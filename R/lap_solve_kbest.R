@@ -118,8 +118,8 @@ lap_solve_kbest_df <- function(df, k, source_col, target_col, cost_col,
   unique_targets <- sort(unique(target_vals))
   
   # Create mapping to 1-based indices
-  source_map <- setNames(seq_along(unique_sources), unique_sources)
-  target_map <- setNames(seq_along(unique_targets), unique_targets)
+  source_map <- stats::setNames(seq_along(unique_sources), unique_sources)
+  target_map <- stats::setNames(seq_along(unique_targets), unique_targets)
   
   # Build cost matrix
   n_sources <- length(unique_sources)
@@ -162,7 +162,10 @@ lap_solve_kbest_df <- function(df, k, source_col, target_col, cost_col,
 }
 
 #' Print method for k-best assignment results
+#' @param x A `lap_solve_kbest_result`.
+#' @param ... Additional arguments passed to `print()`. Ignored.
 #' @export
+#' @method print lap_solve_kbest_result
 print.lap_solve_kbest_result <- function(x, ...) {
   cat("K-Best Assignment Results\n")
   cat("=========================\n\n")
@@ -200,19 +203,22 @@ print.lap_solve_kbest_result <- function(x, ...) {
 
 #' Get summary of k-best results
 #'
-#' Extract summary information from k-best assignment results
+#' Extract summary information from k-best assignment results.
 #'
-#' @param x An object of class `lap_solve_kbest_result`
-#' @param ... Additional arguments (not used)
+#' @param object An object of class `lap_solve_kbest_result`.
+#' @param ... Additional arguments (unused).
 #'
 #' @return A tibble with one row per solution containing:
-#'   - `rank`: solution rank
-#'   - `solution_id`: solution identifier
-#'   - `total_cost`: total cost of solution
-#'   - `n_assignments`: number of assignments in solution
+#'   - `rank`: solution rank  
+#'   - `solution_id`: solution identifier  
+#'   - `total_cost`: total cost of the solution  
+#'   - `n_assignments`: number of assignments in the solution  
 #'
 #' @export
-summary.lap_solve_kbest_result <- function(x, ...) {
+#' @method summary lap_solve_kbest_result
+summary.lap_solve_kbest_result <- function(object, ...) {
+  x <- object
+
   if (nrow(x) == 0) {
     return(tibble::tibble(
       rank = integer(0),
@@ -221,7 +227,7 @@ summary.lap_solve_kbest_result <- function(x, ...) {
       n_assignments = integer(0)
     ))
   }
-  
+
   x |>
     dplyr::group_by(rank, solution_id, total_cost) |>
     dplyr::summarise(n_assignments = dplyr::n(), .groups = "drop") |>

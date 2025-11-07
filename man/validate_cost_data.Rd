@@ -9,12 +9,12 @@ validate_cost_data(x, forbidden = NA)
 \arguments{
 \item{x}{Cost matrix or data frame}
 
-\item{forbidden}{Value representing forbidden assignments}
+\item{forbidden}{Value representing forbidden assignments (use NA or Inf)}
 }
 \value{
-Validated cost matrix
+Numeric cost matrix
 }
 \description{
-Internal function to validate and prepare cost data for assignment algorithms
+Internal helper that ensures a numeric, non-empty cost matrix.
 }
 \keyword{internal}

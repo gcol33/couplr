@@ -1,4 +1,4 @@
-#' @useDynLib assignr, .registration = TRUE
+#' @useDynLib lapr, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 NULL
 # Internal prep step for LAP: NA -> forbidden, rectangular OK, optional maximize flip

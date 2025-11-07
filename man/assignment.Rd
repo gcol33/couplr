@@ -14,17 +14,44 @@ assignment(
 )
 }
 \arguments{
-\item{cost}{numeric matrix; rows = tasks, columns = agents}
+\item{cost}{Numeric matrix; rows = tasks, columns = agents. \code{NA} or \code{Inf}
+entries are treated as forbidden assignments.}
 
-\item{maximize}{logical; if TRUE, maximizes total cost instead of minimizing}
+\item{maximize}{Logical; if \code{TRUE}, maximizes the total cost instead of minimizing.}
 
-\item{method}{character; one of
-\code{"auto"}, \code{"jv"}, \code{"hungarian"}, \code{"auction"}, \code{"auction_gs"}, \code{"sap"}, \code{"ssp"}, \code{"csflow"}, \code{"hk01"}, or \code{"bruteforce"}}
+\item{method}{Character string indicating the algorithm to use.
+One of \code{"auto"}, \code{"jv"}, \code{"hungarian"}, \code{"auction"}, \code{"auction_gs"},
+\code{"sap"}, \code{"ssp"}, \code{"csflow"}, \code{"hk01"}, or \code{"bruteforce"}.
+\code{"ssp"} is accepted as an alias for \code{"sap"}.}
 
-\item{auction_eps}{optional numeric epsilon for the Auction and Auction-GS methods
-(default: internal value \code{1e-9})}
+\item{auction_eps}{Optional numeric epsilon for the Auction/Auction-GS methods.
+If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}
+
+\item{eps}{Deprecated. Use \code{auction_eps}. If provided and \code{auction_eps} is \code{NULL},
+its value is used for \code{auction_eps}.}
+}
+\value{
+An object of class \code{lap_solve_result}, a list with elements:
+\itemize{
+\item \code{match} — integer vector of length \code{min(nrow(cost), ncol(cost))}
+giving the assigned column for each row (0 if unassigned).
+\item \code{total_cost} — numeric scalar, the objective value.
+\item \code{status} — character scalar, e.g. \code{"optimal"}.
+\item \code{method_used} — character scalar, the algorithm actually used.
+}
 }
 \description{
-Provides several algorithms for solving the linear assignment problem
-(a.k.a. minimum-cost matching). Forbidden edges can be set as \code{NA}.
+Solve the linear assignment problem (minimum- or maximum-cost matching)
+using several algorithms. Forbidden edges can be marked as \code{NA} or \code{Inf}.
+}
+\details{
+\code{method = "auto"} selects an algorithm based on problem size/shape and data
+characteristics (e.g., small problems → \code{"bruteforce"}, binary/all-equal costs → \code{"hk01"},
+sparse/very rectangular → \code{"sap"}, large dense → \code{"auction"}, otherwise \code{"jv"}/\code{"hungarian"}).
+}
+\examples{
+cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
+res  <- assignment(cost)
+res$match; res$total_cost
+
 }

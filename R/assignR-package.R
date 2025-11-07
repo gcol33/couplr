@@ -1,7 +1,7 @@
 #' @keywords internal
 "_PACKAGE"
 
-#' assignr: Fast linear assignment solver for R
+#' lapr: Fast linear assignment solver for R
 #'
 #' Modern, tidy implementations of the Hungarian and Jonker–Volgenant algorithms
 #' for solving linear assignment problems.
@@ -13,9 +13,9 @@
 #'   \item{\code{\link{lap_solve_kbest}}}: Find k-best optimal solutions
 #' }
 #'
-#' @name assignr-package
-#' @aliases assignr
-#' @useDynLib assignr, .registration = TRUE
+#' @name lapr-package
+#' @aliases lapr
+#' @useDynLib lapr, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #' @importFrom rlang enquo quo_is_null eval_tidy
 #' @importFrom tibble tibble as_tibble

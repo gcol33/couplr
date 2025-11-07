@@ -6,6 +6,11 @@
 \usage{
 \method{print}{lap_solve_kbest_result}(x, ...)
 }
+\arguments{
+\item{x}{A \code{lap_solve_kbest_result}.}
+
+\item{...}{Additional arguments passed to \code{print()}. Ignored.}
+}
 \description{
 Print method for k-best assignment results
 }

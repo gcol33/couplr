@@ -1,14 +1,39 @@
 #' Linear assignment solver
 #'
-#' Provides several algorithms for solving the linear assignment problem
-#' (a.k.a. minimum-cost matching). Forbidden edges can be set as `NA`.
+#' Solve the linear assignment problem (minimum- or maximum-cost matching)
+#' using several algorithms. Forbidden edges can be marked as `NA` or `Inf`.
 #'
-#' @param cost numeric matrix; rows = tasks, columns = agents
-#' @param maximize logical; if TRUE, maximizes total cost instead of minimizing
-#' @param method character; one of
-#'   `"auto"`, `"jv"`, `"hungarian"`, `"auction"`, `"auction_gs"`, `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, or `"bruteforce"`
-#' @param auction_eps optional numeric epsilon for the Auction and Auction-GS methods
-#'   (default: internal value `1e-9`)
+#' @param cost Numeric matrix; rows = tasks, columns = agents. `NA` or `Inf`
+#'   entries are treated as forbidden assignments.
+#' @param maximize Logical; if `TRUE`, maximizes the total cost instead of minimizing.
+#' @param method Character string indicating the algorithm to use.
+#'   One of `"auto"`, `"jv"`, `"hungarian"`, `"auction"`, `"auction_gs"`,
+#'   `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, or `"bruteforce"`.
+#'   `"ssp"` is accepted as an alias for `"sap"`.
+#' @param auction_eps Optional numeric epsilon for the Auction/Auction-GS methods.
+#'   If `NULL`, an internal default (e.g., `1e-9`) is used.
+#' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
+#'   its value is used for `auction_eps`.
+#'
+#' @return An object of class `lap_solve_result`, a list with elements:
+#' \itemize{
+#'   \item `match` — integer vector of length `min(nrow(cost), ncol(cost))`
+#'         giving the assigned column for each row (0 if unassigned).
+#'   \item `total_cost` — numeric scalar, the objective value.
+#'   \item `status` — character scalar, e.g. `"optimal"`.
+#'   \item `method_used` — character scalar, the algorithm actually used.
+#' }
+#'
+#' @details
+#' `method = "auto"` selects an algorithm based on problem size/shape and data
+#' characteristics (e.g., small problems → `"bruteforce"`, binary/all-equal costs → `"hk01"`,
+#' sparse/very rectangular → `"sap"`, large dense → `"auction"`, otherwise `"jv"`/`"hungarian"`).
+#'
+#' @examples
+#' cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
+#' res  <- assignment(cost)
+#' res$match; res$total_cost
+#'
 #' @export
 assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","auction","auction_gs",
@@ -16,52 +41,50 @@ assignment <- function(cost, maximize = FALSE,
                        auction_eps = NULL, eps = NULL) {
   method <- match.arg(method)
 
-  # Support both eps and auction_eps for backward compatibility
+  # Back-compat: eps → auction_eps
   if (!is.null(eps) && is.null(auction_eps)) {
     auction_eps <- eps
   }
 
-  # alias for compatibility with tests / external callers
+  # alias for compatibility
   if (method == "ssp") method <- "sap"
 
   cost <- as.matrix(cost)
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
-  # Conservative detector for hk01: exactly all-equal or exactly binary {0,1}
   hk01_candidate <- function(M) {
     x <- as.numeric(M[is.finite(M)])
     if (!length(x)) return(FALSE)
     ux <- sort(unique(round(x, 12)))
-    if (length(ux) == 1L) return(TRUE)                 # all-equal
-    if (length(ux) == 2L && all(ux %in% c(0, 1))) return(TRUE)  # exact 0/1
+    if (length(ux) == 1L) return(TRUE)                       # all-equal
+    if (length(ux) == 2L && all(ux %in% c(0, 1))) return(TRUE) # exact 0/1
     FALSE
   }
 
   n <- nrow(cost); m <- ncol(cost)
 
   if (method == "auto") {
-    # Tiny problems: bruteforce guarantees correctness and is fast
     if (n <= 5 && m <= 5) {
       method <- "bruteforce"
     } else if (hk01_candidate(cost)) {
-      method <- "hk01"        # fast special case: binary {0,1} or all-equal
+      method <- "hk01"
     } else {
       na_rate <- mean(is.na(cost))
       if (n <= 10 && m <= 10) {
-        method <- "jv"        # small problems
-      } else if (na_rate > 0.35 || m >= 2*n) {
-        method <- "sap"        # sparse or very rectangular
+        method <- "jv"
+      } else if (na_rate > 0.35 || m >= 2 * n) {
+        method <- "sap"
       } else if (n > 20 && n <= 80 && na_rate < 0.1 && n <= m) {
-        method <- "hungarian"  # medium-dense problems
+        method <- "hungarian"
       } else if (n >= 100 && n <= m) {
-        method <- "auction"    # large dense problems
+        method <- "auction"
       } else {
-        method <- "jv"         # general-purpose fallback
+        method <- "jv"
       }
     }
   }
 
-  # ---- auto-transpose if n > m ----
+  # auto-transpose if rows > cols
   transposed <- FALSE
   work <- cost
   if (n > m) {
@@ -70,7 +93,6 @@ assignment <- function(cost, maximize = FALSE,
     tmp <- n; n <- m; m <- tmp
   }
 
-  # call the chosen solver on `work`
   res_raw <- switch(
     method,
     "bruteforce" = lap_solve_bruteforce(work, maximize),
@@ -84,11 +106,8 @@ assignment <- function(cost, maximize = FALSE,
     stop("Unknown or unimplemented method: ", method)
   )
 
-  # map back if we transposed
   match_out <- as.integer(res_raw$match)
   if (transposed) {
-    # `work` is m0 x n0. match_out has length m0: row i (orig col i) -> col j (orig row j).
-    # Invert to a length n0 vector: original row j -> original col i.
     n0 <- ncol(work)   # original nrows
     m0 <- nrow(work)   # original ncols
     inv <- integer(n0); inv[] <- 0L
@@ -99,10 +118,12 @@ assignment <- function(cost, maximize = FALSE,
     match_out <- inv
   }
 
-  list(
+  out <- list(
     match = match_out,
     total_cost = as.numeric(res_raw$total_cost),
     status = "optimal",
     method_used = method
   )
+  class(out) <- "lap_solve_result"
+  out
 }

@@ -2,10 +2,16 @@
 % Please edit documentation in R/lap_solve.R
 \name{print.lap_solve_result}
 \alias{print.lap_solve_result}
-\title{Print method for assign results}
+\title{Print method for assignment results}
 \usage{
 \method{print}{lap_solve_result}(x, ...)
 }
+\arguments{
+\item{x}{A \code{lap_solve_result} object.}
+
+\item{...}{Additional arguments passed to \code{print()}. Currently ignored.}
+}
 \description{
-Print method for assign results
+Nicely prints a \code{lap_solve_result} object, including the assignments,
+total cost, and method used.
 }

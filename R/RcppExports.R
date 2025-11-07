@@ -2,50 +2,50 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 lap_prepare_cost_matrix <- function(cost, maximize) {
-    .Call(`_assignr_lap_prepare_cost_matrix`, cost, maximize)
+    .Call(`_lapr_lap_prepare_cost_matrix`, cost, maximize)
 }
 
 lap_solve_bruteforce <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_bruteforce`, cost, maximize)
+    .Call(`_lapr_lap_solve_bruteforce`, cost, maximize)
 }
 
 lap_solve_jv <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_jv`, cost, maximize)
+    .Call(`_lapr_lap_solve_jv`, cost, maximize)
 }
 
 lap_kbest_murty <- function(cost, k, maximize, single_method = "jv") {
-    .Call(`_assignr_lap_kbest_murty`, cost, k, maximize, single_method)
+    .Call(`_lapr_lap_kbest_murty`, cost, k, maximize, single_method)
 }
 
 lap_solve_auction <- function(cost, maximize, eps = NULL) {
-    .Call(`_assignr_lap_solve_auction`, cost, maximize, eps)
+    .Call(`_lapr_lap_solve_auction`, cost, maximize, eps)
 }
 
 lap_solve_auction_scaled <- function(cost, maximize, schedule = "pow2") {
-    .Call(`_assignr_lap_solve_auction_scaled`, cost, maximize, schedule)
+    .Call(`_lapr_lap_solve_auction_scaled`, cost, maximize, schedule)
 }
 
 lap_solve_auction_gs <- function(cost, maximize, eps = NULL) {
-    .Call(`_assignr_lap_solve_auction_gs`, cost, maximize, eps)
+    .Call(`_lapr_lap_solve_auction_gs`, cost, maximize, eps)
 }
 
 lap_solve_ssp <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_ssp`, cost, maximize)
+    .Call(`_lapr_lap_solve_ssp`, cost, maximize)
 }
 
 lap_solve_hungarian <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_hungarian`, cost, maximize)
+    .Call(`_lapr_lap_solve_hungarian`, cost, maximize)
 }
 
 lap_solve_csflow <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_csflow`, cost, maximize)
+    .Call(`_lapr_lap_solve_csflow`, cost, maximize)
 }
 
 lap_kbest_lawler <- function(cost, k, method_base = "jv", maximize = FALSE) {
-    .Call(`_assignr_lap_kbest_lawler`, cost, k, method_base, maximize)
+    .Call(`_lapr_lap_kbest_lawler`, cost, k, method_base, maximize)
 }
 
 lap_solve_hk01 <- function(cost, maximize) {
-    .Call(`_assignr_lap_solve_hk01`, cost, maximize)
+    .Call(`_lapr_lap_solve_hk01`, cost, maximize)
 }
 

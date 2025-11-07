@@ -48,7 +48,7 @@ A tibble with columns:
 }
 }
 \description{
-Modern, tidy interface for solving the linear assignment problem using
+Provides a tidy interface for solving the linear assignment problem using
 Hungarian or Jonker-Volgenant algorithms. Supports rectangular matrices,
 NA/Inf masking, and data frame inputs.
 }

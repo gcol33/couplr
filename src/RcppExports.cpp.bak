@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // lap_prepare_cost_matrix
 Rcpp::List lap_prepare_cost_matrix(NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_prepare_cost_matrix(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_prepare_cost_matrix(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,7 +25,7 @@ END_RCPP
 }
 // lap_solve_bruteforce
 Rcpp::List lap_solve_bruteforce(NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_bruteforce(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_bruteforce(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -37,7 +37,7 @@ END_RCPP
 }
 // lap_solve_jv
 Rcpp::List lap_solve_jv(NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_jv(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_jv(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // lap_kbest_murty
 Rcpp::List lap_kbest_murty(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);
-RcppExport SEXP _lapr_lap_kbest_murty(SEXP costSEXP, SEXP kSEXP, SEXP maximizeSEXP, SEXP single_methodSEXP) {
+RcppExport SEXP _assignr_lap_kbest_murty(SEXP costSEXP, SEXP kSEXP, SEXP maximizeSEXP, SEXP single_methodSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -63,7 +63,7 @@ END_RCPP
 }
 // lap_solve_auction
 Rcpp::List lap_solve_auction(Rcpp::NumericMatrix cost, bool maximize, Rcpp::Nullable<double> eps);
-RcppExport SEXP _lapr_lap_solve_auction(SEXP costSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
+RcppExport SEXP _assignr_lap_solve_auction(SEXP costSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -76,7 +76,7 @@ END_RCPP
 }
 // lap_solve_auction_scaled
 Rcpp::List lap_solve_auction_scaled(Rcpp::NumericMatrix cost, bool maximize, std::string schedule);
-RcppExport SEXP _lapr_lap_solve_auction_scaled(SEXP costSEXP, SEXP maximizeSEXP, SEXP scheduleSEXP) {
+RcppExport SEXP _assignr_lap_solve_auction_scaled(SEXP costSEXP, SEXP maximizeSEXP, SEXP scheduleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -89,7 +89,7 @@ END_RCPP
 }
 // lap_solve_auction_gs
 Rcpp::List lap_solve_auction_gs(Rcpp::NumericMatrix cost, bool maximize, Rcpp::Nullable<double> eps);
-RcppExport SEXP _lapr_lap_solve_auction_gs(SEXP costSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
+RcppExport SEXP _assignr_lap_solve_auction_gs(SEXP costSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -102,7 +102,7 @@ END_RCPP
 }
 // lap_solve_ssp
 Rcpp::List lap_solve_ssp(Rcpp::NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_ssp(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_ssp(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -114,7 +114,7 @@ END_RCPP
 }
 // lap_solve_hungarian
 Rcpp::List lap_solve_hungarian(Rcpp::NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_hungarian(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_hungarian(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -126,7 +126,7 @@ END_RCPP
 }
 // lap_solve_csflow
 Rcpp::List lap_solve_csflow(Rcpp::NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_csflow(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_csflow(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -138,7 +138,7 @@ END_RCPP
 }
 // lap_kbest_lawler
 Rcpp::List lap_kbest_lawler(Rcpp::NumericMatrix cost, int k, std::string method_base, bool maximize);
-RcppExport SEXP _lapr_lap_kbest_lawler(SEXP costSEXP, SEXP kSEXP, SEXP method_baseSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_kbest_lawler(SEXP costSEXP, SEXP kSEXP, SEXP method_baseSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -152,7 +152,7 @@ END_RCPP
 }
 // lap_solve_hk01
 Rcpp::List lap_solve_hk01(Rcpp::NumericMatrix cost, bool maximize);
-RcppExport SEXP _lapr_lap_solve_hk01(SEXP costSEXP, SEXP maximizeSEXP) {
+RcppExport SEXP _assignr_lap_solve_hk01(SEXP costSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -164,22 +164,22 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lapr_lap_prepare_cost_matrix", (DL_FUNC) &_lapr_lap_prepare_cost_matrix, 2},
-    {"_lapr_lap_solve_bruteforce", (DL_FUNC) &_lapr_lap_solve_bruteforce, 2},
-    {"_lapr_lap_solve_jv", (DL_FUNC) &_lapr_lap_solve_jv, 2},
-    {"_lapr_lap_kbest_murty", (DL_FUNC) &_lapr_lap_kbest_murty, 4},
-    {"_lapr_lap_solve_auction", (DL_FUNC) &_lapr_lap_solve_auction, 3},
-    {"_lapr_lap_solve_auction_scaled", (DL_FUNC) &_lapr_lap_solve_auction_scaled, 3},
-    {"_lapr_lap_solve_auction_gs", (DL_FUNC) &_lapr_lap_solve_auction_gs, 3},
-    {"_lapr_lap_solve_ssp", (DL_FUNC) &_lapr_lap_solve_ssp, 2},
-    {"_lapr_lap_solve_hungarian", (DL_FUNC) &_lapr_lap_solve_hungarian, 2},
-    {"_lapr_lap_solve_csflow", (DL_FUNC) &_lapr_lap_solve_csflow, 2},
-    {"_lapr_lap_kbest_lawler", (DL_FUNC) &_lapr_lap_kbest_lawler, 4},
-    {"_lapr_lap_solve_hk01", (DL_FUNC) &_lapr_lap_solve_hk01, 2},
+    {"_assignr_lap_prepare_cost_matrix", (DL_FUNC) &_assignr_lap_prepare_cost_matrix, 2},
+    {"_assignr_lap_solve_bruteforce", (DL_FUNC) &_assignr_lap_solve_bruteforce, 2},
+    {"_assignr_lap_solve_jv", (DL_FUNC) &_assignr_lap_solve_jv, 2},
+    {"_assignr_lap_kbest_murty", (DL_FUNC) &_assignr_lap_kbest_murty, 4},
+    {"_assignr_lap_solve_auction", (DL_FUNC) &_assignr_lap_solve_auction, 3},
+    {"_assignr_lap_solve_auction_scaled", (DL_FUNC) &_assignr_lap_solve_auction_scaled, 3},
+    {"_assignr_lap_solve_auction_gs", (DL_FUNC) &_assignr_lap_solve_auction_gs, 3},
+    {"_assignr_lap_solve_ssp", (DL_FUNC) &_assignr_lap_solve_ssp, 2},
+    {"_assignr_lap_solve_hungarian", (DL_FUNC) &_assignr_lap_solve_hungarian, 2},
+    {"_assignr_lap_solve_csflow", (DL_FUNC) &_assignr_lap_solve_csflow, 2},
+    {"_assignr_lap_kbest_lawler", (DL_FUNC) &_assignr_lap_kbest_lawler, 4},
+    {"_assignr_lap_solve_hk01", (DL_FUNC) &_assignr_lap_solve_hk01, 2},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_lapr(DllInfo *dll) {
+RcppExport void R_init_assignr(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

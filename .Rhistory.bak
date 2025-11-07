@@ -1,0 +1,237 @@
+devtools::load_all()
+# Test script to see full error
+library(assignr)
+set.seed(1)
+for (n in 2:7) {
+cat("\n\n=== Testing n =", n, "===\n")
+M <- matrix(runif(n*n), n)
+cat("Matrix:\n")
+print(M)
+cat("\nTrying JV method...\n")
+a <- assignment(M, method = "jv")
+cat("JV result: total_cost =", a$total_cost, "\n")
+cat("\nTrying Hungarian method...\n")
+tryCatch({
+h <- assignment(M, method = "hungarian")
+cat("Hungarian result: total_cost =", h$total_cost, "\n")
+if (abs(a$total_cost - h$total_cost) > 1e-10) {
+cat("*** MISMATCH! ***\n")
+} else {
+cat("Match ✓\n")
+}
+}, error = function(e) {
+cat("ERROR:", conditionMessage(e), "\n")
+cat("Full error:\n")
+print(e)
+})
+}
+devtools::load_all()
+# Test script to see full error
+library(assignr)
+set.seed(1)
+for (n in 2:7) {
+cat("\n\n=== Testing n =", n, "===\n")
+M <- matrix(runif(n*n), n)
+cat("Matrix:\n")
+print(M)
+cat("\nTrying JV method...\n")
+a <- assignment(M, method = "jv")
+cat("JV result: total_cost =", a$total_cost, "\n")
+cat("\nTrying Hungarian method...\n")
+tryCatch({
+h <- assignment(M, method = "hungarian")
+cat("Hungarian result: total_cost =", h$total_cost, "\n")
+if (abs(a$total_cost - h$total_cost) > 1e-10) {
+cat("*** MISMATCH! ***\n")
+} else {
+cat("Match ✓\n")
+}
+}, error = function(e) {
+cat("ERROR:", conditionMessage(e), "\n")
+cat("Full error:\n")
+print(e)
+})
+}
+devtools::load_all()
+# Test script to see full error
+library(assignr)
+set.seed(1)
+for (n in 2:7) {
+cat("\n\n=== Testing n =", n, "===\n")
+M <- matrix(runif(n*n), n)
+cat("Matrix:\n")
+print(M)
+cat("\nTrying JV method...\n")
+a <- assignment(M, method = "jv")
+cat("JV result: total_cost =", a$total_cost, "\n")
+cat("\nTrying Hungarian method...\n")
+tryCatch({
+h <- assignment(M, method = "hungarian")
+cat("Hungarian result: total_cost =", h$total_cost, "\n")
+if (abs(a$total_cost - h$total_cost) > 1e-10) {
+cat("*** MISMATCH! ***\n")
+} else {
+cat("Match ✓\n")
+}
+}, error = function(e) {
+cat("ERROR:", conditionMessage(e), "\n")
+cat("Full error:\n")
+print(e)
+})
+}
+devtools::load_all()
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+# Clean everything
+devtools::clean_dll()
+# Then reload
+devtools::load_all()
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+# Clean everything
+devtools::clean_dll()
+# Then reload
+devtools::load_all()
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+# Clean everything
+devtools::clean_dll()
+# Then reload
+devtools::load_all()
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+# Clean everything
+devtools::clean_dll()
+# Then reload
+devtools::load_all()
+library(assignr)
+set.seed(1)
+M <- matrix(runif(4), 2, 2)
+print(M)
+# Test JV
+a <- assignment(M, method = "jv")
+cat("JV total_cost:", a$total_cost, "\n")
+# Test Hungarian
+h <- assignment(M, method = "hungarian")
+cat("Hungarian total_cost:", h$total_cost, "\n")
+# Clean everything
+devtools::clean_dll()
+# Then reload
+devtools::load_all()
+devtools::test()
+usethis::use_test("assignment-csflow")
+devtools::load_all()
+devtools::test(filter = "assignment-csflow")
+devtools::load_all()
+devtools::test(filter = "assignment-csflow")
+devtools::load_all()
+devtools::load_all()
+devtools::test(filter = "assignment-csflow")
+devtools::load_all()
+devtools::test(filter = "assignment-csflow")
+usethis::use_test("kbest-lawler")
+writeLines('
+test_that("Lawler k-best returns nondecreasing costs and no dupes", {
+set.seed(1)
+for (n in 3:6) {
+M <- matrix(runif(n*n), n)
+k <- min(10, factorial(n))
+L <- lap_kbest_lawler(M, k, method_base = "jv", maximize = FALSE)
+expect_true(length(L) >= 1)
+cs <- vapply(L, `[[`, numeric(1), "total_cost")
+expect_true(all(diff(cs) >= -1e-12))
+keys <- vapply(L, function(x) paste(x$match, collapse=","), character(1))
+expect_equal(length(unique(keys)), length(keys))
+}
+})
+', "tests/testthat/test-kbest-lawler.R")
+devtools::load_all()
+devtools::test(filter = "kbest-lawler")
+devtools::load_all()
+devtools::test(filter = "kbest-lawler")
+# Copy to your package
+cp test-assignment-auction-gs.R tests/testthat/
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+devtools::test()
+# Build all vignettes
+devtools::build_vignettes()
+# Then view them in your browser
+browseVignettes("assignr")
+# Build the package with vignettes
+devtools::build(vignettes = TRUE)
+# Or just knit the vignette to see it
+rmarkdown::render("vignettes/getting-started.Rmd")
+dir.create("vignettes", showWarnings = FALSE)
+devtools::build_vignettes()

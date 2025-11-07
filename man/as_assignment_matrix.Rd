@@ -2,20 +2,20 @@
 % Please edit documentation in R/utils.R
 \name{as_assignment_matrix}
 \alias{as_assignment_matrix}
-\title{Convert assignment result to matrix format}
+\title{Convert assignment result to a binary matrix}
 \usage{
 as_assignment_matrix(x, n_sources = NULL, n_targets = NULL)
 }
 \arguments{
-\item{x}{An assignment result object}
+\item{x}{An assignment result object of class \code{lap_solve_result}}
 
-\item{n_sources}{Number of source nodes (optional, inferred if not provided)}
+\item{n_sources}{Number of source nodes, optional}
 
-\item{n_targets}{Number of target nodes (optional, inferred if not provided)}
+\item{n_targets}{Number of target nodes, optional}
 }
 \value{
-Binary assignment matrix (0/1)
+Integer matrix with 0 and 1 entries
 }
 \description{
-Convert a tidy assignment result back to a binary assignment matrix
+Turns a tidy assignment result back into a 0/1 assignment matrix.
 }

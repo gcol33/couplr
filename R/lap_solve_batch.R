@@ -245,23 +245,32 @@ lap_solve_batch_grouped <- function(df, source_col, target_col, cost_col,
 }
 
 #' Print method for batch assignment results
+#'
+#' Prints a summary and the table of results for a batch of assignment
+#' problems solved with `lap_solve_batch()`.
+#'
+#' @param x A `lap_solve_batch_result` object.
+#' @param ... Additional arguments passed to `print()`. Currently ignored.
+#'
 #' @export
+#' @method print lap_solve_batch_result
 print.lap_solve_batch_result <- function(x, ...) {
   cat("Batch Assignment Results\n")
   cat("========================\n\n")
-  
-  n_problems <- length(unique(x$problem_id))
-  cat("Number of problems solved:", n_problems, "\n")
-  
-  if ("total_cost" %in% names(x)) {
-    total_costs <- unique(x[c("problem_id", "total_cost")])
-    cat("Total cost range:", 
-        sprintf("[%.2f, %.2f]", min(total_costs$total_cost), max(total_costs$total_cost)),
-        "\n")
+
+  # Only report counts if the column exists
+  if ("problem_id" %in% names(x)) {
+    cat("Number of problems solved:", dplyr::n_distinct(x$problem_id), "\n")
   }
-  
+
+  # Only report cost range if BOTH columns exist
+  if (all(c("problem_id", "total_cost") %in% names(x))) {
+    total_costs <- dplyr::distinct(x, .data$problem_id, .data$total_cost)
+    rng <- range(total_costs$total_cost, na.rm = TRUE)
+    cat("Total cost range:", sprintf("[%.2f, %.2f]", rng[1], rng[2]), "\n")
+  }
+
   cat("\n")
   print(tibble::as_tibble(x), ...)
-  
   invisible(x)
 }

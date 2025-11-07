@@ -71,7 +71,7 @@ example_costs <- list(
 #' # Or use batch solving
 #' example_df |>
 #'   group_by(sim) |>
-#'   assign_batch(source, target, cost)
+#'   lap_solve_batch(source, target, cost)
 #'
 #' @export
 example_df <- tibble::tibble(

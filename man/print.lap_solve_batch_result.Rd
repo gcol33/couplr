@@ -6,6 +6,12 @@
 \usage{
 \method{print}{lap_solve_batch_result}(x, ...)
 }
+\arguments{
+\item{x}{A \code{lap_solve_batch_result} object.}
+
+\item{...}{Additional arguments passed to \code{print()}. Currently ignored.}
+}
 \description{
-Print method for batch assignment results
+Prints a summary and the table of results for a batch of assignment
+problems solved with \code{lap_solve_batch()}.
 }

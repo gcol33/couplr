@@ -2,7 +2,7 @@
 % Please edit documentation in R/kbest_assignment.R
 \name{kbest_assignment}
 \alias{kbest_assignment}
-\title{k-best linear assignments (Murty)}
+\title{k-best linear assignment solutions (Murty's algorithm)}
 \usage{
 kbest_assignment(
   cost,
@@ -13,16 +13,46 @@ kbest_assignment(
 )
 }
 \arguments{
-\item{cost}{numeric matrix (NA = forbidden)}
+\item{cost}{Numeric cost matrix where rows represent sources and columns represent
+targets. Use \code{NA} or \code{Inf} for forbidden assignments.}
 
-\item{k}{number of solutions}
+\item{k}{Integer; the number of best distinct solutions to return.}
 
-\item{maximize}{logical}
+\item{maximize}{Logical; if \code{TRUE}, maximizes total cost instead of minimizing.}
 
-\item{method}{"murty" (reserved for future variants)}
+\item{method}{Character string indicating which k-best algorithm to use.
+Currently only \code{"murty"} is implemented (reserved for future variants).}
 
-\item{single_method}{sub-solver for each node ("jv")}
+\item{single_method}{Character string giving the base assignment solver
+used within each Murty node. Typically \code{"jv"}.}
+}
+\value{
+A \code{data.frame} with one row per assignment in each solution and columns:
+\itemize{
+\item \code{rank} – rank of the solution (1 = best),
+\item \code{match_id} – identifier for the solution (same as rank),
+\item \code{row}, \code{col} – assigned row and column indices,
+\item \code{cost_edge} – cost of the assignment edge,
+\item \code{cost_total} – total cost of the full solution.
+}
 }
 \description{
-k-best linear assignments (Murty)
+Compute the top-\eqn{k} optimal solutions to the linear assignment problem
+using Murty's algorithm. Each solution represents a distinct assignment
+of rows to columns with its total cost.
+}
+\details{
+Murty’s algorithm systematically partitions the solution space of the
+assignment problem to find the next-best solutions after the optimal one.
+Each subproblem is solved with a base LAP solver (\code{single_method}).
+}
+\examples{
+cost <- matrix(c(
+  4, 2, 5,
+  3, 3, 6,
+  7, 5, 4
+), nrow = 3, byrow = TRUE)
+
+kbest_assignment(cost, k = 3)
+
 }

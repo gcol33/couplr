@@ -4,22 +4,22 @@
 \alias{summary.lap_solve_kbest_result}
 \title{Get summary of k-best results}
 \usage{
-\method{summary}{lap_solve_kbest_result}(x, ...)
+\method{summary}{lap_solve_kbest_result}(object, ...)
 }
 \arguments{
-\item{x}{An object of class \code{lap_solve_kbest_result}}
+\item{object}{An object of class \code{lap_solve_kbest_result}.}
 
-\item{...}{Additional arguments (not used)}
+\item{...}{Additional arguments (unused).}
 }
 \value{
 A tibble with one row per solution containing:
 \itemize{
 \item \code{rank}: solution rank
 \item \code{solution_id}: solution identifier
-\item \code{total_cost}: total cost of solution
-\item \code{n_assignments}: number of assignments in solution
+\item \code{total_cost}: total cost of the solution
+\item \code{n_assignments}: number of assignments in the solution
 }
 }
 \description{
-Extract summary information from k-best assignment results
+Extract summary information from k-best assignment results.
 }

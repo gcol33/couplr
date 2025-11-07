@@ -1,6 +1,6 @@
 #' Solve linear assignment problems
 #'
-#' Modern, tidy interface for solving the linear assignment problem using
+#' Provides a tidy interface for solving the linear assignment problem using
 #' Hungarian or Jonker-Volgenant algorithms. Supports rectangular matrices,
 #' NA/Inf masking, and data frame inputs.
 #'
@@ -134,8 +134,8 @@ lap_solve_df <- function(df, source_col, target_col, cost_col,
   unique_targets <- sort(unique(target_vals))
   
   # Create mapping to 1-based indices
-  source_map <- setNames(seq_along(unique_sources), unique_sources)
-  target_map <- setNames(seq_along(unique_targets), unique_targets)
+  source_map <- stats::setNames(seq_along(unique_sources), unique_sources)
+  target_map <- stats::setNames(seq_along(unique_targets), unique_targets)
   
   # Build cost matrix
   n_sources <- length(unique_sources)
@@ -202,22 +202,31 @@ lap_solve_grouped <- function(df, source_col, target_col, cost_col,
     })
 }
 
-#' Print method for assign results
+#' Print method for assignment results
+#'
+#' Nicely prints a `lap_solve_result` object, including the assignments,
+#' total cost, and method used.
+#'
+#' @param x A `lap_solve_result` object.
+#' @param ... Additional arguments passed to `print()`. Currently ignored.
+#'
 #' @export
+#' @method print lap_solve_result
 print.lap_solve_result <- function(x, ...) {
   cat("Assignment Result\n")
   cat("=================\n\n")
-  
+
   total_cost <- attr(x, "total_cost")
   method_used <- attr(x, "method_used")
-  
+
   # Print the tibble
   print(tibble::as_tibble(x), ...)
-  
+
   cat("\nTotal cost:", total_cost, "\n")
   if (!is.null(method_used)) {
     cat("Method:", method_used, "\n")
   }
-  
+
   invisible(x)
 }
+

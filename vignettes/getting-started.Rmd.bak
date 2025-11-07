@@ -1,10 +1,10 @@
 ---
-title: "Getting Started with lapr"
+title: "Getting Started with assignR"
 author: "Gilles Colling"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting Started with lapr}
+  %\VignetteIndexEntry{Getting Started with assignR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,14 +14,14 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library(lapr)
+library(assignr)
 ```
 
 ## Introduction
 
-The linear assignment problem (LAP) is fundamental to many optimization tasks: assigning workers to jobs, matching students to schools, or pairing drivers with riders. `lapr` provides a modern, tidy interface for solving these problems efficiently in R.
+The linear assignment problem (LAP) is fundamental to many optimization tasks: assigning workers to jobs, matching students to schools, or pairing drivers with riders. `assignR` provides a modern, tidy interface for solving these problems efficiently in R.
 
-This vignette introduces the core functionality of `lapr` through practical examples.
+This vignette introduces the core functionality of `assignR` through practical examples.
 
 ## The Assignment Problem
 
@@ -37,7 +37,7 @@ Find the assignment that minimizes (or maximizes) the total cost, with each sour
 
 ### Matrix Input
 
-The simplest way to use `lapr` is with a numeric cost matrix:
+The simplest way to use `assignR` is with a numeric cost matrix:
 
 ```{r basic-matrix}
 # Cost matrix: 3 workers, 3 tasks
@@ -77,7 +77,7 @@ This is particularly useful when your data is already in long format or when wor
 
 ## Working with Rectangular Problems
 
-Unlike many assignment solvers, `lapr` handles rectangular problems without any manual padding:
+Unlike many assignment solvers, `assignR` handles rectangular problems without any manual padding:
 
 ```{r rectangular}
 # 3 workers, 5 tasks - assign each worker to a task
@@ -126,7 +126,7 @@ cat("Total profit:", get_total_cost(result), "\n")
 
 ## Grouped Data Frames
 
-One of `lapr`'s most powerful features is seamless integration with grouped data frames:
+One of `assignR`'s most powerful features is seamless integration with grouped data frames:
 
 ```{r grouped}
 # Multiple assignment problems in one data frame
@@ -183,7 +183,7 @@ summary(kbest)
 
 ## Extracting Results
 
-`lapr` provides several utility functions for working with results:
+`assignR` provides several utility functions for working with results:
 
 ```{r utilities}
 result <- lap_solve(cost)
@@ -203,10 +203,10 @@ is_lap_solve_result(result)
 
 ## Choosing Algorithms
 
-`lapr` includes multiple algorithms optimized for different scenarios:
+`assignR` includes multiple algorithms optimized for different scenarios:
 
 ```{r methods}
-# Let lapr choose (default)
+# Let assignR choose (default)
 lap_solve(cost, method = "auto")
 
 # Force specific algorithm
@@ -271,7 +271,7 @@ schedule |>
 
 ## Summary
 
-`lapr` provides:
+`assignR` provides:
 
 - Simple, consistent API via `lap_solve()`, `lap_solve_batch()`, and `lap_solve_kbest()`
 - Tidy data frame support with grouped workflows
@@ -279,4 +279,4 @@ schedule |>
 - Multiple algorithms for different scenarios
 - High-performance C++ backend
 
-Whether you're solving a single small problem or thousands of large ones, `lapr` has you covered.
+Whether you're solving a single small problem or thousands of large ones, `assignR` has you covered.

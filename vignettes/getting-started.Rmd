@@ -265,9 +265,10 @@ schedule |>
 
 ## Next Steps
 
-- See `?lap_solve` and related help topics  
-- Check out `vignette("advanced")` for advanced topics including parallel batch solving
-- Visit our [GitLab repository](###) for updates and examples
+See the help pages for detailed usage and examples:  
+`?lap_solve`, `?lap_solve_batch`, and `?lap_solve_kbest`.
+
+You can also visit the [GitHub repository](https://github.com/gcol33/lapr) for source code and additional examples.
 
 ## Summary
 

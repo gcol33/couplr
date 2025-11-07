@@ -1,0 +1,282 @@
+---
+title: "Getting Started with assignR"
+author: "Gilles Colling"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with assignR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(assignr)
+```
+
+## Introduction
+
+The linear assignment problem (LAP) is fundamental to many optimization tasks: assigning workers to jobs, matching students to schools, or pairing drivers with riders. `assignR` provides a modern, tidy interface for solving these problems efficiently in R.
+
+This vignette introduces the core functionality of `assignR` through practical examples.
+
+## The Assignment Problem
+
+Given:
+
+- A set of **sources** (e.g., workers)
+- A set of **targets** (e.g., tasks)  
+- A **cost matrix** where entry (i,j) represents the cost of assigning source i to target j
+
+Find the assignment that minimizes (or maximizes) the total cost, with each source assigned to at most one target.
+
+## Basic Usage
+
+### Matrix Input
+
+The simplest way to use `assignR` is with a numeric cost matrix:
+
+```{r basic-matrix}
+# Cost matrix: 3 workers, 3 tasks
+cost <- matrix(c(
+  4, 2, 5,  # Worker 1 costs for tasks 1, 2, 3
+  3, 3, 6,  # Worker 2 costs
+  7, 5, 4   # Worker 3 costs
+), nrow = 3, byrow = TRUE)
+
+# Solve
+result <- lap_solve(cost)
+print(result)
+```
+
+The result is a tidy tibble showing which source is assigned to which target, along with the cost of each assignment.
+
+### Data Frame Input
+
+For more complex workflows, you can use data frames:
+
+```{r df-input}
+
+
+# Create assignment problem as data frame
+assignments <- tibble::tibble(
+  worker = rep(1:3, each = 3),
+  task = rep(1:3, times = 3),
+  cost = c(4, 2, 5, 3, 3, 6, 7, 5, 4)
+)
+
+# Solve using column names
+result <- lap_solve(assignments, worker, task, cost)
+print(result)
+```
+
+This is particularly useful when your data is already in long format or when working with databases.
+
+## Working with Rectangular Problems
+
+Unlike many assignment solvers, `assignR` handles rectangular problems without any manual padding:
+
+```{r rectangular}
+# 3 workers, 5 tasks - assign each worker to a task
+cost_rect <- matrix(c(
+  1, 2, 3, 4, 5,
+  6, 5, 4, 3, 2,
+  2, 3, 4, 5, 6
+), nrow = 3, byrow = TRUE)
+
+result <- lap_solve(cost_rect)
+print(result)
+```
+
+## Forbidden Assignments
+
+Use `NA` or `Inf` to mark impossible assignments:
+
+```{r forbidden}
+# Worker 1 cannot do task 3
+cost[1, 3] <- NA
+
+# Worker 2 cannot do task 1
+cost[2, 1] <- Inf
+
+result <- lap_solve(cost)
+print(result)
+```
+
+## Maximization Problems
+
+Switch to maximization by setting `maximize = TRUE`:
+
+```{r maximize}
+# Profit matrix - we want to maximize total profit
+profit <- matrix(c(
+  5, 3, 7,
+  4, 6, 2,
+  8, 4, 5
+), nrow = 3, byrow = TRUE)
+
+result <- lap_solve(profit, maximize = TRUE)
+print(result)
+
+cat("Total profit:", get_total_cost(result), "\n")
+```
+
+## Grouped Data Frames
+
+One of `assignR`'s most powerful features is seamless integration with grouped data frames:
+
+```{r grouped}
+# Multiple assignment problems in one data frame
+simulations <- tibble::tibble(
+  sim = rep(1:3, each = 9),
+  worker = rep(1:3, times = 9),
+  task = rep(1:3, each = 3, times = 3),
+  cost = runif(27, min = 1, max = 10)
+)
+
+# Solve all simulations at once
+results <- simulations |>
+  dplyr::group_by(sim) |>
+  lap_solve(worker, task, cost)
+
+print(results)
+```
+
+## Batch Solving
+
+For even more efficiency with many independent problems, use `lap_solve_batch()`:
+
+```{r batch}
+# Create list of cost matrices
+cost_list <- list(
+  matrix(runif(9, 1, 10), 3, 3),
+  matrix(runif(9, 1, 10), 3, 3),
+  matrix(runif(9, 1, 10), 3, 3)
+)
+
+# Solve all at once
+batch_results <- lap_solve_batch(cost_list)
+print(batch_results)
+```
+
+## Finding Multiple Solutions
+
+Sometimes you want to explore alternative near-optimal solutions. Use `lap_solve_kbest()`:
+
+```{r kbest}
+cost <- matrix(c(
+  1, 2, 3,
+  4, 3, 2,
+  5, 4, 1
+), nrow = 3, byrow = TRUE)
+
+# Find top 5 solutions
+kbest <- lap_solve_kbest(cost, k = 5)
+print(kbest)
+
+# Summary of solutions
+summary(kbest)
+```
+
+## Extracting Results
+
+`assignR` provides several utility functions for working with results:
+
+```{r utilities}
+result <- lap_solve(cost)
+
+# Extract total cost
+get_total_cost(result)
+
+# Get algorithm used
+get_method_used(result)
+
+# Convert to binary assignment matrix
+as_assignment_matrix(result)
+
+# Check result type
+is_lap_solve_result(result)
+```
+
+## Choosing Algorithms
+
+`assignR` includes multiple algorithms optimized for different scenarios:
+
+```{r methods}
+# Let assignR choose (default)
+lap_solve(cost, method = "auto")
+
+# Force specific algorithm
+lap_solve(cost, method = "jv")         # Jonker-Volgenant (fast, general)
+lap_solve(cost, method = "hungarian")  # Classic Hungarian
+lap_solve(cost, method = "auction")    # Auction algorithm (good for large dense)
+```
+
+The `"auto"` method selects the best algorithm based on problem characteristics:
+
+- Binary/uniform costs → HK01 algorithm
+- Sparse/rectangular → SAP algorithm  
+- Large dense → Auction algorithm
+- General case → Jonker-Volgenant
+
+## Real-World Example: Job Scheduling
+
+```{r real-world}
+# Generate realistic job scheduling problem
+set.seed(42)
+
+jobs <- tibble::tibble(
+  day = rep(1:5, each = 12),
+  employee = rep(1:4, times = 15),
+  shift = rep(c("morning", "afternoon", "night"), each = 4, times = 5),
+  preference_score = rnorm(60, mean = 5, sd = 2)
+) |>
+  dplyr::mutate(
+    # Some employees can't work certain shifts
+    preference_score = ifelse(
+      (employee == 1 & shift == "night") |
+      (employee == 2 & shift == "morning"),
+      NA,
+      preference_score
+    )
+  )
+
+# Solve for each day (maximize preference scores)
+schedule <- jobs |>
+  dplyr::group_by(day, shift) |>
+  dplyr::mutate(shift_id = dplyr::cur_group_id()) |>
+  dplyr::ungroup() |>
+  dplyr::group_by(day) |>
+  lap_solve(employee, shift_id, preference_score, maximize = TRUE)
+
+print(schedule)
+
+# Check coverage
+schedule |>
+  dplyr::group_by(day) |>
+  dplyr::summarise(
+    shifts_filled = dplyr::n(),
+    avg_preference = mean(cost, na.rm = TRUE)
+  )
+```
+
+## Next Steps
+
+- See `?lap_solve` and related help topics  
+- Check out `vignette("advanced")` for advanced topics including parallel batch solving
+- Visit our [GitLab repository](###) for updates and examples
+
+## Summary
+
+`assignR` provides:
+
+- Simple, consistent API via `lap_solve()`, `lap_solve_batch()`, and `lap_solve_kbest()`
+- Tidy data frame support with grouped workflows
+- Rectangular matrices and NA masking
+- Multiple algorithms for different scenarios
+- High-performance C++ backend
+
+Whether you're solving a single small problem or thousands of large ones, `assignR` has you covered.

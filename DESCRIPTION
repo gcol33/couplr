@@ -1,11 +1,38 @@
 Package: assignr
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
+Title: Fast Linear Assignment Solver
+Version: 0.1.0
+Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: Modern, tidy implementation of the Hungarian and Jonker-Volgenant 
+    algorithms for solving linear assignment problems. Supports rectangular 
+    matrices, NA/Inf masking for forbidden assignments, data frame inputs with
+    tidy output, batch solving of multiple problems, and finding k-best optimal
+    solutions via Murty's algorithm.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    bench,
+    parallel
+Config/testthat/edition: 3
+Depends:
+    R (>= 3.5.0)
+Imports:
+    Rcpp (>= 1.0.0),
+    tibble (>= 3.0.0),
+    dplyr (>= 1.0.0),
+    rlang (>= 0.4.0),
+    purrr (>= 0.3.0),
+    magrittr (>= 2.0.0)
+LinkingTo:
+    Rcpp,
+    RcppEigen
+SystemRequirements: C++17
+LazyData: true
+VignetteBuilder: knitr
+URL: https://gitlab.com/lenznerb28/assignR
+BugReports: https://gitlab.com/lenznerb28/assignR/-/issues

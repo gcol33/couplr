@@ -1,2 +1,4 @@
 ^lapr\.Rproj$
 ^\.Rproj\.user$
+^doc$
+^Meta$

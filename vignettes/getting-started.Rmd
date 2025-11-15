@@ -12,26 +12,53 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
 )
 library(lapr)
 ```
 
-## Introduction
+## Overview
 
-The linear assignment problem (LAP) is fundamental to many optimization tasks: assigning workers to jobs, matching students to schools, or pairing drivers with riders. `lapr` provides a modern, tidy interface for solving these problems efficiently in R.
+The linear assignment problem (LAP) is a fundamental optimization problem with applications ranging from task scheduling and resource allocation to computer vision and bioinformatics. Given a cost matrix where entry (i,j) represents the cost of assigning source i to target j, the goal is to find the assignment that minimizes (or maximizes) the total cost, with each source assigned to at most one target.
 
-This vignette introduces the core functionality of `lapr` through practical examples.
+`lapr` provides a solution to the LAP with a tidy interface that integrates with the tidyverse ecosystem.
+
+### Key Features
+
+- **Tidy interface**: Works with data frames, tibbles, and grouped data
+- **Efficient**: Implements multiple algorithms with automatic selection
+- **Flexible inputs**: Handles matrices, data frames, rectangular problems, and forbidden assignments
+- **Batch processing**: Solve thousands of problems efficiently with optional parallelization
+- **K-best solutions**: Find multiple near-optimal solutions using Murty's algorithm
+
+## Installation
+
+```{r eval=FALSE}
+# Install from CRAN
+install.packages("lapr")
+
+# Or install development version from GitHub
+# install.packages("remotes")
+remotes::install_github("gcol33/lapr")
+```
 
 ## The Assignment Problem
 
-Given:
+### Problem Definition
 
-- A set of **sources** (e.g., workers)
-- A set of **targets** (e.g., tasks)  
-- A **cost matrix** where entry (i,j) represents the cost of assigning source i to target j
+Consider assigning workers to tasks. Each worker has different costs for completing each task. The assignment problem finds the optimal one-to-one matching that minimizes total cost.
 
-Find the assignment that minimizes (or maximizes) the total cost, with each source assigned to at most one target.
+**Example**: Three workers can complete three tasks with the following costs:
+
+|         | Task 1 | Task 2 | Task 3 |
+|---------|--------|--------|--------|
+| Worker 1|   4    |   2    |   5    |
+| Worker 2|   3    |   3    |   6    |
+| Worker 3|   7    |   5    |   4    |
+
+The optimal assignment is: Worker 1 → Task 2 (cost 2), Worker 2 → Task 1 (cost 3), Worker 3 → Task 3 (cost 4), for a total cost of 9.
 
 ## Basic Usage
 
@@ -40,29 +67,29 @@ Find the assignment that minimizes (or maximizes) the total cost, with each sour
 The simplest way to use `lapr` is with a numeric cost matrix:
 
 ```{r basic-matrix}
-# Cost matrix: 3 workers, 3 tasks
+# Cost matrix: 3 workers × 3 tasks
 cost <- matrix(c(
   4, 2, 5,  # Worker 1 costs for tasks 1, 2, 3
   3, 3, 6,  # Worker 2 costs
   7, 5, 4   # Worker 3 costs
 ), nrow = 3, byrow = TRUE)
 
-# Solve
+# Solve the assignment problem
 result <- lap_solve(cost)
 print(result)
 ```
 
-The result is a tidy tibble showing which source is assigned to which target, along with the cost of each assignment.
+The result is a tidy tibble showing which source (worker) is assigned to which target (task), along with the individual and total costs.
 
 ### Data Frame Input
 
-For more complex workflows, you can use data frames:
+For more complex workflows, especially when working with existing data pipelines, use data frames:
 
 ```{r df-input}
-
+library(dplyr)
 
 # Create assignment problem as data frame
-assignments <- tibble::tibble(
+assignments <- tibble(
   worker = rep(1:3, each = 3),
   task = rep(1:3, times = 3),
   cost = c(4, 2, 5, 3, 3, 6, 7, 5, 4)
@@ -73,14 +100,14 @@ result <- lap_solve(assignments, worker, task, cost)
 print(result)
 ```
 
-This is particularly useful when your data is already in long format or when working with databases.
+This approach is particularly useful when your data is already in long format, when pulling from databases, or when integrating with dplyr workflows.
 
 ## Working with Rectangular Problems
 
-Unlike many assignment solvers, `lapr` handles rectangular problems without any manual padding:
+Unlike many assignment solvers, `lapr` handles rectangular problems (unequal numbers of sources and targets) without manual padding:
 
 ```{r rectangular}
-# 3 workers, 5 tasks - assign each worker to a task
+# 3 workers, 5 tasks - assign each worker to one task
 cost_rect <- matrix(c(
   1, 2, 3, 4, 5,
   6, 5, 4, 3, 2,
@@ -91,20 +118,24 @@ result <- lap_solve(cost_rect)
 print(result)
 ```
 
+The solver automatically handles the rectangular structure, assigning each of the 3 workers to the best available task among the 5 options.
+
 ## Forbidden Assignments
 
-Use `NA` or `Inf` to mark impossible assignments:
+Use `NA` or `Inf` to mark impossible or forbidden assignments:
 
 ```{r forbidden}
-# Worker 1 cannot do task 3
+# Worker 1 cannot do task 3 (e.g., lacks required skill)
 cost[1, 3] <- NA
 
-# Worker 2 cannot do task 1
+# Worker 2 cannot do task 1 (e.g., scheduling conflict)
 cost[2, 1] <- Inf
 
 result <- lap_solve(cost)
 print(result)
 ```
+
+The solver respects these constraints and finds the optimal assignment among the feasible options.
 
 ## Maximization Problems
 
@@ -121,25 +152,25 @@ profit <- matrix(c(
 result <- lap_solve(profit, maximize = TRUE)
 print(result)
 
-cat("Total profit:", get_total_cost(result), "\n")
+cat("\nTotal profit:", get_total_cost(result), "\n")
 ```
 
 ## Grouped Data Frames
 
-One of `lapr`'s most powerful features is seamless integration with grouped data frames:
+One of `lapr`'s most powerful features is seamless integration with grouped data frames, allowing you to solve many related problems at once:
 
 ```{r grouped}
 # Multiple assignment problems in one data frame
-simulations <- tibble::tibble(
+simulations <- tibble(
   sim = rep(1:3, each = 9),
-  worker = rep(1:3, times = 9),
-  task = rep(1:3, each = 3, times = 3),
+  worker = rep(rep(1:3, each = 3), times = 3),
+  task = rep(rep(1:3, times = 3), times = 3),
   cost = runif(27, min = 1, max = 10)
 )
 
 # Solve all simulations at once
 results <- simulations |>
-  dplyr::group_by(sim) |>
+  group_by(sim) |>
   lap_solve(worker, task, cost)
 
 print(results)
@@ -147,24 +178,42 @@ print(results)
 
 ## Batch Solving
 
-For even more efficiency with many independent problems, use `lap_solve_batch()`:
+For maximum efficiency when solving many independent problems, use `lap_solve_batch()`:
 
 ```{r batch}
 # Create list of cost matrices
-cost_list <- list(
-  matrix(runif(9, 1, 10), 3, 3),
-  matrix(runif(9, 1, 10), 3, 3),
-  matrix(runif(9, 1, 10), 3, 3)
-)
+set.seed(123)
+cost_list <- lapply(1:100, function(i) matrix(runif(9, 1, 10), 3, 3))
 
-# Solve all at once
+# Solve all problems at once
 batch_results <- lap_solve_batch(cost_list)
-print(batch_results)
+
+# View summary statistics
+batch_results |>
+  distinct(problem_id, total_cost) |>
+  summarise(
+    n_problems = n(),
+    mean_cost = mean(total_cost),
+    min_cost = min(total_cost),
+    max_cost = max(total_cost)
+  )
+```
+
+### Parallel Batch Solving
+
+For large numbers of problems, enable parallel processing:
+
+```{r parallel, eval=FALSE}
+# Solve with 4 threads
+batch_results <- lap_solve_batch(cost_list, n_threads = 4)
+
+# Use all available cores
+batch_results <- lap_solve_batch(cost_list, n_threads = NULL)
 ```
 
 ## Finding Multiple Solutions
 
-Sometimes you want to explore alternative near-optimal solutions. Use `lap_solve_kbest()`:
+Sometimes you want to explore alternative near-optimal solutions. Use `lap_solve_kbest()` to find the k best solutions:
 
 ```{r kbest}
 cost <- matrix(c(
@@ -177,11 +226,17 @@ cost <- matrix(c(
 kbest <- lap_solve_kbest(cost, k = 5)
 print(kbest)
 
-# Summary of solutions
+# Get summary of solutions
 summary(kbest)
 ```
 
-## Extracting Results
+This is useful for:
+
+- Exploring alternative plans when the optimal solution is infeasible in practice
+- Robustness analysis
+- Understanding the cost landscape around the optimum
+
+## Extracting and Working with Results
 
 `lapr` provides several utility functions for working with results:
 
@@ -201,83 +256,138 @@ as_assignment_matrix(result)
 is_lap_solve_result(result)
 ```
 
-## Choosing Algorithms
+## Algorithm Selection
 
-`lapr` includes multiple algorithms optimized for different scenarios:
+`lapr` includes multiple algorithms optimized for different scenarios. The default `"auto"` method automatically selects the best algorithm:
 
 ```{r methods}
 # Let lapr choose (default)
 lap_solve(cost, method = "auto")
 
-# Force specific algorithm
-lap_solve(cost, method = "jv")         # Jonker-Volgenant (fast, general)
-lap_solve(cost, method = "hungarian")  # Classic Hungarian
-lap_solve(cost, method = "auction")    # Auction algorithm (good for large dense)
+# Force specific algorithm:
+lap_solve(cost, method = "jv")         # Jonker-Volgenant (general purpose)
+lap_solve(cost, method = "hungarian")  # Hungarian algorithm
+lap_solve(cost, method = "auction")    # Auction algorithm
+lap_solve(cost, method = "sap")        # Sparse assignment (for sparse problems)
 ```
 
-The `"auto"` method selects the best algorithm based on problem characteristics:
+### Auction Algorithm Variants
 
-- Binary/uniform costs → HK01 algorithm
-- Sparse/rectangular → SAP algorithm  
-- Large dense → Auction algorithm
-- General case → Jonker-Volgenant
+The auction algorithm has multiple variants for different problem characteristics:
 
-## Real-World Example: Job Scheduling
+```{r auction-variants, eval=FALSE}
+# Standard fixed-epsilon auction (default)
+lap_solve(cost, method = "auction")
+
+# Scaled-epsilon auction with epsilon-scaling phases
+# Better for problems with large cost ranges
+lap_solve(cost, method = "auction_scaled")
+
+# Gauss-Seidel auction with sequential bidding
+# Can be faster for certain problem structures
+lap_solve(cost, method = "auction_gs")
+```
+
+### Binary Cost Problems
+
+For problems where all costs are 0 or 1, use the specialized HK01 algorithm:
+
+```{r hk01-example}
+# Create binary cost matrix
+binary_cost <- matrix(sample(0:1, 9, replace = TRUE), 3, 3)
+
+# Specialized algorithm for binary costs
+lap_solve(binary_cost, method = "hk01")
+```
+
+The `"auto"` method selects algorithms based on problem characteristics:
+
+- **Binary/uniform costs** → HK01 algorithm
+- **Sparse/rectangular** → SAP algorithm  
+- **Large dense** → Auction algorithm (standard variant)
+- **General case** → Jonker-Volgenant
+
+For most users, `method = "auto"` (the default) provides good performance.
+
+### Parallelization
+
+**Note on parallelization**: Currently, only **`lap_solve_batch()`** supports parallel execution via the `n_threads` parameter. The individual LAP solvers (`lap_solve()`, `lap_solve_kbest()`) run sequentially. Future versions may add parallel support for single large problems.
+
+```{r parallel-example, eval=FALSE}
+# Parallel batch solving (supported)
+lap_solve_batch(cost_list, n_threads = 4)
+
+# Single problem (currently sequential)
+lap_solve(cost)  # No parallelization yet
+```
+
+## Real-World Example: Employee Scheduling
+
+Here's a practical example of using `lapr` to create a weekly work schedule:
 
 ```{r real-world}
-# Generate realistic job scheduling problem
 set.seed(42)
 
-jobs <- tibble::tibble(
-  day = rep(1:5, each = 12),
+# Generate employee preferences for shifts
+schedule_data <- tibble(
+  day = rep(c("Mon", "Tue", "Wed", "Thu", "Fri"), each = 12),
   employee = rep(1:4, times = 15),
   shift = rep(c("morning", "afternoon", "night"), each = 4, times = 5),
   preference_score = rnorm(60, mean = 5, sd = 2)
 ) |>
-  dplyr::mutate(
+  mutate(
     # Some employees can't work certain shifts
-    preference_score = ifelse(
-      (employee == 1 & shift == "night") |
-      (employee == 2 & shift == "morning"),
-      NA,
-      preference_score
-    )
+    preference_score = case_when(
+      employee == 1 & shift == "night" ~ NA_real_,
+      employee == 2 & shift == "morning" ~ NA_real_,
+      TRUE ~ preference_score
+    ),
+    # Create shift IDs within each day
+    shift_id = as.integer(factor(shift, levels = c("morning", "afternoon", "night")))
   )
 
-# Solve for each day (maximize preference scores)
-schedule <- jobs |>
-  dplyr::group_by(day, shift) |>
-  dplyr::mutate(shift_id = dplyr::cur_group_id()) |>
-  dplyr::ungroup() |>
-  dplyr::group_by(day) |>
+# Solve for optimal assignments per day (maximize preferences)
+optimal_schedule <- schedule_data |>
+  group_by(day) |>
   lap_solve(employee, shift_id, preference_score, maximize = TRUE)
 
-print(schedule)
+# View first few assignments
+head(optimal_schedule, 10)
 
-# Check coverage
-schedule |>
-  dplyr::group_by(day) |>
-  dplyr::summarise(
-    shifts_filled = dplyr::n(),
-    avg_preference = mean(cost, na.rm = TRUE)
+# Summary statistics by day
+optimal_schedule |>
+  group_by(day) |>
+  summarise(
+    shifts_filled = n(),
+    avg_preference = mean(cost, na.rm = TRUE),
+    .groups = "drop"
   )
 ```
 
-## Next Steps
+## Performance Considerations
 
-See the help pages for detailed usage and examples:  
-`?lap_solve`, `?lap_solve_batch`, and `?lap_solve_kbest`.
+`lapr` is designed for efficiency:
 
-You can also visit the [GitHub repository](https://github.com/gcol33/lapr) for source code and additional examples.
+- **C++ backend**: Core algorithms implemented in optimized C++ using Rcpp
+- **Automatic algorithm selection**: Chooses an efficient method for your problem
+- **Batch processing**: Amortizes overhead when solving many problems
+- **Parallel execution**: Distributes work across cores for large batches
+
+For small problems (< 100×100), setup overhead dominates and all methods are fast. For large problems (> 1000×1000) or many problems, algorithm selection and parallelization become important.
 
 ## Summary
 
-`lapr` provides:
+`lapr` provides a solution for linear assignment problems in R:
 
-- Simple, consistent API via `lap_solve()`, `lap_solve_batch()`, and `lap_solve_kbest()`
-- Tidy data frame support with grouped workflows
-- Rectangular matrices and NA masking
-- Multiple algorithms for different scenarios
-- High-performance C++ backend
+- **Simple API**: Consistent interface across `lap_solve()`, `lap_solve_batch()`, and `lap_solve_kbest()`
+- **Tidy integration**: Support for data frames, tibbles, and dplyr workflows
+- **Flexible inputs**: Handles matrices, rectangular problems, NA masking, and maximization
+- **Multiple algorithms**: Implements several algorithms with automatic selection
+- **Batch processing**: Solve multiple problems with optional parallelization
 
-Whether you're solving a single small problem or thousands of large ones, `lapr` has you covered.
+**Learn more**:
+
+- **Algorithm details**: `vignette("algorithms")` covers mathematical foundations of each solver
+- **Visual demonstrations**: `vignette("pixel-morphing")` shows advanced applications in computer vision and science
+- **Function documentation**: `?lap_solve`, `?lap_solve_batch`, and `?lap_solve_kbest` provide detailed API references
+- **Source code**: Visit the [GitHub repository](https://github.com/gcol33/lapr) for examples and contributions

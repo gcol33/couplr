@@ -10,6 +10,29 @@
 
 using namespace Rcpp;
 
+// Compute cost spread among allowed entries (max - min)
+static inline double allowed_spread(const std::vector<double>& W,
+                                    const std::vector<int>& MASK,
+                                    int n, int m) {
+  double cmin = INFINITY, cmax = -INFINITY;
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      if (!MASK[i * m + j]) {
+        double v = W[i * m + j];
+        if (R_finite(v)) {
+          if (v < cmin) cmin = v;
+          if (v > cmax) cmax = v;
+        }
+      }
+    }
+  }
+  if (!R_finite(cmin) || !R_finite(cmax)) return 0.0;
+  double s = cmax - cmin;
+  if (s < 0.0) s = 0.0;
+  return s;
+}
+
+
 // Forward decl (defined elsewhere)
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 
@@ -54,11 +77,26 @@ Rcpp::List solve_auction_impl(NumericMatrix cost, bool maximize, double eps_in) 
   std::vector<int>    queue; queue.reserve(n);
 
   // Epsilon
-  double eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : 1e-9;
+  // Adaptive epsilon: scale with cost spread / n to avoid tiny bids that cause slow convergence, scale-invariant choice: ε = spread / (2n²)
+  double eps;
+  if (std::isfinite(eps_in) && eps_in > 0.0) {
+    eps = eps_in;
+  } else {
+    const double spread = allowed_spread(W, MASK, n, m);
+    const double base = (spread > 0.0) ? spread : 1.0;
+    eps = base / (2.0 * (double)n * (double)n);
+    // Defensive clamp to prevent denormal or absurd values
+    if (eps < 1e-12) eps = 1e-12;
+    if (spread > 0.0 && eps > spread) eps = spread;
+  }
+
 
   auto profit = [&](int i, int j) {
     // For minimization: maximize negative (cost + price)
-    return -(W[i * m + j] + price[j]);
+    double base = -(W[i * m + j] + price[j]);
+    unsigned key = (unsigned)((i + 1) * 1315423911u) ^ (unsigned)((j + 1) * 2654435761u);
+    double tweak = std::ldexp((double)(key & 0xFFFFu), -80);
+    return base + tweak;
   };
 
   for (int i = 0; i < n; ++i) queue.push_back(i);
@@ -80,7 +118,7 @@ Rcpp::List solve_auction_impl(NumericMatrix cost, bool maximize, double eps_in) 
     }
     if (jbest < 0) Rcpp::stop("Infeasible");
 
-    double bid = (second == -INFINITY) ? eps : (best - second + eps);
+    double bid = (second == -INFINITY) ? (2.0 * eps) : (best - second + eps);
 
     price[jbest] += bid;
 
@@ -129,6 +167,9 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
                                      double alpha = 7.0,
                                      double final_epsilon = -1.0) {
   using namespace Rcpp;
+
+
+
 
   const int n = cost.nrow(), m = cost.ncol();
   if (n == 0) return make_result(IntegerVector(), 0.0);
@@ -369,11 +410,26 @@ Rcpp::List solve_auction_gauss_seidel_impl(NumericMatrix cost, bool maximize, do
   std::vector<int>    a_of_i(n, -1), i_of_j(m, -1);
 
   // Epsilon
-  double eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : 1e-9;
+  // Adaptive epsilon: scale with cost spread / n² to match regular auction precision
+  double eps;
+  if (std::isfinite(eps_in) && eps_in > 0.0) {
+    eps = eps_in;
+  } else {
+    const double spread = allowed_spread(W, MASK, n, m);
+    const double base = (spread > 0.0) ? spread : 1.0;
+    // Use same epsilon formula as regular auction: spread / (2n²)
+    eps = base / (2.0 * (double)n * (double)n);
+    // Defensive clamp to prevent denormal or absurd values
+    if (eps < 1e-12) eps = 1e-12;
+    if (spread > 0.0 && eps > spread) eps = spread;
+  }
 
   // Profit function (for minimization, maximize negative cost)
   auto profit = [&](int i, int j) {
-    return -(W[i * m + j] + price[j]);
+    double base = -(W[i * m + j] + price[j]);
+    unsigned key = (unsigned)((i + 1) * 1315423911u) ^ (unsigned)((j + 1) * 2654435761u);
+    double tweak = std::ldexp((double)(key & 0xFFFFu), -80);
+    return base + tweak;
   };
 
   // Gauss-Seidel: iterate until all persons are matched
@@ -409,7 +465,7 @@ Rcpp::List solve_auction_gauss_seidel_impl(NumericMatrix cost, bool maximize, do
       if (jbest < 0) Rcpp::stop("Infeasible: no valid objects for person %d", i + 1);
 
       // Compute bid increment and update price immediately (GS difference)
-      double bid = (second == -INFINITY) ? eps : (best - second + eps);
+      double bid = (second == -INFINITY) ? (2.0 * eps) : (best - second + eps);
       price[jbest] += bid;
 
       // Update assignment

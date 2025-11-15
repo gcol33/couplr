@@ -87,6 +87,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_solve_auction_scaled_params
+Rcpp::List lap_solve_auction_scaled_params(Rcpp::NumericMatrix cost, bool maximize, double initial_epsilon_factor, double alpha, Rcpp::Nullable<double> final_epsilon);
+RcppExport SEXP _lapr_lap_solve_auction_scaled_params(SEXP costSEXP, SEXP maximizeSEXP, SEXP initial_epsilon_factorSEXP, SEXP alphaSEXP, SEXP final_epsilonSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    Rcpp::traits::input_parameter< double >::type initial_epsilon_factor(initial_epsilon_factorSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<double> >::type final_epsilon(final_epsilonSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_auction_scaled_params(cost, maximize, initial_epsilon_factor, alpha, final_epsilon));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_solve_auction_gs
 Rcpp::List lap_solve_auction_gs(Rcpp::NumericMatrix cost, bool maximize, Rcpp::Nullable<double> eps);
 RcppExport SEXP _lapr_lap_solve_auction_gs(SEXP costSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
@@ -162,6 +177,112 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// analyze_color_overlap_cpp
+Rcpp::List analyze_color_overlap_cpp(Rcpp::NumericVector pixelsA, Rcpp::NumericVector pixelsB, int H, int W, int quantize_bits);
+RcppExport SEXP _lapr_analyze_color_overlap_cpp(SEXP pixelsASEXP, SEXP pixelsBSEXP, SEXP HSEXP, SEXP WSEXP, SEXP quantize_bitsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsA(pixelsASEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsB(pixelsBSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    Rcpp::traits::input_parameter< int >::type quantize_bits(quantize_bitsSEXP);
+    rcpp_result_gen = Rcpp::wrap(analyze_color_overlap_cpp(pixelsA, pixelsB, H, W, quantize_bits));
+    return rcpp_result_gen;
+END_RCPP
+}
+// compute_pixel_cost_cpp
+Rcpp::NumericMatrix compute_pixel_cost_cpp(const Rcpp::NumericVector& pixelsA, const Rcpp::NumericVector& pixelsB, int H, int W, double alpha, double beta);
+RcppExport SEXP _lapr_compute_pixel_cost_cpp(SEXP pixelsASEXP, SEXP pixelsBSEXP, SEXP HSEXP, SEXP WSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type pixelsA(pixelsASEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type pixelsB(pixelsBSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_pixel_cost_cpp(pixelsA, pixelsB, H, W, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// downscale_image_cpp
+Rcpp::NumericVector downscale_image_cpp(Rcpp::NumericVector pixels, int H, int W, int H_new, int W_new);
+RcppExport SEXP _lapr_downscale_image_cpp(SEXP pixelsSEXP, SEXP HSEXP, SEXP WSEXP, SEXP H_newSEXP, SEXP W_newSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixels(pixelsSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    Rcpp::traits::input_parameter< int >::type H_new(H_newSEXP);
+    Rcpp::traits::input_parameter< int >::type W_new(W_newSEXP);
+    rcpp_result_gen = Rcpp::wrap(downscale_image_cpp(pixels, H, W, H_new, W_new));
+    return rcpp_result_gen;
+END_RCPP
+}
+// upscale_assignment_cpp
+Rcpp::IntegerVector upscale_assignment_cpp(Rcpp::IntegerVector assignment, int H_orig, int W_orig, int H_scaled, int W_scaled);
+RcppExport SEXP _lapr_upscale_assignment_cpp(SEXP assignmentSEXP, SEXP H_origSEXP, SEXP W_origSEXP, SEXP H_scaledSEXP, SEXP W_scaledSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type assignment(assignmentSEXP);
+    Rcpp::traits::input_parameter< int >::type H_orig(H_origSEXP);
+    Rcpp::traits::input_parameter< int >::type W_orig(W_origSEXP);
+    Rcpp::traits::input_parameter< int >::type H_scaled(H_scaledSEXP);
+    Rcpp::traits::input_parameter< int >::type W_scaled(W_scaledSEXP);
+    rcpp_result_gen = Rcpp::wrap(upscale_assignment_cpp(assignment, H_orig, W_orig, H_scaled, W_scaled));
+    return rcpp_result_gen;
+END_RCPP
+}
+// morph_pixel_level_cpp
+Rcpp::List morph_pixel_level_cpp(Rcpp::NumericVector pixelsA, Rcpp::NumericVector pixelsB, Rcpp::IntegerVector assignment, int H, int W, int n_frames);
+RcppExport SEXP _lapr_morph_pixel_level_cpp(SEXP pixelsASEXP, SEXP pixelsBSEXP, SEXP assignmentSEXP, SEXP HSEXP, SEXP WSEXP, SEXP n_framesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsA(pixelsASEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsB(pixelsBSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type assignment(assignmentSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    Rcpp::traits::input_parameter< int >::type n_frames(n_framesSEXP);
+    rcpp_result_gen = Rcpp::wrap(morph_pixel_level_cpp(pixelsA, pixelsB, assignment, H, W, n_frames));
+    return rcpp_result_gen;
+END_RCPP
+}
+// color_palette_info_cpp
+Rcpp::List color_palette_info_cpp(Rcpp::NumericVector pixelsA, Rcpp::NumericVector pixelsB, int H, int W, int quantize_bits);
+RcppExport SEXP _lapr_color_palette_info_cpp(SEXP pixelsASEXP, SEXP pixelsBSEXP, SEXP HSEXP, SEXP WSEXP, SEXP quantize_bitsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsA(pixelsASEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pixelsB(pixelsBSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    Rcpp::traits::input_parameter< int >::type quantize_bits(quantize_bitsSEXP);
+    rcpp_result_gen = Rcpp::wrap(color_palette_info_cpp(pixelsA, pixelsB, H, W, quantize_bits));
+    return rcpp_result_gen;
+END_RCPP
+}
+// spatial_cost_matrix_cpp
+Rcpp::NumericMatrix spatial_cost_matrix_cpp(Rcpp::IntegerVector idxA, Rcpp::IntegerVector idxB, int H, int W);
+RcppExport SEXP _lapr_spatial_cost_matrix_cpp(SEXP idxASEXP, SEXP idxBSEXP, SEXP HSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type idxA(idxASEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type idxB(idxBSEXP);
+    Rcpp::traits::input_parameter< int >::type H(HSEXP);
+    Rcpp::traits::input_parameter< int >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(spatial_cost_matrix_cpp(idxA, idxB, H, W));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_lapr_lap_prepare_cost_matrix", (DL_FUNC) &_lapr_lap_prepare_cost_matrix, 2},
@@ -170,12 +291,20 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lapr_lap_kbest_murty", (DL_FUNC) &_lapr_lap_kbest_murty, 4},
     {"_lapr_lap_solve_auction", (DL_FUNC) &_lapr_lap_solve_auction, 3},
     {"_lapr_lap_solve_auction_scaled", (DL_FUNC) &_lapr_lap_solve_auction_scaled, 3},
+    {"_lapr_lap_solve_auction_scaled_params", (DL_FUNC) &_lapr_lap_solve_auction_scaled_params, 5},
     {"_lapr_lap_solve_auction_gs", (DL_FUNC) &_lapr_lap_solve_auction_gs, 3},
     {"_lapr_lap_solve_ssp", (DL_FUNC) &_lapr_lap_solve_ssp, 2},
     {"_lapr_lap_solve_hungarian", (DL_FUNC) &_lapr_lap_solve_hungarian, 2},
     {"_lapr_lap_solve_csflow", (DL_FUNC) &_lapr_lap_solve_csflow, 2},
     {"_lapr_lap_kbest_lawler", (DL_FUNC) &_lapr_lap_kbest_lawler, 4},
     {"_lapr_lap_solve_hk01", (DL_FUNC) &_lapr_lap_solve_hk01, 2},
+    {"_lapr_analyze_color_overlap_cpp", (DL_FUNC) &_lapr_analyze_color_overlap_cpp, 5},
+    {"_lapr_compute_pixel_cost_cpp", (DL_FUNC) &_lapr_compute_pixel_cost_cpp, 6},
+    {"_lapr_downscale_image_cpp", (DL_FUNC) &_lapr_downscale_image_cpp, 5},
+    {"_lapr_upscale_assignment_cpp", (DL_FUNC) &_lapr_upscale_assignment_cpp, 5},
+    {"_lapr_morph_pixel_level_cpp", (DL_FUNC) &_lapr_morph_pixel_level_cpp, 6},
+    {"_lapr_color_palette_info_cpp", (DL_FUNC) &_lapr_color_palette_info_cpp, 5},
+    {"_lapr_spatial_cost_matrix_cpp", (DL_FUNC) &_lapr_spatial_cost_matrix_cpp, 4},
     {NULL, NULL, 0}
 };
 

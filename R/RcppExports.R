@@ -21,8 +21,12 @@ lap_solve_auction <- function(cost, maximize, eps = NULL) {
     .Call(`_lapr_lap_solve_auction`, cost, maximize, eps)
 }
 
-lap_solve_auction_scaled <- function(cost, maximize, schedule = "pow2") {
+lap_solve_auction_scaled <- function(cost, maximize, schedule = "alpha7") {
     .Call(`_lapr_lap_solve_auction_scaled`, cost, maximize, schedule)
+}
+
+lap_solve_auction_scaled_params <- function(cost, maximize, initial_epsilon_factor = 1.0, alpha = 7.0, final_epsilon = NULL) {
+    .Call(`_lapr_lap_solve_auction_scaled_params`, cost, maximize, initial_epsilon_factor, alpha, final_epsilon)
 }
 
 lap_solve_auction_gs <- function(cost, maximize, eps = NULL) {
@@ -47,5 +51,33 @@ lap_kbest_lawler <- function(cost, k, method_base = "jv", maximize = FALSE) {
 
 lap_solve_hk01 <- function(cost, maximize) {
     .Call(`_lapr_lap_solve_hk01`, cost, maximize)
+}
+
+analyze_color_overlap_cpp <- function(pixelsA, pixelsB, H, W, quantize_bits = 5L) {
+    .Call(`_lapr_analyze_color_overlap_cpp`, pixelsA, pixelsB, H, W, quantize_bits)
+}
+
+compute_pixel_cost_cpp <- function(pixelsA, pixelsB, H, W, alpha, beta) {
+    .Call(`_lapr_compute_pixel_cost_cpp`, pixelsA, pixelsB, H, W, alpha, beta)
+}
+
+downscale_image_cpp <- function(pixels, H, W, H_new, W_new) {
+    .Call(`_lapr_downscale_image_cpp`, pixels, H, W, H_new, W_new)
+}
+
+upscale_assignment_cpp <- function(assignment, H_orig, W_orig, H_scaled, W_scaled) {
+    .Call(`_lapr_upscale_assignment_cpp`, assignment, H_orig, W_orig, H_scaled, W_scaled)
+}
+
+morph_pixel_level_cpp <- function(pixelsA, pixelsB, assignment, H, W, n_frames) {
+    .Call(`_lapr_morph_pixel_level_cpp`, pixelsA, pixelsB, assignment, H, W, n_frames)
+}
+
+color_palette_info_cpp <- function(pixelsA, pixelsB, H, W, quantize_bits = 5L) {
+    .Call(`_lapr_color_palette_info_cpp`, pixelsA, pixelsB, H, W, quantize_bits)
+}
+
+spatial_cost_matrix_cpp <- function(idxA, idxB, H, W) {
+    .Call(`_lapr_spatial_cost_matrix_cpp`, idxA, idxB, H, W)
 }
 

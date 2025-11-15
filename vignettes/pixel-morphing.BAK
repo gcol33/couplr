@@ -1,0 +1,860 @@
+---
+title: "Optimal Matching in Science: From Theory to Practice"
+author: "Gilles Colling"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Optimal Matching in Science: From Theory to Practice}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = FALSE,
+  message    = FALSE,
+  warning    = FALSE,
+  fig.align  = "center",
+  out.width  = "100%"
+)
+
+library(lapr)
+library(knitr)
+
+# Helper function to locate example assets
+ext_demo <- function(...) {
+  system.file("extdata", ..., package = "lapr")
+}
+```
+
+## Overview
+
+Optimal matching problems appear throughout science when we need to find correspondences between two sets of entities based on both their intrinsic properties (features) and their spatial arrangement. This vignette explores three scientific domains where these problems arise, then demonstrates the mathematical approaches to solving them efficiently.
+
+**Scientific Applications**:
+
+- **Ecology**: Match vegetation plots across time based on species composition and spatial location
+- **Physics**: Track particles through video frames based on appearance and predicted trajectories  
+- **Chemistry**: Align molecular conformations based on atom types and 3D coordinates
+
+**Mathematical Challenge**: Exact optimal matching requires solving an $n \times n$ assignment problem, which becomes computationally expensive for large $n$ (thousands of entities). We need approximation strategies that preserve quality while reducing computational cost.
+
+**Visual Demonstration**: To illustrate these concepts intuitively, we use pixel morphing between images. Each pixel is an "entity" with color (feature) and position (spatial), making it a perfect visual analog for scientific matching problems.
+
+**Related vignettes**:
+
+- For basic `lapr` usage: `vignette("getting-started")`
+- For algorithm details: `vignette("algorithms")`
+
+## The General Matching Problem
+
+### Problem Formulation
+
+Given two sets of entities $A = \{a_1, \ldots, a_n\}$ and $B = \{b_1, \ldots, b_n\}$, find the optimal one-to-one correspondence by minimizing:
+
+$$
+\min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
+$$
+
+where the cost combines feature similarity and spatial proximity:
+
+$$
+c_{ij} = \alpha \cdot d_{\text{feature}}(a_i, b_j) + \beta \cdot d_{\text{spatial}}(\mathbf{x}_i, \mathbf{x}_j)
+$$
+
+**Feature distance** $d_{\text{feature}}$: Domain-specific similarity
+- Ecology: Bray-Curtis dissimilarity between species vectors
+- Physics: Difference in particle intensity or size
+- Chemistry: Penalty for mismatched atom types
+- Images: Euclidean distance in RGB color space
+
+**Spatial distance** $d_{\text{spatial}}$: Physical proximity
+- Ecology: Geographic distance between plot centers
+- Physics: Euclidean distance accounting for predicted motion
+- Chemistry: 3D distance between atomic coordinates
+- Images: 2D pixel position distance
+
+**Weights**: $\alpha, \beta \geq 0$ balance feature matching vs. spatial coherence
+
+### Computational Challenge
+
+**Exact solution**: Requires solving full $n \times n$ LAP
+- **Complexity**: $O(n^3)$ using Jonker-Volgenant
+- **Feasible**: Up to $n \approx 1000$ (about 30×30 images, or 1000 plots/particles/atoms)
+- **Prohibitive**: For $n = 10,000$ (100×100 images), requires hours
+
+**Need for approximations**: Real applications often involve:
+- High-resolution images: 200×200 = 40,000 pixels
+- Large ecological surveys: 5,000+ plots
+- Particle tracking: 10,000+ particles per frame
+- Molecular dynamics: 100,000+ atoms
+
+## Three Approximation Strategies
+
+We demonstrate three mathematical approaches to reducing computational cost while preserving matching quality. Each has different trade-offs and is suited to different scientific contexts.
+
+### Strategy 1: Feature Quantization
+
+**Core idea**: Reduce problem size by grouping entities with similar features, then match groups.
+
+#### Mathematical Formulation
+
+1. **Quantize features**: Map continuous feature space to discrete palette
+   $$\text{quantize}: \mathbb{R}^d \to \{1, \ldots, k\}$$
+   where $k \ll n$ (typically $k \approx 64$ for $n = 1600$)
+
+2. **Group by palette**: $G_A^{(c)} = \{i : \text{quantize}(f_i) = c\}$
+
+3. **Match groups**: Solve $k \times k$ LAP between palette entries
+   $$c'_{ij} = \alpha \cdot d(p_i, p_j) + \beta \cdot d(\bar{\mathbf{x}}_i, \bar{\mathbf{x}}_j)$$
+   where $p_i$ is palette color and $\bar{\mathbf{x}}_i$ is centroid position
+
+4. **Assign entities**: Each entity in $G_A^{(c)}$ matched to palette $c$ gets assigned to target based on group assignment
+
+#### Complexity Reduction
+
+- **Original**: $O(n^3)$ for $n \times n$ LAP
+- **Quantized**: $O(k^3 + nk)$ for $k \times k$ LAP plus entity-to-group assignment
+- **Speedup**: $\sim (n/k)^3$ (e.g., $(1600/64)^3 \approx 15,000\times$ for 40×40 images)
+
+#### Quality Trade-offs
+
+**Advantages**:
+- Dramatic speedup for large $n$
+- Preserves global structure (similar features matched)
+- Smooth transitions (no large jumps)
+
+**Disadvantages**:
+- Loses fine-grained distinctions within palette groups
+- Quantization artifacts when $k$ too small
+- May miss optimal local pairings
+
+```{r color-walk-vis, out.width="49%", fig.show='hold'}
+gif_image_cw  <- ext_demo("morphs", "image_color_walk.gif")
+gif_circle_cw <- ext_demo("icons",  "circle_color_walk.gif")
+
+include_graphics(c(gif_image_cw, gif_circle_cw))
+```
+
+**Visual demonstration** (Feature Quantization): Notice how similar colors move together as coherent groups. This preserves global color distribution but loses per-pixel precision.
+
+### Strategy 2: Hierarchical Decomposition  
+
+**Core idea**: Split problem into smaller subproblems by spatial or feature partitioning, solve recursively.
+
+#### Mathematical Formulation
+
+1. **Spatial partitioning**: Divide domain into $m \times m$ patches (e.g., $m = 4$ for 16 patches)
+   $$P_A^{(k)} = \{a_i : \mathbf{x}_i \in \text{Patch}_k\}$$
+
+2. **Patch-level matching**: Solve $m^2 \times m^2$ LAP between patch representatives
+   - Representative: Centroid position + mean features
+   - Cost: Same feature + spatial formula but at patch level
+
+3. **Recursive refinement**: Within each matched patch pair $(P_A^{(k)}, P_B^{(l)})$:
+   - If $|P_A^{(k)}| \leq \tau$ (threshold, e.g., $\tau = 50$): Solve exactly with LAP
+   - Else: Recursively partition and repeat
+
+4. **Combine solutions**: Concatenate assignments from all leaf subproblems
+
+#### Complexity Reduction
+
+For $d$ levels of decomposition (each reducing problem by factor $4$):
+
+- **Original**: $O(n^3)$
+- **Hierarchical**: $O(d \cdot (n/4^{d/2})^3 \cdot 4^d) = O(d \cdot n^{3/2} \cdot 2^d)$
+- **Speedup**: For $d = 3$, approximately $n^{3/2} / n^3 = n^{-3/2}$ (e.g., $40^{-3/2} \approx 315\times$ for 40×40)
+
+#### Quality Trade-offs
+
+**Advantages**:
+- Near-linear scaling: $O(n \log n)$ amortized
+- Preserves local structure well
+- No feature discretization (maintains precision)
+- Handles large problems ($n > 10,000$)
+
+**Disadvantages**:
+- May miss globally optimal matches across patch boundaries
+- Quality depends on initial partitioning
+- Boundary artifacts if patches poorly aligned
+
+**Algorithm** (Hierarchical Decomposition - High-Level Concept):
+
+```
+FUNCTION match_hierarchical(region_A, region_B, threshold, level):
+  
+  // Base case: region small enough for exact LAP
+  IF size(region_A) <= threshold THEN
+    cost ← compute_cost_matrix(region_A, region_B, α, β)
+    RETURN lap_solve(cost)
+  END IF
+  
+  // Divide into 2×2 spatial grid (4 patches)
+  patches_A ← spatial_partition(region_A, grid = 2×2)
+  patches_B ← spatial_partition(region_B, grid = 2×2)
+  
+  // Compute patch representatives
+  FOR each patch p DO
+    centroid[p] ← mean(positions in p)
+    mean_feature[p] ← mean(features in p)
+  END FOR
+  
+  // Match patches using 4×4 LAP
+  patch_cost ← matrix(4, 4)
+  FOR i = 1 to 4 DO
+    FOR j = 1 to 4 DO
+      patch_cost[i,j] ← α·distance(mean_feature_A[i], mean_feature_B[j])
+                       + β·distance(centroid_A[i], centroid_B[j])
+    END FOR
+  END FOR
+  
+  patch_assignment ← lap_solve(patch_cost)
+  
+  // Recursively solve within matched patches
+  assignments ← empty list
+  FOR i = 1 to 4 DO
+    j ← patch_assignment[i]
+    sub_assignment ← match_hierarchical(
+      patches_A[i], 
+      patches_B[j], 
+      threshold, 
+      level + 1
+    )
+    assignments ← append(assignments, sub_assignment)
+  END FOR
+  
+  RETURN concatenate(assignments)
+END FUNCTION
+```
+
+**Implementation notes**:
+
+The actual `lapr` implementation includes additional complexity:
+- Handling non-square regions with remainder patches
+- Normalizing cost components (color/spatial) to comparable scales
+- Converting between column-major indexing and (x,y) coordinates
+- Edge case handling when patches have unequal sizes
+- Memory management for large recursive trees
+
+See `inst/scripts/generate_examples.R` for the complete implementation.
+
+```{r recursive-vis, out.width="49%", fig.show='hold'}
+gif_image_rec  <- ext_demo("morphs", "image_recursive.gif")
+gif_circle_rec <- ext_demo("icons",  "circle_recursive.gif")
+
+include_graphics(c(gif_image_rec, gif_circle_rec))
+```
+
+**Visual demonstration** (Hierarchical Decomposition): Notice how large structures (patches) match first, then finer details. This creates smooth, locally coherent motion while scaling to large problems.
+
+### Strategy 3: Resolution Reduction
+
+**Core idea**: Solve problem at reduced resolution, then upscale assignment to full resolution.
+
+#### Mathematical Formulation
+
+1. **Downscale**: Reduce spatial resolution by factor $s$ (e.g., $s = 2$ for 2× reduction)
+   $$A' = \text{downsample}(A, s), \quad B' = \text{downsample}(B, s)$$
+   - Typical: nearest-neighbor or average pooling
+   - New size: $n' = n/s^2$
+
+2. **Solve at low resolution**: Compute exact LAP on $n' \times n'$ problem
+   $$\pi' = \arg\min \sum_{i=1}^{n'} c'_{i,\pi'(i)}$$
+
+3. **Upscale assignment**: Map low-resolution assignment to full resolution
+   $$\pi(i) = \text{upscale}(\pi'(\text{downsample\_idx}(i)), s)$$
+   - Each high-res entity gets nearest low-res assignment
+
+#### Complexity Reduction
+
+- **Original**: $O(n^3)$
+- **Downscaled**: $O((n/s^2)^3) = O(n^3/s^6)$
+- **Speedup**: $s^6$ (e.g., $2^6 = 64\times$ for 2× downscale)
+
+#### Quality Trade-offs
+
+**Advantages**:
+- Simple to implement
+- Exact LAP at reduced resolution (no approximation *there*)
+- Fast for moderate $s$ (2-4×)
+
+**Disadvantages**:
+- Loss of fine detail
+- Upscaling artifacts (blocky assignments)
+- Not a true permutation (overlaps/holes possible)
+- Quality degrades rapidly with large $s$
+
+**Note**: This is the weakest approximation for most applications and is mainly useful for very large initial problems ($n > 100,000$) to get a rough initial alignment.
+
+### Strategy Comparison
+
+| Approach | Speedup | Quality | Best For |
+|----------|---------|---------|----------|
+| **Exact** (baseline) | 1× | Optimal | $n \leq 1000$ |
+| **Feature Quantization** | $(n/k)^3$ | Good globally | Distinct feature groups |
+| **Hierarchical** | $\sim n^{3/2}$ | Good locally | Large $n$, spatial structure |
+| **Resolution Reduction** | $s^6$ | Moderate | Initial alignment only |
+
+**Practical recommendations**:
+
+- **$n < 1000$**: Use exact LAP (no approximation needed)
+- **$1000 < n < 5000$**: Try feature quantization or 1-level hierarchy
+- **$n > 5000$**: Use hierarchical decomposition (2-3 levels)
+- **$n > 50,000$**: Combine resolution reduction ($s=2$) with hierarchical
+
+## Visual Illustration: Pixel Morphing
+
+To make these abstract concepts concrete, we visualize them using image morphing where:
+- **Entities** = pixels
+- **Features** = RGB color values
+- **Spatial position** = (x, y) coordinates
+
+```{r all-inputs, out.width="24%", fig.show='hold'}
+real_A <- ext_demo("work", "ImageA_40.png")
+real_B <- ext_demo("work", "ImageB_40.png")
+circle_A <- ext_demo("icons", "circleA_40.png")
+circle_B <- ext_demo("icons", "circleB_40.png")
+
+include_graphics(c(real_A, real_B, circle_A, circle_B))
+```
+
+**Test images** (40×40 = 1,600 pixels each): Natural photographs (left pair) and geometric shapes (right pair) demonstrate matching on different feature distributions.
+
+### Exact Pixel Matching
+
+**Full LAP solution** on 1,600×1,600 cost matrix:
+
+$$
+c_{ij} = \alpha \cdot \|\text{RGB}_i^A - \text{RGB}_j^B\|_2 + \beta \cdot \|(x_i, y_i) - (x_j, y_j)\|_2
+$$
+
+where RGB distances are normalized to $[0, \sqrt{3}]$ and spatial distances to $[0, 1]$ (diagonal length).
+
+```{r exact-vis, out.width="49%", fig.show='hold'}
+gif_image_exact  <- ext_demo("morphs", "image_exact.gif")
+gif_circle_exact <- ext_demo("icons",  "circle_exact.gif")
+
+include_graphics(c(gif_image_exact, gif_circle_exact))
+```
+
+**Exact matching** (~500ms for 1,600×1,600): Every pixel optimally assigned. Notice the smooth, precise transitions with no artifacts.
+
+**Implementation** (Conceptual):
+
+```
+// Pseudocode for exact pixel matching
+
+// Step 1: Compute full cost matrix (normalized)
+n_pixels ← height × width
+cost ← matrix(0, n_pixels, n_pixels)
+
+FOR i = 1 to n_pixels DO
+  FOR j = 1 to n_pixels DO
+    // RGB color distance (normalized to [0, sqrt(3)])
+    color_dist ← sqrt((R_A[i] - R_B[j])² + 
+                     (G_A[i] - G_B[j])² + 
+                     (B_A[i] - B_B[j])²) / (255 · sqrt(3))
+    
+    // Spatial distance (normalized to [0, 1] by diagonal)
+    spatial_dist ← sqrt((x_A[i] - x_B[j])² + 
+                       (y_A[i] - y_B[j])²) / diagonal_length
+    
+    // Combined cost
+    cost[i,j] ← α · color_dist + β · spatial_dist
+  END FOR
+END FOR
+
+// Step 2: Solve with Jonker-Volgenant
+assignment ← lap_solve(cost, method = "jv")
+
+// Step 3: Generate morph frames by linear interpolation
+FOR frame_idx = 1 to n_frames DO
+  t ← frame_idx / n_frames  // Time parameter ∈ [0,1]
+  
+  FOR pixel_i = 1 to n_pixels DO
+    j ← assignment[i]  // Matched target pixel
+    
+    // Interpolate position
+    x_new[i] ← (1-t) · x_A[i] + t · x_B[j]
+    y_new[i] ← (1-t) · y_A[i] + t · y_B[j]
+    
+    // Keep source color (transport-only, no blending)
+    RGB_new[i] ← RGB_A[i]
+  END FOR
+  
+  frames[frame_idx] ← render(x_new, y_new, RGB_new)
+END FOR
+```
+
+See `inst/scripts/generate_examples.R` for the complete implementation with proper indexing, memory management, and rendering.
+
+**Performance**: Feasible up to ~100×100 images (10,000 pixels) on typical hardware.
+
+### Approximation Methods in Action
+
+The three visual demonstrations above show:
+
+1. **Feature Quantization** (left): Colors grouped into 64 bins, matched at bin level. Fast but loses per-pixel precision.
+
+2. **Hierarchical** (center): 2 levels of 4×4 patch decomposition. Near-optimal quality at 100-1000× speedup.
+
+3. **Exact** (right): Baseline for comparison. Optimal but expensive.
+
+## Application to Scientific Domains
+
+Now we connect these mathematical approaches back to the original scientific problems.
+
+### Ecology: Vegetation Plot Matching
+
+**Problem**: Match $n$ vegetation plots surveyed in year $t$ to $n$ plots in year $t+5$ to track community dynamics.
+
+**Feature distance**: Bray-Curtis dissimilarity between species abundance vectors
+$$
+d_{\text{BC}}(a, b) = \frac{\sum_s |a_s - b_s|}{\sum_s (a_s + b_s)}
+$$
+where $a_s, b_s$ are abundances of species $s$ in plots $a, b$.
+
+**Spatial distance**: Geographic distance (meters) between plot centers.
+
+**Exact solution** (for small studies, $n < 100$ plots):
+
+```
+// Pseudocode for ecological plot matching
+FOR i = 1 to n_plots_2020 DO
+  FOR j = 1 to n_plots_2025 DO
+    
+    // Bray-Curtis dissimilarity for species composition
+    numerator ← sum over species s of |abundance_2020[i,s] - abundance_2025[j,s]|
+    denominator ← sum over species s of (abundance_2020[i,s] + abundance_2025[j,s])
+    bc_distance ← numerator / denominator
+    
+    // Geographic distance (kilometers)
+    geo_distance ← sqrt((x_2020[i] - x_2025[j])² + (y_2020[i] - y_2025[j])²)
+    
+    // Combined cost (α = 0.7 emphasizes species composition)
+    cost[i,j] ← 0.7 · bc_distance + 0.3 · (geo_distance / max_distance)
+    
+  END FOR
+END FOR
+
+plot_correspondence ← lap_solve(cost)
+```
+
+**Approximation for large studies** ($n > 1000$ plots):
+
+```
+// Hierarchical decomposition by geographic region
+
+// 1. Divide landscape into spatial grid (e.g., 10km × 10km cells)
+regions_2020 ← spatial_partition(plots_2020, grid_size = 10km)
+regions_2025 ← spatial_partition(plots_2025, grid_size = 10km)
+
+// 2. Compute region representatives
+FOR each region r DO
+  mean_composition[r] ← average species vector across plots
+  centroid[r] ← geographic center
+END FOR
+
+// 3. Match regions (small LAP: ~100 regions)
+region_cost ← compute_cost(mean_composition, centroids, α=0.7, β=0.3)
+region_assignment ← lap_solve(region_cost)
+
+// 4. Within matched regions, solve plot-level LAP
+full_assignment ← empty
+FOR r = 1 to n_regions DO
+  r_matched ← region_assignment[r]
+  plots_A ← plots in region_2020[r]
+  plots_B ← plots in region_2025[r_matched]
+  
+  // Local LAP (smaller problem, e.g., 50×50)
+  cost_local ← compute_plot_cost(plots_A, plots_B, α=0.7, β=0.3)
+  local_assignment ← lap_solve(cost_local)
+  
+  full_assignment ← append(full_assignment, local_assignment)
+END FOR
+
+RETURN full_assignment
+```
+
+**Result**: Track individual plot trajectories even in large landscapes (5,000+ plots), identifying:
+- Stable communities (small changes)
+- Succession dynamics (directional changes)
+- Invasion fronts (spatial patterns)
+
+### Physics: Particle Tracking
+
+**Problem**: Track $n$ particles from frame $t$ to frame $t+1$ in experimental video.
+
+**Feature distance**: Difference in measured properties (intensity, size, shape)
+
+**Spatial distance**: Predicted displacement accounting for velocity
+$$
+d_{\text{spatial}}(i, j) = \left\| \mathbf{x}_i + \mathbf{v}_i \Delta t - \mathbf{x}_j \right\|_2
+$$
+where $\mathbf{v}_i$ is estimated velocity from previous frames.
+
+**Constraint**: Maximum displacement $d_{\max}$ (forbid assignments beyond physical limits)
+
+**Exact solution** (for moderate particle counts, $n < 1000$):
+
+```
+// Pseudocode for particle tracking with velocity prediction
+
+// Initialize cost matrix (forbidden by default)
+cost ← matrix(Inf, n_particles, n_particles)
+
+FOR i = 1 to n_particles_at_t DO
+  // Predict position using previous velocity
+  x_predicted ← x_t[i] + velocity_x_t[i] · Δt
+  y_predicted ← y_t[i] + velocity_y_t[i] · Δt
+  
+  FOR j = 1 to n_particles_at_t+1 DO
+    // Distance from predicted position
+    dx ← x_predicted - x_t+1[j]
+    dy ← y_predicted - y_t+1[j]
+    spatial_distance ← sqrt(dx² + dy²)
+    
+    // Only consider physically plausible matches
+    IF spatial_distance <= max_displacement THEN
+      // Feature similarity (intensity, size, etc.)
+      feature_distance ← |intensity_t[i] - intensity_t+1[j]|
+      
+      // Combined cost
+      cost[i,j] ← α · feature_distance + β · spatial_distance
+    END IF
+  END FOR
+END FOR
+
+// Solve assignment (Inf entries automatically forbidden)
+particle_tracks ← lap_solve(cost)
+
+// Update velocities from assignments
+FOR i = 1 to n_matched DO
+  j ← particle_tracks[i]
+  velocity_new[i] ← (position_t+1[j] - position_t[i]) / Δt
+END FOR
+```
+
+**Approximation for dense tracking** ($n > 5000$ particles):
+
+```
+// Two-stage: clustering then local matching
+
+// Stage 1: Spatial clustering (reduces n by factor 5-10)
+clusters_t ← spatial_cluster(particles_t, radius = 2·pixel_size)
+clusters_t+1 ← spatial_cluster(particles_t+1, radius = 2·pixel_size)
+
+// Compute cluster representatives
+FOR each cluster c DO
+  centroid[c] ← mean position of particles in c
+  mean_intensity[c] ← mean intensity
+  mean_velocity[c] ← mean velocity (if available)
+END FOR
+
+// Match clusters (reduced problem: ~500 clusters)
+cluster_cost ← compute_cluster_similarity(clusters_t, clusters_t+1)
+cluster_tracks ← lap_solve(cluster_cost)
+
+// Stage 2: Within matched clusters, track individual particles
+full_tracks ← empty
+FOR c = 1 to n_clusters DO
+  c_matched ← cluster_tracks[c]
+  particles_A ← particles in cluster_t[c]
+  particles_B ← particles in cluster_t+1[c_matched]
+  
+  // Local LAP with tight spatial constraint (e.g., max_disp = 5 pixels)
+  cost_local ← compute_particle_distance(
+    particles_A, particles_B,
+    max_displacement = 5,
+    α = 0.3,  // Feature weight
+    β = 0.7   // Spatial weight
+  )
+  
+  local_tracks ← lap_solve(cost_local)
+  full_tracks ← append(full_tracks, local_tracks)
+END FOR
+
+RETURN full_tracks
+```
+
+**Result**: Accurate particle trajectories for velocity field reconstruction, even with 10,000+ particles per frame (Particle Image Velocimetry, granular flow studies).
+
+### Chemistry: Molecular Conformation Alignment
+
+**Problem**: Align two conformations of the same protein ($n$ atoms) to compute RMSD and analyze structural changes.
+
+**Feature distance**: Heavy penalty for element mismatch
+$$
+d_{\text{element}}(i, j) = \begin{cases}
+0 & \text{if } \text{element}_i = \text{element}_j \\
+\infty & \text{otherwise}
+\end{cases}
+$$
+
+**Spatial distance**: 3D Euclidean distance between atomic coordinates
+
+**Exact solution** (for small molecules, $n < 500$ atoms):
+
+```
+// Pseudocode for molecular conformation alignment
+
+n_atoms ← number of atoms in molecule
+cost ← matrix(0, n_atoms, n_atoms)
+
+FOR i = 1 to n_atoms DO
+  FOR j = 1 to n_atoms DO
+    
+    // Enforce strict element type matching
+    IF element_type_A[i] ≠ element_type_B[j] THEN
+      cost[i,j] ← Inf  // Forbidden assignment
+    ELSE
+      // 3D Euclidean distance between atomic coordinates
+      dx ← x_A[i] - x_B[j]
+      dy ← y_A[i] - y_B[j]
+      dz ← z_A[i] - z_B[j]
+      
+      cost[i,j] ← sqrt(dx² + dy² + dz²)
+    END IF
+    
+  END FOR
+END FOR
+
+// Solve alignment
+alignment ← lap_solve(cost)
+
+// Compute RMSD (Root Mean Square Deviation)
+sum_sq_dist ← 0
+FOR i = 1 to n_atoms DO
+  sum_sq_dist ← sum_sq_dist + cost[i, alignment[i]]²
+END FOR
+
+rmsd ← sqrt(sum_sq_dist / n_atoms)
+```
+
+**Approximation for large biomolecules** ($n > 5000$ atoms, e.g., proteins):
+
+```
+// Hierarchical decomposition by secondary structure
+
+// Stage 1: Partition by structural elements
+segments_A ← partition_by_secondary_structure(molecule_A)
+segments_B ← partition_by_secondary_structure(molecule_B)
+// Typical: 20-50 segments (α-helices, β-sheets, loops, etc.)
+
+// Compute segment representatives
+FOR each segment s DO
+  centroid[s] ← mean(x, y, z) of atoms in segment
+  composition[s] ← count of each element type
+  secondary_structure_type[s] ← helix/sheet/loop/etc.
+END FOR
+
+// Stage 2: Match segments
+segment_cost ← matrix(n_segments_A, n_segments_B)
+FOR i = 1 to n_segments_A DO
+  FOR j = 1 to n_segments_B DO
+    
+    // Require matching secondary structure types
+    IF structure_type_A[i] ≠ structure_type_B[j] THEN
+      segment_cost[i,j] ← Inf
+    ELSE
+      // Centroid distance
+      spatial_dist ← euclidean_distance(centroid_A[i], centroid_B[j])
+      
+      // Composition similarity (element counts)
+      comp_dist ← element_composition_distance(composition_A[i], composition_B[j])
+      
+      segment_cost[i,j] ← 0.5 · spatial_dist + 0.5 · comp_dist
+    END IF
+    
+  END FOR
+END FOR
+
+segment_alignment ← lap_solve(segment_cost)
+
+// Stage 3: Within matched segments, align individual atoms
+atom_alignment ← empty
+FOR s = 1 to n_segments_A DO
+  s_matched ← segment_alignment[s]
+  atoms_A ← atoms in segment_A[s]
+  atoms_B ← atoms in segment_B[s_matched]
+  
+  // Build local cost matrix with element constraints
+  cost_local ← matrix(length(atoms_A), length(atoms_B))
+  FOR i in atoms_A DO
+    FOR j in atoms_B DO
+      IF element[i] ≠ element[j] THEN
+        cost_local[i,j] ← Inf
+      ELSE
+        cost_local[i,j] ← euclidean_distance_3D(i, j)
+      END IF
+    END FOR
+  END FOR
+  
+  local_alignment ← lap_solve(cost_local)
+  atom_alignment ← append(atom_alignment, local_alignment)
+END FOR
+
+// Compute segment-wise RMSD for structural analysis
+FOR each segment DO
+  rmsd_segment ← compute_rmsd(segment_alignment)
+END FOR
+
+RETURN (atom_alignment, rmsd_per_segment)
+```
+
+**Result**: Efficient structural alignment for:
+- Protein conformational analysis
+- Drug docking validation
+- Molecular dynamics trajectory analysis
+- Crystal structure comparison
+
+## Implementation Notes
+
+### Customizing Morph Duration
+
+The morphing examples use default settings, but you can customize:
+
+```r
+# From inst/scripts/generate_examples.R
+generate_morph <- function(assignment, pixels_A, pixels_B, 
+                          n_frames = 30,      # Number of intermediate frames
+                          frame_delay = 0.1) { # Delay between frames (seconds)
+  
+  frames <- lapply(seq(0, 1, length.out = n_frames), function(t) {
+    interpolate_frame(t, assignment, pixels_A, pixels_B)
+  })
+  
+  save_gif(frames, delay = frame_delay)
+}
+```
+
+Total duration = `n_frames × frame_delay` seconds.
+
+### Using the Example Code
+
+The complete morphing implementation is provided in `inst/scripts/generate_examples.R`:
+
+```r
+# View the source
+example_script <- system.file("scripts", "generate_examples.R", package = "lapr")
+file.show(example_script)
+
+# Or source to use functions
+source(example_script)
+
+# Apply to your own data
+my_cost <- build_cost_matrix(my_data_A, my_data_B)
+my_assignment <- lap_solve(my_cost)
+```
+
+### Regenerating Examples
+
+To recreate the morphing demonstrations:
+
+```r
+source("inst/scripts/generate_examples.R")
+```
+
+This generates all GIFs shown in this vignette.
+
+## Mathematical Foundation: Optimal Transport
+
+The matching problems discussed here connect to **discrete optimal transport** theory:
+
+### Monge Problem (1781)
+
+Original formulation: Find transport map $T: A \to B$ minimizing:
+$$
+\int_A c(\mathbf{x}, T(\mathbf{x})) \, d\mu(\mathbf{x})
+$$
+
+### Kantorovich Relaxation (1942)
+
+Linear programming formulation with transport plan $\gamma$:
+$$
+\min_{\gamma} \int_{A \times B} c(\mathbf{x}, \mathbf{y}) \, d\gamma(\mathbf{x}, \mathbf{y})
+$$
+
+### Discrete Case (LAP)
+
+For discrete uniform distributions ($n$ points in $A$ and $B$):
+$$
+\min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)}
+$$
+
+This is the **linear assignment problem** that `lapr` solves efficiently.
+
+### Wasserstein Distance
+
+The optimal transport cost defines a metric:
+$$
+W_1(\mu, \nu) = \min_{\pi} \sum_{i=1}^n c_{i,\pi(i)}
+$$
+
+where $c_{ij} = d(\mathbf{x}_i, \mathbf{x}_j)$ is typically Euclidean distance.
+
+**Applications**:
+- Earth Mover's Distance for image retrieval
+- Distributional similarity in statistics
+- Generative models (Wasserstein GANs)
+
+## Further Reading
+
+### Optimal Transport Theory
+
+- Peyré, G., & Cuturi, M. (2019). "Computational Optimal Transport." *Foundations and Trends in Machine Learning*.
+- Villani, C. (2008). *Optimal Transport: Old and New*. Springer.
+
+### Scientific Applications
+
+**Ecology**:
+- Anderson, M. J. et al. (2011). "Navigating the multiple meanings of beta diversity." *Ecology Letters*.
+- Legendre, P., & Legendre, L. (2012). *Numerical Ecology*. Elsevier.
+
+**Physics**:
+- Adrian, R. J., & Westerweel, J. (2011). *Particle Image Velocimetry*. Cambridge University Press.
+- Crocker, J. C., & Grier, D. G. (1996). "Methods of digital video microscopy." *Journal of Colloid and Interface Science*.
+
+**Chemistry**:
+- Kabsch, W. (1976). "A solution for the best rotation to relate two sets of vectors." *Acta Crystallographica*.
+- Coutsias, E. A., et al. (2004). "Using quaternions to calculate RMSD." *Journal of Computational Chemistry*.
+
+### Assignment Algorithms
+
+- Burkard, R., Dell'Amico, M., & Martello, S. (2009). *Assignment Problems*. SIAM.
+- For `lapr` algorithms: See `vignette("algorithms")`
+
+## Summary
+
+This vignette demonstrated how optimal matching problems arise across scientific domains:
+
+**Core concept**: Combine feature similarity with spatial coherence to find optimal entity correspondences.
+
+**Three approximation strategies**:
+
+1. **Feature quantization**: Group similar features, match groups → $O(k^3)$ for $k$ groups
+2. **Hierarchical decomposition**: Partition spatially, solve recursively → $O(n \log n)$ amortized
+3. **Resolution reduction**: Downsample, solve, upscale → $O(n^3/s^6)$ for factor $s$
+
+**Visual demonstration**: Pixel morphing illustrates these concepts intuitively with color (feature) and position (spatial).
+
+**Scientific applications**:
+
+- **Ecology**: Track vegetation plots across time (species composition + location)
+- **Physics**: Particle tracking in video (appearance + predicted trajectory)
+- **Chemistry**: Molecular alignment (atom type + 3D coordinates)
+
+**What `lapr` provides**:
+
+- Efficient LAP solvers for exact matching: `lap_solve()`
+- Batch solving for multiple problems: `lap_solve_batch()`
+- K-best solutions for robustness: `lap_solve_kbest()`
+- Example code for approximation strategies
+
+**Learn more**:
+
+- Basic usage: `vignette("getting-started")`
+- Algorithm details: `vignette("algorithms")`
+- Function documentation: `?lap_solve`
+
+The combination of exact algorithms for small problems and principled approximations for large problems makes optimal matching tractable across scientific scales, from dozens to millions of entities.

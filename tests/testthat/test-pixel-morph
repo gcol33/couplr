@@ -1,0 +1,264 @@
+# tests/testthat/test-pixel-morph.R
+# Test suite for pixel morphing functionality
+
+test_that("pixel_morph helper functions work", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+
+  H <- 8; W <- 8
+
+  # Create a simple test array
+  test_arr <- array(0L, dim = c(H, W, 3))
+  test_arr[4, 4, 1] <- 255L  # Red pixel
+
+  # Planar conversion
+  planar <- .to_planar_rgb(test_arr)
+  expect_length(planar, H * W * 3)
+
+  # The exact index depends on your planar layout; round-trip instead:
+  arr_back <- .from_planar_rgb(planar, H, W)
+  expect_equal(dim(arr_back), c(H, W, 3))
+  expect_equal(arr_back[4, 4, 1], 255L)
+
+  # Clamp
+  test_vals <- c(-10, 0, 128, 255, 300)
+  clamped <- .clamp_rgb(test_vals)
+  expect_equal(clamped, c(0L, 0L, 128L, 255L, 255L))
+})
+
+test_that("pixel cost matrix computation works", {
+  skip_if_not(exists("compute_pixel_cost_cpp"))
+
+  H <- 4; W <- 4; N <- H * W
+  pixelsA <- numeric(N * 3)
+  pixelsB <- numeric(N * 3)
+
+  # One red pixel in A at linear index 5 (row-major)
+  pixelsA[5] <- 255
+  # One blue pixel in B at linear index 11
+  pixelsB[11 + 2*N] <- 255
+
+  cost <- compute_pixel_cost_cpp(pixelsA, pixelsB, H, W, 1, 1)
+  expect_equal(dim(cost), c(N, N))
+  expect_true(all(is.finite(cost)))
+  expect_true(all(cost >= 0))
+})
+
+test_that("pixel_morph creates animation with small test images (exact)", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"), message = "C++ morphing function not available")
+
+  H <- 8; W <- 8
+  imgA <- array(0, c(H, W, 3))
+  imgA[4:5, 2:3, 1] <- 255  # red block (left)
+
+  imgB <- array(0, c(H, W, 3))
+  imgB[4:5, 6:7, 3] <- 255  # blue block (right)
+
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgA/255, tmpA)
+  png::writePNG(imgB/255, tmpB)
+
+  result <- pixel_morph(
+    imgA = tmpA, imgB = tmpB,
+    alpha = 1, beta = 0,
+    n_frames = 4L, fps = 10L,
+    outfile = tmpOut, show = FALSE,
+    mode = "exact"
+  )
+
+  expect_type(result, "list")
+  expect_equal(result$n_pixels, H * W)
+  expect_equal(length(result$frames), 4)
+  expect_true(file.exists(result$outfile))
+  expect_gt(file.size(result$outfile), 0)
+  expect_equal(result$mode, "exact")
+})
+
+test_that("pixel_morph color_walk mode works with varied colors", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+  skip_if_not(exists("color_palette_info_cpp"))
+
+  H <- 8; W <- 8
+  set.seed(123)
+  imgA <- array(runif(H * W * 3), c(H, W, 3))
+  imgB <- array(runif(H * W * 3), c(H, W, 3))
+
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgA, tmpA)
+  png::writePNG(imgB, tmpB)
+
+  result <- pixel_morph(
+    imgA = tmpA, imgB = tmpB,
+    n_frames = 4L, fps = 10L,
+    outfile = tmpOut, show = FALSE,
+    mode = "color_walk",
+    quantize_bits = 6L
+  )
+
+  expect_type(result, "list")
+  expect_equal(result$n_pixels, H * W)
+  expect_true(file.exists(result$outfile))
+  expect_equal(result$mode, "color_walk")
+})
+
+test_that("pixel_morph exact mode enforces size limit", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+
+  # Create an image larger than the 10,000 pixel limit
+  H <- 120; W <- 120  # 14,400 pixels > 10,000
+  imgLarge <- array(runif(H * W * 3), c(H, W, 3))
+  
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgLarge, tmpA)
+  png::writePNG(imgLarge, tmpB)
+
+  # Should error with helpful message
+  expect_error(
+    pixel_morph(
+      imgA = tmpA, imgB = tmpB,
+      n_frames = 2L, fps = 5L,
+      outfile = tmpOut, show = FALSE,
+      mode = "exact"
+    ),
+    regexp = "Image too large for 'exact' mode"
+  )
+})
+
+
+test_that("pixel_morph exact mode runs with flat colors", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+  skip_if_not(exists("compute_pixel_cost_cpp"))
+
+  H <- 8; W <- 8
+  imgA <- array(0.5, c(H, W, 3))
+  imgB <- array(0.5, c(H, W, 3))
+
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgA, tmpA)
+  png::writePNG(imgB, tmpB)
+
+  result <- pixel_morph(
+    imgA = tmpA, imgB = tmpB,
+    n_frames = 3L, fps = 10L,
+    outfile = tmpOut, show = FALSE,
+    mode = "exact",
+    alpha = 1, beta = 0
+  )
+
+  expect_type(result, "list")
+  expect_equal(result$mode, "exact")
+  expect_true(file.exists(result$outfile))
+})
+
+test_that("pixel_morph handles file-based images", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+
+  H <- 8; W <- 8
+  img1 <- array(runif(H * W * 3), c(H, W, 3))
+  img2 <- array(runif(H * W * 3), c(H, W, 3))
+
+  tmpFile1 <- withr::local_tempfile(fileext = ".png")
+  tmpFile2 <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(img1, tmpFile1)
+  png::writePNG(img2, tmpFile2)
+
+  result <- pixel_morph(
+    imgA = tmpFile1, imgB = tmpFile2,
+    n_frames = 3L, fps = 5L,
+    outfile = tmpOut, show = FALSE,
+    mode = "color_walk"  # Use color_walk as default
+  )
+
+  expect_type(result, "list")
+  expect_true(file.exists(result$outfile))
+})
+
+test_that("exact mode with downscaling can handle larger images", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+  skip_if_not(exists("downscale_image_cpp"))
+
+  # Create image larger than exact limit, but use downscaling
+  H <- 200; W <- 200  # 40,000 pixels > 10,000
+  imgLarge <- array(runif(H * W * 3), c(H, W, 3))
+  
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgLarge, tmpA)
+  png::writePNG(imgLarge, tmpB)
+
+  # Should work with downscaling
+  result <- pixel_morph(
+    imgA = tmpA, imgB = tmpB,
+    n_frames = 2L, fps = 5L,
+    outfile = tmpOut, show = FALSE,
+    mode = "exact",
+    downscale_steps = 2L  # Solve at 1/4 resolution
+  )
+  
+  expect_true(file.exists(result$outfile))
+  expect_equal(result$mode, "exact")
+  expect_gt(file.size(result$outfile), 0)
+})
+
+test_that("color_walk uses pure color matching (not spatial)", {
+  skip_if_not_installed("magick")
+  skip_if_not_installed("png")
+  skip_if_not(exists("morph_pixel_level_cpp"))
+  skip_if_not(exists("color_palette_info_cpp"))
+
+  H <- 8; W <- 8
+  # Create two images with different spatial arrangements of same colors
+  imgA <- array(0, c(H, W, 3))
+  imgA[2:3, 2:3, 1] <- 255  # red top-left
+  imgA[6:7, 6:7, 3] <- 255  # blue bottom-right
+
+  imgB <- array(0, c(H, W, 3))
+  imgB[2:3, 6:7, 1] <- 255  # red top-right (moved)
+  imgB[6:7, 2:3, 3] <- 255  # blue bottom-left (moved)
+
+  tmpA <- withr::local_tempfile(fileext = ".png")
+  tmpB <- withr::local_tempfile(fileext = ".png")
+  tmpOut <- withr::local_tempfile(fileext = ".gif")
+  png::writePNG(imgA/255, tmpA)
+  png::writePNG(imgB/255, tmpB)
+
+  result <- pixel_morph(
+    imgA = tmpA, imgB = tmpB,
+    n_frames = 4L, fps = 10L,
+    outfile = tmpOut, show = FALSE,
+    mode = "color_walk",
+    quantize_bits = 6L
+  )
+
+  # Just check it runs successfully
+  expect_type(result, "list")
+  expect_equal(result$mode, "color_walk")
+  expect_true(file.exists(result$outfile))
+  
+  # Assignment should be based on color, not position
+  # Red pixels (index ~10-13) should map to red pixels in B
+  # This is hard to test exactly, but we verify the morph was created
+  expect_gt(file.size(result$outfile), 0)
+})

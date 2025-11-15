@@ -36,34 +36,31 @@
 #'
 #' @export
 assignment <- function(cost, maximize = FALSE,
-                       method = c("auto","jv","hungarian","auction","auction_gs",
+                       method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce"),
-                       auction_eps = NULL, eps = NULL) {
+                       auction_eps = NULL, eps = NULL
+                       # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
+                       # , auction_final_eps = NULL                          # optional (see below)
+                       ) {
   method <- match.arg(method)
 
   # Back-compat: eps → auction_eps
-  if (!is.null(eps) && is.null(auction_eps)) {
-    auction_eps <- eps
-  }
-
-  # alias for compatibility
+  if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
   if (method == "ssp") method <- "sap"
 
   cost <- as.matrix(cost)
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
-  hk01_candidate <- function(M) {
-    x <- as.numeric(M[is.finite(M)])
-    if (!length(x)) return(FALSE)
-    ux <- sort(unique(round(x, 12)))
-    if (length(ux) == 1L) return(TRUE)                       # all-equal
-    if (length(ux) == 2L && all(ux %in% c(0, 1))) return(TRUE) # exact 0/1
-    FALSE
-  }
-
   n <- nrow(cost); m <- ncol(cost)
 
   if (method == "auto") {
+    hk01_candidate <- function(M) {
+      x <- as.numeric(M[is.finite(M)]); if (!length(x)) return(FALSE)
+      ux <- sort(unique(round(x, 12)))
+      if (length(ux) == 1L) return(TRUE)
+      if (length(ux) == 2L && all(ux %in% c(0,1))) return(TRUE)
+      FALSE
+    }
     if (n <= 5 && m <= 5) {
       method <- "bruteforce"
     } else if (hk01_candidate(cost)) {
@@ -88,28 +85,27 @@ assignment <- function(cost, maximize = FALSE,
   transposed <- FALSE
   work <- cost
   if (n > m) {
-    work <- t(cost)
-    transposed <- TRUE
+    work <- t(cost); transposed <- TRUE
     tmp <- n; n <- m; m <- tmp
   }
 
   res_raw <- switch(
     method,
-    "bruteforce" = lap_solve_bruteforce(work, maximize),
-    "jv"         = lap_solve_jv(work, maximize),
-    "hungarian"  = lap_solve_hungarian(work, maximize),
-    "auction"    = lap_solve_auction(work, maximize, auction_eps),
-    "auction_gs" = lap_solve_auction_gs(work, maximize, auction_eps),
-    "sap"        = lap_solve_ssp(work, maximize),
-    "csflow"     = lap_solve_csflow(work, maximize),
-    "hk01"       = lap_solve_hk01(work, maximize),
+    "bruteforce"    = lap_solve_bruteforce(work, maximize),
+    "jv"            = lap_solve_jv(work, maximize),
+    "hungarian"     = lap_solve_hungarian(work, maximize),
+    "auction"       = lap_solve_auction(work, maximize, auction_eps),
+    "auction_gs"    = lap_solve_auction_gs(work, maximize, auction_eps),
+    "auction_scaled"= lap_solve_auction_scaled(work, maximize),
+    "sap"           = lap_solve_ssp(work, maximize),
+    "csflow"        = lap_solve_csflow(work, maximize),
+    "hk01"          = lap_solve_hk01(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
 
   match_out <- as.integer(res_raw$match)
   if (transposed) {
-    n0 <- ncol(work)   # original nrows
-    m0 <- nrow(work)   # original ncols
+    n0 <- ncol(work); m0 <- nrow(work)
     inv <- integer(n0); inv[] <- 0L
     for (i in seq_len(m0)) {
       j <- match_out[i]
@@ -127,3 +123,4 @@ assignment <- function(cost, maximize = FALSE,
   class(out) <- "lap_solve_result"
   out
 }
+

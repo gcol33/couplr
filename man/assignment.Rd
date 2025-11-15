@@ -7,8 +7,8 @@
 assignment(
   cost,
   maximize = FALSE,
-  method = c("auto", "jv", "hungarian", "auction", "auction_gs", "sap", "ssp", "csflow",
-    "hk01", "bruteforce"),
+  method = c("auto", "jv", "hungarian", "auction", "auction_gs", "auction_scaled", "sap",
+    "ssp", "csflow", "hk01", "bruteforce"),
   auction_eps = NULL,
   eps = NULL
 )

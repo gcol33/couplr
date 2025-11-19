@@ -6,7 +6,7 @@
 \alias{couplr}
 \title{couplr: Optimal Pairing and Matching via Linear Assignment}
 \description{
-Solves optimal pairing and matching problems using linear assignment algorithms. Provides modern, tidy implementations of Hungarian, Jonker-Volgenant, Auction, and other LAP solvers. Designed for matching plots, sites, samples, or any pairwise optimization problem. Supports rectangular matrices, forbidden assignments, data frame inputs, batch solving, k-best solutions, and pixel-level image morphing for visualization.
+Solves optimal pairing and matching problems using linear assignment algorithms. Provides modern, tidy implementations of Hungarian, Jonker-Volgenant, Auction, and other LAP solvers. Designed for matching plots, sites, samples, or any pairwise optimization problem. Supports rectangular matrices, forbidden assignments, data frame inputs, batch solving, k-best solutions, and pixel-level image morphing for visualization. Includes automatic preprocessing with variable health checks, multiple scaling methods (standardized, range, robust), greedy matching algorithms, and comprehensive balance diagnostics for assessing match quality using standardized differences and distribution comparisons.
 
 Solves optimal pairing and matching problems using linear assignment algorithms.
 Designed for matching plots, sites, samples, or any pairwise optimization problem.

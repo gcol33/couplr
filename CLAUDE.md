@@ -4,295 +4,464 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**lapr** is an R package that provides fast solvers for the Linear Assignment Problem (LAP). It implements multiple algorithms (Hungarian, Jonker-Volgenant, Auction, etc.) with a modern tidy interface, supporting rectangular matrices, forbidden assignments (NA/Inf), k-best solutions, and pixel-level image morphing.
+**couplr** (formerly lapr) is an R package providing fast solvers for Linear Assignment Problems (LAP) with modern matching capabilities. It implements 14+ algorithms (Hungarian, Jonker-Volgenant, Auction, Gabow-Tarjan, etc.) with a tidy interface, plus production-ready matching workflows with automatic preprocessing, greedy algorithms, and comprehensive balance diagnostics.
 
 ## Development Commands
 
-### Building and Testing
+### Core Package Development
 
 ```r
 # Install dependencies
-install.packages(c("Rcpp", "RcppEigen", "tibble", "dplyr", "testthat"))
+install.packages(c("Rcpp", "RcppEigen", "tibble", "dplyr", "testthat", "devtools"))
 
-# Build package with native code
+# Load package (recompiles C++ if needed)
 devtools::load_all()  # or Ctrl+Shift+L in RStudio
 
-# Run all tests
-devtools::test()  # or Ctrl+Shift+T in RStudio
+# Run all tests (1369 tests)
+devtools::test()  # or Ctrl+Shift+T
 
 # Run specific test file
-testthat::test_file("tests/testthat/test-assignment.R")
+testthat::test_file("tests/testthat/test-matching.R")
 
-# Check package
-devtools::check()
+# Run matching tests only
+devtools::test(filter = "matching")
 
-# Build documentation
+# Build documentation (after editing roxygen comments)
 devtools::document()
 
-# Build vignettes
-devtools::build_vignettes()
+# Full package check
+devtools::check()
+
+# Build tarball
+devtools::build()
 ```
 
-### C++ Development
+### C++ Development Workflow
 
-The package uses Rcpp and requires C++17. After modifying C++ code:
+After modifying C++ code or adding `[[Rcpp::export]]` functions:
 
 ```r
-# Recompile C++ code
+# Regenerate Rcpp exports (REQUIRED after C++ changes)
 Rcpp::compileAttributes()
+
+# Update documentation
+devtools::document()
+
+# Reload package
 devtools::load_all()
+
+# Run tests
+devtools::test()
+```
+
+**Critical:** C++17 required. Windows users need Rtools with g++ supporting C++17.
+
+### Git Workflow
+
+```bash
+# Check status
+git status
+
+# Add changes
+git add .
+
+# Commit (use descriptive messages)
+git commit -m "Description of changes"
+
+# Push to GitHub
+git push origin main
+
+# Create release tag
+git tag -a v1.0.0 -m "Release message"
+git push origin v1.0.0
 ```
 
 ## Code Architecture
 
-### Two-Layer API Design
+### Three-Layer API Design
 
-**Layer 1 - Core solvers** ([R/assignment.R](R/assignment.R)):
-- `assignment()` - Returns list with `match` vector, `total_cost`, `status`, `method_used`
-- Low-level interface matching C++ semantics
-- Used internally by all higher-level functions
+**Layer 1 - Low-level LAP solvers** ([R/assignment.R](R/assignment.R)):
+- `assignment()` - Core solver wrapper returning `list(match, total_cost, status, method_used)`
+- Direct mapping to C++ implementations
+- Method auto-selection via `method = "auto"`
 
-**Layer 2 - Tidy interface** ([R/lap_solve.R](R/lap_solve.R)):
+**Layer 2 - Tidy LAP interface** ([R/lap_solve.R](R/lap_solve.R)):
 - `lap_solve()` - Returns tibble with tidy output
-- Supports matrix, data frame, and grouped data frame inputs
-- Handles column mapping for data frames via tidy evaluation
-- User-facing API
+- Supports matrix, data frame, and grouped inputs
+- Batch solving via `lap_solve_batch()`
+- K-best solutions via `lap_solve_kbest()`
 
-### LAP Solver Implementations
+**Layer 3 - Matching workflows** (NEW in v1.0.0):
+- `match_couples()` - Optimal one-to-one matching with preprocessing ([R/matching_core.R](R/matching_core.R:1-387))
+- `greedy_couples()` - Fast greedy matching with 3 strategies ([R/matching_core.R](R/matching_core.R:388-625))
+- `matchmaker()` - Blocking/stratification support ([R/matching_blocks.R](R/matching_blocks.R))
+- `balance_diagnostics()` - Comprehensive balance assessment ([R/matching_diagnostics.R](R/matching_diagnostics.R))
+- `preprocess_matching_vars()` - Automatic variable health checks ([R/matching_preprocessing.R](R/matching_preprocessing.R))
 
-All algorithm implementations follow the same pattern:
+### Matching Layer Architecture (v1.0.0)
 
-1. **R wrapper** (e.g., `assignment()` in [R/assignment.R](R/assignment.R)):
-   - Validates inputs
-   - Handles maximize/minimize conversion
-   - Transposes if rows > cols
-   - Calls C++ implementation
-   - Formats result
+The matching layer provides production-ready workflows for observational studies, treatment effect estimation, and sample matching.
 
-2. **C++ interface** ([src/rcpp_interface.cpp](src/rcpp_interface.cpp)):
-   - Exported via `[[Rcpp::export]]`
-   - Thin wrapper around implementation
-   - Handles R <-> C++ type conversion
+**Core Workflow:**
+```r
+# 1. Optional: Create blocks/strata
+blocks <- matchmaker(left, right, block_type = "group", block_by = "site")
 
-3. **C++ implementation** (e.g., [src/solve_jv.cpp](src/solve_jv.cpp)):
-   - Pure C++ algorithm
-   - Returns `Rcpp::List` with `match` and `total_cost`
+# 2. Match with automatic preprocessing
+result <- match_couples(
+  left, right,
+  vars = c("age", "income", "education"),
+  auto_scale = TRUE,           # Smart preprocessing
+  scale = "robust",             # MAD-based scaling
+  max_distance = 0.5,           # Caliper
+  return_diagnostics = TRUE
+)
 
-Available algorithms (see [R/assignment.R](R/assignment.R:10-12)):
-- `jv` - Jonker-Volgenant (general purpose, fast)
-- `hungarian` - Classic Hungarian algorithm
-- `auction` / `auction_gs` / `auction_scaled` - Auction variants
-- `sap` / `ssp` - Shortest augmenting path
-- `csflow` - Cost-scaling flow
-- `hk01` - Hopcroft-Karp for binary/uniform costs
-- `bruteforce` - Exhaustive search for tiny problems
-- `auto` - Automatic selection based on problem characteristics
+# 3. Assess balance quality
+balance <- balance_diagnostics(result, left, right, vars = c("age", "income"))
+print(balance)  # Standardized differences, variance ratios, KS tests
+balance_table(balance)  # Publication-ready table
+```
 
-### K-Best Solutions
+**File Organization:**
+- [R/matching_core.R](R/matching_core.R) - Main matching functions (625 lines)
+- [R/matching_distance.R](R/matching_distance.R) - Distance computation with 3 scaling methods
+- [R/matching_constraints.R](R/matching_constraints.R) - Calipers, weights, max_distance
+- [R/matching_blocks.R](R/matching_blocks.R) - Blocking/stratification
+- [R/matching_preprocessing.R](R/matching_preprocessing.R) - Auto-scaling and health checks (510 lines)
+- [R/matching_diagnostics.R](R/matching_diagnostics.R) - Balance assessment (461 lines)
+- [R/matching_utils.R](R/matching_utils.R) - Shared utilities
 
-Two algorithms for finding k-best assignments (see [R/kbest_assignment.R](R/kbest_assignment.R)):
-- **Murty's algorithm** ([src/solve_murty.cpp](src/solve_murty.cpp)) - Systematic partitioning
-- **Lawler's algorithm** ([src/solve_kbest_lawler.cpp](src/solve_kbest_lawler.cpp)) - Alternative approach
+**Key Features:**
 
-### Pixel Morphing Feature
+1. **Automatic Preprocessing** ([R/matching_preprocessing.R](R/matching_preprocessing.R)):
+   - Detects constant variables (SD = 0) → excludes with warning
+   - Detects high missingness (>50%) → warns
+   - Detects extreme skewness (|skew| > 2) → info
+   - Smart scaling: "robust" (median/MAD), "standardize" (mean/SD), "range" (min-max)
+   - Categorical encoding: binary (0/1), ordered factors (numeric)
 
-Complex multi-mode system for image morphing via LAP (see [R/pixel_morph.R](R/pixel_morph.R)):
+2. **Greedy Matching Algorithms** ([src/solvers/greedy_matching.cpp](src/solvers/greedy_matching.cpp)):
+   - `sorted` - Sort all pairs by cost, assign greedily
+   - `row_best` - For each row, pick best available column
+   - `pq` - Priority queue for large problems
+   - 10-100x faster than optimal for large datasets
 
-**Three assignment modes:**
-1. `exact` - Full pixel-level LAP (small images only, < 4096 pixels recommended)
-2. `color_walk` - Color quantization + spatial mini-LAPs (scales well)
-3. `recursive` - Multi-scale 2×2 recursive tiling
+3. **Balance Diagnostics** ([R/matching_diagnostics.R](R/matching_diagnostics.R)):
+   - Standardized differences: (mean_left - mean_right) / pooled_sd
+   - Variance ratios: SD_left / SD_right
+   - KS tests for distribution comparison
+   - Per-block statistics with quality ratings
+   - Quality thresholds: <0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable, >0.5 poor
 
-**Key functions:**
-- `pixel_morph_animate()` - Creates animated morph (GIF/WebP/MP4)
-- `pixel_morph()` - Returns final transported frame only
-
-**Cost model:** `cost(i,j) = alpha * color_distance + beta * spatial_distance`
-
-**Rendering semantics (CRITICAL):**
-- Assignment computed using both images A and B
-- Renderer uses ONLY image A's colors (transport-only)
-- B influences WHERE pixels go, NOT WHAT colors appear
-- Final frame is sharp (no motion blur)
-
-**C++ support functions** ([src/morph_pixel_level.cpp](src/morph_pixel_level.cpp)):
-- `compute_pixel_cost_cpp()` - Build cost matrix
-- `morph_pixel_level_cpp()` - Render animation frames
-- `downscale_image_cpp()` / `upscale_assignment_cpp()` - Multi-resolution
-- `color_palette_info_cpp()` - Color quantization for color_walk mode
-
-### Special Purpose Solvers
-
-**Line metric solver** ([R/lap_solve.R](R/lap_solve.R:298)):
-- `lap_solve_line_metric()` - Specialized for 1D point matching
-- O(n log n) for square, O(n*m) DP for rectangular
-- Supports L1 (Manhattan) and L2 (squared Euclidean) costs
-
-**Bucketed SAP** ([R/lap_solve.R](R/lap_solve.R:420)):
-- `assignment_ssap_bucket()` - Dial's algorithm for integer costs
-- O(n²×m×C) where C is max cost
-- Auto-scales decimal costs to integers
-
-**Cycle canceling** ([R/lap_solve.R](R/lap_solve.R:487)):
-- `assignment_cycle_cancel()` - Min-cost flow with Karp's algorithm
-
-**Gabow-Tarjan** ([R/lap_solve.R](R/lap_solve.R:578)):
-- `assignment_gabow_tarjan()` - Cost scaling with complementary slackness
-- Maintains exact optimality (no epsilon)
+4. **Blocking Support** ([R/matching_blocks.R](R/matching_blocks.R)):
+   - Exact blocking: `block_type = "group"` + `block_by = "site"`
+   - K-means clustering: `block_type = "cluster"` + `n_clusters = 5`
+   - Preserves block IDs through matching pipeline
 
 ### C++ Code Organization
 
-**Header files:**
-- [src/lap_internal.h](src/lap_internal.h) - Function declarations for all solvers
-- [src/lap_utils.h](src/lap_utils.h) - Shared utilities
-- [src/utils_gabow_tarjan.h](src/utils_gabow_tarjan.h) - Gabow-Tarjan specific types/functions
+**Subdirectory Structure:**
+```
+src/
+├── core/              # Shared utilities
+│   ├── lap_internal.h     # Function declarations
+│   ├── lap_utils.cpp      # Common helpers
+│   └── lap_utils.h
+├── interface/         # Rcpp exports
+│   └── prepare_cost_matrix.cpp
+├── solvers/           # Algorithm implementations (14 solvers)
+│   ├── greedy_matching.cpp    # NEW: Greedy strategies
+│   ├── solve_jv.cpp          # Jonker-Volgenant
+│   ├── solve_hungarian.cpp
+│   ├── solve_auction.cpp
+│   ├── solve_gabow_tarjan.cpp
+│   ├── solve_line_metric.cpp
+│   ├── solve_ssap_bucket.cpp
+│   └── ... (10 more)
+├── gabow_tarjan/      # Gabow-Tarjan specific code
+│   ├── solve_gabow_tarjan.cpp
+│   ├── utils_gabow_tarjan.cpp
+│   └── utils_gabow_tarjan.h
+├── morph/             # Pixel morphing
+│   ├── morph_pixel_level.cpp
+│   └── region_means.cpp
+└── rcpp_interface.cpp # Central export point (ALL exports here)
+```
 
-**Implementation pattern:**
-- Each solver in separate `.cpp` file (e.g., `solve_hungarian.cpp`)
-- Shared code in `lap_utils.cpp`
-- All exports centralized in `rcpp_interface.cpp`
+**Export Pattern (CRITICAL):**
 
-**Key utilities:**
-- `prepare_cost_matrix_impl()` - Handle maximize, Inf/NA masking
-- `validate_cost_data()` - Input validation
+Subdirectory files (e.g., `src/solvers/greedy_matching.cpp`) do NOT use `[[Rcpp::export]]` directly. Instead:
+
+1. Implementation in subdirectory with `_impl` suffix:
+```cpp
+// src/solvers/greedy_matching.cpp
+List greedy_matching_impl(NumericMatrix cost_matrix, bool maximize, std::string strategy) {
+    // Implementation
+}
+```
+
+2. Forward declaration in [src/rcpp_interface.cpp](src/rcpp_interface.cpp):
+```cpp
+extern Rcpp::List greedy_matching_impl(Rcpp::NumericMatrix, bool, std::string);
+```
+
+3. Exported wrapper in [src/rcpp_interface.cpp](src/rcpp_interface.cpp):
+```cpp
+// [[Rcpp::export]]
+Rcpp::List greedy_matching(Rcpp::NumericMatrix cost_matrix,
+                           bool maximize = false,
+                           std::string strategy = "row_best") {
+    return greedy_matching_impl(cost_matrix, maximize, strategy);
+}
+```
+
+**Why:** Rcpp only scans the main source directory, not subdirectories. All `[[Rcpp::export]]` tags MUST be in `src/*.cpp` files at the root level.
+
+### Makefile Structure
+
+**Makevars** (Unix/Linux/Mac):
+```make
+CXX_STD = CXX17
+SOURCES = RcppExports.cpp rcpp_interface.cpp \
+          $(wildcard interface/*.cpp) \
+          $(wildcard core/*.cpp) \
+          $(wildcard solvers/*.cpp) \
+          $(wildcard gabow_tarjan/*.cpp) \
+          $(wildcard morph/*.cpp)
+OBJECTS = $(SOURCES:.cpp=.o)
+```
+
+**Makevars.win** (Windows):
+- Same structure but uses `$(shell ...)` instead of backticks
+- Collects all .cpp files from subdirectories using wildcards
+- Automatically links all object files
+
+### LAP Solver Implementations
+
+Available algorithms (see [R/assignment.R](R/assignment.R)):
+- `jv` - Jonker-Volgenant (general purpose, fast)
+- `hungarian` - Classic Hungarian
+- `auction` / `auction_gs` / `auction_scaled` - Auction variants
+- `ssp` / `sap` - Shortest augmenting path
+- `csflow` - Cost-scaling flow
+- `cost_scaling` - Gabow's cost-scaling
+- `cycle_cancel` - Cycle canceling with Karp
+- `gabow_tarjan` - Gabow-Tarjan with complementary slackness
+- `ssap_bucket` - Dial's algorithm for integer costs
+- `line_metric` - Specialized for 1D matching
+- `hk01` - Hopcroft-Karp for binary costs
+- `bruteforce` - Exhaustive for tiny problems
+- `auto` - Automatic selection
+
+**Greedy Algorithms** (NEW):
+- `greedy_sorted` - Sort pairs, assign greedily
+- `greedy_row_best` - Row-by-row best match
+- `greedy_pq` - Priority queue based
 
 ### Testing Strategy
 
-**Test organization:**
-- One test file per solver (e.g., [tests/testthat/test-assignment-jv.R](tests/testthat/test-assignment-jv.R))
-- Shared test cases for correctness across algorithms
-- Performance benchmarks for large problems
-- Edge cases: rectangular, forbidden edges, maximize
+**Test Organization** (1369 total tests):
+- LAP solvers: `test-assignment-*.R` (one per solver)
+- Matching workflows: [tests/testthat/test-matching.R](tests/testthat/test-matching.R) (98 tests)
+  - Preprocessing: 10 tests
+  - Balance diagnostics: 11 tests
+  - Core matching: 9 tests
+  - Greedy strategies: 4 tests
+  - Integration tests: remainder
+- Gabow-Tarjan modules: `test_gabow_tarjan_moduleA.R` through `moduleH.R`
+- Pixel morphing: `test-pixel-morph.R`
 
-**Gabow-Tarjan has modular tests:**
-- Modules A-H test individual components ([tests/testthat/test_gabow_tarjan_moduleA.R](tests/testthat/test_gabow_tarjan_moduleA.R), etc.)
-- Each module exports test functions via `rcpp_interface.cpp`
-- Integration test in [tests/testthat/test-gabow_tarjan_solver.R](tests/testthat/test-gabow_tarjan_solver.R)
+**Running Subset of Tests:**
+```r
+# All matching tests
+devtools::test(filter = "matching")
+
+# Specific test
+testthat::test_file("tests/testthat/test-matching.R")
+
+# Single test case
+testthat::test_that("balance_diagnostics works with blocking", { ... })
+```
 
 ## Important Conventions
 
 ### Indexing
-- **R code:** 1-based indexing (R convention)
-- **C++ code:** 0-based indexing internally, convert at boundaries
-- **Special value:** -1 (C++) / 0 (R) for "unmatched"
+- **R code:** 1-based (R standard)
+- **C++ code:** 0-based internally, convert at boundaries
+- **Unmatched:** -1 (C++) / 0 (R, displayed as NA in output)
 
 ### Matrix Orientation
-- Rows = sources/tasks
-- Columns = targets/agents
-- If rows > cols, automatically transpose and reverse at end
+- Rows = left/treatment units
+- Cols = right/control units
+- Auto-transpose if rows > cols
 
 ### Cost Matrix Semantics
 - `NA` or `Inf` = forbidden assignment
-- `maximize = TRUE` internally negates costs
+- `maximize = TRUE` negates costs internally
 - Always returns costs on original scale
 
 ### Return Values
-All solvers return consistent structure:
+
+**LAP Solvers:**
 ```r
 list(
   match = integer vector (1-based, length = nrow),
-  total_cost = numeric scalar,
+  total_cost = numeric,
   status = "optimal",
   method_used = "algorithm_name"
 )
 ```
 
-## Cost Computation Semantics (CRITICAL)
-
-**The Single Source of Truth**: All solvers MUST use `compute_total_cost()` from [src/lap_utils.cpp](src/lap_utils.cpp) to compute the `cost` or `total_cost` field.
-
-### The Cost Guarantee
-
-The `cost` field in solver results has a **precise, unambiguous definition**:
-
-```
-cost = sum of original_cost[i, assignment[i]] over all matched rows
-```
-
-**What this means:**
-1. **Always uses ORIGINAL cost matrix** - No transformations, reductions, scaling, or negation
-2. **Works for both minimize and maximize** - Same formula, no sign flips
-3. **Ignores dummy columns** - If `assignment[i] > ncol(original_cost)`, skip it
-4. **Ignores unmatched rows** - If `assignment[i] == 0` or `NA`, skip it
-5. **Only sums finite costs** - Inf/NA in matched edges are skipped
-
-### Why This Matters
-
-Algorithms use many internal tricks:
-- **Hungarian**: Row/column reduction leaves costs near zero
-- **Gabow-Tarjan**: Bit-scaling, integer conversion, negation for maximize
-- **Auction**: Prices added to costs, epsilon-optimal trades
-
-**These must NOT leak into the reported cost!**
-
-### Implementation Pattern
-
-Every solver must follow this pattern at the end:
-
-```cpp
-// Convert to 1-based R assignment vector
-Rcpp::IntegerVector assignment_R(n);
-for (int i = 0; i < n; ++i) {
-    assignment_R[i] = (internal_match[i] != UNMATCHED)
-                      ? (internal_match[i] + 1)
-                      : NA_INTEGER;
-}
-
-// Use centralized helper (THE SINGLE SOURCE OF TRUTH)
-double total_cost = compute_total_cost(original_cost_matrix, assignment_R);
-
-return Rcpp::List::create(
-    Rcpp::Named("match") = assignment_R,
-    Rcpp::Named("total_cost") = total_cost
-);
-```
-
-**NEVER compute cost from internal transformed matrices!**
-
-### Testing Cost Semantics
-
-Use R helper functions from [R/diagnostic_tools.R](R/diagnostic_tools.R):
-
+**Matching Functions:**
 ```r
-# Verify single solver
-result <- assignment(cost, method = "gabow_tarjan")
-verify_cost_semantics(cost, result)  # Checks cost matches formula
-
-# Compare multiple solvers
-compare_solver_costs(cost, methods = c("jv", "hungarian", "gabow_tarjan"))
-
-# Test both minimize and maximize
-test_cost_minimize_maximize(cost)
+list(
+  pairs = tibble(left_id, right_id, distance, block_id),
+  info = list(
+    method = "optimal" or "greedy",
+    strategy = "row_best" (greedy only),
+    n_matched = integer,
+    total_distance = numeric,
+    n_blocks = integer (if blocking)
+  ),
+  # If return_diagnostics = TRUE:
+  left_unmatched = tibble(...),
+  right_unmatched = tibble(...),
+  cost_matrix = matrix,
+  distance_info = list(...)
+)
 ```
 
-These functions enforce the cost guarantee and catch violations early.
+**Balance Diagnostics:**
+```r
+balance_diagnostics object with:
+  var_stats = tibble(variable, mean_left, mean_right, std_diff, ...),
+  overall = list(mean_abs_std_diff, max_abs_std_diff, pct_large_imbalance),
+  n_matched, n_unmatched_left, n_unmatched_right,
+  has_blocks, block_stats
+```
 
-## Adding New Algorithms
+## Adding New Functionality
 
-To add a new LAP solver `foo`:
+### Adding a New LAP Solver
 
-1. Create [src/solve_foo.cpp](src/solve_foo.cpp) with `solve_foo_impl()`
-2. Add declaration to [src/lap_internal.h](src/lap_internal.h)
-3. Export in [src/rcpp_interface.cpp](src/rcpp_interface.cpp): `[[Rcpp::export]] lap_solve_foo()`
-4. Add R wrapper in [R/assignment.R](R/assignment.R): call `lap_solve_foo()` in switch statement
-5. Optionally add standalone function in [R/lap_solve.R](R/lap_solve.R) like `assignment_foo()`
-6. Create test file [tests/testthat/test-assignment-foo.R](tests/testthat/test-assignment-foo.R)
-7. Update documentation and NAMESPACE via `devtools::document()`
+1. Create `src/solvers/solve_foo.cpp` with `solve_foo_impl()`
+2. Add forward declaration in `src/rcpp_interface.cpp`
+3. Add `[[Rcpp::export]]` wrapper in `src/rcpp_interface.cpp`
+4. Run `Rcpp::compileAttributes()` to update `R/RcppExports.R`
+5. Add case to switch in `assignment()` ([R/assignment.R](R/assignment.R))
+6. Create `tests/testthat/test-assignment-foo.R`
+7. Update documentation via `devtools::document()`
+
+### Adding Matching Features
+
+**For preprocessing:**
+- Edit [R/matching_preprocessing.R](R/matching_preprocessing.R)
+- Add tests to [tests/testthat/test-matching.R](tests/testthat/test-matching.R)
+- Update print methods if adding new diagnostics
+
+**For balance diagnostics:**
+- Edit [R/matching_diagnostics.R](R/matching_diagnostics.R)
+- Extend `balance_diagnostics()` or add new functions
+- Update print methods for new output
+
+**For new matching algorithms:**
+- Add C++ implementation in `src/solvers/`
+- Export via `src/rcpp_interface.cpp`
+- Add R wrapper in [R/matching_core.R](R/matching_core.R)
 
 ## Common Pitfalls
 
-1. **Forgetting to call `Rcpp::compileAttributes()`** after adding/modifying `[[Rcpp::export]]`
-2. **Mixing 0-based and 1-based indexing** at R/C++ boundary
-3. **Not handling rectangular matrices** - always test with n ≠ m
-4. **Ignoring NA/Inf costs** - test forbidden edges
-5. **Auto method selection** - verify `method="auto"` chooses correct algorithm
-6. **Pixel morphing semantics** - remember renderer is transport-only (A's colors)
+1. **Forgetting `Rcpp::compileAttributes()`** after C++ changes
+   - Symptom: "could not find function" errors
+   - Fix: Always run after adding/modifying `[[Rcpp::export]]`
 
-## Package Structure Notes
+2. **Exporting from subdirectories**
+   - DON'T: Put `[[Rcpp::export]]` in `src/solvers/*.cpp`
+   - DO: Forward declare and wrap in `src/rcpp_interface.cpp`
 
-- Entry point: [R/assignment.R](R/assignment.R) (`assignment()` function)
-- Tidy interface: [R/lap_solve.R](R/lap_solve.R) (`lap_solve()` function)
-- K-best: [R/kbest_assignment.R](R/kbest_assignment.R)
-- Batch solving: [R/lap_solve_batch.R](R/lap_solve_batch.R)
-- Image morphing: [R/pixel_morph.R](R/pixel_morph.R)
-- All C++ exports: [src/rcpp_interface.cpp](src/rcpp_interface.cpp)
+3. **0-based vs 1-based indexing**
+   - Always convert at R/C++ boundary
+   - C++ match vectors use -1 for unmatched, R uses 0/NA
+
+4. **Not handling rectangular matrices**
+   - Always test with nrow != ncol
+   - Check auto-transpose logic
+
+5. **Ignoring NA/Inf costs**
+   - Test forbidden edges (calipers, blocking)
+   - Verify cost computation skips invalid pairs
+
+6. **Package name references**
+   - OLD: lapr (deprecated)
+   - NEW: couplr (current)
+   - Check tests, examples, vignettes
+
+7. **Object files in commits**
+   - Clean before committing: `git clean -fdX src/`
+   - Add `src/*.o` to .gitignore
+
+## Documentation Files
+
+**Implementation Guides:**
+- [IMPLEMENTATION_STEP1.md](IMPLEMENTATION_STEP1.md) - Automatic preprocessing details
+- [IMPLEMENTATION_STEP2.md](IMPLEMENTATION_STEP2.md) - Balance diagnostics details
+- [MATCHING_ENHANCEMENTS.md](MATCHING_ENHANCEMENTS.md) - Feature roadmap
+- [SETUP_REQUIRED.md](SETUP_REQUIRED.md) - Initial setup for greedy matching
+
+**Package Documentation:**
+- [CHANGELOG.md](CHANGELOG.md) - Detailed release notes
+- [NEWS.md](NEWS.md) - User-facing changes (R convention)
+
+**Examples:**
+- [examples/auto_scale_demo.R](examples/auto_scale_demo.R) - 5 preprocessing demos
+- [examples/balance_diagnostics_demo.R](examples/balance_diagnostics_demo.R) - 6 balance demos
+
+## Special Notes
+
+### Pixel Morphing Semantics
+
+Complex multi-mode system ([R/morph_pixel.R](R/morph_pixel.R)):
+
+**Modes:**
+- `exact` - Full pixel LAP (< 4096 pixels)
+- `color_walk` - Color quantization + spatial LAPs
+- `recursive` - Multi-scale 2×2 tiling
+
+**CRITICAL rendering semantics:**
+- Assignment uses BOTH images A and B
+- Renderer uses ONLY A's colors (transport-only)
+- B influences WHERE pixels go, not WHAT colors
+- Result is sharp (no motion blur)
+
+### Cost Computation Guarantee
+
+All solvers MUST use `compute_total_cost()` from [src/core/lap_utils.cpp](src/core/lap_utils.cpp):
+
+```cpp
+double total_cost = compute_total_cost(original_cost_matrix, assignment_R);
+```
+
+**Never** compute cost from transformed/reduced/scaled matrices. The cost field has precise semantics: sum of original_cost[i, match[i]] over matched rows.
+
+### Backward Compatibility
+
+v1.0.0 is 100% backward compatible:
+- All new parameters default to previous behavior
+- `auto_scale = FALSE` by default
+- No breaking changes to return structures
+- All 1365 pre-existing tests still pass
+
+## Development History
+
+- **v1.0.0 (2025-11-19):** Major release
+  - Added automatic preprocessing and scaling
+  - Added greedy matching algorithms
+  - Added comprehensive balance diagnostics
+  - Renamed from lapr to couplr
+  - 1369 tests passing
+
+- **v0.1.0:** Initial release
+  - Core LAP solvers
+  - Basic matching
+  - Pixel morphing

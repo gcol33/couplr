@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(lapr)
+library(couplr)
 
-test_check("lapr")
+test_check("couplr")

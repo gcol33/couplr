@@ -66,6 +66,38 @@ result
 #> 3     3     1     3 jv
 ```
 
+### Tidy Workflow: Optimal vs Greedy
+
+```r
+library(couplr)
+library(dplyr)
+
+# Optimal matching with pipe workflow
+matched_data <- treatment_df |>
+  match_couples(
+    control_df,
+    vars = c("age", "income", "education"),
+    auto_scale = TRUE,
+    max_distance = 0.5
+  ) |>
+  join_matched(treatment_df, control_df)
+
+# Greedy matching for large datasets (10-100x faster)
+matched_data_fast <- treatment_df |>
+  greedy_couples(
+    control_df,
+    vars = c("age", "income", "education"),
+    strategy = "row_best",
+    auto_scale = TRUE
+  ) |>
+  join_matched(treatment_df, control_df)
+
+# Assess balance quality
+treatment_df |>
+  match_couples(control_df, vars = c("age", "income")) |>
+  balance_diagnostics(treatment_df, control_df, vars = c("age", "income"))
+```
+
 ### Optimal Matching with Preprocessing
 
 ```r

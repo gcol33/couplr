@@ -5,41 +5,35 @@
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/gcol33/couplr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-## The Problem You Probably Don't Notice
+## Why Pairing Matters
 
-Most analyses compare two groups by summarizing them — means, differences, t-tests, regressions. No matching, just group-level comparisons.
+When comparing two groups, simple averages can mislead if the groups differ in important ways. One group might have older participants, higher incomes, or different health profiles. These compositional differences create confounding that obscures real effects.
 
-But when the groups differ in important ways — size, distribution, covariates — a group-level comparison blends everything together. You're comparing averages of mismatched things. Imbalance drives false differences: one group has "easier cases", the other "harder cases". Noise becomes signal.
+**Pairing solves this.** Each observation in group A gets matched to its most similar counterpart in group B, creating balanced comparisons.
 
-**A cleaner comparison happens when each observation in group A is paired with the most comparable observation in group B.**
+Manual pairing doesn't scale. For large datasets, you need an algorithm that finds the globally optimal set of pairs. This is a Linear Assignment Problem, and couplr solves it efficiently.
 
-Doing this pairing manually — or guessing by eye — breaks instantly for large datasets. You need something that finds the best pairs across the whole dataset, not just one observation at a time.
-
-**This is a Linear Assignment Problem.** Optimal solvers do it cleanly, reproducibly, and without heuristics.
-
-## What couplr Does
-
-**couplr** makes optimal pairing accessible in one or two lines of R:
-
-- Makes group comparisons **fair and balanced**
-- Removes bias caused by uneven composition
-- Reveals effects that grouping hides (or fabricates)
-- Works with any model (`lm`, GLM, mixed models, ML)
-- Handles any two groups you want to compare
+## Quick Example
 
 ```r
 library(couplr)
 
-# Compare treatment vs control with optimal pairing
+# Match treatment and control groups on covariates
 result <- treated |>
   match_couples(control, vars = c("age", "income", "health"))
 
 # Get analysis-ready dataset
 data <- join_matched(result, treated, control)
 
-# Now compare fairly matched pairs
+# Estimate treatment effect on balanced pairs
 lm(outcome ~ treatment + age, data = data)
 ```
+
+**What you get:**
+- Optimal pairing across all observations
+- Automatic balance checking with diagnostics
+- Works with any downstream model
+- Fast algorithms for datasets of any size
 
 ## Features
 

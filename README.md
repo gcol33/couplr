@@ -320,6 +320,7 @@ result_weighted <- match_couples(
   plots_2010_weighted, plots_2020_weighted,
   vars = c("lat_scaled", "lon_scaled", "elev_scaled"),
   distance = "euclidean",        # Now captures custom 3D spatial structure
+  auto_scale = TRUE,             # Still normalize after custom weighting
   max_distance = 0.5
 ) |>
   join_matched(plots_2010, plots_2020)

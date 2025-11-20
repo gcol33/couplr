@@ -9,11 +9,12 @@
 
 ## Features
 
-### 🎯 14+ LAP Algorithms
+### 🎯 12 LAP Algorithms + Greedy Methods
 - **Classic solvers**: Hungarian, Jonker-Volgenant
 - **Auction variants**: Standard, Gauss-Seidel, scaled
-- **Advanced methods**: Gabow-Tarjan, cost-scaling, cycle canceling
-- **Greedy algorithms**: Fast approximate matching for large-scale problems
+- **Advanced methods**: Gabow-Tarjan, cost-scaling, cycle canceling, SSAP bucket
+- **Specialized**: SAP (shortest augmenting path), CS-flow, HK01 (binary costs), brute-force
+- **Greedy algorithms**: Sorted, row-best, priority queue (fast approximate matching)
 - **Automatic selection**: Smart method selection based on problem characteristics
 
 ### 🔬 Production-Ready Matching Workflows

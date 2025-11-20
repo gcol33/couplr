@@ -320,7 +320,28 @@ result <- match_couples(
 ### Particle Tracking
 ```r
 # Track particles across video frames
-result <- lap_solve(distance_matrix, method = "jv")
+# Build distance matrix: Euclidean distance between particle positions
+particles_t1 <- data.frame(x = c(10, 45, 78), y = c(20, 55, 30))
+particles_t2 <- data.frame(x = c(12, 47, 80), y = c(22, 53, 28))
+
+# Compute pairwise distances
+cost <- as.matrix(dist(rbind(particles_t1, particles_t2)))[1:3, 4:6]
+
+# Solve assignment: which particle in t2 corresponds to which in t1?
+result <- lap_solve(cost, method = "jv")
+
+# Get particle trajectories
+trajectories <- result |>
+  mutate(
+    x_from = particles_t1$x[row],
+    y_from = particles_t1$y[row],
+    x_to = particles_t2$x[col],
+    y_to = particles_t2$y[col],
+    displacement = sqrt((x_to - x_from)^2 + (y_to - y_from)^2)
+  )
+
+# Now answer: What's the average particle velocity?
+# Or: Which particles moved the most between frames?
 ```
 
 ## Algorithm Selection

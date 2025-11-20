@@ -16,7 +16,8 @@ match_couples_blocked(
   scale,
   max_distance,
   calipers,
-  method
+  method,
+  parallel = FALSE
 )
 }
 \description{

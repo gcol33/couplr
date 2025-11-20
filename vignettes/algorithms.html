@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Gilles Colling" />
+
+<meta name="date" content="2025-11-20" />
+
+<title>Algorithm Details and Mathematical Foundations</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Algorithm Details and Mathematical
+Foundations</h1>
+<h4 class="author">Gilles Colling</h4>
+<h4 class="date">2025-11-20</h4>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>This vignette provides detailed mathematical background on the
+algorithms implemented in <code>lapr</code>. Understanding these
+algorithms can help you choose the right method for your specific
+problem and appreciate the theoretical foundations of assignment
+optimization.</p>
+</div>
+<div id="the-linear-assignment-problem" class="section level2">
+<h2>The Linear Assignment Problem</h2>
+<div id="formal-definition" class="section level3">
+<h3>Formal Definition</h3>
+<p>Given a cost matrix <span class="math inline">\(C \in \mathbb{R}^{n
+\times m}\)</span>, the linear assignment problem (LAP) seeks a set of
+assignments that minimizes the total cost:</p>
+<p><span class="math display">\[
+\min \sum_{i=1}^{n} \sum_{j=1}^{m} c_{ij} x_{ij}
+\]</span></p>
+<p>subject to:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\sum_{j=1}^{m} x_{ij} &amp;\leq 1 \quad \forall i \in \{1,\ldots,n\} \\
+\sum_{i=1}^{n} x_{ij} &amp;\leq 1 \quad \forall j \in \{1,\ldots,m\} \\
+x_{ij} &amp;\in \{0,1\} \quad \forall i,j
+\end{aligned}
+\]</span></p>
+<p>Here <span class="math inline">\(x_{ij} = 1\)</span> if source <span class="math inline">\(i\)</span> is assigned to target <span class="math inline">\(j\)</span>, and <span class="math inline">\(x_{ij}
+= 0\)</span> otherwise. The constraints ensure that each source is
+assigned to at most one target, and each target receives at most one
+source.</p>
+</div>
+<div id="duality-and-optimality-conditions" class="section level3">
+<h3>Duality and Optimality Conditions</h3>
+<p>The LAP has a strong dual formulation. For each source <span class="math inline">\(i\)</span> and target <span class="math inline">\(j\)</span>, we associate dual variables <span class="math inline">\(u_i\)</span> and <span class="math inline">\(v_j\)</span>. The dual problem is:</p>
+<p><span class="math display">\[
+\max \sum_{i=1}^{n} u_i + \sum_{j=1}^{m} v_j
+\]</span></p>
+<p>subject to:</p>
+<p><span class="math display">\[
+u_i + v_j \leq c_{ij} \quad \forall i,j
+\]</span></p>
+<p>A primal-dual solution <span class="math inline">\((x^*, u^*,
+v^*)\)</span> is optimal if and only if it satisfies
+<strong>complementary slackness</strong>:</p>
+<p><span class="math display">\[
+x_{ij}^* &gt; 0 \implies u_i^* + v_j^* = c_{ij}
+\]</span></p>
+<p>This condition means that only assignments along <strong>tight
+edges</strong> (where the dual constraint holds with equality) can be
+part of an optimal solution. This principle underlies most efficient LAP
+algorithms.</p>
+</div>
+</div>
+<div id="algorithms-in-lapr" class="section level2">
+<h2>Algorithms in lapr</h2>
+<div id="hungarian-algorithm" class="section level3">
+<h3>Hungarian Algorithm</h3>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3)\)</span> for square problems, <span class="math inline">\(O(n^2m)\)</span> for rectangular</p>
+<p>The Hungarian algorithm, developed by Kuhn (1955) based on work by
+Kőnig and Egerváry, is the classical method for solving the LAP. It
+maintains dual feasibility throughout and iteratively improves the
+primal solution.</p>
+<div id="algorithm-steps" class="section level4">
+<h4>Algorithm Steps</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Initialization</strong>: Start with any feasible dual
+solution, typically: <span class="math display">\[u_i = \min_j c_{ij},
+\quad v_j = 0\]</span></p></li>
+<li><p><strong>Construct equality graph</strong>: Build a graph <span class="math inline">\(G_=\)</span> containing only tight edges: <span class="math display">\[G_= = \{(i,j) : u_i + v_j =
+c_{ij}\}\]</span></p></li>
+<li><p><strong>Find maximum matching</strong>: Compute a maximum
+cardinality matching <span class="math inline">\(M\)</span> in <span class="math inline">\(G_=\)</span></p></li>
+<li><p><strong>Check optimality</strong>: If <span class="math inline">\(|M| = n\)</span> (all sources matched), the
+solution is optimal</p></li>
+<li><p><strong>Dual update</strong>: Otherwise, find a minimum dual
+update that adds new tight edges:</p>
+<ul>
+<li>Compute the <strong>alternating tree</strong> from unmatched
+sources</li>
+<li>Let <span class="math inline">\(S\)</span> be sources in the tree,
+<span class="math inline">\(T\)</span> be targets in the tree</li>
+<li>Compute <span class="math inline">\(\Delta = \min_{i \in S, j \notin
+T} (c_{ij} - u_i - v_j)\)</span></li>
+<li>Update: <span class="math inline">\(u_i \leftarrow u_i +
+\Delta\)</span> for <span class="math inline">\(i \in S\)</span>, <span class="math inline">\(v_j \leftarrow v_j - \Delta\)</span> for <span class="math inline">\(j \in T\)</span></li>
+</ul></li>
+<li><p><strong>Repeat</strong>: Return to step 2 with the updated dual
+variables</p></li>
+</ol>
+</div>
+<div id="when-to-use" class="section level4">
+<h4>When to Use</h4>
+<p>The Hungarian algorithm is:</p>
+<ul>
+<li><strong>Exact</strong>: Always finds the optimal solution</li>
+<li><strong>Pedagogical</strong>: Easy to understand conceptually</li>
+<li><strong>Moderate performance</strong>: Good for small to medium
+problems (&lt; 500×500)</li>
+<li><strong>Stable</strong>: Numerically robust with clean
+termination</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Example with Hungarian algorithm</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="dv">10</span>, <span class="dv">19</span>, <span class="dv">8</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="dv">15</span>, <span class="dv">10</span>, <span class="dv">11</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">14</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>), <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;hungarian&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">print</span>(result)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; Assignment Result</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; =================</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 3</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt;   source target  cost</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt;  &lt;int&gt; &lt;dbl&gt;</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 1      1      3     8</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; 2      2      2    10</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt; 3      3      1     9</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; Total cost: 27 </span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co">#&gt; Method: hungarian</span></span></code></pre></div>
+</div>
+</div>
+<div id="jonker-volgenant-algorithm" class="section level3">
+<h3>Jonker-Volgenant Algorithm</h3>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3)\)</span> expected time, <span class="math inline">\(O(n^2)\)</span> space</p>
+<p>The Jonker-Volgenant (JV) algorithm (1987) is an optimized variant of
+the shortest augmenting path approach. It’s the default algorithm in
+<code>lapr</code> and provides good performance on most problem
+types.</p>
+<div id="key-ideas" class="section level4">
+<h4>Key Ideas</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Shortest augmenting paths</strong>: Rather than finding
+maximum matchings in equality graphs, JV builds augmenting paths in a
+<strong>reduced cost graph</strong> with respect to dual
+variables</p></li>
+<li><p><strong>Column reduction</strong>: An initial preprocessing phase
+that assigns targets greedily to minimize reduced costs</p></li>
+<li><p><strong>Auction phase</strong>: A rapid auction-style update that
+improves multiple dual variables simultaneously</p></li>
+<li><p><strong>Shortest path phase</strong>: Classical shortest
+augmenting path to handle remaining unmatched sources</p></li>
+</ol>
+<p>The algorithm maintains <strong><span class="math inline">\(\epsilon\)</span>-complementary slackness</strong>
+during execution, allowing it to take larger steps than the classical
+Hungarian method while still guaranteeing exact optimality at
+termination.</p>
+</div>
+<div id="algorithm-phases" class="section level4">
+<h4>Algorithm Phases</h4>
+<p><strong>Phase 1: Column Reduction</strong></p>
+<p>For each target <span class="math inline">\(j\)</span>, find the
+source <span class="math inline">\(i^*\)</span> with minimum cost: <span class="math display">\[i^* = \arg\min_i c_{ij}\]</span></p>
+<p>If <span class="math inline">\(i^*\)</span> is unmatched, assign
+<span class="math inline">\((i^*, j)\)</span> and set <span class="math inline">\(v_j = c_{i^*j}\)</span>. This provides a good
+initial solution and dual bounds.</p>
+<p><strong>Phase 2: Reduction Transfer</strong></p>
+<p>Update dual variables to satisfy reduced cost constraints: <span class="math display">\[u_i = \min_j (c_{ij} - v_j)\]</span></p>
+<p><strong>Phase 3: Augmentation</strong></p>
+<p>For each unmatched source:</p>
+<ol style="list-style-type: decimal">
+<li>Build shortest augmenting path tree using Dijkstra-style search on
+reduced costs</li>
+<li>Update dual variables along the path</li>
+<li>Augment the matching</li>
+</ol>
+</div>
+<div id="when-to-use-1" class="section level4">
+<h4>When to Use</h4>
+<p>Jonker-Volgenant is:</p>
+<ul>
+<li><strong>Efficient</strong>: Good general-purpose performance,
+especially for dense problems</li>
+<li><strong>Default choice</strong>: Used by
+<code>method = &quot;auto&quot;</code> for most problems</li>
+<li><strong>Memory efficient</strong>: <span class="math inline">\(O(n^2)\)</span> space even for dense problems</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Jonker-Volgenant on a larger problem</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>large_cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(n <span class="sc">*</span> n, <span class="dv">0</span>, <span class="dv">100</span>), n, n)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">system.time</span>({</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(large_cost, <span class="at">method =</span> <span class="st">&quot;jv&quot;</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>})</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;       0       0       0</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total cost:&quot;</span>, <span class="fu">get_total_cost</span>(result), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; Total cost: 149.0911</span></span></code></pre></div>
+</div>
+</div>
+<div id="auction-algorithm-family" class="section level3">
+<h3>Auction Algorithm Family</h3>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^2
+\log(nC) / \epsilon)\)</span> for maximum cost <span class="math inline">\(C\)</span> and <span class="math inline">\(\epsilon\)</span>-optimality</p>
+<p>The auction algorithm, developed by Bertsekas (1988), takes an
+economic approach to the assignment problem. Sources “bid” for targets,
+and prices (dual variables) adjust based on competition.
+<code>lapr</code> implements three variants of the auction algorithm,
+each with different performance characteristics.</p>
+<div id="core-auction-concept" class="section level4">
+<h4>Core Auction Concept</h4>
+<p>All auction variants share the same fundamental approach:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Initialization</strong>: Set all prices <span class="math inline">\(p_j = 0\)</span> (dual variables)</p></li>
+<li><p><strong>Bidding phase</strong>: Each unmatched source <span class="math inline">\(i\)</span> finds its best target: <span class="math display">\[j^* = \arg\max_j (v_{ij} - p_j)\]</span> where
+<span class="math inline">\(v_{ij}\)</span> is the value (negative cost)
+of assigning <span class="math inline">\(i\)</span> to <span class="math inline">\(j\)</span></p></li>
+<li><p><strong>Compute bid</strong>: Source <span class="math inline">\(i\)</span> bids for target <span class="math inline">\(j^*\)</span> with increment: <span class="math display">\[\text{bid}_i = (v_{ij^*} - p_{j^*}) -
+(v_{ij^{\text{2nd}}} - p_{j^{\text{2nd}}}) + \epsilon\]</span> where
+<span class="math inline">\(j^{\text{2nd}}\)</span> is the second-best
+target for <span class="math inline">\(i\)</span></p></li>
+<li><p><strong>Assignment phase</strong>: For each target <span class="math inline">\(j\)</span> receiving bids:</p>
+<ul>
+<li>Assign <span class="math inline">\(j\)</span> to the highest bidder
+<span class="math inline">\(i^*\)</span></li>
+<li>Update price: <span class="math inline">\(p_j \leftarrow p_j +
+\text{bid}_{i^*}\)</span></li>
+<li>Remove previous assignment to <span class="math inline">\(j\)</span>
+(if any)</li>
+</ul></li>
+<li><p><strong>Repeat</strong>: Continue until all sources are
+matched</p></li>
+</ol>
+<p>The variants differ in epsilon management, bidding order, and
+convergence strategies.</p>
+</div>
+<div id="variant-1-standard-fixed-epsilon-auction" class="section level4">
+<h4>Variant 1: Standard Fixed-Epsilon Auction</h4>
+<p><strong>When to use</strong>: Default auction choice,
+general-purpose</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction&quot;</span>)</span></code></pre></div>
+<p><strong>Key features</strong>:</p>
+<ul>
+<li>Uses adaptive epsilon: <span class="math inline">\(\epsilon =
+\text{spread} / (2n^2)\)</span> based on cost range</li>
+<li>Queue-based: maintains unmatched sources in a queue, processes in
+LIFO order</li>
+<li>Fast convergence for most problem types</li>
+<li>Good numerical stability</li>
+</ul>
+<p><strong>Algorithm details</strong>:</p>
+<p>The epsilon is chosen to balance speed and accuracy: - Too large:
+fast but may produce suboptimal results - Too small: slow convergence -
+Adaptive formula scales with problem size and cost range</p>
+<p><strong>Epsilon selection</strong>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="dt">double</span> spread <span class="op">=</span> max_cost <span class="op">-</span> min_cost<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>epsilon <span class="op">=</span> spread <span class="op">/</span> <span class="op">(</span><span class="fl">2.0</span> <span class="op">*</span> n <span class="op">*</span> n<span class="op">);</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>epsilon <span class="op">=</span> max<span class="op">(</span>epsilon<span class="op">,</span> <span class="fl">1e-12</span><span class="op">);</span>  <span class="co">// Defensive lower bound</span></span></code></pre></div>
+<p>This gives <span class="math inline">\(\epsilon\)</span>-optimality
+where final cost is within <span class="math inline">\(n\epsilon\)</span> of true optimum.</p>
+</div>
+<div id="variant-2-scaled-epsilon-auction" class="section level4">
+<h4>Variant 2: Scaled-Epsilon Auction</h4>
+<p><strong>When to use</strong>: Problems with large cost ranges or when
+tighter optimality is needed</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_scaled&quot;</span>)</span></code></pre></div>
+<p><strong>Key features</strong>:</p>
+<ul>
+<li><strong>Epsilon-scaling phases</strong>: Starts with large <span class="math inline">\(\epsilon\)</span>, progressively reduces</li>
+<li>Discards and rebuilds matching each phase</li>
+<li>Fewer total bids than fixed-epsilon for large-range problems</li>
+<li>Better final accuracy</li>
+</ul>
+<p><strong>Algorithm structure</strong>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Initial epsilon</strong>: <span class="math inline">\(\epsilon_0 = \max|c_{ij}|\)</span> (maximum
+absolute cost)</p></li>
+<li><p><strong>Phase loop</strong>:</p>
+<pre><code>for each phase:
+  epsilon = epsilon / alpha  (typically alpha = 7)
+  discard all assignments
+  rebuild complete matching at new epsilon
+  until epsilon &lt; epsilon_final</code></pre></li>
+<li><p><strong>Price updates</strong>: Uses cost minimization
+formulation where prices <em>decrease</em>: <span class="math display">\[p_j \leftarrow p_j - (\gamma + \epsilon)\]</span>
+where <span class="math inline">\(\gamma = \text{second\_best\_cost} -
+\text{best\_cost}\)</span></p></li>
+</ol>
+<p><strong>Phases</strong>: Typically 3-7 phases depending on cost range
+and alpha parameter.</p>
+<p><strong>Convergence</strong>: Each phase solves an easier problem
+(larger <span class="math inline">\(\epsilon\)</span>), providing warm
+start for next phase.</p>
+<p><strong>Performance</strong>: - Better than fixed-epsilon when: cost
+range &gt; <span class="math inline">\(10^6\)</span>, need high accuracy
+- Worse than fixed-epsilon when: costs are similar magnitude</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Example with large cost range</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(n <span class="sc">*</span> n, <span class="dv">1</span>, <span class="fl">1e6</span>), n, n)  <span class="co"># Large range: 1 to 1,000,000</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">system.time</span>({</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  result_scaled <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_scaled&quot;</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>})</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;       0       0       0</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total cost:&quot;</span>, <span class="fu">get_total_cost</span>(result_scaled), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; Total cost: 1543862</span></span></code></pre></div>
+</div>
+<div id="variant-3-gauss-seidel-auction" class="section level4">
+<h4>Variant 3: Gauss-Seidel Auction</h4>
+<p><strong>When to use</strong>: Problems where sequential processing
+may exploit structure</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_gs&quot;</span>)</span></code></pre></div>
+<p><strong>Key features</strong>:</p>
+<ul>
+<li><strong>Sequential bidding</strong>: Processes sources in order (1,
+2, …, n)</li>
+<li><strong>Immediate price updates</strong>: Price changes affect
+subsequent bids in same iteration</li>
+<li>Can converge faster for problems with spatial structure</li>
+<li>Handles <span class="math inline">\(n &gt; m\)</span> automatically
+via internal transpose</li>
+</ul>
+<p><strong>Algorithm details</strong>:</p>
+<p>Unlike the queue-based approach, Gauss-Seidel sweeps through all
+sources:</p>
+<pre><code>repeat until converged:
+  for i = 1 to n:
+    if i is unmatched or displaced:
+      find best and second-best objects
+      compute bid = best - second + epsilon
+      update price[j_best] += bid
+      update assignments (may displace another source)</code></pre>
+<p><strong>Key difference</strong>: Price update is applied
+<em>immediately</em>, affecting the next source’s decision in the same
+sweep.</p>
+<p><strong>Convergence behavior</strong>:</p>
+<ul>
+<li>Can be faster than queue-based when problem has structure</li>
+<li>Sequential processing can exploit correlations between nearby
+sources</li>
+<li>Adaptive epsilon matching standard auction: <span class="math inline">\(\epsilon = \text{spread} / (2n^2)\)</span></li>
+</ul>
+<p><strong>Auto-transpose</strong>: If <span class="math inline">\(n
+&gt; m\)</span>, automatically transposes problem internally and
+converts result back.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Example with spatial structure</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Create cost matrix with spatial correlation</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>x_source <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span>n</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>y_source <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span>n</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">outer</span>(x_source, y_source, <span class="cf">function</span>(i, j) <span class="fu">abs</span>(i <span class="sc">-</span> j) <span class="sc">+</span> <span class="fu">runif</span>(n<span class="sc">*</span>n, <span class="dv">0</span>, <span class="dv">5</span>))</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">system.time</span>({</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  result_gs <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_gs&quot;</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>})</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt;       0       0       0</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total cost:&quot;</span>, <span class="fu">get_total_cost</span>(result_gs), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; Total cost: 206.8174</span></span></code></pre></div>
+</div>
+<div id="comparison-of-auction-variants" class="section level4">
+<h4>Comparison of Auction Variants</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Feature</th>
+<th>Standard</th>
+<th>Scaled</th>
+<th>Gauss-Seidel</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Epsilon strategy</td>
+<td>Fixed adaptive</td>
+<td>Scaling phases</td>
+<td>Fixed adaptive</td>
+</tr>
+<tr class="even">
+<td>Bidding order</td>
+<td>Queue (LIFO)</td>
+<td>Queue per phase</td>
+<td>Sequential sweep</td>
+</tr>
+<tr class="odd">
+<td>Best for</td>
+<td>General purpose</td>
+<td>Large cost range</td>
+<td>Structured problems</td>
+</tr>
+<tr class="even">
+<td>Iterations</td>
+<td>Medium</td>
+<td>Fewer phases</td>
+<td>Can be fewer</td>
+</tr>
+<tr class="odd">
+<td>Memory</td>
+<td><span class="math inline">\(O(n + m)\)</span></td>
+<td><span class="math inline">\(O(n + m)\)</span></td>
+<td><span class="math inline">\(O(n + m)\)</span></td>
+</tr>
+<tr class="even">
+<td>Handles <span class="math inline">\(n &gt; m\)</span></td>
+<td>No (error)</td>
+<td>Via padding</td>
+<td>Via transpose</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="when-to-use-which-auction-variant" class="section level4">
+<h4>When to Use Which Auction Variant</h4>
+<p><strong>Use standard auction</strong>
+(<code>method = &quot;auction&quot;</code>): - General-purpose default - Medium to
+large dense problems (<span class="math inline">\(n &gt; 500\)</span>) -
+Costs vary within reasonable range (&lt; <span class="math inline">\(10^6\)</span> spread) - Want predictable, reliable
+performance</p>
+<p><strong>Use scaled-epsilon</strong>
+(<code>method = &quot;auction_scaled&quot;</code>): - Very large cost ranges
+(spread &gt; <span class="math inline">\(10^6\)</span>) - Need provably
+tighter optimality bounds - Willing to trade initial phase overhead for
+better final accuracy - Integer costs with large variation</p>
+<p><strong>Use Gauss-Seidel</strong>
+(<code>method = &quot;auction_gs&quot;</code>): - Problem has spatial or
+sequential structure - <span class="math inline">\(n &gt; m\)</span>
+problems (auto-handles via transpose) - Experimentation to compare with
+standard - Sequential access patterns may help cache performance</p>
+</div>
+<div id="auction-algorithm-advantages" class="section level4">
+<h4>Auction Algorithm Advantages</h4>
+<p>The auction algorithm is suitable for:</p>
+<ul>
+<li><strong>Large dense problems</strong>: Scales to <span class="math inline">\(n &gt; 1000\)</span></li>
+<li><strong>Parallel implementation</strong>: Bidding phase naturally
+parallelizes (future work)</li>
+<li><strong>Approximate solutions</strong>: Can terminate early for
+<span class="math inline">\(\epsilon\)</span>-optimal solutions</li>
+<li><strong>Integer costs</strong>: Efficient with small integer
+costs</li>
+</ul>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Comparison on a medium-sized problem</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">789</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(n <span class="sc">*</span> n, <span class="dv">0</span>, <span class="dv">100</span>), n, n)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">standard =</span> <span class="fu">system.time</span>(<span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction&quot;</span>))[<span class="st">&quot;elapsed&quot;</span>],</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">scaled =</span> <span class="fu">system.time</span>(<span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_scaled&quot;</span>))[<span class="st">&quot;elapsed&quot;</span>],</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="at">gauss_seidel =</span> <span class="fu">system.time</span>(<span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;auction_gs&quot;</span>))[<span class="st">&quot;elapsed&quot;</span>]</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>)</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="fu">print</span>(times)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt;     standard.elapsed       scaled.elapsed gauss_seidel.elapsed </span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt;                    0                    0                    0</span></span></code></pre></div>
+<p><strong>Numerical Stability</strong>:</p>
+<p>All auction variants include safeguards: - Tie-breaking via
+deterministic perturbation (prevents cycling) - Iteration guards
+(prevent infinite loops) - Epsilon clamping (prevents denormal numbers)
+- Spread-based epsilon (scale-invariant)</p>
+</div>
+</div>
+<div id="sparse-assignment-sap" class="section level3">
+<h3>Sparse Assignment (SAP)</h3>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^2 +
+nm)\)</span> for sparse problems with <span class="math inline">\(m\)</span> edges</p>
+<p>The SAP algorithm is optimized for <strong>sparse problems</strong>
+where most cost matrix entries are effectively infinite (forbidden
+assignments). It uses efficient sparse data structures and specialized
+shortest path algorithms.</p>
+<div id="sparse-representation" class="section level4">
+<h4>Sparse Representation</h4>
+<p>Instead of storing an <span class="math inline">\(n \times n\)</span>
+matrix, SAP maintains:</p>
+<ul>
+<li><strong>Adjacency lists</strong>: Only non-forbidden edges are
+stored</li>
+<li><strong>Compressed costs</strong>: Efficient lookup of edge
+costs</li>
+<li><strong>Sparse priority queues</strong>: Fast extraction of minimum
+reduced costs</li>
+</ul>
+</div>
+<div id="algorithm-strategy" class="section level4">
+<h4>Algorithm Strategy</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Graph construction</strong>: Build a sparse directed
+graph with edges only for finite costs</p></li>
+<li><p><strong>Initialization</strong>: Set dual variables based on
+minimum outgoing costs</p></li>
+<li><p><strong>Shortest paths</strong>: Use Dijkstra’s algorithm (or
+Bellman-Ford for negative costs) on the reduced cost graph</p></li>
+<li><p><strong>Path augmentation</strong>: Augment matching along
+shortest paths and update dual variables</p></li>
+</ol>
+</div>
+<div id="when-to-use-2" class="section level4">
+<h4>When to Use</h4>
+<p>SAP is optimal for:</p>
+<ul>
+<li><strong>Sparse problems</strong>: When &gt; 50% of entries are
+forbidden (NA or Inf)</li>
+<li><strong>Rectangular problems</strong>: Naturally handles <span class="math inline">\(n \times m\)</span> problems efficiently</li>
+<li><strong>Structured sparsity</strong>: Problems with known graph
+structure</li>
+<li><strong>Large but sparse</strong>: Can handle very large <span class="math inline">\(n\)</span> if sparsity is high</li>
+</ul>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Sparse assignment problem</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">789</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># Create sparse cost matrix (70% forbidden)</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">Inf</span>, n, n)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>n_edges <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fl">0.3</span> <span class="sc">*</span> n<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>edges <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>(n<span class="sc">^</span><span class="dv">2</span>), n_edges)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>cost[edges] <span class="ot">&lt;-</span> <span class="fu">runif</span>(n_edges, <span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">system.time</span>({</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(cost, <span class="at">method =</span> <span class="st">&quot;sap&quot;</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>})</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;    0.01    0.00    0.03</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Assignments found:&quot;</span>, <span class="fu">nrow</span>(result), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; Assignments found: 200</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total cost:&quot;</span>, <span class="fu">get_total_cost</span>(result), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; Total cost: 564.3393</span></span></code></pre></div>
+</div>
+</div>
+<div id="hopcroft-karp-for-binary-costs-hk01" class="section level3">
+<h3>Hopcroft-Karp for Binary Costs (HK01)</h3>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^{2.5})\)</span> for binary cost matrices</p>
+<p>The HK01 algorithm is specialized for problems where all costs are
+either 0 or 1 (binary). It’s based on the Hopcroft-Karp algorithm for
+maximum cardinality bipartite matching.</p>
+<div id="binary-problem-structure" class="section level4">
+<h4>Binary Problem Structure</h4>
+<p>For costs <span class="math inline">\(c_{ij} \in \{0, 1\}\)</span>,
+the LAP reduces to:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Find maximum matching</strong> in the subgraph of 0-cost
+edges</li>
+<li><strong>If complete</strong>: This is the optimal solution (cost = 0
+for matched edges)</li>
+<li><strong>Otherwise</strong>: Augment with minimum number of 1-cost
+edges</li>
+</ol>
+</div>
+<div id="algorithm-approach" class="section level4">
+<h4>Algorithm Approach</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Phase 1: Maximum matching on 0-edges</strong>: Use
+Hopcroft-Karp to find maximum matching using only zero-cost
+edges</p></li>
+<li><p><strong>Phase 2: Augmentation</strong>: If matching is
+incomplete, augment using shortest augmenting paths in the full
+graph</p></li>
+</ol>
+<p>The Hopcroft-Karp algorithm finds <strong>maximal sets of augmenting
+paths</strong> simultaneously, achieving <span class="math inline">\(O(\sqrt{n})\)</span> augmentation phases.</p>
+</div>
+<div id="when-to-use-3" class="section level4">
+<h4>When to Use</h4>
+<p>HK01 is designed for:</p>
+<ul>
+<li><strong>Binary costs</strong>: Problems where <span class="math inline">\(c_{ij} \in \{0, 1\}\)</span></li>
+<li><strong>Uniform costs</strong>: Problems where all costs are equal
+(can be transformed to binary)</li>
+<li><strong>Bipartite matching</strong>: Unweighted or unit-weight
+bipartite matching</li>
+<li><strong>Very large binary problems</strong>: Can handle <span class="math inline">\(n &gt; 10000\)</span> efficiently</li>
+</ul>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Binary cost problem</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">101</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">300</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>binary_cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">sample</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>, n<span class="sc">^</span><span class="dv">2</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.7</span>)), n, n)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="fu">system.time</span>({</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(binary_cost, <span class="at">method =</span> <span class="st">&quot;hk01&quot;</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>})</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;       0       0       0</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total cost:&quot;</span>, <span class="fu">get_total_cost</span>(result), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; Total cost: 0</span></span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="murtys-algorithm-for-k-best-solutions" class="section level2">
+<h2>Murty’s Algorithm for K-Best Solutions</h2>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(k \cdot
+T(n))\)</span> where <span class="math inline">\(T(n)\)</span> is the
+complexity of solving a single LAP</p>
+<p>Murty’s algorithm (1968) finds the k best assignments in order of
+increasing cost. It’s based on a partition of the solution space into a
+search tree.</p>
+<div id="algorithm-structure" class="section level3">
+<h3>Algorithm Structure</h3>
+<ol style="list-style-type: decimal">
+<li><p><strong>Solve initial LAP</strong>: Find optimal assignment <span class="math inline">\(A^*\)</span> using any LAP solver</p></li>
+<li><p><strong>Partitioning</strong>: For the <span class="math inline">\(k\)</span>-th best solution:</p>
+<ul>
+<li>Take a partial assignment from the priority queue</li>
+<li>For each possible next assignment decision:
+<ul>
+<li><strong>Forbid</strong> one edge from the current solution</li>
+<li><strong>Force</strong> other edges to be included</li>
+<li>Solve modified LAP</li>
+<li>Add new partial solution to queue</li>
+</ul></li>
+</ul></li>
+<li><p><strong>Priority queue</strong>: Maintain solutions ranked by
+total cost</p></li>
+<li><p><strong>Repeat</strong>: Extract next best solution and partition
+until k solutions found</p></li>
+</ol>
+</div>
+<div id="partition-tree-structure" class="section level3">
+<h3>Partition Tree Structure</h3>
+<p>The algorithm maintains a tree where:</p>
+<ul>
+<li><strong>Root</strong>: Complete optimal assignment</li>
+<li><strong>Internal nodes</strong>: Partial assignments with some edges
+forced/forbidden</li>
+<li><strong>Leaves</strong>: Complete assignments</li>
+<li><strong>Children</strong>: Formed by adding one more constraint</li>
+</ul>
+<p>At each node, we solve a constrained LAP where:</p>
+<ul>
+<li>Some edges are <strong>forced</strong> to be in the solution</li>
+<li>Some edges are <strong>forbidden</strong> from the solution</li>
+<li>The remaining edges are solved optimally</li>
+</ul>
+</div>
+<div id="when-to-use-4" class="section level3">
+<h3>When to Use</h3>
+<p>K-best solutions are useful for:</p>
+<ul>
+<li><strong>Robustness analysis</strong>: Understanding sensitivity to
+cost perturbations</li>
+<li><strong>Alternative plans</strong>: Having backup assignments when
+constraints change</li>
+<li><strong>Decision support</strong>: Presenting multiple good options
+to human decision-makers</li>
+<li><strong>Cost landscapes</strong>: Understanding the structure of
+near-optimal solutions</li>
+</ul>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Find k-best solutions</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="dv">10</span>, <span class="dv">19</span>, <span class="dv">8</span>, <span class="dv">15</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="dv">10</span>, <span class="dv">18</span>, <span class="dv">7</span>, <span class="dv">17</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="dv">13</span>, <span class="dv">16</span>, <span class="dv">9</span>, <span class="dv">14</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="dv">12</span>, <span class="dv">19</span>, <span class="dv">8</span>, <span class="dv">18</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>), <span class="at">nrow =</span> <span class="dv">4</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>kbest <span class="ot">&lt;-</span> <span class="fu">lap_solve_kbest</span>(cost, <span class="at">k =</span> <span class="dv">10</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co"># Show cost progression</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="fu">summary</span>(kbest) <span class="sc">|&gt;</span> </span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">10</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 4</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt;     rank solution_id total_cost n_assignments</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt;       &lt;int&gt;      &lt;dbl&gt;         &lt;int&gt;</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt;  1     1           1         49             4</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt;  2     2           2         50             4</span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt;  3     3           3         50             4</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt;  4     4           4         51             4</span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt;  5     5           5         51             4</span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt;  6     6           6         51             4</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt;  7     7           7         51             4</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt;  8     8           8         52             4</span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt;  9     9           9         52             4</span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co">#&gt; 10    10          10         52             4</span></span></code></pre></div>
+</div>
+</div>
+<div id="automatic-algorithm-selection" class="section level2">
+<h2>Automatic Algorithm Selection</h2>
+<p>The <code>method = &quot;auto&quot;</code> option uses heuristics to select the
+best algorithm:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>auto_select <span class="ot">&lt;-</span> <span class="cf">function</span>(cost_matrix) {</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cost_matrix)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">ncol</span>(cost_matrix)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  </span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="co"># Check for binary costs</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(cost_matrix <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="cn">NA</span>, <span class="cn">Inf</span>))) {</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">&quot;hk01&quot;</span>)  <span class="co"># Binary costs → HK01</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  }</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  </span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="co"># Check sparsity</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>  finite_ratio <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">is.finite</span>(cost_matrix)) <span class="sc">/</span> (n <span class="sc">*</span> m)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>  <span class="cf">if</span> (finite_ratio <span class="sc">&lt;</span> <span class="fl">0.3</span> <span class="sc">||</span> <span class="fu">abs</span>(n <span class="sc">-</span> m) <span class="sc">&gt;</span> <span class="fl">0.5</span> <span class="sc">*</span> <span class="fu">max</span>(n, m)) {</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">&quot;sap&quot;</span>)  <span class="co"># Sparse or very rectangular → SAP</span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>  }</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>  </span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>  <span class="co"># Large dense problems</span></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>  <span class="cf">if</span> (n <span class="sc">&gt;</span> <span class="dv">1000</span>) {</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">&quot;auction&quot;</span>)  <span class="co"># Large → Auction</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>  }</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>  </span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>  <span class="co"># Default: Jonker-Volgenant</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>  <span class="fu">return</span>(<span class="st">&quot;jv&quot;</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>}</span></code></pre></div>
+<p>This selection provides good performance across diverse problem types
+without requiring user expertise.</p>
+</div>
+<div id="performance-comparison" class="section level2">
+<h2>Performance Comparison</h2>
+<p>Here’s a rough guide to algorithm performance:</p>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="18%" />
+<col width="21%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Algorithm</th>
+<th>Small (&lt; 100)</th>
+<th>Medium (100-500)</th>
+<th>Large (500-2000)</th>
+<th>Very Large (&gt; 2000)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Hungarian</td>
+<td>Excellent</td>
+<td>Good</td>
+<td>Moderate</td>
+<td>Slow</td>
+</tr>
+<tr class="even">
+<td>Jonker-V</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Good</td>
+</tr>
+<tr class="odd">
+<td>Auction</td>
+<td>Good</td>
+<td>Good</td>
+<td>Excellent</td>
+<td>Excellent</td>
+</tr>
+<tr class="even">
+<td>SAP</td>
+<td>Good†</td>
+<td>Good†</td>
+<td>Excellent†</td>
+<td>Excellent†</td>
+</tr>
+<tr class="odd">
+<td>HK01</td>
+<td>Excellent‡</td>
+<td>Excellent‡</td>
+<td>Excellent‡</td>
+<td>Excellent‡</td>
+</tr>
+</tbody>
+</table>
+<p>† For sparse problems (&lt; 30% density)<br />
+‡ For binary costs only</p>
+</div>
+<div id="numerical-considerations" class="section level2">
+<h2>Numerical Considerations</h2>
+<div id="floating-point-precision" class="section level3">
+<h3>Floating Point Precision</h3>
+<p>All algorithms handle floating-point costs correctly, but be
+aware:</p>
+<ul>
+<li><strong>Rounding errors</strong>: Can accumulate in dual
+variables</li>
+<li><strong>Tight tolerances</strong>: Complementary slackness checked
+with <span class="math inline">\(\epsilon = 10^{-10}\)</span></li>
+<li><strong>Large cost ranges</strong>: Avoid mixing costs that differ
+by &gt; <span class="math inline">\(10^{12}\)</span></li>
+</ul>
+</div>
+<div id="integer-costs" class="section level3">
+<h3>Integer Costs</h3>
+<p>For integer costs, all algorithms are <strong>exact</strong> and
+guarantee integer optimal dual variables.</p>
+</div>
+<div id="numerical-stability" class="section level3">
+<h3>Numerical Stability</h3>
+<p>The implementations include safeguards:</p>
+<ul>
+<li><strong>Overflow detection</strong>: Large costs are clamped to
+prevent overflow</li>
+<li><strong>Epsilon comparisons</strong>: Floating-point comparisons use
+tolerances</li>
+<li><strong>Dual feasibility</strong>: Maintained throughout algorithm
+execution</li>
+</ul>
+</div>
+</div>
+<div id="further-reading" class="section level2">
+<h2>Further Reading</h2>
+<p>For deeper mathematical treatment:</p>
+<ul>
+<li><p><strong>Hungarian algorithm</strong>: Kuhn, H. W. (1955). “The
+Hungarian method for the assignment problem.” <em>Naval Research
+Logistics Quarterly</em>.</p></li>
+<li><p><strong>Jonker-Volgenant</strong>: Jonker, R., &amp; Volgenant,
+A. (1987). “A shortest augmenting path algorithm for dense and sparse
+linear assignment problems.” <em>Computing</em>.</p></li>
+<li><p><strong>Auction algorithm</strong>: Bertsekas, D. P. (1988). “The
+auction algorithm: A distributed relaxation method for the assignment
+problem.” <em>Annals of Operations Research</em>.</p></li>
+<li><p><strong>Murty’s algorithm</strong>: Murty, K. G. (1968). “An
+algorithm for ranking all the assignments in order of increasing cost.”
+<em>Operations Research</em>.</p></li>
+<li><p><strong>General theory</strong>: Burkard, R., Dell’Amico, M.,
+&amp; Martello, S. (2009). <em>Assignment Problems</em>. SIAM.</p></li>
+</ul>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p><code>lapr</code> provides multiple algorithms for the linear
+assignment problem:</p>
+<ul>
+<li><strong>Hungarian</strong>: Classical algorithm, pedagogically
+clear, good for medium problems</li>
+<li><strong>Jonker-Volgenant</strong>: General-purpose method, default
+choice for most problems<br />
+</li>
+<li><strong>Auction</strong>: Good for very large dense problems,
+naturally parallelizable</li>
+<li><strong>SAP</strong>: Specialized for sparse and rectangular
+problems</li>
+<li><strong>HK01</strong>: Optimized for binary costs</li>
+<li><strong>Murty</strong>: Finds k-best solutions for robustness and
+sensitivity analysis</li>
+</ul>
+<p>The automatic selection (<code>method = &quot;auto&quot;</code>) chooses an
+algorithm based on problem characteristics, providing good performance
+without requiring algorithmic expertise.</p>
+<p><strong>Learn more</strong>:</p>
+<ul>
+<li><strong>Basic usage</strong>:
+<code>vignette(&quot;getting-started&quot;)</code> covers core <code>lapr</code>
+functionality and examples</li>
+<li><strong>Applications</strong>:
+<code>vignette(&quot;pixel-morphing&quot;)</code> demonstrates visual and
+scientific applications</li>
+<li><strong>Function documentation</strong>: <code>?lap_solve</code>
+provides detailed API documentation</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

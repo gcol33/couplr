@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Gilles Colling" />
+
+<meta name="date" content="2025-11-20" />
+
+<title>Optimal Matching in Science: From Theory to Practice</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Optimal Matching in Science: From Theory to
+Practice</h1>
+<h4 class="author">Gilles Colling</h4>
+<h4 class="date">2025-11-20</h4>
+
+
+
+<style>
+.pixel-row {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 8px;
+}
+.pixel-row img {
+flex: 0 0 25%;
+max-height: 80px;
+height: auto;
+object-fit: contain;
+}
+
+@media (max-width: 600px) {
+.pixel-row img {
+flex: 0 0 50%;
+max-height: 40px;
+}
+}
+</style>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Optimal matching problems appear throughout science when we need to
+find correspondences between two sets of entities based on both their
+intrinsic properties (features) and their spatial arrangement. This
+vignette explores three scientific domains where these problems arise,
+then demonstrates the mathematical approaches to solving them
+efficiently.</p>
+<p><strong>Scientific Applications</strong>:</p>
+<ul>
+<li><strong>Ecology</strong>: Match vegetation plots across time based
+on species composition and spatial location<br />
+</li>
+<li><strong>Physics</strong>: Track particles through video frames based
+on appearance and predicted trajectories<br />
+</li>
+<li><strong>Chemistry</strong>: Align molecular conformations based on
+atom types and 3D coordinates</li>
+</ul>
+<p><strong>Mathematical Challenge</strong>: Exact optimal matching
+requires solving an <span class="math inline">\(n \times n\)</span>
+assignment problem, which becomes computationally expensive for large
+<span class="math inline">\(n\)</span> (thousands of entities). We need
+approximation strategies that preserve quality while reducing
+computational cost.</p>
+<p><strong>Visual Demonstration</strong>: To illustrate these concepts
+intuitively, we use pixel morphing between images. Each pixel is an
+entity with color (feature) and position (spatial), making it a visual
+analog for scientific matching problems.</p>
+<p><strong>Related vignettes</strong>:</p>
+<ul>
+<li>For basic <code>lapr</code> usage:
+<code>vignette(&quot;getting-started&quot;)</code><br />
+</li>
+<li>For algorithm details: <code>vignette(&quot;algorithms&quot;)</code></li>
+</ul>
+</div>
+<div id="the-general-matching-problem" class="section level2">
+<h2>The General Matching Problem</h2>
+<div id="problem-formulation" class="section level3">
+<h3>Problem Formulation</h3>
+<p>Given two sets of entities <span class="math inline">\(A = \{a_1,
+\ldots, a_n\}\)</span> and <span class="math inline">\(B = \{b_1,
+\ldots, b_n\}\)</span>, find the optimal one-to-one correspondence by
+minimizing</p>
+<p><span class="math display">\[
+\min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
+\]</span></p>
+<p>where the cost combines feature similarity and spatial proximity:</p>
+<p><span class="math display">\[
+c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \,
+d_{\text{spatial}}(\mathbf{x}_i, \mathbf{x}_j).
+\]</span></p>
+<p><strong>Feature distance</strong> <span class="math inline">\(d_{\text{feature}}\)</span>: domain-specific
+similarity</p>
+<ul>
+<li>Ecology: Bray–Curtis dissimilarity between species vectors<br />
+</li>
+<li>Physics: difference in particle intensity or size<br />
+</li>
+<li>Chemistry: penalty for mismatched atom types<br />
+</li>
+<li>Images: Euclidean distance in RGB color space</li>
+</ul>
+<p><strong>Spatial distance</strong> <span class="math inline">\(d_{\text{spatial}}\)</span>: physical
+proximity</p>
+<ul>
+<li>Ecology: geographic distance between plot centers<br />
+</li>
+<li>Physics: Euclidean distance accounting for predicted motion<br />
+</li>
+<li>Chemistry: 3D distance between atomic coordinates<br />
+</li>
+<li>Images: 2D pixel position distance</li>
+</ul>
+<p><strong>Weights</strong> <span class="math inline">\(\alpha, \beta
+\ge 0\)</span> balance feature matching vs. spatial coherence.</p>
+</div>
+<div id="computational-challenge" class="section level3">
+<h3>Computational Challenge</h3>
+<p>Exact solution: solve the full <span class="math inline">\(n \times
+n\)</span> LAP.</p>
+<ul>
+<li>Complexity: <span class="math inline">\(O(n^3)\)</span> using
+Jonker–Volgenant<br />
+</li>
+<li>Feasible: up to <span class="math inline">\(n \approx 1000\)</span>
+(about <span class="math inline">\(30 \times 30\)</span> images, or
+<span class="math inline">\(1000\)</span> plots/particles/atoms)<br />
+</li>
+<li>Prohibitive: for <span class="math inline">\(n = 10\,000\)</span>
+(<span class="math inline">\(100 \times 100\)</span> images), runtime
+and memory become expensive</li>
+</ul>
+<p>Real applications often involve</p>
+<ul>
+<li>High-resolution images: <span class="math inline">\(200 \times 200 =
+40\,000\)</span> pixels<br />
+</li>
+<li>Large ecological surveys: <span class="math inline">\(5000+\)</span>
+plots<br />
+</li>
+<li>Particle tracking: <span class="math inline">\(10\,000+\)</span>
+particles per frame<br />
+</li>
+<li>Molecular dynamics: <span class="math inline">\(100\,000+\)</span>
+atoms</li>
+</ul>
+<p>We therefore need approximations that are much faster but still
+produce high-quality matchings.</p>
+</div>
+</div>
+<div id="visual-illustration-pixel-morphing" class="section level2">
+<h2>Visual Illustration: Pixel Morphing</h2>
+<p>To make the abstract ideas concrete, we visualize them using image
+morphing where</p>
+<ul>
+<li>entities = pixels<br />
+</li>
+<li>features = RGB color values<br />
+</li>
+<li>spatial position = <span class="math inline">\((x, y)\)</span>
+coordinates</li>
+</ul>
+<p>We first show the static input images (all at <span class="math inline">\(80 \times 80\)</span> for display), then the
+animated morphs produced by different matching strategies.</p>
+<div class="pixel-row">
+<p><img role="img" aria-label src alt /> <img role="img" aria-label src alt /> <img role="img" aria-label src alt />
+<img role="img" aria-label src alt /></p>
+</div>
+<p>The first pair are real photographs, the second pair are simple
+geometric shapes. Internally, all matching is computed on logical <span class="math inline">\(40 \times 40\)</span> grids; we then upscale to
+<span class="math inline">\(80 \times 80\)</span> purely for clearer
+display.</p>
+<div id="exact-pixel-matching" class="section level3">
+<h3>Exact Pixel Matching</h3>
+<p>The exact pixel morph uses a full LAP solution on a <span class="math inline">\(1600 \times 1600\)</span> cost matrix. For each
+pair of pixels <span class="math inline">\((i, j)\)</span> we
+compute</p>
+<p><span class="math display">\[
+c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
+         \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2,
+\]</span></p>
+<p>where color distances are normalized to <span class="math inline">\([0, \sqrt{3}]\)</span> (RGB in <span class="math inline">\([0,1]\)</span>) and spatial distances to <span class="math inline">\([0,1]\)</span> using the image diagonal.</p>
+<div class="pixel-row">
+<p><img role="img" aria-label src alt /> <img role="img" aria-label src alt /></p>
+</div>
+<p>This yields an optimal one-to-one assignment of pixels. The resulting
+animations are smooth and artifact-free but require solving the full
+LAP.</p>
+</div>
+<div id="feature-quantization-morph-strategy-1" class="section level3">
+<h3>Feature Quantization Morph (Strategy 1)</h3>
+<div class="pixel-row">
+<p><img role="img" aria-label src alt /> <img role="img" aria-label src alt /></p>
+</div>
+<p>In the feature quantization morph, similar colors are grouped, and
+groups are matched rather than individual pixels. Colors move as
+coherent “bands,” preserving global color structure but losing
+fine-grained per-pixel detail.</p>
+</div>
+<div id="hierarchical-morph-strategy-2" class="section level3">
+<h3>Hierarchical Morph (Strategy 2)</h3>
+<div class="pixel-row">
+<p><img role="img" aria-label src alt /> <img role="img" aria-label src alt /></p>
+</div>
+<p>The hierarchical morph first matches large patches, then refines
+within patches. The motion is locally coherent and scales well to large
+problems, at the price of potentially missing some globally optimal
+cross-patch matches.</p>
+</div>
+</div>
+<div id="three-approximation-strategies" class="section level2">
+<h2>Three Approximation Strategies</h2>
+<p>We now describe the three approximation strategies in detail. The
+animations above correspond directly to these methods.</p>
+<div id="strategy-1-feature-quantization" class="section level3">
+<h3>Strategy 1: Feature Quantization</h3>
+<p><strong>Core idea</strong>: reduce problem size by grouping entities
+with similar features, then match groups.</p>
+<div id="mathematical-formulation" class="section level4">
+<h4>Mathematical Formulation</h4>
+<ol style="list-style-type: decimal">
+<li><strong>Quantize features</strong></li>
+</ol>
+<p>Map continuous feature space to a finite palette</p>
+<p><span class="math display">\[
+\text{quantize}: \mathbb{R}^d \to \{1, \ldots, k\},
+\]</span></p>
+<p>where <span class="math inline">\(k \ll n\)</span> (for example <span class="math inline">\(k \approx 64\)</span> for <span class="math inline">\(n = 1600\)</span>).</p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>Group by palette</strong></li>
+</ol>
+<p>Form groups <span class="math display">\[
+G_A^{(c)} = \{ i : \text{quantize}(f_i) = c \}
+\]</span> and similarly for <span class="math inline">\(B\)</span>.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Match groups</strong></li>
+</ol>
+<p>Solve a <span class="math inline">\(k \times k\)</span> LAP between
+palette entries with costs</p>
+<p><span class="math display">\[
+c&#39;_{ij} = \alpha \, d(p_i, p_j) + \beta \, d(\bar{\mathbf{x}}_i,
+\bar{\mathbf{x}}_j),
+\]</span></p>
+<p>where <span class="math inline">\(p_i\)</span> is the palette color
+and <span class="math inline">\(\bar{\mathbf{x}}_i\)</span> the centroid
+position of group <span class="math inline">\(i\)</span>.</p>
+<ol start="4" style="list-style-type: decimal">
+<li><strong>Assign entities</strong></li>
+</ol>
+<p>Every entity in <span class="math inline">\(G_A^{(c)}\)</span> is
+assigned according to the group-to-group match.</p>
+</div>
+<div id="complexity-reduction" class="section level4">
+<h4>Complexity Reduction</h4>
+<ul>
+<li>Original: <span class="math inline">\(O(n^3)\)</span> for an <span class="math inline">\(n \times n\)</span> LAP<br />
+</li>
+<li>Quantized: <span class="math inline">\(O(k^3 + n k)\)</span> for the
+<span class="math inline">\(k \times k\)</span> LAP plus group
+assignment<br />
+</li>
+<li>Speedup: approximately <span class="math inline">\((n/k)^3\)</span></li>
+</ul>
+<p>For example, with <span class="math inline">\(n = 1600\)</span> (a
+<span class="math inline">\(40 \times 40\)</span> image) and <span class="math inline">\(k = 64\)</span> you get</p>
+<p><span class="math display">\[
+\left(\frac{1600}{64}\right)^3 = 25^3 \approx 15\,000
+\]</span></p>
+<p>times fewer LAP operations.</p>
+</div>
+<div id="quality-trade-offs" class="section level4">
+<h4>Quality Trade-offs</h4>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Very large speedups for big <span class="math inline">\(n\)</span><br />
+</li>
+<li>Preserves global structure (similar features stay together)<br />
+</li>
+<li>Produces smooth, band-like motion without large jumps</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Loses detail within each palette group<br />
+</li>
+<li>Quantization artifacts when <span class="math inline">\(k\)</span>
+is too small<br />
+</li>
+<li>May miss optimal local pairings between similar but distinct feature
+values</li>
+</ul>
+<p>The corresponding GIFs are the <em>color walk</em> morphs shown
+earlier.</p>
+</div>
+</div>
+<div id="strategy-2-hierarchical-decomposition" class="section level3">
+<h3>Strategy 2: Hierarchical Decomposition</h3>
+<p><strong>Core idea</strong>: split the domain into smaller subproblems
+by spatial partitioning, solve subproblems, and combine.</p>
+<div id="mathematical-formulation-1" class="section level4">
+<h4>Mathematical Formulation</h4>
+<ol style="list-style-type: decimal">
+<li><strong>Spatial partitioning</strong></li>
+</ol>
+<p>Divide the domain into <span class="math inline">\(m \times
+m\)</span> patches (for example <span class="math inline">\(m =
+4\)</span> so you get <span class="math inline">\(16\)</span> patches).
+Denote the subset of entities of <span class="math inline">\(A\)</span>
+in patch <span class="math inline">\(k\)</span> by</p>
+<p><span class="math display">\[
+P_A^{(k)} = \{ a_i : \mathbf{x}_i \in \text{Patch}_k \}.
+\]</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>Patch-level matching</strong></li>
+</ol>
+<p>Form patch representatives: centroid position and mean features per
+patch. Solve an <span class="math inline">\(m^2 \times m^2\)</span> LAP
+between patches, with costs defined using the same feature and spatial
+distances but now at patch level.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Recursive refinement</strong></li>
+</ol>
+<p>Within each matched patch pair <span class="math inline">\((P_A^{(k)}, P_B^{(l)})\)</span>:</p>
+<ul>
+<li>If <span class="math inline">\(\lvert P_A^{(k)} \rvert \le
+\tau\)</span> (a threshold, e.g. <span class="math inline">\(\tau =
+50\)</span>) solve the subproblem exactly.<br />
+</li>
+<li>Otherwise, partition that patch pair again and repeat.</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li><strong>Combine solutions</strong></li>
+</ol>
+<p>Concatenate assignments from all leaf subproblems to obtain the
+global matching.</p>
+</div>
+<div id="complexity-sketch" class="section level4">
+<h4>Complexity (Sketch)</h4>
+<p>With <span class="math inline">\(d\)</span> levels of decomposition
+(each level splitting into four patches), the work can be made close to
+<span class="math inline">\(O(n \log n)\)</span> in practice, compared
+to <span class="math inline">\(O(n^3)\)</span> for a single full LAP.
+Intuitively, the LAPs near the leaves are very small, and the costly
+large LAP is replaced by a series of much smaller ones.</p>
+</div>
+<div id="quality-trade-offs-1" class="section level4">
+<h4>Quality Trade-offs</h4>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Scales to very large <span class="math inline">\(n\)</span> (tens of
+thousands of entities)<br />
+</li>
+<li>Preserves local structure: nearby entities tend to be matched within
+the same spatial patch<br />
+</li>
+<li>No feature discretization, so feature precision is retained</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>May miss globally optimal cross-patch matches<br />
+</li>
+<li>Quality depends on partitioning scheme and threshold <span class="math inline">\(\tau\)</span><br />
+</li>
+<li>Possible boundary artifacts if important structure crosses patch
+boundaries</li>
+</ul>
+</div>
+<div id="high-level-algorithm" class="section level4">
+<h4>High-Level Algorithm</h4>
+<pre><code>// Pseudocode for hierarchical LAP matching
+
+FUNCTION match_hierarchical(region_A, region_B, threshold, level):
+
+  // Base case: region small enough for exact LAP
+  IF size(region_A) &lt;= threshold THEN
+    cost ← compute_cost_matrix(region_A, region_B, α, β)
+    RETURN lap_solve(cost)
+  END IF
+
+  // Divide into 2×2 spatial grid (4 patches)
+  patches_A ← spatial_partition(region_A, grid = 2×2)
+  patches_B ← spatial_partition(region_B, grid = 2×2)
+
+  // Compute patch representatives
+  FOR each patch p DO
+    centroid[p]      ← mean(positions in p)
+    mean_feature[p]  ← mean(features in p)
+  END FOR
+
+  // Match patches using 4×4 LAP
+  patch_cost ← matrix(4, 4)
+  FOR i = 1 TO 4 DO
+    FOR j = 1 TO 4 DO
+      patch_cost[i, j] ← α·distance(mean_feature_A[i], mean_feature_B[j]) +
+                         β·distance(centroid_A[i], centroid_B[j])
+    END FOR
+  END FOR
+
+  patch_assignment ← lap_solve(patch_cost)
+
+  // Recursively solve within matched patches
+  assignments ← []
+  FOR i = 1 TO 4 DO
+    j ← patch_assignment[i]
+    sub_assignment ← match_hierarchical(
+      patches_A[i],
+      patches_B[j],
+      threshold,
+      level + 1
+    )
+    assignments ← append(assignments, sub_assignment)
+  END FOR
+
+  RETURN concatenate(assignments)
+END FUNCTION</code></pre>
+<p>The <code>lapr</code> implementation adds pragmatic details such as
+normalization of color and spatial distances, conversion between <span class="math inline">\((x, y)\)</span> coordinates and raster indexing,
+and handling remainder patches when the grid does not divide evenly.</p>
+</div>
+</div>
+<div id="strategy-3-resolution-reduction" class="section level3">
+<h3>Strategy 3: Resolution Reduction</h3>
+<p><strong>Core idea</strong>: solve the LAP on a coarse grid, then
+lift/upscale the assignment to the full-resolution grid.</p>
+<div id="mathematical-formulation-2" class="section level4">
+<h4>Mathematical Formulation</h4>
+<ol style="list-style-type: decimal">
+<li><strong>Downscale</strong></li>
+</ol>
+<p>Reduce spatial resolution by a factor <span class="math inline">\(s\)</span> (for example <span class="math inline">\(s = 2\)</span>):</p>
+<p><span class="math display">\[
+A&#39; = \text{downsample}(A, s), \qquad B&#39; = \text{downsample}(B,
+s).
+\]</span></p>
+<p>Now <span class="math inline">\(A&#39;\)</span> and <span class="math inline">\(B&#39;\)</span> each have <span class="math inline">\(n&#39; = n / s^2\)</span> entities.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>Solve at low resolution</strong></li>
+</ol>
+<p>Compute an exact LAP solution on the <span class="math inline">\(n&#39; \times n&#39;\)</span> problem:</p>
+<p><span class="math display">\[
+\pi&#39; = \arg\min_{\pi&#39;} \sum_{i=1}^{n&#39;}
+c&#39;_{i,\pi&#39;(i)}.
+\]</span></p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Upscale assignment</strong></li>
+</ol>
+<p>Map the low-resolution assignment back to full resolution:</p>
+<p><span class="math display">\[
+\pi(i) = \text{upscale}\!\bigl(\pi&#39;(\text{coarse\_index}(i)),
+s\bigr),
+\]</span></p>
+<p>where each full-resolution entity inherits the assignment of its
+coarse cell.</p>
+</div>
+<div id="complexity" class="section level4">
+<h4>Complexity</h4>
+<ul>
+<li>Original: <span class="math inline">\(O(n^3)\)</span><br />
+</li>
+<li>Downscaled: <span class="math inline">\(O\bigl((n/s^2)^3\bigr) =
+O(n^3 / s^6)\)</span><br />
+</li>
+<li>Speedup: <span class="math inline">\(s^6\)</span></li>
+</ul>
+<p>For <span class="math inline">\(s = 2\)</span> this gives a <span class="math inline">\(64\times\)</span> reduction in LAP work.</p>
+</div>
+<div id="quality-trade-offs-2" class="section level4">
+<h4>Quality Trade-offs</h4>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Very simple to implement<br />
+</li>
+<li>Exact LAP at the coarse level<br />
+</li>
+<li>Large speedups for moderate <span class="math inline">\(s\)</span></li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Loss of fine detail and blocky artifacts<br />
+</li>
+<li>Assignment is no longer a true permutation at pixel level (multiple
+fine pixels can map to the same coarse target)<br />
+</li>
+<li>Quality deteriorates quickly for larger <span class="math inline">\(s\)</span></li>
+</ul>
+<p>In practice, resolution reduction is most useful as a crude
+initialization step for very large problems (<span class="math inline">\(n &gt; 100\,000\)</span>).</p>
+</div>
+</div>
+<div id="strategy-comparison" class="section level3">
+<h3>Strategy Comparison</h3>
+<table>
+<colgroup>
+<col width="21%" />
+<col width="19%" />
+<col width="22%" />
+<col width="36%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Approach</th>
+<th>Speedup (vs. exact)</th>
+<th>Quality</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Exact LAP</td>
+<td><span class="math inline">\(1\times\)</span></td>
+<td>Optimal</td>
+<td><span class="math inline">\(n \le 1000\)</span></td>
+</tr>
+<tr class="even">
+<td>Feature quantization</td>
+<td><span class="math inline">\((n/k)^3\)</span></td>
+<td>Good global structure</td>
+<td>Distinct feature groups</td>
+</tr>
+<tr class="odd">
+<td>Hierarchical</td>
+<td><span class="math inline">\(\approx n^{3/2}\)</span></td>
+<td>Good local structure</td>
+<td>Large <span class="math inline">\(n\)</span>, strong spatial
+structure</td>
+</tr>
+<tr class="even">
+<td>Resolution reduction</td>
+<td><span class="math inline">\(s^6\)</span></td>
+<td>Moderate</td>
+<td>Very large <span class="math inline">\(n\)</span>, rough
+initialization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Practical rules of thumb</strong></p>
+<ul>
+<li><span class="math inline">\(n &lt; 1000\)</span>: use the exact
+LAP.<br />
+</li>
+<li><span class="math inline">\(1000 &lt; n &lt; 5000\)</span>: feature
+quantization or a shallow hierarchy.<br />
+</li>
+<li><span class="math inline">\(n &gt; 5000\)</span>: hierarchical
+decomposition with 2–3 levels.<br />
+</li>
+<li><span class="math inline">\(n &gt; 50\,000\)</span>: combine <span class="math inline">\(s = 2\)</span> resolution reduction with a
+hierarchical method.</li>
+</ul>
+</div>
+</div>
+<div id="implementation-details-of-exact-pixel-matching" class="section level2">
+<h2>Implementation Details of Exact Pixel Matching</h2>
+<p>We now spell out the exact LAP-based morph more concretely.</p>
+<p>We again use the cost</p>
+<p><span class="math display">\[
+c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
+         \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2.
+\]</span></p>
+<p>The algorithm:</p>
+<pre><code>// Pseudocode for exact pixel matching
+
+// Step 1: Compute full cost matrix (normalized)
+n_pixels ← height × width
+cost ← matrix(0, n_pixels, n_pixels)
+
+FOR i = 1 TO n_pixels DO
+  FOR j = 1 TO n_pixels DO
+    // RGB color distance (normalized to [0, sqrt(3)])
+    color_dist ← sqrt((R_A[i] - R_B[j])^2 +
+                      (G_A[i] - G_B[j])^2 +
+                      (B_A[i] - B_B[j])^2) / (255 · sqrt(3))
+
+    // Spatial distance (normalized to [0, 1] by diagonal)
+    spatial_dist ← sqrt((x_A[i] - x_B[j])^2 +
+                        (y_A[i] - y_B[j])^2) / diagonal_length
+
+    // Combined cost
+    cost[i, j] ← α · color_dist + β · spatial_dist
+  END FOR
+END FOR
+
+// Step 2: Solve with Jonker–Volgenant
+assignment ← lap_solve(cost, method = &quot;jv&quot;)
+
+// Step 3: Generate morph frames by linear interpolation
+FOR frame_idx = 1 TO n_frames DO
+  t ← frame_idx / n_frames  // Time parameter in [0, 1]
+
+  FOR pixel_i = 1 TO n_pixels DO
+    j ← assignment[pixel_i]  // Matched target pixel
+
+    // Interpolate position
+    x_new[pixel_i] ← (1 - t) · x_A[pixel_i] + t · x_B[j]
+    y_new[pixel_i] ← (1 - t) · y_A[pixel_i] + t · y_B[j]
+
+    // Keep source color (transport-only, no blending)
+    RGB_new[pixel_i] ← RGB_A[pixel_i]
+  END FOR
+
+  frames[frame_idx] ← render(x_new, y_new, RGB_new)
+END FOR</code></pre>
+<p>The <code>lapr</code> implementation handles indexing, raster layout,
+and shows or saves the resulting GIFs.</p>
+<p>Approximate performance: up to about <span class="math inline">\(100
+\times 100\)</span> (10 000 pixels) on typical hardware is fine with the
+exact LAP.</p>
+</div>
+<div id="application-to-scientific-domains" class="section level2">
+<h2>Application to Scientific Domains</h2>
+<p>We now return from pixel morphs to the scientific settings that
+motivated them.</p>
+<div id="ecology-vegetation-plot-matching" class="section level3">
+<h3>Ecology: Vegetation Plot Matching</h3>
+<p><strong>Problem</strong>: match <span class="math inline">\(n\)</span> vegetation plots surveyed at time <span class="math inline">\(t\)</span> to <span class="math inline">\(n\)</span> plots at time <span class="math inline">\(t + \Delta t\)</span> to track community
+dynamics.</p>
+<p><strong>Feature distance</strong>: Bray–Curtis dissimilarity between
+species abundance vectors</p>
+<p><span class="math display">\[
+d_{\text{BC}}(a, b) =
+\frac{\sum_s \lvert a_s - b_s \rvert}
+     {\sum_s (a_s + b_s)},
+\]</span></p>
+<p>where <span class="math inline">\(a_s, b_s\)</span> are abundances of
+species <span class="math inline">\(s\)</span> in plots <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>.</p>
+<p><strong>Spatial distance</strong>: geographic distance (e.g. in
+kilometers) between plot centers.</p>
+<p>Exact solution for small studies (<span class="math inline">\(n &lt;
+100\)</span>):</p>
+<pre><code>// Pseudocode for ecological plot matching
+FOR i = 1 TO n_plots_t DO
+  FOR j = 1 TO n_plots_tplus DO
+
+    // Bray–Curtis dissimilarity for species composition
+    numerator   ← sum over species s of |abundance_t[i, s] - abundance_tplus[j, s]|
+    denominator ← sum over species s of (abundance_t[i, s] + abundance_tplus[j, s])
+    bc_distance ← numerator / denominator
+
+    // Geographic distance (kilometers)
+    geo_distance ← sqrt((x_t[i] - x_tplus[j])^2 +
+                        (y_t[i] - y_tplus[j])^2)
+
+    // Combined cost (α = 0.7 emphasizes species composition)
+    cost[i, j] ← 0.7 · bc_distance + 0.3 · (geo_distance / max_distance)
+
+  END FOR
+END FOR
+
+plot_correspondence ← lap_solve(cost)</code></pre>
+<p>For large studies (<span class="math inline">\(n &gt; 1000\)</span>)
+a hierarchical approach by region is more practical:</p>
+<pre><code>// Hierarchical decomposition by geographic region
+
+// 1. Divide landscape into spatial grid (e.g. 10 km × 10 km cells)
+regions_t     ← spatial_partition(plots_t,     grid_size = 10 km)
+regions_tplus ← spatial_partition(plots_tplus, grid_size = 10 km)
+
+// 2. Compute region representatives
+FOR each region r DO
+  mean_composition[r] ← average species vector across plots in r
+  centroid[r]         ← geographic center of r
+END FOR
+
+// 3. Match regions (small LAP: ~100 regions)
+region_cost       ← compute_cost(mean_composition, centroids, α = 0.7, β = 0.3)
+region_assignment ← lap_solve(region_cost)
+
+// 4. Within matched regions, solve plot-level LAP
+full_assignment ← []
+FOR r = 1 TO n_regions DO
+  r_matched ← region_assignment[r]
+  plots_A   ← plots in regions_t[r]
+  plots_B   ← plots in regions_tplus[r_matched]
+
+  // Local LAP (smaller problem, e.g. 50 × 50)
+  cost_local       ← compute_plot_cost(plots_A, plots_B, α = 0.7, β = 0.3)
+  local_assignment ← lap_solve(cost_local)
+
+  full_assignment ← append(full_assignment, local_assignment)
+END FOR
+
+RETURN full_assignment</code></pre>
+<p>This allows tracking individual plot trajectories across time,
+distinguishing stable communities, successional trends, and invasion
+fronts.</p>
+</div>
+<div id="physics-particle-tracking" class="section level3">
+<h3>Physics: Particle Tracking</h3>
+<p><strong>Problem</strong>: track <span class="math inline">\(n\)</span> particles between frame <span class="math inline">\(t\)</span> and <span class="math inline">\(t +
+\Delta t\)</span> in experimental video.</p>
+<p><strong>Feature distance</strong>: differences in intensity, size, or
+shape.</p>
+<p><strong>Spatial distance</strong>: displacement relative to predicted
+motion:</p>
+<p><span class="math display">\[
+d_{\text{spatial}}(i, j) =
+\bigl\| \mathbf{x}_i + \mathbf{v}_i \Delta t - \mathbf{x}_j \bigr\|_2,
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{v}_i\)</span> is the
+estimated velocity from previous frames.</p>
+<p>We also impose a maximum displacement <span class="math inline">\(d_{\max}\)</span> beyond which matches are
+physically implausible.</p>
+<p>Exact solution (moderate <span class="math inline">\(n\)</span>):</p>
+<pre><code>// Pseudocode for particle tracking with velocity prediction
+
+// Initialize cost matrix as forbidden everywhere
+cost ← matrix(Inf, n_particles_t, n_particles_tplus)
+
+FOR i = 1 TO n_particles_t DO
+  // Predict position using previous velocity
+  x_predicted ← x_t[i] + v_x_t[i] · Δt
+  y_predicted ← y_t[i] + v_y_t[i] · Δt
+
+  FOR j = 1 TO n_particles_tplus DO
+    // Distance from predicted position
+    dx ← x_predicted - x_tplus[j]
+    dy ← y_predicted - y_tplus[j]
+    spatial_distance ← sqrt(dx^2 + dy^2)
+
+    // Only consider physically plausible matches
+    IF spatial_distance &lt;= max_displacement THEN
+      // Feature similarity (intensity, size, etc.)
+      feature_distance ← |intensity_t[i] - intensity_tplus[j]|
+
+      // Combined cost
+      cost[i, j] ← α · feature_distance + β · spatial_distance
+    END IF
+  END FOR
+END FOR
+
+// Solve assignment (Inf entries are forbidden)
+particle_tracks ← lap_solve(cost)
+
+// Update velocities from assignments
+FOR i = 1 TO n_particles_t DO
+  j ← particle_tracks[i]
+  velocity_new[i] ← (position_tplus[j] - position_t[i]) / Δt
+END FOR</code></pre>
+<p>For dense tracking (<span class="math inline">\(n &gt;
+5000\)</span>), we can first cluster particles:</p>
+<pre><code>// Two-stage: clustering then local matching
+
+// Stage 1: spatial clustering
+clusters_t     ← spatial_cluster(particles_t,     radius = 2 · pixel_size)
+clusters_tplus ← spatial_cluster(particles_tplus, radius = 2 · pixel_size)
+
+// Compute cluster representatives
+FOR each cluster c DO
+  centroid[c]       ← mean position of particles in c
+  mean_intensity[c] ← mean intensity
+  mean_velocity[c]  ← mean velocity (if available)
+END FOR
+
+// Match clusters
+cluster_cost   ← compute_cluster_similarity(clusters_t, clusters_tplus)
+cluster_tracks ← lap_solve(cluster_cost)
+
+// Stage 2: within matched clusters, track individual particles
+full_tracks ← []
+FOR c = 1 TO n_clusters DO
+  c_matched   ← cluster_tracks[c]
+  particles_A ← particles in clusters_t[c]
+  particles_B ← particles in clusters_tplus[c_matched]
+
+  cost_local ← compute_particle_distance(
+    particles_A, particles_B,
+    max_displacement = 5,
+    α = 0.3,
+    β = 0.7
+  )
+
+  local_tracks ← lap_solve(cost_local)
+  full_tracks  ← append(full_tracks, local_tracks)
+END FOR
+
+RETURN full_tracks</code></pre>
+<p>This yields efficient and robust trajectories even for very dense
+particle fields.</p>
+</div>
+<div id="chemistry-molecular-conformation-alignment" class="section level3">
+<h3>Chemistry: Molecular Conformation Alignment</h3>
+<p><strong>Problem</strong>: align two conformations of the same
+molecule (e.g. a protein) with <span class="math inline">\(n\)</span>
+atoms to compute RMSD and analyze structural change.</p>
+<p><strong>Feature distance</strong>: strict element matching</p>
+<p><span class="math display">\[
+d_{\text{element}}(i, j) =
+\begin{cases}
+0, &amp; \text{if } \text{element}_i = \text{element}_j, \\
+\infty, &amp; \text{otherwise.}
+\end{cases}
+\]</span></p>
+<p><strong>Spatial distance</strong>: 3D Euclidean distance between
+atomic coordinates.</p>
+<p>Exact LAP for small molecules:</p>
+<pre><code>// Pseudocode for molecular conformation alignment
+
+n_atoms ← number of atoms in molecule
+cost    ← matrix(0, n_atoms, n_atoms)
+
+FOR i = 1 TO n_atoms DO
+  FOR j = 1 TO n_atoms DO
+
+    // Enforce strict element type matching
+    IF element_type_A[i] ≠ element_type_B[j] THEN
+      cost[i, j] ← Inf
+    ELSE
+      dx ← x_A[i] - x_B[j]
+      dy ← y_A[i] - y_B[j]
+      dz ← z_A[i] - z_B[j]
+      cost[i, j] ← sqrt(dx^2 + dy^2 + dz^2)
+    END IF
+
+  END FOR
+END FOR
+
+// Solve alignment
+alignment ← lap_solve(cost)
+
+// Compute RMSD
+sum_sq_dist ← 0
+FOR i = 1 TO n_atoms DO
+  j            ← alignment[i]
+  sum_sq_dist ← sum_sq_dist + cost[i, j]^2
+END FOR
+
+rmsd ← sqrt(sum_sq_dist / n_atoms)</code></pre>
+<p>For large biomolecules, we again use a hierarchical strategy, this
+time by secondary structure elements (helices, sheets, loops, etc.),
+aligning segments first and then atoms within matched segments.</p>
+</div>
+</div>
+<div id="implementation-notes" class="section level2">
+<h2>Implementation Notes</h2>
+<div id="customizing-morph-duration" class="section level3">
+<h3>Customizing Morph Duration</h3>
+<p>The morphing examples use default settings, but you can customize the
+number of frames and speed:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># From inst/scripts/generate_examples.R</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>generate_morph <span class="ot">&lt;-</span> <span class="cf">function</span>(assignment, pixels_A, pixels_B,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                           <span class="at">n_frames    =</span> <span class="dv">30</span>,   <span class="co"># number of frames</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                           <span class="at">frame_delay =</span> <span class="fl">0.1</span>)  <span class="co"># delay between frames (seconds)</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>{</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  frames <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> n_frames), <span class="cf">function</span>(t) {</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="fu">interpolate_frame</span>(t, assignment, pixels_A, pixels_B)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  })</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="fu">save_gif</span>(frames, <span class="at">delay =</span> frame_delay)</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>}</span></code></pre></div>
+<p>Total animation duration is <code>n_frames * frame_delay</code>
+seconds.</p>
+</div>
+<div id="using-the-example-code" class="section level3">
+<h3>Using the Example Code</h3>
+<p>The morphing implementation is provided in
+<code>inst/scripts/generate_examples.R</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># View the source</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>example_script <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;scripts&quot;</span>, <span class="st">&quot;generate_examples.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;lapr&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">file.show</span>(example_script)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># Or source to use its helpers</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">source</span>(example_script)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># Apply to your own data</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>my_cost       <span class="ot">&lt;-</span> <span class="fu">build_cost_matrix</span>(my_data_A, my_data_B)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>my_assignment <span class="ot">&lt;-</span> <span class="fu">lap_solve</span>(my_cost)</span></code></pre></div>
+</div>
+<div id="regenerating-examples" class="section level3">
+<h3>Regenerating Examples</h3>
+<p>To regenerate all demo GIFs and PNGs:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;inst/scripts/generate_examples.R&quot;</span>)</span></code></pre></div>
+<p>This will write the assets under <code>inst/extdata</code>.</p>
+</div>
+</div>
+<div id="mathematical-foundation-optimal-transport" class="section level2">
+<h2>Mathematical Foundation: Optimal Transport</h2>
+<p>The matching problems discussed here are discrete instances of
+optimal transport.</p>
+<div id="monge-problem" class="section level3">
+<h3>Monge Problem</h3>
+<p>The original Monge formulation (1781) seeks a transport map <span class="math inline">\(T: A \to B\)</span> minimizing</p>
+<p><span class="math display">\[
+\int_A c(\mathbf{x}, T(\mathbf{x})) \,\mathrm{d}\mu(\mathbf{x}).
+\]</span></p>
+</div>
+<div id="kantorovich-relaxation" class="section level3">
+<h3>Kantorovich Relaxation</h3>
+<p>Kantorovich (1942) relaxed this to a transport plan <span class="math inline">\(\gamma\)</span> on <span class="math inline">\(A
+\times B\)</span>:</p>
+<p><span class="math display">\[
+\min_{\gamma} \int_{A \times B} c(\mathbf{x}, \mathbf{y})
+\,\mathrm{d}\gamma(\mathbf{x}, \mathbf{y})
+\]</span></p>
+<p>subject to marginal constraints on <span class="math inline">\(\gamma\)</span>.</p>
+</div>
+<div id="discrete-linear-assignment" class="section level3">
+<h3>Discrete Linear Assignment</h3>
+<p>For discrete uniform distributions with <span class="math inline">\(n\)</span> points in <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> we obtain exactly the linear assignment
+problem:</p>
+<p><span class="math display">\[
+\min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)},
+\]</span></p>
+<p>which is what <code>lapr</code> solves efficiently.</p>
+</div>
+<div id="wasserstein-distance" class="section level3">
+<h3>Wasserstein Distance</h3>
+<p>With <span class="math inline">\(c_{ij} = d(\mathbf{x}_i,
+\mathbf{x}_j)\)</span> (often Euclidean distance), the optimal cost
+defines the <span class="math inline">\(1\)</span>‑Wasserstein
+distance:</p>
+<p><span class="math display">\[
+W_1(\mu, \nu) = \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)}.
+\]</span></p>
+<p>This appears in</p>
+<ul>
+<li>Earth mover’s distance for image retrieval<br />
+</li>
+<li>Distributional similarity in statistics<br />
+</li>
+<li>Generative modeling (e.g. Wasserstein GANs)</li>
+</ul>
+</div>
+</div>
+<div id="further-reading" class="section level2">
+<h2>Further Reading</h2>
+<div id="optimal-transport-theory" class="section level3">
+<h3>Optimal Transport Theory</h3>
+<ul>
+<li>Peyré, G., &amp; Cuturi, M. (2019). <em>Computational Optimal
+Transport</em>. Foundations and Trends in Machine Learning.<br />
+</li>
+<li>Villani, C. (2008). <em>Optimal Transport: Old and New</em>.
+Springer.</li>
+</ul>
+</div>
+<div id="scientific-applications" class="section level3">
+<h3>Scientific Applications</h3>
+<p><strong>Ecology</strong></p>
+<ul>
+<li>Anderson, M. J. et al. (2011). Navigating the multiple meanings of
+beta diversity. <em>Ecology Letters</em>.<br />
+</li>
+<li>Legendre, P., &amp; Legendre, L. (2012). <em>Numerical Ecology</em>.
+Elsevier.</li>
+</ul>
+<p><strong>Physics</strong></p>
+<ul>
+<li>Adrian, R. J., &amp; Westerweel, J. (2011). <em>Particle Image
+Velocimetry</em>. Cambridge University Press.<br />
+</li>
+<li>Crocker, J. C., &amp; Grier, D. G. (1996). Methods of digital video
+microscopy. <em>Journal of Colloid and Interface Science</em>.</li>
+</ul>
+<p><strong>Chemistry</strong></p>
+<ul>
+<li>Kabsch, W. (1976). A solution for the best rotation to relate two
+sets of vectors. <em>Acta Crystallographica</em>.<br />
+</li>
+<li>Coutsias, E. A. et al. (2004). Using quaternions to calculate RMSD.
+<em>Journal of Computational Chemistry</em>.</li>
+</ul>
+</div>
+<div id="assignment-algorithms" class="section level3">
+<h3>Assignment Algorithms</h3>
+<ul>
+<li>Burkard, R., Dell’Amico, M., &amp; Martello, S. (2009).
+<em>Assignment Problems</em>. SIAM.<br />
+</li>
+<li>For implementation details in this package see
+<code>vignette(&quot;algorithms&quot;)</code>.</li>
+</ul>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>We have seen how optimal matching problems arise in ecology, physics,
+and chemistry, and how they can be expressed as linear assignment
+problems that combine feature similarity with spatial coherence. Exact
+LAP solutions provide gold-standard matchings for small problems, while
+feature quantization, hierarchical decomposition, and resolution
+reduction make much larger problems tractable.</p>
+<p>Pixel morphing serves as an intuitive visual testbed for these ideas,
+but the same algorithms apply directly to vegetation plots, particles in
+videos, and atoms in molecules. Together, the methods provided by
+<code>lapr</code> allow you to move smoothly between exact optimal
+matchings and principled approximations, depending on problem size and
+accuracy requirements.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

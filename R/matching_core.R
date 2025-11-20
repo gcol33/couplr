@@ -29,6 +29,11 @@
 #' @param method LAP solver: "auto", "hungarian", "jv", "gabow_tarjan", etc.
 #' @param return_unmatched Include unmatched units in output
 #' @param return_diagnostics Include detailed diagnostics in output
+#' @param parallel Enable parallel processing for blocked matching.
+#'   Requires 'future' and 'future.apply' packages. Can be:
+#'   - `FALSE`: Sequential processing (default)
+#'   - `TRUE`: Auto-configure parallel backend
+#'   - Character: Specify future plan (e.g., "multisession", "multicore")
 #'
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
@@ -67,7 +72,8 @@ match_couples <- function(left, right = NULL,
                           require_full_matching = FALSE,
                           method = "auto",
                           return_unmatched = TRUE,
-                          return_diagnostics = FALSE) {
+                          return_diagnostics = FALSE,
+                          parallel = FALSE) {
 
   # Check if left is a distance_object
   if (is_distance_object(left)) {
@@ -127,13 +133,18 @@ match_couples <- function(left, right = NULL,
   block_info <- detect_blocking(left, right, block_id, ignore_blocks)
 
   if (block_info$use_blocking) {
+    # Setup parallel processing if requested
+    parallel_state <- setup_parallel(parallel)
+    on.exit(restore_parallel(parallel_state), add = TRUE)
+
     # Blocked matching
     result <- match_couples_blocked(
       left, right, left_ids, right_ids,
       block_col = block_info$block_col,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      method = method
+      method = method,
+      parallel = parallel_state$setup
     )
   } else {
     # Single matching
@@ -407,10 +418,50 @@ match_couples_single <- function(left, right, left_ids, right_ids,
 #' @keywords internal
 match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   block_col, vars, distance, weights, scale,
-                                  max_distance, calipers, method) {
+                                  max_distance, calipers, method,
+                                  parallel = FALSE) {
 
   blocks <- unique(c(left[[block_col]], right[[block_col]]))
 
+  # Use parallel processing if requested and available
+  if (parallel && length(blocks) > 1) {
+    result <- match_blocks_parallel(
+      blocks, left, right, left_ids, right_ids,
+      block_col, vars, distance, weights, scale,
+      max_distance, calipers, method,
+      parallel = TRUE
+    )
+
+    # Reorder columns to put block_id first
+    if (nrow(result$pairs) > 0) {
+      result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
+    }
+
+    # Add additional summary statistics
+    if (nrow(result$block_summary) > 0) {
+      result$block_summary <- dplyr::mutate(
+        result$block_summary,
+        n_pairs = .data$n_matched,
+        total_distance = .data$n_matched * .data$mean_distance,
+        n_unmatched_left = .data$n_left - .data$n_matched,
+        n_unmatched_right = .data$n_right - .data$n_matched
+      )
+    }
+
+    return(list(
+      pairs = result$pairs,
+      unmatched = result$unmatched,
+      info = list(
+        n_matched = nrow(result$pairs),
+        total_distance = sum(result$pairs$distance, na.rm = TRUE),
+        blocked = TRUE,
+        n_blocks = length(blocks),
+        block_summary = result$block_summary
+      )
+    ))
+  }
+
+  # Sequential processing (original code)
   all_pairs <- list()
   all_unmatched_left <- character(0)
   all_unmatched_right <- character(0)
@@ -613,7 +664,8 @@ greedy_couples <- function(left, right = NULL,
                            require_full_matching = FALSE,
                            strategy = c("row_best", "sorted", "pq"),
                            return_unmatched = TRUE,
-                           return_diagnostics = FALSE) {
+                           return_diagnostics = FALSE,
+                           parallel = FALSE) {
 
   strategy <- match.arg(strategy)
 
@@ -675,13 +727,18 @@ greedy_couples <- function(left, right = NULL,
   block_info <- detect_blocking(left, right, block_id, ignore_blocks)
 
   if (block_info$use_blocking) {
+    # Setup parallel processing if requested
+    parallel_state <- setup_parallel(parallel)
+    on.exit(restore_parallel(parallel_state), add = TRUE)
+
     # Blocked matching
     result <- greedy_couples_blocked(
       left, right, left_ids, right_ids,
       block_col = block_info$block_col,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      strategy = strategy
+      strategy = strategy,
+      parallel = parallel_state$setup
     )
   } else {
     # Single matching
@@ -959,10 +1016,50 @@ greedy_couples_single <- function(left, right, left_ids, right_ids,
 #' @keywords internal
 greedy_couples_blocked <- function(left, right, left_ids, right_ids,
                                    block_col, vars, distance, weights, scale,
-                                   max_distance, calipers, strategy) {
+                                   max_distance, calipers, strategy,
+                                   parallel = FALSE) {
 
   blocks <- unique(c(left[[block_col]], right[[block_col]]))
 
+  # Use parallel processing if requested and available
+  if (parallel && length(blocks) > 1) {
+    result <- greedy_blocks_parallel(
+      blocks, left, right, left_ids, right_ids,
+      block_col, vars, distance, weights, scale,
+      max_distance, calipers, strategy,
+      parallel = TRUE
+    )
+
+    # Reorder columns to put block_id first
+    if (nrow(result$pairs) > 0) {
+      result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
+    }
+
+    # Add additional summary statistics
+    if (nrow(result$block_summary) > 0) {
+      result$block_summary <- dplyr::mutate(
+        result$block_summary,
+        n_pairs = .data$n_matched,
+        total_distance = .data$n_matched * .data$mean_distance,
+        n_unmatched_left = .data$n_left - .data$n_matched,
+        n_unmatched_right = .data$n_right - .data$n_matched
+      )
+    }
+
+    return(list(
+      pairs = result$pairs,
+      unmatched = result$unmatched,
+      info = list(
+        n_matched = nrow(result$pairs),
+        total_distance = sum(result$pairs$distance, na.rm = TRUE),
+        blocked = TRUE,
+        n_blocks = length(blocks),
+        block_summary = result$block_summary
+      )
+    ))
+  }
+
+  # Sequential processing (original code)
   all_pairs <- list()
   all_unmatched_left <- character(0)
   all_unmatched_right <- character(0)

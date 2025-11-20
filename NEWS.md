@@ -82,6 +82,29 @@ Performance optimization for exploring multiple matching strategies:
   - Automatically detects distance objects vs. datasets
   - All existing code continues to work unchanged
 
+### Parallel Processing
+
+Speed up blocked matching with multi-core processing:
+
+* **New `parallel` parameter** in `match_couples()` and `greedy_couples()`:
+  - Enable with `parallel = TRUE` for automatic configuration
+  - Specify plan with `parallel = "multisession"` or other future plan
+  - Works with any number of blocks - automatically determines if beneficial
+  - Gracefully falls back if future packages not installed
+* **Powered by the `future` package**:
+  - Cross-platform support (Windows, Unix/Mac, clusters)
+  - Respects user-configured parallel backends
+  - Automatic worker management
+  - Clean restoration of original plan after execution
+* **Performance**:
+  - Best for 10+ blocks with 50+ units per block
+  - Speedup scales with number of cores and complexity
+  - Minimal overhead for small problems
+* **Integration**:
+  - Works with all blocking methods (exact, fuzzy, clustering)
+  - Compatible with distance caching from Step 4
+  - Supports all matching parameters (constraints, calipers, scaling)
+
 ### New Functions
 
 * `preprocess_matching_vars()` - Main preprocessing orchestrator
@@ -100,7 +123,8 @@ Performance optimization for exploring multiple matching strategies:
 * `examples/balance_diagnostics_demo.R` - 6 balance diagnostic examples
 * `examples/join_matched_demo.R` - 8 joined dataset demonstrations
 * `examples/distance_cache_demo.R` - Distance caching and reuse examples
-* Complete implementation documentation (claude/IMPLEMENTATION_STEP1.md through STEP4.md)
+* `examples/parallel_matching_demo.R` - 7 parallel processing examples
+* Complete implementation documentation (claude/IMPLEMENTATION_STEP1.md through STEP5.md)
 * All functions have full Roxygen documentation
 
 ### Tests

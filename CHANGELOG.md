@@ -158,6 +158,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `match_couples_from_distance()` - Handles optimal matching from cached distances
   - `greedy_couples_from_distance()` - Handles greedy matching from cached distances
 
+#### Matching Enhancements - Step 5: Parallel Processing
+- **Parallel block matching** via `parallel` parameter in `match_couples()` and `greedy_couples()`:
+  - Distributes blocked matching across multiple cores using the `future` package
+  - Automatic worker setup with `parallel = TRUE` (uses availableCores() - 1)
+  - Custom plan support: pass plan name as string (e.g., `parallel = "multisession"`)
+  - Works with both optimal and greedy matching strategies
+  - Graceful fallback to sequential processing if future packages unavailable
+- **Parallel infrastructure** in `R/matching_parallel.R`:
+  - `setup_parallel()` - Configure parallel backend with auto-detection
+  - `restore_parallel()` - Restore original future plan after execution
+  - `can_parallelize()` - Check if future packages are available
+  - `parallel_lapply()` - Unified parallel/sequential lapply interface
+  - `match_blocks_parallel()` - Parallel optimal matching across blocks
+  - `greedy_blocks_parallel()` - Parallel greedy matching across blocks
+- **Performance benefits**:
+  - Scales with number of blocks and block size
+  - Best for 10+ blocks with 50+ units per block
+  - Speedup depends on available cores and problem complexity
+  - Minimal overhead for small problems (automatic detection)
+- **Cross-platform support**:
+  - Windows: `multisession` plan (separate R processes)
+  - Unix/Mac: `multicore` or `multisession` plans
+  - Cluster: Distributed computing via future's cluster plan
+  - Respects user-configured future plans
+- **Integration**:
+  - Works seamlessly with blocking (via `block_id` parameter)
+  - Compatible with distance caching from Step 4
+  - Supports all existing matching parameters
+  - Automatic plan restoration prevents side effects
+- **7 comprehensive examples** in `examples/parallel_matching_demo.R`:
+  - Basic parallel vs sequential comparison
+  - Custom parallel plan configuration
+  - Greedy matching with parallelization
+  - When parallel processing helps most
+  - Combining parallel + distance caching
+  - Platform-specific plans
+  - Performance tips and best practices
+
 ### Changed
 - Updated `DESCRIPTION` to include new matching features
 - Enhanced `NAMESPACE` with new exports:
@@ -171,9 +209,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `is_distance_object()`
   - `update_constraints()`
   - S3 print and summary methods for new classes
-- Modified function signatures to accept distance objects:
-  - `match_couples(left, right = NULL, vars = NULL, ...)` - left can now be distance_object
-  - `greedy_couples(left, right = NULL, vars = NULL, ...)` - left can now be distance_object
+- Modified function signatures to accept distance objects and parallel processing:
+  - `match_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE)` - left can be distance_object, parallel for blocked matching
+  - `greedy_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE)` - left can be distance_object, parallel for blocked matching
+- Added `future` and `future.apply` to Suggests for parallel processing support
 
 ### Fixed
 - Greedy matching functions now properly exported via Rcpp interface

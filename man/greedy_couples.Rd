@@ -19,7 +19,8 @@ greedy_couples(
   require_full_matching = FALSE,
   strategy = c("row_best", "sorted", "pq"),
   return_unmatched = TRUE,
-  return_diagnostics = FALSE
+  return_diagnostics = FALSE,
+  parallel = FALSE
 )
 }
 \arguments{
@@ -59,6 +60,14 @@ scaling method (default: FALSE)}
 \item{return_unmatched}{Include unmatched units in output}
 
 \item{return_diagnostics}{Include detailed diagnostics in output}
+
+\item{parallel}{Enable parallel processing for blocked matching.
+Requires 'future' and 'future.apply' packages. Can be:
+\itemize{
+\item \code{FALSE}: Sequential processing (default)
+\item \code{TRUE}: Auto-configure parallel backend
+\item Character: Specify future plan (e.g., "multisession", "multicore")
+}}
 }
 \value{
 A list with class "matching_result" (same structure as match_couples)

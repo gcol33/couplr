@@ -16,7 +16,8 @@ greedy_couples_blocked(
   scale,
   max_distance,
   calipers,
-  strategy
+  strategy,
+  parallel = FALSE
 )
 }
 \description{

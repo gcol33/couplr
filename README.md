@@ -214,13 +214,6 @@ bootstrap_results <- replicate(1000, {
 # Sequential: ~10 minutes → Parallel (8 cores): ~2 minutes
 ```
 
-**Why use batch processing in couplr?**
-- ⚡ **Automatic parallelization**: Just add `parallel = TRUE`
-- 🎯 **Smart blocking**: Match within groups while maintaining optimal solutions
-- 🔄 **Works everywhere**: Cross-platform via `future` framework (Windows, Unix, clusters)
-- 📊 **Scales linearly**: More cores = proportionally faster results
-- 🧩 **Seamless integration**: Works with blocking, distance caching, and all constraints
-
 ### Distance Caching for Experimentation
 
 ```r

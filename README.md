@@ -290,38 +290,51 @@ mean(matched_data$age_left) - mean(matched_data$age_right)  # e.g., 0.3 years
 
 ### Ecological Studies
 ```r
-# Match vegetation plots across time periods with spatial constraints
-result <- match_couples(
+# Approach 1: Simple Euclidean distance matching
+result_simple <- match_couples(
   plots_2010, plots_2020,
-  vars = c("temperature", "precipitation", "elevation", "latitude", "longitude"),
-  distance = "euclidean",        # Euclidean distance for spatial matching
-  auto_scale = TRUE,              # Auto-scale different units
-  max_distance = 500,             # Only match plots within 500m
-  return_diagnostics = TRUE
+  vars = c("latitude", "longitude", "elevation"),
+  distance = "euclidean",        # Treats all dimensions equally
+  auto_scale = TRUE,
+  max_distance = 500
 ) |>
   join_matched(plots_2010, plots_2020)
 
-# Now answer: How did species composition change in similar environmental conditions?
-lm(species_richness_right ~ species_richness_left + elevation_left, data = result)
+# Approach 2: Weighted spatial structure (latitude > longitude, 3D distance)
+# Custom distance: prioritize latitude, account for elevation
+plots_2010_weighted <- plots_2010 |>
+  mutate(
+    lat_scaled = latitude * 2,       # 2x weight on latitude
+    lon_scaled = longitude * 1,      # 1x weight on longitude
+    elev_scaled = elevation / 100    # Elevation in 100m units
+  )
 
-# Or: Did temperature increase more in certain habitat types?
-result |>
+plots_2020_weighted <- plots_2020 |>
+  mutate(
+    lat_scaled = latitude * 2,
+    lon_scaled = longitude * 1,
+    elev_scaled = elevation / 100
+  )
+
+result_weighted <- match_couples(
+  plots_2010_weighted, plots_2020_weighted,
+  vars = c("lat_scaled", "lon_scaled", "elev_scaled"),
+  distance = "euclidean",        # Now captures custom 3D spatial structure
+  max_distance = 0.5
+) |>
+  join_matched(plots_2010, plots_2020)
+
+# Compare approaches: Did weighting improve ecological relevance?
+# Simple approach may match plots at similar longitude but different latitudes
+# Weighted approach prioritizes latitudinal similarity (e.g., climate zones)
+
+# Answer research questions with weighted matches
+lm(species_richness_right ~ species_richness_left + elevation_left, data = result_weighted)
+
+result_weighted |>
   mutate(temp_change = temperature_right - temperature_left) |>
   group_by(habitat_type_left) |>
   summarise(mean_warming = mean(temp_change))
-
-# Match across seasons with temporal restrictions
-result <- match_couples(
-  summer_plots, winter_plots,
-  vars = c("biomass", "species_count", "soil_moisture"),
-  distance = "manhattan",
-  max_distance = 0.5,             # Only similar plots
-  block_by = "site_id"            # Within same site
-) |>
-  join_matched(summer_plots, winter_plots)
-
-# Answer: How does seasonal migration affect biodiversity in matched plots?
-# Or: Which environmental factors predict seasonal biomass loss?
 ```
 
 ### Particle Tracking

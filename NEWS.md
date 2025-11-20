@@ -105,6 +105,33 @@ Speed up blocked matching with multi-core processing:
   - Compatible with distance caching from Step 4
   - Supports all matching parameters (constraints, calipers, scaling)
 
+### Fun Error Messages and Cost Checking
+
+Like testthat, couplr makes errors light, memorable, and helpful with couple-themed messages:
+
+* **New `check_costs` parameter** (default: `TRUE`) in `match_couples()` and `greedy_couples()`:
+  - Automatically checks distance distributions before matching
+  - Provides friendly, actionable warnings for common problems
+  - Set to `FALSE` to skip checks in production code
+* **Fun couple-themed error messages** throughout the package:
+  - 💔 "No matches made - can't couple without candidates!"
+  - 🔍 "Your constraints are too strict. Love can't bloom in a vacuum!"
+  - ✨ Helpful suggestions: "Try increasing max_distance or relaxing calipers"
+  - 💖 Success messages: "Excellent balance! These couples are well-matched!"
+* **Automatic problem detection**:
+  - **Too many zeros**: Warns about duplicates or identical values (>10% zero distances)
+  - **Extreme costs**: Detects skewed distributions (99th percentile > 10x the 95th)
+  - **Many forbidden pairs**: Warns when constraints eliminate >50% of valid pairs
+  - **Constant distances**: Alerts when all distances are identical
+  - **Constant variables**: Detects and excludes variables with no variation
+* **New diagnostic function** `diagnose_distance_matrix()`:
+  - Comprehensive analysis of cost distributions
+  - Variable-specific problem detection
+  - Actionable suggestions for fixes
+  - Quality rating (good/fair/poor)
+* **Emoji control**: Disable with `options(couplr.emoji = FALSE)` if preferred
+* **Philosophy**: Errors should be less intimidating, more memorable, and provide clear guidance
+
 ### New Functions
 
 * `preprocess_matching_vars()` - Main preprocessing orchestrator
@@ -115,6 +142,8 @@ Speed up blocked matching with multi-core processing:
 * `compute_distances()` - Precompute and cache distance matrices
 * `update_constraints()` - Modify constraints on distance objects
 * `is_distance_object()` - Type checking for distance objects
+* `diagnose_distance_matrix()` - Comprehensive distance diagnostics
+* `check_cost_distribution()` - Check for distribution problems
 * Added robust scaling method using median and MAD
 
 ### Documentation & Examples
@@ -124,13 +153,14 @@ Speed up blocked matching with multi-core processing:
 * `examples/join_matched_demo.R` - 8 joined dataset demonstrations
 * `examples/distance_cache_demo.R` - Distance caching and reuse examples
 * `examples/parallel_matching_demo.R` - 7 parallel processing examples
-* Complete implementation documentation (claude/IMPLEMENTATION_STEP1.md through STEP5.md)
+* `examples/error_messages_demo.R` - 10 fun error message demonstrations
+* Complete implementation documentation (claude/IMPLEMENTATION_STEP1.md through STEP6.md)
 * All functions have full Roxygen documentation
 
 ### Tests
 
 * Added 34+ new tests (10 for preprocessing, 11 for balance diagnostics, 13 for joined datasets, tests for distance caching)
-* All 1428+ tests passing with full backward compatibility
+* All 1509+ tests passing with full backward compatibility
 
 ## Major Changes (Initial 1.0.0 Release)
 

@@ -196,6 +196,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Platform-specific plans
   - Performance tips and best practices
 
+#### Matching Enhancements - Step 6: Fun Error Messages and Cost Checking
+- **Automatic cost distribution checking** via `check_costs` parameter (default: `TRUE`):
+  - Enabled by default in `match_couples()` and `greedy_couples()`
+  - Detects common problems before matching begins
+  - Can be disabled with `check_costs = FALSE` for production code
+- **Fun, couple-themed error messages** throughout the package:
+  - Light, memorable messages inspired by testthat
+  - Themed around coupling, matching, and pairing
+  - Less intimidating for new users, more memorable
+  - Clear actionable suggestions for fixing problems
+- **Emoji support** (optional, controlled via `options(couplr.emoji = FALSE)`):
+  - 💔 for errors (broken heart)
+  - 💌 for warnings (love letter)
+  - 💬 for info messages (speech balloon)
+  - 💖 for success (sparkling heart)
+  - ✨ for suggestions (sparkles)
+  - 🔍 for search/investigation
+  - Automatically disabled in non-interactive sessions
+- **Message helper functions** in `R/matching_messages.R`:
+  - `couplr_stop()` - Fun error messages with emoji
+  - `couplr_warn()` - Fun warning messages
+  - `couplr_inform()` - Info messages
+  - `couplr_success()` - Success messages
+  - `couplr_emoji()` - Get themed emoji
+  - Specific error helpers: `err_missing_data()`, `err_missing_vars()`, `err_no_valid_pairs()`, etc.
+  - Specific warning helpers: `warn_constant_var()`, `warn_many_zeros()`, `warn_extreme_costs()`, etc.
+- **Cost distribution checking** via `check_cost_distribution()`:
+  - Detects too many zero distances (>10%) - suggests checking for duplicates
+  - Detects extreme cost ratios (99th percentile > 10x 95th) - suggests scaling
+  - Detects many forbidden pairs (>50%) - suggests relaxing constraints
+  - Detects constant distances - suggests checking variable informativeness
+  - Returns detailed diagnostic information
+- **Comprehensive diagnostics** via `diagnose_distance_matrix()` (exported):
+  - Full analysis of distance matrix quality
+  - Variable-specific problem detection
+  - Per-variable issue tracking (constant, extreme scale differences)
+  - Actionable suggestions for improvements
+  - Quality rating: "good", "fair", or "poor"
+- **Integration**:
+  - Integrated into `match_couples_single()`, `match_couples_from_distance()`
+  - Integrated into greedy matching functions
+  - Warnings issued before LAP solving to catch problems early
+  - Backward compatible - all tests pass with check_costs enabled
+- **10 comprehensive examples** in `examples/error_messages_demo.R`:
+  - Basic friendly error messages
+  - Duplicate detection warnings
+  - Skewed distribution detection
+  - Overly strict constraints
+  - Constant variable detection
+  - No valid pairs scenarios
+  - Distance matrix diagnostics
+  - Disabling cost checks
+  - Emoji control
+  - Balance quality messages
+
 ### Changed
 - Updated `DESCRIPTION` to include new matching features
 - Enhanced `NAMESPACE` with new exports:
@@ -209,10 +264,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `is_distance_object()`
   - `update_constraints()`
   - S3 print and summary methods for new classes
-- Modified function signatures to accept distance objects and parallel processing:
-  - `match_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE)` - left can be distance_object, parallel for blocked matching
-  - `greedy_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE)` - left can be distance_object, parallel for blocked matching
+- Modified function signatures to accept distance objects, parallel processing, and cost checking:
+  - `match_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE, check_costs = TRUE)` - left can be distance_object, parallel for blocked matching, automatic cost checking
+  - `greedy_couples(left, right = NULL, vars = NULL, ..., parallel = FALSE, check_costs = TRUE)` - left can be distance_object, parallel for blocked matching, automatic cost checking
 - Added `future` and `future.apply` to Suggests for parallel processing support
+- Updated error messages throughout package to use fun, couple-themed helpers
+- Added `diagnose_distance_matrix()` to NAMESPACE exports
 
 ### Fixed
 - Greedy matching functions now properly exported via Rcpp interface

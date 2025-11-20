@@ -34,6 +34,8 @@
 #'   - `FALSE`: Sequential processing (default)
 #'   - `TRUE`: Auto-configure parallel backend
 #'   - Character: Specify future plan (e.g., "multisession", "multicore")
+#' @param check_costs If TRUE, check distance distribution for potential problems
+#'   and provide helpful warnings before matching (default: TRUE)
 #'
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
@@ -73,7 +75,8 @@ match_couples <- function(left, right = NULL,
                           method = "auto",
                           return_unmatched = TRUE,
                           return_diagnostics = FALSE,
-                          parallel = FALSE) {
+                          parallel = FALSE,
+                          check_costs = TRUE) {
 
   # Check if left is a distance_object
   if (is_distance_object(left)) {
@@ -85,17 +88,23 @@ match_couples <- function(left, right = NULL,
       require_full_matching = require_full_matching,
       method = method,
       return_unmatched = return_unmatched,
-      return_diagnostics = return_diagnostics
+      return_diagnostics = return_diagnostics,
+      check_costs = check_costs
     ))
   }
 
   # Standard path: left and right are datasets
   if (is.null(right)) {
-    stop("When left is a dataset, right must be provided")
+    couplr_stop("When left is a dataset, right must be provided\n",
+                "  ", couplr_emoji("search"),
+                "Need two datasets to make couples!")
   }
 
   if (is.null(vars)) {
-    stop("When left is a dataset, vars must be specified")
+    couplr_stop("When left is a dataset, vars must be specified\n",
+                "  ", couplr_emoji("info"),
+                "Use vars = c('var1', 'var2', ...) to specify matching ",
+                "variables")
   }
 
   # Apply automatic preprocessing if requested
@@ -152,7 +161,8 @@ match_couples <- function(left, right = NULL,
       left, right, left_ids, right_ids,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      method = method
+      method = method,
+      check_costs = check_costs
     )
   }
 
@@ -195,7 +205,8 @@ match_couples_from_distance <- function(dist_obj,
                                         require_full_matching = FALSE,
                                         method = "auto",
                                         return_unmatched = TRUE,
-                                        return_diagnostics = FALSE) {
+                                        return_diagnostics = FALSE,
+                                        check_costs = TRUE) {
 
   # Extract from distance object
   cost_matrix <- dist_obj$cost_matrix
@@ -215,9 +226,14 @@ match_couples_from_distance <- function(dist_obj,
     )
   }
 
+  # Check cost distribution if requested
+  if (check_costs) {
+    check_cost_distribution(cost_matrix, warn = TRUE)
+  }
+
   # Check for valid pairs
   if (!has_valid_pairs(cost_matrix)) {
-    warning("No valid pairs found after applying constraints", call. = FALSE)
+    err_no_valid_pairs("No valid pairs after applying constraints")
 
     return(structure(
       list(
@@ -321,7 +337,8 @@ match_couples_from_distance <- function(dist_obj,
 #' @keywords internal
 match_couples_single <- function(left, right, left_ids, right_ids,
                                  vars, distance, weights, scale,
-                                 max_distance, calipers, method) {
+                                 max_distance, calipers, method,
+                                 check_costs = TRUE) {
 
   # Build cost matrix
   cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
@@ -330,9 +347,14 @@ match_couples_single <- function(left, right, left_ids, right_ids,
   cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
                                        max_distance, calipers)
 
+  # Check cost distribution if requested
+  if (check_costs) {
+    check_cost_distribution(cost_matrix, warn = TRUE)
+  }
+
   # Check for valid pairs
   if (!has_valid_pairs(cost_matrix)) {
-    warning("No valid pairs found after applying constraints", call. = FALSE)
+    err_no_valid_pairs("No valid pairs after applying constraints")
 
     return(list(
       pairs = tibble::tibble(
@@ -665,7 +687,8 @@ greedy_couples <- function(left, right = NULL,
                            strategy = c("row_best", "sorted", "pq"),
                            return_unmatched = TRUE,
                            return_diagnostics = FALSE,
-                           parallel = FALSE) {
+                           parallel = FALSE,
+                           check_costs = TRUE) {
 
   strategy <- match.arg(strategy)
 
@@ -675,6 +698,7 @@ greedy_couples <- function(left, right = NULL,
       left,
       max_distance = max_distance,
       calipers = calipers,
+      check_costs = check_costs,
       ignore_blocks = ignore_blocks,
       require_full_matching = require_full_matching,
       strategy = strategy,

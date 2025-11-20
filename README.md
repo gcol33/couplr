@@ -5,7 +5,41 @@
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/gcol33/couplr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-**couplr** is an R package for solving Linear Assignment Problems (LAP) with production-ready matching workflows. It combines state-of-the-art optimization algorithms with modern statistical matching tools for observational studies, treatment effect estimation, and optimal pairing problems.
+## The Problem You Probably Don't Notice
+
+Most analyses compare two groups by summarizing them — means, differences, t-tests, regressions. No matching, just group-level comparisons.
+
+But when the groups differ in important ways — size, distribution, covariates — a group-level comparison blends everything together. You're comparing averages of mismatched things. Imbalance drives false differences: one group has "easier cases", the other "harder cases". Noise becomes signal.
+
+**A cleaner comparison happens when each observation in group A is paired with the most comparable observation in group B.**
+
+Doing this pairing manually — or guessing by eye — breaks instantly for large datasets. You need something that finds the best pairs across the whole dataset, not just one observation at a time.
+
+**This is a Linear Assignment Problem.** Optimal solvers do it cleanly, reproducibly, and without heuristics.
+
+## What couplr Does
+
+**couplr** makes optimal pairing accessible in one or two lines of R:
+
+- Makes group comparisons **fair and balanced**
+- Removes bias caused by uneven composition
+- Reveals effects that grouping hides (or fabricates)
+- Works with any model (`lm`, GLM, mixed models, ML)
+- Handles any two groups you want to compare
+
+```r
+library(couplr)
+
+# Compare treatment vs control with optimal pairing
+result <- treated |>
+  match_couples(control, vars = c("age", "income", "health"))
+
+# Get analysis-ready dataset
+data <- join_matched(result, treated, control)
+
+# Now compare fairly matched pairs
+lm(outcome ~ treatment + age, data = data)
+```
 
 ## Features
 

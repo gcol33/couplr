@@ -9,13 +9,17 @@
 
 ## Features
 
-### 🎯 12 LAP Algorithms + Greedy Methods
+### 🎯 12 Optimal LAP Algorithms
 - **Classic solvers**: Hungarian, Jonker-Volgenant
 - **Auction variants**: Standard, Gauss-Seidel, scaled
 - **Advanced methods**: Gabow-Tarjan, cost-scaling, cycle canceling, SSAP bucket
 - **Specialized**: SAP (shortest augmenting path), CS-flow, HK01 (binary costs), brute-force
-- **Greedy algorithms**: Sorted, row-best, priority queue (fast approximate matching)
 - **Automatic selection**: Smart method selection based on problem characteristics
+
+### ⚡ Greedy Matching (Separate)
+- **Fast approximate algorithms**: Sorted, row-best, priority queue (10-100x faster)
+- **Separate function**: Use `greedy_couples()` instead of `match_couples()`
+- **Trade-off**: Speed vs optimality - no guarantee of minimum total distance
 
 ### 🔬 Production-Ready Matching Workflows
 - **Automatic preprocessing**: Variable health checks, smart scaling, categorical encoding
@@ -184,21 +188,38 @@ result <- lap_solve(distance_matrix, method = "jv")
 
 ## Algorithm Selection
 
-The package automatically selects the best algorithm based on problem characteristics:
+### Optimal LAP Solvers
+
+The package automatically selects the best optimal algorithm with `method = "auto"`:
 
 | Problem Type | Recommended Method | Complexity |
 |-------------|-------------------|-----------|
-| Small (n < 100) | `hungarian` | O(n³) |
-| Medium, dense | `jv` | O(n²log n) |
-| Large, sparse | `auction` | O(n²) |
-| Very large | `greedy_row_best` | O(n²) |
+| Very small (n ≤ 8) | `bruteforce` | O(n!) |
+| Small (n ≤ 50) | `hungarian` | O(n³) |
+| Medium (50 < n ≤ 75) | `jv` | O(n²log n) |
+| Large (n > 75) | `auction_scaled` | O(n²) |
 | Binary costs | `hk01` | O(√n · m) |
+| Sparse (>50% NA) | `sap` | O(n²) |
 
-Override with `method` parameter:
 ```r
+# Optimal matching (default uses method = "auto")
+lap_solve(cost)                        # Automatic selection
 lap_solve(cost, method = "hungarian")  # Force specific algorithm
-lap_solve(cost, method = "auto")       # Let package decide (default)
+match_couples(left, right, vars)       # Always optimal
 ```
+
+### Greedy Algorithms (Separate Function)
+
+For very large problems where approximate solutions are acceptable:
+
+```r
+# Greedy matching (separate function)
+greedy_couples(left, right, vars, strategy = "row_best")  # Default: fast
+greedy_couples(left, right, vars, strategy = "sorted")    # Better quality
+greedy_couples(left, right, vars, strategy = "pq")        # Memory efficient
+```
+
+**Trade-off**: 10-100x faster but no optimality guarantee
 
 ## Documentation
 

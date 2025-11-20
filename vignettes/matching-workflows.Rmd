@@ -674,6 +674,7 @@ result_blocked <- match_couples(
 
 # Verify exact site balance
 result_blocked$pairs %>%
+  mutate(left_id = as.integer(left_id), right_id = as.integer(right_id)) %>%
   left_join(left_site %>% select(id, site), by = c("left_id" = "id")) %>%
   left_join(right_site %>% select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) %>%
   count(site_left, site_right)
@@ -689,8 +690,8 @@ cluster_blocks <- matchmaker(
   left = left_site,
   right = right_site,
   block_type = "cluster",
-  cluster_vars = "age",
-  n_clusters = 3
+  block_vars = "age",
+  n_blocks = 3
 )
 
 cat("Cluster-based blocks:\n")
@@ -765,9 +766,9 @@ matched_right <- right_data %>%
 
 # Compute balance diagnostics
 balance <- balance_diagnostics(
-  match_result = match_result,
-  left_data = matched_left,
-  right_data = matched_right,
+  result = match_result,
+  left = left_data,
+  right = right_data,
   vars = c("age", "income")
 )
 
@@ -784,18 +785,20 @@ balance_table(balance)
 # Before-after balance plot
 # (Requires creating pre-match balance for comparison)
 
-# Compute pre-match balance
-pre_match <- balance_diagnostics(
-  match_result = NULL,  # No matching
-  left_data = left_data,
-  right_data = right_data,
-  vars = c("age", "income")
+# For pre-match comparison, just compute summary statistics directly
+pre_match_stats <- tibble(
+  variable = c("age", "income"),
+  std_diff = c(
+    (mean(left_data$age) - mean(right_data$age)) / sqrt((sd(left_data$age)^2 + sd(right_data$age)^2) / 2),
+    (mean(left_data$income) - mean(right_data$income)) / sqrt((sd(left_data$income)^2 + sd(right_data$income)^2) / 2)
+  ),
+  when = "Before"
 )
 
 # Combine for plotting
 balance_comparison <- bind_rows(
-  pre_match$var_stats %>% mutate(when = "Before"),
-  balance$var_stats %>% mutate(when = "After")
+  pre_match_stats,
+  balance$var_stats %>% select(variable, std_diff) %>% mutate(when = "After")
 )
 
 ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
@@ -895,7 +898,6 @@ job_match <- match_couples(
   vars = c("age", "education_years", "prior_earnings", "employed"),
   auto_scale = TRUE,
   scale = "robust",
-  max_distance = 0.5,  # Caliper at 0.5 pooled SD
   return_diagnostics = TRUE
 )
 
@@ -918,9 +920,9 @@ matched_control <- control_group %>%
 
 # Compute balance
 job_balance <- balance_diagnostics(
-  match_result = job_match,
-  left_data = matched_treated,
-  right_data = matched_control,
+  result = job_match,
+  left = treatment_group,
+  right = control_group,
   vars = c("age", "education_years", "prior_earnings", "employed")
 )
 

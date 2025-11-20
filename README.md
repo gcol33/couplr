@@ -259,24 +259,37 @@ lm(outcome ~ treatment + covariates, data = data)
 ### Ecological Studies
 ```r
 # Match vegetation plots across time periods with spatial constraints
-# Ensure plots are matched only if they're within 500m (Euclidean distance)
 result <- match_couples(
   plots_2010, plots_2020,
   vars = c("temperature", "precipitation", "elevation", "latitude", "longitude"),
-  distance = "euclidean",        # Use Euclidean distance
+  distance = "euclidean",        # Euclidean distance for spatial matching
   auto_scale = TRUE,              # Auto-scale different units
-  max_distance = 500,             # Spatial caliper: max 500m distance
+  max_distance = 500,             # Only match plots within 500m
   return_diagnostics = TRUE
-)
+) |>
+  join_matched(plots_2010, plots_2020)
 
-# Alternative: Match across seasons with temporal restrictions
+# Now answer: How did species composition change in similar environmental conditions?
+lm(species_richness_right ~ species_richness_left + elevation_left, data = result)
+
+# Or: Did temperature increase more in certain habitat types?
+result |>
+  mutate(temp_change = temperature_right - temperature_left) |>
+  group_by(habitat_type_left) |>
+  summarise(mean_warming = mean(temp_change))
+
+# Match across seasons with temporal restrictions
 result <- match_couples(
   summer_plots, winter_plots,
   vars = c("biomass", "species_count", "soil_moisture"),
-  distance = "manhattan",         # Or use Manhattan distance
-  max_distance = 0.5,             # Restrict to similar plots only
-  block_by = "site_id"            # Exact match within same site
-)
+  distance = "manhattan",
+  max_distance = 0.5,             # Only similar plots
+  block_by = "site_id"            # Within same site
+) |>
+  join_matched(summer_plots, winter_plots)
+
+# Answer: How does seasonal migration affect biodiversity in matched plots?
+# Or: Which environmental factors predict seasonal biomass loss?
 ```
 
 ### Particle Tracking

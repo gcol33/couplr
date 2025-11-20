@@ -42,6 +42,13 @@ build_equality_graph(const CostMatrix& cost,
                      const DualVec& y_u,
                      const DualVec& y_v);
 
+void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
+                                        const CostMatrix& cost,
+                                        const MatchVec& row_match,
+                                        const DualVec& y_u,
+                                        const DualVec& y_v,
+                                        const std::vector<int>& affected_cols);
+
 // ============================================================================
 // Module C: Augment matching along a path
 // ============================================================================
@@ -91,11 +98,14 @@ bool hungarian_step_one_feasible(const CostMatrix& cost,
 
 bool is_perfect(const MatchVec& row_match);
 
+// New signature that supports incremental updates
 bool apply_step1(const CostMatrix& cost,
                 MatchVec& row_match,
                 MatchVec& col_match,
                 DualVec& y_u,
-                DualVec& y_v);
+                DualVec& y_v,
+                std::vector<std::vector<int>>* eq_graph = nullptr,
+                std::vector<int>* affected_cols_out = nullptr);
 
 void match_gt(const CostMatrix& cost,
              MatchVec& row_match,

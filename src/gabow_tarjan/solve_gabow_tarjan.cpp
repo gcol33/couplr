@@ -135,21 +135,20 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
         v_R[j] = maximize ? -val : val;
     }
     
-    // Build result list, with names matching your debug helpers
+    // Build result list matching the standard lap_solve API
+    // Required fields: "match" and "total_cost" (used by assignment() function in R/lap_solve.R:121,134)
     return Rcpp::List::create(
-        // Old names / public API
-        Rcpp::Named("assignment") = row_match_R,
-        Rcpp::Named("row_duals")  = u_R,
-        Rcpp::Named("col_duals")  = v_R,
-        
-        // Extra names expected by diagnostic helpers
+        // Standard API (required by assignment())
+        Rcpp::Named("match")      = row_match_R,
+        Rcpp::Named("total_cost") = total_cost,
+
+        // Extra fields for diagnostic/debugging
         Rcpp::Named("row_match")  = row_match_R,
         Rcpp::Named("col_match")  = col_match_R,
+        Rcpp::Named("row_duals")  = u_R,
+        Rcpp::Named("col_duals")  = v_R,
         Rcpp::Named("u")          = u_R,
         Rcpp::Named("v")          = v_R,
-        
-        // Common fields
-        Rcpp::Named("cost")       = total_cost,
         Rcpp::Named("n_matched")  = n_matched,
         Rcpp::Named("method")     = "gabow_tarjan"
     );

@@ -137,6 +137,62 @@ build_equality_graph(const CostMatrix& cost,
     return eq_graph;
 }
 
+/**
+ * Incrementally update equality graph after dual variable changes
+ *
+ * After Step 1, only columns on augmenting paths have y_v decreased.
+ * This function updates the equality graph by checking only the affected
+ * columns against all rows, achieving O(|affected_cols| × n) complexity
+ * instead of O(nm).
+ *
+ * @param eq_graph Existing equality graph to update (modified in place)
+ * @param cost Cost matrix
+ * @param row_match Current matching
+ * @param y_u Dual variables for rows
+ * @param y_v Dual variables for columns (updated since last graph build)
+ * @param affected_cols List of column indices whose y_v decreased
+ */
+void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
+                                        const CostMatrix& cost,
+                                        const MatchVec& row_match,
+                                        const DualVec& y_u,
+                                        const DualVec& y_v,
+                                        const std::vector<int>& affected_cols)
+{
+    const int n = static_cast<int>(cost.size());
+    const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
+
+    // For each affected column, check all rows for new eligible edges
+    for (int j : affected_cols) {
+        if (j < 0 || j >= m) continue;
+
+        for (int i = 0; i < n; ++i) {
+            long long c_ij = cost[i][j];
+
+            // Skip forbidden edges
+            if (c_ij >= BIG_INT) {
+                continue;
+            }
+
+            bool in_matching = (row_match[i] == j);
+            bool is_elig = is_eligible(c_ij, in_matching, y_u[i], y_v[j]);
+
+            // Check if (i,j) is already in eq_graph[i]
+            auto& adj_list = eq_graph[i];
+            auto it = std::find(adj_list.begin(), adj_list.end(), j);
+            bool already_present = (it != adj_list.end());
+
+            if (is_elig && !already_present) {
+                // Edge became eligible: add it
+                adj_list.push_back(j);
+            } else if (!is_elig && already_present) {
+                // Edge no longer eligible: remove it
+                adj_list.erase(it);
+            }
+        }
+    }
+}
+
 // ============================================================================
 // Module C: Augment matching along a path
 // ============================================================================
@@ -156,45 +212,13 @@ void augment_along_path(const std::vector<std::pair<int,int>>& edges,
                         MatchVec& row_match,
                         MatchVec& col_match)
 {
-    // 1. Build current matching M from row_match
-    std::set<std::pair<int,int>> M;
-    for (int i = 0; i < static_cast<int>(row_match.size()); ++i) {
-        int j = row_match[i];
-        if (j != NIL) {
-            M.emplace(i, j);
-        }
-    }
-    
-    // 2. Symmetric difference M' = M Δ P
-    std::set<std::pair<int,int>> P(edges.begin(), edges.end());
-    std::set<std::pair<int,int>> M_sym;
-    
-    // M - P (edges in M but not in P)
-    for (const auto& e : M) {
-        if (P.find(e) == P.end()) {
-            M_sym.insert(e);
-        }
-    }
-    
-    // P - M (edges in P but not in M)
-    for (const auto& e : P) {
-        if (M.find(e) == M.end()) {
-            M_sym.insert(e);
-        }
-    }
-    
-    // 3. Clear current matches
-    for (int i = 0; i < static_cast<int>(row_match.size()); ++i) {
-        row_match[i] = NIL;
-    }
-    for (int j = 0; j < static_cast<int>(col_match.size()); ++j) {
-        col_match[j] = NIL;
-    }
-    
-    // 4. Rebuild row_match / col_match from M_sym
-    for (const auto& e : M_sym) {
-        int i = e.first;
-        int j = e.second;
+    // OPTIMIZED: Direct in-place flip - O(path_length) instead of O(n)
+    // Paper (page 6): "Augmenting along P means M ← M ⊕ P"
+    // This is just flipping matched/unmatched status along the path
+
+    for (const auto& edge : edges) {
+        int i = edge.first;
+        int j = edge.second;
         row_match[i] = j;
         col_match[j] = i;
     }
@@ -324,8 +348,11 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
                               const MatchVec& row_match,
                               const MatchVec& col_match)
 {
+    // OPTIMIZED: Single DFS pass - O(m) instead of O(sqrt(n) * m)
+    // Paper approach: Find ALL maximal paths in ONE traversal (like Hopcroft-Karp)
+
     const int n = static_cast<int>(eq_graph.size());
-    
+
     // Determine number of columns
     int m = 0;
     for (const auto& nbrs : eq_graph) {
@@ -333,34 +360,59 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
             if (j + 1 > m) m = j + 1;
         }
     }
-    
-    std::vector<bool> banned_row(n, false);
-    std::vector<bool> banned_col(m, false);
-    
-    std::vector<std::vector<std::pair<int,int>>> paths;
-    
-    while (true) {
-        auto path = find_one_augmenting_path_eq(eq_graph,
-                                                row_match,
-                                                col_match,
-                                                banned_row,
-                                                banned_col);
-        if (path.empty()) {
-            break;
+
+    std::vector<bool> visited_row(n, false);
+    std::vector<bool> visited_col(m, false);
+    std::vector<std::pair<int,int>> current_path;
+    std::vector<std::vector<std::pair<int,int>>> all_paths;
+
+    // DFS from a single row to find an augmenting path
+    std::function<bool(int)> dfs = [&](int i) -> bool {
+        if (visited_row[i]) return false;
+        visited_row[i] = true;
+
+        // Try all eligible edges from row i
+        for (int j : eq_graph[i]) {
+            if (visited_col[j]) continue;
+
+            visited_col[j] = true;
+            current_path.emplace_back(i, j);
+
+            // If j is free, we found an augmenting path!
+            if (col_match[j] == NIL) {
+                all_paths.push_back(current_path);
+                // Don't clear path yet - keep it for potential reuse
+                return true;
+            }
+
+            // Otherwise, follow matched edge to continue DFS
+            int i2 = col_match[j];
+            if (i2 != NIL && !visited_row[i2]) {
+                if (dfs(i2)) {
+                    return true;
+                }
+            }
+
+            // Backtrack
+            current_path.pop_back();
+            // Don't unmark visited_col[j] - ensures vertex-disjoint paths
         }
-        
-        paths.push_back(path);
-        
-        // Ban all vertices in this path to ensure vertex-disjointness
-        for (const auto& e : path) {
-            int i = e.first;
-            int j = e.second;
-            if (i >= 0 && i < n) banned_row[i] = true;
-            if (j >= 0 && j < m) banned_col[j] = true;
+
+        return false;
+    };
+
+    // Try DFS from each free row
+    for (int i = 0; i < n; ++i) {
+        if (row_match[i] == NIL && !visited_row[i]) {
+            current_path.clear();
+            if (dfs(i)) {
+                // Successfully found a path
+                // visited arrays ensure next search finds vertex-disjoint path
+            }
         }
     }
-    
-    return paths;
+
+    return all_paths;
 }
 
 // ============================================================================
@@ -769,69 +821,83 @@ bool is_perfect(const MatchVec& row_match) {
 
 /**
  * Apply Step 1 of Gabow-Tarjan algorithm
- * 
+ *
  * Finds maximal set of vertex-disjoint augmenting paths on eligible edges
  * and updates matching and duals.
- * 
+ *
  * Steps:
- * 1. Build equality graph of eligible edges
+ * 1. Build equality graph of eligible edges (or use provided one for incremental updates)
  * 2. Find maximal set of vertex-disjoint augmenting paths
  * 3. Augment along each path
  * 4. For each column on any path, decrease y_v[j] by 1
- * 
+ *
  * @param cost Cost matrix
  * @param row_match Current matching from rows (modified in place)
  * @param col_match Current matching from columns (modified in place)
  * @param y_u Dual variables for rows (modified in place)
  * @param y_v Dual variables for columns (modified in place)
+ * @param eq_graph Optional pointer to existing equality graph (for incremental updates)
+ * @param affected_cols_out Optional pointer to store list of columns whose y_v decreased
  * @return true if augmenting paths were found, false otherwise
  */
 bool apply_step1(const CostMatrix& cost,
                 MatchVec& row_match,
                 MatchVec& col_match,
                 DualVec& y_u,
-                DualVec& y_v)
+                DualVec& y_v,
+                std::vector<std::vector<int>>* eq_graph,
+                std::vector<int>* affected_cols_out)
 {
-    // 1. Build equality graph of eligible edges
-    auto eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
-    
+    // 1. Build equality graph of eligible edges (or use provided one)
+    std::vector<std::vector<int>> local_eq_graph;
+    std::vector<std::vector<int>>& graph_ref = eq_graph ? *eq_graph : local_eq_graph;
+
+    if (!eq_graph) {
+        // No existing graph provided: build from scratch
+        local_eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
+    }
+
     // 2. Find maximal set of vertex-disjoint augmenting paths
-    auto paths = find_maximal_augmenting_paths(eq_graph, row_match, col_match);
-    
+    auto paths = find_maximal_augmenting_paths(graph_ref, row_match, col_match);
+
     if (paths.empty()) {
         return false;
     }
-    
-    // 3. Collect ALL edges from ALL paths and augment in one operation
-    std::set<std::pair<int,int>> all_path_edges;
+
+    // 3. Augment paths individually and track columns used
+    // OPTIMIZED: Augment each path individually for efficiency
+    // Old approach: collected all edges into a set (O(n log n)), then augmented
+    // New approach: augment each path directly (O(total_path_length))
     std::vector<bool> col_used(y_v.size(), false);
-    
+
     for (const auto& path : paths) {
-        // Collect edges from this path
+        // Augment this path directly
+        augment_along_path(path, row_match, col_match);
+
+        // Mark columns as used
         for (const auto& e : path) {
-            all_path_edges.insert(e);
-            
-            // Mark column as used
             int j = e.second;
             if (j >= 0 && j < static_cast<int>(col_used.size())) {
                 col_used[j] = true;
             }
         }
     }
-    
-    // Convert set to vector for augment_along_path
-    std::vector<std::pair<int,int>> all_edges(all_path_edges.begin(), all_path_edges.end());
-    
-    // Augment matching along ALL paths at once
-    augment_along_path(all_edges, row_match, col_match);
-    
+
     // 4. Decrease y_v[j] for all columns on any path (V1 vertices in paper)
+    // Also collect affected columns for incremental updates
+    if (affected_cols_out) {
+        affected_cols_out->clear();
+    }
+
     for (int j = 0; j < static_cast<int>(col_used.size()); ++j) {
         if (col_used[j]) {
             y_v[j] -= 1;
+            if (affected_cols_out) {
+                affected_cols_out->push_back(j);
+            }
         }
     }
-    
+
     return true;
 }
 
@@ -1000,24 +1066,37 @@ void match_gt(const CostMatrix& cost,
     // - The state is 1-feasible
     // - Ready to run the main Gabow-Tarjan loop
 
-    
+
+    // OPTIMIZATION: Incremental equality graph updates
+    // Build initial equality graph once, then update incrementally after each Step 1
+    std::vector<std::vector<int>> eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
+    std::vector<int> affected_cols;
+
     int it = 0;
     while (!is_perfect(row_match)) {
         ++it;
         if (it > max_iters) {
             throw std::runtime_error("match_gt exceeded max_iters");
         }
-        
+
         // Optional: Check 1-feasibility before Step 1 (debug only)
         if (check_feasible) {
             if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {
                 throw std::runtime_error("1-feasibility violated before Step 1");
             }
         }
-        
+
         // Step 1: Maximal vertex-disjoint augmenting paths on eligible edges
-        bool found_paths = apply_step1(cost, row_match, col_match, y_u, y_v);
-        
+        // Use incremental updates: pass existing eq_graph and get affected columns
+        bool found_paths = apply_step1(cost, row_match, col_match, y_u, y_v,
+                                       &eq_graph, &affected_cols);
+
+        // If Step 1 found paths, update the equality graph incrementally
+        // (only check rows against columns whose y_v decreased)
+        if (found_paths && !affected_cols.empty()) {
+            update_equality_graph_incremental(eq_graph, cost, row_match, y_u, y_v, affected_cols);
+        }
+
         // Check if matching is now perfect
         if (is_perfect(row_match)) {
             break;
@@ -1030,8 +1109,11 @@ void match_gt(const CostMatrix& cost,
             if (!hungarian_step_one_feasible(cost, row_match, col_match, y_u, y_v)) {
                 throw std::runtime_error("No augmenting path in Step 2 (no perfect matching)");
             }
+
+            // After Step 2, duals may have changed significantly: rebuild equality graph
+            eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
         }
-        
+
         // Optional: Check 1-feasibility after Step 2 (debug only)
         if (check_feasible) {
             if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {

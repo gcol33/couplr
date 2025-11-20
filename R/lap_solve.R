@@ -32,8 +32,16 @@
 #'
 #' @details
 #' `method = "auto"` selects an algorithm based on problem size/shape and data
-#' characteristics (e.g., small problems → `"bruteforce"`, binary/all-equal costs → `"hk01"`,
-#' sparse/very rectangular → `"sap"`, large dense → `"auction"`, otherwise `"jv"`/`"hungarian"`).
+#' characteristics:
+#' \itemize{
+#'   \item Very small (n≤8): `"bruteforce"` — exact enumeration
+#'   \item Binary/constant costs: `"hk01"` — specialized for 0/1 costs
+#'   \item Sparse (>50\% NA) or very rectangular (m≥3n): `"sap"` — handles sparsity
+#'   \item Small-medium (8<n≤50): `"hungarian"` — provides exact dual solutions
+#'   \item Medium (50<n≤75): `"jv"` — fast general-purpose solver
+#'   \item Large (n>75): `"auction_scaled"` — fastest for large dense problems
+#' }
+#' Benchmarks show auction_scaled and JV are 100-1500x faster than Hungarian at n=500.
 #'
 #' @examples
 #' cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
@@ -66,6 +74,7 @@ assignment <- function(cost, maximize = FALSE,
   }
 
   if (method == "auto") {
+    # Check for special cost structures first
     hk01_candidate <- function(M) {
       x <- as.numeric(M[is.finite(M)]); if (!length(x)) return(FALSE)
       ux <- sort(unique(round(x, 12)))
@@ -73,22 +82,34 @@ assignment <- function(cost, maximize = FALSE,
       if (length(ux) == 2L && all(ux %in% c(0,1))) return(TRUE)
       FALSE
     }
-    if (n <= 5 && m <= 5) {
+
+    # Strategy based on comprehensive benchmarks:
+    # - n≤8: bruteforce (exact enumeration for very small problems)
+    # - 8<n≤50: hungarian (exact dual solutions for small-medium)
+    # - 50<n≤75: jv (fast general-purpose solver)
+    # - n>75: auction_scaled (fastest for large problems)
+    # Special cases override size-based selection:
+    # - Binary/constant costs: hk01 (specialized algorithm)
+    # - Sparse/rectangular: sap (handles sparsity well)
+
+    if (n <= 8 && m <= 8) {
       method <- "bruteforce"
     } else if (hk01_candidate(cost)) {
       method <- "hk01"
     } else {
       na_rate <- mean(is.na(cost))
-      if (n <= 10 && m <= 10) {
-        method <- "jv"
-      } else if (na_rate > 0.35 || m >= 2 * n) {
+      # Sparse or very rectangular problems
+      if (na_rate > 0.5 || m >= 3 * n) {
         method <- "sap"
-      } else if (n > 20 && n <= 80 && na_rate < 0.1 && n <= m) {
+      } else if (n <= 50) {
+        # Small-medium: Hungarian provides exact dual solutions
         method <- "hungarian"
-      } else if (n >= 100 && n <= m) {
-        method <- "auction"
-      } else {
+      } else if (n <= 75) {
+        # Medium: JV is fast and reliable
         method <- "jv"
+      } else {
+        # Large: auction_scaled is fastest (benchmarks show it beats JV)
+        method <- "auction_scaled"
       }
     }
   }

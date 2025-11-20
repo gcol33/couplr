@@ -138,7 +138,7 @@ head(matched_data)
 
 ### Fast Greedy Matching for Large Data
 
-**Performance note:** Optimal matching becomes slow above n > 500. For large datasets (500+), use `greedy_couples()` for 10-100x speedup.
+**Performance note:** Optimal matching becomes slow above n > 500 per group. For large datasets, use `greedy_couples()` for 10-100x speedup.
 
 ```r
 # For n > 500: use greedy algorithm (10-100x faster than optimal)

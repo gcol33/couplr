@@ -37,7 +37,7 @@ devtools::install_github("gcol33/couplr")
 - **Automatic selection**: Smart method selection based on problem characteristics
 
 ### ⚡ Greedy Matching (Separate)
-- **Fast approximate algorithms**: Sorted, row-best, priority queue (10-100x faster)
+- **Fast approximate algorithms**: Sorted, row-best, priority queue (1.3-1.6x faster, 11x less memory)
 - **Separate function**: Use `greedy_couples()` instead of `match_couples()`
 - **Trade-off**: Speed vs optimality - no guarantee of minimum total distance
 
@@ -164,10 +164,10 @@ head(matched_data)
 
 ### Fast Greedy Matching for Large Data
 
-**Performance note:** Optimal matching becomes slow above n > 500 per group. For large datasets, use `greedy_couples()` for 10-100x speedup.
+**Performance note:** Optimal matching is practical up to ~2000 per group. For larger datasets, use `greedy_couples()` for faster approximate solutions.
 
 ```r
-# For n > 500: use greedy algorithm (10-100x faster than optimal)
+# For n > 2000: use greedy algorithm
 result <- greedy_couples(
   left = large_treatment_df,     # e.g., 5000 treated units
   right = large_control_df,       # e.g., 10000 control units
@@ -430,7 +430,7 @@ match_couples(left, right, vars)       # Always optimal
 
 ### Greedy Algorithms (Separate Function)
 
-For very large problems where approximate solutions are acceptable:
+For large problems (n > 2000) or memory-constrained environments:
 
 ```r
 # Greedy matching (separate function)
@@ -439,7 +439,7 @@ greedy_couples(left, right, vars, strategy = "sorted")    # Better quality
 greedy_couples(left, right, vars, strategy = "pq")        # Memory efficient
 ```
 
-**Trade-off**: 10-100x faster but no optimality guarantee
+**Trade-off**: 1.3-1.6x faster and 11x less memory, but no optimality guarantee
 
 ## Documentation
 
@@ -460,12 +460,13 @@ The package includes comprehensive example scripts:
 
 ## Performance
 
-For large datasets (n > 500), greedy matching provides substantial speedup over optimal algorithms:
+Optimal matching is practical for most real-world problems. Greedy algorithms provide moderate speedup with some quality trade-off:
 
 ```r
-# Benchmark: n = 1000 per group
+# Benchmark across problem sizes
 library(bench)
 
+# n = 1000 (typical use case)
 bench::mark(
   optimal = match_couples(left, right, vars, method = "auto"),
   greedy  = greedy_couples(left, right, vars, strategy = "row_best")
@@ -476,15 +477,19 @@ bench::mark(
 #> 1 optimal      1.24s    1.28s      0.78      220MB     42.9
 #> 2 greedy       909ms    914ms      1.09     19.6MB     54.1
 
-# Greedy is 1.4x faster and uses 11.2x less memory
+# Speedup scales with problem size:
+# n=100:  optimal=12ms,  greedy=9ms   (1.3x faster)
+# n=500:  optimal=295ms, greedy=229ms (1.3x faster)
+# n=1000: optimal=1.24s, greedy=920ms (1.3x faster)
+# n=2000: optimal=5.68s, greedy=3.65s (1.6x faster)
 ```
 
 **Key takeaways**:
-- **Speed**: Greedy is 1.4x faster (1.28s → 914ms for n=1000)
-- **Memory**: Greedy uses 11.2x less memory (220MB → 19.6MB)
-- **Scalability**: Speedup increases with problem size (>10x for n > 5000)
+- **Speed**: Greedy provides 1.3-1.6x speedup for typical problems
+- **Memory**: Greedy uses ~11x less memory (important for large n)
+- **Quality**: Both produce high-quality matches; optimal guarantees minimum total distance
 
-**When to use greedy**: For n > 500 per group, greedy matching (`greedy_couples()`) offers good quality with much better performance. Use optimal matching (`match_couples()`) when you need guaranteed minimum total distance.
+**When to use greedy**: For n > 2000 per group or when memory is constrained, greedy matching (`greedy_couples()`) offers good quality with better resource usage. Use optimal matching (`match_couples()`) for smaller problems or when optimality is critical.
 
 ```r
 # To run benchmarks yourself:

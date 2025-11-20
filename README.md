@@ -138,15 +138,22 @@ head(matched_data)
 
 ### Fast Greedy Matching for Large Data
 
+**Performance note:** Optimal matching becomes slow above n > 500. For large datasets (500+), use `greedy_couples()` for 10-100x speedup.
+
 ```r
-# Use greedy algorithm for speed (10-100x faster)
+# For n > 500: use greedy algorithm (10-100x faster than optimal)
 result <- greedy_couples(
-  left = large_treatment_df,
-  right = large_control_df,
+  left = large_treatment_df,     # e.g., 5000 treated units
+  right = large_control_df,       # e.g., 10000 control units
   vars = c("age", "income"),
-  strategy = "row_best",  # or "sorted" or "pq"
+  strategy = "row_best",          # Fast and good quality
   auto_scale = TRUE
 )
+
+# Strategy options:
+# - "row_best": Fastest, good quality (default)
+# - "sorted": Slower, better quality
+# - "pq": Memory efficient for very large data
 ```
 
 ### Matching with Blocking

@@ -63,11 +63,9 @@ devtools::install_github("gcol33/couplr")
 
 ## Why Pairing?
 
-When comparing two groups, simple averages can mislead if the groups differ in composition. One group might have older participants, higher incomes, or different health profiles. These differences create confounding that obscures real effects.
+Group averages can mislead when groups differ in composition. If treated patients are older or sicker than controls, any difference might reflect age or health rather than treatment.
 
-Pairing solves this by matching each observation in group A to its most similar counterpart in group B. This creates balanced comparisons where differences reflect the effect of interest, not compositional imbalance.
-
-Manual pairing doesn't scale. For large datasets, you need an algorithm that finds the globally optimal set of pairs across all observations. This is a Linear Assignment Problem.
+Pairing fixes this by matching each treated unit to its most similar control. Manual pairing doesn't scale. For large datasets, you need an algorithm that finds optimal pairs globally. This is a Linear Assignment Problem.
 
 ## Quick Start
 

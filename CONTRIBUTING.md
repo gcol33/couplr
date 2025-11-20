@@ -6,6 +6,34 @@ Thank you for considering contributing to couplr! This document provides guideli
 
 Be respectful and constructive. We're building tools for the R community.
 
+## Documentation Standards
+
+### No Fabricated Data
+
+**CRITICAL**: Never include made-up numbers, benchmarks, or example outputs in documentation.
+
+- ❌ **Never** fabricate benchmark results
+- ❌ **Never** invent example outputs
+- ❌ **Never** guess performance numbers
+- ✅ **Always** run actual code to get real results
+- ✅ **Always** ask maintainers if you need benchmark data
+- ✅ **Always** mark placeholder values clearly: `# TODO: Run actual benchmark`
+
+**Why this matters**: Fabricated data misleads users about package performance and creates trust issues. If you need benchmark results but can't run them, ask maintainers or leave a clear TODO marker.
+
+**Example - WRONG**:
+```r
+# Made-up numbers
+bench::mark(...)
+#> median: 850ms  # ← This is fake!
+```
+
+**Example - RIGHT**:
+```r
+# TODO: Run actual benchmark with n=1000
+# Expected to be faster than baseline by ~10x based on algorithm complexity
+```
+
 ## Getting Started
 
 ### Prerequisites

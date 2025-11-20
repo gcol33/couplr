@@ -55,6 +55,21 @@ Key design points AI agents should know:
 - Add a new solver: follow the "Adding a new C++ solver" steps above and add documentation in `man/` via roxygen comments.
 - Improve auto-selection heuristics: modify `R/assignment.R::method == 'auto'` heuristics and add tests under `tests/` demonstrating expected selection for small/sparse/dense inputs.
 
+# Documentation standards
+
+## CRITICAL: No Fabricated Data
+
+**Never include made-up numbers, benchmarks, or outputs in documentation or examples.**
+
+- ❌ Do not fabricate benchmark results
+- ❌ Do not invent example outputs
+- ❌ Do not guess performance numbers
+- ✅ Run actual code to get real results
+- ✅ Ask maintainers if you need benchmark data
+- ✅ Mark placeholders: `# TODO: Run actual benchmark`
+
+Why: Fabricated data misleads users about performance and erodes trust.
+
 # Contact / Issues
 - Bug reports URL in `DESCRIPTION`: `https://github.com/gcol33/couplr/issues` — open an issue for ambiguous design decisions.
 

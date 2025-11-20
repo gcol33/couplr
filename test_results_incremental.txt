@@ -1,0 +1,315 @@
+
+══ Testing test-matching.R ═════════════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 3 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 4 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 5 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 6 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 7 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 8 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 9 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 10 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 11 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 12 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 13 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 14 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 15 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 16 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 17 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 18 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 19 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 20 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 21 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 22 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 23 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 24 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 25 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 26 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 27 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 28 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 29 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 30 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 31 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 32 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 33 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 34 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 35 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 36 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 37 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 38 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 39 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 40 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 41 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 42 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 43 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 44 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 45 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 46 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 47 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 48 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 49 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 50 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 51 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 52 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 53 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 54 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 55 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 56 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 57 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 58 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 59 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 60 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 61 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 62 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 63 | WARN 0 | SKIP 0 | PASS 0 ]
+
+── Error ('test-matching.R:17:3'): matchmaker creates blocks correctly ─────────
+Error in `matchmaker(left, right, block_type = "group", block_by = "region")`: could not find function "matchmaker"
+
+── Error ('test-matching.R:39:3'): matchmaker filters small blocks ─────────────
+Error in `matchmaker(left, right, block_type = "group", block_by = "region", 
+    min_left = 3, min_right = 3)`: could not find function "matchmaker"
+
+── Error ('test-matching.R:57:3'): match_couples works with simple input ───────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:68:3'): match_couples respects max_distance ─────────
+Error in `match_couples(left, right, vars = "x", max_distance = 0.5)`: could not find function "match_couples"
+
+── Error ('test-matching.R:86:3'): match_couples respects calipers ─────────────
+Error in `match_couples(left, right, vars = c("x", "y"), calipers = list(y = 2))`: could not find function "match_couples"
+
+── Error ('test-matching.R:108:3'): match_couples works with blocking ──────────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:120:3'): match_couples handles rectangular inputs ───
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:128:3'): validate_matching_inputs catches errors ────
+Error in `validate_matching_inputs(list(), data.frame(x = 1))`: could not find function "validate_matching_inputs"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_error(...) at test-matching.R:128:3
+ 2.   └─testthat:::expect_condition_matching(...)
+ 3.     └─testthat:::quasi_capture(...)
+ 4.       ├─testthat (local) .capture(...)
+ 5.       │ └─base::withCallingHandlers(...)
+ 6.       └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+
+── Error ('test-matching.R:153:3'): distance metrics work correctly ────────────
+Error in `compute_distance_matrix(left, right, "euclidean")`: could not find function "compute_distance_matrix"
+
+── Error ('test-matching.R:169:3'): scaling works correctly ────────────────────
+Error in `apply_scaling(left, right, "standardize")`: could not find function "apply_scaling"
+
+── Error ('test-matching.R:186:3'): greedy_couples works with simple input ─────
+Error in `greedy_couples(left, right, vars = "x")`: could not find function "greedy_couples"
+
+── Error ('test-matching.R:198:3'): greedy_couples respects constraints ────────
+Error in `greedy_couples(left, right, vars = "x", max_distance = 0.5)`: could not find function "greedy_couples"
+
+── Error ('test-matching.R:216:3'): greedy_couples works with blocking ─────────
+Error in `greedy_couples(left, right, vars = "x")`: could not find function "greedy_couples"
+
+── Error ('test-matching.R:228:3'): greedy strategies produce valid matchings ──
+Error in `greedy_couples(left, right, vars = "x", strategy = "row_best")`: could not find function "greedy_couples"
+
+── Failure ('test-matching.R:251:5'): greedy is faster than optimal (smoke test) ──
+Expected `{ ... }` to run without any errors.
+i Actually got a <simpleError> with text:
+  could not find function "match_couples"
+
+── Error ('test-matching.R:256:3'): greedy is faster than optimal (smoke test) ──
+Error in `eval(code, test_env)`: object 'result_greedy' not found
+Backtrace:
+    ▆
+ 1. └─testthat::expect_gte(result_greedy$info$total_distance, result_opt$info$total_distance) at test-matching.R:256:3
+ 2.   └─testthat::quasi_label(enquo(object), label, arg = "object")
+ 3.     └─rlang::eval_bare(expr, quo_get_env(quo))
+
+── Error ('test-matching.R:273:3'): check_variable_health detects constant variables ──
+Error in `check_variable_health(left, right, c("x", "y"))`: could not find function "check_variable_health"
+
+── Error ('test-matching.R:291:3'): check_variable_health detects all-NA variables ──
+Error in `check_variable_health(left, right, c("x", "y"))`: could not find function "check_variable_health"
+
+── Error ('test-matching.R:305:3'): check_variable_health detects high missingness ──
+Error in `check_variable_health(left, right, "x")`: could not find function "check_variable_health"
+
+── Error ('test-matching.R:318:3'): check_variable_health detects skewness ─────
+Error in `check_variable_health(left, right, "x")`: could not find function "check_variable_health"
+
+── Error ('test-matching.R:329:3'): suggest_scaling returns appropriate methods ──
+Error in `suggest_scaling(left, right, c("x", "y"))`: could not find function "suggest_scaling"
+
+── Error ('test-matching.R:352:3'): preprocess_matching_vars excludes problematic variables ──
+Error in `preprocess_matching_vars(left, right, vars = c("const", "good", 
+    "all_na"), auto_scale = TRUE, remove_problematic = TRUE, 
+    verbose = FALSE)`: could not find function "preprocess_matching_vars"
+
+── Error ('test-matching.R:369:3'): preprocess_matching_vars suggests scaling method ──
+Error in `preprocess_matching_vars(left, right, vars = c("x", "y"), auto_scale = TRUE, 
+    scale_method = "auto", verbose = FALSE)`: could not find function "preprocess_matching_vars"
+
+── Error ('test-matching.R:397:5'): match_couples with auto_scale works correctly ──
+Error in `match_couples(left, right, vars = c("const", "x", "y"), auto_scale = TRUE)`: could not find function "match_couples"
+Backtrace:
+    ▆
+ 1. └─base::suppressWarnings(...) at test-matching.R:396:3
+ 2.   └─base::withCallingHandlers(...)
+
+── Error ('test-matching.R:421:3'): greedy_couples with auto_scale works correctly ──
+Error in `greedy_couples(left, right, vars = c("x", "y"), auto_scale = TRUE)`: could not find function "greedy_couples"
+
+── Error ('test-matching.R:439:3'): standardized_difference calculates correctly ──
+Error in `standardized_difference(x1, x2)`: could not find function "standardized_difference"
+
+── Error ('test-matching.R:449:3'): standardized_difference handles edge cases ──
+Error in `standardized_difference(numeric(0), c(1, 2, 3))`: could not find function "standardized_difference"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_true(...) at test-matching.R:449:3
+ 2.   └─testthat::quasi_label(enquo(object), label, arg = "object")
+ 3.     └─rlang::eval_bare(expr, quo_get_env(quo))
+
+── Error ('test-matching.R:474:3'): balance_diagnostics works with simple matching ──
+Error in `match_couples(left, right, vars = c("age", "income"))`: could not find function "match_couples"
+
+── Error ('test-matching.R:497:3'): balance_diagnostics computes correct statistics ──
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:517:3'): balance_diagnostics detects imbalance ──────
+Error in `match_couples(left, right, vars = "age")`: could not find function "match_couples"
+
+── Error ('test-matching.R:538:3'): balance_diagnostics works with blocking ────
+Error in `matchmaker(left, right, block_type = "group", block_by = "group")`: could not find function "matchmaker"
+
+── Error ('test-matching.R:561:3'): balance_diagnostics handles unmatched units ──
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:582:3'): balance_table formats output correctly ─────
+Error in `match_couples(left, right, vars = c("age", "income"))`: could not find function "match_couples"
+
+── Error ('test-matching.R:605:3'): balance_diagnostics print method works ─────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:617:3'): balance_diagnostics validates inputs ───────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:657:3'): join_matched works with basic matching ─────
+Error in `match_couples(left, right, vars = c("age", "income"))`: could not find function "match_couples"
+
+── Error ('test-matching.R:698:3'): join_matched handles custom suffixes ───────
+Error in `match_couples(left, right, vars = "age")`: could not find function "match_couples"
+
+── Error ('test-matching.R:727:3'): join_matched handles variable selection ────
+Error in `match_couples(left, right, vars = c("age", "income"))`: could not find function "match_couples"
+
+── Error ('test-matching.R:758:3'): join_matched works with blocking ───────────
+Error in `matchmaker(left, right, block_type = "group", block_by = "region")`: could not find function "matchmaker"
+
+── Error ('test-matching.R:770:3'): join_matched handles include options ───────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:807:3'): join_matched handles custom ID columns ─────
+Error in `match_couples(left, right, vars = "age")`: could not find function "match_couples"
+
+── Error ('test-matching.R:833:3'): join_matched validates inputs ──────────────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:880:3'): join_matched handles empty matches ─────────
+Error in `match_couples(left, right, vars = "x", max_distance = 1)`: could not find function "match_couples"
+Backtrace:
+    ▆
+ 1. └─base::suppressWarnings(...) at test-matching.R:880:3
+ 2.   └─base::withCallingHandlers(...)
+
+── Error ('test-matching.R:905:3'): join_matched works with greedy matching ────
+Error in `greedy_couples(left, right, vars = "age", strategy = "sorted")`: could not find function "greedy_couples"
+
+── Error ('test-matching.R:916:3'): augment.matching_result works ──────────────
+Error in `match_couples(left, right, vars = "x")`: could not find function "match_couples"
+
+── Error ('test-matching.R:949:3'): join_matched column order is sensible ──────
+Error in `match_couples(left, right, vars = "age")`: could not find function "match_couples"
+
+── Error ('test-matching.R:977:3'): compute_distances creates valid distance object ──
+Error in `compute_distances(left, right, vars = c("x", "y"))`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1022:3'): compute_distances with auto_scale works ───
+Error in `compute_distances(left, right, vars = c("age", "income"), auto_scale = TRUE)`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1045:3'): compute_distances with scaling works ──────
+Error in `compute_distances(left, right, vars = c("x", "y"), scale = "standardize")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1069:3'): compute_distances validates inputs ────────
+Error in `compute_distances(list(), right, vars = "x")`: could not find function "compute_distances"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_error(...) at test-matching.R:1069:3
+ 2.   └─testthat:::expect_condition_matching(...)
+ 3.     └─testthat:::quasi_capture(...)
+ 4.       ├─testthat (local) .capture(...)
+ 5.       │ └─base::withCallingHandlers(...)
+ 6.       └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+
+── Error ('test-matching.R:1107:3'): match_couples works with distance object ──
+Error in `compute_distances(left, right, vars = c("x", "y"), scale = "standardize")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1137:3'): greedy_couples works with distance object ──
+Error in `compute_distances(left, right, vars = "x")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1160:3'): distance object reusable across multiple matches ──
+Error in `compute_distances(left, right, vars = c("x", "y"), scale = "standardize")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1183:3'): update_constraints creates new distance object ──
+Error in `compute_distances(left, right, vars = "x")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1209:3'): update_constraints validates input ────────
+Error in `update_constraints(list(), max_distance = 1)`: could not find function "update_constraints"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_error(...) at test-matching.R:1209:3
+ 2.   └─testthat:::expect_condition_matching(...)
+ 3.     └─testthat:::quasi_capture(...)
+ 4.       ├─testthat (local) .capture(...)
+ 5.       │ └─base::withCallingHandlers(...)
+ 6.       └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+
+── Error ('test-matching.R:1227:3'): distance object with blocking stores block info ──
+Error in `compute_distances(left, right, vars = "x", block_id = "block")`: could not find function "compute_distances"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_message(...) at test-matching.R:1227:3
+ 2.   └─testthat:::expect_condition_matching(...)
+ 3.     └─testthat:::quasi_capture(...)
+ 4.       ├─testthat (local) .capture(...)
+ 5.       │ └─base::withCallingHandlers(...)
+ 6.       └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+
+── Error ('test-matching.R:1239:3'): print.distance_object works ───────────────
+Error in `compute_distances(left, right, vars = c("x", "y"), scale = "standardize")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1252:3'): summary.distance_object works ─────────────
+Error in `compute_distances(left, right, vars = "x")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1275:3'): distance object works with join_matched ───
+Error in `compute_distances(left, right, vars = c("x", "y"))`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1301:3'): distance object works with balance_diagnostics ──
+Error in `compute_distances(left, right, vars = c("x", "y"), scale = "standardize")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1317:3'): distance object backwards compatible ──────
+Error in `match_couples(left, right, vars = "x", distance = "euclidean")`: could not find function "match_couples"
+
+── Error ('test-matching.R:1338:3'): is_distance_object works correctly ────────
+Error in `compute_distances(left, right, vars = "x")`: could not find function "compute_distances"
+
+── Error ('test-matching.R:1356:3'): distance object with custom ID columns ────
+Error in `compute_distances(left, right, vars = "x", left_id = "patient_id", 
+    right_id = "control_id")`: could not find function "compute_distances"
+
+[ FAIL 63 | WARN 0 | SKIP 0 | PASS 0 ]

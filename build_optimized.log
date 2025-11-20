@@ -1,0 +1,224 @@
+* installing to library 'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5'
+* installing *source* package 'couplr' ...
+** this is package 'couplr' version '1.0.0'
+** using staged installation
+** libs
+using C++ compiler: 'G__~1.EXE (GCC) 14.2.0'
+using C++17
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c RcppExports.cpp -o RcppExports.o
+In file included from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Core:205,
+                 from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Dense:1,
+                 from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/RcppEigenForward.h:28,
+                 from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/RcppEigen.h:25,
+                 from RcppExports.cpp:4:
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:46:40: warning: ignoring attributes on template argument '__m128i' [-Wignored-attributes]
+   46 | typedef eigen_packet_wrapper<__m128i, 0> Packet4i;
+      |                                        ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:47:40: warning: ignoring attributes on template argument '__m128i' [-Wignored-attributes]
+   47 | typedef eigen_packet_wrapper<__m128i, 1> Packet16b;
+      |                                        ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:49:39: warning: ignoring attributes on template argument '__m128' [-Wignored-attributes]
+   49 | template<> struct is_arithmetic<__m128>  { enum { value = true }; };
+      |                                       ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:50:40: warning: ignoring attributes on template argument '__m128i' [-Wignored-attributes]
+   50 | template<> struct is_arithmetic<__m128i> { enum { value = true }; };
+      |                                        ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:51:40: warning: ignoring attributes on template argument '__m128d' [-Wignored-attributes]
+   51 | template<> struct is_arithmetic<__m128d> { enum { value = true }; };
+      |                                        ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:222:43: warning: ignoring attributes on template argument 'Eigen::internal::Packet4f' {aka '__m128'} [-Wignored-attributes]
+  222 | template<> struct unpacket_traits<Packet4f> {
+      |                                           ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:228:43: warning: ignoring attributes on template argument 'Eigen::internal::Packet2d' {aka '__m128d'} [-Wignored-attributes]
+  228 | template<> struct unpacket_traits<Packet2d> {
+      |                                           ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:1124:34: warning: ignoring attributes on template argument 'Eigen::internal::Packet4f' {aka '__m128'} [-Wignored-attributes]
+ 1124 | ptranspose(PacketBlock<Packet4f,4>& kernel) {
+      |                                  ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/PacketMath.h:1129:34: warning: ignoring attributes on template argument 'Eigen::internal::Packet2d' {aka '__m128d'} [-Wignored-attributes]
+ 1129 | ptranspose(PacketBlock<Packet2d,2>& kernel) {
+      |                                  ^
+In file included from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Core:174:
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/Default/ConjHelper.h:16:60: warning: ignoring attributes on template argument 'Eigen::internal::Packet4f' {aka '__m128'} [-Wignored-attributes]
+   16 |   struct conj_helper<PACKET_REAL, PACKET_CPLX, false, false> {          \
+      |                                                            ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/Complex.h:173:1: note: in expansion of macro 'EIGEN_MAKE_CONJ_HELPER_CPLX_REAL'
+  173 | EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet2cf,Packet4f)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/Default/ConjHelper.h:29:60: warning: ignoring attributes on template argument 'Eigen::internal::Packet4f' {aka '__m128'} [-Wignored-attributes]
+   29 |   struct conj_helper<PACKET_CPLX, PACKET_REAL, false, false> {          \
+      |                                                            ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/Complex.h:173:1: note: in expansion of macro 'EIGEN_MAKE_CONJ_HELPER_CPLX_REAL'
+  173 | EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet2cf,Packet4f)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/Default/ConjHelper.h:16:60: warning: ignoring attributes on template argument 'Eigen::internal::Packet2d' {aka '__m128d'} [-Wignored-attributes]
+   16 |   struct conj_helper<PACKET_REAL, PACKET_CPLX, false, false> {          \
+      |                                                            ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/Complex.h:298:1: note: in expansion of macro 'EIGEN_MAKE_CONJ_HELPER_CPLX_REAL'
+  298 | EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet1cd,Packet2d)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/Default/ConjHelper.h:29:60: warning: ignoring attributes on template argument 'Eigen::internal::Packet2d' {aka '__m128d'} [-Wignored-attributes]
+   29 |   struct conj_helper<PACKET_CPLX, PACKET_REAL, false, false> {          \
+      |                                                            ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/arch/SSE/Complex.h:298:1: note: in expansion of macro 'EIGEN_MAKE_CONJ_HELPER_CPLX_REAL'
+  298 | EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet1cd,Packet2d)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Core:165:
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h: In instantiation of 'struct Eigen::internal::find_best_packet<float, 4>':
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/Matrix.h:22:57:   required from 'struct Eigen::internal::traits<Eigen::Matrix<float, 4, 1> >'
+   22 |   typedef typename find_best_packet<_Scalar,size>::type PacketScalar;
+      |                                                         ^~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:266:49:   required from 'struct Eigen::internal::traits<Eigen::Quaternion<float> >'
+  266 |     Alignment = internal::traits<Coefficients>::Alignment,
+      |                                                 ^~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/arch/Geometry_SIMD.h:24:46:   required from here
+   24 |     ResAlignment = traits<Quaternion<float> >::Alignment
+      |                                              ^~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:44: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<float>::type' {aka '__m128'} [-Wignored-attributes]
+  190 |          bool Stop = Size==Dynamic || (Size%unpacket_traits<PacketType>::size)==0 || is_same<PacketType,typename unpacket_traits<PacketType>::half>::value>
+      |                                       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<float>::type' {aka '__m128'} [-Wignored-attributes]
+  190 |          bool Stop = Size==Dynamic || (Size%unpacket_traits<PacketType>::size)==0 || is_same<PacketType,typename unpacket_traits<PacketType>::half>::value>
+      |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<float>::type' {aka '__m128'} [-Wignored-attributes]
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::unpacket_traits<__vector(4) float>::half' {aka '__m128'} [-Wignored-attributes]
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:208:88: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<float>::type' {aka '__m128'} [-Wignored-attributes]
+  208 |   typedef typename find_best_packet_helper<Size,typename packet_traits<T>::type>::type type;
+      |                                                                                        ^~~~
+In file included from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Core:271:
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h: In instantiation of 'class Eigen::DenseCoeffsBase<Eigen::Matrix<float, 4, 1>, 0>':
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:302:7:   required from 'class Eigen::DenseCoeffsBase<Eigen::Matrix<float, 4, 1>, 1>'
+  302 | class DenseCoeffsBase<Derived, WriteAccessors> : public DenseCoeffsBase<Derived, ReadOnlyAccessors>
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:555:7:   required from 'class Eigen::DenseCoeffsBase<Eigen::Matrix<float, 4, 1>, 3>'
+  555 | class DenseCoeffsBase<Derived, DirectWriteAccessors>
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseBase.h:41:34:   required from 'class Eigen::DenseBase<Eigen::Matrix<float, 4, 1> >'
+   41 | template<typename Derived> class DenseBase
+      |                                  ^~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/MatrixBase.h:48:34:   required from 'class Eigen::MatrixBase<Eigen::Matrix<float, 4, 1> >'
+   48 | template<typename Derived> class MatrixBase
+      |                                  ^~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/PlainObjectBase.h:98:7:   required from 'class Eigen::PlainObjectBase<Eigen::Matrix<float, 4, 1> >'
+   98 | class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
+      |       ^~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/Matrix.h:178:7:   required from 'class Eigen::Matrix<float, 4, 1>'
+  178 | class Matrix
+      |       ^~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:46:50:   required from 'class Eigen::QuaternionBase<Eigen::Quaternion<float> >'
+   46 |   typedef typename Coefficients::CoeffReturnType CoeffReturnType;
+      |                                                  ^~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:273:7:   required from 'class Eigen::Quaternion<float>'
+  273 | class Quaternion : public QuaternionBase<Quaternion<_Scalar,_Options> >
+      |       ^~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/arch/Geometry_SIMD.h:27:3:   required from here
+   27 |   {
+      |   ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:56:30: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<float>::type' {aka '__m128'} [-Wignored-attributes]
+   56 |                      >::type PacketReturnType;
+      |                              ^~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h: In instantiation of 'struct Eigen::internal::find_best_packet<double, 4>':
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/Matrix.h:22:57:   required from 'struct Eigen::internal::traits<Eigen::Matrix<double, 4, 1> >'
+   22 |   typedef typename find_best_packet<_Scalar,size>::type PacketScalar;
+      |                                                         ^~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:266:49:   required from 'struct Eigen::internal::traits<Eigen::Quaternion<double> >'
+  266 |     Alignment = internal::traits<Coefficients>::Alignment,
+      |                                                 ^~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/arch/Geometry_SIMD.h:98:47:   required from here
+   98 |     ResAlignment = traits<Quaternion<double> >::Alignment
+      |                                               ^~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:44: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+  190 |          bool Stop = Size==Dynamic || (Size%unpacket_traits<PacketType>::size)==0 || is_same<PacketType,typename unpacket_traits<PacketType>::half>::value>
+      |                                       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+  190 |          bool Stop = Size==Dynamic || (Size%unpacket_traits<PacketType>::size)==0 || is_same<PacketType,typename unpacket_traits<PacketType>::half>::value>
+      |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:190:83: warning: ignoring attributes on template argument 'Eigen::internal::unpacket_traits<__vector(2) double>::half' {aka '__m128d'} [-Wignored-attributes]
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/util/XprHelper.h:208:88: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+  208 |   typedef typename find_best_packet_helper<Size,typename packet_traits<T>::type>::type type;
+      |                                                                                        ^~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h: In instantiation of 'class Eigen::DenseCoeffsBase<Eigen::Matrix<double, 4, 1>, 0>':
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:302:7:   required from 'class Eigen::DenseCoeffsBase<Eigen::Matrix<double, 4, 1>, 1>'
+  302 | class DenseCoeffsBase<Derived, WriteAccessors> : public DenseCoeffsBase<Derived, ReadOnlyAccessors>
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:555:7:   required from 'class Eigen::DenseCoeffsBase<Eigen::Matrix<double, 4, 1>, 3>'
+  555 | class DenseCoeffsBase<Derived, DirectWriteAccessors>
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseBase.h:41:34:   required from 'class Eigen::DenseBase<Eigen::Matrix<double, 4, 1> >'
+   41 | template<typename Derived> class DenseBase
+      |                                  ^~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/MatrixBase.h:48:34:   required from 'class Eigen::MatrixBase<Eigen::Matrix<double, 4, 1> >'
+   48 | template<typename Derived> class MatrixBase
+      |                                  ^~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/PlainObjectBase.h:98:7:   required from 'class Eigen::PlainObjectBase<Eigen::Matrix<double, 4, 1> >'
+   98 | class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
+      |       ^~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/Matrix.h:178:7:   required from 'class Eigen::Matrix<double, 4, 1>'
+  178 | class Matrix
+      |       ^~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:46:50:   required from 'class Eigen::QuaternionBase<Eigen::Quaternion<double> >'
+   46 |   typedef typename Coefficients::CoeffReturnType CoeffReturnType;
+      |                                                  ^~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/Quaternion.h:273:7:   required from 'class Eigen::Quaternion<double>'
+  273 | class Quaternion : public QuaternionBase<Quaternion<_Scalar,_Options> >
+      |       ^~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Geometry/arch/Geometry_SIMD.h:102:3:   required from here
+  102 |   {
+      |   ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/Core/DenseCoeffsBase.h:56:30: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+   56 |                      >::type PacketReturnType;
+      |                              ^~~~~~~~~~~~~~~~
+In file included from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/SparseCore:37,
+                 from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/Sparse:26,
+                 from C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/RcppEigenForward.h:29:
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/SparseCore/SparseMatrixBase.h: In instantiation of 'class Eigen::SparseMatrixBase<Eigen::SparseMatrix<double, 0, int> >':
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/SparseCore/SparseCompressedBase.h:36:7:   required from 'class Eigen::SparseCompressedBase<Eigen::SparseMatrix<double, 0, int> >'
+   36 | class SparseCompressedBase
+      |       ^~~~~~~~~~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/SparseCore/SparseMatrix.h:96:7:   required from 'class Eigen::SparseMatrix<double, 0, int>'
+   96 | class SparseMatrix
+      |       ^~~~~~~~~~~~
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/unsupported/Eigen/src/IterativeSolvers/ConstrainedConjGrad.h:61:25:   required from here
+   61 |   typedef Triplet<double> T;
+      |                         ^
+C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include/Eigen/src/SparseCore/SparseMatrixBase.h:47:30: warning: ignoring attributes on template argument 'Eigen::internal::packet_traits<double>::type' {aka '__m128d'} [-Wignored-attributes]
+   47 |                      >::type PacketReturnType;
+      |                              ^~~~~~~~~~~~~~~~
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c rcpp_interface.cpp -o rcpp_interface.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c interface/prepare_cost_matrix.cpp -o interface/prepare_cost_matrix.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c core/lap_utils.cpp -o core/lap_utils.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/greedy_matching.cpp -o solvers/greedy_matching.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_auction.cpp -o solvers/solve_auction.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_bruteforce.cpp -o solvers/solve_bruteforce.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_cost_scaling.cpp -o solvers/solve_cost_scaling.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_csflow.cpp -o solvers/solve_csflow.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_cycle_cancel.cpp -o solvers/solve_cycle_cancel.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_hk01.cpp -o solvers/solve_hk01.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_hungarian.cpp -o solvers/solve_hungarian.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_jv.cpp -o solvers/solve_jv.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_kbest_lawler.cpp -o solvers/solve_kbest_lawler.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_line_metric.cpp -o solvers/solve_line_metric.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_murty.cpp -o solvers/solve_murty.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_ssap_bucket.cpp -o solvers/solve_ssap_bucket.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c solvers/solve_ssp.cpp -o solvers/solve_ssp.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c gabow_tarjan/solve_gabow_tarjan.cpp -o gabow_tarjan/solve_gabow_tarjan.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c gabow_tarjan/utils_gabow_tarjan.cpp -o gabow_tarjan/utils_gabow_tarjan.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c morph/morph_pixel_level.cpp -o morph/morph_pixel_level.o
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.1/include" -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -I"C:/Users/GILLES~1/AppData/Local/R/WIN-LI~1/4.5/Rcpp/include" -I"C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include" -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/RcppEigen/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c morph/region_means.cpp -o morph/region_means.o
+morph/region_means.cpp:44: warning: ignoring '#pragma omp parallel' [-Wunknown-pragmas]
+   44 |   #pragma omp parallel for if(HW > 20000) schedule(static)
+g++ -shared -s -static-libgcc -o couplr.dll tmp.def RcppExports.o rcpp_interface.o interface/prepare_cost_matrix.o core/lap_utils.o solvers/greedy_matching.o solvers/solve_auction.o solvers/solve_bruteforce.o solvers/solve_cost_scaling.o solvers/solve_csflow.o solvers/solve_cycle_cancel.o solvers/solve_hk01.o solvers/solve_hungarian.o solvers/solve_jv.o solvers/solve_kbest_lawler.o solvers/solve_line_metric.o solvers/solve_murty.o solvers/solve_ssap_bucket.o solvers/solve_ssp.o gabow_tarjan/solve_gabow_tarjan.o gabow_tarjan/utils_gabow_tarjan.o morph/morph_pixel_level.o morph/region_means.o -LC:/PROGRA~1/R/R-45~1.1/bin/x64 -lRlapack -LC:/PROGRA~1/R/R-45~1.1/bin/x64 -lRblas -lgfortran -lquadmath -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib/x64 -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib -LC:/PROGRA~1/R/R-45~1.1/bin/x64 -lR
+installing to C:/Users/Gilles Colling/AppData/Local/R/win-library/4.5/00LOCK-couplr/00new/couplr/libs/x64
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+Note: possible error in 'greedy_couples_from_distance(left, ': unused argument (check_costs = check_costs) 
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (couplr)

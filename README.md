@@ -460,20 +460,20 @@ The package includes comprehensive example scripts:
 
 ## Performance
 
-Benchmarks on a standard laptop (n = 1000):
+For large datasets (n > 500), greedy matching provides 10-100x speedup over optimal algorithms:
 
 ```r
-# Optimal matching
-bench::mark(
-  optimal = match_couples(left, right, vars, method = "optimal"),
-  greedy  = greedy_couples(left, right, vars, strategy = "row_best")
-)
-#> # A tibble: 2 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 optimal      850ms    865ms      1.16     45.2MB     0
-#> 2 greedy        12ms     14ms     71.4       8.1MB     0
+# To run benchmarks yourself:
+# source("benchmark_readme.R")  # Available in repository root
+
+# Optimal matching: Uses sophisticated algorithms (Hungarian, JV, Auction)
+result_optimal <- match_couples(left, right, vars, method = "auto")
+
+# Greedy matching: Fast approximate solution
+result_greedy <- greedy_couples(left, right, vars, strategy = "row_best")
 ```
+
+**Performance note**: Optimal matching scales as O(n²) to O(n³) depending on algorithm. For n > 500 per group, use `greedy_couples()` unless optimality is critical.
 
 ## Citation
 

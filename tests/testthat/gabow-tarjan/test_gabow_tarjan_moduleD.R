@@ -147,25 +147,32 @@ test_that("Module D: multiple alternating paths", {
     c(2L, 3L),     # row 2 -> cols 1,2
     c(4L)          # row 3 -> col 3 (will be simple path)
   )
-  
+
   # Initial matching: {(0,0), (1,1)}
   row_match <- c(1L, 2L, 0L, 0L)
   col_match <- c(1L, 2L, 0L, 0L)
-  
+
   paths <- gt_find_maximal_augmenting_paths(eq_graph, row_match, col_match)
-  
+
   # Should find 2 paths: one for row3->col3, one more complex
   expect_equal(length(paths), 2)
-  
-  # Check that we got vertex-disjoint paths
-  all_rows <- integer(0)
-  all_cols <- integer(0)
-  for (path in paths) {
-    all_rows <- c(all_rows, path[, 1])
-    all_cols <- c(all_cols, path[, 2])
-  }
-  expect_equal(length(all_rows), length(unique(all_rows)))
-  expect_equal(length(all_cols), length(unique(all_cols)))
+
+  # Check that paths are vertex-disjoint ACROSS paths
+  # Note: Within an alternating path, vertices can appear multiple times
+  # (e.g., path [(2,1), (1,1), (1,2)] has row 1 and col 1 appearing twice)
+  # We check that no vertex appears in BOTH paths
+
+  # Get the set of vertices (rows and cols) used in each path
+  path1_rows <- unique(paths[[1]][, 1])
+  path1_cols <- unique(paths[[1]][, 2])
+  path2_rows <- unique(paths[[2]][, 1])
+  path2_cols <- unique(paths[[2]][, 2])
+
+  # Check no row overlap between paths
+  expect_equal(length(intersect(path1_rows, path2_rows)), 0)
+
+  # Check no column overlap between paths
+  expect_equal(length(intersect(path1_cols, path2_cols)), 0)
 })
 
 test_that("Module D: returns empty list not NULL when no paths", {

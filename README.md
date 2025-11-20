@@ -5,35 +5,27 @@
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/gcol33/couplr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-## Why Pairing Matters
-
-When comparing two groups, simple averages can mislead if the groups differ in important ways. One group might have older participants, higher incomes, or different health profiles. These compositional differences create confounding that obscures real effects.
-
-**Pairing solves this.** Each observation in group A gets matched to its most similar counterpart in group B, creating balanced comparisons.
-
-Manual pairing doesn't scale. For large datasets, you need an algorithm that finds the globally optimal set of pairs. This is a Linear Assignment Problem, and couplr solves it efficiently.
-
-## Quick Example
+**couplr** solves optimal pairing problems using Linear Assignment algorithms. Match observations across groups, balance covariates, and prepare analysis-ready datasets.
 
 ```r
 library(couplr)
 
-# Match treatment and control groups on covariates
+# Match treatment and control groups
 result <- treated |>
   match_couples(control, vars = c("age", "income", "health"))
 
-# Get analysis-ready dataset
+# Get balanced pairs for analysis
 data <- join_matched(result, treated, control)
-
-# Estimate treatment effect on balanced pairs
 lm(outcome ~ treatment + age, data = data)
 ```
 
-**What you get:**
-- Optimal pairing across all observations
-- Automatic balance checking with diagnostics
-- Works with any downstream model
-- Fast algorithms for datasets of any size
+## Installation
+
+```r
+# Install from GitHub
+# install.packages("devtools")
+devtools::install_github("gcol33/couplr")
+```
 
 ## Features
 
@@ -68,6 +60,14 @@ lm(outcome ~ treatment + age, data = data)
 # install.packages("devtools")
 devtools::install_github("gcol33/couplr")
 ```
+
+## Why Pairing?
+
+When comparing two groups, simple averages can mislead if the groups differ in composition. One group might have older participants, higher incomes, or different health profiles. These differences create confounding that obscures real effects.
+
+Pairing solves this by matching each observation in group A to its most similar counterpart in group B. This creates balanced comparisons where differences reflect the effect of interest, not compositional imbalance.
+
+Manual pairing doesn't scale. For large datasets, you need an algorithm that finds the globally optimal set of pairs across all observations. This is a Linear Assignment Problem.
 
 ## Quick Start
 

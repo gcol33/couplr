@@ -7,6 +7,8 @@
 /doc/
 /Meta/
 .claude
+.claude/
+claude/
 CLAUDE.md
 
 # C++ compilation artifacts

@@ -325,17 +325,32 @@ result_weighted <- match_couples(
 ) |>
   join_matched(plots_2010, plots_2020)
 
-# Compare approaches: Did weighting improve ecological relevance?
-# Simple approach may match plots at similar longitude but different latitudes
-# Weighted approach prioritizes latitudinal similarity (e.g., climate zones)
+# Now answer temporal change questions with matched plots:
 
-# Answer research questions with weighted matches
-lm(species_richness_right ~ species_richness_left + elevation_left, data = result_weighted)
-
+# 1. How much did species richness decline from 2010 to 2020?
 result_weighted |>
-  mutate(temp_change = temperature_right - temperature_left) |>
-  group_by(habitat_type_left) |>
-  summarise(mean_warming = mean(temp_change))
+  mutate(richness_change = species_richness_right - species_richness_left) |>
+  summarise(
+    mean_loss = mean(richness_change),
+    pct_declining = mean(richness_change < 0) * 100
+  )
+
+# 2. Does warming predict biodiversity loss in matched plots?
+change_model <- result_weighted |>
+  mutate(
+    richness_change = species_richness_right - species_richness_left,
+    temp_change = temperature_right - temperature_left
+  )
+
+lm(richness_change ~ temp_change + elevation_left + habitat_type_left,
+   data = change_model) |> summary()
+
+# 3. Compare spatial approaches: Did weighting improve match quality?
+balance_simple <- balance_diagnostics(result_simple, plots_2010, plots_2020,
+                                     vars = c("latitude", "longitude"))
+balance_weighted <- balance_diagnostics(result_weighted, plots_2010, plots_2020,
+                                       vars = c("latitude", "longitude"))
+# Weighted approach should show better latitudinal balance
 ```
 
 ### Particle Tracking

@@ -14,12 +14,15 @@ naturally with modern R workflows.
 ### Why couplr?
 
 While other R packages address LAP, `couplr` distinguishes itself
-through: 1. **Tidy integration**: First-class support for tibbles, dplyr
-workflows, and grouped data 2. **Algorithm selection**: 12+ algorithms
-with automatic selection based on problem characteristics 3.
-**Production matching**: High-level matching functions for observational
-studies (v1.0.0) 4. **Scalability**: From small matrices to thousands of
-parallel problems
+through:
+
+- **Tidy integration**: First-class support for tibbles, dplyr
+  workflows, and grouped data
+- **Algorithm selection**: 12+ algorithms with automatic selection based
+  on problem characteristics
+- **Production matching**: High-level matching functions for
+  observational studies (v1.0.0)
+- **Scalability**: From small matrices to thousands of parallel problems
 
 **Alternative packages** and how they differ:
 

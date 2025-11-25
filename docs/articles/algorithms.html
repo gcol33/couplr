@@ -983,7 +983,7 @@ costs</li>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     standard.elapsed       scaled.elapsed gauss_seidel.elapsed </span></span>
-<span><span class="co">#&gt;                 0.00                 0.00                 0.02</span></span></code></pre></div>
+<span><span class="co">#&gt;                    0                    0                    0</span></span></code></pre></div>
 <p><strong>Numerical Stability</strong>:</p>
 <p>All auction variants include safeguards: - Tie-breaking via
 deterministic perturbation (prevents cycling) - Iteration guards
@@ -1069,7 +1069,7 @@ if sparsity is high</li>
 <span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"sap"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;    0.02    0.00    0.02</span></span>
+<span><span class="co">#&gt;    0.01    0.00    0.02</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Assignments found:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignments found: 200</span></span>

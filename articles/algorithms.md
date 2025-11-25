@@ -364,7 +364,7 @@ system.time({
   result <- lap_solve(large_cost, method = "jv")
 })
 #>    user  system elapsed 
-#>   0.002   0.000   0.002
+#>   0.001   0.000   0.002
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 149.0911
@@ -617,7 +617,7 @@ times <- c(
 
 print(times)
 #>     standard.elapsed       scaled.elapsed gauss_seidel.elapsed 
-#>                0.007                0.004                0.006
+#>                0.008                0.003                0.005
 ```
 
 **Numerical Stability**:
@@ -683,7 +683,7 @@ system.time({
   result <- lap_solve(cost, method = "sap")
 })
 #>    user  system elapsed 
-#>   0.037   0.000   0.036
+#>   0.036   0.000   0.037
 
 cat("Assignments found:", nrow(result), "\n")
 #> Assignments found: 200
@@ -740,7 +740,7 @@ system.time({
   result <- lap_solve(binary_cost, method = "hk01")
 })
 #>    user  system elapsed 
-#>   0.002   0.003   0.005
+#>   0.002   0.002   0.005
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 0

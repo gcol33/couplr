@@ -37,7 +37,7 @@ working with observational data
 - When to use optimal vs greedy matching
 - Creating publication-ready balance tables
 
-**Time to complete**: 30–45 minutes
+**Time to complete**: 30-45 minutes
 
 ### Documentation Roadmap
 
@@ -422,7 +422,7 @@ computationally expensive. `couplr` provides fast greedy alternatives.
 **Optimal matching** (`method = "optimal"`):
 
 - Minimizes total distance (globally optimal solution)
-- Uses linear assignment algorithms (O(n³) complexity)
+- Uses linear assignment algorithms ($O\left( n^{3} \right)$ complexity)
 - Suitable for: n \< 5,000, when optimality is critical
 - Typical runtime: \<1 second for n=1,000, ~10 seconds for n=3,000
 
@@ -472,18 +472,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 44.825 seconds
+#>   Time: 51.541 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 2.068 seconds
+#>   Time: 1.988 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 21.7 x
+#>   Speedup: 25.9 x
 ```
 
 ### Greedy Strategies
@@ -566,9 +566,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted    0.084        0.0912          18.24
+#> elapsed    sorted    0.082        0.0912          18.24
 #> elapsed1 row_best    0.076        0.0968          19.36
-#> elapsed2       pq    0.085        0.0912          18.24
+#> elapsed2       pq    0.084        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -1266,7 +1266,7 @@ effect_table <- tibble(
   `N (Treated)` = c(nrow(treatment_group), nrow(matched_treated)),
   `N (Control)` = c(nrow(control_group), nrow(matched_control)),
   `Effect Estimate` = sprintf("$%s", format(round(c(naive_effect, matched_effect)), big.mark = ",")),
-  `95% CI` = c("—", sprintf("($%s, $%s)",
+  `95% CI` = c("--", sprintf("($%s, $%s)",
                             format(round(t_test$conf.int[1]), big.mark = ","),
                             format(round(t_test$conf.int[2]), big.mark = ",")))
 )
@@ -1278,7 +1278,8 @@ print(effect_table)
 
 ### Scalability
 
-**Optimal matching complexity:** O(n³) using Jonker-Volgenant
+**Optimal matching complexity:** $O\left( n^{3} \right)$ using
+Jonker-Volgenant
 
 - n = 100: \< 0.01 seconds
 - n = 500: ~ 0.1 seconds
@@ -1286,8 +1287,8 @@ print(effect_table)
 - n = 3,000: ~ 10 seconds
 - n = 5,000: ~ 30-60 seconds
 
-**Greedy matching complexity:** O(n² log n) for sorted, O(n²) for
-row-best
+**Greedy matching complexity:** $O\left( n^{2}\log n \right)$ for
+sorted, $O\left( n^{2} \right)$ for row-best
 
 - n = 5,000: ~ 1 second
 - n = 10,000: ~ 3-5 seconds
@@ -1320,7 +1321,7 @@ blocks <- matchmaker(
   n_clusters = 10
 )
 
-# Much faster: 10 × O(1000³) << O(10000³)
+# Much faster: 10 * O(1000^3) << O(10000^3)
 result <- match_couples(
   blocks$left, blocks$right,
   vars = covariates,
@@ -1418,8 +1419,8 @@ Accept that some treatment units are unmatchable (report this!)
 
 **Symptom**:
 [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
-runs for minutes or doesn’t complete. **Cause**: O(n³) complexity for
-optimal matching.
+runs for minutes or doesn’t complete. **Cause**: $O\left( n^{3} \right)$
+complexity for optimal matching.
 
 **Solutions**:
 

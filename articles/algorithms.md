@@ -29,7 +29,7 @@ you:
 - Trade-offs between algorithms
 - Numerical considerations and failure modes
 
-**Time to complete**: 45–60 minutes (conceptual reading)
+**Time to complete**: 45-60 minutes (conceptual reading)
 
 ### Documentation Roadmap
 
@@ -134,15 +134,15 @@ Before diving into individual algorithms, here’s a decision framework:
 
 ### Quick Reference Table
 
-| Algorithm            | Complexity     | Best For                  | Avoid When       |
-|----------------------|----------------|---------------------------|------------------|
-| **Hungarian**        | O(n³)          | Small problems, pedagogy  | n \> 500         |
-| **Jonker-Volgenant** | O(n³) expected | General purpose (default) | Extremely sparse |
-| **Auction**          | O(n² log nC/ε) | Large dense (n \> 1000)   | Small problems   |
-| **Auction (scaled)** | O(n² log nC/ε) | Large cost range          | Small problems   |
-| **Auction (GS)**     | O(n² log nC/ε) | Structured problems       | Random costs     |
-| **SAP**              | O(n² + nm)     | Sparse (\>50% forbidden)  | Dense problems   |
-| **HK01**             | O(n^2.5)       | Binary costs only         | Non-binary costs |
+| Algorithm            | Complexity                              | Best For                  | Avoid When       |
+|----------------------|-----------------------------------------|---------------------------|------------------|
+| **Hungarian**        | $O\left( n^{3} \right)$                 | Small problems, pedagogy  | n \> 500         |
+| **Jonker-Volgenant** | $O\left( n^{3} \right)$ expected        | General purpose (default) | Extremely sparse |
+| **Auction**          | $O\left( n^{2}\log nC/\epsilon \right)$ | Large dense (n \> 1000)   | Small problems   |
+| **Auction (scaled)** | $O\left( n^{2}\log nC/\epsilon \right)$ | Large cost range          | Small problems   |
+| **Auction (GS)**     | $O\left( n^{2}\log nC/\epsilon \right)$ | Structured problems       | Random costs     |
+| **SAP**              | $O\left( n^{2} + nm \right)$            | Sparse (\>50% forbidden)  | Dense problems   |
+| **HK01**             | $O\left( n^{2.5} \right)$               | Binary costs only         | Non-binary costs |
 
 ### Head-to-Head Comparison
 
@@ -334,7 +334,7 @@ system.time({
   result <- lap_solve(large_cost, method = "jv")
 })
 #>    user  system elapsed 
-#>   0.001   0.000   0.001
+#>   0.001   0.000   0.002
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 149.0911
@@ -466,7 +466,7 @@ system.time({
   result_scaled <- lap_solve(cost, method = "auction_scaled")
 })
 #>    user  system elapsed 
-#>   0.001   0.000   0.002
+#>   0.001   0.000   0.001
 
 cat("Total cost:", get_total_cost(result_scaled), "\n")
 #> Total cost: 1543862
@@ -528,7 +528,7 @@ system.time({
   result_gs <- lap_solve(cost, method = "auction_gs")
 })
 #>    user  system elapsed 
-#>   0.001   0.000   0.001
+#>   0.002   0.000   0.002
 
 cat("Total cost:", get_total_cost(result_gs), "\n")
 #> Total cost: 204.2516
@@ -653,7 +653,7 @@ system.time({
   result <- lap_solve(cost, method = "sap")
 })
 #>    user  system elapsed 
-#>   0.033   0.000   0.033
+#>   0.036   0.000   0.036
 
 cat("Assignments found:", nrow(result), "\n")
 #> Assignments found: 200
@@ -710,7 +710,7 @@ system.time({
   result <- lap_solve(binary_cost, method = "hk01")
 })
 #>    user  system elapsed 
-#>   0.003   0.001   0.005
+#>   0.003   0.002   0.005
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 0
@@ -984,25 +984,25 @@ considerations for LAP algorithms in `couplr`:
 
 **Key Takeaways**:
 
-1.  **Algorithm selection matters** for large problems—O(n³) adds up
-    quickly
+1.  **Algorithm selection matters** for large problems –
+    $O\left( n^{3} \right)$ adds up quickly
 2.  **`method = "auto"`** handles most cases well, but understanding the
     options helps with debugging
 3.  **Numerical issues** are rare but can occur with extreme cost ranges
     or degenerate problems
-4.  **All algorithms find optimal solutions**—differences are in speed
+4.  **All algorithms find optimal solutions** – differences are in speed
     and edge case handling
 
 **Algorithm Summary**:
 
-| Algorithm        | Best For                  | Complexity     |
-|------------------|---------------------------|----------------|
-| Hungarian        | Education, small problems | O(n³)          |
-| Jonker-Volgenant | General purpose (default) | O(n³) expected |
-| Auction variants | Large dense problems      | O(n² log nC/ε) |
-| SAP              | Sparse problems           | O(n² + nm)     |
-| HK01             | Binary costs              | O(n^2.5)       |
-| Murty            | K-best solutions          | O(k × T(n))    |
+| Algorithm        | Best For                  | Complexity                              |
+|------------------|---------------------------|-----------------------------------------|
+| Hungarian        | Education, small problems | $O\left( n^{3} \right)$                 |
+| Jonker-Volgenant | General purpose (default) | $O\left( n^{3} \right)$ expected        |
+| Auction variants | Large dense problems      | $O\left( n^{2}\log nC/\epsilon \right)$ |
+| SAP              | Sparse problems           | $O\left( n^{2} + nm \right)$            |
+| HK01             | Binary costs              | $O\left( n^{2.5} \right)$               |
+| Murty            | K-best solutions          | $O\left( k \cdot T(n) \right)$          |
 
 **What’s Next?**
 

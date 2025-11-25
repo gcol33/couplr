@@ -1,0 +1,1055 @@
+# Algorithm Details and Mathematical Foundations
+
+## Overview
+
+This vignette provides detailed mathematical background on the
+algorithms implemented in `couplr`. Understanding these algorithms helps
+you:
+
+- Choose the right method for your specific problem characteristics
+- Debug unexpected behavior or performance issues
+- Appreciate the theoretical foundations underlying assignment
+  optimization
+
+### Who This Vignette Is For
+
+**Audience**: Intermediate users, researchers, algorithm enthusiasts
+
+**Prerequisites**:
+
+- Familiarity with basic `couplr` usage
+  ([`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md))
+- Basic linear algebra (matrix notation)
+- Comfort with Big-O complexity notation
+
+**What You’ll Learn**:
+
+- How each algorithm works at a conceptual and mathematical level
+- When to use each algorithm (and when NOT to)
+- Trade-offs between algorithms
+- Numerical considerations and failure modes
+
+**Time to complete**: 45–60 minutes (conceptual reading)
+
+### Documentation Roadmap
+
+| Vignette           | Focus                                      | Difficulty   |
+|--------------------|--------------------------------------------|--------------|
+| Getting Started    | Basic LAP solving, API introduction        | Beginner     |
+| **Algorithms**     | Mathematical foundations, solver selection | Intermediate |
+| Matching Workflows | Production matching pipelines              | Intermediate |
+| Pixel Morphing     | Scientific applications, approximations    | Advanced     |
+
+*You are here: Algorithms*
+
+## The Linear Assignment Problem
+
+### Formal Definition
+
+Given a cost matrix $`C \in \mathbb{R}^{n \times m}`$, the linear
+assignment problem (LAP) seeks a set of assignments that minimizes the
+total cost:
+
+``` math
+\min \sum_{i=1}^{n} \sum_{j=1}^{m} c_{ij} x_{ij}
+```
+
+subject to:
+
+``` math
+\begin{aligned}
+\sum_{j=1}^{m} x_{ij} &\leq 1 \quad \forall i \in \{1,\ldots,n\} \\
+\sum_{i=1}^{n} x_{ij} &\leq 1 \quad \forall j \in \{1,\ldots,m\} \\
+x_{ij} &\in \{0,1\} \quad \forall i,j
+\end{aligned}
+```
+
+Here $`x_{ij} = 1`$ if source $`i`$ is assigned to target $`j`$, and
+$`x_{ij} = 0`$ otherwise. The constraints ensure that each source is
+assigned to at most one target, and each target receives at most one
+source.
+
+### Duality and Optimality Conditions
+
+The LAP has a strong dual formulation. For each source $`i`$ and target
+$`j`$, we associate dual variables $`u_i`$ and $`v_j`$. The dual problem
+is:
+
+``` math
+\max \sum_{i=1}^{n} u_i + \sum_{j=1}^{m} v_j
+```
+
+subject to:
+
+``` math
+u_i + v_j \leq c_{ij} \quad \forall i,j
+```
+
+A primal-dual solution $`(x^*, u^*, v^*)`$ is optimal if and only if it
+satisfies **complementary slackness**:
+
+``` math
+x_{ij}^* > 0 \implies u_i^* + v_j^* = c_{ij}
+```
+
+This condition means that only assignments along **tight edges** (where
+the dual constraint holds with equality) can be part of an optimal
+solution. This principle underlies most efficient LAP algorithms.
+
+### Visualizing the Assignment Problem
+
+It helps to think of the LAP as a weighted bipartite graph:
+
+    Sources (rows)          Targets (columns)
+
+        S₁ ───────2──────── T₁
+         │ ╲     ╱         ╱│
+         │  ╲4  ╱3        ╱ │
+         3   ╲ ╱        5   1
+         │    ╳          ╱  │
+         │   ╱ ╲       ╱    │
+        S₂ ─╱───╲──1──╱──── T₂
+           ╱     ╲   ╱     ╱
+          ╱       ╲ ╱    2
+        S₃ ────3───╳───── T₃
+
+    Edge weights = costs
+    Goal: Select one edge per source, one per target, minimizing total weight
+
+The algorithms below all solve this problem but take different paths
+through the solution space.
+
+## Algorithm Selection Guide
+
+Before diving into individual algorithms, here’s a decision framework:
+
+                        Is the cost matrix binary (0/1)?
+                                  |
+                  ┌───────────────┴───────────────┐
+                  Yes                             No
+                  |                               |
+              Use HK01                    Is sparsity > 50%?
+                                                  |
+                                  ┌───────────────┴───────────────┐
+                                  Yes                             No
+                                  |                               |
+                              Use SAP                      Is n > 1000?
+                                                                  |
+                                                  ┌───────────────┴───────────────┐
+                                                  Yes                             No
+                                                  |                               |
+                                              Use Auction              Use JV (default)
+                                              or consider
+                                              approximations
+
+### Quick Reference Table
+
+| Algorithm | Complexity | Best For | Avoid When |
+|----|----|----|----|
+| **Hungarian** | O(n³) | Small problems, pedagogy | n \> 500 |
+| **Jonker-Volgenant** | O(n³) expected | General purpose (default) | Extremely sparse |
+| **Auction** | O(n² log nC/ε) | Large dense (n \> 1000) | Small problems |
+| **Auction (scaled)** | O(n² log nC/ε) | Large cost range | Small problems |
+| **Auction (GS)** | O(n² log nC/ε) | Structured problems | Random costs |
+| **SAP** | O(n² + nm) | Sparse (\>50% forbidden) | Dense problems |
+| **HK01** | O(n^2.5) | Binary costs only | Non-binary costs |
+
+### Head-to-Head Comparison
+
+| Scenario               | Hungarian | JV  | Auction | SAP | HK01 |
+|------------------------|-----------|-----|---------|-----|------|
+| Dense 100×100          | ✓✓✓       | ✓✓✓ | ✓✓      | ✓   | N/A  |
+| Dense 1000×1000        | ✓         | ✓✓✓ | ✓✓✓     | ✓   | N/A  |
+| Sparse (80% forbidden) | ✓         | ✓✓  | ✓       | ✓✓✓ | N/A  |
+| Binary costs           | ✓         | ✓   | ✓       | ✓   | ✓✓✓  |
+| Rectangular n×2n       | ✗         | ✓✓  | ✗       | ✓✓✓ | ✓✓   |
+| Numerical precision    | ✓✓✓       | ✓✓  | ✓       | ✓✓  | ✓✓✓  |
+
+✓✓✓ = Excellent \| ✓✓ = Good \| ✓ = Acceptable \| ✗ = Not recommended
+
+## Algorithms in couplr
+
+### Hungarian Algorithm
+
+**Complexity**: $`O(n^3)`$ for square problems, $`O(n^2m)`$ for
+rectangular
+
+The Hungarian algorithm, developed by Kuhn (1955) based on work by Kőnig
+and Egerváry, is the classical method for solving the LAP. It maintains
+dual feasibility throughout and iteratively improves the primal
+solution.
+
+#### Algorithm Steps
+
+1.  **Initialization**: Start with any feasible dual solution,
+    typically:
+    ``` math
+    u_i = \min_j c_{ij}, \quad v_j = 0
+    ```
+
+2.  **Construct equality graph**: Build a graph $`G_=`$ containing only
+    tight edges:
+    ``` math
+    G_= = \{(i,j) : u_i + v_j = c_{ij}\}
+    ```
+
+3.  **Find maximum matching**: Compute a maximum cardinality matching
+    $`M`$ in $`G_=`$
+
+4.  **Check optimality**: If $`|M| = n`$ (all sources matched), the
+    solution is optimal
+
+5.  **Dual update**: Otherwise, find a minimum dual update that adds new
+    tight edges:
+
+    - Compute the **alternating tree** from unmatched sources
+    - Let $`S`$ be sources in the tree, $`T`$ be targets in the tree
+    - Compute
+      $`\Delta = \min_{i \in S, j \notin T} (c_{ij} - u_i - v_j)`$
+    - Update: $`u_i \leftarrow u_i + \Delta`$ for $`i \in S`$,
+      $`v_j \leftarrow v_j - \Delta`$ for $`j \in T`$
+
+6.  **Repeat**: Return to step 2 with the updated dual variables
+
+#### When to Use
+
+The Hungarian algorithm is:
+
+- **Exact**: Always finds the optimal solution
+- **Pedagogical**: Easy to understand conceptually
+- **Moderate performance**: Good for small to medium problems (\<
+  500×500)
+- **Stable**: Numerically robust with clean termination
+
+#### When NOT to Use
+
+- **Large problems (n \> 500)**: JV or Auction will be significantly
+  faster
+- **Sparse problems**: SAP exploits sparsity; Hungarian does not
+- **Performance-critical applications**: The $`O(n³)`$ complexity
+  accumulates quickly
+
+#### Edge Cases and Limitations
+
+- **Rectangular matrices**: Handled by padding internally, but less
+  efficient than SAP
+- **Multiple optimal solutions**: Returns one arbitrarily (deterministic
+  but not specified)
+- **Degenerate problems**: Handles ties gracefully via perturbation
+
+``` r
+
+# Example with Hungarian algorithm
+cost <- matrix(c(
+  10, 19, 8,
+  15, 10, 11,
+  9, 12, 14
+), nrow = 3, byrow = TRUE)
+
+result <- lap_solve(cost, method = "hungarian")
+print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      3     8
+#> 2      2      2    10
+#> 3      3      1     9
+#> 
+#> Total cost: 27 
+#> Method: hungarian
+```
+
+### Jonker-Volgenant Algorithm
+
+**Complexity**: $`O(n^3)`$ expected time, $`O(n^2)`$ space
+
+The Jonker-Volgenant (JV) algorithm (1987) is an optimized variant of
+the shortest augmenting path approach. It’s the default algorithm in
+`couplr` and provides good performance on most problem types.
+
+#### Key Ideas
+
+1.  **Shortest augmenting paths**: Rather than finding maximum matchings
+    in equality graphs, JV builds augmenting paths in a **reduced cost
+    graph** with respect to dual variables
+
+2.  **Column reduction**: An initial preprocessing phase that assigns
+    targets greedily to minimize reduced costs
+
+3.  **Auction phase**: A rapid auction-style update that improves
+    multiple dual variables simultaneously
+
+4.  **Shortest path phase**: Classical shortest augmenting path to
+    handle remaining unmatched sources
+
+The algorithm maintains **$`\epsilon`$-complementary slackness** during
+execution, allowing it to take larger steps than the classical Hungarian
+method while still guaranteeing exact optimality at termination.
+
+#### Algorithm Phases
+
+**Phase 1: Column Reduction**
+
+For each target $`j`$, find the source $`i^*`$ with minimum cost:
+``` math
+i^* = \arg\min_i c_{ij}
+```
+
+If $`i^*`$ is unmatched, assign $`(i^*, j)`$ and set $`v_j = c_{i^*j}`$.
+This provides a good initial solution and dual bounds.
+
+**Phase 2: Reduction Transfer**
+
+Update dual variables to satisfy reduced cost constraints:
+``` math
+u_i = \min_j (c_{ij} - v_j)
+```
+
+**Phase 3: Augmentation**
+
+For each unmatched source:
+
+1.  Build shortest augmenting path tree using Dijkstra-style search on
+    reduced costs
+2.  Update dual variables along the path
+3.  Augment the matching
+
+#### When to Use
+
+Jonker-Volgenant is:
+
+- **Efficient**: Good general-purpose performance, especially for dense
+  problems
+- **Default choice**: Used by `method = "auto"` for most problems
+- **Memory efficient**: $`O(n^2)`$ space even for dense problems
+
+#### When NOT to Use
+
+- **Extremely sparse problems**: SAP will be faster
+- **Binary costs**: HK01 is specialized and faster
+- **Need guaranteed worst-case**: JV has excellent average case but
+  auction may be more predictable
+
+#### Edge Cases and Limitations
+
+- **Cycling**: Rare, but possible with near-degenerate problems.
+  Implementation includes safeguards.
+- **Negative costs**: Handled correctly (unlike some implementations)
+- **Large cost ranges**: May lose precision; consider scaling costs to
+  similar magnitude
+
+``` r
+
+# Jonker-Volgenant on a larger problem
+set.seed(123)
+n <- 100
+large_cost <- matrix(runif(n * n, 0, 100), n, n)
+
+system.time({
+  result <- lap_solve(large_cost, method = "jv")
+})
+#>    user  system elapsed 
+#>       0       0       0
+
+cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 149.0911
+```
+
+### Auction Algorithm Family
+
+**Complexity**: $`O(n^2 \log(nC) / \epsilon)`$ for maximum cost $`C`$
+and $`\epsilon`$-optimality
+
+The auction algorithm, developed by Bertsekas (1988), takes an economic
+approach to the assignment problem. Sources “bid” for targets, and
+prices (dual variables) adjust based on competition. `couplr` implements
+three variants of the auction algorithm, each with different performance
+characteristics.
+
+#### Core Auction Concept
+
+All auction variants share the same fundamental approach:
+
+1.  **Initialization**: Set all prices $`p_j = 0`$ (dual variables)
+
+2.  **Bidding phase**: Each unmatched source $`i`$ finds its best
+    target:
+    ``` math
+    j^* = \arg\max_j (v_{ij} - p_j)
+    ```
+    where $`v_{ij}`$ is the value (negative cost) of assigning $`i`$ to
+    $`j`$
+
+3.  **Compute bid**: Source $`i`$ bids for target $`j^*`$ with
+    increment:
+    ``` math
+    \text{bid}_i = (v_{ij^*} - p_{j^*}) - (v_{ij^{\text{2nd}}} - p_{j^{\text{2nd}}}) + \epsilon
+    ```
+    where $`j^{\text{2nd}}`$ is the second-best target for $`i`$
+
+4.  **Assignment phase**: For each target $`j`$ receiving bids:
+
+    - Assign $`j`$ to the highest bidder $`i^*`$
+    - Update price: $`p_j \leftarrow p_j + \text{bid}_{i^*}`$
+    - Remove previous assignment to $`j`$ (if any)
+
+5.  **Repeat**: Continue until all sources are matched
+
+The variants differ in epsilon management, bidding order, and
+convergence strategies.
+
+#### Variant 1: Standard Fixed-Epsilon Auction
+
+**When to use**: Default auction choice, general-purpose
+
+``` r
+
+lap_solve(cost, method = "auction")
+```
+
+**Key features**:
+
+- Uses adaptive epsilon: $`\epsilon = \text{spread} / (2n^2)`$ based on
+  cost range
+- Queue-based: maintains unmatched sources in a queue, processes in LIFO
+  order
+- Fast convergence for most problem types
+- Good numerical stability
+
+**Algorithm details**:
+
+The epsilon is chosen to balance speed and accuracy: - Too large: fast
+but may produce suboptimal results - Too small: slow convergence -
+Adaptive formula scales with problem size and cost range
+
+**Epsilon selection**:
+
+``` cpp
+double spread = max_cost - min_cost;
+epsilon = spread / (2.0 * n * n);
+epsilon = max(epsilon, 1e-12);  // Defensive lower bound
+```
+
+This gives $`\epsilon`$-optimality where final cost is within
+$`n\epsilon`$ of true optimum.
+
+#### Variant 2: Scaled-Epsilon Auction
+
+**When to use**: Problems with large cost ranges or when tighter
+optimality is needed
+
+``` r
+
+lap_solve(cost, method = "auction_scaled")
+```
+
+**Key features**:
+
+- **Epsilon-scaling phases**: Starts with large $`\epsilon`$,
+  progressively reduces
+- Discards and rebuilds matching each phase
+- Fewer total bids than fixed-epsilon for large-range problems
+- Better final accuracy
+
+**Algorithm structure**:
+
+1.  **Initial epsilon**: $`\epsilon_0 = \max|c_{ij}|`$ (maximum absolute
+    cost)
+
+2.  **Phase loop**:
+
+        for each phase:
+          epsilon = epsilon / alpha  (typically alpha = 7)
+          discard all assignments
+          rebuild complete matching at new epsilon
+          until epsilon < epsilon_final
+
+3.  **Price updates**: Uses cost minimization formulation where prices
+    *decrease*:
+    ``` math
+    p_j \leftarrow p_j - (\gamma + \epsilon)
+    ```
+    where $`\gamma = \text{second\_best\_cost} - \text{best\_cost}`$
+
+**Phases**: Typically 3-7 phases depending on cost range and alpha
+parameter.
+
+**Convergence**: Each phase solves an easier problem (larger
+$`\epsilon`$), providing warm start for next phase.
+
+**Performance**: - Better than fixed-epsilon when: cost range \>
+$`10^6`$, need high accuracy - Worse than fixed-epsilon when: costs are
+similar magnitude
+
+``` r
+
+# Example with large cost range
+set.seed(123)
+n <- 50
+cost <- matrix(runif(n * n, 1, 1e6), n, n)  # Large range: 1 to 1,000,000
+
+system.time({
+  result_scaled <- lap_solve(cost, method = "auction_scaled")
+})
+#>    user  system elapsed 
+#>       0       0       0
+
+cat("Total cost:", get_total_cost(result_scaled), "\n")
+#> Total cost: 1543862
+```
+
+#### Variant 3: Gauss-Seidel Auction
+
+**When to use**: Problems where sequential processing may exploit
+structure
+
+``` r
+
+lap_solve(cost, method = "auction_gs")
+```
+
+**Key features**:
+
+- **Sequential bidding**: Processes sources in order (1, 2, …, n)
+- **Immediate price updates**: Price changes affect subsequent bids in
+  same iteration
+- Can converge faster for problems with spatial structure
+- Handles $`n > m`$ automatically via internal transpose
+
+**Algorithm details**:
+
+Unlike the queue-based approach, Gauss-Seidel sweeps through all
+sources:
+
+    repeat until converged:
+      for i = 1 to n:
+        if i is unmatched or displaced:
+          find best and second-best objects
+          compute bid = best - second + epsilon
+          update price[j_best] += bid
+          update assignments (may displace another source)
+
+**Key difference**: Price update is applied *immediately*, affecting the
+next source’s decision in the same sweep.
+
+**Convergence behavior**:
+
+- Can be faster than queue-based when problem has structure
+- Sequential processing can exploit correlations between nearby sources
+- Adaptive epsilon matching standard auction:
+  $`\epsilon = \text{spread} / (2n^2)`$
+
+**Auto-transpose**: If $`n > m`$, automatically transposes problem
+internally and converts result back.
+
+``` r
+
+# Example with spatial structure
+set.seed(456)
+n <- 100
+# Create cost matrix with spatial correlation
+x_source <- 1:n
+y_source <- 1:n
+cost <- outer(x_source, y_source, function(i, j) abs(i - j) + runif(n*n, 0, 5))
+
+system.time({
+  result_gs <- lap_solve(cost, method = "auction_gs")
+})
+#>    user  system elapsed 
+#>       0       0       0
+
+cat("Total cost:", get_total_cost(result_gs), "\n")
+#> Total cost: 204.2516
+```
+
+#### Comparison of Auction Variants
+
+| Feature           | Standard        | Scaled           | Gauss-Seidel        |
+|-------------------|-----------------|------------------|---------------------|
+| Epsilon strategy  | Fixed adaptive  | Scaling phases   | Fixed adaptive      |
+| Bidding order     | Queue (LIFO)    | Queue per phase  | Sequential sweep    |
+| Best for          | General purpose | Large cost range | Structured problems |
+| Iterations        | Medium          | Fewer phases     | Can be fewer        |
+| Memory            | $`O(n + m)`$    | $`O(n + m)`$     | $`O(n + m)`$        |
+| Handles $`n > m`$ | No (error)      | Via padding      | Via transpose       |
+
+#### When to Use Which Auction Variant
+
+**Use standard auction** (`method = "auction"`): - General-purpose
+default - Medium to large dense problems ($`n > 500`$) - Costs vary
+within reasonable range (\< $`10^6`$ spread) - Want predictable,
+reliable performance
+
+**Use scaled-epsilon** (`method = "auction_scaled"`): - Very large cost
+ranges (spread \> $`10^6`$) - Need provably tighter optimality bounds -
+Willing to trade initial phase overhead for better final accuracy -
+Integer costs with large variation
+
+**Use Gauss-Seidel** (`method = "auction_gs"`): - Problem has spatial or
+sequential structure - $`n > m`$ problems (auto-handles via transpose) -
+Experimentation to compare with standard - Sequential access patterns
+may help cache performance
+
+#### Auction Algorithm Advantages
+
+The auction algorithm is suitable for:
+
+- **Large dense problems**: Scales to $`n > 1000`$
+- **Parallel implementation**: Bidding phase naturally parallelizes
+  (future work)
+- **Approximate solutions**: Can terminate early for
+  $`\epsilon`$-optimal solutions
+- **Integer costs**: Efficient with small integer costs
+
+``` r
+
+# Comparison on a medium-sized problem
+set.seed(789)
+n <- 200
+cost <- matrix(runif(n * n, 0, 100), n, n)
+
+times <- c(
+  standard = system.time(lap_solve(cost, method = "auction"))["elapsed"],
+  scaled = system.time(lap_solve(cost, method = "auction_scaled"))["elapsed"],
+  gauss_seidel = system.time(lap_solve(cost, method = "auction_gs"))["elapsed"]
+)
+
+print(times)
+#>     standard.elapsed       scaled.elapsed gauss_seidel.elapsed 
+#>                 0.00                 0.00                 0.02
+```
+
+**Numerical Stability**:
+
+All auction variants include safeguards: - Tie-breaking via
+deterministic perturbation (prevents cycling) - Iteration guards
+(prevent infinite loops) - Epsilon clamping (prevents denormal
+numbers) - Spread-based epsilon (scale-invariant)
+
+### Sparse Assignment (SAP)
+
+**Complexity**: $`O(n^2 + nm)`$ for sparse problems with $`m`$ edges
+
+The SAP algorithm is optimized for **sparse problems** where most cost
+matrix entries are effectively infinite (forbidden assignments). It uses
+efficient sparse data structures and specialized shortest path
+algorithms.
+
+#### Sparse Representation
+
+Instead of storing an $`n \times n`$ matrix, SAP maintains:
+
+- **Adjacency lists**: Only non-forbidden edges are stored
+- **Compressed costs**: Efficient lookup of edge costs
+- **Sparse priority queues**: Fast extraction of minimum reduced costs
+
+#### Algorithm Strategy
+
+1.  **Graph construction**: Build a sparse directed graph with edges
+    only for finite costs
+
+2.  **Initialization**: Set dual variables based on minimum outgoing
+    costs
+
+3.  **Shortest paths**: Use Dijkstra’s algorithm (or Bellman-Ford for
+    negative costs) on the reduced cost graph
+
+4.  **Path augmentation**: Augment matching along shortest paths and
+    update dual variables
+
+#### When to Use
+
+SAP is optimal for:
+
+- **Sparse problems**: When \> 50% of entries are forbidden (NA or Inf)
+- **Rectangular problems**: Naturally handles $`n \times m`$ problems
+  efficiently
+- **Structured sparsity**: Problems with known graph structure
+- **Large but sparse**: Can handle very large $`n`$ if sparsity is high
+
+``` r
+
+# Sparse assignment problem
+set.seed(789)
+n <- 200
+# Create sparse cost matrix (70% forbidden)
+cost <- matrix(Inf, n, n)
+n_edges <- floor(0.3 * n^2)
+edges <- sample(1:(n^2), n_edges)
+cost[edges] <- runif(n_edges, 0, 100)
+
+system.time({
+  result <- lap_solve(cost, method = "sap")
+})
+#>    user  system elapsed 
+#>    0.01    0.00    0.01
+
+cat("Assignments found:", nrow(result), "\n")
+#> Assignments found: 200
+cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 564.3393
+```
+
+### Hopcroft-Karp for Binary Costs (HK01)
+
+**Complexity**: $`O(n^{2.5})`$ for binary cost matrices
+
+The HK01 algorithm is specialized for problems where all costs are
+either 0 or 1 (binary). It’s based on the Hopcroft-Karp algorithm for
+maximum cardinality bipartite matching.
+
+#### Binary Problem Structure
+
+For costs $`c_{ij} \in \{0, 1\}`$, the LAP reduces to:
+
+1.  **Find maximum matching** in the subgraph of 0-cost edges
+2.  **If complete**: This is the optimal solution (cost = 0 for matched
+    edges)
+3.  **Otherwise**: Augment with minimum number of 1-cost edges
+
+#### Algorithm Approach
+
+1.  **Phase 1: Maximum matching on 0-edges**: Use Hopcroft-Karp to find
+    maximum matching using only zero-cost edges
+
+2.  **Phase 2: Augmentation**: If matching is incomplete, augment using
+    shortest augmenting paths in the full graph
+
+The Hopcroft-Karp algorithm finds **maximal sets of augmenting paths**
+simultaneously, achieving $`O(\sqrt{n})`$ augmentation phases.
+
+#### When to Use
+
+HK01 is designed for:
+
+- **Binary costs**: Problems where $`c_{ij} \in \{0, 1\}`$
+- **Uniform costs**: Problems where all costs are equal (can be
+  transformed to binary)
+- **Bipartite matching**: Unweighted or unit-weight bipartite matching
+- **Very large binary problems**: Can handle $`n > 10000`$ efficiently
+
+``` r
+
+# Binary cost problem
+set.seed(101)
+n <- 300
+binary_cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
+
+system.time({
+  result <- lap_solve(binary_cost, method = "hk01")
+})
+#>    user  system elapsed 
+#>       0       0       0
+
+cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 0
+```
+
+## Murty’s Algorithm for K-Best Solutions
+
+**Complexity**: $`O(k \cdot T(n))`$ where $`T(n)`$ is the complexity of
+solving a single LAP
+
+Murty’s algorithm (1968) finds the k best assignments in order of
+increasing cost. It’s based on a partition of the solution space into a
+search tree.
+
+### Algorithm Structure
+
+1.  **Solve initial LAP**: Find optimal assignment $`A^*`$ using any LAP
+    solver
+
+2.  **Partitioning**: For the $`k`$-th best solution:
+
+    - Take a partial assignment from the priority queue
+    - For each possible next assignment decision:
+      - **Forbid** one edge from the current solution
+      - **Force** other edges to be included
+      - Solve modified LAP
+      - Add new partial solution to queue
+
+3.  **Priority queue**: Maintain solutions ranked by total cost
+
+4.  **Repeat**: Extract next best solution and partition until k
+    solutions found
+
+### Partition Tree Structure
+
+The algorithm maintains a tree where:
+
+- **Root**: Complete optimal assignment
+- **Internal nodes**: Partial assignments with some edges
+  forced/forbidden
+- **Leaves**: Complete assignments
+- **Children**: Formed by adding one more constraint
+
+At each node, we solve a constrained LAP where:
+
+- Some edges are **forced** to be in the solution
+- Some edges are **forbidden** from the solution
+- The remaining edges are solved optimally
+
+### When to Use
+
+K-best solutions are useful for:
+
+- **Robustness analysis**: Understanding sensitivity to cost
+  perturbations
+- **Alternative plans**: Having backup assignments when constraints
+  change
+- **Decision support**: Presenting multiple good options to human
+  decision-makers
+- **Cost landscapes**: Understanding the structure of near-optimal
+  solutions
+
+``` r
+
+# Find k-best solutions
+cost <- matrix(c(
+  10, 19, 8, 15,
+  10, 18, 7, 17,
+  13, 16, 9, 14,
+  12, 19, 8, 18
+), nrow = 4, byrow = TRUE)
+
+kbest <- lap_solve_kbest(cost, k = 10)
+
+# Show cost progression
+summary(kbest) |> 
+  print(n = 10)
+#> # A tibble: 10 × 4
+#>     rank solution_id total_cost n_assignments
+#>    <int>       <int>      <dbl>         <int>
+#>  1     1           1         49             4
+#>  2     2           2         50             4
+#>  3     3           3         50             4
+#>  4     4           4         51             4
+#>  5     5           5         51             4
+#>  6     6           6         51             4
+#>  7     7           7         51             4
+#>  8     8           8         52             4
+#>  9     9           9         52             4
+#> 10    10          10         52             4
+```
+
+## Automatic Algorithm Selection
+
+The `method = "auto"` option uses heuristics to select the best
+algorithm:
+
+``` r
+
+auto_select <- function(cost_matrix) {
+  n <- nrow(cost_matrix)
+  m <- ncol(cost_matrix)
+  
+  # Check for binary costs
+  if (all(cost_matrix %in% c(0, 1, NA, Inf))) {
+    return("hk01")  # Binary costs → HK01
+  }
+  
+  # Check sparsity
+  finite_ratio <- sum(is.finite(cost_matrix)) / (n * m)
+  if (finite_ratio < 0.3 || abs(n - m) > 0.5 * max(n, m)) {
+    return("sap")  # Sparse or very rectangular → SAP
+  }
+  
+  # Large dense problems
+  if (n > 1000) {
+    return("auction")  # Large → Auction
+  }
+  
+  # Default: Jonker-Volgenant
+  return("jv")
+}
+```
+
+This selection provides good performance across diverse problem types
+without requiring user expertise.
+
+## Performance Comparison
+
+Here’s a rough guide to algorithm performance:
+
+| Algorithm | Small (\< 100) | Medium (100-500) | Large (500-2000) | Very Large (\> 2000) |
+|----|----|----|----|----|
+| Hungarian | Excellent | Good | Moderate | Slow |
+| Jonker-V | Excellent | Excellent | Excellent | Good |
+| Auction | Good | Good | Excellent | Excellent |
+| SAP | Good† | Good† | Excellent† | Excellent† |
+| HK01 | Excellent‡ | Excellent‡ | Excellent‡ | Excellent‡ |
+
+† For sparse problems (\< 30% density)  
+‡ For binary costs only
+
+## Numerical Considerations
+
+### Floating Point Precision
+
+All algorithms handle floating-point costs correctly, but be aware:
+
+- **Rounding errors**: Can accumulate in dual variables
+- **Tight tolerances**: Complementary slackness checked with
+  $`\epsilon = 10^{-10}`$
+- **Large cost ranges**: Avoid mixing costs that differ by \>
+  $`10^{12}`$
+
+### Integer Costs
+
+For integer costs, all algorithms are **exact** and guarantee integer
+optimal dual variables.
+
+### Numerical Stability
+
+The implementations include safeguards:
+
+- **Overflow detection**: Large costs are clamped to prevent overflow
+- **Epsilon comparisons**: Floating-point comparisons use tolerances
+- **Dual feasibility**: Maintained throughout algorithm execution
+
+## When Algorithms Fail
+
+Understanding failure modes helps debug unexpected results.
+
+### Infeasible Problems
+
+If too many entries are forbidden (NA/Inf), no valid assignment may
+exist:
+
+``` r
+
+# Infeasible: no column reachable from row 2
+cost_infeasible <- matrix(c(
+  1, 2, 3,
+  Inf, Inf, Inf,  # Row 2 cannot be assigned
+ 4, 5, 6
+), nrow = 3, byrow = TRUE)
+
+# Detection: check that each row has at least one finite entry
+feasible_rows <- rowSums(is.finite(cost_infeasible)) > 0
+cat("Feasible rows:", feasible_rows, "\n")
+#> Feasible rows: TRUE FALSE TRUE
+cat("Problem is", ifelse(all(feasible_rows), "feasible", "INFEASIBLE"), "\n")
+#> Problem is INFEASIBLE
+```
+
+### Nearly Degenerate Problems
+
+When many costs are nearly equal, small numerical errors can cause:
+
+- Different algorithms finding different solutions (all optimal)
+- Cycling in auction algorithms (rare, safeguarded)
+- Incorrect optimality certification (very rare)
+
+``` r
+
+# Degenerate: many tied costs
+cost_degen <- matrix(c(
+  1, 1, 1,
+  1, 1, 1,
+  1, 1, 1
+), nrow = 3, byrow = TRUE)
+
+# Multiple solutions exist - algorithms may find different ones
+r1 <- lap_solve(cost_degen, method = "hungarian")
+r2 <- lap_solve(cost_degen, method = "jv")
+
+# Both optimal (cost = 3), but possibly different assignments
+cat("Hungarian total:", get_total_cost(r1), "\n")
+#> Hungarian total: 3
+cat("JV total:", get_total_cost(r2), "\n")
+#> JV total: 3
+```
+
+**Mitigation**: Add small random perturbations if you need deterministic
+behavior, or accept that any optimal solution is acceptable.
+
+### Overflow in Dual Variables
+
+For very large cost ranges (\> $`10^{10}`$), dual variable updates may
+overflow:
+
+``` r
+
+# Problematic: cost range is 10^15
+cost_overflow <- matrix(c(1e-5, 1e10, 1e10, 1e-5), nrow = 2)
+# May produce incorrect results on some systems
+```
+
+**Mitigation**: Scale costs to a reasonable range (0 to $`10^{6}`$)
+before solving.
+
+### Algorithm-Specific Issues
+
+| Algorithm    | Known Issues                      | Mitigation           |
+|--------------|-----------------------------------|----------------------|
+| Hungarian    | Slow for n \> 500                 | Use JV or Auction    |
+| JV           | May cycle with many ties          | Safeguards included  |
+| Auction      | Slow convergence for tiny epsilon | Use scaled variant   |
+| Auction (GS) | Suboptimal for random costs       | Try standard auction |
+| SAP          | Inefficient for dense problems    | Use JV instead       |
+| HK01         | Only for binary costs             | Check cost values    |
+
+## Further Reading
+
+For deeper mathematical treatment:
+
+- **Hungarian algorithm**: Kuhn, H. W. (1955). “The Hungarian method for
+  the assignment problem.” *Naval Research Logistics Quarterly*.
+
+- **Jonker-Volgenant**: Jonker, R., & Volgenant, A. (1987). “A shortest
+  augmenting path algorithm for dense and sparse linear assignment
+  problems.” *Computing*.
+
+- **Auction algorithm**: Bertsekas, D. P. (1988). “The auction
+  algorithm: A distributed relaxation method for the assignment
+  problem.” *Annals of Operations Research*.
+
+- **Murty’s algorithm**: Murty, K. G. (1968). “An algorithm for ranking
+  all the assignments in order of increasing cost.” *Operations
+  Research*.
+
+- **General theory**: Burkard, R., Dell’Amico, M., & Martello, S.
+  (2009). *Assignment Problems*. SIAM.
+
+## Summary
+
+This vignette covered the mathematical foundations and practical
+considerations for LAP algorithms in `couplr`:
+
+**Key Takeaways**:
+
+1.  **Algorithm selection matters** for large problems—O(n³) adds up
+    quickly
+2.  **`method = "auto"`** handles most cases well, but understanding the
+    options helps with debugging
+3.  **Numerical issues** are rare but can occur with extreme cost ranges
+    or degenerate problems
+4.  **All algorithms find optimal solutions**—differences are in speed
+    and edge case handling
+
+**Algorithm Summary**:
+
+| Algorithm        | Best For                  | Complexity     |
+|------------------|---------------------------|----------------|
+| Hungarian        | Education, small problems | O(n³)          |
+| Jonker-Volgenant | General purpose (default) | O(n³) expected |
+| Auction variants | Large dense problems      | O(n² log nC/ε) |
+| SAP              | Sparse problems           | O(n² + nm)     |
+| HK01             | Binary costs              | O(n^2.5)       |
+| Murty            | K-best solutions          | O(k × T(n))    |
+
+**What’s Next?**
+
+| If you want to… | Read… |
+|----|----|
+| Solve basic assignment problems | [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) |
+| Match observations in studies | [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) |
+| Handle very large problems | [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) |
+
+**Function reference**:
+[`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
+[`?assignment`](https://gcol33.github.io/couplr/reference/assignment.md)

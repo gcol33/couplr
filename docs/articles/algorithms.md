@@ -650,7 +650,7 @@ times <- c(
 
 print(times)
 #>     standard.elapsed       scaled.elapsed gauss_seidel.elapsed 
-#>                 0.01                 0.00                 0.00
+#>                    0                    0                    0
 ```
 
 **Numerical Stability**:
@@ -716,7 +716,7 @@ system.time({
   result <- lap_solve(cost, method = "sap")
 })
 #>    user  system elapsed 
-#>    0.04    0.00    0.01
+#>    0.02    0.00    0.01
 
 cat("Assignments found:", nrow(result), "\n")
 #> Assignments found: 200
@@ -773,7 +773,7 @@ system.time({
   result <- lap_solve(binary_cost, method = "hk01")
 })
 #>    user  system elapsed 
-#>       0       0       0
+#>    0.02    0.00    0.02
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 0

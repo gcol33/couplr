@@ -98,23 +98,70 @@ solution. This principle underlies most efficient LAP algorithms.
 
 ### Visualizing the Assignment Problem
 
-It helps to think of the LAP as a weighted bipartite graph:
+It helps to think of the LAP as a weighted bipartite graph. The
+following plot shows a 3x3 assignment problem where sources (left) must
+be matched to targets (right), with edge weights representing costs:
 
-    Sources (rows)          Targets (columns)
+``` r
 
-        S₁ ───────2──────── T₁
-         │ ╲     ╱         ╱│
-         │  ╲4  ╱3        ╱ │
-         3   ╲ ╱        5   1
-         │    ╳          ╱  │
-         │   ╱ ╲       ╱    │
-        S₂ ─╱───╲──1──╱──── T₂
-           ╱     ╲   ╱     ╱
-          ╱       ╲ ╱    2
-        S₃ ────3───╳───── T₃
+# Create a bipartite graph visualization of the assignment problem
+library(ggplot2)
 
-    Edge weights = costs
-    Goal: Select one edge per source, one per target, minimizing total weight
+# Define node positions
+nodes <- data.frame(
+ name = c("S1", "S2", "S3", "T1", "T2", "T3"),
+ x = c(0, 0, 0, 2, 2, 2),
+ y = c(3, 2, 1, 3, 2, 1),
+ type = c("Source", "Source", "Source", "Target", "Target", "Target")
+)
+
+# Define edges with costs (subset for clarity)
+edges <- data.frame(
+ from_x = c(0, 0, 0, 0, 0, 0),
+ from_y = c(3, 3, 2, 2, 1, 1),
+ to_x = c(2, 2, 2, 2, 2, 2),
+ to_y = c(3, 2, 2, 1, 3, 1),
+ cost = c(2, 4, 1, 3, 3, 2),
+ optimal = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE)
+)
+
+ggplot() +
+ # Draw edges (non-optimal in gray, optimal in blue)
+ geom_segment(data = edges[!edges$optimal, ],
+              aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
+              color = "gray70", linewidth = 0.8, alpha = 0.5) +
+ geom_segment(data = edges[edges$optimal, ],
+              aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
+              color = "steelblue", linewidth = 1.5) +
+ # Add edge labels
+ geom_label(data = edges,
+            aes(x = (from_x + to_x) / 2, y = (from_y + to_y) / 2, label = cost),
+            size = 3.5, label.padding = unit(0.15, "lines"),
+            fill = ifelse(edges$optimal, "steelblue", "gray90"),
+            color = ifelse(edges$optimal, "white", "gray30")) +
+ # Draw nodes
+ geom_point(data = nodes, aes(x = x, y = y, color = type), size = 12) +
+ geom_text(data = nodes, aes(x = x, y = y, label = name),
+           color = "white", fontface = "bold", size = 4) +
+ # Styling
+ scale_color_manual(values = c("Source" = "coral", "Target" = "seagreen")) +
+ labs(title = "Assignment Problem as Bipartite Graph",
+      subtitle = "Optimal assignment shown in blue (total cost = 5)",
+      color = NULL) +
+ theme_void() +
+ theme(legend.position = "bottom",
+       plot.title = element_text(hjust = 0.5, face = "bold"),
+       plot.subtitle = element_text(hjust = 0.5)) +
+ coord_fixed(ratio = 0.8)
+```
+
+![Bipartite graph showing sources S1, S2, S3 on the left connected to
+targets T1, T2, T3 on the right with weighted edges representing
+assignment costs](algorithms_files/figure-html/bipartite-graph-1.png)
+
+The goal is to select exactly one edge per source and one per target,
+minimizing total weight. The optimal solution (blue edges) assigns S1 to
+T1, S2 to T2, and S3 to T3 with total cost 2 + 1 + 2 = 5.
 
 The algorithms below all solve this problem but take different paths
 through the solution space.
@@ -123,24 +170,8 @@ through the solution space.
 
 Before diving into individual algorithms, here’s a decision framework:
 
-                        Is the cost matrix binary (0/1)?
-                                  |
-                  ┌───────────────┴───────────────┐
-                  Yes                             No
-                  |                               |
-              Use HK01                    Is sparsity > 50%?
-                                                  |
-                                  ┌───────────────┴───────────────┐
-                                  Yes                             No
-                                  |                               |
-                              Use SAP                      Is n > 1000?
-                                                                  |
-                                                  ┌───────────────┴───────────────┐
-                                                  Yes                             No
-                                                  |                               |
-                                              Use Auction              Use JV (default)
-                                              or consider
-                                              approximations
+![Flowchart showing algorithm selection based on cost matrix
+properties](algorithms_files/figure-html/decision-flowchart-1.png)
 
 ### Quick Reference Table
 
@@ -352,7 +383,7 @@ system.time({
   result <- lap_solve(large_cost, method = "jv")
 })
 #>    user  system elapsed 
-#>       0       0       0
+#>    0.01    0.00    0.00
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 149.0911
@@ -559,7 +590,7 @@ system.time({
   result_gs <- lap_solve(cost, method = "auction_gs")
 })
 #>    user  system elapsed 
-#>       0       0       0
+#>    0.02    0.00    0.00
 
 cat("Total cost:", get_total_cost(result_gs), "\n")
 #> Total cost: 204.2516
@@ -742,7 +773,7 @@ system.time({
   result <- lap_solve(binary_cost, method = "hk01")
 })
 #>    user  system elapsed 
-#>       0       0       0
+#>    0.02    0.00    0.00
 
 cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 0

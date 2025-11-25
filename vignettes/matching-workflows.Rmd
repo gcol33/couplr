@@ -1270,20 +1270,71 @@ This vignette walked through a complete matching workflow using the job training
 
 **Recommended Workflow**:
 
-```
-1. Explore data → Identify confounders
-                      ↓
-2. First match   → match_couples(vars, auto_scale = TRUE)
-                      ↓
-3. Check balance → balance_diagnostics()
-                      ↓
-       ┌──────────────┴──────────────┐
-    Balance OK                   Balance poor
-       ↓                              ↓
-4. Estimate effect             Refine: caliper, blocking,
-                               more variables
-                                      ↓
-                               Return to step 3
+```{r workflow-diagram, fig.width=8, fig.height=6, echo=FALSE, fig.alt="Flowchart showing recommended matching workflow with iterative refinement loop"}
+library(ggplot2)
+
+# Define workflow nodes
+nodes <- data.frame(
+  label = c("1. Explore data\nIdentify confounders",
+            "2. First match\nmatch_couples()",
+            "3. Check balance\nbalance_diagnostics()",
+            "Balance\nOK?",
+            "4. Estimate\neffect",
+            "Refine: caliper,\nblocking, more vars"),
+  x = c(4, 4, 4, 4, 2, 6),
+  y = c(6, 5, 4, 3, 2, 2),
+  type = c("step", "step", "step", "decision", "step", "step")
+)
+
+# Define edges
+edges <- data.frame(
+  from_x = c(4, 4, 4, 4, 4, 6),
+  from_y = c(6, 5, 4, 3, 3, 2),
+  to_x = c(4, 4, 4, 2, 6, 4),
+  to_y = c(5, 4, 3, 2, 2, 4),
+  label = c("", "", "", "Yes", "No", ""),
+  label_x = c(NA, NA, NA, 2.8, 5.2, 5.5),
+  label_y = c(NA, NA, NA, 2.6, 2.6, 3)
+)
+
+ggplot() +
+  # Draw straight edges (vertical arrows)
+  geom_segment(data = edges[1:3, ],
+               aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
+               arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
+               color = "gray40", linewidth = 0.7) +
+  # Draw decision branches
+
+  geom_segment(data = edges[4:5, ],
+               aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
+               arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
+               color = "gray40", linewidth = 0.7) +
+  # Draw return loop (curved)
+  geom_curve(data = edges[6, ],
+             aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
+             arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
+             color = "gray40", linewidth = 0.7, curvature = 0.3) +
+  # Edge labels
+  geom_text(data = edges[!is.na(edges$label_x), ],
+            aes(x = label_x, y = label_y, label = label),
+            size = 3, color = "gray30", fontface = "italic") +
+  # Step nodes (rectangles via label)
+  geom_label(data = nodes[nodes$type == "step", ],
+             aes(x = x, y = y, label = label), size = 3,
+             fill = "lightblue", color = "darkblue",
+             label.padding = unit(0.4, "lines"), label.r = unit(0.15, "lines"),
+             lineheight = 0.9) +
+  # Decision node (diamond shape via point)
+  geom_point(data = nodes[nodes$type == "decision", ],
+             aes(x = x, y = y), shape = 23, size = 20,
+             fill = "lightyellow", color = "darkorange", stroke = 1.5) +
+  geom_text(data = nodes[nodes$type == "decision", ],
+            aes(x = x, y = y, label = label), size = 3, lineheight = 0.85) +
+  # Title
+  labs(title = "Matching Workflow") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 12)) +
+  coord_cartesian(xlim = c(0, 8), ylim = c(1.5, 6.5))
 ```
 
 **What's Next?**

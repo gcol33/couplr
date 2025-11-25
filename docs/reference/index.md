@@ -1,0 +1,126 @@
+# Package index
+
+## LAP Solving
+
+Core functions for solving linear assignment problems
+
+- [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+  : Solve linear assignment problems
+- [`lap_solve_batch()`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md)
+  : Solve multiple assignment problems efficiently
+- [`lap_solve_kbest()`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md)
+  : Find k-best optimal assignments
+- [`lap_solve_line_metric()`](https://gcol33.github.io/couplr/reference/lap_solve_line_metric.md)
+  : Solve 1-D Line Assignment Problem
+- [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  : Linear assignment solver
+
+## Matching Functions
+
+High-level matching for observational studies
+
+- [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  : Optimal matching using linear assignment
+- [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+  : Fast approximate matching using greedy algorithm
+- [`matchmaker()`](https://gcol33.github.io/couplr/reference/matchmaker.md)
+  : Create blocks for stratified matching
+
+## Balance Diagnostics
+
+Assess and report match quality
+
+- [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+  : Balance Diagnostics for Matched Pairs
+- [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md)
+  : Create Balance Table
+
+## Distance and Preprocessing
+
+Distance computation and data preparation
+
+- [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md)
+  : Compute and Cache Distance Matrix for Reuse
+- [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md)
+  : Update Constraints on Distance Object
+- [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md)
+  : Preprocess matching variables with automatic checks and scaling
+- [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md)
+  : Diagnose distance matrix and suggest fixes
+
+## Joined Datasets
+
+Create analysis-ready merged datasets
+
+- [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+  : Join Matched Pairs with Original Data
+- [`augment(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/augment.matching_result.md)
+  : Augment Matching Results with Original Data (broom-style)
+- [`augment()`](https://gcol33.github.io/couplr/reference/augment.md) :
+  Generic Augment Function
+
+## Utility Functions
+
+Helper functions for working with results
+
+- [`get_total_cost()`](https://gcol33.github.io/couplr/reference/get_total_cost.md)
+  : Extract total cost from assignment result
+- [`get_method_used()`](https://gcol33.github.io/couplr/reference/get_method_used.md)
+  : Extract method used from assignment result
+- [`as_assignment_matrix()`](https://gcol33.github.io/couplr/reference/as_assignment_matrix.md)
+  : Convert assignment result to a binary matrix
+- [`is_lap_solve_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_result.md)
+  : Check if object is an assignment result
+- [`is_lap_solve_batch_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_batch_result.md)
+  : Check if object is a batch assignment result
+- [`is_lap_solve_kbest_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_kbest_result.md)
+  : Check if object is a k-best assignment result
+- [`is_distance_object()`](https://gcol33.github.io/couplr/reference/is_distance_object.md)
+  : Check if Object is a Distance Object
+
+## Example Data
+
+Built-in datasets for examples and testing
+
+- [`hospital_staff`](https://gcol33.github.io/couplr/reference/hospital_staff.md)
+  : Hospital staff scheduling example dataset
+- [`example_costs`](https://gcol33.github.io/couplr/reference/example_costs.md)
+  : Example cost matrices for assignment problems
+- [`example_df`](https://gcol33.github.io/couplr/reference/example_df.md)
+  : Example assignment problem data frame
+
+## Pixel Morphing
+
+Visual demonstrations and image processing
+
+- [`pixel_morph()`](https://gcol33.github.io/couplr/reference/pixel_morph.md)
+  : Pixel-level image morphing (final frame only)
+- [`pixel_morph_animate()`](https://gcol33.github.io/couplr/reference/pixel_morph_animate.md)
+  : Pixel-level image morphing (animation)
+
+## Print and Summary Methods
+
+S3 methods for displaying results
+
+- [`print(`*`<lap_solve_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_result.md)
+  : Print method for assignment results
+- [`print(`*`<lap_solve_batch_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_batch_result.md)
+  : Print method for batch assignment results
+- [`print(`*`<lap_solve_kbest_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_kbest_result.md)
+  : Print method for k-best assignment results
+- [`print(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/print.matching_result.md)
+  : Print method for matching results
+- [`print(`*`<matchmaker_result>`*`)`](https://gcol33.github.io/couplr/reference/print.matchmaker_result.md)
+  : Print method for matchmaker results
+- [`print(`*`<balance_diagnostics>`*`)`](https://gcol33.github.io/couplr/reference/print.balance_diagnostics.md)
+  : Print Method for Balance Diagnostics
+- [`print(`*`<distance_object>`*`)`](https://gcol33.github.io/couplr/reference/print.distance_object.md)
+  : Print Method for Distance Objects
+- [`print(`*`<preprocessing_result>`*`)`](https://gcol33.github.io/couplr/reference/print.preprocessing_result.md)
+  : Print method for preprocessing result
+- [`print(`*`<variable_health>`*`)`](https://gcol33.github.io/couplr/reference/print.variable_health.md)
+  : Print method for variable health
+- [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gcol33.github.io/couplr/reference/summary.lap_solve_kbest_result.md)
+  : Get summary of k-best results
+- [`summary(`*`<distance_object>`*`)`](https://gcol33.github.io/couplr/reference/summary.distance_object.md)
+  : Summary Method for Distance Objects

@@ -6,7 +6,7 @@ The linear assignment problem (LAP) is a fundamental optimization
 problem: given a cost matrix where entry (i, j) represents the cost of
 assigning source i to target j, find the one-to-one assignment that
 minimizes (or maximizes) total cost. LAP appears throughout data
-science, operations research, and scientific computing—from scheduling
+science, operations research, and scientific computing – from scheduling
 and resource allocation to computer vision and bioinformatics. `couplr`
 provides efficient LAP solvers with a tidy interface that integrates
 naturally with modern R workflows.
@@ -52,7 +52,7 @@ operations
 - Batch solving and finding multiple solutions
 - When to use different algorithms
 
-**Time to complete**: 20–30 minutes
+**Time to complete**: 20-30 minutes
 
 ### Documentation Roadmap
 
@@ -101,7 +101,7 @@ matching that minimizes total cost (or maximizes total preference).
 
 This vignette uses a recurring **hospital staff scheduling** example
 that demonstrates increasingly complex scenarios. The same conceptual
-problem—assigning nurses to shifts—evolves to show different couplr
+problem – assigning nurses to shifts – evolves to show different couplr
 features.
 
 **Simple Example**: Three nurses can cover three shifts with the
@@ -849,9 +849,9 @@ algorithm selection and parallelization become important.
 | Problem Size | Typical Runtime | Recommendation |
 |----|----|----|
 | \< 100×100 | \< 0.01s | Any method works |
-| 100–500 | 0.01–0.1s | `method = "auto"` |
-| 500–1000 | 0.1–1s | Consider `method = "jv"` |
-| 1000–3000 | 1–30s | Use `method = "auction"` |
+| 100-500 | 0.01-0.1s | `method = "auto"` |
+| 500-1000 | 0.1-1s | Consider `method = "jv"` |
+| 1000-3000 | 1-30s | Use `method = "auction"` |
 | \> 3000 | \> 30s | See [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) for blocking strategies |
 
 ## Common Pitfalls and Troubleshooting
@@ -926,7 +926,7 @@ that total costs match even if assignments differ.
 
 ### Problem: Slow performance on large problems
 
-**Cause**: O(n³) complexity for exact algorithms.
+**Cause**: $`O(n^3)`$ complexity for exact algorithms.
 
 **Solutions**:
 

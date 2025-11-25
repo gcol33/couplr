@@ -40,7 +40,7 @@ minds
 - How matching problems appear in ecology, physics, and chemistry
 - Mathematical connections to optimal transport theory
 
-**Time to complete**: 45–60 minutes (conceptual reading)
+**Time to complete**: 45-60 minutes (conceptual reading)
 
 ### Documentation Roadmap
 
@@ -95,7 +95,7 @@ c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\m
 
 **Feature distance** $`d_{\text{feature}}`$: domain-specific similarity
 
-- Ecology: Bray–Curtis dissimilarity between species vectors  
+- Ecology: Bray-Curtis dissimilarity between species vectors
 - Physics: difference in particle intensity or size  
 - Chemistry: penalty for mismatched atom types  
 - Images: Euclidean distance in RGB color space
@@ -114,7 +114,7 @@ coherence.
 
 Exact solution: solve the full $`n \times n`$ LAP.
 
-- Complexity: $`O(n^3)`$ using Jonker–Volgenant  
+- Complexity: $`O(n^3)`$ using Jonker-Volgenant
 - Feasible: up to $`n \approx 1000`$ (about $`30 \times 30`$ images, or
   $`1000`$ plots/particles/atoms)  
 - Prohibitive: for $`n = 10\,000`$ ($`100 \times 100`$ images), runtime
@@ -467,7 +467,7 @@ initialization step for very large problems ($`n > 100\,000`$).
 
 - $`n < 1000`$: use the exact LAP.  
 - $`1000 < n < 5000`$: feature quantization or a shallow hierarchy.  
-- $`n > 5000`$: hierarchical decomposition with 2–3 levels.  
+- $`n > 5000`$: hierarchical decomposition with 2-3 levels.
 - $`n > 50\,000`$: combine $`s = 2`$ resolution reduction with a
   hierarchical method.
 
@@ -506,7 +506,7 @@ The algorithm:
       END FOR
     END FOR
 
-    // Step 2: Solve with Jonker–Volgenant
+    // Step 2: Solve with Jonker-Volgenant
     assignment ← lap_solve(cost, method = "jv")
 
     // Step 3: Generate morph frames by linear interpolation
@@ -543,7 +543,7 @@ motivated them.
 **Problem**: match $`n`$ vegetation plots surveyed at time $`t`$ to
 $`n`$ plots at time $`t + \Delta t`$ to track community dynamics.
 
-**Feature distance**: Bray–Curtis dissimilarity between species
+**Feature distance**: Bray-Curtis dissimilarity between species
 abundance vectors
 
 ``` math
@@ -564,7 +564,7 @@ Exact solution for small studies ($`n < 100`$):
     FOR i = 1 TO n_plots_t DO
       FOR j = 1 TO n_plots_tplus DO
 
-        // Bray–Curtis dissimilarity for species composition
+        // Bray-Curtis dissimilarity for species composition
         numerator   ← sum over species s of |abundance_t[i, s] - abundance_tplus[j, s]|
         denominator ← sum over species s of (abundance_t[i, s] + abundance_tplus[j, s])
         bc_distance ← numerator / denominator
@@ -981,7 +981,8 @@ morphing and scientific applications.
 
 1.  **Assignment = matching**: LAP finds optimal correspondences between
     two sets
-2.  **Scalability matters**: O(n³) becomes prohibitive for n \> 3,000
+2.  **Scalability matters**: $`O(n^3)`$ becomes prohibitive for
+    $`n > 3{,}000`$
 3.  **Three approximations**: Feature quantization, hierarchical
     decomposition, resolution reduction
 4.  **Same math, different domains**: Pixels, particles, plots, and

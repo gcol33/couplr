@@ -112,7 +112,7 @@ enthusiasts</p>
 <li>Trade-offs between algorithms</li>
 <li>Numerical considerations and failure modes</li>
 </ul>
-<p><strong>Time to complete</strong>: 45–60 minutes (conceptual
+<p><strong>Time to complete</strong>: 45-60 minutes (conceptual
 reading)</p>
 </div>
 <div class="section level3">
@@ -283,43 +283,45 @@ framework:</p>
 <tbody>
 <tr class="odd">
 <td><strong>Hungarian</strong></td>
-<td>O(n³)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></td>
 <td>Small problems, pedagogy</td>
 <td>n &gt; 500</td>
 </tr>
 <tr class="even">
 <td><strong>Jonker-Volgenant</strong></td>
-<td>O(n³) expected</td>
+<td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+expected</td>
 <td>General purpose (default)</td>
 <td>Extremely sparse</td>
 </tr>
 <tr class="odd">
 <td><strong>Auction</strong></td>
-<td>O(n² log nC/ε)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mi>C</mi><mi>/</mi><mi>ϵ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log nC/\epsilon)</annotation></semantics></math></td>
 <td>Large dense (n &gt; 1000)</td>
 <td>Small problems</td>
 </tr>
 <tr class="even">
 <td><strong>Auction (scaled)</strong></td>
-<td>O(n² log nC/ε)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mi>C</mi><mi>/</mi><mi>ϵ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log nC/\epsilon)</annotation></semantics></math></td>
 <td>Large cost range</td>
 <td>Small problems</td>
 </tr>
 <tr class="odd">
 <td><strong>Auction (GS)</strong></td>
-<td>O(n² log nC/ε)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mi>C</mi><mi>/</mi><mi>ϵ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log nC/\epsilon)</annotation></semantics></math></td>
 <td>Structured problems</td>
 <td>Random costs</td>
 </tr>
 <tr class="even">
 <td><strong>SAP</strong></td>
-<td>O(n² + nm)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math></td>
 <td>Sparse (&gt;50% forbidden)</td>
 <td>Dense problems</td>
 </tr>
 <tr class="odd">
 <td><strong>HK01</strong></td>
-<td>O(n^2.5)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2.5</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^{2.5})</annotation></semantics></math></td>
 <td>Binary costs only</td>
 <td>Non-binary costs</td>
 </tr>
@@ -1067,7 +1069,7 @@ if sparsity is high</li>
 <span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"sap"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;    0.01    0.00    0.01</span></span>
+<span><span class="co">#&gt;    0.02    0.00    0.02</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Assignments found:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignments found: 200</span></span>
@@ -1547,8 +1549,9 @@ considerations for LAP algorithms in <code>couplr</code>:</p>
 <p><strong>Key Takeaways</strong>:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Algorithm selection matters</strong> for large
-problems—O(n³) adds up quickly</li>
+<strong>Algorithm selection matters</strong> for large problems –
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+adds up quickly</li>
 <li>
 <strong><code>method = "auto"</code></strong> handles most cases
 well, but understanding the options helps with debugging</li>
@@ -1556,7 +1559,7 @@ well, but understanding the options helps with debugging</li>
 <strong>Numerical issues</strong> are rare but can occur with
 extreme cost ranges or degenerate problems</li>
 <li>
-<strong>All algorithms find optimal solutions</strong>—differences
+<strong>All algorithms find optimal solutions</strong> – differences
 are in speed and edge case handling</li>
 </ol>
 <p><strong>Algorithm Summary</strong>:</p>
@@ -1570,32 +1573,34 @@ are in speed and edge case handling</li>
 <tr class="odd">
 <td>Hungarian</td>
 <td>Education, small problems</td>
-<td>O(n³)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></td>
 </tr>
 <tr class="even">
 <td>Jonker-Volgenant</td>
 <td>General purpose (default)</td>
-<td>O(n³) expected</td>
+<td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+expected</td>
 </tr>
 <tr class="odd">
 <td>Auction variants</td>
 <td>Large dense problems</td>
-<td>O(n² log nC/ε)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mi>C</mi><mi>/</mi><mi>ϵ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log nC/\epsilon)</annotation></semantics></math></td>
 </tr>
 <tr class="even">
 <td>SAP</td>
 <td>Sparse problems</td>
-<td>O(n² + nm)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math></td>
 </tr>
 <tr class="odd">
 <td>HK01</td>
 <td>Binary costs</td>
-<td>O(n^2.5)</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2.5</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^{2.5})</annotation></semantics></math></td>
 </tr>
 <tr class="even">
 <td>Murty</td>
 <td>K-best solutions</td>
-<td>O(k × T(n))</td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>⋅</mo><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(k \cdot T(n))</annotation></semantics></math></td>
 </tr>
 </tbody>
 </table>

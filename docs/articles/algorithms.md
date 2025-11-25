@@ -29,7 +29,7 @@ you:
 - Trade-offs between algorithms
 - Numerical considerations and failure modes
 
-**Time to complete**: 45–60 minutes (conceptual reading)
+**Time to complete**: 45-60 minutes (conceptual reading)
 
 ### Documentation Roadmap
 
@@ -146,13 +146,13 @@ Before diving into individual algorithms, here’s a decision framework:
 
 | Algorithm | Complexity | Best For | Avoid When |
 |----|----|----|----|
-| **Hungarian** | O(n³) | Small problems, pedagogy | n \> 500 |
-| **Jonker-Volgenant** | O(n³) expected | General purpose (default) | Extremely sparse |
-| **Auction** | O(n² log nC/ε) | Large dense (n \> 1000) | Small problems |
-| **Auction (scaled)** | O(n² log nC/ε) | Large cost range | Small problems |
-| **Auction (GS)** | O(n² log nC/ε) | Structured problems | Random costs |
-| **SAP** | O(n² + nm) | Sparse (\>50% forbidden) | Dense problems |
-| **HK01** | O(n^2.5) | Binary costs only | Non-binary costs |
+| **Hungarian** | $`O(n^3)`$ | Small problems, pedagogy | n \> 500 |
+| **Jonker-Volgenant** | $`O(n^3)`$ expected | General purpose (default) | Extremely sparse |
+| **Auction** | $`O(n^2 \log nC/\epsilon)`$ | Large dense (n \> 1000) | Small problems |
+| **Auction (scaled)** | $`O(n^2 \log nC/\epsilon)`$ | Large cost range | Small problems |
+| **Auction (GS)** | $`O(n^2 \log nC/\epsilon)`$ | Structured problems | Random costs |
+| **SAP** | $`O(n^2 + nm)`$ | Sparse (\>50% forbidden) | Dense problems |
+| **HK01** | $`O(n^{2.5})`$ | Binary costs only | Non-binary costs |
 
 ### Head-to-Head Comparison
 
@@ -685,7 +685,7 @@ system.time({
   result <- lap_solve(cost, method = "sap")
 })
 #>    user  system elapsed 
-#>    0.01    0.00    0.01
+#>    0.02    0.00    0.02
 
 cat("Assignments found:", nrow(result), "\n")
 #> Assignments found: 200
@@ -1022,25 +1022,25 @@ considerations for LAP algorithms in `couplr`:
 
 **Key Takeaways**:
 
-1.  **Algorithm selection matters** for large problems—O(n³) adds up
-    quickly
+1.  **Algorithm selection matters** for large problems – $`O(n^3)`$ adds
+    up quickly
 2.  **`method = "auto"`** handles most cases well, but understanding the
     options helps with debugging
 3.  **Numerical issues** are rare but can occur with extreme cost ranges
     or degenerate problems
-4.  **All algorithms find optimal solutions**—differences are in speed
+4.  **All algorithms find optimal solutions** – differences are in speed
     and edge case handling
 
 **Algorithm Summary**:
 
-| Algorithm        | Best For                  | Complexity     |
-|------------------|---------------------------|----------------|
-| Hungarian        | Education, small problems | O(n³)          |
-| Jonker-Volgenant | General purpose (default) | O(n³) expected |
-| Auction variants | Large dense problems      | O(n² log nC/ε) |
-| SAP              | Sparse problems           | O(n² + nm)     |
-| HK01             | Binary costs              | O(n^2.5)       |
-| Murty            | K-best solutions          | O(k × T(n))    |
+| Algorithm        | Best For                  | Complexity                  |
+|------------------|---------------------------|-----------------------------|
+| Hungarian        | Education, small problems | $`O(n^3)`$                  |
+| Jonker-Volgenant | General purpose (default) | $`O(n^3)`$ expected         |
+| Auction variants | Large dense problems      | $`O(n^2 \log nC/\epsilon)`$ |
+| SAP              | Sparse problems           | $`O(n^2 + nm)`$             |
+| HK01             | Binary costs              | $`O(n^{2.5})`$              |
+| Murty            | K-best solutions          | $`O(k \cdot T(n))`$         |
 
 **What’s Next?**
 

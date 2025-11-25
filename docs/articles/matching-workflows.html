@@ -118,7 +118,7 @@ encoding</li>
 <li>When to use optimal vs greedy matching</li>
 <li>Creating publication-ready balance tables</li>
 </ul>
-<p><strong>Time to complete</strong>: 30–45 minutes</p>
+<p><strong>Time to complete</strong>: 30-45 minutes</p>
 </div>
 <div class="section level3">
 <h3 id="documentation-roadmap">Documentation Roadmap<a class="anchor" aria-label="anchor" href="#documentation-roadmap"></a>
@@ -585,7 +585,9 @@ alternatives.</p>
 (<code>method = "optimal"</code>):</p>
 <ul>
 <li>Minimizes total distance (globally optimal solution)</li>
-<li>Uses linear assignment algorithms (O(n³) complexity)</li>
+<li>Uses linear assignment algorithms
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+complexity)</li>
 <li>Suitable for: n &lt; 5,000, when optimality is critical</li>
 <li>Typical runtime: &lt;1 second for n=1,000, ~10 seconds for
 n=3,000</li>
@@ -638,18 +640,18 @@ matters</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 21.39 seconds</span></span>
+<span><span class="co">#&gt;   Time: 22.16 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.93 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.91 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 23 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 24.4 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -728,8 +730,8 @@ default):</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
 <span><span class="co">#&gt; elapsed    sorted     0.05        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.04        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq     0.05        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed1 row_best     0.05        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed2       pq     0.04        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li>Default to <code>strategy = "row_best"</code> for good speed/quality
@@ -1466,7 +1468,7 @@ program</p>
 <span>  `N (Treated)` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">treatment_group</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">matched_treated</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  `N (Control)` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">control_group</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">matched_control</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  `Effect Estimate` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"$%s"</span>, <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">naive_effect</span>, <span class="va">matched_effect</span><span class="op">)</span><span class="op">)</span>, big.mark <span class="op">=</span> <span class="st">","</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  `95% CI` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"—"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"($%s, $%s)"</span>,</span>
+<span>  `95% CI` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"--"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"($%s, $%s)"</span>,</span>
 <span>                            <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">t_test</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>, big.mark <span class="op">=</span> <span class="st">","</span><span class="op">)</span>,</span>
 <span>                            <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">t_test</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>, big.mark <span class="op">=</span> <span class="st">","</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
@@ -1480,8 +1482,9 @@ program</p>
 <div class="section level3">
 <h3 id="scalability">Scalability<a class="anchor" aria-label="anchor" href="#scalability"></a>
 </h3>
-<p><strong>Optimal matching complexity:</strong> O(n³) using
-Jonker-Volgenant</p>
+<p><strong>Optimal matching complexity:</strong>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+using Jonker-Volgenant</p>
 <ul>
 <li>n = 100: &lt; 0.01 seconds</li>
 <li>n = 500: ~ 0.1 seconds</li>
@@ -1489,8 +1492,11 @@ Jonker-Volgenant</p>
 <li>n = 3,000: ~ 10 seconds</li>
 <li>n = 5,000: ~ 30-60 seconds</li>
 </ul>
-<p><strong>Greedy matching complexity:</strong> O(n² log n) for sorted,
-O(n²) for row-best</p>
+<p><strong>Greedy matching complexity:</strong>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log n)</annotation></semantics></math>
+for sorted,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math>
+for row-best</p>
 <ul>
 <li>n = 5,000: ~ 1 second</li>
 <li>n = 10,000: ~ 3-5 seconds</li>
@@ -1527,7 +1533,7 @@ O(n²) for row-best</p>
 <span>  n_clusters <span class="op">=</span> <span class="fl">10</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Much faster: 10 × O(1000³) &lt;&lt; O(10000³)</span></span>
+<span><span class="co"># Much faster: 10 * O(1000^3) &lt;&lt; O(10000^3)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  <span class="va">blocks</span><span class="op">$</span><span class="va">left</span>, <span class="va">blocks</span><span class="op">$</span><span class="va">right</span>,</span>
 <span>  vars <span class="op">=</span> <span class="va">covariates</span>,</span>
@@ -1614,8 +1620,9 @@ this!)</p>
 <h3 id="problem-matching-takes-too-long">Problem: Matching Takes Too Long<a class="anchor" aria-label="anchor" href="#problem-matching-takes-too-long"></a>
 </h3>
 <p><strong>Symptom</strong>: <code><a href="../reference/match_couples.html">match_couples()</a></code> runs for
-minutes or doesn’t complete. <strong>Cause</strong>: O(n³) complexity
-for optimal matching.</p>
+minutes or doesn’t complete. <strong>Cause</strong>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+complexity for optimal matching.</p>
 <p><strong>Solutions</strong>:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># For n &gt; 3000: use greedy</span></span>

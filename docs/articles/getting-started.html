@@ -87,7 +87,7 @@ Colling</h4>
 problem: given a cost matrix where entry (i, j) represents the cost of
 assigning source i to target j, find the one-to-one assignment that
 minimizes (or maximizes) total cost. LAP appears throughout data
-science, operations research, and scientific computing—from scheduling
+science, operations research, and scientific computing – from scheduling
 and resource allocation to computer vision and bioinformatics.
 <code>couplr</code> provides efficient LAP solvers with a tidy interface
 that integrates naturally with modern R workflows.</p>
@@ -137,7 +137,7 @@ assignments</li>
 <li>Batch solving and finding multiple solutions</li>
 <li>When to use different algorithms</li>
 </ul>
-<p><strong>Time to complete</strong>: 20–30 minutes</p>
+<p><strong>Time to complete</strong>: 20-30 minutes</p>
 </div>
 <div class="section level3">
 <h3 id="documentation-roadmap">Documentation Roadmap<a class="anchor" aria-label="anchor" href="#documentation-roadmap"></a>
@@ -224,8 +224,8 @@ overtime likelihood. The assignment problem finds the optimal one-to-one
 matching that minimizes total cost (or maximizes total preference).</p>
 <p>This vignette uses a recurring <strong>hospital staff
 scheduling</strong> example that demonstrates increasingly complex
-scenarios. The same conceptual problem—assigning nurses to
-shifts—evolves to show different couplr features.</p>
+scenarios. The same conceptual problem – assigning nurses to shifts –
+evolves to show different couplr features.</p>
 <p><strong>Simple Example</strong>: Three nurses can cover three shifts
 with the following costs (lower = better fit):</p>
 <table class="table">
@@ -966,19 +966,19 @@ algorithm selection and parallelization become important.</p>
 <td>Any method works</td>
 </tr>
 <tr class="even">
-<td>100–500</td>
-<td>0.01–0.1s</td>
+<td>100-500</td>
+<td>0.01-0.1s</td>
 <td><code>method = "auto"</code></td>
 </tr>
 <tr class="odd">
-<td>500–1000</td>
-<td>0.1–1s</td>
+<td>500-1000</td>
+<td>0.1-1s</td>
 <td>Consider <code>method = "jv"</code>
 </td>
 </tr>
 <tr class="even">
-<td>1000–3000</td>
-<td>1–30s</td>
+<td>1000-3000</td>
+<td>1-30s</td>
 <td>Use <code>method = "auction"</code>
 </td>
 </tr>
@@ -1061,7 +1061,9 @@ Or verify that total costs match even if assignments differ.</p>
 <div class="section level3">
 <h3 id="problem-slow-performance-on-large-problems">Problem: Slow performance on large problems<a class="anchor" aria-label="anchor" href="#problem-slow-performance-on-large-problems"></a>
 </h3>
-<p><strong>Cause</strong>: O(n³) complexity for exact algorithms.</p>
+<p><strong>Cause</strong>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+complexity for exact algorithms.</p>
 <p><strong>Solutions</strong>:</p>
 <ul>
 <li>For n &gt; 1000: Try <code>method = "auction"</code>

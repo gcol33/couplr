@@ -25,6 +25,7 @@ and other LAP solvers.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://gcol33.github.io/couplr/}
   \item \url{https://github.com/gcol33/couplr}
   \item Report bugs at \url{https://github.com/gcol33/couplr/issues}
 }

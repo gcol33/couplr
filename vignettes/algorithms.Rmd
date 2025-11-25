@@ -19,7 +19,41 @@ library(couplr)
 
 ## Overview
 
-This vignette provides detailed mathematical background on the algorithms implemented in `couplr`. Understanding these algorithms can help you choose the right method for your specific problem and appreciate the theoretical foundations of assignment optimization.
+This vignette provides detailed mathematical background on the algorithms implemented in `couplr`. Understanding these algorithms helps you:
+
+- Choose the right method for your specific problem characteristics
+- Debug unexpected behavior or performance issues
+- Appreciate the theoretical foundations underlying assignment optimization
+
+### Who This Vignette Is For
+
+**Audience**: Intermediate users, researchers, algorithm enthusiasts
+
+**Prerequisites**:
+
+- Familiarity with basic `couplr` usage (`vignette("getting-started")`)
+- Basic linear algebra (matrix notation)
+- Comfort with Big-O complexity notation
+
+**What You'll Learn**:
+
+- How each algorithm works at a conceptual and mathematical level
+- When to use each algorithm (and when NOT to)
+- Trade-offs between algorithms
+- Numerical considerations and failure modes
+
+**Time to complete**: 45--60 minutes (conceptual reading)
+
+### Documentation Roadmap
+
+| Vignette | Focus | Difficulty |
+|----------|-------|------------|
+| Getting Started | Basic LAP solving, API introduction | Beginner |
+| **Algorithms** | Mathematical foundations, solver selection | Intermediate |
+| Matching Workflows | Production matching pipelines | Intermediate |
+| Pixel Morphing | Scientific applications, approximations | Advanced |
+
+*You are here: Algorithms*
 
 ## The Linear Assignment Problem
 
@@ -65,6 +99,80 @@ $$
 
 This condition means that only assignments along **tight edges** (where the dual constraint holds with equality) can be part of an optimal solution. This principle underlies most efficient LAP algorithms.
 
+### Visualizing the Assignment Problem
+
+It helps to think of the LAP as a weighted bipartite graph:
+
+```
+Sources (rows)          Targets (columns)
+
+    S₁ ───────2──────── T₁
+     │ ╲     ╱         ╱│
+     │  ╲4  ╱3        ╱ │
+     3   ╲ ╱        5   1
+     │    ╳          ╱  │
+     │   ╱ ╲       ╱    │
+    S₂ ─╱───╲──1──╱──── T₂
+       ╱     ╲   ╱     ╱
+      ╱       ╲ ╱    2
+    S₃ ────3───╳───── T₃
+
+Edge weights = costs
+Goal: Select one edge per source, one per target, minimizing total weight
+```
+
+The algorithms below all solve this problem but take different paths through the solution space.
+
+## Algorithm Selection Guide
+
+Before diving into individual algorithms, here's a decision framework:
+
+```
+                    Is the cost matrix binary (0/1)?
+                              |
+              ┌───────────────┴───────────────┐
+              Yes                             No
+              |                               |
+          Use HK01                    Is sparsity > 50%?
+                                              |
+                              ┌───────────────┴───────────────┐
+                              Yes                             No
+                              |                               |
+                          Use SAP                      Is n > 1000?
+                                                              |
+                                              ┌───────────────┴───────────────┐
+                                              Yes                             No
+                                              |                               |
+                                          Use Auction              Use JV (default)
+                                          or consider
+                                          approximations
+```
+
+### Quick Reference Table
+
+| Algorithm | Complexity | Best For | Avoid When |
+|-----------|------------|----------|------------|
+| **Hungarian** | O(n³) | Small problems, pedagogy | n > 500 |
+| **Jonker-Volgenant** | O(n³) expected | General purpose (default) | Extremely sparse |
+| **Auction** | O(n² log nC/ε) | Large dense (n > 1000) | Small problems |
+| **Auction (scaled)** | O(n² log nC/ε) | Large cost range | Small problems |
+| **Auction (GS)** | O(n² log nC/ε) | Structured problems | Random costs |
+| **SAP** | O(n² + nm) | Sparse (>50% forbidden) | Dense problems |
+| **HK01** | O(n^2.5) | Binary costs only | Non-binary costs |
+
+### Head-to-Head Comparison
+
+| Scenario | Hungarian | JV | Auction | SAP | HK01 |
+|----------|-----------|----|---------|----|------|
+| Dense 100×100 | ✓✓✓ | ✓✓✓ | ✓✓ | ✓ | N/A |
+| Dense 1000×1000 | ✓ | ✓✓✓ | ✓✓✓ | ✓ | N/A |
+| Sparse (80% forbidden) | ✓ | ✓✓ | ✓ | ✓✓✓ | N/A |
+| Binary costs | ✓ | ✓ | ✓ | ✓ | ✓✓✓ |
+| Rectangular n×2n | ✗ | ✓✓ | ✗ | ✓✓✓ | ✓✓ |
+| Numerical precision | ✓✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓✓ |
+
+✓✓✓ = Excellent | ✓✓ = Good | ✓ = Acceptable | ✗ = Not recommended
+
 ## Algorithms in couplr
 
 ### Hungarian Algorithm
@@ -101,6 +209,18 @@ The Hungarian algorithm is:
 - **Pedagogical**: Easy to understand conceptually
 - **Moderate performance**: Good for small to medium problems (< 500×500)
 - **Stable**: Numerically robust with clean termination
+
+#### When NOT to Use
+
+- **Large problems (n > 500)**: JV or Auction will be significantly faster
+- **Sparse problems**: SAP exploits sparsity; Hungarian does not
+- **Performance-critical applications**: The $O(n³)$ complexity accumulates quickly
+
+#### Edge Cases and Limitations
+
+- **Rectangular matrices**: Handled by padding internally, but less efficient than SAP
+- **Multiple optimal solutions**: Returns one arbitrarily (deterministic but not specified)
+- **Degenerate problems**: Handles ties gracefully via perturbation
 
 ```{r hungarian-example}
 # Example with Hungarian algorithm
@@ -161,6 +281,18 @@ Jonker-Volgenant is:
 - **Efficient**: Good general-purpose performance, especially for dense problems
 - **Default choice**: Used by `method = "auto"` for most problems
 - **Memory efficient**: $O(n^2)$ space even for dense problems
+
+#### When NOT to Use
+
+- **Extremely sparse problems**: SAP will be faster
+- **Binary costs**: HK01 is specialized and faster
+- **Need guaranteed worst-case**: JV has excellent average case but auction may be more predictable
+
+#### Edge Cases and Limitations
+
+- **Cycling**: Rare, but possible with near-degenerate problems. Implementation includes safeguards.
+- **Negative costs**: Handled correctly (unlike some implementations)
+- **Large cost ranges**: May lose precision; consider scaling costs to similar magnitude
 
 ```{r jv-example}
 # Jonker-Volgenant on a larger problem
@@ -632,6 +764,77 @@ The implementations include safeguards:
 - **Epsilon comparisons**: Floating-point comparisons use tolerances
 - **Dual feasibility**: Maintained throughout algorithm execution
 
+## When Algorithms Fail
+
+Understanding failure modes helps debug unexpected results.
+
+### Infeasible Problems
+
+If too many entries are forbidden (NA/Inf), no valid assignment may exist:
+
+```{r infeasible-demo}
+# Infeasible: no column reachable from row 2
+cost_infeasible <- matrix(c(
+  1, 2, 3,
+  Inf, Inf, Inf,  # Row 2 cannot be assigned
+ 4, 5, 6
+), nrow = 3, byrow = TRUE)
+
+# Detection: check that each row has at least one finite entry
+feasible_rows <- rowSums(is.finite(cost_infeasible)) > 0
+cat("Feasible rows:", feasible_rows, "\n")
+cat("Problem is", ifelse(all(feasible_rows), "feasible", "INFEASIBLE"), "\n")
+```
+
+### Nearly Degenerate Problems
+
+When many costs are nearly equal, small numerical errors can cause:
+
+- Different algorithms finding different solutions (all optimal)
+- Cycling in auction algorithms (rare, safeguarded)
+- Incorrect optimality certification (very rare)
+
+```{r degenerate-demo}
+# Degenerate: many tied costs
+cost_degen <- matrix(c(
+  1, 1, 1,
+  1, 1, 1,
+  1, 1, 1
+), nrow = 3, byrow = TRUE)
+
+# Multiple solutions exist - algorithms may find different ones
+r1 <- lap_solve(cost_degen, method = "hungarian")
+r2 <- lap_solve(cost_degen, method = "jv")
+
+# Both optimal (cost = 3), but possibly different assignments
+cat("Hungarian total:", get_total_cost(r1), "\n")
+cat("JV total:", get_total_cost(r2), "\n")
+```
+
+**Mitigation**: Add small random perturbations if you need deterministic behavior, or accept that any optimal solution is acceptable.
+
+### Overflow in Dual Variables
+
+For very large cost ranges (> $10^{10}$), dual variable updates may overflow:
+```{r overflow-warning, eval=FALSE}
+# Problematic: cost range is 10^15
+cost_overflow <- matrix(c(1e-5, 1e10, 1e10, 1e-5), nrow = 2)
+# May produce incorrect results on some systems
+```
+
+**Mitigation**: Scale costs to a reasonable range (0 to $10^{6}$) before solving.
+
+### Algorithm-Specific Issues
+
+| Algorithm | Known Issues | Mitigation |
+|-----------|--------------|------------|
+| Hungarian | Slow for n > 500 | Use JV or Auction |
+| JV | May cycle with many ties | Safeguards included |
+| Auction | Slow convergence for tiny epsilon | Use scaled variant |
+| Auction (GS) | Suboptimal for random costs | Try standard auction |
+| SAP | Inefficient for dense problems | Use JV instead |
+| HK01 | Only for binary costs | Check cost values |
+
 ## Further Reading
 
 For deeper mathematical treatment:
@@ -648,19 +851,32 @@ For deeper mathematical treatment:
 
 ## Summary
 
-`couplr` provides multiple algorithms for the linear assignment problem:
+This vignette covered the mathematical foundations and practical considerations for LAP algorithms in `couplr`:
 
-- **Hungarian**: Classical algorithm, pedagogically clear, good for medium problems
-- **Jonker-Volgenant**: General-purpose method, default choice for most problems  
-- **Auction**: Good for very large dense problems, naturally parallelizable
-- **SAP**: Specialized for sparse and rectangular problems
-- **HK01**: Optimized for binary costs
-- **Murty**: Finds k-best solutions for robustness and sensitivity analysis
+**Key Takeaways**:
 
-The automatic selection (`method = "auto"`) chooses an algorithm based on problem characteristics, providing good performance without requiring algorithmic expertise.
+1. **Algorithm selection matters** for large problems---O(n³) adds up quickly
+2. **`method = "auto"`** handles most cases well, but understanding the options helps with debugging
+3. **Numerical issues** are rare but can occur with extreme cost ranges or degenerate problems
+4. **All algorithms find optimal solutions**---differences are in speed and edge case handling
 
-**Learn more**:
+**Algorithm Summary**:
 
-- **Basic usage**: `vignette("getting-started")` covers core `couplr` functionality and examples
-- **Applications**: `vignette("pixel-morphing")` demonstrates visual and scientific applications
-- **Function documentation**: `?lap_solve` provides detailed API documentation
+| Algorithm | Best For | Complexity |
+|-----------|----------|------------|
+| Hungarian | Education, small problems | O(n³) |
+| Jonker-Volgenant | General purpose (default) | O(n³) expected |
+| Auction variants | Large dense problems | O(n² log nC/ε) |
+| SAP | Sparse problems | O(n² + nm) |
+| HK01 | Binary costs | O(n^2.5) |
+| Murty | K-best solutions | O(k × T(n)) |
+
+**What's Next?**
+
+| If you want to... | Read... |
+|-------------------|---------|
+| Solve basic assignment problems | `vignette("getting-started")` |
+| Match observations in studies | `vignette("matching-workflows")` |
+| Handle very large problems | `vignette("pixel-morphing")` |
+
+**Function reference**: `?lap_solve`, `?assignment`

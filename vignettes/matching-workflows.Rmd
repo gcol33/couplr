@@ -23,11 +23,48 @@ library(ggplot2)
 
 ## Overview
 
-Matching is a fundamental technique for creating comparable groups in observational studies, treatment effect estimation, and experimental design. Unlike random assignment, observational data often contain systematic differences between groups that can confound causal inference. Matching addresses this by pairing similar units across groups based on observed characteristics (covariates).
+Matching is a fundamental technique for creating comparable groups in observational studies. Unlike random assignment, observational data often contain systematic differences between treatment and control groups that confound causal inference. Matching addresses this by pairing similar units based on observed characteristics, creating "apples-to-apples" comparisons.
 
-This vignette demonstrates production-ready matching workflows using `couplr`'s high-level matching functions introduced in v1.0.0. These tools handle the complete pipeline from raw data to publication-ready results, including automatic preprocessing, balance assessment, and diagnostic reporting.
+This vignette follows a **complete workflow** from raw data to publication-ready results, using a realistic job training evaluation as the running example. You'll learn to handle the full pipeline: preprocessing, matching, assessment, and reporting.
 
-**Key Features:**
+### Who This Vignette Is For
+
+**Audience**: Researchers, epidemiologists, economists, data scientists working with observational data
+
+**Prerequisites**:
+
+- Familiarity with basic `couplr` usage (`vignette("getting-started")`)
+- Understanding of causal inference concepts (treatment effects, confounding)
+- Basic statistics (means, standard deviations, t-tests)
+
+**What You'll Learn**:
+
+- How to match treatment and control units with `match_couples()`
+- Automatic preprocessing: scaling, health checks, categorical encoding
+- Assessing match quality with `balance_diagnostics()`
+- When to use optimal vs greedy matching
+- Creating publication-ready balance tables
+
+**Time to complete**: 30--45 minutes
+
+### Documentation Roadmap
+
+| Vignette | Focus | Difficulty |
+|----------|-------|------------|
+| Getting Started | Basic LAP solving, API introduction | Beginner |
+| Algorithms | Mathematical foundations, solver selection | Intermediate |
+| **Matching Workflows** | Production matching pipelines | Intermediate |
+| Pixel Morphing | Scientific applications, approximations | Advanced |
+
+*You are here: Matching Workflows*
+
+### The Running Example: Job Training Evaluation
+
+Throughout this vignette, we evaluate a **job training program's effect on earnings**. The challenge: participants self-selected into the program, so they differ systematically from non-participants in age, education, and prior earnings. Without matching, any earnings difference could be due to these baseline differences rather than the program itself.
+
+**Our goal**: Create comparable treatment and control groups, assess balance quality, and estimate the treatment effect credibly.
+
+### Key Features
 
 - Automatic preprocessing with health checks and smart scaling
 - Optimal matching via linear assignment algorithms
@@ -35,20 +72,6 @@ This vignette demonstrates production-ready matching workflows using `couplr`'s 
 - Blocking and stratification support
 - Comprehensive balance diagnostics
 - Publication-ready output tables
-
-**Target Applications:**
-
-- Treatment effect estimation in epidemiology and health services research
-- Program evaluation in economics and social sciences
-- Creating matched cohorts for comparative effectiveness studies
-- Balancing baseline characteristics in quasi-experimental designs
-- Sample matching for survey weighting
-
-**Related vignettes:**
-
-- For algorithm details: `vignette("algorithms")`
-- For LAP foundations: `vignette("getting-started")`
-- For balance interpretation: `vignette("balance-diagnostics")` (upcoming)
 
 ## Problem Definition
 
@@ -160,7 +183,7 @@ The result contains:
 
 ### Understanding the Output
 
-```{r inspect-output}
+```{r inspect-output, fig.alt="Histogram showing the distribution of match distances, with most matches having low distances indicating good match quality"}
 # How many matched?
 cat("Matched pairs:", result$info$n_matched, "\n")
 cat("Unmatched left:", nrow(result$left_unmatched), "\n")
@@ -506,7 +529,7 @@ Without calipers, optimal matching may pair very dissimilar units just to maximi
 - Reducing the number of matches to improve average quality
 - Implementing the "common support" requirement in propensity score matching
 
-```{r calipers}
+```{r calipers, fig.alt="Overlapping histograms comparing match distances with and without caliper constraint, showing the caliper excludes distant matches"}
 # Create data where some units are far apart
 set.seed(202)
 left_cal <- tibble(
@@ -779,9 +802,47 @@ print(balance)
 balance_table(balance)
 ```
 
+### How to Interpret Balance Results
+
+The balance diagnostics output tells you whether your match succeeded. Here's how to read it:
+
+```
+Balance Diagnostics
+-------------------
+Variables: age, income
+
+Variable Statistics:
+  variable mean_left mean_right std_diff var_ratio ks_stat ks_p
+  age      45.2      45.8       -0.08    0.95      0.06    0.89
+  income   58000     56500      0.12     1.08      0.09    0.45
+```
+
+**Reading each column**:
+
+| Column | Meaning | Good Values |
+|--------|---------|-------------|
+| `std_diff` | Standardized difference in means | \|value\| < 0.1 excellent, < 0.25 acceptable |
+| `var_ratio` | Ratio of standard deviations | 0.5--2.0 acceptable, closer to 1.0 is better |
+| `ks_stat` | Kolmogorov-Smirnov statistic | Smaller is better |
+| `ks_p` | KS test p-value | > 0.05 suggests similar distributions |
+
+**Quality thresholds** for standardized differences:
+
+- **< 0.1**: Excellent balance---treat as successfully matched
+- **0.1--0.25**: Good balance---acceptable for most purposes
+- **0.25--0.5**: Marginal---consider refinement or sensitivity analysis
+- **> 0.5**: Poor balance---matching strategy needs revision
+
+**What to do if balance is poor**:
+
+1. **Add more matching variables** that explain the imbalance
+2. **Tighten calipers** (accept fewer matches but better quality)
+3. **Try blocking** on the problematic variable
+4. **Report and discuss** in limitations section
+
 ### Visualizing Balance
 
-```{r balance-plots}
+```{r balance-plots, fig.alt="Bar chart comparing standardized differences before and after matching, with threshold lines at 0.1 and 0.25 showing improved balance after matching"}
 # Before-after balance plot
 # (Requires creating pre-match balance for comparison)
 
@@ -1102,32 +1163,135 @@ result <- match_couples(
 )
 ```
 
+## What Can Go Wrong
+
+Matching doesn't always succeed. Here are common problems and solutions.
+
+### Problem: Poor Balance Despite Matching
+
+**Symptom**: `balance_diagnostics()` shows |std_diff| > 0.25 for some variables.
+
+**Causes**:
+- Groups are fundamentally too different (weak overlap)
+- Important confounders not included in matching variables
+- Caliper too loose
+
+**Solutions**:
+```{r poor-balance-fix, eval=FALSE}
+# 1. Add more matching variables
+result <- match_couples(left, right,
+                        vars = c("age", "income", "education", "region"),  # Added!
+                        auto_scale = TRUE)
+
+# 2. Tighten caliper (fewer but better matches)
+result <- match_couples(left, right, vars = vars,
+                        max_distance = 0.1)  # Was 0.5
+
+# 3. Block on the problematic variable
+blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
+result <- match_couples(blocks$left, blocks$right, vars = other_vars,
+                        block_id = "block_id")
+```
+
+### Problem: Very Few Matches
+
+**Symptom**: `n_matched` is much smaller than `nrow(left)`.
+
+**Causes**:
+- Caliper too strict
+- Non-overlapping covariate distributions
+- Blocking creates small strata
+
+**Diagnosis**:
+```{r few-matches-diagnosis, eval=FALSE}
+# Check covariate overlap
+library(ggplot2)
+combined <- bind_rows(
+  left %>% mutate(group = "treatment"),
+  right %>% mutate(group = "control")
+)
+ggplot(combined, aes(x = age, fill = group)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Check for Overlap")
+```
+
+**Solutions**:
+- Relax caliper
+- Use coarser blocking categories
+- Accept that some treatment units are unmatchable (report this!)
+
+### Problem: Matching Takes Too Long
+
+**Symptom**: `match_couples()` runs for minutes or doesn't complete.
+**Cause**: O(n³) complexity for optimal matching.
+
+**Solutions**:
+```{r slow-matching-fix, eval=FALSE}
+# For n > 3000: use greedy
+result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+
+# For n > 5000: add blocking
+blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
+result <- match_couples(blocks$left, blocks$right, vars = vars,
+                        block_id = "block_id")
+```
+
+### Problem: Memory Error
+
+**Symptom**: R crashes or reports "cannot allocate vector of size X".
+
+**Cause**: Full cost matrix doesn't fit in RAM. A 10,000×10,000 matrix needs ~800 MB.
+
+**Solutions**:
+- Use `greedy_couples()` which doesn't require full matrix
+- Use blocking to create smaller sub-problems
+- Consider random sampling if sample size permits
+
 ## Summary
 
-This vignette demonstrated production-ready matching workflows with `couplr`:
+This vignette walked through a complete matching workflow using the job training evaluation example:
 
-**Key Takeaways:**
+1. **Problem framing**: Treatment effect estimation with selection bias
+2. **Matching**: Creating comparable groups with `match_couples()`
+3. **Preprocessing**: Automatic scaling and variable health checks
+4. **Assessment**: Balance diagnostics and interpretation
+5. **Refinement**: Calipers, blocking, and greedy alternatives
+6. **Estimation**: Treatment effect with confidence intervals
 
-- **Automatic preprocessing** handles scaling, categorical variables, and data quality issues
-- **Optimal matching** provides globally best solution for n < 5,000
-- **Greedy matching** offers fast approximation for large datasets
-- **Calipers** ensure minimum match quality by excluding poor pairs
-- **Blocking** enables exact balance on key variables and improves scalability
-- **Balance diagnostics** assess match quality via standardized differences, variance ratios, and KS tests
-- **Real-world workflow** integrates matching into treatment effect estimation pipeline
+**Key Takeaways**:
 
-**Recommended Workflow:**
+| Concept | Key Point |
+|---------|-----------|
+| Preprocessing | Always use `auto_scale = TRUE` unless you have a specific reason not to |
+| Balance | Target \|std_diff\| < 0.1; accept < 0.25 |
+| Calipers | Start loose, tighten if needed for balance |
+| Blocking | Use for exact balance on key categorical variables |
+| Greedy | Use for n > 3000; almost as good, much faster |
 
-1. Explore data, identify covariates to balance
-2. Apply `match_couples()` with `auto_scale = TRUE`
-3. Assess balance with `balance_diagnostics()`
-4. Refine if needed (add caliper, blocking, or try greedy)
-5. Report balance tables and treatment effects
+**Recommended Workflow**:
 
-**Learn more:**
+```
+1. Explore data → Identify confounders
+                      ↓
+2. First match   → match_couples(vars, auto_scale = TRUE)
+                      ↓
+3. Check balance → balance_diagnostics()
+                      ↓
+       ┌──────────────┴──────────────┐
+    Balance OK                   Balance poor
+       ↓                              ↓
+4. Estimate effect             Refine: caliper, blocking,
+                               more variables
+                                      ↓
+                               Return to step 3
+```
 
-- Algorithm details: `vignette("algorithms")`
-- Balance interpretation: `vignette("balance-diagnostics")` (upcoming)
-- Large-scale matching: `vignette("large-scale-matching")` (upcoming)
-- Function documentation: `?match_couples`, `?greedy_couples`, `?balance_diagnostics`
-- Causal inference methods: `vignette("observational-studies")` (upcoming)
+**What's Next?**
+
+| If you want to... | Read... |
+|-------------------|---------|
+| Understand LAP algorithms | `vignette("algorithms")` |
+| Handle very large n (> 10,000) | `vignette("pixel-morphing")` for approximation strategies |
+| Learn basic assignment | `vignette("getting-started")` |
+
+**Function reference**: `?match_couples`, `?greedy_couples`, `?balance_diagnostics`, `?matchmaker`

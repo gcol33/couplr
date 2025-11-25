@@ -1,0 +1,143 @@
+url: https://gcol33.github.io/couplr/
+
+template:
+ bootstrap: 5
+ bootswatch: flatly
+ bslib:
+   primary: "#0d6efd"
+   code-bg: "#f8f9fa"
+
+home:
+  title: "couplr: Linear Assignment Problems and Matching in R"
+  description: >
+    Efficient algorithms for linear assignment problems (LAP) with tidy
+    integration, production-ready matching workflows, and comprehensive
+    balance diagnostics.
+
+authors:
+  Gilles Colling:
+    href: https://github.com/gcol33
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get Started
+      href: articles/getting-started.html
+    articles:
+      text: Articles
+      menu:
+        - text: "Getting Started"
+          href: articles/getting-started.html
+        - text: "Algorithm Details"
+          href: articles/algorithms.html
+        - text: "Matching Workflows"
+          href: articles/matching-workflows.html
+        - text: "Pixel Morphing & Scientific Applications"
+          href: articles/pixel-morphing.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/gcol33/couplr
+      aria-label: GitHub
+
+reference:
+  - title: "LAP Solving"
+    desc: "Core functions for solving linear assignment problems"
+    contents:
+      - lap_solve
+      - lap_solve_batch
+      - lap_solve_kbest
+      - lap_solve_line_metric
+      - assignment
+
+  - title: "Matching Functions"
+    desc: "High-level matching for observational studies"
+    contents:
+      - match_couples
+      - greedy_couples
+      - matchmaker
+
+  - title: "Balance Diagnostics"
+    desc: "Assess and report match quality"
+    contents:
+      - balance_diagnostics
+      - balance_table
+
+  - title: "Distance and Preprocessing"
+    desc: "Distance computation and data preparation"
+    contents:
+      - compute_distances
+      - update_constraints
+      - preprocess_matching_vars
+      - diagnose_distance_matrix
+
+  - title: "Joined Datasets"
+    desc: "Create analysis-ready merged datasets"
+    contents:
+      - join_matched
+      - starts_with("augment")
+
+  - title: "Utility Functions"
+    desc: "Helper functions for working with results"
+    contents:
+      - get_total_cost
+      - get_method_used
+      - as_assignment_matrix
+      - is_lap_solve_result
+      - is_lap_solve_batch_result
+      - is_lap_solve_kbest_result
+      - is_distance_object
+
+  - title: "Example Data"
+    desc: "Built-in datasets for examples and testing"
+    contents:
+      - hospital_staff
+      - example_costs
+      - example_df
+
+  - title: "Pixel Morphing"
+    desc: "Visual demonstrations and image processing"
+    contents:
+      - pixel_morph
+      - pixel_morph_animate
+      - starts_with("morph")
+
+  - title: "Print and Summary Methods"
+    desc: "S3 methods for displaying results"
+    contents:
+      - print.lap_solve_result
+      - print.lap_solve_batch_result
+      - print.lap_solve_kbest_result
+      - print.matching_result
+      - print.matchmaker_result
+      - print.balance_diagnostics
+      - print.distance_object
+      - print.preprocessing_result
+      - print.variable_health
+      - summary.lap_solve_kbest_result
+      - summary.distance_object
+
+articles:
+  - title: "Getting Started"
+    navbar: ~
+    contents:
+      - getting-started
+
+  - title: "Deep Dives"
+    navbar: ~
+    contents:
+      - algorithms
+      - matching-workflows
+      - pixel-morphing
+
+news:
+  releases:
+    - text: "Version 1.0.0"
+      href: news/index.html
+
+footer:
+  structure:
+    left: developed_by
+    right: built_with

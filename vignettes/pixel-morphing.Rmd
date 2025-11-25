@@ -45,30 +45,75 @@ knitr::opts_chunk$set(
 library(couplr)
 library(knitr)
 
-# Helper function to locate example assets
+# Helper function to locate example assets - use local paths for vignettes
 ext_demo <- function(...) {
-  system.file("extdata", ..., package = "couplr")
+  # Images are in vignettes/images/ for pkgdown compatibility
+  # Takes nested path args and returns just the filename in images/
+  args <- c(...)
+  filename <- args[length(args)]  # Get the last element (the filename)
+  file.path("images", filename)
 }
 ```
 
 ## Overview
 
-Optimal matching problems appear throughout science when we need to find correspondences between two sets of entities based on both their intrinsic properties (features) and their spatial arrangement. This vignette explores three scientific domains where these problems arise, then demonstrates the mathematical approaches to solving them efficiently.
+This vignette serves three purposes:
 
-**Scientific Applications**:
+1. **Build intuition**: Use pixel morphing as a visual analogy for assignment problems
+2. **Scale up**: Demonstrate approximation strategies when exact LAP becomes infeasible
+3. **Scientific applications**: Show how matching applies to ecology, physics, and chemistry
 
-- **Ecology**: Match vegetation plots across time based on species composition and spatial location  
-- **Physics**: Track particles through video frames based on appearance and predicted trajectories  
-- **Chemistry**: Align molecular conformations based on atom types and 3D coordinates  
+**This vignette is different**: Unlike the other couplr documentation, it emphasizes *understanding* over *doing*. If you're looking to solve a matching problem today, start with `vignette("getting-started")` or `vignette("matching-workflows")`. Come here when you want to understand *why* these algorithms work and *when* approximations are appropriate.
 
-**Mathematical Challenge**: Exact optimal matching requires solving an $n \times n$ assignment problem, which becomes computationally expensive for large $n$ (thousands of entities). We need approximation strategies that preserve quality while reducing computational cost.
+### Who This Vignette Is For
 
-**Visual Demonstration**: To illustrate these concepts intuitively, we use pixel morphing between images. Each pixel is an entity with color (feature) and position (spatial), making it a visual analog for scientific matching problems.
+**Audience**: Advanced users, researchers, algorithm developers, curious minds
 
-**Related vignettes**:
+**Prerequisites**:
 
-- For basic `couplr` usage: `vignette("getting-started")`  
-- For algorithm details: `vignette("algorithms")`  
+- Familiarity with `lap_solve()` (`vignette("getting-started")`)
+- Basic complexity analysis (Big-O notation)
+- Interest in algorithm design or scientific computing
+
+**What You'll Learn**:
+
+- Why exact LAP becomes infeasible for large n
+- Three approximation strategies and their trade-offs
+- How matching problems appear in ecology, physics, and chemistry
+- Mathematical connections to optimal transport theory
+
+**Time to complete**: 45--60 minutes (conceptual reading)
+
+### Documentation Roadmap
+
+| Vignette | Focus | Difficulty |
+|----------|-------|------------|
+| Getting Started | Basic LAP solving, API introduction | Beginner |
+| Algorithms | Mathematical foundations, solver selection | Intermediate |
+| Matching Workflows | Production matching pipelines | Intermediate |
+| **Pixel Morphing** | Scientific applications, approximations | Advanced |
+
+*You are here: Pixel Morphing (Advanced)*
+
+### Why Pixels?
+
+Pixels provide an ideal testbed for understanding assignment problems:
+
+- Each pixel is an **entity** with measurable properties
+- **Color** = feature (what it looks like)
+- **Position** = spatial location (where it is)
+- The matching is **visually verifiable**---you can see if it worked
+
+The same algorithms that morph images smoothly also track particles in physics, align molecules in chemistry, and match vegetation plots in ecology.
+
+### Scientific Applications at a Glance
+
+| Domain | Entities | Features | Spatial |
+|--------|----------|----------|---------|
+| **Ecology** | Vegetation plots | Species composition | Geographic location |
+| **Physics** | Particles | Intensity, size | Predicted position |
+| **Chemistry** | Atoms | Element type | 3D coordinates |
+| **Images** | Pixels | RGB color | (x, y) position |  
 
 ## The General Matching Problem
 
@@ -136,10 +181,12 @@ circle_A <- ext_demo("icons", "circleA_80.png")
 circle_B <- ext_demo("icons", "circleB_80.png")
 
 files <- c(real_A, real_B, circle_A, circle_B)
+alts <- c("Source image A: photograph", "Target image B: photograph",
+          "Source image A: circle icon", "Target image B: circle icon")
 
 cat('<div class="pixel-row">\n')
-for (f in files) {
-  cat(sprintf('<img src="%s" alt="" />\n', f))
+for (i in seq_along(files)) {
+  cat(sprintf('<img src="%s" alt="%s" />\n', files[i], alts[i]))
 }
 cat('</div>\n')
 ```
@@ -162,10 +209,12 @@ gif_image_exact  <- ext_demo("morphs", "image_exact.gif")
 gif_circle_exact <- ext_demo("icons",  "circle_exact.gif")
 
 files <- c(gif_image_exact, gif_circle_exact)
+alts <- c("Animated GIF showing exact pixel morphing between two photographs",
+          "Animated GIF showing exact pixel morphing between two circle icons")
 
 cat('<div class="pixel-row">\n')
-for (f in files) {
-  cat(sprintf('<img src="%s" alt="" />\n', f))
+for (i in seq_along(files)) {
+  cat(sprintf('<img src="%s" alt="%s" />\n', files[i], alts[i]))
 }
 cat('</div>\n')
 ```
@@ -179,10 +228,12 @@ gif_image_cw  <- ext_demo("morphs", "image_color_walk.gif")
 gif_circle_cw <- ext_demo("icons",  "circle_color_walk.gif")
 
 files <- c(gif_image_cw, gif_circle_cw)
+alts <- c("Animated GIF showing feature quantization morphing between two photographs",
+          "Animated GIF showing feature quantization morphing between two circle icons")
 
 cat('<div class="pixel-row">\n')
-for (f in files) {
-  cat(sprintf('<img src="%s" alt="" />\n', f))
+for (i in seq_along(files)) {
+  cat(sprintf('<img src="%s" alt="%s" />\n', files[i], alts[i]))
 }
 cat('</div>\n')
 ```
@@ -196,10 +247,12 @@ gif_image_rec  <- ext_demo("morphs", "image_recursive.gif")
 gif_circle_rec <- ext_demo("icons",  "circle_recursive.gif")
 
 files <- c(gif_image_rec, gif_circle_rec)
+alts <- c("Animated GIF showing hierarchical morphing between two photographs",
+          "Animated GIF showing hierarchical morphing between two circle icons")
 
 cat('<div class="pixel-row">\n')
-for (f in files) {
-  cat(sprintf('<img src="%s" alt="" />\n', f))
+for (i in seq_along(files)) {
+  cat(sprintf('<img src="%s" alt="%s" />\n', files[i], alts[i]))
 }
 cat('</div>\n')
 ```
@@ -876,8 +929,71 @@ This appears in
 - Burkard, R., Dell'Amico, M., & Martello, S. (2009). *Assignment Problems*. SIAM.  
 - For implementation details in this package see `vignette("algorithms")`.  
 
+## Connection to couplr Workflows
+
+The approximation strategies in this vignette become relevant when working with couplr's practical matching functions.
+
+### When Do These Strategies Apply?
+
+| Strategy | couplr Implementation | When to Use |
+|----------|----------------------|-------------|
+| Exact LAP | `match_couples(method = "jv")` | n < 3,000 |
+| Feature quantization | Implicit via `scale = "robust"` | Reduces effective feature space |
+| Hierarchical | `matchmaker(block_type = "cluster")` | n > 3,000, use blocking |
+| Resolution reduction | Custom code | Very large n |
+
+### Practical Recommendations
+
+**For n < 3,000**: Use `match_couples()` with exact algorithms:
+
+```r
+result <- match_couples(left, right, vars = c("x", "y", "z"), auto_scale = TRUE)
+```
+
+**For 3,000 < n < 10,000**: Use blocking to create smaller subproblems:
+
+```r
+blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 10)
+result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
+```
+
+**For n > 10,000**: Use greedy matching:
+
+```r
+result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+```
+
+**For n > 50,000**: Combine strategies---blocking + greedy within blocks, or implement custom approximations using the techniques in this vignette.
+
+### Limitations of Approximation Strategies
+
+Each approximation trades accuracy for speed. Know the failure modes:
+
+| Strategy | Works Well When | Fails When |
+|----------|-----------------|------------|
+| Feature quantization | Features cluster naturally | Continuous features, fine distinctions matter |
+| Hierarchical | Spatial locality is meaningful | Optimal matches cross boundaries |
+| Resolution reduction | Coarse structure suffices | Fine detail matters |
+
 ## Summary
 
-We have seen how optimal matching problems arise in ecology, physics, and chemistry, and how they can be expressed as linear assignment problems that combine feature similarity with spatial coherence. Exact LAP solutions provide gold-standard matchings for small problems, while feature quantization, hierarchical decomposition, and resolution reduction make much larger problems tractable.
+This vignette explored optimal matching through the lens of pixel morphing and scientific applications.
 
-Pixel morphing serves as an intuitive visual testbed for these ideas, but the same algorithms apply directly to vegetation plots, particles in videos, and atoms in molecules. Together, the methods provided by `couplr` allow you to move smoothly between exact optimal matchings and principled approximations, depending on problem size and accuracy requirements.
+**Key Ideas**:
+
+1. **Assignment = matching**: LAP finds optimal correspondences between two sets
+2. **Scalability matters**: O(n³) becomes prohibitive for n > 3,000
+3. **Three approximations**: Feature quantization, hierarchical decomposition, resolution reduction
+4. **Same math, different domains**: Pixels, particles, plots, and atoms all use the same algorithms
+
+**What's Next?**
+
+| If you want to... | Read... |
+|-------------------|---------|
+| Solve basic assignment problems | `vignette("getting-started")` |
+| Match observations in studies | `vignette("matching-workflows")` |
+| Understand algorithm internals | `vignette("algorithms")` |
+
+**Function reference**: `?lap_solve`, `?match_couples`, `?greedy_couples`
+
+The same algorithms that morph images smoothly also track particles in physics, align molecules in chemistry, and match vegetation plots in ecology. Together, the methods in `couplr` let you move between exact optimal matchings and principled approximations, depending on problem size and accuracy requirements.

@@ -50,7 +50,7 @@ LinkingTo:
 SystemRequirements: C++17
 LazyData: true
 VignetteBuilder: knitr
-URL: https://github.com/gcol33/couplr
+URL: https://gcol33.github.io/couplr/, https://github.com/gcol33/couplr
 BugReports: https://github.com/gcol33/couplr/issues
 Config/testthat/edition: 3
 Config/testthat/parallel: true

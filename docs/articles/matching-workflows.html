@@ -81,7 +81,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2025-11-28</h4>
+            <h4 data-toc-skip class="date">2025-11-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -382,7 +382,7 @@ without matches</li>
 <span>    y <span class="op">=</span> <span class="st">"Count"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme_minimal</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/inspect-output-1.png" class="r-plt" alt="Histogram showing the distribution of match distances, with most matches having low distances indicating good match quality" width="672"></p>
+<p><img src="matching-workflows_files/figure-html/inspect-output-1.png" class="r-plt" alt="Histogram showing the distribution of match distances, with most matches having low distances indicating good match quality" width="2100"></p>
 <p><strong>Interpretation:</strong></p>
 <ul>
 <li>Lower distances indicate better matches (more similar units)</li>
@@ -649,14 +649,14 @@ matters</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 21.98 seconds</span></span>
+<span><span class="co">#&gt;   Time: 21.74 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.92 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.91 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
@@ -738,7 +738,7 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted     0.05        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed    sorted     0.03        0.0912          18.24</span></span>
 <span><span class="co">#&gt; elapsed1 row_best     0.03        0.0968          19.36</span></span>
 <span><span class="co">#&gt; elapsed2       pq     0.04        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
@@ -829,7 +829,7 @@ matching</li>
 <span>    fill <span class="op">=</span> <span class="st">"Condition"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme_minimal</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/calipers-1.png" class="r-plt" alt="Overlapping histograms comparing match distances with and without caliper constraint, showing the caliper excludes distant matches" width="672"></p>
+<p><img src="matching-workflows_files/figure-html/calipers-1.png" class="r-plt" alt="Overlapping histograms comparing match distances with and without caliper constraint, showing the caliper excludes distant matches" width="2100"></p>
 </div>
 <div class="section level3">
 <h3 id="choosing-caliper-width">Choosing Caliper Width<a class="anchor" aria-label="anchor" href="#choosing-caliper-width"></a>
@@ -1222,7 +1222,7 @@ quality)</li>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme_minimal</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">coord_flip</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/balance-plots-1.png" class="r-plt" alt="Bar chart comparing standardized differences before and after matching, with threshold lines at 0.1 and 0.25 showing improved balance after matching" width="672"></p>
+<p><img src="matching-workflows_files/figure-html/balance-plots-1.png" class="r-plt" alt="Bar chart comparing standardized differences before and after matching, with threshold lines at 0.1 and 0.25 showing improved balance after matching" width="2100"></p>
 </div>
 </div>
 <div class="section level2">
@@ -1715,7 +1715,7 @@ reason not to</td>
 </tbody>
 </table>
 <p><strong>Recommended Workflow</strong>:</p>
-<p><img src="matching-workflows_files/figure-html/workflow-diagram-1.png" class="r-plt" alt="Flowchart showing recommended matching workflow with iterative refinement loop" width="768"></p>
+<p><img src="matching-workflows_files/figure-html/workflow-diagram-1.png" class="r-plt" alt="Flowchart showing recommended matching workflow with iterative refinement loop" width="2400"></p>
 <hr>
 </div>
 <div class="section level2">

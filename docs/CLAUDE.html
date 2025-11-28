@@ -146,22 +146,35 @@ C:\Program Files\R\R-4.5.1\bin\R.exe</code></pre>
 <p><strong>Note:</strong> The <code>src/</code> directory may contain committed object files (<code>*.o</code>, <code>*.dll</code>) which can become stale. Clean before building if behavior is unexpected.</p>
 </div>
 <div class="section level3">
+<h3 id="building-the-pkgdown-website">Building the pkgdown Website<a class="anchor" aria-label="anchor" href="#building-the-pkgdown-website"></a></h3>
+<p>The package uses pkgdown with Bootstrap 5 Sandstone theme and a custom build script that post-processes SVG files for proper dark mode support.</p>
+<p><strong>Build the site:</strong></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># From package root directory</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.1\bin\Rscript.exe"</span> build_site<span class="op">.</span><span class="fu">R</span></span></code></pre></div>
+<p><strong>What the build script does:</strong> 1. Runs <code><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">pkgdown::build_site()</a></code> to generate the documentation site 2. Makes all SVG files theme-aware (handles both svglite and base R svg() formats) 3. Inlines SVGs in HTML files so CSS can style them for dark mode</p>
+<p><strong>Key files:</strong> - <a href="build_site.R">build_site.R</a> - Main build script with SVG post-processing - <a href="pkgdown/extra.css">pkgdown/extra.css</a> - Custom CSS for plots and dark mode - <a href="_pkgdown.yml">_pkgdown.yml</a> - pkgdown configuration</p>
+<p><strong>Theme colors (Sandstone Bootstrap 5):</strong></p>
+<pre><code>Light mode: bg=#F5F6F8, border=#DFD7CA, text=#3E3F3A
+Dark mode:  bg=#343739, border=#495057, text=#DFD7CA</code></pre>
+<p><strong>CSS features:</strong> - Plot borders match code block styling (.375rem border-radius) - SVG backgrounds and text respond to light/dark mode - Legend boxes get rounded corners and proper theming - Inline SVGs allow CSS to style internal elements</p>
+</div>
+<div class="section level3">
 <h3 id="git-workflow">Git Workflow<a class="anchor" aria-label="anchor" href="#git-workflow"></a></h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Check status</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">git</span> status</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Add changes</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">git</span> add .</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># Commit (use descriptive messages)</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Description of changes"</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># Push to GitHub</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="fu">git</span> push origin main</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co"># Create release tag</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="fu">git</span> tag <span class="at">-a</span> v1.0.0 <span class="at">-m</span> <span class="st">"Release message"</span></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="fu">git</span> push origin v1.0.0</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Check status</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">git</span> status</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># Add changes</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">git</span> add .</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># Commit (use descriptive messages)</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Description of changes"</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co"># Push to GitHub</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="fu">git</span> push origin main</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co"># Create release tag</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">git</span> tag <span class="at">-a</span> v1.0.0 <span class="at">-m</span> <span class="st">"Release message"</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="fu">git</span> push origin v1.0.0</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -176,7 +189,7 @@ C:\Program Files\R\R-4.5.1\bin\R.exe</code></pre>
 <h3 id="matching-layer-architecture-v100">Matching Layer Architecture (v1.0.0)<a class="anchor" aria-label="anchor" href="#matching-layer-architecture-v100"></a></h3>
 <p>The matching layer provides production-ready workflows for observational studies, treatment effect estimation, and sample matching.</p>
 <p><strong>Core Workflow:</strong></p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Optional: Create blocks/strata</span></span>
 <span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/matchmaker.html">matchmaker</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, block_type <span class="op">=</span> <span class="st">"group"</span>, block_by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span></span>
 <span></span>
@@ -302,19 +315,19 @@ C:\Program Files\R\R-4.5.1\bin\R.exe</code></pre>
 <p><strong>Export Pattern (CRITICAL):</strong></p>
 <p>Subdirectory files (e.g., <code>src/solvers/greedy_matching.cpp</code>) do NOT use <code>[[Rcpp::export]]</code> directly. Instead:</p>
 <ol style="list-style-type: decimal"><li>Implementation in subdirectory with <code>_impl</code> suffix:</li>
-</ol><div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co">// src/solvers/greedy_matching.cpp</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>List greedy_matching_impl<span class="op">(</span>NumericMatrix cost_matrix<span class="op">,</span> <span class="dt">bool</span> maximize<span class="op">,</span> <span class="bu">std::</span>string strategy<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="co">// Implementation</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+</ol><div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co">// src/solvers/greedy_matching.cpp</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>List greedy_matching_impl<span class="op">(</span>NumericMatrix cost_matrix<span class="op">,</span> <span class="dt">bool</span> maximize<span class="op">,</span> <span class="bu">std::</span>string strategy<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>    <span class="co">// Implementation</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <ol start="2" style="list-style-type: decimal"><li>Forward declaration in <a href="src/rcpp_interface.cpp">src/rcpp_interface.cpp</a>:</li>
-</ol><div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="at">extern</span> Rcpp<span class="op">::</span>List greedy_matching_impl<span class="op">(</span>Rcpp<span class="op">::</span>NumericMatrix<span class="op">,</span> <span class="dt">bool</span><span class="op">,</span> <span class="bu">std::</span>string<span class="op">);</span></span></code></pre></div>
+</ol><div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="at">extern</span> Rcpp<span class="op">::</span>List greedy_matching_impl<span class="op">(</span>Rcpp<span class="op">::</span>NumericMatrix<span class="op">,</span> <span class="dt">bool</span><span class="op">,</span> <span class="bu">std::</span>string<span class="op">);</span></span></code></pre></div>
 <ol start="3" style="list-style-type: decimal"><li>Exported wrapper in <a href="src/rcpp_interface.cpp">src/rcpp_interface.cpp</a>:</li>
-</ol><div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>Rcpp<span class="op">::</span>List greedy_matching<span class="op">(</span>Rcpp<span class="op">::</span>NumericMatrix cost_matrix<span class="op">,</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>                           <span class="dt">bool</span> maximize <span class="op">=</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>                           <span class="bu">std::</span>string strategy <span class="op">=</span> <span class="st">"row_best"</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="cf">return</span> greedy_matching_impl<span class="op">(</span>cost_matrix<span class="op">,</span> maximize<span class="op">,</span> strategy<span class="op">);</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+</ol><div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>Rcpp<span class="op">::</span>List greedy_matching<span class="op">(</span>Rcpp<span class="op">::</span>NumericMatrix cost_matrix<span class="op">,</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>                           <span class="dt">bool</span> maximize <span class="op">=</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>                           <span class="bu">std::</span>string strategy <span class="op">=</span> <span class="st">"row_best"</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>    <span class="cf">return</span> greedy_matching_impl<span class="op">(</span>cost_matrix<span class="op">,</span> maximize<span class="op">,</span> strategy<span class="op">);</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p><strong>Why:</strong> Rcpp only scans the main source directory, not subdirectories. All <code>[[Rcpp::export]]</code> tags MUST be in <code>src/*.cpp</code> files at the root level.</p>
 </div>
 <div class="section level3">
@@ -396,7 +409,7 @@ OBJECTS = $(SOURCES:.cpp=.o)</code></pre>
     ├── test-utils.R                      # General utilities
     └── test-*.R                          # Other specialized tests</code></pre>
 <p><strong>Running Tests:</strong></p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run all tests</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">test</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># or Ctrl+Shift+T in RStudio</span></span>
 <span></span>
@@ -442,34 +455,34 @@ OBJECTS = $(SOURCES:.cpp=.o)</code></pre>
 <div class="section level3">
 <h3 id="return-values">Return Values<a class="anchor" aria-label="anchor" href="#return-values"></a></h3>
 <p><strong>LAP Solvers:</strong></p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">list</span>(</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">match =</span> integer <span class="fu">vector</span> (<span class="dv">1</span><span class="sc">-</span>based, <span class="at">length =</span> nrow),</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">total_cost =</span> numeric,</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">status =</span> <span class="st">"optimal"</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="at">method_used =</span> <span class="st">"algorithm_name"</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="at">match =</span> integer <span class="fu">vector</span> (<span class="dv">1</span><span class="sc">-</span>based, <span class="at">length =</span> nrow),</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="at">total_cost =</span> numeric,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="at">status =</span> <span class="st">"optimal"</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="at">method_used =</span> <span class="st">"algorithm_name"</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>)</span></code></pre></div>
 <p><strong>Matching Functions:</strong></p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">list</span>(</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">pairs =</span> <span class="fu">tibble</span>(left_id, right_id, distance, block_id),</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">info =</span> <span class="fu">list</span>(</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"optimal"</span> or <span class="st">"greedy"</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>    <span class="at">strategy =</span> <span class="st">"row_best"</span> (greedy only),</span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>    <span class="at">n_matched =</span> integer,</span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>    <span class="at">total_distance =</span> numeric,</span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>    <span class="at">n_blocks =</span> <span class="fu">integer</span> (<span class="cf">if</span> blocking)</span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>  ),</span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>  <span class="co"># If return_diagnostics = TRUE:</span></span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  <span class="at">left_unmatched =</span> <span class="fu">tibble</span>(...),</span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="at">right_unmatched =</span> <span class="fu">tibble</span>(...),</span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="at">cost_matrix =</span> matrix,</span>
-<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="at">distance_info =</span> <span class="fu">list</span>(...)</span>
-<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  <span class="at">pairs =</span> <span class="fu">tibble</span>(left_id, right_id, distance, block_id),</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="at">info =</span> <span class="fu">list</span>(</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"optimal"</span> or <span class="st">"greedy"</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>    <span class="at">strategy =</span> <span class="st">"row_best"</span> (greedy only),</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>    <span class="at">n_matched =</span> integer,</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>    <span class="at">total_distance =</span> numeric,</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>    <span class="at">n_blocks =</span> <span class="fu">integer</span> (<span class="cf">if</span> blocking)</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>  ),</span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>  <span class="co"># If return_diagnostics = TRUE:</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>  <span class="at">left_unmatched =</span> <span class="fu">tibble</span>(...),</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>  <span class="at">right_unmatched =</span> <span class="fu">tibble</span>(...),</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>  <span class="at">cost_matrix =</span> matrix,</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>  <span class="at">distance_info =</span> <span class="fu">list</span>(...)</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>)</span></code></pre></div>
 <p><strong>Balance Diagnostics:</strong></p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>balance_diagnostics object with<span class="sc">:</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  var_stats <span class="ot">=</span> <span class="fu">tibble</span>(variable, mean_left, mean_right, std_diff, ...),</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  overall <span class="ot">=</span> <span class="fu">list</span>(mean_abs_std_diff, max_abs_std_diff, pct_large_imbalance),</span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  n_matched, n_unmatched_left, n_unmatched_right,</span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  has_blocks, block_stats</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>balance_diagnostics object with<span class="sc">:</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  var_stats <span class="ot">=</span> <span class="fu">tibble</span>(variable, mean_left, mean_right, std_diff, ...),</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  overall <span class="ot">=</span> <span class="fu">list</span>(mean_abs_std_diff, max_abs_std_diff, pct_large_imbalance),</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  n_matched, n_unmatched_left, n_unmatched_right,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  has_blocks, block_stats</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -580,7 +593,7 @@ OBJECTS = $(SOURCES:.cpp=.o)</code></pre>
 <div class="section level3">
 <h3 id="cost-computation-guarantee">Cost Computation Guarantee<a class="anchor" aria-label="anchor" href="#cost-computation-guarantee"></a></h3>
 <p>All solvers MUST use <code>compute_total_cost()</code> from <a href="src/core/lap_utils.cpp">src/core/lap_utils.cpp</a>:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="dt">double</span> total_cost <span class="op">=</span> compute_total_cost<span class="op">(</span>original_cost_matrix<span class="op">,</span> assignment_R<span class="op">);</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="dt">double</span> total_cost <span class="op">=</span> compute_total_cost<span class="op">(</span>original_cost_matrix<span class="op">,</span> assignment_R<span class="op">);</span></span></code></pre></div>
 <p><strong>Never</strong> compute cost from transformed/reduced/scaled matrices. The cost field has precise semantics: sum of original_cost[i, match[i]] over matched rows.</p>
 </div>
 <div class="section level3">
@@ -612,7 +625,7 @@ Performance Considerations → Real-World Examples → Summary → Further Readi
 <p><strong>6. Cross-Referencing</strong> - Link between vignettes at appropriate moments - Point to function documentation (<code><a href="reference/lap_solve.html">?lap_solve</a></code>) - Reference GitHub repository for contributions - Suggest “Learn more” pathways at end of each major section</p>
 <p><strong>7. Practical Guidance</strong> - Performance benchmarks with <code><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time()</a></code> - Memory/scalability considerations - “When NOT to use” sections - Common pitfalls and solutions</p>
 <p><strong>8. Code Formatting Standards</strong></p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Use descriptive variable names</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
@@ -903,35 +916,35 @@ library(couplr)
 <h2 id="package-dependencies">Package Dependencies<a class="anchor" aria-label="anchor" href="#package-dependencies"></a></h2>
 <p><strong>System Requirements:</strong> - <strong>R</strong> ≥ 3.5.0 - <strong>C++17</strong> compiler (Rtools for Windows with g++ supporting C++17) - <strong>RcppEigen</strong> for matrix operations</p>
 <p><strong>Core Dependencies (Imports):</strong></p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">Rcpp</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">0.0</span>)           <span class="co"># C++ integration</span></span>
-<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>RcppEigen                 <span class="co"># Matrix operations</span></span>
-<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a><span class="fu">tibble</span> (<span class="sc">&gt;=</span> <span class="dv">3</span>.<span class="fl">0.0</span>)         <span class="co"># Modern data frames</span></span>
-<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a><span class="fu">dplyr</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">0.0</span>)          <span class="co"># Data manipulation</span></span>
-<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a><span class="fu">rlang</span> (<span class="sc">&gt;=</span> <span class="dv">0</span>.<span class="fl">4.0</span>)          <span class="co"># Tidy evaluation</span></span>
-<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a><span class="fu">purrr</span> (<span class="sc">&gt;=</span> <span class="dv">0</span>.<span class="fl">3.0</span>)          <span class="co"># Functional programming</span></span>
-<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a><span class="fu">magrittr</span> (<span class="sc">&gt;=</span> <span class="dv">2</span>.<span class="fl">0.0</span>)       <span class="co"># Pipe operator</span></span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">Rcpp</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">0.0</span>)           <span class="co"># C++ integration</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>RcppEigen                 <span class="co"># Matrix operations</span></span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a><span class="fu">tibble</span> (<span class="sc">&gt;=</span> <span class="dv">3</span>.<span class="fl">0.0</span>)         <span class="co"># Modern data frames</span></span>
+<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a><span class="fu">dplyr</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">0.0</span>)          <span class="co"># Data manipulation</span></span>
+<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a><span class="fu">rlang</span> (<span class="sc">&gt;=</span> <span class="dv">0</span>.<span class="fl">4.0</span>)          <span class="co"># Tidy evaluation</span></span>
+<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a><span class="fu">purrr</span> (<span class="sc">&gt;=</span> <span class="dv">0</span>.<span class="fl">3.0</span>)          <span class="co"># Functional programming</span></span>
+<span id="cb30-7"><a href="#cb30-7" tabindex="-1"></a><span class="fu">magrittr</span> (<span class="sc">&gt;=</span> <span class="dv">2</span>.<span class="fl">0.0</span>)       <span class="co"># Pipe operator</span></span></code></pre></div>
 <p><strong>Suggested Dependencies (Optional):</strong></p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="co"># Testing</span></span>
-<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a><span class="fu">testthat</span> (<span class="sc">&gt;=</span> <span class="dv">3</span>.<span class="fl">0.0</span>)       <span class="co"># Unit testing framework</span></span>
-<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>withr                     <span class="co"># Temporary state management</span></span>
-<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a></span>
-<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a><span class="co"># Documentation</span></span>
-<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>knitr                     <span class="co"># Vignette generation</span></span>
-<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a>rmarkdown                 <span class="co"># Documentation rendering</span></span>
-<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a></span>
-<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a><span class="co"># Performance</span></span>
-<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a>bench                     <span class="co"># Benchmarking</span></span>
-<span id="cb29-11"><a href="#cb29-11" tabindex="-1"></a>parallel                  <span class="co"># Parallel computation</span></span>
-<span id="cb29-12"><a href="#cb29-12" tabindex="-1"></a><span class="fu">future</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">20.0</span>)        <span class="co"># Async parallel framework</span></span>
-<span id="cb29-13"><a href="#cb29-13" tabindex="-1"></a><span class="fu">future.apply</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">8.0</span>)   <span class="co"># Future-compatible apply functions</span></span>
-<span id="cb29-14"><a href="#cb29-14" tabindex="-1"></a></span>
-<span id="cb29-15"><a href="#cb29-15" tabindex="-1"></a><span class="co"># Image processing (for pixel morphing)</span></span>
-<span id="cb29-16"><a href="#cb29-16" tabindex="-1"></a>magick                    <span class="co"># ImageMagick R bindings</span></span>
-<span id="cb29-17"><a href="#cb29-17" tabindex="-1"></a>OpenImageR                <span class="co"># Image processing utilities</span></span>
-<span id="cb29-18"><a href="#cb29-18" tabindex="-1"></a>farver                    <span class="co"># Fast color space manipulation</span></span>
-<span id="cb29-19"><a href="#cb29-19" tabindex="-1"></a>av                        <span class="co"># Video encoding</span></span>
-<span id="cb29-20"><a href="#cb29-20" tabindex="-1"></a>reticulate                <span class="co"># Python integration</span></span>
-<span id="cb29-21"><a href="#cb29-21" tabindex="-1"></a>png                       <span class="co"># PNG file handling</span></span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># Testing</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="fu">testthat</span> (<span class="sc">&gt;=</span> <span class="dv">3</span>.<span class="fl">0.0</span>)       <span class="co"># Unit testing framework</span></span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>withr                     <span class="co"># Temporary state management</span></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a><span class="co"># Documentation</span></span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a>knitr                     <span class="co"># Vignette generation</span></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a>rmarkdown                 <span class="co"># Documentation rendering</span></span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a><span class="co"># Performance</span></span>
+<span id="cb31-10"><a href="#cb31-10" tabindex="-1"></a>bench                     <span class="co"># Benchmarking</span></span>
+<span id="cb31-11"><a href="#cb31-11" tabindex="-1"></a>parallel                  <span class="co"># Parallel computation</span></span>
+<span id="cb31-12"><a href="#cb31-12" tabindex="-1"></a><span class="fu">future</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">20.0</span>)        <span class="co"># Async parallel framework</span></span>
+<span id="cb31-13"><a href="#cb31-13" tabindex="-1"></a><span class="fu">future.apply</span> (<span class="sc">&gt;=</span> <span class="dv">1</span>.<span class="fl">8.0</span>)   <span class="co"># Future-compatible apply functions</span></span>
+<span id="cb31-14"><a href="#cb31-14" tabindex="-1"></a></span>
+<span id="cb31-15"><a href="#cb31-15" tabindex="-1"></a><span class="co"># Image processing (for pixel morphing)</span></span>
+<span id="cb31-16"><a href="#cb31-16" tabindex="-1"></a>magick                    <span class="co"># ImageMagick R bindings</span></span>
+<span id="cb31-17"><a href="#cb31-17" tabindex="-1"></a>OpenImageR                <span class="co"># Image processing utilities</span></span>
+<span id="cb31-18"><a href="#cb31-18" tabindex="-1"></a>farver                    <span class="co"># Fast color space manipulation</span></span>
+<span id="cb31-19"><a href="#cb31-19" tabindex="-1"></a>av                        <span class="co"># Video encoding</span></span>
+<span id="cb31-20"><a href="#cb31-20" tabindex="-1"></a>reticulate                <span class="co"># Python integration</span></span>
+<span id="cb31-21"><a href="#cb31-21" tabindex="-1"></a>png                       <span class="co"># PNG file handling</span></span></code></pre></div>
 <p><strong>LinkingTo:</strong> - Rcpp - R/C++ interface - RcppEigen - High-performance matrix library</p>
 </div>
 <div class="section level2">
@@ -957,7 +970,7 @@ library(couplr)
 <h2 id="quick-reference-common-workflows">Quick Reference: Common Workflows<a class="anchor" aria-label="anchor" href="#quick-reference-common-workflows"></a></h2>
 <div class="section level3">
 <h3 id="id_1-basic-optimal-matching">1. Basic Optimal Matching<a class="anchor" aria-label="anchor" href="#id_1-basic-optimal-matching"></a></h3>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gcol33.github.io/couplr/">couplr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Match with automatic preprocessing</span></span>
@@ -979,7 +992,7 @@ library(couplr)
 </div>
 <div class="section level3">
 <h3 id="id_2-fast-greedy-matching-for-large-data">2. Fast Greedy Matching for Large Data<a class="anchor" aria-label="anchor" href="#id_2-fast-greedy-matching-for-large-data"></a></h3>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Use greedy algorithm for speed</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">large_treatment_df</span>,</span>
@@ -991,7 +1004,7 @@ library(couplr)
 </div>
 <div class="section level3">
 <h3 id="id_3-matching-with-blocking">3. Matching with Blocking<a class="anchor" aria-label="anchor" href="#id_3-matching-with-blocking"></a></h3>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create blocks</span></span>
 <span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/matchmaker.html">matchmaker</a></span><span class="op">(</span></span>
 <span>  <span class="va">left_df</span>, <span class="va">right_df</span>,</span>
@@ -1009,7 +1022,7 @@ library(couplr)
 </div>
 <div class="section level3">
 <h3 id="id_4-distance-caching-for-experimentation">4. Distance Caching for Experimentation<a class="anchor" aria-label="anchor" href="#id_4-distance-caching-for-experimentation"></a></h3>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compute distances once</span></span>
 <span><span class="va">dist_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_distances.html">compute_distances</a></span><span class="op">(</span></span>
 <span>  <span class="va">left_df</span>, <span class="va">right_df</span>,</span>
@@ -1027,7 +1040,7 @@ library(couplr)
 </div>
 <div class="section level3">
 <h3 id="id_5-lap-solving-low-level">5. LAP Solving (Low-Level)<a class="anchor" aria-label="anchor" href="#id_5-lap-solving-low-level"></a></h3>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create cost matrix</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">9</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
@@ -1039,7 +1052,7 @@ library(couplr)
 </div>
 <div class="section level3">
 <h3 id="id_6-publication-workflow">6. Publication Workflow<a class="anchor" aria-label="anchor" href="#id_6-publication-workflow"></a></h3>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Match</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, <span class="va">vars</span>, auto_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>

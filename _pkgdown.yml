@@ -5,6 +5,12 @@ template:
   bootswatch: sandstone
   light-switch: true
 
+figures:
+  dev: ragg::agg_png
+  dpi: 300
+  fig.ext: png
+  bg: "transparent"
+
 home:
   title: "couplr: Linear Assignment Problems and Matching in R"
   description: >

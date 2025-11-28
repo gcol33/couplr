@@ -1,10 +1,10 @@
 ---
-title: "Optimal Matching in Science: From Theory to Practice"
+title: "Advanced Topics"
 author: "Gilles Colling"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Optimal Matching in Science: From Theory to Practice}
+  %\VignetteIndexEntry{Advanced Topics}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -986,14 +986,13 @@ This vignette explored optimal matching through the lens of pixel morphing and s
 3. **Three approximations**: Feature quantization, hierarchical decomposition, resolution reduction
 4. **Same math, different domains**: Pixels, particles, plots, and atoms all use the same algorithms
 
-**What's Next?**
-
-| If you want to... | Read... |
-|-------------------|---------|
-| Solve basic assignment problems | `vignette("getting-started")` |
-| Match observations in studies | `vignette("matching-workflows")` |
-| Understand algorithm internals | `vignette("algorithms")` |
-
-**Function reference**: `?lap_solve`, `?match_couples`, `?greedy_couples`
-
 The same algorithms that morph images smoothly also track particles in physics, align molecules in chemistry, and match vegetation plots in ecology. Together, the methods in `couplr` let you move between exact optimal matchings and principled approximations, depending on problem size and accuracy requirements.
+
+---
+
+## See Also
+
+- `vignette("getting-started")` - Basic LAP solving
+- `vignette("algorithms")` - Mathematical foundations
+- `vignette("matching-workflows")` - Production matching pipelines
+- `?lap_solve`, `?match_couples`, `?greedy_couples`

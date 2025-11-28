@@ -1,4 +1,4 @@
-# Optimal Matching in Science: From Theory to Practice
+# Advanced Topics
 
 ## Overview
 
@@ -988,21 +988,22 @@ morphing and scientific applications.
 4.  **Same math, different domains**: Pixels, particles, plots, and
     atoms all use the same algorithms
 
-**What’s Next?**
-
-| If you want to… | Read… |
-|----|----|
-| Solve basic assignment problems | [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) |
-| Match observations in studies | [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) |
-| Understand algorithm internals | [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) |
-
-**Function reference**:
-[`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
-[`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
-[`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
-
 The same algorithms that morph images smoothly also track particles in
 physics, align molecules in chemistry, and match vegetation plots in
 ecology. Together, the methods in `couplr` let you move between exact
 optimal matchings and principled approximations, depending on problem
 size and accuracy requirements.
+
+------------------------------------------------------------------------
+
+## See Also
+
+- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+  Basic LAP solving
+- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+  Mathematical foundations
+- [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
+  Production matching pipelines
+- [`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
+  [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
+  [`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md)

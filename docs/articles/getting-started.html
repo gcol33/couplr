@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Getting Started with couplr • couplr</title>
+<title>Quick Start • couplr</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Getting Started with couplr">
+<meta property="og:title" content="Quick Start">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -55,6 +55,14 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/gcol33/couplr" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
@@ -69,11 +77,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Getting Started with couplr</h1>
+      <h1>Quick Start</h1>
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2025-11-25</h4>
+            <h4 data-toc-skip class="date">2025-11-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -82,216 +90,81 @@ Colling</h4>
     
     
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="what-couplr-does">What couplr Does<a class="anchor" aria-label="anchor" href="#what-couplr-does"></a>
 </h2>
-<p>The linear assignment problem (LAP) is a fundamental optimization
-problem: given a cost matrix where entry (i, j) represents the cost of
-assigning source i to target j, find the one-to-one assignment that
-minimizes (or maximizes) total cost. LAP appears throughout data
-science, operations research, and scientific computing, including
-scheduling, resource allocation, computer vision, and
-bioinformatics.</p>
-<p><code>couplr</code> provides efficient LAP solvers with a tidy
-interface that integrates naturally with modern R workflows.</p>
+<p>couplr solves the Linear Assignment Problem (LAP): given a cost
+matrix where entry (i, j) represents the cost of assigning source i to
+target j, find the one-to-one assignment that minimizes total cost. It
+also provides production-ready matching workflows for observational
+studies (see <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code>).</p>
+</div>
+<div class="section level2">
+<h2 id="interface-hierarchy">Interface Hierarchy<a class="anchor" aria-label="anchor" href="#interface-hierarchy"></a>
+</h2>
+<p>couplr provides three levels of interface:</p>
 <div class="section level3">
-<h3 id="why-couplr">Why couplr?<a class="anchor" aria-label="anchor" href="#why-couplr"></a>
+<h3 id="level-1-lap-solvers">Level 1: LAP Solvers<a class="anchor" aria-label="anchor" href="#level-1-lap-solvers"></a>
 </h3>
-<p>While other R packages address LAP, <code>couplr</code> distinguishes
-itself through:</p>
+<p><strong>lap_solve()</strong> - Core assignment problem solver:</p>
 <ul>
-<li>
-<strong>Tidy integration</strong>: First-class support for tibbles,
-dplyr workflows, and grouped data</li>
-<li>
-<strong>Algorithm selection</strong>: 12+ algorithms with automatic
-selection based on problem characteristics</li>
-<li>
-<strong>Production matching</strong>: High-level matching functions
-for observational studies (v1.0.0)</li>
-<li>
-<strong>Scalability</strong>: From small matrices to thousands of
-parallel problems</li>
+<li>Accepts matrices, data frames, or grouped data</li>
+<li>Returns tidy tibble output</li>
+<li>Automatic algorithm selection</li>
 </ul>
-<p><strong>Alternative packages</strong> and how they differ:</p>
+<p><strong>assignment()</strong> - Low-level solver:</p>
 <ul>
-<li>
-<code>clue</code>: General-purpose optimization toolkit where LAP is
-one feature among many</li>
-<li>
-<code>lpSolve</code>: Broad linear programming focus, less
-specialized for assignment</li>
-<li>
-<code>RcppHungarian</code>: Single algorithm implementation without
-tidy interface</li>
+<li>Direct C++ backend access</li>
+<li>Returns list with match vector</li>
 </ul>
-<p><code>couplr</code> focuses specifically on assignment problems with
-a user-friendly API and modern R idioms.</p>
 </div>
 <div class="section level3">
-<h3 id="who-this-vignette-is-for">Who This Vignette Is For<a class="anchor" aria-label="anchor" href="#who-this-vignette-is-for"></a>
+<h3 id="level-2-extended-solving">Level 2: Extended Solving<a class="anchor" aria-label="anchor" href="#level-2-extended-solving"></a>
 </h3>
-<p><strong>Audience</strong>: Beginners to couplr, R users familiar with
-basic matrix operations</p>
-<p><strong>Prerequisites</strong>:</p>
+<p><strong>lap_solve_batch()</strong> - Solve many problems at once:</p>
 <ul>
-<li>Basic R knowledge (data frames, functions)</li>
-<li>Understanding of what a “cost” or “distance” matrix means</li>
+<li>List of cost matrices input</li>
+<li>Optional parallel execution</li>
+<li>Efficient for many small problems</li>
 </ul>
-<p><strong>What You’ll Learn</strong>:</p>
+<p><strong>lap_solve_kbest()</strong> - Find multiple solutions:</p>
 <ul>
-<li>How to solve basic assignment problems with
-<code><a href="../reference/lap_solve.html">lap_solve()</a></code>
-</li>
-<li>Working with data frames, rectangular problems, and forbidden
-assignments</li>
-<li>Batch solving and finding multiple solutions</li>
-<li>When to use different algorithms</li>
+<li>Returns k-best assignments (Murty’s algorithm)</li>
+<li>Useful for robustness analysis</li>
 </ul>
-<p><strong>Time to complete</strong>: 20-30 minutes</p>
 </div>
 <div class="section level3">
-<h3 id="documentation-roadmap">Documentation Roadmap<a class="anchor" aria-label="anchor" href="#documentation-roadmap"></a>
+<h3 id="level-3-matching-workflows">Level 3: Matching Workflows<a class="anchor" aria-label="anchor" href="#level-3-matching-workflows"></a>
 </h3>
-<p>The couplr documentation is organized as follows:</p>
-<table class="table">
-<colgroup>
-<col width="34%">
-<col width="24%">
-<col width="41%">
-</colgroup>
-<thead><tr class="header">
-<th>Vignette</th>
-<th>Focus</th>
-<th>Difficulty</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><strong>Getting Started</strong></td>
-<td>Basic LAP solving, API introduction</td>
-<td>Beginner</td>
-</tr>
-<tr class="even">
-<td>Algorithms</td>
-<td>Mathematical foundations, solver selection</td>
-<td>Intermediate</td>
-</tr>
-<tr class="odd">
-<td>Matching Workflows</td>
-<td>Production matching pipelines</td>
-<td>Intermediate</td>
-</tr>
-<tr class="even">
-<td>Pixel Morphing</td>
-<td>Scientific applications, approximations</td>
-<td>Advanced</td>
-</tr>
-</tbody>
-</table>
-<p><em>You are here: Getting Started</em></p>
-</div>
-<div class="section level3">
-<h3 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
-</h3>
+<p><strong>match_couples()</strong> - Optimal one-to-one matching:</p>
 <ul>
-<li>
-<strong>Tidy interface</strong>: Works with data frames, tibbles,
-and grouped data</li>
-<li>
-<strong>Efficient</strong>: Implements multiple algorithms with
-automatic selection</li>
-<li>
-<strong>Flexible inputs</strong>: Handles matrices, data frames,
-rectangular problems, and forbidden assignments</li>
-<li>
-<strong>Batch processing</strong>: Solve thousands of problems
-efficiently with optional parallelization</li>
-<li>
-<strong>K-best solutions</strong>: Find multiple near-optimal
-solutions using Murty’s algorithm</li>
+<li>Automatic preprocessing and scaling</li>
+<li>Balance diagnostics</li>
+<li>Production-ready for observational studies</li>
 </ul>
+<p><strong>greedy_couples()</strong> - Fast approximate matching:</p>
+<ul>
+<li>10-100x faster than optimal</li>
+<li>Three strategy options</li>
+</ul>
+<hr>
 </div>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="quick-examples">Quick Examples<a class="anchor" aria-label="anchor" href="#quick-examples"></a>
 </h2>
+<div class="section level3">
+<h3 id="lap_solve-basic-assignment">lap_solve(): Basic Assignment<a class="anchor" aria-label="anchor" href="#lap_solve-basic-assignment"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install from CRAN</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"couplr"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gcol33.github.io/couplr/">couplr</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Or install development version from GitHub</span></span>
-<span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="the-assignment-problem">The Assignment Problem<a class="anchor" aria-label="anchor" href="#the-assignment-problem"></a>
-</h2>
-<div class="section level3">
-<h3 id="problem-definition">Problem Definition<a class="anchor" aria-label="anchor" href="#problem-definition"></a>
-</h3>
-<p>Consider assigning nurses to shifts in a hospital. Each nurse has
-different suitability for each shift based on skills, travel time, and
-overtime likelihood. The assignment problem finds the optimal one-to-one
-matching that minimizes total cost (or maximizes total preference).</p>
-<p>This vignette uses a recurring <strong>hospital staff
-scheduling</strong> example that demonstrates increasingly complex
-scenarios. The same conceptual problem (assigning nurses to shifts)
-evolves to show different couplr features.</p>
-<p><strong>Simple Example</strong>: Three nurses can cover three shifts
-with the following costs (lower = better fit):</p>
-<table class="table">
-<thead><tr class="header">
-<th></th>
-<th>Shift 1</th>
-<th>Shift 2</th>
-<th>Shift 3</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Nurse 1</td>
-<td>4</td>
-<td>2</td>
-<td>5</td>
-</tr>
-<tr class="even">
-<td>Nurse 2</td>
-<td>3</td>
-<td>3</td>
-<td>6</td>
-</tr>
-<tr class="odd">
-<td>Nurse 3</td>
-<td>7</td>
-<td>5</td>
-<td>4</td>
-</tr>
-</tbody>
-</table>
-<p>The optimal assignment is: Nurse 1 → Shift 2 (cost 2), Nurse 2 →
-Shift 1 (cost 3), Nurse 3 → Shift 3 (cost 4), for a total cost of 9.</p>
-<blockquote>
-<p><strong>Note</strong>: couplr includes a comprehensive
-<code>hospital_staff</code> dataset that we’ll use throughout this
-vignette. Type <code><a href="../reference/hospital_staff.html">?hospital_staff</a></code> for details.</p>
-</blockquote>
-</div>
-</div>
-<div class="section level2">
-<h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
-</h2>
-<div class="section level3">
-<h3 id="matrix-input">Matrix Input<a class="anchor" aria-label="anchor" href="#matrix-input"></a>
-</h3>
-<p>The simplest way to use <code>couplr</code> is with a numeric cost
-matrix:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Cost matrix: 3 nurses × 3 shifts (from our simple example above)</span></span>
+<span><span class="co"># Cost matrix: 3 nurses × 3 shifts</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>,  <span class="co"># Nurse 1 costs for shifts 1, 2, 3</span></span>
-<span>  <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">6</span>,  <span class="co"># Nurse 2 costs</span></span>
-<span>  <span class="fl">7</span>, <span class="fl">5</span>, <span class="fl">4</span>   <span class="co"># Nurse 3 costs</span></span>
+<span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>,</span>
+<span>  <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">6</span>,</span>
+<span>  <span class="fl">7</span>, <span class="fl">5</span>, <span class="fl">4</span></span>
 <span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Solve the assignment problem</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignment Result</span></span>
@@ -306,43 +179,14 @@ matrix:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Total cost: 9 </span></span>
 <span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
-<p>The result is a tidy tibble showing which source (nurse) is assigned
-to which target (shift), along with individual and total costs.</p>
-<p><strong>Reading the output</strong>: Row 1 shows Nurse 1 assigned to
-Shift 2 with cost 2. The <code>total_cost</code> column shows the
-cumulative cost of all assignments (9).</p>
-<p>For larger problems, use the built-in <code>hospital_staff</code>
-dataset:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 10 nurses × 10 shifts</span></span>
-<span><span class="va">result_10x10</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">basic_costs</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_10x10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      8     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      7     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>      4      4     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>      5      9     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>      6     10     3</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 22 </span></span>
-<span><span class="co">#&gt; Method: hungarian</span></span>
-<span></span>
-<span><span class="co"># Total cost</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Total assignment cost:"</span>, <span class="fu"><a href="../reference/get_total_cost.html">get_total_cost</a></span><span class="op">(</span><span class="va">result_10x10</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Total assignment cost: 22</span></span></code></pre></div>
+<p><strong>Reading the output</strong>: Row 1 shows source 1 assigned to
+target 2 with cost 2. The <code>total_cost</code> column shows the
+cumulative cost (9).</p>
 </div>
 <div class="section level3">
 <h3 id="data-frame-input">Data Frame Input<a class="anchor" aria-label="anchor" href="#data-frame-input"></a>
 </h3>
-<p>For more complex workflows, especially when working with existing
-data pipelines, use data frames:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
@@ -353,67 +197,41 @@ data pipelines, use data frames:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
 <span></span>
-<span><span class="co"># The hospital_staff dataset includes a data frame version</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">schedule_df</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">#&gt;   nurse_id shift_id  cost preference skill_match</span></span>
-<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1        1     3          8           0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1        2     7          4           0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        1        3     5          6           1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        1        4     9          2           0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        1        5     4          7           1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>        1        6     8          3           1</span></span>
+<span><span class="co"># Long-format data frame</span></span>
+<span><span class="va">schedule_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span></span>
+<span>  nurse <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  shift <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  cost <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">5</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve using column names</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">schedule_df</span>, <span class="va">nurse_id</span>, <span class="va">shift_id</span>, <span class="va">cost</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">schedule_df</span>, <span class="va">nurse</span>, <span class="va">shift</span>, <span class="va">cost</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignment Result</span></span>
 <span><span class="co">#&gt; =================</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 3</span></span></span>
-<span><span class="co">#&gt;    source target  cost</span></span>
-<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>      1      8     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>      2      2     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>      3      7     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>      4      4     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>      5      9     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>      6     10     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>      7      1     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>      8      3     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>      9      6     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     10      5     2</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt;   source target  cost</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      2     2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      1     3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     4</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 22 </span></span>
-<span><span class="co">#&gt; Method: hungarian</span></span></code></pre></div>
-<p>This approach is particularly useful when your data is already in
-long format, when pulling from databases, or when integrating with dplyr
-workflows.</p>
-<hr>
-<p><em>Now that we can solve the basic problem, what happens when we
-have more shifts than nurses to fill them?</em></p>
+<span><span class="co">#&gt; Total cost: 9 </span></span>
+<span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
 </div>
-</div>
-<div class="section level2">
-<h2 id="working-with-rectangular-problems">Working with Rectangular Problems<a class="anchor" aria-label="anchor" href="#working-with-rectangular-problems"></a>
-</h2>
-<p>Real scheduling problems rarely have equal numbers of nurses and
-shifts. A hospital might have 8 nurses available but need to cover 12
-shifts, or have 15 nurses but only 10 shifts to fill.</p>
-<p>Unlike many assignment solvers, <code>couplr</code> handles
-rectangular problems (unequal numbers of sources and targets) without
-manual padding:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 3 nurses, 5 available shifts - assign each nurse to one shift</span></span>
+<div class="section level3">
+<h3 id="rectangular-problems">Rectangular Problems<a class="anchor" aria-label="anchor" href="#rectangular-problems"></a>
+</h3>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 3 nurses, 5 shifts - assign each nurse to one shift</span></span>
 <span><span class="va">cost_rect</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>,   <span class="co"># Nurse 1's costs for 5 shifts</span></span>
-<span>  <span class="fl">6</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>,   <span class="co"># Nurse 2's costs</span></span>
-<span>  <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span>    <span class="co"># Nurse 3's costs</span></span>
+<span>  <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>,</span>
+<span>  <span class="fl">6</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>,</span>
+<span>  <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span></span>
 <span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost_rect</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost_rect</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignment Result</span></span>
 <span><span class="co">#&gt; =================</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -426,42 +244,22 @@ manual padding:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Total cost: 6 </span></span>
 <span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
-<p>The solver automatically handles the rectangular structure, assigning
-each of the 3 nurses to their best available shift among the 5 options.
-Notice that shifts 3 and 4 remain unassigned (they’re not in the
-<code>target</code> column).</p>
-<p><strong>Interpretation</strong>: When rows &lt; columns, each row
-(nurse) gets exactly one column (shift), and some columns remain
-unassigned. When rows &gt; columns, the matrix is transposed internally
-so each column gets one row.</p>
-<hr>
-<p><em>What if certain nurse-shift combinations are impossible due to
-scheduling conflicts or skill requirements?</em></p>
+<p>When rows &lt; columns, each row gets one column, and some columns
+remain unassigned.</p>
 </div>
-<div class="section level2">
-<h2 id="forbidden-assignments">Forbidden Assignments<a class="anchor" aria-label="anchor" href="#forbidden-assignments"></a>
-</h2>
-<p>In real scheduling, some assignments are simply impossible: a nurse
-lacks the required certification for an ICU shift, or has a scheduling
-conflict that makes a night shift impossible.</p>
-<p>Use <code>NA</code> or <code>Inf</code> to mark impossible or
-forbidden assignments:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Fresh cost matrix</span></span>
-<span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>,</span>
-<span>  <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">6</span>,</span>
+<div class="section level3">
+<h3 id="forbidden-assignments">Forbidden Assignments<a class="anchor" aria-label="anchor" href="#forbidden-assignments"></a>
+</h3>
+<p>Use <code>NA</code> or <code>Inf</code> to mark impossible
+assignments:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cost_forbidden</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="cn">NA</span>,   <span class="co"># Source 1 cannot go to target 3</span></span>
+<span>  <span class="cn">Inf</span>, <span class="fl">3</span>, <span class="fl">6</span>,  <span class="co"># Source 2 cannot go to target 1</span></span>
 <span>  <span class="fl">7</span>, <span class="fl">5</span>, <span class="fl">4</span></span>
 <span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Nurse 1 cannot work Shift 3 (lacks ICU certification)</span></span>
-<span><span class="va">cost</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span></span>
-<span><span class="co"># Nurse 2 cannot work Shift 1 (scheduling conflict)</span></span>
-<span><span class="va">cost</span><span class="op">[</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">Inf</span></span>
-<span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost_forbidden</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignment Result</span></span>
 <span><span class="co">#&gt; =================</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -474,132 +272,77 @@ forbidden assignments:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Total cost: 11 </span></span>
 <span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
-<p>The solver respects these constraints and finds the optimal
-assignment among the feasible options. Compare this result to the
-unconstrained solution: Nurse 1 still gets Shift 2 (cost 2), but the
-other assignments adjust around the constraints.</p>
-<p><strong>When to use <code>NA</code> vs <code>Inf</code></strong>:
-Both mark forbidden assignments. Use <code>NA</code> for “not
-applicable” (e.g., skill mismatch) and <code>Inf</code> for “infinitely
-costly” (e.g., severe overtime). Functionally they behave
-identically.</p>
 <hr>
-<p><em>So far we’ve minimized costs. What about maximizing preferences
-instead?</em></p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="maximization-problems">Maximization Problems<a class="anchor" aria-label="anchor" href="#maximization-problems"></a>
 </h2>
-<p>Sometimes you want to maximize preferences rather than minimize
-costs. Nurses have shift preferences (higher = more preferred), and
-happier nurses mean lower turnover.</p>
-<p>Switch to maximization by setting <code>maximize = TRUE</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Preference matrix from hospital_staff (0-10 scale, higher = more preferred)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">preferences</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         Shift_1 Shift_2 Shift_3 Shift_4 Shift_5 Shift_6 Shift_7 Shift_8 Shift_9</span></span>
-<span><span class="co">#&gt; Nurse_1       8       4       6       2       7       3       5       9       4</span></span>
-<span><span class="co">#&gt; Nurse_2       5       9       3       7       4       8       2       6       7</span></span>
-<span><span class="co">#&gt; Nurse_3       6       7       8       4       3       5       9       2       6</span></span>
-<span><span class="co">#&gt; Nurse_4       3       5       4       9       6       7       8       5       3</span></span>
-<span><span class="co">#&gt; Nurse_5       7       2       5       6       8       4       3       7       9</span></span>
-<span><span class="co">#&gt; Nurse_6       4       8       7       3       5       9       6       4       2</span></span>
-<span><span class="co">#&gt;         Shift_10</span></span>
-<span><span class="co">#&gt; Nurse_1        6</span></span>
-<span><span class="co">#&gt; Nurse_2        5</span></span>
-<span><span class="co">#&gt; Nurse_3        7</span></span>
-<span><span class="co">#&gt; Nurse_4        4</span></span>
-<span><span class="co">#&gt; Nurse_5        2</span></span>
-<span><span class="co">#&gt; Nurse_6        8</span></span>
+<p>Switch to maximization with <code>maximize = TRUE</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Preference scores (higher = better)</span></span>
+<span><span class="va">preferences</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">3</span>,</span>
+<span>  <span class="fl">4</span>, <span class="fl">7</span>, <span class="fl">6</span>,</span>
+<span>  <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">9</span></span>
+<span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Maximize total nurse satisfaction</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">preferences</span>, maximize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">preferences</span>, maximize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Assignment Result</span></span>
 <span><span class="co">#&gt; =================</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   source target  cost</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      8     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      7     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>      4      4     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>      5      9     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>      6     10     8</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     8</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     9</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 88 </span></span>
-<span><span class="co">#&gt; Method: hungarian</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nTotal preference score:"</span>, <span class="fu"><a href="../reference/get_total_cost.html">get_total_cost</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total preference score: 88</span></span></code></pre></div>
-<p><strong>Behind the scenes</strong>: <code>maximize = TRUE</code>
-internally negates the costs, solves the minimization problem, then
-reports results on the original scale.</p>
+<span><span class="co">#&gt; Total cost: 24 </span></span>
+<span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
 <hr>
-<p><em>What if you need to schedule multiple days at once, each with its
-own cost matrix?</em></p>
 </div>
 <div class="section level2">
-<h2 id="grouped-data-frames">Grouped Data Frames<a class="anchor" aria-label="anchor" href="#grouped-data-frames"></a>
+<h2 id="grouped-data">Grouped Data<a class="anchor" aria-label="anchor" href="#grouped-data"></a>
 </h2>
-<p>One of <code>couplr</code>’s most powerful features is seamless
-integration with grouped data frames, allowing you to solve many related
-problems at once.</p>
-<p>The <code>hospital_staff$weekly_df</code> dataset contains scheduling
-costs for 5 days. Each day needs its own optimal assignment:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Weekly schedule: 5 days × 10 nurses × 10 shifts</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hospital_staff</span><span class="op">$</span><span class="va">weekly_df</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">#&gt;   day    nurse_id shift_id  cost preference</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Monday        1        1     2          7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Monday        1        2     5          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Monday        1        3     4          6</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Monday        1        4    11          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Monday        1        5     6          8</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Monday        1        6     9          4</span></span>
+<p>Solve multiple problems at once with grouped data frames:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Weekly schedule: 3 days × 3 nurses × 3 shifts</span></span>
+<span><span class="va">weekly_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mon"</span>, <span class="st">"Tue"</span>, <span class="st">"Wed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
+<span>  nurse <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  shift <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
+<span>  cost <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">27</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve all days at once</span></span>
-<span><span class="va">weekly_results</span> <span class="op">&lt;-</span> <span class="va">hospital_staff</span><span class="op">$</span><span class="va">weekly_df</span> <span class="op">|&gt;</span></span>
+<span><span class="va">weekly_df</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">day</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">nurse_id</span>, <span class="va">shift_id</span>, <span class="va">cost</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># View assignments by day</span></span>
-<span><span class="va">weekly_results</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">nurse</span>, <span class="va">shift</span>, <span class="va">cost</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">day</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>total_cost <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
-<span><span class="co">#&gt;   day       total_cost</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Monday            18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Tuesday           15</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Wednesday         25</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Thursday          18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Friday            20</span></span></code></pre></div>
-<p>This pattern—grouping, then solving—works naturally with dplyr
-pipelines and is much cleaner than writing loops.</p>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
+<span><span class="co">#&gt;   day   total_cost</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Mon        10.4 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Tue         8.51</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Wed        13.6</span></span></code></pre></div>
+<hr>
 </div>
 <div class="section level2">
 <h2 id="batch-solving">Batch Solving<a class="anchor" aria-label="anchor" href="#batch-solving"></a>
 </h2>
-<hr>
-<p><em>For even larger scale—hundreds or thousands of independent
-problems—grouped data frames may become unwieldy. That’s where batch
-solving shines.</em></p>
-<p>For maximum efficiency when solving many independent problems, use
+<p>For many independent problems, use
 <code><a href="../reference/lap_solve_batch.html">lap_solve_batch()</a></code>:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create list of cost matrices</span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 100 random cost matrices</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span><span class="va">cost_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">9</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Solve all problems at once</span></span>
+<span><span class="co"># Solve all at once</span></span>
 <span><span class="va">batch_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_batch.html">lap_solve_batch</a></span><span class="op">(</span><span class="va">cost_list</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># View summary statistics</span></span>
+<span><span class="co"># Summary</span></span>
 <span><span class="va">batch_results</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">problem_id</span>, <span class="va">total_cost</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
@@ -612,33 +355,17 @@ solving shines.</em></p>
 <span><span class="co">#&gt;   n_problems mean_cost min_cost max_cost</span></span>
 <span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        100      11.3     5.20     19.1</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="parallel-batch-solving">Parallel Batch Solving<a class="anchor" aria-label="anchor" href="#parallel-batch-solving"></a>
-</h3>
-<p>For large numbers of problems, enable parallel processing:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Solve with 4 threads</span></span>
-<span><span class="va">batch_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_batch.html">lap_solve_batch</a></span><span class="op">(</span><span class="va">cost_list</span>, n_threads <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Use all available cores</span></span>
-<span><span class="va">batch_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_batch.html">lap_solve_batch</a></span><span class="op">(</span><span class="va">cost_list</span>, n_threads <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-</div>
+<p>Enable parallel processing for large batches:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/lap_solve_batch.html">lap_solve_batch</a></span><span class="op">(</span><span class="va">cost_list</span>, n_threads <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
 <div class="section level2">
-<h2 id="finding-multiple-solutions">Finding Multiple Solutions<a class="anchor" aria-label="anchor" href="#finding-multiple-solutions"></a>
+<h2 id="k-best-solutions">K-Best Solutions<a class="anchor" aria-label="anchor" href="#k-best-solutions"></a>
 </h2>
-<hr>
-<p><em>The optimal schedule might be mathematically perfect but
-practically impossible—Nurse 1 is on vacation that week. What are the
-alternatives?</em></p>
-<p>Sometimes you want to explore alternative near-optimal solutions. Use
-<code><a href="../reference/lap_solve_kbest.html">lap_solve_kbest()</a></code> to find the k best solutions:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>,</span>
-<span>  <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>,</span>
-<span>  <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">1</span></span>
-<span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<p>Find multiple near-optimal solutions:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Find top 5 solutions</span></span>
 <span><span class="va">kbest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_kbest.html">lap_solve_kbest</a></span><span class="op">(</span><span class="va">cost</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
@@ -673,31 +400,58 @@ alternatives?</em></p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span>     4           4      3      1     5          9</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span>     5           5      1      3     3         11</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span>     5           5      2      2     3         11</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span>     5           5      3      1     5         11</span></span>
-<span></span>
-<span><span class="co"># Get summary of solutions</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">kbest</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 4</span></span></span>
-<span><span class="co">#&gt;    rank solution_id total_cost n_assignments</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1           1          5             3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2           2          7             3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3           3          7             3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4           4          9             3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5           5         11             3</span></span></code></pre></div>
-<p>This is useful for:</p>
-<ul>
-<li>Exploring alternative plans when the optimal solution is infeasible
-in practice</li>
-<li>Robustness analysis</li>
-<li>Understanding the cost landscape around the optimum</li>
-</ul>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span>     5           5      3      1     5         11</span></span></code></pre></div>
+<p>Useful for exploring alternatives when the optimal solution is
+infeasible in practice.</p>
+<hr>
 </div>
 <div class="section level2">
-<h2 id="extracting-and-working-with-results">Extracting and Working with Results<a class="anchor" aria-label="anchor" href="#extracting-and-working-with-results"></a>
+<h2 id="algorithm-selection">Algorithm Selection<a class="anchor" aria-label="anchor" href="#algorithm-selection"></a>
 </h2>
-<p><code>couplr</code> provides several utility functions for working
-with results:</p>
+<p>couplr includes 12+ algorithms with automatic selection:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Let couplr choose (default)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/get_method_used.html">get_method_used</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "bruteforce"</span></span></code></pre></div>
+<p>Force specific algorithms:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"jv"</span><span class="op">)</span>         <span class="co"># Jonker-Volgenant (general purpose)</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span>  <span class="co"># Hungarian algorithm</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction"</span><span class="op">)</span>    <span class="co"># Auction algorithm</span></span>
+<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hk01"</span><span class="op">)</span>       <span class="co"># For binary (0/1) costs</span></span></code></pre></div>
+<p><strong>Selection guide:</strong></p>
+<table class="table">
+<thead><tr class="header">
+<th>Problem Type</th>
+<th>Recommended Method</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>General case</td>
+<td>
+<code>"auto"</code> or <code>"jv"</code>
+</td>
+</tr>
+<tr class="even">
+<td>Binary costs (0/1)</td>
+<td><code>"hk01"</code></td>
+</tr>
+<tr class="odd">
+<td>Large dense (n &gt; 1000)</td>
+<td><code>"auction"</code></td>
+</tr>
+<tr class="even">
+<td>Sparse/many forbidden</td>
+<td><code>"sap"</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="utility-functions">Utility Functions<a class="anchor" aria-label="anchor" href="#utility-functions"></a>
+</h2>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
 <span></span>
@@ -714,260 +468,17 @@ with results:</p>
 <span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
 <span><span class="co">#&gt; [1,]    1    0    0</span></span>
 <span><span class="co">#&gt; [2,]    0    1    0</span></span>
-<span><span class="co">#&gt; [3,]    0    0    1</span></span>
-<span></span>
-<span><span class="co"># Check result type</span></span>
-<span><span class="fu"><a href="../reference/is_lap_solve_result.html">is_lap_solve_result</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="algorithm-selection">Algorithm Selection<a class="anchor" aria-label="anchor" href="#algorithm-selection"></a>
-</h2>
+<span><span class="co">#&gt; [3,]    0    0    1</span></span></code></pre></div>
 <hr>
-<p><em>By default, couplr chooses an algorithm automatically. But
-understanding the options can help with performance tuning or
-debugging.</em></p>
-<p><code>couplr</code> includes multiple algorithms optimized for
-different scenarios. The default <code>"auto"</code> method
-automatically selects the best algorithm:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Let couplr choose (default)</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 5 </span></span>
-<span><span class="co">#&gt; Method: bruteforce</span></span>
-<span></span>
-<span><span class="co"># Force specific algorithm:</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"jv"</span><span class="op">)</span>         <span class="co"># Jonker-Volgenant (general purpose)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 5 </span></span>
-<span><span class="co">#&gt; Method: jv</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span>  <span class="co"># Hungarian algorithm</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 5 </span></span>
-<span><span class="co">#&gt; Method: hungarian</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction"</span><span class="op">)</span>    <span class="co"># Auction algorithm</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 5 </span></span>
-<span><span class="co">#&gt; Method: auction</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"sap"</span><span class="op">)</span>        <span class="co"># Sparse assignment (for sparse problems)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      3     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 5 </span></span>
-<span><span class="co">#&gt; Method: sap</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="auction-algorithm-variants">Auction Algorithm Variants<a class="anchor" aria-label="anchor" href="#auction-algorithm-variants"></a>
-</h3>
-<p>The auction algorithm has multiple variants for different problem
-characteristics:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Standard fixed-epsilon auction (default)</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Scaled-epsilon auction with epsilon-scaling phases</span></span>
-<span><span class="co"># Better for problems with large cost ranges</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction_scaled"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Gauss-Seidel auction with sequential bidding</span></span>
-<span><span class="co"># Can be faster for certain problem structures</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction_gs"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="binary-cost-problems">Binary Cost Problems<a class="anchor" aria-label="anchor" href="#binary-cost-problems"></a>
-</h3>
-<p>For problems where all costs are 0 or 1, use the specialized HK01
-algorithm:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create binary cost matrix</span></span>
-<span><span class="va">binary_cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">9</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Specialized algorithm for binary costs</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">binary_cost</span>, method <span class="op">=</span> <span class="st">"hk01"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      2     0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      3     0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      3      1     0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 0 </span></span>
-<span><span class="co">#&gt; Method: hk01</span></span></code></pre></div>
-<p>The <code>"auto"</code> method selects algorithms based on problem
-characteristics:</p>
-<ul>
-<li>
-<strong>Binary/uniform costs</strong> → HK01 algorithm</li>
-<li>
-<strong>Sparse/rectangular</strong> → SAP algorithm<br>
-</li>
-<li>
-<strong>Large dense</strong> → Auction algorithm (standard
-variant)</li>
-<li>
-<strong>General case</strong> → Jonker-Volgenant</li>
-</ul>
-<p>For most users, <code>method = "auto"</code> (the default) provides
-good performance.</p>
-</div>
-<div class="section level3">
-<h3 id="parallelization">Parallelization<a class="anchor" aria-label="anchor" href="#parallelization"></a>
-</h3>
-<p><strong>Note on parallelization</strong>: Currently, only
-<strong><code><a href="../reference/lap_solve_batch.html">lap_solve_batch()</a></code></strong> supports parallel
-execution via the <code>n_threads</code> parameter. The individual LAP
-solvers (<code><a href="../reference/lap_solve.html">lap_solve()</a></code>, <code><a href="../reference/lap_solve_kbest.html">lap_solve_kbest()</a></code>) run
-sequentially. Future versions may add parallel support for single large
-problems.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Parallel batch solving (supported)</span></span>
-<span><span class="fu"><a href="../reference/lap_solve_batch.html">lap_solve_batch</a></span><span class="op">(</span><span class="va">cost_list</span>, n_threads <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Single problem (currently sequential)</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span>  <span class="co"># No parallelization yet</span></span></code></pre></div>
-</div>
 </div>
 <div class="section level2">
-<h2 id="real-world-example-employee-scheduling">Real-World Example: Employee Scheduling<a class="anchor" aria-label="anchor" href="#real-world-example-employee-scheduling"></a>
+<h2 id="performance-guide">Performance Guide<a class="anchor" aria-label="anchor" href="#performance-guide"></a>
 </h2>
-<p>Here’s a practical example of using <code>couplr</code> to create a
-weekly work schedule:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Generate employee preferences for shifts</span></span>
-<span><span class="va">schedule_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>  day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mon"</span>, <span class="st">"Tue"</span>, <span class="st">"Wed"</span>, <span class="st">"Thu"</span>, <span class="st">"Fri"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
-<span>  employee <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, times <span class="op">=</span> <span class="fl">15</span><span class="op">)</span>,</span>
-<span>  shift <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"morning"</span>, <span class="st">"afternoon"</span>, <span class="st">"night"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span>, times <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  preference_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, mean <span class="op">=</span> <span class="fl">5</span>, sd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>    <span class="co"># Some employees can't work certain shifts</span></span>
-<span>    preference_score <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
-<span>      <span class="va">employee</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">&amp;</span> <span class="va">shift</span> <span class="op">==</span> <span class="st">"night"</span> <span class="op">~</span> <span class="cn">NA_real_</span>,</span>
-<span>      <span class="va">employee</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">shift</span> <span class="op">==</span> <span class="st">"morning"</span> <span class="op">~</span> <span class="cn">NA_real_</span>,</span>
-<span>      <span class="cn">TRUE</span> <span class="op">~</span> <span class="va">preference_score</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    <span class="co"># Create shift IDs within each day</span></span>
-<span>    shift_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">shift</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"morning"</span>, <span class="st">"afternoon"</span>, <span class="st">"night"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Solve for optimal assignments per day (maximize preferences)</span></span>
-<span><span class="va">optimal_schedule</span> <span class="op">&lt;-</span> <span class="va">schedule_data</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">day</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">employee</span>, <span class="va">shift_id</span>, <span class="va">preference_score</span>, maximize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># View first few assignments</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">optimal_schedule</span>, <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
-<span><span class="co">#&gt;    day   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Fri        1      2  8.15</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Fri        3      1  5.64</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Fri        4      3  5.57</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Mon        1      1  7.74</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Mon        3      2  8.02</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Mon        4      3  9.57</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Thu        1      1  3.43</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Thu        3      2  6.52</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Thu        4      3  7.89</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Tue        1      2  4.43</span></span>
-<span></span>
-<span><span class="co"># Summary statistics by day</span></span>
-<span><span class="va">optimal_schedule</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">day</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
-<span>    shifts_filled <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    avg_preference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cost</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>    .groups <span class="op">=</span> <span class="st">"drop"</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
-<span><span class="co">#&gt;   day   shifts_filled avg_preference</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Fri               3           6.46</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Mon               3           8.45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Thu               3           5.95</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Tue               3           5.53</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Wed               3           7.07</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="performance-considerations">Performance Considerations<a class="anchor" aria-label="anchor" href="#performance-considerations"></a>
-</h2>
-<p><code>couplr</code> is designed for efficiency:</p>
-<ul>
-<li>
-<strong>C++ backend</strong>: Core algorithms implemented in
-optimized C++ using Rcpp</li>
-<li>
-<strong>Automatic algorithm selection</strong>: Chooses an efficient
-method for your problem</li>
-<li>
-<strong>Batch processing</strong>: Amortizes overhead when solving
-many problems</li>
-<li>
-<strong>Parallel execution</strong>: Distributes work across cores
-for large batches</li>
-</ul>
-<p>For small problems (&lt; 100×100), setup overhead dominates and all
-methods are fast. For large problems (&gt; 1000×1000) or many problems,
-algorithm selection and parallelization become important.</p>
 <table class="table">
-<colgroup>
-<col width="29%">
-<col width="36%">
-<col width="34%">
-</colgroup>
 <thead><tr class="header">
 <th>Problem Size</th>
 <th>Typical Runtime</th>
-<th>Recommendation</th>
+<th>Notes</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -983,186 +494,82 @@ algorithm selection and parallelization become important.</p>
 <tr class="odd">
 <td>500-1000</td>
 <td>0.1-1s</td>
-<td>Consider <code>method = "jv"</code>
+<td>Consider <code>"jv"</code>
 </td>
 </tr>
 <tr class="even">
 <td>1000-3000</td>
 <td>1-30s</td>
-<td>Use <code>method = "auction"</code>
+<td>Use <code>"auction"</code>
 </td>
 </tr>
 <tr class="odd">
 <td>&gt; 3000</td>
 <td>&gt; 30s</td>
-<td>See <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> for blocking
-strategies</td>
+<td>See <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code>
+</td>
 </tr>
 </tbody>
 </table>
+<hr>
 </div>
 <div class="section level2">
-<h2 id="common-pitfalls-and-troubleshooting">Common Pitfalls and Troubleshooting<a class="anchor" aria-label="anchor" href="#common-pitfalls-and-troubleshooting"></a>
+<h2 id="common-issues">Common Issues<a class="anchor" aria-label="anchor" href="#common-issues"></a>
 </h2>
 <div class="section level3">
-<h3 id="problem-all-assignments-have-inf-cost">Problem: “All assignments have Inf cost”<a class="anchor" aria-label="anchor" href="#problem-all-assignments-have-inf-cost"></a>
+<h3 id="all-assignments-have-inf-cost">“All assignments have Inf cost”<a class="anchor" aria-label="anchor" href="#all-assignments-have-inf-cost"></a>
 </h3>
-<p><strong>Cause</strong>: Too many forbidden entries (NA/Inf) make the
-problem infeasible.</p>
-<p><strong>Solution</strong>: Check that a feasible solution exists. For
-rectangular problems with forbidden entries, ensure at least one valid
-assignment exists for each source.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Check feasibility before solving</span></span>
-<span><span class="va">cost_problematic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fl">1</span>, <span class="cn">NA</span>, <span class="cn">NA</span>,</span>
-<span>  <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>,  <span class="co"># Row 2 has no valid targets!</span></span>
-<span>  <span class="cn">NA</span>, <span class="fl">2</span>, <span class="fl">3</span></span>
-<span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check which rows have at least one finite value</span></span>
-<span><span class="va">feasible</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">cost_problematic</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">feasible</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Infeasible rows:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="op">!</span><span class="va">feasible</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
+<p><strong>Cause</strong>: Too many forbidden entries make the problem
+infeasible.</p>
+<p><strong>Solution</strong>: Ensure each row has at least one finite
+value.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cost_check</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">feasible</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">cost_check</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">feasible</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Infeasible rows:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="op">!</span><span class="va">feasible</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Infeasible rows: 2</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="problem-unexpected-assignments">Problem: Unexpected assignments<a class="anchor" aria-label="anchor" href="#problem-unexpected-assignments"></a>
+<h3 id="different-results-with-different-methods">Different results with different methods<a class="anchor" aria-label="anchor" href="#different-results-with-different-methods"></a>
 </h3>
-<p><strong>Cause</strong>: Cost matrix orientation wrong (rows vs
-columns swapped).</p>
-<p><strong>Solution</strong>: Remember: rows = sources (nurses), columns
-= targets (shifts). The result shows source→target assignments.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Verify orientation</span></span>
-<span><span class="va">cost_check</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cost_check</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Nurse_A"</span>, <span class="st">"Nurse_B"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">cost_check</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Shift_1"</span>, <span class="st">"Shift_2"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">cost_check</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         Shift_1 Shift_2</span></span>
-<span><span class="co">#&gt; Nurse_A       1     100</span></span>
-<span><span class="co">#&gt; Nurse_B     100       1</span></span>
-<span></span>
-<span><span class="co"># Nurse_A should get Shift_1 (cost 1), Nurse_B should get Shift_2 (cost 1)</span></span>
-<span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost_check</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Assignment Result</span></span>
-<span><span class="co">#&gt; =================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   source target  cost</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>      1      1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      2      2     1</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total cost: 2 </span></span>
-<span><span class="co">#&gt; Method: bruteforce</span></span></code></pre></div>
+<p><strong>Cause</strong>: Multiple optimal solutions may exist.</p>
+<p><strong>Solution</strong>: Use <code>method = "hungarian"</code> for
+deterministic tie-breaking, or verify total costs match.</p>
 </div>
 <div class="section level3">
-<h3 id="problem-different-results-with-different-methods">Problem: Different results with different methods<a class="anchor" aria-label="anchor" href="#problem-different-results-with-different-methods"></a>
+<h3 id="slow-performance-on-large-problems">Slow performance on large problems<a class="anchor" aria-label="anchor" href="#slow-performance-on-large-problems"></a>
 </h3>
-<p><strong>Cause</strong>: Multiple optimal solutions may exist.
-Different algorithms may find different optima with the same total
-cost.</p>
-<p><strong>Solution</strong>: If you need deterministic results, use
-<code>method = "hungarian"</code> which has deterministic tie-breaking.
-Or verify that total costs match even if assignments differ.</p>
-</div>
-<div class="section level3">
-<h3 id="problem-slow-performance-on-large-problems">Problem: Slow performance on large problems<a class="anchor" aria-label="anchor" href="#problem-slow-performance-on-large-problems"></a>
-</h3>
-<p><strong>Cause</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-complexity for exact algorithms.</p>
 <p><strong>Solutions</strong>:</p>
 <ul>
-<li>For n &gt; 1000: Try <code>method = "auction"</code>
+<li>n &gt; 1000: Use <code>method = "auction"</code>
 </li>
-<li>For n &gt; 3000: Use blocking via
+<li>n &gt; 3000: Use blocking via
 <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code>
 </li>
-<li>For n &gt; 5000: Consider greedy matching with
-<code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>
-</li>
+<li>n &gt; 5000: Use <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code> for approximate
+solutions</li>
 </ul>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># For large problems, auction algorithm is often faster</span></span>
-<span><span class="va">large_cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1000000</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">large_cost</span>, method <span class="op">=</span> <span class="st">"auction"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="problem-memory-errors">Problem: Memory errors<a class="anchor" aria-label="anchor" href="#problem-memory-errors"></a>
-</h3>
-<p><strong>Cause</strong>: Cost matrix too large for available RAM. A
-10,000×10,000 matrix requires ~800 MB.</p>
-<p><strong>Solution</strong>: Use blocking to divide the problem, or
-switch to greedy matching which doesn’t require the full cost matrix in
-memory.</p>
+<hr>
 </div>
 </div>
 <div class="section level2">
-<h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
 </h2>
-<p>This vignette walked through hospital staff scheduling to demonstrate
-couplr’s core functionality:</p>
-<ol style="list-style-type: decimal">
+<ul>
 <li>
-<strong>Basic solving</strong>: Matrix and data frame inputs with
-<code><a href="../reference/lap_solve.html">lap_solve()</a></code>
+<code><a href="../articles/algorithms.html">vignette("algorithms")</a></code> - Mathematical foundations and
+solver internals</li>
+<li>
+<code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> - Production matching
+for observational studies</li>
+<li>
+<code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> - Large-scale approximation
+strategies</li>
+<li>
+<code><a href="../reference/lap_solve.html">?lap_solve</a></code>, <code><a href="../reference/lap_solve_batch.html">?lap_solve_batch</a></code>,
+<code><a href="../reference/lap_solve_kbest.html">?lap_solve_kbest</a></code>, <code><a href="../reference/match_couples.html">?match_couples</a></code>
 </li>
-<li>
-<strong>Rectangular problems</strong>: More shifts than nurses (or
-vice versa)</li>
-<li>
-<strong>Forbidden assignments</strong>: Using NA/Inf for impossible
-pairings</li>
-<li>
-<strong>Maximization</strong>: Optimizing preferences instead of
-minimizing costs</li>
-<li>
-<strong>Grouped data</strong>: Solving multiple days at once with
-dplyr</li>
-<li>
-<strong>Batch solving</strong>: Handling hundreds of independent
-problems</li>
-<li>
-<strong>K-best solutions</strong>: Exploring alternatives to the
-optimal</li>
-<li>
-<strong>Algorithm selection</strong>: Choosing the right solver for
-your problem</li>
-</ol>
-<p><strong>What’s Next?</strong></p>
-<table class="table">
-<colgroup>
-<col width="67%">
-<col width="32%">
-</colgroup>
-<thead><tr class="header">
-<th>If you want to…</th>
-<th>Read…</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Understand algorithm internals</td>
-<td><code><a href="../articles/algorithms.html">vignette("algorithms")</a></code></td>
-</tr>
-<tr class="even">
-<td>Match observations in a study</td>
-<td><code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code></td>
-</tr>
-<tr class="odd">
-<td>Handle very large problems</td>
-<td>
-<code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> for approximation
-strategies</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Function reference</strong>: <code><a href="../reference/lap_solve.html">?lap_solve</a></code>,
-<code><a href="../reference/lap_solve_batch.html">?lap_solve_batch</a></code>, <code><a href="../reference/lap_solve_kbest.html">?lap_solve_kbest</a></code>,
-<code><a href="../reference/hospital_staff.html">?hospital_staff</a></code></p>
-<p><strong>Source code</strong>: <a href="https://github.com/gcol33/couplr" class="external-link">github.com/gcol33/couplr</a></p>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

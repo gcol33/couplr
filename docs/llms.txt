@@ -238,14 +238,14 @@ S3 methods for displaying results
 
 ### Getting Started
 
-- [Getting Started with
-  couplr](https://gcol33.github.io/couplr/articles/getting-started.md):
+- [Quick
+  Start](https://gcol33.github.io/couplr/articles/getting-started.md):
 
 ### Deep Dives
 
-- [Algorithm Details and Mathematical
-  Foundations](https://gcol33.github.io/couplr/articles/algorithms.md):
-- [Matching Workflows: From Data to
-  Publication](https://gcol33.github.io/couplr/articles/matching-workflows.md):
-- [Optimal Matching in Science: From Theory to
-  Practice](https://gcol33.github.io/couplr/articles/pixel-morphing.md):
+- [Theory and
+  Algorithms](https://gcol33.github.io/couplr/articles/algorithms.md):
+- [Matching
+  Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md):
+- [Advanced
+  Topics](https://gcol33.github.io/couplr/articles/pixel-morphing.md):

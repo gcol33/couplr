@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Optimal Matching in Science: From Theory to Practice • couplr</title>
+<title>Advanced Topics • couplr</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Optimal Matching in Science: From Theory to Practice">
+<meta property="og:title" content="Advanced Topics">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -55,6 +55,14 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/gcol33/couplr" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
@@ -69,11 +77,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Optimal Matching in Science: From Theory to Practice</h1>
+      <h1>Advanced Topics</h1>
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2025-11-25</h4>
+            <h4 data-toc-skip class="date">2025-11-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/pixel-morphing.Rmd" class="external-link"><code>vignettes/pixel-morphing.Rmd</code></a></small>
       <div class="d-none name"><code>pixel-morphing.Rmd</code></div>
@@ -1440,34 +1448,29 @@ hierarchical decomposition, resolution reduction</li>
 <strong>Same math, different domains</strong>: Pixels, particles,
 plots, and atoms all use the same algorithms</li>
 </ol>
-<p><strong>What’s Next?</strong></p>
-<table class="table">
-<thead><tr class="header">
-<th>If you want to…</th>
-<th>Read…</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Solve basic assignment problems</td>
-<td><code><a href="../articles/getting-started.html">vignette("getting-started")</a></code></td>
-</tr>
-<tr class="even">
-<td>Match observations in studies</td>
-<td><code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code></td>
-</tr>
-<tr class="odd">
-<td>Understand algorithm internals</td>
-<td><code><a href="../articles/algorithms.html">vignette("algorithms")</a></code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Function reference</strong>: <code><a href="../reference/lap_solve.html">?lap_solve</a></code>,
-<code><a href="../reference/match_couples.html">?match_couples</a></code>, <code><a href="../reference/greedy_couples.html">?greedy_couples</a></code></p>
 <p>The same algorithms that morph images smoothly also track particles
 in physics, align molecules in chemistry, and match vegetation plots in
 ecology. Together, the methods in <code>couplr</code> let you move
 between exact optimal matchings and principled approximations, depending
 on problem size and accuracy requirements.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/getting-started.html">vignette("getting-started")</a></code> - Basic LAP solving</li>
+<li>
+<code><a href="../articles/algorithms.html">vignette("algorithms")</a></code> - Mathematical foundations</li>
+<li>
+<code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> - Production matching
+pipelines</li>
+<li>
+<code><a href="../reference/lap_solve.html">?lap_solve</a></code>, <code><a href="../reference/match_couples.html">?match_couples</a></code>,
+<code><a href="../reference/greedy_couples.html">?greedy_couples</a></code>
+</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

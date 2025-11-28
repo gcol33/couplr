@@ -1,4 +1,4 @@
-# Matching Workflows: From Data to Publication
+# Matching Workflows
 
 ## Overview
 
@@ -228,7 +228,7 @@ summary(result$pairs$distance)
 
 # Visualize match quality
 ggplot(result$pairs, aes(x = distance)) +
-  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+  geom_histogram(bins = 30, fill = "#29abe0", alpha = 0.7) +
   labs(
     title = "Distribution of Match Distances",
     x = "Euclidean Distance (scaled)",
@@ -472,14 +472,14 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 51.38 seconds
+#>   Time: 51.607 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.969 seconds
+#>   Time: 1.977 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
@@ -566,7 +566,7 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted    0.082        0.0912          18.24
+#> elapsed    sorted    0.083        0.0912          18.24
 #> elapsed1 row_best    0.077        0.0968          19.36
 #> elapsed2       pq    0.084        0.0912          18.24
 ```
@@ -1000,8 +1000,8 @@ balance_comparison <- bind_rows(
 
 ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
   geom_col(position = "dodge") +
-  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "darkgreen") +
-  geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "orange") +
+  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b") +
+  geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c") +
   labs(
     title = "Covariate Balance Before and After Matching",
     x = "Variable",
@@ -1475,16 +1475,17 @@ training evaluation example:
 refinement
 loop](matching-workflows_files/figure-html/workflow-diagram-1.png)
 
-**What’s Next?**
+------------------------------------------------------------------------
 
-| If you want to…                 | Read…                                                                                                                   |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| Understand LAP algorithms       | [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md)                                      |
-| Handle very large n (\> 10,000) | [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) for approximation strategies |
-| Learn basic assignment          | [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md)                            |
+## See Also
 
-**Function reference**:
-[`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
-[`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md),
-[`?balance_diagnostics`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md),
-[`?matchmaker`](https://gcol33.github.io/couplr/reference/matchmaker.md)
+- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+  Basic LAP solving
+- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+  Mathematical foundations
+- [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) -
+  Large-scale approximation strategies
+- [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
+  [`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md),
+  [`?balance_diagnostics`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md),
+  [`?matchmaker`](https://gcol33.github.io/couplr/reference/matchmaker.md)

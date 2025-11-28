@@ -103,7 +103,7 @@ Only assignments along tight edges can be optimal. This principle underlies most
 
 The LAP corresponds to finding a minimum-weight perfect matching in a weighted bipartite graph:
 
-```{r bipartite-graph, fig.width=7, fig.height=5, echo=FALSE}
+```{r bipartite-graph, fig.width=8, fig.height=6, echo=FALSE}
 library(ggplot2)
 
 nodes <- data.frame(
@@ -130,42 +130,43 @@ ggplot() +
   # Non-optimal edges
   geom_segment(data = edges_nonopt,
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
-               color = "#aaa49b", linewidth = 0.8, alpha = 0.6) +
+               color = "#aaa49b", linewidth = 1.2, alpha = 0.6) +
   # Optimal edges
   geom_segment(data = edges_opt,
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
-               color = "#93c54b", linewidth = 1.8) +
+               color = "#93c54b", linewidth = 2.5) +
   # Non-optimal edge labels
-
   geom_label(data = edges_nonopt,
              aes(x = (from_x + to_x) / 2, y = (from_y + to_y) / 2, label = cost),
-             size = 3.5, label.padding = unit(0.15, "lines"),
+             size = 5, label.padding = unit(0.3, "lines"),
              fill = "#dfd9d2", color = "#3e3f3a") +
   # Optimal edge labels
   geom_label(data = edges_opt,
              aes(x = (from_x + to_x) / 2, y = (from_y + to_y) / 2, label = cost),
-             size = 3.5, label.padding = unit(0.15, "lines"),
-             fill = "#93c54b", color = "white") +
+             size = 5, label.padding = unit(0.3, "lines"),
+             fill = "#93c54b", color = "white", fontface = "bold") +
   # Nodes
-  geom_point(data = nodes, aes(x = x, y = y, color = type), size = 12) +
+  geom_point(data = nodes, aes(x = x, y = y, color = type), size = 18) +
   geom_text(data = nodes, aes(x = x, y = y, label = name),
-            color = "white", fontface = "bold", size = 4) +
+            color = "white", fontface = "bold", size = 6) +
   scale_color_manual(values = c("Source" = "#f47c3c", "Target" = "#29abe0")) +
   labs(title = "Assignment Problem as Bipartite Graph",
        subtitle = "Optimal assignment shown in green (total cost = 5)",
        color = "") +
   theme_minimal() +
   theme(legend.position = "bottom",
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        plot.subtitle = element_text(hjust = 0.5),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        plot.subtitle = element_text(hjust = 0.5, size = 11),
         axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
         plot.background = element_rect(fill = "transparent", color = NA),
         panel.background = element_rect(fill = "transparent", color = NA),
         legend.background = element_rect(fill = "transparent", color = NA),
-        legend.box.background = element_rect(fill = "transparent", color = NA)) +
-  coord_fixed(ratio = 0.8)
+        legend.box.background = element_rect(fill = "transparent", color = NA),
+        legend.text = element_text(size = 11),
+        plot.margin = margin(15, 25, 15, 25)) +
+  coord_cartesian(xlim = c(-0.4, 2.4), ylim = c(0.5, 3.5))
 ```
 
 The optimal solution (green edges) assigns S1→T1, S2→T2, S3→T3 with total cost 2 + 1 + 2 = 5.
@@ -174,7 +175,7 @@ The optimal solution (green edges) assigns S1→T1, S2→T2, S3→T3 with total 
 
 ## Algorithm Selection Guide
 
-```{r decision-flowchart, fig.width=8, fig.height=5, echo=FALSE, fig.alt="Flowchart showing algorithm selection based on cost matrix properties"}
+```{r decision-flowchart, fig.width=9, fig.height=6, echo=FALSE, fig.alt="Flowchart showing algorithm selection based on cost matrix properties"}
 library(ggplot2)
 
 nodes <- data.frame(
@@ -199,28 +200,29 @@ edges <- data.frame(
 ggplot() +
   geom_segment(data = edges,
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
-               arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
-               color = "#3e3f3a", linewidth = 0.7) +
+               arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+               color = "#3e3f3a", linewidth = 1) +
   geom_text(data = edges, aes(x = label_x, y = label_y, label = label),
-            size = 3, color = "#3e3f3a", fontface = "italic") +
+            size = 4.5, color = "#3e3f3a", fontface = "italic") +
   geom_point(data = nodes[nodes$type == "question", ],
-             aes(x = x, y = y), shape = 23, size = 18,
-             fill = "#ffc107", color = "#f47c3c", stroke = 1.5) +
+             aes(x = x, y = y), shape = 23, size = 24,
+             fill = "#ffc107", color = "#f47c3c", stroke = 2) +
   geom_text(data = nodes[nodes$type == "question", ],
-            aes(x = x, y = y, label = label), size = 3, lineheight = 0.85,
+            aes(x = x, y = y, label = label), size = 4, lineheight = 0.9,
             color = "#3e3f3a") +
   geom_label(data = nodes[nodes$type == "answer", ],
-             aes(x = x, y = y, label = label), size = 3.5, fontface = "bold",
+             aes(x = x, y = y, label = label), size = 5, fontface = "bold",
              fill = "#93c54b", color = "white",
-             label.padding = unit(0.35, "lines"), label.r = unit(0.2, "lines")) +
+             label.padding = unit(0.5, "lines"), label.r = unit(0.25, "lines")) +
   labs(title = "Algorithm Selection Decision Tree") +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
         axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
         plot.background = element_rect(fill = "transparent", color = NA),
-        panel.background = element_rect(fill = "transparent", color = NA)) +
+        panel.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = margin(15, 30, 15, 30)) +
   coord_cartesian(xlim = c(1, 8), ylim = c(0.5, 4.5))
 ```
 

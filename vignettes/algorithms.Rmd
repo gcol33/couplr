@@ -113,14 +113,24 @@ nodes <- data.frame(
   type = c("Source", "Source", "Source", "Target", "Target", "Target")
 )
 
+# Edge data with explicit from/to names for clarity
 edges <- data.frame(
   from_x = c(0, 0, 0, 0, 0, 0),
   from_y = c(3, 3, 2, 2, 1, 1),
   to_x = c(2, 2, 2, 2, 2, 2),
   to_y = c(3, 2, 2, 3, 3, 1),
   cost = c(2, 4, 1, 3, 3, 2),
+  from_node = c("S1", "S1", "S2", "S2", "S3", "S3"),
+  to_node = c("T1", "T2", "T2", "T1", "T1", "T3"),
   optimal = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE)
 )
+
+# Offset labels to avoid overlap - position along edge path
+edges$label_x <- (edges$from_x + edges$to_x) / 2
+edges$label_y <- (edges$from_y + edges$to_y) / 2
+# Nudge crossing edges' labels to reduce overlap
+edges$label_y[4] <- edges$label_y[4] + 0.15  # S2→T1
+edges$label_y[5] <- edges$label_y[5] - 0.15  # S3→T1
 
 # Split edges for separate styling
 edges_opt <- edges[edges$optimal, ]
@@ -135,14 +145,15 @@ ggplot() +
   geom_segment(data = edges_opt,
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
                color = "#93c54b", linewidth = 2.5) +
-  # Non-optimal edge labels
+  # Non-optimal edge labels (show connection explicitly)
   geom_label(data = edges_nonopt,
-             aes(x = (from_x + to_x) / 2, y = (from_y + to_y) / 2, label = cost),
-             size = 5, label.padding = unit(0.3, "lines"),
+             aes(x = label_x, y = label_y,
+                 label = paste0(from_node, "\u2192", to_node, ": ", cost)),
+             size = 3.5, label.padding = unit(0.2, "lines"),
              fill = "#dfd9d2", color = "#3e3f3a") +
   # Optimal edge labels
   geom_label(data = edges_opt,
-             aes(x = (from_x + to_x) / 2, y = (from_y + to_y) / 2, label = cost),
+             aes(x = label_x, y = label_y, label = cost),
              size = 5, label.padding = unit(0.3, "lines"),
              fill = "#93c54b", color = "white", fontface = "bold") +
   # Nodes

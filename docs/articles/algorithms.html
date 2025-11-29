@@ -602,45 +602,46 @@ different (but equally optimal) solutions across algorithms</p>
 <th>Hungarian</th>
 <th>JV</th>
 <th>Auction</th>
-<th>SAP</th>
-<th>HK01</th>
+<th>SAP*</th>
+<th>HK01**</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td>&lt; 100</td>
-<td>✓✓✓</td>
-<td>✓✓✓</td>
-<td>✓✓</td>
-<td>✓†</td>
-<td>✓‡</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Good</td>
+<td>Good</td>
+<td>Good</td>
 </tr>
 <tr class="even">
 <td>100-500</td>
-<td>✓✓</td>
-<td>✓✓✓</td>
-<td>✓✓</td>
-<td>✓✓†</td>
-<td>✓✓‡</td>
+<td>Good</td>
+<td>Excellent</td>
+<td>Good</td>
+<td>Excellent</td>
+<td>Excellent</td>
 </tr>
 <tr class="odd">
 <td>500-2000</td>
-<td>✓</td>
-<td>✓✓✓</td>
-<td>✓✓✓</td>
-<td>✓✓✓†</td>
-<td>✓✓✓‡</td>
+<td>Slow</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Excellent</td>
 </tr>
 <tr class="even">
 <td>&gt; 2000</td>
-<td>✗</td>
-<td>✓✓</td>
-<td>✓✓✓</td>
-<td>✓✓✓†</td>
-<td>✓✓✓‡</td>
+<td>Too slow</td>
+<td>Good</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Excellent</td>
 </tr>
 </tbody>
 </table>
-<p>† For sparse problems | ‡ For binary costs only</p>
+<p>* SAP only for sparse problems (&gt;50% forbidden entries) ** HK01
+only for binary costs (0/1)</p>
 <hr>
 </div>
 <div class="section level3">

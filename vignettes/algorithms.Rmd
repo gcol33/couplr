@@ -123,8 +123,8 @@ edges <- data.frame(
 )
 
 # Position labels along edge path (t=0 is source, t=1 is target)
-# Shift overlapping labels by varying t
-edges$t <- c(0.5, 0.5, 0.5, 0.35, 0.65, 0.5)  # S2→T1 at 0.35, S3→T1 at 0.65
+# Shift overlapping labels to avoid crossings
+edges$t <- c(0.5, 0.5, 0.5, 0.2, 0.8, 0.5)  # S2→T1 near source, S3→T1 near target
 edges$label_x <- edges$from_x + edges$t * (edges$to_x - edges$from_x)
 edges$label_y <- edges$from_y + edges$t * (edges$to_y - edges$from_y)
 

@@ -450,14 +450,15 @@ cat("Feasible:", feasible, "\n")
 
 ## Performance Summary
 
-| Size | Hungarian | JV | Auction | SAP | HK01 |
+| Size | Hungarian | JV | Auction | SAP* | HK01** |
 |------|-----------|----|---------|----|------|
-| < 100 | ✓✓✓ | ✓✓✓ | ✓✓ | ✓† | ✓‡ |
-| 100-500 | ✓✓ | ✓✓✓ | ✓✓ | ✓✓† | ✓✓‡ |
-| 500-2000 | ✓ | ✓✓✓ | ✓✓✓ | ✓✓✓† | ✓✓✓‡ |
-| > 2000 | ✗ | ✓✓ | ✓✓✓ | ✓✓✓† | ✓✓✓‡ |
+| < 100 | Excellent | Excellent | Good | Good | Good |
+| 100-500 | Good | Excellent | Good | Excellent | Excellent |
+| 500-2000 | Slow | Excellent | Excellent | Excellent | Excellent |
+| > 2000 | Too slow | Good | Excellent | Excellent | Excellent |
 
-† For sparse problems | ‡ For binary costs only
+\* SAP only for sparse problems (>50% forbidden entries)
+\*\* HK01 only for binary costs (0/1)
 
 ---
 

@@ -25,7 +25,5 @@ left <- data.frame(id = 1:3, x = c(1, 2, 3))
 right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 dist_obj <- compute_distances(left, right, vars = "x")
 is_distance_object(dist_obj)  # TRUE
-#> [1] TRUE
 is_distance_object(list())    # FALSE
-#> [1] FALSE
 ```

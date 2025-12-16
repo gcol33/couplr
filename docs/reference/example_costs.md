@@ -33,46 +33,10 @@ A list containing several example cost matrices:
 ``` r
 # Use simple example
 lap_solve(example_costs$simple_3x3)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      2     2
-#> 2      2      1     3
-#> 3      3      3     4
-#> 
-#> Total cost: 9 
-#> Method: bruteforce 
 
 # Rectangular problem
 lap_solve(example_costs$rectangular_3x5)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      1     1
-#> 2      2      5     2
-#> 3      3      2     3
-#> 
-#> Total cost: 6 
-#> Method: bruteforce 
 
 # With forbidden assignments
 lap_solve(example_costs$sparse_with_na)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      2     2
-#> 2      2      1     3
-#> 3      3      3     4
-#> 
-#> Total cost: 9 
-#> Method: bruteforce 
 ```

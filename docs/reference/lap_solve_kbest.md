@@ -83,37 +83,6 @@ A tibble with columns:
 # Matrix input - find 5 best solutions
 cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), nrow = 3)
 lap_solve_kbest(cost, k = 5)
-#> K-Best Assignment Results
-#> =========================
-#> 
-#> Number of solutions: 5 
-#> 
-#> Solution costs:
-#>   Rank 1: 9.0000
-#>   Rank 2: 11.0000
-#>   Rank 3: 13.0000
-#>   Rank 4: 15.0000
-#>   Rank 5: 15.0000
-#> 
-#> Assignments:
-#> # A tibble: 15 × 6
-#>     rank solution_id source target  cost total_cost
-#>    <int>       <int>  <int>  <int> <dbl>      <dbl>
-#>  1     1           1      1      2     3          9
-#>  2     1           1      2      1     2          9
-#>  3     1           1      3      3     4          9
-#>  4     2           2      1      1     4         11
-#>  5     2           2      2      2     3         11
-#>  6     2           2      3      3     4         11
-#>  7     3           3      1      2     3         13
-#>  8     3           3      2      3     5         13
-#>  9     3           3      3      1     5         13
-#> 10     4           4      1      1     4         15
-#> 11     4           4      2      3     5         15
-#> 12     4           4      3      2     6         15
-#> 13     5           5      1      3     7         15
-#> 14     5           5      2      1     2         15
-#> 15     5           5      3      2     6         15
 
 # Data frame input
 library(dplyr)
@@ -123,53 +92,7 @@ df <- tibble(
   cost = c(4, 2, 5, 3, 3, 6, 7, 5, 4)
 )
 lap_solve_kbest(df, k = 3, source, target, cost)
-#> K-Best Assignment Results
-#> =========================
-#> 
-#> Number of solutions: 3 
-#> 
-#> Solution costs:
-#>   Rank 1: 9.0000
-#>   Rank 2: 11.0000
-#>   Rank 3: 13.0000
-#> 
-#> Assignments:
-#> # A tibble: 9 × 6
-#>    rank solution_id source target  cost total_cost
-#>   <int>       <int>  <int>  <int> <dbl>      <dbl>
-#> 1     1           1      1      2     2          9
-#> 2     1           1      2      1     3          9
-#> 3     1           1      3      3     4          9
-#> 4     2           2      1      1     4         11
-#> 5     2           2      2      2     3         11
-#> 6     2           2      3      3     4         11
-#> 7     3           3      1      3     5         13
-#> 8     3           3      2      1     3         13
-#> 9     3           3      3      2     5         13
 
 # With maximization
 lap_solve_kbest(cost, k = 3, maximize = TRUE)
-#> K-Best Assignment Results
-#> =========================
-#> 
-#> Number of solutions: 3 
-#> 
-#> Solution costs:
-#>   Rank 1: 15.0000
-#>   Rank 2: 15.0000
-#>   Rank 3: 11.0000
-#> 
-#> Assignments:
-#> # A tibble: 9 × 6
-#>    rank solution_id source target  cost total_cost
-#>   <int>       <int>  <int>  <int> <dbl>      <dbl>
-#> 1     1           1      1      3     7         15
-#> 2     1           1      2      2     3         15
-#> 3     1           1      3      1     5         15
-#> 4     2           2      1      1     4         15
-#> 5     2           2      2      3     5         15
-#> 6     2           2      3      2     6         15
-#> 7     3           3      1      1     4         11
-#> 8     3           3      2      2     3         11
-#> 9     3           3      3      3     4         11
 ```

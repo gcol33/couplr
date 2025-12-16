@@ -116,52 +116,24 @@ to a subset of the m targets, minimizing total distance. The DP recurrence is:</
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Square case: equal number of sources and targets</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">3.2</span>, <span class="fl">5.1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.0</span>, <span class="fl">3.0</span>, <span class="fl">5.5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L1"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1-D Line Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ===========================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignments (1-based):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 1 -&gt; Target 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 2 -&gt; Target 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 3 -&gt; Target 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 1.1 </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Rectangular case: more targets than sources</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.0</span>, <span class="fl">3.0</span>, <span class="fl">5.0</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">2.0</span>, <span class="fl">3.5</span>, <span class="fl">4.5</span>, <span class="fl">6.0</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L2"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1-D Line Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ===========================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignments (1-based):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 1 -&gt; Target 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 2 -&gt; Target 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 3 -&gt; Target 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 0.75 </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With unsorted inputs (will be sorted internally)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.0</span>, <span class="fl">1.0</span>, <span class="fl">3.0</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.5</span>, <span class="fl">0.5</span>, <span class="fl">6.0</span>, <span class="fl">2.0</span>, <span class="fl">3.5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L1"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1-D Line Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ===========================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignments (1-based):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 1 -&gt; Target 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 2 -&gt; Target 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Source 3 -&gt; Target 5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 1.5 </span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># Square case: equal number of sources and targets</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">3.2</span>, <span class="fl">5.1</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.0</span>, <span class="fl">3.0</span>, <span class="fl">5.5</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L1"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Rectangular case: more targets than sources</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.0</span>, <span class="fl">3.0</span>, <span class="fl">5.0</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">2.0</span>, <span class="fl">3.5</span>, <span class="fl">4.5</span>, <span class="fl">6.0</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L2"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># With unsorted inputs (will be sorted internally)</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.0</span>, <span class="fl">1.0</span>, <span class="fl">3.0</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.5</span>, <span class="fl">0.5</span>, <span class="fl">6.0</span>, <span class="fl">2.0</span>, <span class="fl">3.5</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">lap_solve_line_metric</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, cost <span class="op">=</span> <span class="st">"L1"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

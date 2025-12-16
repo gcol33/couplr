@@ -163,90 +163,19 @@ for introductory tutorial
 ``` r
 # Basic assignment: assign nurses to shifts minimizing cost
 lap_solve(hospital_staff$basic_costs)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 10 × 3
-#>    source target  cost
-#>     <int>  <int> <dbl>
-#>  1      1      8     2
-#>  2      2      2     2
-#>  3      3      7     2
-#>  4      4      4     2
-#>  5      5      9     2
-#>  6      6     10     3
-#>  7      7      1     2
-#>  8      8      3     2
-#>  9      9      6     3
-#> 10     10      5     2
-#> 
-#> Total cost: 22 
-#> Method: hungarian 
 
 # Maximize preferences instead
 lap_solve(hospital_staff$preferences, maximize = TRUE)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 10 × 3
-#>    source target  cost
-#>     <int>  <int> <dbl>
-#>  1      1      8     9
-#>  2      2      2     9
-#>  3      3      7     9
-#>  4      4      4     9
-#>  5      5      9     9
-#>  6      6     10     8
-#>  7      7      1     9
-#>  8      8      3     9
-#>  9      9      6     8
-#> 10     10      5     9
-#> 
-#> Total cost: 88 
-#> Method: hungarian 
 
 # Data frame workflow
 library(dplyr)
 hospital_staff$schedule_df |>
   lap_solve(nurse_id, shift_id, cost)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 10 × 3
-#>    source target  cost
-#>     <int>  <int> <dbl>
-#>  1      1      8     2
-#>  2      2      2     2
-#>  3      3      7     2
-#>  4      4      4     2
-#>  5      5      9     2
-#>  6      6     10     3
-#>  7      7      1     2
-#>  8      8      3     2
-#>  9      9      6     3
-#> 10     10      5     2
-#> 
-#> Total cost: 22 
-#> Method: hungarian 
 
 # Batch solve weekly schedule
 hospital_staff$weekly_df |>
   group_by(day) |>
   lap_solve(nurse_id, shift_id, cost)
-#> # A tibble: 50 × 4
-#>    day    source target  cost
-#>    <fct>   <int>  <int> <dbl>
-#>  1 Monday      1      1     2
-#>  2 Monday      2      9     2
-#>  3 Monday      3      3     1
-#>  4 Monday      4      4     0
-#>  5 Monday      5      5     2
-#>  6 Monday      6      6     1
-#>  7 Monday      7      8     4
-#>  8 Monday      8     10     1
-#>  9 Monday      9      2     4
-#> 10 Monday     10      7     1
-#> # ℹ 40 more rows
 
 # Matching workflow: match full-time to part-time nurses
 match_couples(
@@ -255,30 +184,4 @@ match_couples(
   vars = c("age", "experience_years", "certification_level"),
   auto_scale = TRUE
 )
-#> Auto-selected scaling method: standardize
-#> Matching Result
-#> ===============
-#> 
-#> Method: lap 
-#> Pairs matched: 200 
-#> Unmatched (left): 0 
-#> Unmatched (right): 100 
-#> Total distance: 59.9496 
-#> 
-#> Matched pairs:
-#> # A tibble: 200 × 6
-#>    left_id right_id  distance .age_diff .experience_years_diff
-#>    <chr>   <chr>        <dbl>     <dbl>                  <dbl>
-#>  1 left_1  right_60     0.217        -1                      1
-#>  2 left_2  right_94     0.175         2                      0
-#>  3 left_3  right_12     0             0                      0
-#>  4 left_4  right_253    0.530        -4                      2
-#>  5 left_5  right_262    0.481        -5                      1
-#>  6 left_6  right_73     0             0                      0
-#>  7 left_7  right_296    0.199         0                      1
-#>  8 left_8  right_92     0.262         3                      0
-#>  9 left_9  right_151    0.477        -3                      2
-#> 10 left_10 right_247    0             0                      0
-#> # ℹ 190 more rows
-#> # ℹ 1 more variable: .certification_level_diff <int>
 ```

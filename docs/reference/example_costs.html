@@ -81,52 +81,15 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Use simple example</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">simple_3x3</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> =================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   source target  cost</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1      2     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      2      1     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      3      3     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Method: bruteforce </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Rectangular problem</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">rectangular_3x5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> =================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   source target  cost</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1      1     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      2      5     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      3      2     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 6 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Method: bruteforce </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With forbidden assignments</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">sparse_with_na</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assignment Result</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> =================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   source target  cost</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1      2     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      2      1     3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      3      3     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total cost: 9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Method: bruteforce </span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># Use simple example</span></span>
+<span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">simple_3x3</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Rectangular problem</span></span>
+<span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">rectangular_3x5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># With forbidden assignments</span></span>
+<span><span class="fu"><a href="lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">example_costs</span><span class="op">$</span><span class="va">sparse_with_na</span><span class="op">)</span></span>
+<span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

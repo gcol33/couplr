@@ -14,8 +14,9 @@
 #' @param maximize Logical; if `TRUE`, maximizes the total cost instead of minimizing.
 #' @param method Character string indicating the algorithm to use.
 #'   One of `"auto"`, `"jv"`, `"hungarian"`, `"auction"`, `"auction_gs"`,
-#'   `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, or `"bruteforce"`.
+#'   `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, `"lapmod"`, or `"bruteforce"`.
 #'   `"ssp"` is accepted as an alias for `"sap"`.
+#'   `"lapmod"` is a sparse variant of JV, faster for large matrices with >50% NA/Inf.
 #' @param auction_eps Optional numeric epsilon for the Auction/Auction-GS methods.
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
 #' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
@@ -36,7 +37,8 @@
 #' \itemize{
 #'   \item Very small (n≤8): `"bruteforce"` — exact enumeration
 #'   \item Binary/constant costs: `"hk01"` — specialized for 0/1 costs
-#'   \item Sparse (>50\% NA) or very rectangular (m≥3n): `"sap"` — handles sparsity
+#'   \item Large sparse (n>100, >50\% NA/Inf): `"lapmod"` — sparse JV variant
+#'   \item Sparse or very rectangular: `"sap"` — handles sparsity well
 #'   \item Small-medium (8<n≤50): `"hungarian"` — provides exact dual solutions
 #'   \item Medium (50<n≤75): `"jv"` — fast general-purpose solver
 #'   \item Large (n>75): `"auction_scaled"` — fastest for large dense problems
@@ -52,7 +54,7 @@
 assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce",
-                                  "ssap_bucket","cycle_cancel","gabow_tarjan"),
+                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod"),
                        auction_eps = NULL, eps = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
@@ -97,9 +99,18 @@ assignment <- function(cost, maximize = FALSE,
     } else if (hk01_candidate(cost)) {
       method <- "hk01"
     } else {
-      na_rate <- mean(is.na(cost))
+      # Count NA and Inf as sparse entries
+      na_rate <- mean(is.na(cost) | is.infinite(cost))
       # Sparse or very rectangular problems
-      if (na_rate > 0.5 || m >= 3 * n) {
+      if (na_rate > 0.5) {
+        # Large sparse: use LAPMOD (sparse JV variant)
+        if (n > 100) {
+          method <- "lapmod"
+        } else {
+          method <- "sap"
+        }
+      } else if (m >= 3 * n) {
+        # Very rectangular: SAP handles this well
         method <- "sap"
       } else if (n <= 50) {
         # Small-medium: Hungarian provides exact dual solutions
@@ -136,6 +147,7 @@ assignment <- function(cost, maximize = FALSE,
     "ssap_bucket"   = lap_solve_ssap_bucket(work, maximize),
     "cycle_cancel"  = lap_solve_cycle_cancel(work, maximize),
     "gabow_tarjan"  = lap_solve_gabow_tarjan(work, maximize),
+    "lapmod"        = lap_solve_lapmod(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
 
@@ -160,7 +172,7 @@ assignment <- function(cost, maximize = FALSE,
   out
 }
 
-n# ==============================================================================
+# ==============================================================================
 # Tidy LAP Interface (User-Facing)
 # ==============================================================================
 # This section contains lap_solve() and related tidy wrappers.
@@ -535,6 +547,124 @@ print.lap_line_metric_result <- function(x, ...) {
   }
   
   cat("\nTotal cost:", x$total_cost, "\n")
+  invisible(x)
+}
+
+# ==============================================================================
+# Bottleneck Assignment Problem (BAP) Solver
+# ==============================================================================
+
+#' Solve the Bottleneck Assignment Problem
+#'
+#' Finds an assignment that minimizes (or maximizes) the maximum edge cost
+#' in a perfect matching. Unlike standard LAP which minimizes the sum of costs,
+#' BAP minimizes the maximum (bottleneck) cost.
+#'
+#' @param cost Numeric matrix; rows = tasks, columns = agents. `NA` or `Inf`
+#'   entries are treated as forbidden assignments.
+#' @param maximize Logical; if `TRUE`, maximizes the minimum edge cost instead
+#'   of minimizing the maximum (maximin objective). Default is `FALSE` (minimax).
+#'
+#' @return A list with class `"bottleneck_result"` containing:
+#'   \itemize{
+#'     \item `match` - integer vector of length `nrow(cost)` giving the
+#'           assigned column for each row (1-based indexing)
+#'     \item `bottleneck` - numeric scalar, the bottleneck (max/min edge) value
+#'     \item `status` - character scalar, e.g. `"optimal"`
+#'   }
+#'
+#' @details
+#' The Bottleneck Assignment Problem (BAP) is a variant of the Linear Assignment
+#' Problem where instead of minimizing the sum of assignment costs, we minimize
+#' the maximum cost among all assignments (minimax objective).
+#'
+#' **Algorithm:**
+#' Uses binary search on the sorted unique costs combined with Hopcroft-Karp
+#' bipartite matching to find the minimum threshold that allows a perfect matching.
+#'
+#' **Complexity:** O(E * sqrt(V) * log(unique costs)) where E = edges, V = vertices.
+#'
+#' **Applications:**
+#' \itemize{
+#'   \item Task scheduling with deadline constraints (minimize latest completion)
+#'   \item Resource allocation (minimize maximum load/distance)
+#'   \item Network routing (minimize maximum link utilization)
+#'   \item Fair division problems (minimize maximum disparity)
+#' }
+#'
+#' @examples
+#' # Simple example: minimize max cost
+#' cost <- matrix(c(1, 5, 3,
+#'                  2, 4, 6,
+#'                  7, 1, 2), nrow = 3, byrow = TRUE)
+#' result <- bottleneck_assignment(cost)
+#' result$bottleneck  # Maximum edge cost in optimal assignment
+#'
+#' # Maximize minimum (fair allocation)
+#' profits <- matrix(c(10, 5, 8,
+#'                     6, 12, 4,
+#'                     3, 7, 11), nrow = 3, byrow = TRUE)
+#' result <- bottleneck_assignment(profits, maximize = TRUE)
+#' result$bottleneck  # Minimum profit among all assignments
+#'
+#' # With forbidden assignments
+#' cost <- matrix(c(1, NA, 3,
+#'                  2, 4, Inf,
+#'                  5, 1, 2), nrow = 3, byrow = TRUE)
+#' result <- bottleneck_assignment(cost)
+#'
+#' @seealso [assignment()] for standard LAP (sum objective), [lap_solve()] for
+#'   tidy LAP interface
+#'
+#' @export
+bottleneck_assignment <- function(cost, maximize = FALSE) {
+  cost <- as.matrix(cost)
+
+  if (any(is.nan(cost))) {
+    stop("NaN not allowed in `cost`")
+  }
+
+  n <- nrow(cost)
+  m <- ncol(cost)
+
+  if (n == 0 || m == 0) {
+    stop("Cost matrix must have at least one row and one column.")
+  }
+
+  if (n > m) {
+    stop("Bottleneck assignment requires nrow <= ncol. ",
+         "Got ", n, " rows and ", m, " columns.")
+  }
+
+  # Call C++ implementation
+  res_raw <- lap_solve_bottleneck(cost, maximize)
+
+  out <- list(
+    match = as.integer(res_raw$match),
+    bottleneck = as.numeric(res_raw$total_cost),
+    status = "optimal"
+  )
+  class(out) <- "bottleneck_result"
+  out
+}
+
+#' @export
+print.bottleneck_result <- function(x, ...) {
+  cat("Bottleneck Assignment Result\n")
+  cat("============================\n\n")
+
+  n <- length(x$match)
+  cat("Assignments (1-based indices):\n")
+  for (i in seq_len(min(n, 10))) {
+    cat(sprintf("  Row %d -> Column %d\n", i, x$match[i]))
+  }
+  if (n > 10) {
+    cat(sprintf("  ... (%d more assignments)\n", n - 10))
+  }
+
+  cat("\nBottleneck value:", x$bottleneck, "\n")
+  cat("Status:", x$status, "\n")
+
   invisible(x)
 }
 

@@ -215,6 +215,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_solve_lapmod
+Rcpp::List lap_solve_lapmod(Rcpp::NumericMatrix cost, bool maximize);
+RcppExport SEXP _couplr_lap_solve_lapmod(SEXP costSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_lapmod(cost, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_solve_bottleneck
+Rcpp::List lap_solve_bottleneck(Rcpp::NumericMatrix cost, bool maximize);
+RcppExport SEXP _couplr_lap_solve_bottleneck(SEXP costSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_bottleneck(cost, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // greedy_matching_sorted
 Rcpp::List greedy_matching_sorted(Rcpp::NumericMatrix cost_matrix, bool maximize);
 RcppExport SEXP _couplr_greedy_matching_sorted(SEXP cost_matrixSEXP, SEXP maximizeSEXP) {
@@ -540,6 +564,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_line_metric_cpp", (DL_FUNC) &_couplr_lap_solve_line_metric_cpp, 4},
     {"_couplr_lap_solve_ssap_bucket", (DL_FUNC) &_couplr_lap_solve_ssap_bucket, 2},
     {"_couplr_lap_solve_gabow_tarjan", (DL_FUNC) &_couplr_lap_solve_gabow_tarjan, 2},
+    {"_couplr_lap_solve_lapmod", (DL_FUNC) &_couplr_lap_solve_lapmod, 2},
+    {"_couplr_lap_solve_bottleneck", (DL_FUNC) &_couplr_lap_solve_bottleneck, 2},
     {"_couplr_greedy_matching_sorted", (DL_FUNC) &_couplr_greedy_matching_sorted, 2},
     {"_couplr_greedy_matching_row_best", (DL_FUNC) &_couplr_greedy_matching_row_best, 2},
     {"_couplr_greedy_matching_pq", (DL_FUNC) &_couplr_greedy_matching_pq, 2},

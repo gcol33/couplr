@@ -8,7 +8,8 @@ assignment(
   cost,
   maximize = FALSE,
   method = c("auto", "jv", "hungarian", "auction", "auction_gs", "auction_scaled", "sap",
-    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan"),
+    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan",
+    "lapmod"),
   auction_eps = NULL,
   eps = NULL
 )
@@ -21,8 +22,9 @@ entries are treated as forbidden assignments.}
 
 \item{method}{Character string indicating the algorithm to use.
 One of \code{"auto"}, \code{"jv"}, \code{"hungarian"}, \code{"auction"}, \code{"auction_gs"},
-\code{"sap"}, \code{"ssp"}, \code{"csflow"}, \code{"hk01"}, or \code{"bruteforce"}.
-\code{"ssp"} is accepted as an alias for \code{"sap"}.}
+\code{"sap"}, \code{"ssp"}, \code{"csflow"}, \code{"hk01"}, \code{"lapmod"}, or \code{"bruteforce"}.
+\code{"ssp"} is accepted as an alias for \code{"sap"}.
+\code{"lapmod"} is a sparse variant of JV, faster for large matrices with >50\% NA/Inf.}
 
 \item{auction_eps}{Optional numeric epsilon for the Auction/Auction-GS methods.
 If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}
@@ -50,7 +52,8 @@ characteristics:
 \itemize{
 \item Very small (n≤8): \code{"bruteforce"} — exact enumeration
 \item Binary/constant costs: \code{"hk01"} — specialized for 0/1 costs
-\item Sparse (>50\\% NA) or very rectangular (m≥3n): \code{"sap"} — handles sparsity
+\item Large sparse (n>100, >50\\% NA/Inf): \code{"lapmod"} — sparse JV variant
+\item Sparse or very rectangular: \code{"sap"} — handles sparsity well
 \item Small-medium (8<n≤50): \code{"hungarian"} — provides exact dual solutions
 \item Medium (50<n≤75): \code{"jv"} — fast general-purpose solver
 \item Large (n>75): \code{"auction_scaled"} — fastest for large dense problems

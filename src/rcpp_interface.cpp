@@ -23,6 +23,8 @@ extern Rcpp::List greedy_matching_impl(Rcpp::NumericMatrix cost_matrix, bool max
 // Forward decls for LAP solvers (no [[Rcpp::export]] here)
 Rcpp::List solve_cycle_cancel_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_lapmod_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_bottleneck_impl(Rcpp::NumericMatrix cost, bool maximize);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
@@ -190,6 +192,16 @@ Rcpp::List lap_solve_ssap_bucket(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_gabow_tarjan(Rcpp::NumericMatrix cost, bool maximize) {
   return solve_gabow_tarjan_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_lapmod(Rcpp::NumericMatrix cost, bool maximize) {
+  return solve_lapmod_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_bottleneck(Rcpp::NumericMatrix cost, bool maximize) {
+  return solve_bottleneck_impl(cost, maximize);
 }
 
 // =======================

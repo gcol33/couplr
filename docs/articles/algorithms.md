@@ -126,6 +126,7 @@ properties](algorithms_files/figure-html/decision-flowchart-1.svg)
 | Auction | $`O(n^2 \log nC/\epsilon)`$ | Large dense (n \> 1000) | Small problems |
 | SAP | $`O(n^2 + nm)`$ | Sparse (\>50% forbidden) | Dense problems |
 | HK01 | $`O(n^{2.5})`$ | Binary costs only | Non-binary costs |
+| Gabow-Tarjan | $`O(n^3 \log C)`$ | Large integer cost ranges | Non-integer costs |
 
 ------------------------------------------------------------------------
 
@@ -308,7 +309,76 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ------------------------------------------------------------------------
 
-### 6. K-Best Solutions (Murty’s Algorithm)
+### 6. Gabow-Tarjan (Bit-Scaling)
+
+**Complexity**: $`O(n^3 \log C)`$ where $`C`$ is the maximum cost
+
+A sophisticated algorithm combining bit-scaling with Hungarian search
+(Gabow & Tarjan, 1989). Particularly effective for integer costs with
+large ranges.
+
+#### Key Concepts
+
+**Bit-scaling**: Process costs from most significant to least
+significant bit. At scale $`k`$, work with costs
+$`\lfloor c_{ij} / 2^k \rfloor`$.
+
+**1-feasibility**: Relaxed complementary slackness allowing slack of 1:
+``` math
+u_i + v_j \leq c_{ij} + 1 \quad \text{(all edges)}
+```
+``` math
+u_i + v_j \geq c_{ij} \quad \text{(matched edges)}
+```
+
+**Cost-length transformation**: Define edge lengths based on matching
+status:
+``` math
+\ell(i,j) = \begin{cases} c_{ij} & \text{if } (i,j) \text{ matched} \\ c_{ij} + 1 & \text{otherwise} \end{cases}
+```
+
+#### Algorithm Structure
+
+1.  **Initialize** at coarsest scale (highest bit)
+2.  **Refine** by doubling costs and restoring feasibility
+3.  **Hungarian search** for shortest augmenting paths
+4.  **Dual updates** maintain 1-feasibility throughout
+5.  **Repeat** until all bits processed
+
+#### Complexity Analysis
+
+- $`O(\log C)`$ scaling phases
+- $`O(n)`$ augmenting paths per phase
+- $`O(n^2)`$ per augmenting path (Hungarian search)
+- **Total**: $`O(n^3 \log C)`$
+
+#### When to Use
+
+- Integer costs with large ranges ($`C > 10^6`$)
+- When theoretical worst-case guarantees matter
+- Research and algorithmic comparisons
+
+``` r
+
+set.seed(42)
+n <- 50
+cost <- matrix(sample(1:10000, n * n, replace = TRUE), n, n)
+result <- lap_solve(cost, method = "gabow_tarjan")
+cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 16884
+```
+
+#### Comparison with Other Methods
+
+| Property        | Gabow-Tarjan        | Hungarian      | JV                  |
+|-----------------|---------------------|----------------|---------------------|
+| Complexity      | $`O(n^3 \log C)`$   | $`O(n^3)`$     | $`O(n^3)`$ expected |
+| Cost dependence | Yes ($`\log C`$)    | No             | No                  |
+| Best for        | Large integer costs | Small problems | General purpose     |
+
+------------------------------------------------------------------------
+
+### 7. K-Best Solutions (Murty’s Algorithm)
 
 **Complexity**: $`O(k \cdot T(n))`$ where $`T(n)`$ is single LAP
 complexity
@@ -373,15 +443,16 @@ equally optimal) solutions across algorithms
 
 ### Performance Summary
 
-| Size     | Hungarian | JV        | Auction   | SAP\*     | HK01\*\*  |
-|----------|-----------|-----------|-----------|-----------|-----------|
-| \< 100   | Excellent | Excellent | Good      | Good      | Good      |
-| 100-500  | Good      | Excellent | Good      | Excellent | Excellent |
-| 500-2000 | Slow      | Excellent | Excellent | Excellent | Excellent |
-| \> 2000  | Too slow  | Good      | Excellent | Excellent | Excellent |
+| Size     | Hungarian | JV        | Auction   | SAP\*     | HK01\*\*  | GT\*\*\* |
+|----------|-----------|-----------|-----------|-----------|-----------|----------|
+| \< 100   | Excellent | Excellent | Good      | Good      | Good      | Good     |
+| 100-500  | Good      | Excellent | Good      | Excellent | Excellent | Good     |
+| 500-2000 | Slow      | Excellent | Excellent | Excellent | Excellent | Good     |
+| \> 2000  | Too slow  | Good      | Excellent | Excellent | Excellent | Good     |
 
 \* SAP only for sparse problems (\>50% forbidden entries) \*\* HK01 only
-for binary costs (0/1)
+for binary costs (0/1) \*\*\* GT (Gabow-Tarjan) best for large integer
+cost ranges; has $`O(\log C)`$ factor
 
 ------------------------------------------------------------------------
 
@@ -394,6 +465,8 @@ for binary costs (0/1)
   *Computing*.
 - Bertsekas, D. P. (1988). The auction algorithm: A distributed
   relaxation method. *Annals of Operations Research*.
+- Gabow, H. N., & Tarjan, R. E. (1989). Faster scaling algorithms for
+  network problems. *SIAM Journal on Computing*, 18(5), 1013-1036.
 - Murty, K. G. (1968). An algorithm for ranking all assignments in order
   of increasing cost. *Operations Research*.
 - Burkard, R., Dell’Amico, M., & Martello, S. (2009). *Assignment

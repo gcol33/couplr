@@ -14,9 +14,10 @@
 #' @param maximize Logical; if `TRUE`, maximizes the total cost instead of minimizing.
 #' @param method Character string indicating the algorithm to use.
 #'   One of `"auto"`, `"jv"`, `"hungarian"`, `"auction"`, `"auction_gs"`,
-#'   `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, `"lapmod"`, or `"bruteforce"`.
+#'   `"sap"`, `"ssp"`, `"csflow"`, `"hk01"`, `"lapmod"`, `"csa"`, or `"bruteforce"`.
 #'   `"ssp"` is accepted as an alias for `"sap"`.
 #'   `"lapmod"` is a sparse variant of JV, faster for large matrices with >50% NA/Inf.
+#'   `"csa"` is Goldberg-Kennedy cost-scaling, often fastest for medium-large problems.
 #' @param auction_eps Optional numeric epsilon for the Auction/Auction-GS methods.
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
 #' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
@@ -54,7 +55,7 @@
 assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce",
-                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod"),
+                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa"),
                        auction_eps = NULL, eps = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
@@ -148,6 +149,7 @@ assignment <- function(cost, maximize = FALSE,
     "cycle_cancel"  = lap_solve_cycle_cancel(work, maximize),
     "gabow_tarjan"  = lap_solve_gabow_tarjan(work, maximize),
     "lapmod"        = lap_solve_lapmod(work, maximize),
+    "csa"           = lap_solve_csa(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
 

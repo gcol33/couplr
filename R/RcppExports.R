@@ -73,6 +73,10 @@ lap_solve_bottleneck <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_bottleneck`, cost, maximize)
 }
 
+lap_solve_csa <- function(cost, maximize) {
+    .Call(`_couplr_lap_solve_csa`, cost, maximize)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

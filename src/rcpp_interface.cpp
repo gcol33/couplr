@@ -25,6 +25,7 @@ Rcpp::List solve_cycle_cancel_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_lapmod_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_bottleneck_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_csa_impl(Rcpp::NumericMatrix cost, bool maximize);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
@@ -202,6 +203,11 @@ Rcpp::List lap_solve_lapmod(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_bottleneck(Rcpp::NumericMatrix cost, bool maximize) {
   return solve_bottleneck_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_csa(Rcpp::NumericMatrix cost, bool maximize) {
+  return solve_csa_impl(cost, maximize);
 }
 
 // =======================

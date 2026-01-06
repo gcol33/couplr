@@ -19,6 +19,7 @@
 | Cost-Scaling Flow | `csflow` | 1988 | O(n²m log(nC)) | Push-relabel reduction |
 | Cycle Canceling | `cycle_cancel` | 1989 | O(n²m log(nN)) | Karp's negative cycle detection |
 | **Gabow-Tarjan** | `gabow_tarjan` | 1989 | O(√nm log(nC)) | **First R implementation ever** |
+| **CSA** | `csa` | 1995 | O(√n m log(nC)) | Goldberg-Kennedy cost-scaling; **NEW** |
 | SSAP with Buckets | `ssap_bucket` | 1969 | O(nm + nC) | Dial's algorithm; integer costs |
 | Hopcroft-Karp | `hk01` | 1973 | O(√n m) | Binary/uniform costs only |
 | Line Metric | `line_metric` | - | O(n log n) | 1D optimal transport |
@@ -62,17 +63,7 @@
   - Essential for large-scale bioinformatics matching
 - **Key insight:** Exploits sparsity by maintaining candidate lists per row
 
-#### 2. Goldberg-Kennedy Cost-Scaling Assignment (CSA)
-- **Year:** 1995
-- **Complexity:** O(√n m log(nC))
-- **Implementation effort:** Medium (3-4 days)
-- **Why:**
-  - Often fastest in practice for medium-large problems
-  - Different from `csflow` (which reduces to min-cost flow)
-  - Direct assignment-specific push-relabel
-  - Complements auction for different cost distributions
-
-#### 3. Bottleneck Assignment Problem (BAP)
+#### 2. Bottleneck Assignment Problem (BAP)
 - **Year:** 1961 (Gross)
 - **Complexity:** O(n^2.5) or O(n² log n) with binary search
 - **Implementation effort:** Low (1-2 days)
@@ -181,13 +172,13 @@
 ## Implementation Priority Queue
 
 ```
-Phase 1 (Next Release):
+Phase 1 (Completed):
   [✓] LAPMOD (sparse JV) ← DONE! 52 tests passing
   [✓] Bottleneck Assignment ← DONE! 59 tests passing
+  [✓] Goldberg-Kennedy CSA ← DONE! 80 tests passing
 
 Phase 2:
-  [1] Goldberg-Kennedy CSA
-  [2] Sinkhorn-Knopp (soft assignment)
+  [1] Sinkhorn-Knopp (soft assignment)
 
 Phase 3:
   [3] Ramshaw-Tarjan rectangular
@@ -207,7 +198,7 @@ Future:
 ### R Packages
 | Package | Algorithms | Sparse? | Rectangular? | K-best? |
 |---------|-----------|---------|--------------|---------|
-| **couplr** | 15+ | Soon | Yes | Yes |
+| **couplr** | 17+ | Yes | Yes | Yes |
 | lpSolve | Simplex | No | Yes | No |
 | clue | Hungarian | No | Yes | No |
 | RcppHungarian | Hungarian | No | No | No |

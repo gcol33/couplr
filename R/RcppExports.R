@@ -77,6 +77,14 @@ lap_solve_csa <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_csa`, cost, maximize)
 }
 
+lap_solve_sinkhorn <- function(cost, lambda = 10.0, tol = 1e-9, max_iter = 1000L, r_weights = NULL, c_weights = NULL) {
+    .Call(`_couplr_lap_solve_sinkhorn`, cost, lambda, tol, max_iter, r_weights, c_weights)
+}
+
+sinkhorn_round <- function(P) {
+    .Call(`_couplr_sinkhorn_round`, P)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

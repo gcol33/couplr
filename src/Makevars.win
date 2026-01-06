@@ -23,6 +23,9 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_murty.cpp \
           solvers/solve_ssap_bucket.cpp \
           solvers/solve_ssp.cpp \
+          solvers/solve_lapmod.cpp \
+          solvers/solve_bottleneck.cpp \
+          solvers/solve_csa.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
           morph/morph_pixel_level.cpp \
@@ -46,6 +49,9 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_murty.o \
           solvers/solve_ssap_bucket.o \
           solvers/solve_ssp.o \
+          solvers/solve_lapmod.o \
+          solvers/solve_bottleneck.o \
+          solvers/solve_csa.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
           morph/morph_pixel_level.o \

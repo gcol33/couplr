@@ -251,6 +251,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_solve_sinkhorn
+Rcpp::List lap_solve_sinkhorn(Rcpp::NumericMatrix cost, double lambda, double tol, int max_iter, Rcpp::Nullable<Rcpp::NumericVector> r_weights, Rcpp::Nullable<Rcpp::NumericVector> c_weights);
+RcppExport SEXP _couplr_lap_solve_sinkhorn(SEXP costSEXP, SEXP lambdaSEXP, SEXP tolSEXP, SEXP max_iterSEXP, SEXP r_weightsSEXP, SEXP c_weightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type r_weights(r_weightsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type c_weights(c_weightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_sinkhorn(cost, lambda, tol, max_iter, r_weights, c_weights));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sinkhorn_round
+Rcpp::IntegerVector sinkhorn_round(Rcpp::NumericMatrix P);
+RcppExport SEXP _couplr_sinkhorn_round(SEXP PSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type P(PSEXP);
+    rcpp_result_gen = Rcpp::wrap(sinkhorn_round(P));
+    return rcpp_result_gen;
+END_RCPP
+}
 // greedy_matching_sorted
 Rcpp::List greedy_matching_sorted(Rcpp::NumericMatrix cost_matrix, bool maximize);
 RcppExport SEXP _couplr_greedy_matching_sorted(SEXP cost_matrixSEXP, SEXP maximizeSEXP) {
@@ -579,6 +606,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_lapmod", (DL_FUNC) &_couplr_lap_solve_lapmod, 2},
     {"_couplr_lap_solve_bottleneck", (DL_FUNC) &_couplr_lap_solve_bottleneck, 2},
     {"_couplr_lap_solve_csa", (DL_FUNC) &_couplr_lap_solve_csa, 2},
+    {"_couplr_lap_solve_sinkhorn", (DL_FUNC) &_couplr_lap_solve_sinkhorn, 6},
+    {"_couplr_sinkhorn_round", (DL_FUNC) &_couplr_sinkhorn_round, 1},
     {"_couplr_greedy_matching_sorted", (DL_FUNC) &_couplr_greedy_matching_sorted, 2},
     {"_couplr_greedy_matching_row_best", (DL_FUNC) &_couplr_greedy_matching_row_best, 2},
     {"_couplr_greedy_matching_pq", (DL_FUNC) &_couplr_greedy_matching_pq, 2},

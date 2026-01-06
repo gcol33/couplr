@@ -26,6 +26,10 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_lapmod_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_bottleneck_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_csa_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_sinkhorn_impl(Rcpp::NumericMatrix cost, double lambda, double tol,
+                               int max_iter, Rcpp::Nullable<Rcpp::NumericVector> r_weights,
+                               Rcpp::Nullable<Rcpp::NumericVector> c_weights);
+Rcpp::IntegerVector sinkhorn_round_impl(Rcpp::NumericMatrix P);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
@@ -208,6 +212,19 @@ Rcpp::List lap_solve_bottleneck(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_csa(Rcpp::NumericMatrix cost, bool maximize) {
   return solve_csa_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_sinkhorn(Rcpp::NumericMatrix cost, double lambda = 10.0,
+                              double tol = 1e-9, int max_iter = 1000,
+                              Rcpp::Nullable<Rcpp::NumericVector> r_weights = R_NilValue,
+                              Rcpp::Nullable<Rcpp::NumericVector> c_weights = R_NilValue) {
+  return solve_sinkhorn_impl(cost, lambda, tol, max_iter, r_weights, c_weights);
+}
+
+// [[Rcpp::export]]
+Rcpp::IntegerVector sinkhorn_round(Rcpp::NumericMatrix P) {
+  return sinkhorn_round_impl(P);
 }
 
 // =======================

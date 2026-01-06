@@ -679,3 +679,134 @@ print.bottleneck_result <- function(x, ...) {
 #
 # These are accessed via the method parameter in assignment() rather than
 # separate wrapper functions to keep the API clean.
+
+# ==============================================================================
+# Sinkhorn-Knopp (Entropy-Regularized Optimal Transport)
+# ==============================================================================
+
+#' Sinkhorn-Knopp optimal transport solver
+#'
+#' Compute an entropy-regularized optimal transport plan using the Sinkhorn-Knopp
+#' algorithm. Unlike other LAP solvers that return a hard 1-to-1 assignment,
+#' this returns a soft assignment (doubly stochastic matrix).
+#'
+#' @param cost Numeric matrix of transport costs. `NA` or `Inf` entries are
+#'   treated as very high cost (effectively forbidden).
+#' @param lambda Regularization parameter (default 10). Higher values produce
+#'   sharper (more deterministic) transport plans; lower values produce smoother
+#'   distributions. Typical range: 1-100.
+#' @param tol Convergence tolerance (default 1e-9).
+#' @param max_iter Maximum iterations (default 1000).
+#' @param r_weights Optional numeric vector of row marginals (source distribution).
+#'   Default is uniform. Will be normalized to sum to 1.
+#' @param c_weights Optional numeric vector of column marginals (target distribution).
+#'   Default is uniform. Will be normalized to sum to 1.
+#'
+#' @return A list with elements:
+#' \itemize{
+#'   \item `transport_plan` — numeric matrix, the optimal transport plan P.
+#'         Row sums approximate r_weights, column sums approximate c_weights.
+#'   \item `cost` — the transport cost <C, P> (without entropy term).
+#'   \item `u`, `v` — scaling vectors (P = diag(u) * K * diag(v) where K = exp(-lambda*C)).
+#'   \item `converged` — logical, whether the algorithm converged.
+#'   \item `iterations` — number of iterations used.
+#'   \item `lambda` — the regularization parameter used.
+#' }
+#'
+#' @details
+#' The Sinkhorn-Knopp algorithm solves the entropy-regularized optimal transport
+#' problem:
+#'
+#' \deqn{P^* = \arg\min_P \langle C, P \rangle - \frac{1}{\lambda} H(P)}
+#'
+#' subject to row sums = r_weights and column sums = c_weights.
+#'
+#' The entropy term H(P) encourages spread in the transport plan. As lambda -> Inf,
+
+#' the solution approaches the standard (unregularized) optimal transport.
+#'
+#' **Key differences from standard LAP solvers:**
+#' - Returns a soft assignment (probabilities) not a hard 1-to-1 matching
+#' - Supports unequal marginals (weighted distributions)
+#' - Differentiable, making it useful in ML pipelines
+#' - Very fast: O(n²) per iteration with typically O(1/ε²) iterations
+#'
+#' Use [sinkhorn_to_assignment()] to round the soft assignment to a hard matching.
+#'
+#' @examples
+#' cost <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), nrow = 3, byrow = TRUE)
+#'
+#' # Soft assignment with default parameters
+#' result <- sinkhorn(cost)
+#' print(round(result$transport_plan, 3))
+#'
+#' # Sharper assignment (higher lambda)
+#' result_sharp <- sinkhorn(cost, lambda = 50)
+#' print(round(result_sharp$transport_plan, 3))
+#'
+#' # With custom marginals (more mass from row 1)
+#' result_weighted <- sinkhorn(cost, r_weights = c(0.5, 0.25, 0.25))
+#' print(round(result_weighted$transport_plan, 3))
+#'
+#' # Round to hard assignment
+#' hard_match <- sinkhorn_to_assignment(result)
+#' print(hard_match)
+#'
+#' @seealso [assignment()] for hard 1-to-1 matching, [sinkhorn_to_assignment()]
+#'   to round soft assignments.
+#'
+#' @references
+#' Cuturi, M. (2013). Sinkhorn Distances: Lightspeed Computation of Optimal
+#' Transport. *Advances in Neural Information Processing Systems*, 26.
+#'
+#' @export
+sinkhorn <- function(cost, lambda = 10, tol = 1e-9, max_iter = 1000,
+                     r_weights = NULL, c_weights = NULL) {
+  if (!is.matrix(cost)) {
+    cost <- as.matrix(cost)
+  }
+  if (!is.numeric(cost)) {
+    stop("cost must be a numeric matrix")
+  }
+  if (lambda <= 0) {
+    stop("lambda must be positive")
+  }
+
+  lap_solve_sinkhorn(cost, lambda, tol, max_iter, r_weights, c_weights)
+}
+
+#' Round Sinkhorn transport plan to hard assignment
+#'
+#' Convert a soft transport plan from [sinkhorn()] to a hard 1-to-1 assignment
+#' using greedy rounding.
+#'
+#' @param result Either a result from [sinkhorn()] or a transport plan matrix.
+#'
+#' @return Integer vector of column assignments (1-based), same format as
+#'   [assignment()].
+#'
+#' @details
+#' Greedy rounding iteratively assigns each row to its most probable column,
+#' ensuring no column is assigned twice. This may not give the globally optimal
+#' hard assignment; for that, use the transport plan as a cost matrix with
+#' [assignment()].
+#'
+#' @examples
+#' cost <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), nrow = 3, byrow = TRUE)
+#' result <- sinkhorn(cost, lambda = 20)
+#' hard_match <- sinkhorn_to_assignment(result)
+#' print(hard_match)
+#'
+#' @seealso [sinkhorn()]
+#' @export
+sinkhorn_to_assignment <- function(result) {
+  if (is.list(result) && "transport_plan" %in% names(result)) {
+    P <- result$transport_plan
+  } else if (is.matrix(result)) {
+    P <- result
+  } else {
+    stop("result must be a sinkhorn() result or a transport plan matrix")
+  }
+
+  sinkhorn_round(P)
+}

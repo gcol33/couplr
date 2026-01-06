@@ -55,7 +55,8 @@
 assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce",
-                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa"),
+                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
+                                  "ramshaw_tarjan"),
                        auction_eps = NULL, eps = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
@@ -150,6 +151,7 @@ assignment <- function(cost, maximize = FALSE,
     "gabow_tarjan"  = lap_solve_gabow_tarjan(work, maximize),
     "lapmod"        = lap_solve_lapmod(work, maximize),
     "csa"           = lap_solve_csa(work, maximize),
+    "ramshaw_tarjan"= lap_solve_ramshaw_tarjan(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
 

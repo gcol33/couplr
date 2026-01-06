@@ -85,6 +85,10 @@ sinkhorn_round <- function(P) {
     .Call(`_couplr_sinkhorn_round`, P)
 }
 
+lap_solve_ramshaw_tarjan <- function(cost, maximize) {
+    .Call(`_couplr_lap_solve_ramshaw_tarjan`, cost, maximize)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

@@ -23,6 +23,7 @@
 | SSAP with Buckets | `ssap_bucket` | 1969 | O(nm + nC) | Dial's algorithm; integer costs |
 | Hopcroft-Karp | `hk01` | 1973 | O(√n m) | Binary/uniform costs only |
 | Line Metric | `line_metric` | - | O(n log n) | 1D optimal transport |
+| **Ramshaw-Tarjan** | `ramshaw_tarjan` | 2012 | O(nm + n² log n) | Rectangular specialization; **NEW** |
 | Bruteforce | `bruteforce` | - | O(n!) | Exhaustive; n ≤ 8 |
 
 ### Specialized Problem Variants
@@ -179,12 +180,12 @@ Phase 1 (Completed):
   [✓] Goldberg-Kennedy CSA ← DONE! 80 tests passing
   [✓] Sinkhorn-Knopp ← DONE! 48 tests passing
 
-Phase 2:
+Phase 2 (Completed):
+  [✓] Ramshaw-Tarjan rectangular ← DONE! 77 tests passing
 
 Phase 3:
-  [3] Ramshaw-Tarjan rectangular
-  [4] Push-Relabel Assignment
-  [5] Return dual variables from existing solvers
+  [1] Push-Relabel Assignment
+  [2] Return dual variables from existing solvers
 
 Future:
   [6] Orlin's algorithm

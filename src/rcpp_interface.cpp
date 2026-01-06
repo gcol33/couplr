@@ -30,6 +30,7 @@ Rcpp::List solve_sinkhorn_impl(Rcpp::NumericMatrix cost, double lambda, double t
                                int max_iter, Rcpp::Nullable<Rcpp::NumericVector> r_weights,
                                Rcpp::Nullable<Rcpp::NumericVector> c_weights);
 Rcpp::IntegerVector sinkhorn_round_impl(Rcpp::NumericMatrix P);
+Rcpp::List solve_ramshaw_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
@@ -225,6 +226,11 @@ Rcpp::List lap_solve_sinkhorn(Rcpp::NumericMatrix cost, double lambda = 10.0,
 // [[Rcpp::export]]
 Rcpp::IntegerVector sinkhorn_round(Rcpp::NumericMatrix P) {
   return sinkhorn_round_impl(P);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_ramshaw_tarjan(Rcpp::NumericMatrix cost, bool maximize) {
+  return solve_ramshaw_tarjan_impl(cost, maximize);
 }
 
 // =======================

@@ -93,6 +93,10 @@ lap_solve_push_relabel <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_push_relabel`, cost, maximize)
 }
 
+lap_solve_jv_duals <- function(cost, maximize) {
+    .Call(`_couplr_lap_solve_jv_duals`, cost, maximize)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

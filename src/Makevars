@@ -29,6 +29,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_sinkhorn.cpp \
           solvers/solve_ramshaw_tarjan.cpp \
           solvers/solve_push_relabel.cpp \
+          solvers/solve_jv_duals.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
           morph/morph_pixel_level.cpp \
@@ -58,6 +59,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_sinkhorn.o \
           solvers/solve_ramshaw_tarjan.o \
           solvers/solve_push_relabel.o \
+          solvers/solve_jv_duals.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
           morph/morph_pixel_level.o \

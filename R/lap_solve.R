@@ -813,3 +813,153 @@ sinkhorn_to_assignment <- function(result) {
 
   sinkhorn_round(P)
 }
+
+# ==============================================================================
+# Assignment with Dual Variables
+# ==============================================================================
+
+#' Solve assignment problem and return dual variables
+#'
+#' Solves the linear assignment problem and returns dual potentials (u, v)
+#' in addition to the optimal matching. The dual variables provide an
+#' optimality certificate and enable sensitivity analysis.
+#'
+#' @param cost Numeric matrix; rows = tasks, columns = agents. `NA` or `Inf`
+#'   entries are treated as forbidden assignments.
+#' @param maximize Logical; if `TRUE`, maximizes the total cost instead of minimizing.
+#'
+#' @return A list with class `"assignment_duals_result"` containing:
+#'   \itemize{
+#'     \item `match` - integer vector of column assignments (1-based)
+#'     \item `total_cost` - optimal objective value
+#'     \item `u` - numeric vector of row dual variables (length n)
+#'     \item `v` - numeric vector of column dual variables (length m)
+#'     \item `status` - character, e.g. "optimal"
+#'   }
+#'
+#' @details
+#' The dual variables satisfy the complementary slackness conditions:
+#' \itemize{
+#'   \item For minimization: `u[i] + v[j] <= cost[i,j]` for all (i,j)
+#'   \item For any assigned pair (i,j): `u[i] + v[j] = cost[i,j]`
+#' }
+#'
+#' This implies that `sum(u) + sum(v) = total_cost` (strong duality).
+#'
+#' **Applications of dual variables:**
+#' \itemize{
+#'   \item **Optimality verification**: Check that duals satisfy constraints
+
+#'   \item **Sensitivity analysis**: Reduced cost `c[i,j] - u[i] - v[j]` shows
+#'         how much an edge cost must decrease before it enters the solution
+#'   \item **Pricing in column generation**: Use duals to price new columns
+#'   \item **Warm starting**: Reuse duals when costs change slightly
+#' }
+#'
+#' @examples
+#' cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), nrow = 3, byrow = TRUE)
+#' result <- assignment_duals(cost)
+#'
+#' # Check optimality: u + v should equal cost for assigned pairs
+#' for (i in 1:3) {
+#'   j <- result$match[i]
+#'   cat(sprintf("Row %d -> Col %d: u + v = %.2f, cost = %.2f\n",
+#'               i, j, result$u[i] + result$v[j], cost[i, j]))
+#' }
+#'
+#' # Verify strong duality
+#' cat("sum(u) + sum(v) =", sum(result$u) + sum(result$v), "\n")
+#' cat("total_cost =", result$total_cost, "\n")
+#'
+#' # Reduced costs (how much must cost decrease to enter solution)
+#' reduced <- outer(result$u, result$v, "+")
+#' reduced_cost <- cost - reduced
+#' print(round(reduced_cost, 2))
+#'
+#' @seealso [assignment()] for standard assignment without duals
+#' @export
+assignment_duals <- function(cost, maximize = FALSE) {
+  cost <- as.matrix(cost)
+  if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
+
+  n <- nrow(cost)
+  m <- ncol(cost)
+
+  if (n == 0 || m == 0) {
+    stop("Cost matrix must have at least one row and one column.")
+  }
+
+  # Auto-transpose if rows > cols
+  transposed <- FALSE
+  work <- cost
+  if (n > m) {
+    work <- t(cost)
+    transposed <- TRUE
+    tmp <- n; n <- m; m <- tmp
+  }
+
+  # Call JV with duals
+
+  res_raw <- lap_solve_jv_duals(work, maximize)
+
+  match_out <- as.integer(res_raw$match)
+  u_out <- as.numeric(res_raw$u)
+  v_out <- as.numeric(res_raw$v)
+
+  if (transposed) {
+    # Map back: work was m0 x n0, match_work is length m0
+    n0 <- ncol(work)
+    m0 <- nrow(work)
+    inv <- integer(n0)
+    inv[] <- 0L
+    for (i in seq_len(m0)) {
+      j <- match_out[i]
+      if (j > 0L) inv[j] <- i
+    }
+    match_out <- inv
+    # Swap u and v for transposed case
+    tmp_u <- u_out
+    u_out <- v_out
+    v_out <- tmp_u
+  }
+
+  out <- list(
+    match = match_out,
+    total_cost = as.numeric(res_raw$total_cost),
+    u = u_out,
+    v = v_out,
+    status = "optimal"
+  )
+  class(out) <- "assignment_duals_result"
+  out
+}
+
+#' @export
+print.assignment_duals_result <- function(x, ...) {
+  cat("Assignment Result with Duals\n")
+  cat("============================\n\n")
+
+  n <- length(x$match)
+  cat("Assignments (1-based indices):\n")
+  for (i in seq_len(min(n, 10))) {
+    if (x$match[i] > 0) {
+      cat(sprintf("  Row %d -> Column %d\n", i, x$match[i]))
+    }
+  }
+  if (n > 10) {
+    cat(sprintf("  ... (%d more assignments)\n", n - 10))
+  }
+
+  cat("\nTotal cost:", x$total_cost, "\n")
+  cat("Status:", x$status, "\n")
+
+  cat("\nDual variables:\n")
+  cat("  u (row):", head(x$u, 5))
+  if (length(x$u) > 5) cat(" ...")
+  cat("\n")
+  cat("  v (col):", head(x$v, 5))
+  if (length(x$v) > 5) cat(" ...")
+  cat("\n")
+
+  invisible(x)
+}

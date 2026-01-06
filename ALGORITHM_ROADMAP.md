@@ -31,13 +31,14 @@
 |-----------|----------|------|------------|-------|
 | **Bottleneck Assignment** | `bottleneck_assignment()` | 1959 | O(E√V log U) | Minimax objective; **NEW** |
 
-### Approximate Solvers
+### Approximate / Soft Solvers
 
-| Algorithm | Method | Complexity | Optimality Gap |
-|-----------|--------|------------|----------------|
-| Greedy (sorted) | `greedy_sorted` | O(n² log n) | ~5-15% |
-| Greedy (row-best) | `greedy_row_best` | O(n²) | ~5-15% |
-| Greedy (priority queue) | `greedy_pq` | O(n² log n) | ~3-10% |
+| Algorithm | Method | Complexity | Notes |
+|-----------|--------|------------|-------|
+| Greedy (sorted) | `greedy_sorted` | O(n² log n) | ~5-15% gap |
+| Greedy (row-best) | `greedy_row_best` | O(n²) | ~5-15% gap |
+| Greedy (priority queue) | `greedy_pq` | O(n² log n) | ~3-10% gap |
+| **Sinkhorn-Knopp** | `sinkhorn()` | O(n²/ε²) | Soft assignment; entropy-regularized OT; **NEW** |
 
 ### K-Best Solvers
 
@@ -176,9 +177,9 @@ Phase 1 (Completed):
   [✓] LAPMOD (sparse JV) ← DONE! 52 tests passing
   [✓] Bottleneck Assignment ← DONE! 59 tests passing
   [✓] Goldberg-Kennedy CSA ← DONE! 80 tests passing
+  [✓] Sinkhorn-Knopp ← DONE! 48 tests passing
 
 Phase 2:
-  [1] Sinkhorn-Knopp (soft assignment)
 
 Phase 3:
   [3] Ramshaw-Tarjan rectangular
@@ -198,7 +199,7 @@ Future:
 ### R Packages
 | Package | Algorithms | Sparse? | Rectangular? | K-best? |
 |---------|-----------|---------|--------------|---------|
-| **couplr** | 17+ | Yes | Yes | Yes |
+| **couplr** | 18+ | Yes | Yes | Yes |
 | lpSolve | Simplex | No | Yes | No |
 | clue | Hungarian | No | Yes | No |
 | RcppHungarian | Hungarian | No | No | No |

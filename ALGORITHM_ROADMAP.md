@@ -27,6 +27,12 @@
 | **Push-Relabel** | `push_relabel` | 1988 | O(n²m) | Goldberg-Tarjan preflow-push; **NEW** |
 | Bruteforce | `bruteforce` | - | O(n!) | Exhaustive; n ≤ 8 |
 
+### Dual Variable Extraction
+
+| Algorithm | Function | Notes |
+|-----------|----------|-------|
+| **JV with Duals** | `assignment_duals()` | Returns (u, v) potentials; sensitivity analysis; **NEW** |
+
 ### Specialized Problem Variants
 
 | Algorithm | Function | Year | Complexity | Notes |
@@ -187,8 +193,11 @@ Phase 2 (Completed):
 Phase 3 (Completed):
   [✓] Push-Relabel Assignment ← DONE! 77 tests passing
 
-Phase 4:
-  [1] Return dual variables from existing solvers
+Phase 4 (Completed):
+  [✓] Return dual variables from existing solvers ← DONE! 86 tests passing
+      - assignment_duals() function for sensitivity analysis
+      - Complementary slackness: u[i] + v[j] = cost[i,j] for assigned pairs
+      - Strong duality: sum(u) + sum(v) = total_cost
 
 Future:
   [6] Orlin's algorithm

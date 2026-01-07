@@ -12,4 +12,4 @@
 - [x] Rebuild pkgdown website using `build_site.R`
 
 ## Remaining Tasks
-- [ ] Commit and push all changes
+- [x] Commit all changes (b9a3094)

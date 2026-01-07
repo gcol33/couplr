@@ -595,6 +595,162 @@ Different packages excel at different tasks:
 
 ---
 
+## Real-World Case Study: Job Training Evaluation
+
+This section applies couplr to a dataset inspired by the classic Lalonde (1986) job training evaluation, demonstrating the full workflow on realistic data.
+
+### Background
+
+The National Supported Work (NSW) demonstration was a randomized job training program. The methodological challenge is evaluating the program using observational (non-randomized) comparison groups, which introduces selection bias.
+
+**Typical covariates**: age, education, race, marital status, prior earnings (re74, re75), employment status.
+
+### Simulating Lalonde-Style Data
+
+```{r lalonde-style}
+set.seed(1986)
+
+# NSW treatment group (randomized)
+nsw_treat <- tibble(
+  id = 1:185,
+  age = pmax(17, rnorm(185, 25, 7)),
+  education = pmax(0, pmin(16, rnorm(185, 10, 2))),
+  black = rbinom(185, 1, 0.84),
+  hispanic = rbinom(185, 1, 0.06),
+  married = rbinom(185, 1, 0.19),
+  nodegree = rbinom(185, 1, 0.71),
+  re74 = pmax(0, rnorm(185, 2100, 5000)),
+  re75 = pmax(0, rnorm(185, 1500, 3500)),
+  group = "treatment"
+)
+
+# CPS comparison group (observational - very different!)
+cps_control <- tibble(
+  id = 186:16000,
+  age = pmax(17, rnorm(15815, 33, 11)),
+  education = pmax(0, pmin(16, rnorm(15815, 12, 3))),
+  black = rbinom(15815, 1, 0.07),
+  hispanic = rbinom(15815, 1, 0.07),
+  married = rbinom(15815, 1, 0.71),
+  nodegree = rbinom(15815, 1, 0.30),
+  re74 = pmax(0, rnorm(15815, 14000, 9000)),
+  re75 = pmax(0, rnorm(15815, 13500, 9000)),
+  group = "control"
+)
+
+cat("NSW treatment:", nrow(nsw_treat), "individuals\n")
+cat("CPS control:", nrow(cps_control), "individuals\n")
+
+# Baseline imbalance is severe
+vars_lalonde <- c("age", "education", "black", "hispanic", "married",
+                  "nodegree", "re74", "re75")
+cat("\nBaseline standardized differences:\n")
+for (v in vars_lalonde) {
+  t_mean <- mean(nsw_treat[[v]])
+  c_mean <- mean(cps_control[[v]])
+  pooled_sd <- sqrt((var(nsw_treat[[v]]) + var(cps_control[[v]])) / 2)
+  std_diff <- (t_mean - c_mean) / pooled_sd
+  cat(sprintf("  %s: %.2f\n", v, std_diff))
+}
+```
+
+### Challenge: Massive Control Pool
+
+With 185 treatment vs 15,815 control units, we need efficient matching. couplr handles this with greedy matching:
+
+```{r lalonde-matching}
+# Greedy matching (fast for large control pools)
+result_lalonde <- greedy_couples(
+  left = nsw_treat,
+  right = cps_control,
+  vars = vars_lalonde,
+  strategy = "pq",       # Priority queue - efficient for large pools
+  auto_scale = TRUE,
+  scale = "robust"
+)
+
+cat("Matched", result_lalonde$info$n_matched, "of", nrow(nsw_treat), "treatment units\n")
+cat("Mean distance:", round(mean(result_lalonde$pairs$distance), 4), "\n")
+```
+
+### Balance Assessment
+
+```{r lalonde-balance, fig.width=9, fig.height=5, fig.alt="Balance plot for Lalonde-style matching showing improvement in standardized differences"}
+balance_lalonde <- balance_diagnostics(
+  result_lalonde, nsw_treat, cps_control, vars_lalonde
+)
+
+# Before/after comparison
+before_df <- tibble(
+  variable = vars_lalonde,
+  std_diff = sapply(vars_lalonde, function(v) {
+    t_mean <- mean(nsw_treat[[v]])
+    c_mean <- mean(cps_control[[v]])
+    pooled_sd <- sqrt((var(nsw_treat[[v]]) + var(cps_control[[v]])) / 2)
+    (t_mean - c_mean) / pooled_sd
+  }),
+  stage = "Before"
+)
+
+after_df <- balance_lalonde$var_stats %>%
+  select(variable, std_diff) %>%
+  mutate(stage = "After")
+
+balance_plot_df <- bind_rows(before_df, after_df) %>%
+  mutate(stage = factor(stage, levels = c("Before", "After")))
+
+ggplot(balance_plot_df, aes(x = reorder(variable, abs(std_diff)),
+                             y = std_diff, fill = stage)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b") +
+  geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c") +
+  coord_flip() +
+  labs(
+    title = "Covariate Balance: Before vs After Matching",
+    subtitle = "Lalonde-style job training evaluation",
+    x = "",
+    y = "Standardized Difference",
+    fill = ""
+  ) +
+  scale_fill_manual(values = c("Before" = "#d9534f", "After" = "#93c54b")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold")
+  )
+```
+
+### Interpretation
+
+The matching dramatically reduces imbalance:
+
+```{r lalonde-summary}
+cat("Balance summary:\n")
+cat("  Mean |std diff| before:",
+    round(mean(abs(before_df$std_diff)), 3), "\n")
+cat("  Mean |std diff| after:",
+    round(balance_lalonde$overall$mean_abs_std_diff, 3), "\n")
+cat("  Max |std diff| after:",
+    round(balance_lalonde$overall$max_abs_std_diff, 3), "\n")
+
+if (balance_lalonde$overall$max_abs_std_diff < 0.25) {
+  cat("\n✓ All variables within acceptable balance threshold (0.25)\n")
+} else {
+  cat("\n⚠ Some variables exceed 0.25 threshold - consider calipers or blocking\n")
+}
+```
+
+### Key Takeaways
+
+1. **Greedy matching** handles 185:15,815 ratio efficiently
+2. **Robust scaling** handles skewed earnings distributions
+3. **Balance diagnostics** quantify improvement
+4. **Large control pools** actually help - more options for good matches
+
+For comparison, this scenario would require full distance matrix computation (185 × 15,815 = 2.9M entries) for optimal matching, but greedy matching finds excellent matches in milliseconds.
+
+---
+
 ## References
 
 - Ho, D. E., Imai, K., King, G., & Stuart, E. A. (2011). MatchIt: Nonparametric preprocessing for parametric causal inference. *Journal of Statistical Software*, 42(8), 1-28. [doi:10.18637/jss.v042.i08](https://doi.org/10.18637/jss.v042.i08)
@@ -604,6 +760,8 @@ Different packages excel at different tasks:
 - Zubizarreta, J. R., Kilcioglu, C., & Vielma, J. P. (2018). designmatch: Matched samples that are balanced and representative by design. R package. [CRAN](https://CRAN.R-project.org/package=designmatch)
 
 - Sekhon, J. S. (2011). Multivariate and propensity score matching software with automated balance optimization: The Matching package for R. *Journal of Statistical Software*, 42(7), 1-52. [doi:10.18637/jss.v042.i07](https://doi.org/10.18637/jss.v042.i07)
+
+- LaLonde, R. J. (1986). Evaluating the econometric evaluations of training programs with experimental data. *The American Economic Review*, 76(4), 604-620.
 
 ---
 

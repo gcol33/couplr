@@ -23,3 +23,12 @@
 ^optimized_.*\.cpp$
 ^fasterscaling\.pdf$
 ^examples$
+^src/.*\.backup$
+^src/.*\.working_backup$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^cran-comments\.md$
+^build_site\.R$
+^debug_.*\.R$
+^todo\.md$

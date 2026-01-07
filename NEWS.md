@@ -160,7 +160,7 @@ Like testthat, couplr makes errors light, memorable, and helpful with couple-the
 ### Tests
 
 * Added 34+ new tests (10 for preprocessing, 11 for balance diagnostics, 13 for joined datasets, tests for distance caching)
-* All 1509+ tests passing with full backward compatibility
+* All tests passing with full backward compatibility
 
 ## Major Changes (Initial 1.0.0 Release)
 

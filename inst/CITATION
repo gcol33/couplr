@@ -1,0 +1,8 @@
+citHeader("To cite couplr in publications use:")
+
+bibentry("Manual",
+         title = "couplr: Optimal Pairing and Matching via Linear Assignment",
+         author = person("Gilles", "Colling"),
+         year = "2025",
+         note = "R package version 1.0.0",
+         url = "https://github.com/gcol33/couplr")

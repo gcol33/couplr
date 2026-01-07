@@ -2,7 +2,7 @@ Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
 Version: 1.0.0
 Authors@R:
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
+    person("Gilles", "Colling", email = "gilles.colling051@gmail.com", role = c("aut", "cre"))
 Description: Solves optimal pairing and matching problems using linear assignment
     algorithms. Provides modern, tidy implementations of Hungarian, Jonker-Volgenant,
     Auction, and other LAP solvers. Designed for matching plots, sites, samples, or

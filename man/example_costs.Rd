@@ -17,7 +17,7 @@ A list containing several example cost matrices:
 example_costs
 }
 \description{
-Small example datasets for demonstrating assignR functionality
+Small example datasets for demonstrating couplr functionality
 }
 \examples{
 # Use simple example

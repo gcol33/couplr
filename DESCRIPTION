@@ -43,7 +43,8 @@ Suggests: testthat (>= 3.0.0),
     farver,
     av,
     reticulate,
-    png
+    png,
+    combinat
 LinkingTo:
     Rcpp,
     RcppEigen

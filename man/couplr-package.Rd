@@ -32,7 +32,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Gilles Colling \email{gilles.colling051@gmail.com}
 
 }
 \keyword{internal}

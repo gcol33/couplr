@@ -610,36 +610,38 @@ The National Supported Work (NSW) demonstration was a randomized job training pr
 ```{r lalonde-style}
 set.seed(1986)
 
-# NSW treatment group (randomized)
+# NSW treatment group (randomized) - smaller sample for CRAN
 nsw_treat <- tibble(
-  id = 1:185,
-  age = pmax(17, rnorm(185, 25, 7)),
-  education = pmax(0, pmin(16, rnorm(185, 10, 2))),
-  black = rbinom(185, 1, 0.84),
-  hispanic = rbinom(185, 1, 0.06),
-  married = rbinom(185, 1, 0.19),
-  nodegree = rbinom(185, 1, 0.71),
-  re74 = pmax(0, rnorm(185, 2100, 5000)),
-  re75 = pmax(0, rnorm(185, 1500, 3500)),
+  id = 1:100,
+  age = pmax(17, rnorm(100, 25, 7)),
+  education = pmax(0, pmin(16, rnorm(100, 10, 2))),
+  black = rbinom(100, 1, 0.84),
+  hispanic = rbinom(100, 1, 0.06),
+  married = rbinom(100, 1, 0.19),
+  nodegree = rbinom(100, 1, 0.71),
+  re74 = pmax(0, rnorm(100, 2100, 5000)),
+  re75 = pmax(0, rnorm(100, 1500, 3500)),
   group = "treatment"
 )
 
 # CPS comparison group (observational - very different!)
+# Reduced from 15,815 to 500 for CRAN timing compliance
 cps_control <- tibble(
-  id = 186:16000,
-  age = pmax(17, rnorm(15815, 33, 11)),
-  education = pmax(0, pmin(16, rnorm(15815, 12, 3))),
-  black = rbinom(15815, 1, 0.07),
-  hispanic = rbinom(15815, 1, 0.07),
-  married = rbinom(15815, 1, 0.71),
-  nodegree = rbinom(15815, 1, 0.30),
-  re74 = pmax(0, rnorm(15815, 14000, 9000)),
-  re75 = pmax(0, rnorm(15815, 13500, 9000)),
+  id = 101:600,
+  age = pmax(17, rnorm(500, 33, 11)),
+  education = pmax(0, pmin(16, rnorm(500, 12, 3))),
+  black = rbinom(500, 1, 0.07),
+  hispanic = rbinom(500, 1, 0.07),
+  married = rbinom(500, 1, 0.71),
+  nodegree = rbinom(500, 1, 0.30),
+  re74 = pmax(0, rnorm(500, 14000, 9000)),
+  re75 = pmax(0, rnorm(500, 13500, 9000)),
   group = "control"
 )
 
 cat("NSW treatment:", nrow(nsw_treat), "individuals\n")
 cat("CPS control:", nrow(cps_control), "individuals\n")
+cat("(Note: Real CPS has ~16,000 controls; reduced here for vignette timing)\n")
 
 # Baseline imbalance is severe
 vars_lalonde <- c("age", "education", "black", "hispanic", "married",
@@ -654,9 +656,9 @@ for (v in vars_lalonde) {
 }
 ```
 
-### Challenge: Massive Control Pool
+### Challenge: Large Control Pool
 
-With 185 treatment vs 15,815 control units, we need efficient matching. couplr handles this with greedy matching:
+With treatment vs control groups of different sizes, we need efficient matching. couplr handles this with greedy matching:
 
 ```{r lalonde-matching}
 # Greedy matching (fast for large control pools)
@@ -747,7 +749,7 @@ if (balance_lalonde$overall$max_abs_std_diff < 0.25) {
 3. **Balance diagnostics** quantify improvement
 4. **Large control pools** actually help - more options for good matches
 
-For comparison, this scenario would require full distance matrix computation (185 × 15,815 = 2.9M entries) for optimal matching, but greedy matching finds excellent matches in milliseconds.
+For comparison, optimal matching would require full distance matrix computation (n × m entries), but greedy matching finds excellent matches in milliseconds. With real CPS data (15,815 controls), this efficiency becomes critical.
 
 ---
 

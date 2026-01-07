@@ -9,7 +9,7 @@
 #include <queue>
 #include <map>
 #include <algorithm>
-#include <stdexcept>
+// stdexcept removed - use Rcpp::stop() instead
 // #include <iostream>  // Removed for CRAN compliance (no std::cerr allowed)
 
 // ============================================================================
@@ -1066,13 +1066,13 @@ void match_gt(const CostMatrix& cost,
     while (!is_perfect(row_match)) {
         ++it;
         if (it > max_iters) {
-            throw std::runtime_error("match_gt exceeded max_iters");
+            Rcpp::stop("match_gt exceeded max_iters");
         }
 
         // Optional: Check 1-feasibility before Step 1 (debug only)
         if (check_feasible) {
             if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {
-                throw std::runtime_error("1-feasibility violated before Step 1");
+                Rcpp::stop("1-feasibility violated before Step 1");
             }
         }
 
@@ -1097,7 +1097,7 @@ void match_gt(const CostMatrix& cost,
         if (!found_paths) {
             // Hungarian search on cost-length to find one augmenting path
             if (!hungarian_step_one_feasible(cost, row_match, col_match, y_u, y_v)) {
-                throw std::runtime_error("No augmenting path in Step 2 (no perfect matching)");
+                Rcpp::stop("No augmenting path in Step 2 (no perfect matching)");
             }
 
             // After Step 2, duals may have changed significantly: rebuild equality graph
@@ -1107,7 +1107,7 @@ void match_gt(const CostMatrix& cost,
         // Optional: Check 1-feasibility after Step 2 (debug only)
         if (check_feasible) {
             if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {
-                throw std::runtime_error("1-feasibility violated after Step 2");
+                Rcpp::stop("1-feasibility violated after Step 2");
             }
         }
     }

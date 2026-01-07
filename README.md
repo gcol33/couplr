@@ -6,6 +6,17 @@
 
 **couplr** is an R package for solving Linear Assignment Problems (LAP) with production-ready matching workflows. It provides optimal one-to-one matching between two groups, with automatic preprocessing, balance diagnostics, and analysis-ready output.
 
+## Why couplr?
+
+Existing R packages for optimal matching (MatchIt, optmatch) focus on propensity score workflows for causal inference. **couplr** takes a different approach:
+
+- **Direct covariate matching**: Match on observed variables without propensity score estimation
+- **Algorithm choice**: 20 LAP solvers let you pick the right algorithm for your problem size and structure
+- **Production workflows**: Preprocessing, diagnostics, and joined output in a single pipeline
+- **Beyond causal inference**: Match plots to controls, pair samples for experiments, align images pixel-by-pixel
+
+If you need propensity score matching with replacement or variable ratios, use MatchIt. If you need optimal one-to-one assignment with full control over the distance metric and algorithm, use couplr.
+
 ## Installation
 
 ```r
@@ -34,7 +45,7 @@ matched_data <- join_matched(result, treated, control)
 
 ## Features
 
-- **12 optimal LAP algorithms**: Hungarian, Jonker-Volgenant, Auction, Gabow-Tarjan, and more
+- **20 optimal LAP algorithms**: Hungarian, Jonker-Volgenant, Auction, Gabow-Tarjan, Network Simplex, and more
 - **3 greedy algorithms**: Fast approximate matching for large datasets
 - **Automatic preprocessing**: Variable scaling, health checks, categorical encoding
 - **Balance diagnostics**: Standardized differences, variance ratios, KS statistics

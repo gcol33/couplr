@@ -1,6 +1,6 @@
 #' Example cost matrices for assignment problems
 #'
-#' Small example datasets for demonstrating assignR functionality
+#' Small example datasets for demonstrating couplr functionality
 #'
 #' @format A list containing several example cost matrices:
 #' \describe{

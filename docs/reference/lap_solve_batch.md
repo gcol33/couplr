@@ -79,10 +79,52 @@ costs <- list(
   matrix(c(5, 6, 7, 8), 2, 2)
 )
 lap_solve_batch(costs)
+#> Batch Assignment Results
+#> ========================
+#> 
+#> Number of problems solved: 2 
+#> Total cost range: [5.00, 13.00] 
+#> 
+#> # A tibble: 4 × 6
+#>   problem_id source target  cost total_cost method_used
+#>        <int>  <int>  <int> <dbl>      <dbl> <chr>      
+#> 1          1      1      1     1          5 bruteforce 
+#> 2          1      2      2     4          5 bruteforce 
+#> 3          2      1      1     5         13 bruteforce 
+#> 4          2      2      2     8         13 bruteforce 
 
 # 3D array
 arr <- array(runif(2 * 2 * 10), dim = c(2, 2, 10))
 lap_solve_batch(arr)
+#> Batch Assignment Results
+#> ========================
+#> 
+#> Number of problems solved: 10 
+#> Total cost range: [0.33, 1.15] 
+#> 
+#> # A tibble: 20 × 6
+#>    problem_id source target   cost total_cost method_used
+#>         <int>  <int>  <int>  <dbl>      <dbl> <chr>      
+#>  1          1      1      2 0.159       0.809 bruteforce 
+#>  2          1      2      1 0.650       0.809 bruteforce 
+#>  3          2      1      1 0.891       1.15  bruteforce 
+#>  4          2      2      2 0.260       1.15  bruteforce 
+#>  5          3      1      1 0.318       0.329 bruteforce 
+#>  6          3      2      2 0.0109      0.329 bruteforce 
+#>  7          4      1      1 0.0631      0.361 bruteforce 
+#>  8          4      2      2 0.298       0.361 bruteforce 
+#>  9          5      1      1 0.0946      0.497 bruteforce 
+#> 10          5      2      2 0.402       0.497 bruteforce 
+#> 11          6      1      1 0.0591      0.335 bruteforce 
+#> 12          6      2      2 0.276       0.335 bruteforce 
+#> 13          7      1      2 0.199       0.743 bruteforce 
+#> 14          7      2      1 0.544       0.743 bruteforce 
+#> 15          8      1      2 0.876       1.15  bruteforce 
+#> 16          8      2      1 0.271       1.15  bruteforce 
+#> 17          9      1      2 0.183       0.564 bruteforce 
+#> 18          9      2      1 0.381       0.564 bruteforce 
+#> 19         10      1      1 0.906       0.919 bruteforce 
+#> 20         10      2      2 0.0133      0.919 bruteforce 
 
 # Grouped data frame
 library(dplyr)
@@ -93,7 +135,42 @@ df <- tibble(
   cost = runif(45, 1, 10)
 )
 df |> group_by(sim) |> lap_solve_batch(source, target, cost)
+#> Batch Assignment Results
+#> ========================
+#> 
+#> 
+#> # A tibble: 15 × 6
+#>      sim source target  cost total_cost method_used
+#>    <int>  <int>  <int> <dbl>      <dbl> <chr>      
+#>  1     1      1      2  6.82      14.9  bruteforce 
+#>  2     1      2      3  6.42      14.9  bruteforce 
+#>  3     1      3      1  1.69      14.9  bruteforce 
+#>  4     2      1      3  1.62       9.34 bruteforce 
+#>  5     2      2      2  3.18       9.34 bruteforce 
+#>  6     2      3      1  4.54       9.34 bruteforce 
+#>  7     3      1      2  2.20       8.55 bruteforce 
+#>  8     3      2      3  3.31       8.55 bruteforce 
+#>  9     3      3      1  3.03       8.55 bruteforce 
+#> 10     4      1      3  1.24      10.0  bruteforce 
+#> 11     4      2      2  6.88      10.0  bruteforce 
+#> 12     4      3      1  1.91      10.0  bruteforce 
+#> 13     5      1      2  3.36       7.37 bruteforce 
+#> 14     5      2      1  2.85       7.37 bruteforce 
+#> 15     5      3      3  1.16       7.37 bruteforce 
 
 # Parallel execution (requires n_threads > 1)
 lap_solve_batch(costs, n_threads = 2)
+#> Batch Assignment Results
+#> ========================
+#> 
+#> Number of problems solved: 2 
+#> Total cost range: [5.00, 13.00] 
+#> 
+#> # A tibble: 4 × 6
+#>   problem_id source target  cost total_cost method_used
+#>        <int>  <int>  <int> <dbl>      <dbl> <chr>      
+#> 1          1      1      1     1          5 bruteforce 
+#> 2          1      2      2     4          5 bruteforce 
+#> 3          2      1      1     5         13 bruteforce 
+#> 4          2      2      2     8         13 bruteforce 
 ```

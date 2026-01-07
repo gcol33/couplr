@@ -494,18 +494,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 189.48 seconds
+#>   Time: 198.81 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.49 seconds
+#>   Time: 1.53 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 127.2 x
+#>   Speedup: 129.9 x
 ```
 
 ### Greedy Strategies
@@ -589,8 +589,8 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.06        0.0912          18.24
-#> elapsed1 row_best     0.07        0.0968          19.36
+#> elapsed    sorted     0.08        0.0912          18.24
+#> elapsed1 row_best     0.06        0.0968          19.36
 #> elapsed2       pq     0.08        0.0912          18.24
 ```
 
@@ -1533,6 +1533,10 @@ loop](matching-workflows_files/figure-html/workflow-diagram-1.svg)
   Basic LAP solving
 - [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
   Mathematical foundations
+- [`vignette("comparison")`](https://gcol33.github.io/couplr/articles/comparison.md) -
+  How couplr compares to MatchIt, optmatch, designmatch
+- [`vignette("troubleshooting")`](https://gcol33.github.io/couplr/articles/troubleshooting.md) -
+  Common issues and solutions
 - [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) -
   Large-scale approximation strategies
 - [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),

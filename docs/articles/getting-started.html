@@ -36,8 +36,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core Topics</h6></li>
     <li><a class="dropdown-item" href="../articles/algorithms.html">Algorithm Details</a></li>
     <li><a class="dropdown-item" href="../articles/matching-workflows.html">Matching Workflows</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Comparison with Alternatives</a></li>
+    <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
     <li><a class="dropdown-item" href="../articles/pixel-morphing.html">Pixel Morphing &amp; Scientific Applications</a></li>
   </ul>
 </li>
@@ -96,7 +104,66 @@ Colling</h4>
 matrix where entry (i, j) represents the cost of assigning source i to
 target j, find the one-to-one assignment that minimizes total cost. It
 also provides production-ready matching workflows for observational
-studies (see <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code>).</p>
+studies.</p>
+<div class="section level3">
+<h3 id="documentation-roadmap">Documentation Roadmap<a class="anchor" aria-label="anchor" href="#documentation-roadmap"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="30%">
+<col width="21%">
+<col width="30%">
+<col width="18%">
+</colgroup>
+<thead><tr class="header">
+<th>Vignette</th>
+<th>Focus</th>
+<th>Audience</th>
+<th>Time</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<strong>Quick Start</strong> (this)</td>
+<td>Basic LAP solving, API introduction</td>
+<td>Everyone</td>
+<td>10 min</td>
+</tr>
+<tr class="even">
+<td><a href="algorithms.html">Algorithms</a></td>
+<td>Mathematical foundations, solver selection</td>
+<td>Technical users</td>
+<td>30 min</td>
+</tr>
+<tr class="odd">
+<td><a href="matching-workflows.html">Matching Workflows</a></td>
+<td>Production matching pipelines</td>
+<td>Researchers</td>
+<td>45 min</td>
+</tr>
+<tr class="even">
+<td><a href="comparison.html">Comparison</a></td>
+<td>vs MatchIt, optmatch, designmatch</td>
+<td>Package evaluators</td>
+<td>20 min</td>
+</tr>
+<tr class="odd">
+<td><a href="troubleshooting.html">Troubleshooting</a></td>
+<td>Common issues and solutions</td>
+<td>All users</td>
+<td>As needed</td>
+</tr>
+<tr class="even">
+<td><a href="pixel-morphing.html">Pixel Morphing</a></td>
+<td>Scientific applications</td>
+<td>Advanced</td>
+<td>30 min</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Start here</strong>, then proceed to whichever vignette
+matches your use case.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="interface-hierarchy">Interface Hierarchy<a class="anchor" aria-label="anchor" href="#interface-hierarchy"></a>
@@ -563,6 +630,12 @@ solver internals</li>
 <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> - Production matching
 for observational studies</li>
 <li>
+<code><a href="../articles/comparison.html">vignette("comparison")</a></code> - How couplr compares to
+MatchIt, optmatch, designmatch</li>
+<li>
+<code><a href="../articles/troubleshooting.html">vignette("troubleshooting")</a></code> - Common issues and
+solutions</li>
+<li>
 <code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> - Large-scale approximation
 strategies</li>
 <li>
@@ -578,7 +651,7 @@ strategies</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by <a href="https://github.com/gcol33" class="external-link">Gilles Colling</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -36,8 +36,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core Topics</h6></li>
     <li><a class="dropdown-item" href="../articles/algorithms.html">Algorithm Details</a></li>
     <li><a class="dropdown-item" href="../articles/matching-workflows.html">Matching Workflows</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Comparison with Alternatives</a></li>
+    <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
     <li><a class="dropdown-item" href="../articles/pixel-morphing.html">Pixel Morphing &amp; Scientific Applications</a></li>
   </ul>
 </li>
@@ -213,97 +221,7 @@ underlies most efficient LAP algorithms.</p>
 </h3>
 <p>The LAP corresponds to finding a minimum-weight perfect matching in a
 weighted bipartite graph:</p>
-
-<div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='576.00pt' height='432.00pt' viewBox='0 0 576.00 432.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
-<g class='svglite'>
-<defs>
-  <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite text {
-      white-space: pre;
-      fill: #3E3F3A;
-    }
-    .svglite g.glyphgroup path {
-      fill: inherit;
-      stroke: none;
-    }
-  ]]></style>
-</defs>
-<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
-<defs>
-  <clipPath id='cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA='>
-    <rect x='0.00' y='0.00' width='576.00' height='432.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
-<rect x='0.00' y='0.00' width='576.00' height='432.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-</g>
-<defs>
-  <clipPath id='cpMjQuOTF8NTUxLjA5fDQ5LjA3fDM0NC4xMQ=='>
-    <rect x='24.91' y='49.07' width='526.19' height='295.05' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMjQuOTF8NTUxLjA5fDQ5LjA3fDM0NC4xMQ==)'>
-<rect x='24.91' y='49.07' width='526.19' height='295.05' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-<line x1='117.16' y1='107.18' x2='458.84' y2='196.59' style='stroke-width: 2.56; stroke: #AAA49B; stroke-opacity: 0.60; stroke-linecap: butt;' />
-<line x1='117.16' y1='196.59' x2='458.84' y2='107.18' style='stroke-width: 2.56; stroke: #AAA49B; stroke-opacity: 0.60; stroke-linecap: butt;' />
-<line x1='117.16' y1='286.00' x2='458.84' y2='107.18' style='stroke-width: 2.56; stroke: #AAA49B; stroke-opacity: 0.60; stroke-linecap: butt;' />
-<line x1='117.16' y1='107.18' x2='458.84' y2='107.18' style='stroke-width: 5.33; stroke: #93C54B; stroke-linecap: butt;' />
-<line x1='117.16' y1='196.59' x2='458.84' y2='196.59' style='stroke-width: 5.33; stroke: #93C54B; stroke-linecap: butt;' />
-<line x1='117.16' y1='286.00' x2='458.84' y2='286.00' style='stroke-width: 5.33; stroke: #93C54B; stroke-linecap: butt;' />
-<polygon points='281.49,162.10 294.51,162.10 294.41,162.10 294.82,162.08 295.23,162.00 295.61,161.85 295.97,161.64 296.29,161.38 296.56,161.07 296.78,160.73 296.94,160.35 297.04,159.95 297.07,159.54 297.07,159.54 297.07,144.23 297.07,144.23 297.04,143.82 296.94,143.42 296.78,143.04 296.56,142.70 296.29,142.39 295.97,142.13 295.61,141.92 295.23,141.77 294.82,141.69 294.51,141.67 281.49,141.67 281.79,141.69 281.38,141.68 280.97,141.73 280.58,141.84 280.21,142.02 279.87,142.25 279.57,142.54 279.32,142.87 279.13,143.23 279.00,143.62 278.93,144.03 278.93,144.23 278.93,159.54 278.93,159.33 278.93,159.74 279.00,160.15 279.13,160.54 279.32,160.91 279.57,161.23 279.87,161.52 280.21,161.75 280.58,161.93 280.97,162.05 281.38,162.10 ' style='stroke-width: 0.53; stroke: #3E3F3A; fill: #DFD9D2;' />
-<text x='288.00' y='156.98' text-anchor='middle' style='font-size: 14.23px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>4</text>
-<polygon points='178.98,188.92 192.01,188.92 191.91,188.92 192.32,188.90 192.72,188.82 193.11,188.67 193.46,188.47 193.78,188.21 194.06,187.90 194.28,187.55 194.44,187.17 194.54,186.77 194.57,186.36 194.57,186.36 194.57,171.06 194.57,171.06 194.54,170.65 194.44,170.25 194.28,169.87 194.06,169.52 193.78,169.21 193.46,168.95 193.11,168.74 192.72,168.60 192.32,168.51 192.01,168.50 178.98,168.50 179.29,168.51 178.88,168.50 178.47,168.55 178.07,168.66 177.70,168.84 177.36,169.07 177.07,169.36 176.82,169.69 176.63,170.05 176.50,170.44 176.43,170.85 176.42,171.06 176.42,186.36 176.43,186.15 176.43,186.57 176.50,186.97 176.63,187.36 176.82,187.73 177.07,188.06 177.36,188.34 177.70,188.58 178.07,188.75 178.47,188.87 178.88,188.92 ' style='stroke-width: 0.53; stroke: #3E3F3A; fill: #DFD9D2;' />
-<text x='185.50' y='183.80' text-anchor='middle' style='font-size: 14.23px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>3</text>
-<polygon points='383.99,153.16 397.02,153.16 396.91,153.15 397.33,153.14 397.73,153.06 398.12,152.91 398.47,152.70 398.79,152.44 399.06,152.13 399.29,151.79 399.45,151.41 399.55,151.01 399.58,150.60 399.58,150.60 399.58,135.29 399.58,135.29 399.55,134.88 399.45,134.48 399.29,134.10 399.06,133.76 398.79,133.45 398.47,133.19 398.12,132.98 397.73,132.83 397.33,132.75 397.02,132.73 383.99,132.73 384.30,132.75 383.89,132.73 383.48,132.78 383.08,132.90 382.71,133.08 382.37,133.31 382.07,133.60 381.83,133.92 381.63,134.29 381.50,134.68 381.44,135.09 381.43,135.29 381.43,150.60 381.44,150.39 381.44,150.80 381.50,151.21 381.63,151.60 381.83,151.96 382.07,152.29 382.37,152.58 382.71,152.81 383.08,152.99 383.48,153.10 383.89,153.15 ' style='stroke-width: 0.53; stroke: #3E3F3A; fill: #DFD9D2;' />
-<text x='390.50' y='148.04' text-anchor='middle' style='font-size: 14.23px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>3</text>
-<polygon points='281.49,117.39 294.51,117.39 294.41,117.39 294.82,117.37 295.23,117.29 295.61,117.15 295.97,116.94 296.29,116.68 296.56,116.37 296.78,116.02 296.94,115.64 297.04,115.24 297.07,114.83 297.07,114.83 297.07,99.53 297.07,99.53 297.04,99.12 296.94,98.72 296.78,98.34 296.56,97.99 296.29,97.68 295.97,97.42 295.61,97.22 295.23,97.07 294.82,96.99 294.51,96.97 281.49,96.97 281.79,96.99 281.38,96.97 280.97,97.02 280.58,97.14 280.21,97.31 279.87,97.55 279.57,97.83 279.32,98.16 279.13,98.53 279.00,98.92 278.93,99.32 278.93,99.53 278.93,114.83 278.93,114.63 278.93,115.04 279.00,115.45 279.13,115.84 279.32,116.20 279.57,116.53 279.87,116.82 280.21,117.05 280.58,117.23 280.97,117.34 281.38,117.39 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='288.00' y='112.27' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>2</text>
-<polygon points='281.49,206.80 294.51,206.80 294.41,206.80 294.82,206.78 295.23,206.70 295.61,206.55 295.97,206.35 296.29,206.09 296.56,205.78 296.78,205.43 296.94,205.05 297.04,204.65 297.07,204.24 297.07,204.24 297.07,188.94 297.07,188.94 297.04,188.53 296.94,188.13 296.78,187.75 296.56,187.40 296.29,187.09 295.97,186.83 295.61,186.63 295.23,186.48 294.82,186.40 294.51,186.38 281.49,186.38 281.79,186.40 281.38,186.38 280.97,186.43 280.58,186.54 280.21,186.72 279.87,186.96 279.57,187.24 279.32,187.57 279.13,187.94 279.00,188.33 278.93,188.73 278.93,188.94 278.93,204.24 278.93,204.04 278.93,204.45 279.00,204.85 279.13,205.24 279.32,205.61 279.57,205.94 279.87,206.22 280.21,206.46 280.58,206.64 280.97,206.75 281.38,206.80 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='288.00' y='201.68' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>1</text>
-<polygon points='281.49,296.21 294.51,296.21 294.41,296.21 294.82,296.19 295.23,296.11 295.61,295.96 295.97,295.76 296.29,295.50 296.56,295.19 296.78,294.84 296.94,294.46 297.04,294.06 297.07,293.65 297.07,293.65 297.07,278.35 297.07,278.35 297.04,277.94 296.94,277.54 296.78,277.16 296.56,276.81 296.29,276.50 295.97,276.24 295.61,276.03 295.23,275.89 294.82,275.81 294.51,275.79 281.49,275.79 281.79,275.81 281.38,275.79 280.97,275.84 280.58,275.95 280.21,276.13 279.87,276.36 279.57,276.65 279.32,276.98 279.13,277.34 279.00,277.73 278.93,278.14 278.93,278.35 278.93,293.65 278.93,293.44 278.93,293.86 279.00,294.26 279.13,294.65 279.32,295.02 279.57,295.35 279.87,295.63 280.21,295.87 280.58,296.04 280.97,296.16 281.38,296.21 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='288.00' y='291.09' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>2</text>
-<circle cx='117.16' cy='107.18' r='19.56' style='stroke-width: 0.71; stroke: #F47C3C; fill: #F47C3C;' />
-<circle cx='117.16' cy='196.59' r='19.56' style='stroke-width: 0.71; stroke: #F47C3C; fill: #F47C3C;' />
-<circle cx='117.16' cy='286.00' r='19.56' style='stroke-width: 0.71; stroke: #F47C3C; fill: #F47C3C;' />
-<circle cx='458.84' cy='107.18' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
-<circle cx='458.84' cy='196.59' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
-<circle cx='458.84' cy='286.00' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
-<text x='117.16' y='113.29' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='20.86px' lengthAdjust='spacingAndGlyphs'>S1</text>
-<text x='117.16' y='202.70' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='20.86px' lengthAdjust='spacingAndGlyphs'>S2</text>
-<text x='117.16' y='292.11' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='20.86px' lengthAdjust='spacingAndGlyphs'>S3</text>
-<text x='458.84' y='113.29' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='19.91px' lengthAdjust='spacingAndGlyphs'>T1</text>
-<text x='458.84' y='202.70' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='19.91px' lengthAdjust='spacingAndGlyphs'>T2</text>
-<text x='458.84' y='292.11' text-anchor='middle' style='font-size: 17.07px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='19.91px' lengthAdjust='spacingAndGlyphs'>T3</text>
-</g>
-<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
-<rect x='187.80' y='355.07' width='200.39' height='61.98' style='stroke-width: 0.75; stroke: none;' /> fill: #F5F6F8;' />
-<rect x='187.80' y='355.07' width='200.39' height='61.98' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-<circle cx='224.27' cy='386.06' r='19.56' style='stroke-width: 0.71; stroke: #F47C3C; fill: #F47C3C;' />
-<circle cx='321.13' cy='386.06' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
-<text x='255.27' y='390.00' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='34.88px' lengthAdjust='spacingAndGlyphs'>Source</text>
-<text x='352.12' y='390.00' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='30.59px' lengthAdjust='spacingAndGlyphs'>Target</text>
-<text x='288.00' y='41.27' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='248.08px' lengthAdjust='spacingAndGlyphs'>Optimal assignment shown in green (total cost = 5)</text>
-<text x='288.00' y='24.97' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='265.22px' lengthAdjust='spacingAndGlyphs'>Assignment Problem as Bipartite Graph</text>
-</g>
-</g>
-</svg></div>
-
+<p><img src="algorithms_files/figure-html/bipartite-graph-1.svg" class="r-plt" width="768"></p>
 <p>The optimal solution (green edges) assigns S1→T1, S2→T2, S3→T3 with
 total cost 2 + 1 + 2 = 5.</p>
 <hr>
@@ -311,94 +229,7 @@ total cost 2 + 1 + 2 = 5.</p>
 <div class="section level3">
 <h3 id="algorithm-selection-guide">Algorithm Selection Guide<a class="anchor" aria-label="anchor" href="#algorithm-selection-guide"></a>
 </h3>
-
-<div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='432.00pt' viewBox='0 0 648.00 432.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
-<g class='svglite'>
-<defs>
-  <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite text {
-      white-space: pre;
-      fill: #3E3F3A;
-    }
-    .svglite g.glyphgroup path {
-      fill: inherit;
-      stroke: none;
-    }
-  ]]></style>
-</defs>
-<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
-<defs>
-  <clipPath id='cpMC4wMHw2NDguMDB8MC4wMHw0MzIuMDA='>
-    <rect x='0.00' y='0.00' width='648.00' height='432.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHw0MzIuMDA=)'>
-<rect x='0.00' y='0.00' width='648.00' height='432.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-</g>
-<defs>
-  <clipPath id='cpMjkuODl8NjE4LjExfDMzLjM5fDQxNy4wNg=='>
-    <rect x='29.89' y='33.39' width='588.22' height='383.67' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMjkuODl8NjE4LjExfDMzLjM5fDQxNy4wNg==)'>
-<rect x='29.89' y='33.39' width='588.22' height='383.67' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-<line x1='285.80' y1='94.43' x2='133.02' y2='181.62' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='135.88,176.73 133.02,181.62 138.69,181.65 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<line x1='285.80' y1='94.43' x2='438.59' y2='181.62' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='432.92,181.65 438.59,181.62 435.73,176.73 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<line x1='438.59' y1='181.62' x2='285.80' y2='268.82' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='288.66,263.93 285.80,268.82 291.47,268.85 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<line x1='438.59' y1='181.62' x2='438.59' y2='268.82' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='435.75,263.91 438.59,268.82 441.42,263.91 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<line x1='438.59' y1='268.82' x2='362.20' y2='356.02' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='363.30,350.46 362.20,356.02 367.56,354.19 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<line x1='438.59' y1='268.82' x2='514.98' y2='356.02' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polygon points='509.61,354.19 514.98,356.02 513.88,350.46 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<text x='194.13' y='133.89' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.34px' lengthAdjust='spacingAndGlyphs'>Yes</text>
-<text x='377.47' y='133.89' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.34px' lengthAdjust='spacingAndGlyphs'>No</text>
-<text x='346.92' y='221.08' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.34px' lengthAdjust='spacingAndGlyphs'>Yes</text>
-<text x='453.87' y='221.08' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.34px' lengthAdjust='spacingAndGlyphs'>No</text>
-<text x='385.11' y='312.64' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.34px' lengthAdjust='spacingAndGlyphs'>Yes</text>
-<text x='492.06' y='312.64' text-anchor='middle' style='font-size: 12.80px; font-style: italic;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.34px' lengthAdjust='spacingAndGlyphs'>No</text>
-<polygon points='285.80,128.30 319.67,94.43 285.80,60.56 251.93,94.43 ' style='stroke-width: 2.83; stroke: #F47C3C; fill: #FFC107;' />
-<polygon points='438.59,215.50 472.46,181.62 438.59,147.75 404.72,181.62 ' style='stroke-width: 2.83; stroke: #F47C3C; fill: #FFC107;' />
-<polygon points='438.59,302.69 472.46,268.82 438.59,234.95 404.72,268.82 ' style='stroke-width: 2.83; stroke: #F47C3C; fill: #FFC107;' />
-<text x='285.80' y='92.35' text-anchor='middle' style='font-size: 11.38px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='32.25px' lengthAdjust='spacingAndGlyphs'>Binary</text>
-<text x='285.80' y='104.65' text-anchor='middle' style='font-size: 11.38px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='32.88px' lengthAdjust='spacingAndGlyphs'>costs?</text>
-<text x='438.59' y='179.55' text-anchor='middle' style='font-size: 11.38px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='41.09px' lengthAdjust='spacingAndGlyphs'>Sparsity</text>
-<text x='438.59' y='191.84' text-anchor='middle' style='font-size: 11.38px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='38.89px' lengthAdjust='spacingAndGlyphs'>&gt; 50%?</text>
-<text x='438.59' y='272.89' text-anchor='middle' style='font-size: 11.38px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='50.92px' lengthAdjust='spacingAndGlyphs'>n &gt; 1000?</text>
-<polygon points='110.58,195.25 155.46,195.25 155.29,195.25 155.97,195.22 156.65,195.08 157.29,194.84 157.88,194.50 158.41,194.06 158.87,193.55 159.24,192.97 159.51,192.33 159.67,191.67 159.73,190.98 159.73,190.98 159.73,172.27 159.73,172.27 159.67,171.58 159.51,170.92 159.24,170.28 158.87,169.70 158.41,169.19 157.88,168.75 157.29,168.41 156.65,168.17 155.97,168.03 155.46,168.00 110.58,168.00 111.09,168.03 110.41,168.00 109.72,168.09 109.06,168.28 108.44,168.57 107.88,168.96 107.38,169.44 106.97,169.99 106.65,170.59 106.43,171.25 106.32,171.92 106.31,172.27 106.31,190.98 106.32,190.64 106.32,191.33 106.43,192.00 106.65,192.66 106.97,193.26 107.38,193.81 107.88,194.29 108.44,194.68 109.06,194.97 109.72,195.16 110.41,195.25 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='133.02' y='186.72' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.34px' lengthAdjust='spacingAndGlyphs'>HK01</text>
-<polygon points='266.92,282.45 304.69,282.45 304.52,282.44 305.20,282.42 305.88,282.28 306.52,282.04 307.11,281.69 307.65,281.26 308.10,280.74 308.47,280.16 308.74,279.53 308.90,278.86 308.96,278.18 308.96,278.18 308.96,259.46 308.96,259.46 308.90,258.78 308.74,258.11 308.47,257.48 308.10,256.90 307.65,256.39 307.11,255.95 306.52,255.61 305.88,255.36 305.20,255.23 304.69,255.20 266.92,255.20 267.43,255.23 266.75,255.20 266.06,255.28 265.41,255.47 264.78,255.77 264.22,256.16 263.72,256.63 263.31,257.18 262.99,257.79 262.77,258.44 262.66,259.12 262.65,259.46 262.65,278.18 262.66,277.84 262.66,278.52 262.77,279.20 262.99,279.85 263.31,280.46 263.72,281.01 264.22,281.49 264.78,281.88 265.41,282.17 266.06,282.36 266.75,282.44 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='285.80' y='273.91' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='29.23px' lengthAdjust='spacingAndGlyphs'>SAP</text>
-<polygon points='331.47,369.64 392.93,369.64 392.75,369.64 393.44,369.61 394.11,369.48 394.75,369.23 395.35,368.89 395.88,368.45 396.34,367.94 396.70,367.36 396.97,366.73 397.14,366.06 397.19,365.38 397.19,365.38 397.19,346.66 397.19,346.66 397.14,345.98 396.97,345.31 396.70,344.68 396.34,344.10 395.88,343.58 395.35,343.15 394.75,342.80 394.11,342.56 393.44,342.42 392.93,342.39 331.47,342.39 331.98,342.42 331.30,342.40 330.61,342.48 329.95,342.67 329.33,342.96 328.77,343.35 328.27,343.83 327.86,344.38 327.54,344.99 327.32,345.64 327.21,346.32 327.20,346.66 327.20,365.38 327.21,365.03 327.21,365.72 327.32,366.40 327.54,367.05 327.86,367.66 328.27,368.21 328.77,368.68 329.33,369.07 329.95,369.37 330.61,369.56 331.30,369.64 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='362.20' y='361.11' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='52.92px' lengthAdjust='spacingAndGlyphs'>Auction</text>
-<polygon points='472.00,369.64 557.96,369.64 557.79,369.64 558.48,369.61 559.15,369.48 559.79,369.23 560.39,368.89 560.92,368.45 561.37,367.94 561.74,367.36 562.01,366.73 562.17,366.06 562.23,365.38 562.23,365.38 562.23,346.66 562.23,346.66 562.17,345.98 562.01,345.31 561.74,344.68 561.37,344.10 560.92,343.58 560.39,343.15 559.79,342.80 559.15,342.56 558.48,342.42 557.96,342.39 472.00,342.39 472.52,342.42 471.83,342.40 471.15,342.48 470.49,342.67 469.87,342.96 469.30,343.35 468.81,343.83 468.40,344.38 468.08,344.99 467.86,345.64 467.75,346.32 467.74,346.66 467.74,365.38 467.75,365.03 467.75,365.72 467.86,366.40 468.08,367.05 468.40,367.66 468.81,368.21 469.30,368.68 469.87,369.07 470.49,369.37 471.15,369.56 471.83,369.64 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='514.98' y='361.11' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='77.42px' lengthAdjust='spacingAndGlyphs'>JV (default)</text>
-</g>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHw0MzIuMDA=)'>
-<text x='324.00' y='24.97' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='227.11px' lengthAdjust='spacingAndGlyphs'>Algorithm Selection Decision Tree</text>
-</g>
-</g>
-</svg></div>
-
+<p><img src="algorithms_files/figure-html/decision-flowchart-1.svg" class="r-plt" alt="Flowchart showing algorithm selection based on cost matrix properties" width="864"></p>
 <div class="section level4">
 <h4 id="quick-reference">Quick Reference<a class="anchor" aria-label="anchor" href="#quick-reference"></a>
 </h4>
@@ -1324,6 +1155,12 @@ start</li>
 <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> - Production matching
 pipelines</li>
 <li>
+<code><a href="../articles/comparison.html">vignette("comparison")</a></code> - How couplr compares to
+MatchIt, optmatch, designmatch</li>
+<li>
+<code><a href="../articles/troubleshooting.html">vignette("troubleshooting")</a></code> - Common issues and
+solutions</li>
+<li>
 <code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> - Large-scale approximation
 strategies</li>
 <li>
@@ -1348,7 +1185,7 @@ strategies</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by <a href="https://github.com/gcol33" class="external-link">Gilles Colling</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
@@ -1362,121 +1199,5 @@ strategies</li>
 
 
 
-  <script>
-/* SVG Copy Button Functionality - Copy as PNG Image */
-(function() {
-  "use strict";
-
-  // Convert SVG to PNG and copy to clipboard
-  async function copySvgAsImage(svg, btn) {
-    try {
-      // Get SVG dimensions
-      var svgRect = svg.getBoundingClientRect();
-      var width = svgRect.width;
-      var height = svgRect.height;
-
-      // Use higher resolution for better quality (2x)
-      var scale = 2;
-      var canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      var ctx = canvas.getContext("2d");
-      ctx.scale(scale, scale);
-
-      // Clone SVG and prepare for rendering
-      var clone = svg.cloneNode(true);
-      clone.classList.remove("inline-svg");
-
-      // Get computed styles and inline them for proper rendering
-      var svgStyles = window.getComputedStyle(svg);
-
-      // Serialize SVG
-      var serializer = new XMLSerializer();
-      var svgString = serializer.serializeToString(clone);
-
-      // Create a blob and URL for the SVG
-      var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-      var url = URL.createObjectURL(svgBlob);
-
-      // Create image and draw to canvas
-      var img = new Image();
-      img.onload = async function() {
-        // Fill white background (for transparency)
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw the SVG
-        ctx.drawImage(img, 0, 0, width, height);
-        URL.revokeObjectURL(url);
-
-        // Convert canvas to blob and copy to clipboard
-        canvas.toBlob(async function(blob) {
-          try {
-            var item = new ClipboardItem({ "image/png": blob });
-            await navigator.clipboard.write([item]);
-
-            // Show success tooltip
-            showTooltip(btn, "Copied!");
-          } catch (err) {
-            console.error("Failed to copy image:", err);
-            showTooltip(btn, "Copy failed - try right-click");
-          }
-        }, "image/png");
-      };
-
-      img.onerror = function() {
-        URL.revokeObjectURL(url);
-        console.error("Failed to load SVG as image");
-        showTooltip(btn, "Copy failed");
-      };
-
-      img.src = url;
-
-    } catch (err) {
-      console.error("Error copying SVG:", err);
-      showTooltip(btn, "Copy failed");
-    }
-  }
-
-  // Show tooltip message
-  function showTooltip(btn, message) {
-    var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
-    btn.setAttribute("data-bs-original-title", message);
-    var tooltip = bootstrap.Tooltip.getInstance(btn);
-    if (tooltip) {
-      tooltip.show();
-    }
-    setTimeout(function() {
-      btn.setAttribute("data-bs-original-title", originalTitle);
-    }, 1500);
-  }
-
-  // Initialize SVG copy buttons after DOM is ready
-  document.addEventListener("DOMContentLoaded", function() {
-    // Check for Clipboard API support
-    if (!navigator.clipboard || !navigator.clipboard.write) {
-      console.warn("Clipboard API not supported - SVG copy buttons disabled");
-      return;
-    }
-
-    // Add click handlers to all SVG copy buttons
-    document.querySelectorAll(".btn-copy-svg").forEach(function(btn) {
-      btn.addEventListener("click", function(e) {
-        e.preventDefault();
-        var container = btn.closest(".svg-container");
-        if (!container) return;
-
-        var svg = container.querySelector("svg");
-        if (!svg) return;
-
-        copySvgAsImage(svg, btn);
-      });
-
-      // Initialize Bootstrap tooltip
-      new bootstrap.Tooltip(btn, { container: "body" });
-    });
-  });
-})();
-</script>
-</body>
+  </body>
 </html>

@@ -73,13 +73,22 @@ for (i in 1:3) {
   cat(sprintf("Row %d -> Col %d: u + v = %.2f, cost = %.2f\n",
               i, j, result$u[i] + result$v[j], cost[i, j]))
 }
+#> Row 1 -> Col 2: u + v = 2.00, cost = 2.00
+#> Row 2 -> Col 1: u + v = 3.00, cost = 3.00
+#> Row 3 -> Col 3: u + v = 4.00, cost = 4.00
 
 # Verify strong duality
 cat("sum(u) + sum(v) =", sum(result$u) + sum(result$v), "\n")
+#> sum(u) + sum(v) = 9 
 cat("total_cost =", result$total_cost, "\n")
+#> total_cost = 9 
 
 # Reduced costs (how much must cost decrease to enter solution)
 reduced <- outer(result$u, result$v, "+")
 reduced_cost <- cost - reduced
 print(round(reduced_cost, 2))
+#>      [,1] [,2] [,3]
+#> [1,]    2    0    3
+#> [2,]    0    0    3
+#> [3,]    3    1    0
 ```

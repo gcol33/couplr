@@ -10,6 +10,12 @@
 - [x] Run `devtools::document()` to regenerate `.Rd` documentation
 - [x] Update `_pkgdown.yml` with new functions (assignment_duals, bottleneck_assignment, sinkhorn, sinkhorn_to_assignment)
 - [x] Rebuild pkgdown website using `build_site.R`
+- [x] Commit network simplex changes (b9a3094)
+- [x] Update CLAUDE.md with new algorithms (7861e87)
+- [x] Comprehensive documentation update for all 20 algorithms (8db9f55)
+  - Reorganized `@param method` into categorized groups
+  - Expanded algorithms vignette with 6 new algorithm sections
+  - Added specialized functions section (duals, bottleneck, sinkhorn)
+  - Updated quick reference and performance tables
 
-## Remaining Tasks
-- [x] Commit all changes (b9a3094)
+## All Done!

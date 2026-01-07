@@ -5,9 +5,21 @@
 couplr solves the Linear Assignment Problem (LAP): given a cost matrix
 where entry (i, j) represents the cost of assigning source i to target
 j, find the one-to-one assignment that minimizes total cost. It also
-provides production-ready matching workflows for observational studies
-(see
-[`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)).
+provides production-ready matching workflows for observational studies.
+
+### Documentation Roadmap
+
+| Vignette | Focus | Audience | Time |
+|----|----|----|----|
+| **Quick Start** (this) | Basic LAP solving, API introduction | Everyone | 10 min |
+| [Algorithms](https://gcol33.github.io/couplr/articles/algorithms.md) | Mathematical foundations, solver selection | Technical users | 30 min |
+| [Matching Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md) | Production matching pipelines | Researchers | 45 min |
+| [Comparison](https://gcol33.github.io/couplr/articles/comparison.md) | vs MatchIt, optmatch, designmatch | Package evaluators | 20 min |
+| [Troubleshooting](https://gcol33.github.io/couplr/articles/troubleshooting.md) | Common issues and solutions | All users | As needed |
+| [Pixel Morphing](https://gcol33.github.io/couplr/articles/pixel-morphing.md) | Scientific applications | Advanced | 30 min |
+
+**Start here**, then proceed to whichever vignette matches your use
+case.
 
 ## Interface Hierarchy
 
@@ -442,6 +454,10 @@ or verify total costs match.
   Mathematical foundations and solver internals
 - [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
   Production matching for observational studies
+- [`vignette("comparison")`](https://gcol33.github.io/couplr/articles/comparison.md) -
+  How couplr compares to MatchIt, optmatch, designmatch
+- [`vignette("troubleshooting")`](https://gcol33.github.io/couplr/articles/troubleshooting.md) -
+  Common issues and solutions
 - [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) -
   Large-scale approximation strategies
 - [`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),

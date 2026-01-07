@@ -40,8 +40,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/getting-started.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core Topics</h6></li>
     <li><a class="dropdown-item" href="articles/algorithms.html">Algorithm Details</a></li>
     <li><a class="dropdown-item" href="articles/matching-workflows.html">Matching Workflows</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="articles/comparison.html">Comparison with Alternatives</a></li>
+    <li><a class="dropdown-item" href="articles/troubleshooting.html">Troubleshooting</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
     <li><a class="dropdown-item" href="articles/pixel-morphing.html">Pixel Morphing &amp; Scientific Applications</a></li>
   </ul>
 </li>
@@ -81,6 +89,22 @@
 <p><a href="https://github.com/gcol33/couplr" class="external-link"><img src="https://img.shields.io/github/stars/gcol33/couplr" alt="GitHub stars"></a> <a href="https://github.com/gcol33/couplr" class="external-link"><img src="https://img.shields.io/badge/R--CMD--check-passing-brightgreen" alt="R-CMD-check"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a></p>
 <p><strong>couplr</strong> is an R package for solving Linear Assignment Problems (LAP) with production-ready matching workflows. It provides optimal one-to-one matching between two groups, with automatic preprocessing, balance diagnostics, and analysis-ready output.</p>
 <div class="section level2">
+<h2 id="why-couplr">Why couplr?<a class="anchor" aria-label="anchor" href="#why-couplr"></a>
+</h2>
+<p>Existing R packages for optimal matching (MatchIt, optmatch) focus on propensity score workflows for causal inference. <strong>couplr</strong> takes a different approach:</p>
+<ul>
+<li>
+<strong>Direct covariate matching</strong>: Match on observed variables without propensity score estimation</li>
+<li>
+<strong>Algorithm choice</strong>: 20 LAP solvers let you pick the right algorithm for your problem size and structure</li>
+<li>
+<strong>Production workflows</strong>: Preprocessing, diagnostics, and joined output in a single pipeline</li>
+<li>
+<strong>Beyond causal inference</strong>: Match plots to controls, pair samples for experiments, align images pixel-by-pixel</li>
+</ul>
+<p>If you need propensity score matching with replacement or variable ratios, use MatchIt. If you need optimal one-to-one assignment with full control over the distance metric and algorithm, use couplr.</p>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -111,7 +135,7 @@
 </h2>
 <ul>
 <li>
-<strong>12 optimal LAP algorithms</strong>: Hungarian, Jonker-Volgenant, Auction, Gabow-Tarjan, and more</li>
+<strong>20 optimal LAP algorithms</strong>: Hungarian, Jonker-Volgenant, Auction, Gabow-Tarjan, Network Simplex, and more</li>
 <li>
 <strong>3 greedy algorithms</strong>: Fast approximate matching for large datasets</li>
 <li>
@@ -220,7 +244,8 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>First Last <br><small class="roles"> Author, maintainer </small>   </li>
+<li>
+<a href="https://github.com/gcol33" class="external-link">Gilles Colling</a> <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -231,7 +256,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by <a href="https://github.com/gcol33" class="external-link">Gilles Colling</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

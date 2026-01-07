@@ -80,6 +80,18 @@ A tibble with columns:
 # Matrix input
 cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), nrow = 3)
 lap_solve(cost)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      2     3
+#> 2      2      1     2
+#> 3      3      3     4
+#> 
+#> Total cost: 9 
+#> Method: bruteforce 
 
 # Data frame input
 library(dplyr)
@@ -89,10 +101,34 @@ df <- tibble(
   cost = c(4, 2, 5, 3, 3, 6, 7, 5, 4)
 )
 lap_solve(df, source, target, cost)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      2     2
+#> 2      2      1     3
+#> 3      3      3     4
+#> 
+#> Total cost: 9 
+#> Method: bruteforce 
 
 # With NA masking (forbidden assignments)
 cost[1, 3] <- NA
 lap_solve(cost)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      2     3
+#> 2      2      1     2
+#> 3      3      3     4
+#> 
+#> Total cost: 9 
+#> Method: bruteforce 
 
 # Grouped data frames
 df <- tibble(
@@ -102,4 +138,13 @@ df <- tibble(
   cost = runif(18, 1, 10)
 )
 df |> group_by(sim) |> lap_solve(source, target, cost)
+#> # A tibble: 6 × 4
+#>     sim source target  cost
+#>   <int>  <int>  <int> <dbl>
+#> 1     1      1      1  1.92
+#> 2     1      2      2  5.77
+#> 3     1      3      3  6.95
+#> 4     2      1      3  5.71
+#> 5     2      2      1  1.66
+#> 6     2      3      2  4.31
 ```

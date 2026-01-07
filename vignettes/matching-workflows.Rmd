@@ -1356,5 +1356,7 @@ ggplot() +
 
 - `vignette("getting-started")` - Basic LAP solving
 - `vignette("algorithms")` - Mathematical foundations
+- `vignette("comparison")` - How couplr compares to MatchIt, optmatch, designmatch
+- `vignette("troubleshooting")` - Common issues and solutions
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 - `?match_couples`, `?greedy_couples`, `?balance_diagnostics`, `?matchmaker`

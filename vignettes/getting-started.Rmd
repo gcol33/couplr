@@ -21,7 +21,20 @@ library(couplr)
 
 ## What couplr Does
 
-couplr solves the Linear Assignment Problem (LAP): given a cost matrix where entry (i, j) represents the cost of assigning source i to target j, find the one-to-one assignment that minimizes total cost. It also provides production-ready matching workflows for observational studies (see `vignette("matching-workflows")`).
+couplr solves the Linear Assignment Problem (LAP): given a cost matrix where entry (i, j) represents the cost of assigning source i to target j, find the one-to-one assignment that minimizes total cost. It also provides production-ready matching workflows for observational studies.
+
+### Documentation Roadmap
+
+| Vignette | Focus | Audience | Time |
+|----------|-------|----------|------|
+| **Quick Start** (this) | Basic LAP solving, API introduction | Everyone | 10 min |
+| [Algorithms](algorithms.html) | Mathematical foundations, solver selection | Technical users | 30 min |
+| [Matching Workflows](matching-workflows.html) | Production matching pipelines | Researchers | 45 min |
+| [Comparison](comparison.html) | vs MatchIt, optmatch, designmatch | Package evaluators | 20 min |
+| [Troubleshooting](troubleshooting.html) | Common issues and solutions | All users | As needed |
+| [Pixel Morphing](pixel-morphing.html) | Scientific applications | Advanced | 30 min |
+
+**Start here**, then proceed to whichever vignette matches your use case.
 
 ## Interface Hierarchy
 
@@ -315,5 +328,7 @@ if (!all(feasible)) cat("Infeasible rows:", which(!feasible), "\n")
 
 - `vignette("algorithms")` - Mathematical foundations and solver internals
 - `vignette("matching-workflows")` - Production matching for observational studies
+- `vignette("comparison")` - How couplr compares to MatchIt, optmatch, designmatch
+- `vignette("troubleshooting")` - Common issues and solutions
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 - `?lap_solve`, `?lap_solve_batch`, `?lap_solve_kbest`, `?match_couples`

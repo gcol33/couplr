@@ -133,6 +133,14 @@ left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5), y = c(2, 4, 6, 8, 10))
 right <- data.frame(id = 6:10, x = c(1.1, 2.2, 3.1, 4.2, 5.1), y = c(2.1, 4.1, 6.2, 8.1, 10.1))
 result <- match_couples(left, right, vars = c("x", "y"))
 print(result$pairs)
+#> # A tibble: 5 × 5
+#>   left_id right_id distance .x_diff .y_diff
+#>   <chr>   <chr>       <dbl>   <dbl>   <dbl>
+#> 1 1       6           0.141 -0.100  -0.100 
+#> 2 2       7           0.224 -0.200  -0.1000
+#> 3 3       8           0.224 -0.100  -0.200 
+#> 4 4       9           0.224 -0.200  -0.1000
+#> 5 5       10          0.141 -0.1000 -0.1000
 
 # With constraints
 result <- match_couples(left, right, vars = c("x", "y"),

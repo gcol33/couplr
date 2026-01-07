@@ -738,6 +738,10 @@ Competitive for max-flow style problems
   Basic usage and quick start
 - [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
   Production matching pipelines
+- [`vignette("comparison")`](https://gcol33.github.io/couplr/articles/comparison.md) -
+  How couplr compares to MatchIt, optmatch, designmatch
+- [`vignette("troubleshooting")`](https://gcol33.github.io/couplr/articles/troubleshooting.md) -
+  Common issues and solutions
 - [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) -
   Large-scale approximation strategies
 - [`?assignment`](https://gcol33.github.io/couplr/reference/assignment.md) -

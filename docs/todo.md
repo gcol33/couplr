@@ -25,6 +25,15 @@ bottleneck_assignment, sinkhorn, sinkhorn_to_assignment)
 
 Rebuild pkgdown website using `build_site.R`
 
-## Remaining Tasks
+Commit network simplex changes (b9a3094)
 
-Commit all changes (b9a3094)
+Update CLAUDE.md with new algorithms (7861e87)
+
+Comprehensive documentation update for all 20 algorithms (8db9f55)
+
+- Reorganized `@param method` into categorized groups
+- Expanded algorithms vignette with 6 new algorithm sections
+- Added specialized functions section (duals, bottleneck, sinkhorn)
+- Updated quick reference and performance tables
+
+## All Done!

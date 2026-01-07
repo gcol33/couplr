@@ -34,10 +34,20 @@ navbar:
       menu:
         - text: "Getting Started"
           href: articles/getting-started.html
+        - text: "---"
+        - text: "Core Topics"
         - text: "Algorithm Details"
           href: articles/algorithms.html
         - text: "Matching Workflows"
           href: articles/matching-workflows.html
+        - text: "---"
+        - text: "Guides"
+        - text: "Comparison with Alternatives"
+          href: articles/comparison.html
+        - text: "Troubleshooting"
+          href: articles/troubleshooting.html
+        - text: "---"
+        - text: "Advanced"
         - text: "Pixel Morphing & Scientific Applications"
           href: articles/pixel-morphing.html
     github:
@@ -132,11 +142,21 @@ articles:
     contents:
       - getting-started
 
-  - title: "Deep Dives"
+  - title: "Core Topics"
     navbar: ~
     contents:
       - algorithms
       - matching-workflows
+
+  - title: "Guides"
+    navbar: ~
+    contents:
+      - comparison
+      - troubleshooting
+
+  - title: "Advanced"
+    navbar: ~
+    contents:
       - pixel-morphing
 
 news:

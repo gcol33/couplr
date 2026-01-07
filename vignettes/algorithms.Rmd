@@ -754,6 +754,8 @@ cat("Feasible:", feasible, "\n")
 
 - `vignette("getting-started")` - Basic usage and quick start
 - `vignette("matching-workflows")` - Production matching pipelines
+- `vignette("comparison")` - How couplr compares to MatchIt, optmatch, designmatch
+- `vignette("troubleshooting")` - Common issues and solutions
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 - `?assignment` - Core solver with all 20 methods
 - `?lap_solve` - Tidy interface

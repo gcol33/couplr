@@ -2,21 +2,21 @@
 
 ## Authors
 
-- **First Last**. Author, maintainer.
+- **[Gilles Colling](https://github.com/gcol33)**. Author, maintainer.
 
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/gcol33/couplr/blob/HEAD/DESCRIPTION)
+[`inst/CITATION`](https://github.com/gcol33/couplr/blob/HEAD/inst/CITATION)
 
-Last F (2026). *couplr: Optimal Pairing and Matching via Linear
+Colling G (2025). *couplr: Optimal Pairing and Matching via Linear
 Assignment*. R package version 1.0.0,
-<https://gcol33.github.io/couplr/>.
+<https://github.com/gcol33/couplr>.
 
     @Manual{,
       title = {couplr: Optimal Pairing and Matching via Linear Assignment},
-      author = {First Last},
-      year = {2026},
+      author = {Gilles Colling},
+      year = {2025},
       note = {R package version 1.0.0},
-      url = {https://gcol33.github.io/couplr/},
+      url = {https://github.com/gcol33/couplr},
     }

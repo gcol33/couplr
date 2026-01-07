@@ -20,8 +20,16 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/getting-started.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Core Topics</h6></li>
     <li><a class="dropdown-item" href="articles/algorithms.html">Algorithm Details</a></li>
     <li><a class="dropdown-item" href="articles/matching-workflows.html">Matching Workflows</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="articles/comparison.html">Comparison with Alternatives</a></li>
+    <li><a class="dropdown-item" href="articles/troubleshooting.html">Troubleshooting</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
     <li><a class="dropdown-item" href="articles/pixel-morphing.html">Pixel Morphing &amp; Scientific Applications</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -65,11 +73,19 @@
 <li><label><input type="checkbox" checked>Run <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> to regenerate <code>.Rd</code> documentation</label></li>
 <li><label><input type="checkbox" checked>Update <code>_pkgdown.yml</code> with new functions (assignment_duals, bottleneck_assignment, sinkhorn, sinkhorn_to_assignment)</label></li>
 <li><label><input type="checkbox" checked>Rebuild pkgdown website using <code>build_site.R</code></label></li>
+<li><label><input type="checkbox" checked>Commit network simplex changes (b9a3094)</label></li>
+<li><label><input type="checkbox" checked>Update CLAUDE.md with new algorithms (7861e87)</label></li>
+<li>
+<label><input type="checkbox" checked>Comprehensive documentation update for all 20 algorithms (8db9f55)</label>
+<ul><li>Reorganized <code>@param method</code> into categorized groups</li>
+<li>Expanded algorithms vignette with 6 new algorithm sections</li>
+<li>Added specialized functions section (duals, bottleneck, sinkhorn)</li>
+<li>Updated quick reference and performance tables</li>
+</ul></li>
 </ul></div>
 <div class="section level2">
-<h2 id="remaining-tasks">Remaining Tasks<a class="anchor" aria-label="anchor" href="#remaining-tasks"></a></h2>
-<ul class="task-list"><li><label><input type="checkbox" checked>Commit all changes (b9a3094)</label></li>
-</ul></div>
+<h2 id="all-done">All Done!<a class="anchor" aria-label="anchor" href="#all-done"></a></h2>
+</div>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -77,7 +93,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by <a href="https://github.com/gcol33" class="external-link">Gilles Colling</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -4,7 +4,7 @@
 
 ## Test environments
 
-* local Windows 11 x64, R 4.5.1
+* local Windows 11 x64, R 4.5.2
 * GitHub Actions: ubuntu-latest (R release), windows-latest (R release), macOS-latest (R release)
 * R-hub: windows-x86_64-devel, ubuntu-gcc-release, fedora-clang-devel
 

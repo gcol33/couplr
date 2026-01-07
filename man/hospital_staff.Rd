@@ -5,50 +5,76 @@
 \alias{hospital_staff}
 \title{Hospital staff scheduling example dataset}
 \format{
-A list containing several related datasets:
+A list containing eight related datasets:
 \describe{
-\item{basic_costs}{A 10x10 cost matrix for assigning 10 nurses to 10 shifts.
-Lower values indicate better fit (less overtime, matches skills).}
-\item{preferences}{A 10x10 preference matrix (0-10 scale, higher = more preferred).
-Use with \code{maximize = TRUE}.
-}
-\item{schedule_df}{A tibble with 100 rows (10 nurses x 10 shifts) containing:
+\item{basic_costs}{A 10x10 numeric cost matrix for assigning 10 nurses
+to 10 shifts. Values range from approximately 1-15, where lower values
+indicate better fit (less overtime, matches skills, respects preferences).
+Use with \code{lap_solve()} for basic assignment.}
+\item{preferences}{A 10x10 numeric preference matrix on a 0-10 scale,
+where higher values indicate stronger nurse preference for a shift.
+Use with \code{lap_solve(..., maximize = TRUE)} to optimize preferences
+rather than minimize costs.}
+\item{schedule_df}{A tibble with 100 rows (10 nurses x 10 shifts) in
+long format for data frame workflows:
 \describe{
-\item{nurse_id}{Nurse identifier (1-10)}
-\item{shift_id}{Shift identifier (1-10)}
-\item{cost}{Assignment cost}
-\item{preference}{Nurse preference score (0-10)}
-\item{skill_match}{Whether nurse skills match shift needs (0/1)}
+\item{nurse_id}{Integer 1-10. Unique identifier for each nurse.}
+\item{shift_id}{Integer 1-10. Unique identifier for each shift.}
+\item{cost}{Numeric. Assignment cost (same values as basic_costs).}
+\item{preference}{Numeric 0-10. Nurse preference score.}
+\item{skill_match}{Integer 0/1. Binary indicator: 1 if nurse skills
+match shift requirements, 0 otherwise.}
 }
 }
 \item{nurses}{A tibble with 10 rows describing nurse characteristics:
 \describe{
-\item{nurse_id}{Nurse identifier (1-10)}
-\item{experience_years}{Years of experience (1-20)}
-\item{department}{Primary department (ICU, ER, General, Pediatrics)}
-\item{shift_preference}{Preferred shift type (day, evening, night)}
-\item{certification_level}{Certification level (1-3)}
+\item{nurse_id}{Integer 1-10. Links to schedule_df and basic_costs rows.}
+\item{experience_years}{Numeric 1-20. Years of nursing experience.}
+\item{department}{Character. Primary department: "ICU", "ER",
+"General", or "Pediatrics".}
+\item{shift_preference}{Character. Preferred shift type: "day",
+"evening", or "night".}
+\item{certification_level}{Integer 1-3. Certification level where
+3 is highest (e.g., 1=RN, 2=BSN, 3=MSN).}
 }
 }
 \item{shifts}{A tibble with 10 rows describing shift requirements:
 \describe{
-\item{shift_id}{Shift identifier (1-10)}
-\item{department}{Department needing coverage}
-\item{shift_type}{Shift type (day, evening, night)}
-\item{min_experience}{Minimum years of experience required}
-\item{min_certification}{Minimum certification level required}
+\item{shift_id}{Integer 1-10. Links to schedule_df and basic_costs cols.}
+\item{department}{Character. Department needing coverage.}
+\item{shift_type}{Character. Shift type: "day", "evening", or "night".}
+\item{min_experience}{Numeric. Minimum years of experience required.}
+\item{min_certification}{Integer 1-3. Minimum certification level.}
 }
 }
-\item{weekly_df}{A tibble for batch solving: 5 days x 10 nurses x 10 shifts.
-Contains columns: day, nurse_id, shift_id, cost, preference.
+\item{weekly_df}{A tibble for batch solving with 500 rows
+(5 days x 10 nurses x 10 shifts):
+\describe{
+\item{day}{Character. Day of week: "Mon", "Tue", "Wed", "Thu", "Fri".}
+\item{nurse_id}{Integer 1-10. Nurse identifier.}
+\item{shift_id}{Integer 1-10. Shift identifier.}
+\item{cost}{Numeric. Daily assignment cost (varies by day).}
+\item{preference}{Numeric 0-10. Daily preference score.}
 }
-\item{nurses_extended}{A tibble with 200 nurses for matching examples.
-Contains: nurse_id, age, experience_years, hourly_rate, department,
-certification_level, is_fulltime.
+Use with \code{group_by(day)} for solving each day's schedule.
 }
-\item{controls_extended}{A tibble with 300 potential control nurses for
-matching examples. Same structure as nurses_extended.
+\item{nurses_extended}{A tibble with 200 nurses for matching examples,
+representing a treatment group (e.g., full-time nurses):
+\describe{
+\item{nurse_id}{Integer 1-200. Unique identifier.}
+\item{age}{Numeric 22-65. Nurse age in years.}
+\item{experience_years}{Numeric 0-40. Years of nursing experience.}
+\item{hourly_rate}{Numeric 25-75. Hourly wage in dollars.}
+\item{department}{Character. Primary department assignment.}
+\item{certification_level}{Integer 1-3. Certification level.}
+\item{is_fulltime}{Logical. TRUE for full-time status.}
 }
+}
+\item{controls_extended}{A tibble with 300 potential control nurses
+(e.g., part-time or registry nurses) for matching. Same structure
+as nurses_extended. Designed to have systematic differences from
+nurses_extended (older, less experience on average) to demonstrate
+matching's ability to create comparable groups.}
 }
 }
 \usage{
@@ -62,7 +88,10 @@ as well as nurse characteristics for matching workflows.
 }
 \details{
 This dataset is used throughout the couplr documentation to provide
-a consistent, realistic example that evolves in complexity.
+a consistent, realistic example that evolves in complexity. It supports
+three use cases: (1) basic LAP solving with cost matrices, (2) batch
+solving across multiple days, and (3) matching workflows comparing
+nurse groups.
 
 The dataset is designed to demonstrate progressively complex scenarios:
 

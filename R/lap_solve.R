@@ -967,6 +967,7 @@ sinkhorn_to_assignment <- function(result) {
 #' print(round(reduced_cost, 2))
 #'
 #' @seealso [assignment()] for standard assignment without duals
+#' @importFrom utils head
 #' @export
 assignment_duals <- function(cost, maximize = FALSE) {
   cost <- as.matrix(cost)

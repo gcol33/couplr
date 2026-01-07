@@ -11,7 +11,8 @@ assignment(
   cost,
   maximize = FALSE,
   method = c("auto", "jv", "hungarian", "auction", "auction_gs", "auction_scaled", "sap",
-    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan"),
+    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan",
+    "lapmod", "csa", "ramshaw_tarjan", "push_relabel", "orlin", "network_simplex"),
   auction_eps = NULL,
   eps = NULL
 )
@@ -32,8 +33,12 @@ assignment(
 
   Character string indicating the algorithm to use. One of `"auto"`,
   `"jv"`, `"hungarian"`, `"auction"`, `"auction_gs"`, `"sap"`, `"ssp"`,
-  `"csflow"`, `"hk01"`, or `"bruteforce"`. `"ssp"` is accepted as an
-  alias for `"sap"`.
+  `"csflow"`, `"hk01"`, `"lapmod"`, `"csa"`, `"orlin"`, or
+  `"bruteforce"`. `"ssp"` is accepted as an alias for `"sap"`.
+  `"lapmod"` is a sparse variant of JV, faster for large matrices with
+  \>50% NA/Inf. `"csa"` is Goldberg-Kennedy cost-scaling, often fastest
+  for medium-large problems. `"orlin"` is the Orlin-Ahuja scaling
+  algorithm with O(sqrt(n) \* m \* log(nC)) complexity.
 
 - auction_eps:
 
@@ -67,7 +72,9 @@ data characteristics:
 
 - Binary/constant costs: `"hk01"` — specialized for 0/1 costs
 
-- Sparse (\>50\\
+- Large sparse (n\>100, \>50\\
+
+- Sparse or very rectangular: `"sap"` — handles sparsity well
 
 - Small-medium (8\<n≤50): `"hungarian"` — provides exact dual solutions
 

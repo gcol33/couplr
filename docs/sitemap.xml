@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://gcol33.github.io/couplr/404.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/ALGORITHM_ROADMAP.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/articles/algorithms.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/articles/getting-started.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/articles/index.html</loc></url>
@@ -10,9 +11,9 @@
 <url><loc>https://gcol33.github.io/couplr/CLAUDE.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/CONTRIBUTING.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/copilot-instructions.html</loc></url>
-<url><loc>https://gcol33.github.io/couplr/GABOW_TARJAN_FIXES.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/index.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/LICENSE-text.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/NETWORK_SIMPLEX_PLAN.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/news/index.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/apply_all_constraints.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/apply_calipers.html</loc></url>
@@ -20,6 +21,7 @@
 <url><loc>https://gcol33.github.io/couplr/reference/apply_scaling.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/apply_weights.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/assignment.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/reference/assignment_duals.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/assign_blocks_cluster.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/assign_blocks_group.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/as_assignment_matrix.html</loc></url>
@@ -29,6 +31,7 @@
 <url><loc>https://gcol33.github.io/couplr/reference/balance_diagnostics.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/balance_table.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/BIG_COST.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/reference/bottleneck_assignment.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/build_cost_matrix.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/calculate_var_balance.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/can_parallelize.html</loc></url>
@@ -102,6 +105,8 @@
 <url><loc>https://gcol33.github.io/couplr/reference/print.variable_health.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/restore_parallel.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/setup_parallel.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/reference/sinkhorn.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/reference/sinkhorn_to_assignment.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/standardized_difference.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/success_good_balance.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/suggest_scaling.html</loc></url>
@@ -121,6 +126,7 @@
 <url><loc>https://gcol33.github.io/couplr/reference/warn_many_zeros.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/warn_parallel_unavailable.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/reference/warn_poor_quality.html</loc></url>
+<url><loc>https://gcol33.github.io/couplr/todo.html</loc></url>
 <url><loc>https://gcol33.github.io/couplr/VIGNETTE_IMPROVEMENT_PLAN.html</loc></url>
 </urlset>
 

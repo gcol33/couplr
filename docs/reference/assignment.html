@@ -66,7 +66,8 @@ using several algorithms. Forbidden edges can be marked as <code>NA</code> or <c
 <span>  <span class="va">cost</span>,</span>
 <span>  maximize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"jv"</span>, <span class="st">"hungarian"</span>, <span class="st">"auction"</span>, <span class="st">"auction_gs"</span>, <span class="st">"auction_scaled"</span>, <span class="st">"sap"</span>,</span>
-<span>    <span class="st">"ssp"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>, <span class="st">"ssap_bucket"</span>, <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span><span class="op">)</span>,</span>
+<span>    <span class="st">"ssp"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>, <span class="st">"ssap_bucket"</span>, <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>,</span>
+<span>    <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>, <span class="st">"push_relabel"</span>, <span class="st">"orlin"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
 <span>  auction_eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  eps <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -88,8 +89,11 @@ entries are treated as forbidden assignments.</p></dd>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>Character string indicating the algorithm to use.
 One of <code>"auto"</code>, <code>"jv"</code>, <code>"hungarian"</code>, <code>"auction"</code>, <code>"auction_gs"</code>,
-<code>"sap"</code>, <code>"ssp"</code>, <code>"csflow"</code>, <code>"hk01"</code>, or <code>"bruteforce"</code>.
-<code>"ssp"</code> is accepted as an alias for <code>"sap"</code>.</p></dd>
+<code>"sap"</code>, <code>"ssp"</code>, <code>"csflow"</code>, <code>"hk01"</code>, <code>"lapmod"</code>, <code>"csa"</code>, <code>"orlin"</code>, or <code>"bruteforce"</code>.
+<code>"ssp"</code> is accepted as an alias for <code>"sap"</code>.
+<code>"lapmod"</code> is a sparse variant of JV, faster for large matrices with &gt;50% NA/Inf.
+<code>"csa"</code> is Goldberg-Kennedy cost-scaling, often fastest for medium-large problems.
+<code>"orlin"</code> is the Orlin-Ahuja scaling algorithm with O(sqrt(n) * m * log(nC)) complexity.</p></dd>
 
 
 <dt id="arg-auction-eps">auction_eps<a class="anchor" aria-label="anchor" href="#arg-auction-eps"></a></dt>
@@ -115,7 +119,8 @@ giving the assigned column for each row (0 if unassigned).</p></li>
     <p><code>method = "auto"</code> selects an algorithm based on problem size/shape and data
 characteristics:</p><ul><li><p>Very small (n≤8): <code>"bruteforce"</code> — exact enumeration</p></li>
 <li><p>Binary/constant costs: <code>"hk01"</code> — specialized for 0/1 costs</p></li>
-<li><p>Sparse (&gt;50\<!-- % NA) or very rectangular (m≥3n): \code{"sap"} — handles sparsity --></p></li>
+<li><p>Large sparse (n&gt;100, &gt;50\<!-- % NA/Inf): \code{"lapmod"} — sparse JV variant --></p></li>
+<li><p>Sparse or very rectangular: <code>"sap"</code> — handles sparsity well</p></li>
 <li><p>Small-medium (8&lt;n≤50): <code>"hungarian"</code> — provides exact dual solutions</p></li>
 <li><p>Medium (50&lt;n≤75): <code>"jv"</code> — fast general-purpose solver</p></li>
 <li><p>Large (n&gt;75): <code>"auction_scaled"</code> — fastest for large dense problems</p></li>

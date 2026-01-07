@@ -54,6 +54,10 @@ reference:
       - lap_solve_kbest
       - lap_solve_line_metric
       - assignment
+      - assignment_duals
+      - bottleneck_assignment
+      - sinkhorn
+      - sinkhorn_to_assignment
 
   - title: "Matching Functions"
     desc: "High-level matching for observational studies"

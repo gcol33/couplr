@@ -14,6 +14,14 @@ Core functions for solving linear assignment problems
   : Solve 1-D Line Assignment Problem
 - [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
   : Linear assignment solver
+- [`assignment_duals()`](https://gcol33.github.io/couplr/reference/assignment_duals.md)
+  : Solve assignment problem and return dual variables
+- [`bottleneck_assignment()`](https://gcol33.github.io/couplr/reference/bottleneck_assignment.md)
+  : Solve the Bottleneck Assignment Problem
+- [`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md)
+  : Sinkhorn-Knopp optimal transport solver
+- [`sinkhorn_to_assignment()`](https://gcol33.github.io/couplr/reference/sinkhorn_to_assignment.md)
+  : Round Sinkhorn transport plan to hard assignment
 
 ## Matching Functions
 

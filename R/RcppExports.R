@@ -97,6 +97,10 @@ lap_solve_jv_duals <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_jv_duals`, cost, maximize)
 }
 
+lap_solve_network_simplex <- function(cost) {
+    .Call(`_couplr_lap_solve_network_simplex`, cost)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

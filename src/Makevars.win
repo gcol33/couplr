@@ -3,7 +3,7 @@
 
 CXX_STD = CXX17
 
-PKG_CPPFLAGS = -DEIGEN_NO_DEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -Isolvers/orlin_ahuja
+PKG_CPPFLAGS = -DEIGEN_NO_DEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -Isolvers/orlin_ahuja -Isolvers/network_simplex
 
 # Explicitly list all C++ sources (avoid GNU wildcard extension)
 SOURCES = RcppExports.cpp rcpp_interface.cpp \
@@ -31,6 +31,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_push_relabel.cpp \
           solvers/solve_jv_duals.cpp \
           solvers/orlin_ahuja/orlin_tests.cpp \
+          solvers/network_simplex/solve_network_simplex.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
           morph/morph_pixel_level.cpp \
@@ -62,6 +63,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_push_relabel.o \
           solvers/solve_jv_duals.o \
           solvers/orlin_ahuja/orlin_tests.o \
+          solvers/network_simplex/solve_network_simplex.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
           morph/morph_pixel_level.o \

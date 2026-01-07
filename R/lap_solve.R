@@ -57,7 +57,7 @@ assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce",
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
-                                  "ramshaw_tarjan","push_relabel","orlin"),
+                                  "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
                        auction_eps = NULL, eps = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
@@ -154,7 +154,8 @@ assignment <- function(cost, maximize = FALSE,
     "csa"           = lap_solve_csa(work, maximize),
     "ramshaw_tarjan"= lap_solve_ramshaw_tarjan(work, maximize),
     "push_relabel"  = lap_solve_push_relabel(work, maximize),
-    "orlin"         = lap_solve_orlin(work, maximize),
+    "orlin"           = lap_solve_orlin(work, maximize),
+    "network_simplex"= lap_solve_network_simplex_wrapper(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
 
@@ -700,6 +701,27 @@ lap_solve_orlin <- function(cost, maximize = FALSE) {
   }
 
   list(match = result$row_to_col, total_cost = total_cost)
+}
+
+#' @keywords internal
+lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
+  # Network simplex for minimum-cost flow on assignment network
+  work <- if (maximize) -cost else cost
+  work[is.na(work)] <- Inf
+
+  result <- lap_solve_network_simplex(work)
+
+  # Compute total cost from original cost matrix
+  n <- nrow(cost)
+  total_cost <- 0
+  for (i in seq_len(n)) {
+    j <- result$match[i]
+    if (j > 0 && is.finite(cost[i, j])) {
+      total_cost <- total_cost + cost[i, j]
+    }
+  }
+
+  list(match = result$match, total_cost = total_cost)
 }
 
 # ==============================================================================

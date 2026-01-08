@@ -44,9 +44,9 @@ race_data <- data.frame(
 ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algorithm)) +
   geom_col(width = 0.7) +
   geom_text(aes(label = paste0(time_ms, " ms")),
-            hjust = -0.1, size = 5, fontface = "bold") +
+            hjust = -0.1, size = 5, fontface = "bold", colour = "#3E3F3A") +
   geom_text(aes(label = paste0("(", year, ")")),
-            hjust = -0.1, vjust = 2.5, size = 3.5) +
+            hjust = -0.1, vjust = 2.5, size = 3.5, colour = "#3E3F3A") +
   scale_fill_manual(values = c(
     "Hungarian" = "#d9534f",
     "Jonker-Volgenant" = "#5bc0de",

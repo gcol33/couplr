@@ -40,6 +40,20 @@ void build_allowed(
 // Ensure each row has at least one finite option (used by some solvers)
 void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m);
 
+// Check if matrix is feasible (each row has at least one finite value)
+// Returns true if feasible, false otherwise (does not throw)
+bool is_feasible(const Rcpp::NumericMatrix& M);
+
+// Check if a matching result is valid (no forbidden edges chosen)
+// Returns true if all matched edges are finite, false otherwise
+bool is_valid_matching(const Rcpp::NumericMatrix& cost,
+                       const std::vector<int>& match);
+
+// Check if a perfect matching exists using greedy with backtracking
+// More thorough than is_feasible() - actually tries to find a matching
+// Returns true if a valid matching exists, false otherwise
+bool has_valid_matching(const Rcpp::NumericMatrix& M);
+
 // Overload for Rcpp::IntegerVector (converts and calls vector version)
 inline void ensure_each_row_has_option(const Rcpp::IntegerVector& mask, int n, int m) {
   std::vector<int> mask_vec(mask.begin(), mask.end());
@@ -82,3 +96,11 @@ Rcpp::List run_base_solver_by_name(
     const Rcpp::NumericMatrix& cost,
     bool maximize,
     const std::string& method);
+
+// Non-throwing version: returns true on success, false on failure
+// On success, result contains the solution; on failure, result is empty
+bool try_run_base_solver(
+    const Rcpp::NumericMatrix& cost,
+    bool maximize,
+    const std::string& method,
+    Rcpp::List& result);

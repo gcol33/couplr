@@ -138,14 +138,15 @@ Rcpp::List solve_kbest_lawler_impl(NumericMatrix cost,
     std::vector<int> force_cols(pi0.begin(), pi0.begin() + (i - 1));
     NumericMatrix Mi = apply_constraints(cost, force_cols, i, pi0[i - 1]);
 
-    try {
-      auto child = solve_one_with_auto_transpose(Mi, method_base, maximize);
-      std::string key = match_to_key(child.first);
-      if (seen.insert(key).second) {
-        pq.emplace(child.first, child.second, i + 1);
-      }
-    } catch (...) {
-      // infeasible child; skip
+    // Check if a valid matching exists before calling solver
+    if (!has_valid_matching(Mi)) continue;
+
+    // Solve - guaranteed not to throw since we verified feasibility
+    std::pair<std::vector<int>, double> child = solve_one_with_auto_transpose(Mi, method_base, maximize);
+
+    std::string key = match_to_key(child.first);
+    if (seen.insert(key).second) {
+      pq.emplace(child.first, child.second, i + 1);
     }
   }
 
@@ -164,14 +165,15 @@ Rcpp::List solve_kbest_lawler_impl(NumericMatrix cost,
       std::vector<int> force_cols(node.match.begin(), node.match.begin() + (i - 1));
       NumericMatrix Mi = apply_constraints(cost, force_cols, i, node.match[i - 1]);
 
-      try {
-        auto child = solve_one_with_auto_transpose(Mi, method_base, maximize);
-        std::string key = match_to_key(child.first);
-        if (seen.insert(key).second) {
-          pq.emplace(child.first, child.second, i + 1);
-        }
-      } catch (...) {
-        // infeasible; continue
+      // Check if a valid matching exists before calling solver
+      if (!has_valid_matching(Mi)) continue;
+
+      // Solve - guaranteed not to throw since we verified feasibility
+      std::pair<std::vector<int>, double> child = solve_one_with_auto_transpose(Mi, method_base, maximize);
+
+      std::string key = match_to_key(child.first);
+      if (seen.insert(key).second) {
+        pq.emplace(child.first, child.second, i + 1);
       }
     }
   }

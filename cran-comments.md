@@ -1,6 +1,9 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+The NOTE is "unable to verify current time" which is a network-related
+check that does not affect package functionality.
 
 ## Test environments
 

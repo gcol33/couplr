@@ -2,10 +2,10 @@ Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
 Version: 1.0.0
 Authors@R:
-    person("Gilles", "Colling", email = "gilles.colling051@gmail.com", role = c("aut", "cre"))
+    person("Gilles", "Colling", email = "gilles.colling051@gmail.com", role = c("aut", "cre", "cph"))
 Description: Solves optimal pairing and matching problems using linear assignment
-    algorithms. Provides modern, tidy implementations of Hungarian, Jonker-Volgenant,
-    Auction, and other LAP solvers. Designed for matching plots, sites, samples, or
+    algorithms. Provides modern, tidy implementations of 'Hungarian', 'Jonker-Volgenant',
+    'Auction', and other LAP solvers. Designed for matching plots, sites, samples, or
     any pairwise optimization problem. Supports rectangular matrices, forbidden
     assignments, data frame inputs, batch solving, k-best solutions, and pixel-level
     image morphing for visualization. Includes automatic preprocessing with variable
@@ -13,11 +13,12 @@ Description: Solves optimal pairing and matching problems using linear assignmen
     matching algorithms, and comprehensive balance diagnostics for assessing match
     quality using standardized differences and distribution comparisons.
 License: MIT + file LICENSE
+Language: en-US
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.1.0)
 Imports:
     Rcpp (>= 1.0.0),
     tibble (>= 3.0.0),

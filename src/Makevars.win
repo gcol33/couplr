@@ -3,7 +3,7 @@
 
 CXX_STD = CXX17
 
-PKG_CPPFLAGS = -DEIGEN_NO_DEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -Isolvers/orlin_ahuja -Isolvers/network_simplex
+PKG_CPPFLAGS = -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -Isolvers/orlin_ahuja -Isolvers/network_simplex
 
 # Explicitly list all C++ sources (avoid GNU wildcard extension)
 SOURCES = RcppExports.cpp rcpp_interface.cpp \

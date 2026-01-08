@@ -739,11 +739,7 @@ Rcpp::List gt_match_gt(Rcpp::NumericMatrix cost_r,
     }
     
     // Run match_gt
-    try {
-        match_gt(cost, row_match, col_match, y_u, y_v, max_iters, check_feasible);
-    } catch (const std::exception& e) {
-        Rcpp::stop(std::string("match_gt error: ") + e.what());
-    }
+    match_gt(cost, row_match, col_match, y_u, y_v, max_iters, check_feasible);
     
     // Convert back to R format (1-based)
     Rcpp::IntegerVector row_match_out(n);
@@ -832,11 +828,7 @@ Rcpp::List scale_match_cpp(Rcpp::NumericMatrix cost_r,
     }
     
     // Run scale_match
-    try {
-        scale_match(cost, row_match, col_match, y_u, y_v);
-    } catch (const std::exception& e) {
-        Rcpp::stop(std::string("scale_match error: ") + e.what());
-    }
+    scale_match(cost, row_match, col_match, y_u, y_v);
     
     // Convert back to R format (1-based)
     Rcpp::IntegerVector row_match_out(n);

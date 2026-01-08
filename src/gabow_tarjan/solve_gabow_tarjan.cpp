@@ -92,11 +92,7 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
     DualVec y_v(m, 0);
     
     // Solve using Gabow–Tarjan bit-scaling algorithm
-    try {
-        solve_gabow_tarjan_inner(cost_matrix, row_match, col_match, y_u, y_v);
-    } catch (const std::exception& e) {
-        Rcpp::stop(std::string("Gabow-Tarjan solver error: ") + e.what());
-    }
+    solve_gabow_tarjan_inner(cost_matrix, row_match, col_match, y_u, y_v);
     
     // Convert matching to 1-based R vectors
     Rcpp::IntegerVector row_match_R(n);

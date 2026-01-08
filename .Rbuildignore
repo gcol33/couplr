@@ -35,3 +35,5 @@
 ^ALGORITHM_ROADMAP\.md$
 ^NETWORK_SIMPLEX_PLAN\.md$
 ^VIGNETTE_IMPROVEMENT_PLAN\.md$
+^src/.*\.o$
+^src/.*\.dll$

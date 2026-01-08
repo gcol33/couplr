@@ -77,6 +77,93 @@ void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m) {
   }
 }
 
+// Check if matrix is feasible (each row has at least one finite value)
+// Returns true if feasible, false otherwise (does not throw)
+bool is_feasible(const Rcpp::NumericMatrix& M) {
+  const int n = M.nrow();
+  const int m = M.ncol();
+  if (n == 0 || m == 0) return false;
+  if (n > m) return false;  // Cannot match all rows if n > m
+
+  for (int i = 0; i < n; ++i) {
+    bool has_finite = false;
+    for (int j = 0; j < m; ++j) {
+      if (R_finite(M(i, j))) {
+        has_finite = true;
+        break;
+      }
+    }
+    if (!has_finite) return false;
+  }
+  return true;
+}
+
+// Check if a matching result is valid (no forbidden edges chosen)
+bool is_valid_matching(const Rcpp::NumericMatrix& cost,
+                       const std::vector<int>& match) {
+  const int n = cost.nrow();
+  const int m = cost.ncol();
+
+  for (int i = 0; i < n && i < static_cast<int>(match.size()); ++i) {
+    int j1 = match[i];  // 1-based column
+    if (j1 <= 0 || j1 > m) continue;  // Skip unmatched or out of bounds
+    int j = j1 - 1;  // 0-based
+    if (!R_finite(cost(i, j))) {
+      return false;  // Forbidden edge was chosen
+    }
+  }
+  return true;
+}
+
+// Helper for has_valid_matching: DFS to find augmenting path
+static bool dfs_augment(int u, const std::vector<std::vector<int>>& adj,
+                        std::vector<int>& match_v, std::vector<bool>& visited) {
+  for (int v : adj[u]) {
+    if (visited[v]) continue;
+    visited[v] = true;
+    if (match_v[v] < 0 || dfs_augment(match_v[v], adj, match_v, visited)) {
+      match_v[v] = u;
+      return true;
+    }
+  }
+  return false;
+}
+
+// Check if a perfect matching exists using Hungarian-style augmenting paths
+// This is O(n*m) worst case but fast for typical k-best subproblems
+bool has_valid_matching(const Rcpp::NumericMatrix& M) {
+  const int n = M.nrow();
+  const int m = M.ncol();
+
+  // Quick checks
+  if (n == 0) return true;  // Empty is valid
+  if (n > m) return false;  // Can't match all rows
+
+  // Build adjacency list (only finite edges)
+  std::vector<std::vector<int>> adj(n);
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      if (R_finite(M(i, j))) {
+        adj[i].push_back(j);
+      }
+    }
+    if (adj[i].empty()) return false;  // Row has no options
+  }
+
+  // Find maximum matching using Hopcroft-Karp style augmentation
+  std::vector<int> match_v(m, -1);  // match_v[j] = row matched to col j, or -1
+  int matched = 0;
+
+  for (int u = 0; u < n; ++u) {
+    std::vector<bool> visited(m, false);
+    if (dfs_augment(u, adj, match_v, visited)) {
+      ++matched;
+    }
+  }
+
+  return matched == n;  // Perfect matching exists iff all rows matched
+}
+
 // Central cost computation helper - THE SINGLE SOURCE OF TRUTH
 // Computes: sum of original_cost[i, assignment[i]-1] over all matched rows
 //

@@ -74,18 +74,19 @@ Rcpp::List solve_murty_impl(NumericMatrix cost, int k, bool maximize, std::strin
 
       NumericMatrix Mnext = apply_exclusions(cost, forbid_next);
 
-      try {
-        List ch = run_base_solver_by_name(Mnext, maximize, single_method);
-        IntegerVector miv = ch["match"];
-        double tot = as<double>(ch["total_cost"]);
-        std::vector<int> mv(miv.begin(), miv.end());
+      // Check if a valid matching exists before calling solver
+      if (!has_valid_matching(Mnext)) continue;
 
-        std::string key = match_to_key(mv);
-        if (seen.insert(key).second) {
-          pq.push(Node{tot, mv, std::move(forbid_next)});
-        }
-      } catch (...) {
-        // infeasible branch; skip
+      // Solve - guaranteed not to throw since we verified feasibility
+      List ch = run_base_solver_by_name(Mnext, maximize, single_method);
+
+      IntegerVector miv = ch["match"];
+      double tot = as<double>(ch["total_cost"]);
+      std::vector<int> mv(miv.begin(), miv.end());
+
+      std::string key = match_to_key(mv);
+      if (seen.insert(key).second) {
+        pq.push(Node{tot, mv, std::move(forbid_next)});
       }
     }
   }

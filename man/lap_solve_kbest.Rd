@@ -50,7 +50,7 @@ A tibble with columns:
 }
 }
 \description{
-Returns the top k optimal (or near-optimal) assignments using Murty's algorithm.
+Returns the top k optimal (or near-optimal) assignments using 'Murty' algorithm.
 Useful for exploring alternative optimal solutions or finding robust assignments.
 }
 \examples{

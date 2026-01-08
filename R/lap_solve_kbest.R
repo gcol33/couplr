@@ -1,6 +1,6 @@
 #' Find k-best optimal assignments
 #'
-#' Returns the top k optimal (or near-optimal) assignments using Murty's algorithm.
+#' Returns the top k optimal (or near-optimal) assignments using 'Murty' algorithm.
 #' Useful for exploring alternative optimal solutions or finding robust assignments.
 #'
 #' @param x Cost matrix, data frame, or tibble. If a data frame/tibble,

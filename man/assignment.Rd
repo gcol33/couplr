@@ -25,40 +25,40 @@ entries are treated as forbidden assignments.}
 \strong{General-purpose solvers:}
 \itemize{
 \item \code{"auto"} — Automatic selection based on problem characteristics (default)
-\item \code{"jv"} — Jonker-Volgenant, fast general-purpose O(n³)
-\item \code{"hungarian"} — Classic Hungarian algorithm O(n³)
+\item \code{"jv"} — 'Jonker-Volgenant', fast general-purpose O(n³)
+\item \code{"hungarian"} — Classic 'Hungarian' algorithm O(n³)
 }
 
 \strong{Auction-based solvers:}
 \itemize{
-\item \code{"auction"} — Bertsekas auction with adaptive epsilon
-\item \code{"auction_gs"} — Gauss-Seidel variant, good for spatial structure
-\item \code{"auction_scaled"} — Epsilon-scaling, fastest for large dense problems
+\item \code{"auction"} — 'Bertsekas' auction with adaptive epsilon
+\item \code{"auction_gs"} — 'Gauss-Seidel' variant, good for spatial structure
+\item \code{"auction_scaled"} — 'Epsilon-scaling', fastest for large dense problems
 }
 
 \strong{Specialized solvers:}
 \itemize{
 \item \code{"sap"} / \code{"ssp"} — Shortest augmenting path, handles sparsity well
 \item \code{"lapmod"} — Sparse JV variant, faster when >50\\% entries are NA/Inf
-\item \code{"hk01"} — Hopcroft-Karp for binary (0/1) costs only
-\item \code{"ssap_bucket"} — Dial's algorithm for integer costs
+\item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) costs only
+\item \code{"ssap_bucket"} — 'Dial' algorithm for integer costs
 \item \code{"line_metric"} — O(n log n) for 1D assignment problems
 \item \code{"bruteforce"} — Exact enumeration for tiny problems (n ≤ 8)
 }
 
 \strong{Advanced solvers:}
 \itemize{
-\item \code{"csa"} — Goldberg-Kennedy cost-scaling, often fastest for medium-large
-\item \code{"gabow_tarjan"} — Bit-scaling with complementary slackness O(n³ log C)
-\item \code{"cycle_cancel"} — Cycle-canceling with Karp's algorithm
+\item \code{"csa"} — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
+\item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n³ log C)
+\item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
 \item \code{"csflow"} — Cost-scaling network flow
-\item \code{"network_simplex"} — Network simplex with spanning tree representation
-\item \code{"orlin"} — Orlin-Ahuja scaling O(√n · m · log(nC))
-\item \code{"push_relabel"} — Push-relabel max-flow based solver
-\item \code{"ramshaw_tarjan"} — Optimized for rectangular matrices (n ≠ m)
+\item \code{"network_simplex"} — 'Network simplex' with spanning tree representation
+\item \code{"orlin"} — 'Orlin-Ahuja' scaling O(√n · m · log(nC))
+\item \code{"push_relabel"} — 'Push-relabel' max-flow based solver
+\item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n ≠ m)
 }}
 
-\item{auction_eps}{Optional numeric epsilon for the Auction/Auction-GS methods.
+\item{auction_eps}{Optional numeric epsilon for the 'Auction'/'Auction-GS' methods.
 If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}
 
 \item{eps}{Deprecated. Use \code{auction_eps}. If provided and \code{auction_eps} is \code{NULL},
@@ -90,7 +90,7 @@ characteristics:
 \item Medium (50<n≤75): \code{"jv"} — fast general-purpose solver
 \item Large (n>75): \code{"auction_scaled"} — fastest for large dense problems
 }
-Benchmarks show auction_scaled and JV are 100-1500x faster than Hungarian at n=500.
+Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.
 }
 \examples{
 cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
@@ -101,7 +101,7 @@ res$match; res$total_cost
 \seealso{
 \itemize{
 \item \code{\link[=lap_solve]{lap_solve()}} — Tidy interface returning tibbles
-\item \code{\link[=lap_solve_kbest]{lap_solve_kbest()}} — Find k-best assignments (Murty's algorithm)
+\item \code{\link[=lap_solve_kbest]{lap_solve_kbest()}} — Find k-best assignments ('Murty' algorithm)
 \item \code{\link[=assignment_duals]{assignment_duals()}} — Extract dual variables for sensitivity analysis
 \item \code{\link[=bottleneck_assignment]{bottleneck_assignment()}} — Minimize maximum edge cost (minimax)
 \item \code{\link[=sinkhorn]{sinkhorn()}} — Entropy-regularized optimal transport

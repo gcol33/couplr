@@ -33,7 +33,7 @@ Problem where instead of minimizing the sum of assignment costs, we minimize
 the maximum cost among all assignments (minimax objective).
 
 \strong{Algorithm:}
-Uses binary search on the sorted unique costs combined with Hopcroft-Karp
+Uses binary search on the sorted unique costs combined with 'Hopcroft-Karp'
 bipartite matching to find the minimum threshold that allows a perfect matching.
 
 \strong{Complexity:} O(E * sqrt(V) * log(unique costs)) where E = edges, V = vertices.

@@ -100,17 +100,19 @@ For guaranteed pixel-perfect results, use:
 }
 }
 \examples{
-\dontrun{
+\donttest{
+# Use bundled example images
+imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
+imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
+
 # Basic morph
-result <- pixel_morph("imageA.png", "imageB.png")
+result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
 
 # Pure spatial rearrangement
-result <- pixel_morph("imageA.png", "imageB.png",
-                      alpha = 0, beta = 1)
+result <- pixel_morph(imgA, imgB, alpha = 0, beta = 1, show = FALSE)
 
 # Exact mode for small images (guaranteed permutation)
-result <- pixel_morph("small_A.png", "small_B.png",
-                      mode = "exact", downscale_steps = 0)
+result <- pixel_morph(imgA, imgB, mode = "exact", downscale_steps = 0, show = FALSE)
 }
 
 }

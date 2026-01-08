@@ -105,18 +105,18 @@
 #' A warning is issued if overlaps/holes are detected in the final frame.
 #'
 #' @examples
-#' \dontrun{
-#' # Basic animation with default settings
-#' pixel_morph_animate("imageA.png", "imageB.png", outfile = "morph.gif")
+#' \donttest{
+#' # Use bundled example images
+#' imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
+#' imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
+#'
+#' # Basic animation (writes to temp file)
+#' outfile <- tempfile(fileext = ".gif")
+#' pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
 #'
 #' # Pure spatial rearrangement (ignore B's colors in assignment)
-#' pixel_morph_animate("imageA.png", "imageB.png",
-#'                     alpha = 0, beta = 1, outfile = "spatial.gif")
-#'
-#' # Large image with downscaling
-#' pixel_morph_animate("largeA.png", "largeB.png",
-#'                     mode = "color_walk", downscale_steps = 2,
-#'                     outfile = "large_morph.gif")
+#' pixel_morph_animate(imgA, imgB, alpha = 0, beta = 1,
+#'                     outfile = tempfile(fileext = ".gif"), show = FALSE)
 #' }
 #'
 #' @export
@@ -504,17 +504,19 @@ pixel_morph_animate <- function(imgA,
 #' }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' # Use bundled example images
+#' imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
+#' imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
+#'
 #' # Basic morph
-#' result <- pixel_morph("imageA.png", "imageB.png")
+#' result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
 #'
 #' # Pure spatial rearrangement
-#' result <- pixel_morph("imageA.png", "imageB.png",
-#'                       alpha = 0, beta = 1)
+#' result <- pixel_morph(imgA, imgB, alpha = 0, beta = 1, show = FALSE)
 #'
 #' # Exact mode for small images (guaranteed permutation)
-#' result <- pixel_morph("small_A.png", "small_B.png",
-#'                       mode = "exact", downscale_steps = 0)
+#' result <- pixel_morph(imgA, imgB, mode = "exact", downscale_steps = 0, show = FALSE)
 #' }
 #'
 #' @seealso \code{\link{pixel_morph_animate}} for animated version

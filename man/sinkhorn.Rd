@@ -2,7 +2,7 @@
 % Please edit documentation in R/lap_solve.R
 \name{sinkhorn}
 \alias{sinkhorn}
-\title{Sinkhorn-Knopp optimal transport solver}
+\title{'Sinkhorn-Knopp' optimal transport solver}
 \usage{
 sinkhorn(
   cost,
@@ -44,12 +44,12 @@ Row sums approximate r_weights, column sums approximate c_weights.
 }
 }
 \description{
-Compute an entropy-regularized optimal transport plan using the Sinkhorn-Knopp
+Compute an entropy-regularized optimal transport plan using the 'Sinkhorn-Knopp'
 algorithm. Unlike other LAP solvers that return a hard 1-to-1 assignment,
 this returns a soft assignment (doubly stochastic matrix).
 }
 \details{
-The Sinkhorn-Knopp algorithm solves the entropy-regularized optimal transport
+The 'Sinkhorn-Knopp' algorithm solves the entropy-regularized optimal transport
 problem:
 
 \deqn{P^* = \arg\min_P \langle C, P \rangle - \frac{1}{\lambda} H(P)}
@@ -90,7 +90,7 @@ print(hard_match)
 
 }
 \references{
-Cuturi, M. (2013). Sinkhorn Distances: Lightspeed Computation of Optimal
+Cuturi, M. (2013). 'Sinkhorn Distances': Lightspeed Computation of Optimal
 Transport. \emph{Advances in Neural Information Processing Systems}, 26.
 }
 \seealso{

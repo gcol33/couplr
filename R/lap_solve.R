@@ -17,39 +17,39 @@
 #'   **General-purpose solvers:**
 #'   \itemize{
 #'     \item `"auto"` — Automatic selection based on problem characteristics (default)
-#'     \item `"jv"` — Jonker-Volgenant, fast general-purpose O(n³)
-#'     \item `"hungarian"` — Classic Hungarian algorithm O(n³)
+#'     \item `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n³)
+#'     \item `"hungarian"` — Classic 'Hungarian' algorithm O(n³)
 #'   }
 #'
 #'   **Auction-based solvers:**
 #'   \itemize{
-#'     \item `"auction"` — Bertsekas auction with adaptive epsilon
-#'     \item `"auction_gs"` — Gauss-Seidel variant, good for spatial structure
-#'     \item `"auction_scaled"` — Epsilon-scaling, fastest for large dense problems
+#'     \item `"auction"` — 'Bertsekas' auction with adaptive epsilon
+#'     \item `"auction_gs"` — 'Gauss-Seidel' variant, good for spatial structure
+#'     \item `"auction_scaled"` — 'Epsilon-scaling', fastest for large dense problems
 #'   }
 #'
 #'   **Specialized solvers:**
 #'   \itemize{
 #'     \item `"sap"` / `"ssp"` — Shortest augmenting path, handles sparsity well
 #'     \item `"lapmod"` — Sparse JV variant, faster when >50\% entries are NA/Inf
-#'     \item `"hk01"` — Hopcroft-Karp for binary (0/1) costs only
-#'     \item `"ssap_bucket"` — Dial's algorithm for integer costs
+#'     \item `"hk01"` — 'Hopcroft-Karp' for binary (0/1) costs only
+#'     \item `"ssap_bucket"` — 'Dial' algorithm for integer costs
 #'     \item `"line_metric"` — O(n log n) for 1D assignment problems
 #'     \item `"bruteforce"` — Exact enumeration for tiny problems (n ≤ 8)
 #'   }
 #'
 #'   **Advanced solvers:**
 #'   \itemize{
-#'     \item `"csa"` — Goldberg-Kennedy cost-scaling, often fastest for medium-large
-#'     \item `"gabow_tarjan"` — Bit-scaling with complementary slackness O(n³ log C)
-#'     \item `"cycle_cancel"` — Cycle-canceling with Karp's algorithm
+#'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
+#'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n³ log C)
+#'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Cost-scaling network flow
-#'     \item `"network_simplex"` — Network simplex with spanning tree representation
-#'     \item `"orlin"` — Orlin-Ahuja scaling O(√n · m · log(nC))
-#'     \item `"push_relabel"` — Push-relabel max-flow based solver
-#'     \item `"ramshaw_tarjan"` — Optimized for rectangular matrices (n ≠ m)
+#'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
+#'     \item `"orlin"` — 'Orlin-Ahuja' scaling O(√n · m · log(nC))
+#'     \item `"push_relabel"` — 'Push-relabel' max-flow based solver
+#'     \item `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular matrices (n ≠ m)
 #'   }
-#' @param auction_eps Optional numeric epsilon for the Auction/Auction-GS methods.
+#' @param auction_eps Optional numeric epsilon for the 'Auction'/'Auction-GS' methods.
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
 #' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
 #'   its value is used for `auction_eps`.
@@ -75,12 +75,12 @@
 #'   \item Medium (50<n≤75): `"jv"` — fast general-purpose solver
 #'   \item Large (n>75): `"auction_scaled"` — fastest for large dense problems
 #' }
-#' Benchmarks show auction_scaled and JV are 100-1500x faster than Hungarian at n=500.
+#' Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.
 #'
 #' @seealso
 #' \itemize{
 #'   \item [lap_solve()] — Tidy interface returning tibbles
-#'   \item [lap_solve_kbest()] — Find k-best assignments (Murty's algorithm)
+#'   \item [lap_solve_kbest()] — Find k-best assignments ('Murty' algorithm)
 #'   \item [assignment_duals()] — Extract dual variables for sensitivity analysis
 #'   \item [bottleneck_assignment()] — Minimize maximum edge cost (minimax)
 #'   \item [sinkhorn()] — Entropy-regularized optimal transport
@@ -227,7 +227,7 @@ assignment <- function(cost, maximize = FALSE,
 #' Solve linear assignment problems
 #'
 #' Provides a tidy interface for solving the linear assignment problem using
-#' Hungarian or Jonker-Volgenant algorithms. Supports rectangular matrices,
+#' 'Hungarian' or 'Jonker-Volgenant' algorithms. Supports rectangular matrices,
 #' NA/Inf masking, and data frame inputs.
 #'
 #' @param x Cost matrix, data frame, or tibble. If a data frame/tibble,
@@ -238,11 +238,11 @@ assignment <- function(cost, maximize = FALSE,
 #' @param maximize Logical; if TRUE, maximizes total cost instead of minimizing (default: FALSE)
 #' @param method Algorithm to use. One of:
 #'   - "auto" (default): automatically selects best algorithm
-#'   - "jv": Jonker-Volgenant algorithm (general purpose, fast)
-#'   - "hungarian": Classic Hungarian algorithm
-#'   - "auction": Auction algorithm (good for large dense problems)
+#'   - "jv": 'Jonker-Volgenant' algorithm (general purpose, fast)
+#'   - "hungarian": Classic 'Hungarian' algorithm
+#'   - "auction": 'Bertsekas' auction algorithm (good for large dense problems)
 #'   - "sap": Sparse assignment (good for sparse/rectangular problems)
-#'   - "hk01": Hopcroft-Karp for binary/uniform costs
+#'   - "hk01": 'Hopcroft-Karp' for binary/uniform costs
 #' @param forbidden Value to mark forbidden assignments (default: NA). Can also use Inf.
 #'
 #' @return A tibble with columns:
@@ -492,8 +492,8 @@ print.lap_solve_result <- function(x, ...) {
 #' @param x Numeric vector of source positions (will be sorted internally)
 #' @param y Numeric vector of target positions (will be sorted internally)
 #' @param cost Cost function for distance. Either:
-#'   - "L1" (default): absolute distance (Manhattan distance)
-#'   - "L2": squared distance (squared Euclidean distance)
+#'   - "L1" (default): absolute distance ('Manhattan' distance)
+#'   - "L2": squared distance (squared 'Euclidean' distance)
 #'   Can also use aliases: "abs", "manhattan" for L1; "sq", "squared", "quadratic" for L2
 #' @param maximize Logical; if TRUE, maximizes total cost instead of minimizing (default: FALSE)
 #'
@@ -626,7 +626,7 @@ print.lap_line_metric_result <- function(x, ...) {
 #' the maximum cost among all assignments (minimax objective).
 #'
 #' **Algorithm:**
-#' Uses binary search on the sorted unique costs combined with Hopcroft-Karp
+#' Uses binary search on the sorted unique costs combined with 'Hopcroft-Karp'
 #' bipartite matching to find the minimum threshold that allows a perfect matching.
 #'
 #' **Complexity:** O(E * sqrt(V) * log(unique costs)) where E = edges, V = vertices.
@@ -777,9 +777,9 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 # Sinkhorn-Knopp (Entropy-Regularized Optimal Transport)
 # ==============================================================================
 
-#' Sinkhorn-Knopp optimal transport solver
+#' 'Sinkhorn-Knopp' optimal transport solver
 #'
-#' Compute an entropy-regularized optimal transport plan using the Sinkhorn-Knopp
+#' Compute an entropy-regularized optimal transport plan using the 'Sinkhorn-Knopp'
 #' algorithm. Unlike other LAP solvers that return a hard 1-to-1 assignment,
 #' this returns a soft assignment (doubly stochastic matrix).
 #'
@@ -807,7 +807,7 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #' }
 #'
 #' @details
-#' The Sinkhorn-Knopp algorithm solves the entropy-regularized optimal transport
+#' The 'Sinkhorn-Knopp' algorithm solves the entropy-regularized optimal transport
 #' problem:
 #'
 #' \deqn{P^* = \arg\min_P \langle C, P \rangle - \frac{1}{\lambda} H(P)}
@@ -849,7 +849,7 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #'   to round soft assignments.
 #'
 #' @references
-#' Cuturi, M. (2013). Sinkhorn Distances: Lightspeed Computation of Optimal
+#' Cuturi, M. (2013). 'Sinkhorn Distances': Lightspeed Computation of Optimal
 #' Transport. *Advances in Neural Information Processing Systems*, 26.
 #'
 #' @export
@@ -868,7 +868,7 @@ sinkhorn <- function(cost, lambda = 10, tol = 1e-9, max_iter = 1000,
   lap_solve_sinkhorn(cost, lambda, tol, max_iter, r_weights, c_weights)
 }
 
-#' Round Sinkhorn transport plan to hard assignment
+#' Round 'Sinkhorn' transport plan to hard assignment
 #'
 #' Convert a soft transport plan from [sinkhorn()] to a hard 1-to-1 assignment
 #' using greedy rounding.

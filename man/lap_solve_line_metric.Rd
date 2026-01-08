@@ -13,8 +13,8 @@ lap_solve_line_metric(x, y, cost = "L1", maximize = FALSE)
 
 \item{cost}{Cost function for distance. Either:
 \itemize{
-\item "L1" (default): absolute distance (Manhattan distance)
-\item "L2": squared distance (squared Euclidean distance)
+\item "L1" (default): absolute distance ('Manhattan' distance)
+\item "L2": squared distance (squared 'Euclidean' distance)
 Can also use aliases: "abs", "manhattan" for L1; "sq", "squared", "quadratic" for L2
 }}
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/lap_solve.R
 \name{sinkhorn_to_assignment}
 \alias{sinkhorn_to_assignment}
-\title{Round Sinkhorn transport plan to hard assignment}
+\title{Round 'Sinkhorn' transport plan to hard assignment}
 \usage{
 sinkhorn_to_assignment(result)
 }

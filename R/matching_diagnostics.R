@@ -156,17 +156,17 @@ calculate_var_balance <- function(left_vals, right_vals, var_name) {
 #' (|std diff| > 0.25), and maximum standardized difference.
 #'
 #' @examples
-#' \dontrun{
 #' # Create sample data
+#' set.seed(123)
 #' left <- data.frame(
-#'   id = 1:50,
-#'   age = rnorm(50, 45, 10),
-#'   income = rnorm(50, 50000, 15000)
+#'   id = 1:10,
+#'   age = rnorm(10, 45, 10),
+#'   income = rnorm(10, 50000, 15000)
 #' )
 #' right <- data.frame(
-#'   id = 51:150,
-#'   age = rnorm(100, 47, 10),
-#'   income = rnorm(100, 52000, 15000)
+#'   id = 11:30,
+#'   age = rnorm(20, 47, 10),
+#'   income = rnorm(20, 52000, 15000)
 #' )
 #'
 #' # Match
@@ -178,7 +178,6 @@ calculate_var_balance <- function(left_vals, right_vals, var_name) {
 #'
 #' # Get balance table
 #' balance_table(balance)
-#' }
 #'
 #' @export
 balance_diagnostics <- function(result,

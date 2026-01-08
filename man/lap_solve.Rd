@@ -29,11 +29,11 @@ must include columns specified by \code{source}, \code{target}, and \code{cost}.
 \item{method}{Algorithm to use. One of:
 \itemize{
 \item "auto" (default): automatically selects best algorithm
-\item "jv": Jonker-Volgenant algorithm (general purpose, fast)
-\item "hungarian": Classic Hungarian algorithm
-\item "auction": Auction algorithm (good for large dense problems)
+\item "jv": 'Jonker-Volgenant' algorithm (general purpose, fast)
+\item "hungarian": Classic 'Hungarian' algorithm
+\item "auction": 'Bertsekas' auction algorithm (good for large dense problems)
 \item "sap": Sparse assignment (good for sparse/rectangular problems)
-\item "hk01": Hopcroft-Karp for binary/uniform costs
+\item "hk01": 'Hopcroft-Karp' for binary/uniform costs
 }}
 
 \item{forbidden}{Value to mark forbidden assignments (default: NA). Can also use Inf.}
@@ -49,7 +49,7 @@ A tibble with columns:
 }
 \description{
 Provides a tidy interface for solving the linear assignment problem using
-Hungarian or Jonker-Volgenant algorithms. Supports rectangular matrices,
+'Hungarian' or 'Jonker-Volgenant' algorithms. Supports rectangular matrices,
 NA/Inf masking, and data frame inputs.
 }
 \examples{

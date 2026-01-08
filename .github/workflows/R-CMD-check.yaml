@@ -17,9 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # macos-latest temporarily disabled due to CRAN ARM binary unavailability
-          # See: https://github.com/r-lib/actions/issues/865
-          # - {os: macos-latest,   r: 'release'}
+          - {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
@@ -44,7 +42,7 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
-          cache-version: 2
+          cache-version: 1
 
       - uses: r-lib/actions/check-r-package@v2
         with:

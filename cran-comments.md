@@ -1,14 +1,6 @@
 ## R CMD check results
 
-0 errors | 1 warning | 1 note
-
-### WARNING: Found 'abort' in compiled code
-The 'abort' symbol appears in the compiled code due to the C++ exception
-handling mechanism used by Rcpp::stop() for error reporting. This is a
-standard Rcpp pattern used by many CRAN packages. The code never calls
-abort() directly - the symbol is linked as part of the C++ runtime ABI
-for exception handling. All errors are properly signaled to R via
-Rcpp::stop() which throws a catchable exception.
+0 errors | 0 warnings | 1 note
 
 ### NOTE: "unable to verify current time"
 This is a network-related check that does not affect package functionality.

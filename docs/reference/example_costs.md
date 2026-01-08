@@ -56,8 +56,8 @@ assignment uses all diagonal entries (total cost = 0).
 
 ## See also
 
-[`lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
-[`example_df`](https://gcol33.github.io/couplr/reference/example_df.md)
+[`lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md),
+[`example_df`](https://gillescolling.com/couplr/reference/example_df.md)
 
 ## Examples
 

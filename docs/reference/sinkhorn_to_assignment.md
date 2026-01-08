@@ -1,8 +1,8 @@
 # Round 'Sinkhorn' transport plan to hard assignment
 
 Convert a soft transport plan from
-[`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md) to
-a hard 1-to-1 assignment using greedy rounding.
+[`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
+to a hard 1-to-1 assignment using greedy rounding.
 
 ## Usage
 
@@ -15,13 +15,13 @@ sinkhorn_to_assignment(result)
 - result:
 
   Either a result from
-  [`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md)
+  [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
   or a transport plan matrix.
 
 ## Value
 
 Integer vector of column assignments (1-based), same format as
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md).
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md).
 
 ## Details
 
@@ -29,11 +29,11 @@ Greedy rounding iteratively assigns each row to its most probable
 column, ensuring no column is assigned twice. This may not give the
 globally optimal hard assignment; for that, use the transport plan as a
 cost matrix with
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md).
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md).
 
 ## See also
 
-[`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md)
+[`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
 
 ## Examples
 

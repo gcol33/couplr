@@ -21,9 +21,9 @@ balance_diagnostics(
 - result:
 
   A matching result object from
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   or
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 
 - left:
 

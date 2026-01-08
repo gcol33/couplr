@@ -112,10 +112,10 @@ result <- lap_solve(cost)
 
 ## Documentation
 
-- [`vignette("getting-started", package = "couplr")`](https://gcol33.github.io/couplr/articles/getting-started.md)
-- [`vignette("algorithms", package = "couplr")`](https://gcol33.github.io/couplr/articles/algorithms.md)
-- [`vignette("matching-workflows", package = "couplr")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)
-- [`vignette("pixel-morphing", package = "couplr")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md)
+- [`vignette("getting-started", package = "couplr")`](https://gillescolling.com/couplr/articles/getting-started.md)
+- [`vignette("algorithms", package = "couplr")`](https://gillescolling.com/couplr/articles/algorithms.md)
+- [`vignette("matching-workflows", package = "couplr")`](https://gillescolling.com/couplr/articles/matching-workflows.md)
+- [`vignette("pixel-morphing", package = "couplr")`](https://gillescolling.com/couplr/articles/pixel-morphing.md)
 
 ## Citation
 
@@ -138,141 +138,141 @@ MIT
 
 Core functions for solving linear assignment problems
 
-- [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+- [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
   : Solve linear assignment problems
-- [`lap_solve_batch()`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md)
+- [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
   : Solve multiple assignment problems efficiently
-- [`lap_solve_kbest()`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md)
+- [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
   : Find k-best optimal assignments
-- [`lap_solve_line_metric()`](https://gcol33.github.io/couplr/reference/lap_solve_line_metric.md)
+- [`lap_solve_line_metric()`](https://gillescolling.com/couplr/reference/lap_solve_line_metric.md)
   : Solve 1-D Line Assignment Problem
-- [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+- [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   : Linear assignment solver
-- [`assignment_duals()`](https://gcol33.github.io/couplr/reference/assignment_duals.md)
+- [`assignment_duals()`](https://gillescolling.com/couplr/reference/assignment_duals.md)
   : Solve assignment problem and return dual variables
-- [`bottleneck_assignment()`](https://gcol33.github.io/couplr/reference/bottleneck_assignment.md)
+- [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
   : Solve the Bottleneck Assignment Problem
-- [`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md)
+- [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
   : 'Sinkhorn-Knopp' optimal transport solver
-- [`sinkhorn_to_assignment()`](https://gcol33.github.io/couplr/reference/sinkhorn_to_assignment.md)
+- [`sinkhorn_to_assignment()`](https://gillescolling.com/couplr/reference/sinkhorn_to_assignment.md)
   : Round 'Sinkhorn' transport plan to hard assignment
 
 ## Matching Functions
 
 High-level matching for observational studies
 
-- [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+- [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   : Optimal matching using linear assignment
-- [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+- [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
   : Fast approximate matching using greedy algorithm
-- [`matchmaker()`](https://gcol33.github.io/couplr/reference/matchmaker.md)
+- [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
   : Create blocks for stratified matching
 
 ## Balance Diagnostics
 
 Assess and report match quality
 
-- [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+- [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
   : Balance Diagnostics for Matched Pairs
-- [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md)
+- [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
   : Create Balance Table
 
 ## Distance and Preprocessing
 
 Distance computation and data preparation
 
-- [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md)
+- [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
   : Compute and Cache Distance Matrix for Reuse
-- [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md)
+- [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md)
   : Update Constraints on Distance Object
-- [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md)
+- [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
   : Preprocess matching variables with automatic checks and scaling
-- [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md)
+- [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
   : Diagnose distance matrix and suggest fixes
 
 ## Joined Datasets
 
 Create analysis-ready merged datasets
 
-- [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+- [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
   : Join Matched Pairs with Original Data
-- [`augment(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/augment.matching_result.md)
+- [`augment(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/augment.matching_result.md)
   : Augment Matching Results with Original Data (broom-style)
-- [`augment()`](https://gcol33.github.io/couplr/reference/augment.md) :
+- [`augment()`](https://gillescolling.com/couplr/reference/augment.md) :
   Generic Augment Function
 
 ## Utility Functions
 
 Helper functions for working with results
 
-- [`get_total_cost()`](https://gcol33.github.io/couplr/reference/get_total_cost.md)
+- [`get_total_cost()`](https://gillescolling.com/couplr/reference/get_total_cost.md)
   : Extract total cost from assignment result
-- [`get_method_used()`](https://gcol33.github.io/couplr/reference/get_method_used.md)
+- [`get_method_used()`](https://gillescolling.com/couplr/reference/get_method_used.md)
   : Extract method used from assignment result
-- [`as_assignment_matrix()`](https://gcol33.github.io/couplr/reference/as_assignment_matrix.md)
+- [`as_assignment_matrix()`](https://gillescolling.com/couplr/reference/as_assignment_matrix.md)
   : Convert assignment result to a binary matrix
-- [`is_lap_solve_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_result.md)
+- [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_result.md)
   : Check if object is an assignment result
-- [`is_lap_solve_batch_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_batch_result.md)
+- [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_batch_result.md)
   : Check if object is a batch assignment result
-- [`is_lap_solve_kbest_result()`](https://gcol33.github.io/couplr/reference/is_lap_solve_kbest_result.md)
+- [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_kbest_result.md)
   : Check if object is a k-best assignment result
-- [`is_distance_object()`](https://gcol33.github.io/couplr/reference/is_distance_object.md)
+- [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md)
   : Check if Object is a Distance Object
 
 ## Example Data
 
 Built-in datasets for examples and testing
 
-- [`hospital_staff`](https://gcol33.github.io/couplr/reference/hospital_staff.md)
+- [`hospital_staff`](https://gillescolling.com/couplr/reference/hospital_staff.md)
   : Hospital staff scheduling example dataset
-- [`example_costs`](https://gcol33.github.io/couplr/reference/example_costs.md)
+- [`example_costs`](https://gillescolling.com/couplr/reference/example_costs.md)
   : Example cost matrices for assignment problems
-- [`example_df`](https://gcol33.github.io/couplr/reference/example_df.md)
+- [`example_df`](https://gillescolling.com/couplr/reference/example_df.md)
   : Example assignment problem data frame
 
 ## Pixel Morphing
 
 Visual demonstrations and image processing
 
-- [`pixel_morph()`](https://gcol33.github.io/couplr/reference/pixel_morph.md)
+- [`pixel_morph()`](https://gillescolling.com/couplr/reference/pixel_morph.md)
   : Pixel-level image morphing (final frame only)
-- [`pixel_morph_animate()`](https://gcol33.github.io/couplr/reference/pixel_morph_animate.md)
+- [`pixel_morph_animate()`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
   : Pixel-level image morphing (animation)
 
 ## Print, Summary and Plot Methods
 
 S3 methods for displaying and visualizing results
 
-- [`print(`*`<lap_solve_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_result.md)
+- [`print(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_result.md)
   : Print method for assignment results
-- [`print(`*`<lap_solve_batch_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_batch_result.md)
+- [`print(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_batch_result.md)
   : Print method for batch assignment results
-- [`print(`*`<lap_solve_kbest_result>`*`)`](https://gcol33.github.io/couplr/reference/print.lap_solve_kbest_result.md)
+- [`print(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_kbest_result.md)
   : Print method for k-best assignment results
-- [`print(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/print.matching_result.md)
+- [`print(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/print.matching_result.md)
   : Print method for matching results
-- [`print(`*`<matchmaker_result>`*`)`](https://gcol33.github.io/couplr/reference/print.matchmaker_result.md)
+- [`print(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/print.matchmaker_result.md)
   : Print method for matchmaker results
-- [`print(`*`<balance_diagnostics>`*`)`](https://gcol33.github.io/couplr/reference/print.balance_diagnostics.md)
+- [`print(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/print.balance_diagnostics.md)
   : Print Method for Balance Diagnostics
-- [`print(`*`<distance_object>`*`)`](https://gcol33.github.io/couplr/reference/print.distance_object.md)
+- [`print(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/print.distance_object.md)
   : Print Method for Distance Objects
-- [`print(`*`<preprocessing_result>`*`)`](https://gcol33.github.io/couplr/reference/print.preprocessing_result.md)
+- [`print(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/print.preprocessing_result.md)
   : Print method for preprocessing result
-- [`print(`*`<variable_health>`*`)`](https://gcol33.github.io/couplr/reference/print.variable_health.md)
+- [`print(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/print.variable_health.md)
   : Print method for variable health
-- [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gcol33.github.io/couplr/reference/summary.lap_solve_kbest_result.md)
+- [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/summary.lap_solve_kbest_result.md)
   : Get summary of k-best results
-- [`summary(`*`<distance_object>`*`)`](https://gcol33.github.io/couplr/reference/summary.distance_object.md)
+- [`summary(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/summary.distance_object.md)
   : Summary Method for Distance Objects
-- [`summary(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/summary.matching_result.md)
+- [`summary(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/summary.matching_result.md)
   : Summary method for matching results
-- [`summary(`*`<balance_diagnostics>`*`)`](https://gcol33.github.io/couplr/reference/summary.balance_diagnostics.md)
+- [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/summary.balance_diagnostics.md)
   : Summary method for balance diagnostics
-- [`plot(`*`<matching_result>`*`)`](https://gcol33.github.io/couplr/reference/plot.matching_result.md)
+- [`plot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/plot.matching_result.md)
   : Plot method for matching results
-- [`plot(`*`<balance_diagnostics>`*`)`](https://gcol33.github.io/couplr/reference/plot.balance_diagnostics.md)
+- [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/plot.balance_diagnostics.md)
   : Plot method for balance diagnostics
 
 # Articles
@@ -280,23 +280,23 @@ S3 methods for displaying and visualizing results
 ### Getting Started
 
 - [Quick
-  Start](https://gcol33.github.io/couplr/articles/getting-started.md):
+  Start](https://gillescolling.com/couplr/articles/getting-started.md):
 
 ### Core Topics
 
 - [The Algorithm
-  Collection](https://gcol33.github.io/couplr/articles/algorithms.md):
+  Collection](https://gillescolling.com/couplr/articles/algorithms.md):
 - [Matching
-  Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md):
+  Workflows](https://gillescolling.com/couplr/articles/matching-workflows.md):
 
 ### Guides
 
 - [Comparison with
-  Alternatives](https://gcol33.github.io/couplr/articles/comparison.md):
+  Alternatives](https://gillescolling.com/couplr/articles/comparison.md):
 - [Troubleshooting
-  Guide](https://gcol33.github.io/couplr/articles/troubleshooting.md):
+  Guide](https://gillescolling.com/couplr/articles/troubleshooting.md):
 
 ### Advanced
 
 - [Advanced
-  Topics](https://gcol33.github.io/couplr/articles/pixel-morphing.md):
+  Topics](https://gillescolling.com/couplr/articles/pixel-morphing.md):

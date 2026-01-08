@@ -2,7 +2,7 @@
 
 Prints a summary and the table of results for a batch of assignment
 problems solved with
-[`lap_solve_batch()`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md).
+[`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md).
 
 ## Usage
 

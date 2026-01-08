@@ -63,7 +63,7 @@ assignment(
 
   - `"line_metric"` — O(n log n) for 1D assignment problems
 
-  - `"bruteforce"` — Exact enumeration for tiny problems (n ≤ 8)
+  - `"bruteforce"` — Exact enumeration for tiny problems (n \<= 8)
 
   **Advanced solvers:**
 
@@ -80,12 +80,12 @@ assignment(
   - `"network_simplex"` — 'Network simplex' with spanning tree
     representation
 
-  - `"orlin"` — 'Orlin-Ahuja' scaling O(√n · m · log(nC))
+  - `"orlin"` — 'Orlin-Ahuja' scaling O(sqrt(n) \* m \* log(nC))
 
   - `"push_relabel"` — 'Push-relabel' max-flow based solver
 
   - `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular
-    matrices (n ≠ m)
+    matrices (n != m)
 
 - auction_eps:
 
@@ -115,7 +115,7 @@ An object of class `lap_solve_result`, a list with elements:
 `method = "auto"` selects an algorithm based on problem size/shape and
 data characteristics:
 
-- Very small (n≤8): `"bruteforce"` — exact enumeration
+- Very small (n \<= 8): `"bruteforce"` — exact enumeration
 
 - Binary/constant costs: `"hk01"` — specialized for 0/1 costs
 
@@ -123,9 +123,10 @@ data characteristics:
 
 - Sparse or very rectangular: `"sap"` — handles sparsity well
 
-- Small-medium (8\<n≤50): `"hungarian"` — provides exact dual solutions
+- Small-medium (8 \< n \<= 50): `"hungarian"` — provides exact dual
+  solutions
 
-- Medium (50\<n≤75): `"jv"` — fast general-purpose solver
+- Medium (50 \< n \<= 75): `"jv"` — fast general-purpose solver
 
 - Large (n\>75): `"auction_scaled"` — fastest for large dense problems
 
@@ -134,19 +135,19 @@ Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than
 
 ## See also
 
-- [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+- [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
   — Tidy interface returning tibbles
 
-- [`lap_solve_kbest()`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md)
+- [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
   — Find k-best assignments ('Murty' algorithm)
 
-- [`assignment_duals()`](https://gcol33.github.io/couplr/reference/assignment_duals.md)
+- [`assignment_duals()`](https://gillescolling.com/couplr/reference/assignment_duals.md)
   — Extract dual variables for sensitivity analysis
 
-- [`bottleneck_assignment()`](https://gcol33.github.io/couplr/reference/bottleneck_assignment.md)
+- [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
   — Minimize maximum edge cost (minimax)
 
-- [`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md)
+- [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
   — Entropy-regularized optimal transport
 
 ## Examples

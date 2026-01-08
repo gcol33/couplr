@@ -100,7 +100,7 @@ positions determined by the assignment to B.
 - No motion blur (unlike intermediate frames in animation)
 
 See
-[`pixel_morph_animate`](https://gcol33.github.io/couplr/reference/pixel_morph_animate.md)
+[`pixel_morph_animate`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
 for detailed explanation of assignment vs rendering semantics.
 
 ### Permutation Warnings
@@ -132,7 +132,7 @@ For guaranteed pixel-perfect results, use:
 
 ## See also
 
-[`pixel_morph_animate`](https://gcol33.github.io/couplr/reference/pixel_morph_animate.md)
+[`pixel_morph_animate`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
 for animated version
 
 ## Examples

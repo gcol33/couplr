@@ -2,7 +2,7 @@
 
 Performs fast one-to-one matching using greedy strategies. Does not
 guarantee optimal total distance but is much faster than
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 for large datasets. Supports blocking, distance constraints, and various
 distance metrics.
 

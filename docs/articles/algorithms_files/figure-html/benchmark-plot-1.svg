@@ -119,7 +119,7 @@
 <text x='377.86' y='415.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='29.34px' lengthAdjust='spacingAndGlyphs'>Auction</text>
 <text x='435.44' y='415.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.11px' lengthAdjust='spacingAndGlyphs'>CSA</text>
 <text x='481.79' y='415.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='66.00px' lengthAdjust='spacingAndGlyphs'>Network Simplex</text>
-<text x='42.91' y='31.80' style='font-size: 11.00px;fill: #6C757D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='327.39px' lengthAdjust='spacingAndGlyphs'>Log scale. CSA and JV consistently fastest. Hungarian falls behind.</text>
+<text x='42.91' y='31.80' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='327.39px' lengthAdjust='spacingAndGlyphs'>Log scale. CSA and JV consistently fastest. Hungarian falls behind.</text>
 <text x='42.91' y='15.50' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='230.98px' lengthAdjust='spacingAndGlyphs'>Algorithm Scaling: Dense Matrices</text>
 </g>
 </g>

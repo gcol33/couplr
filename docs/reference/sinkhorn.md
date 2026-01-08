@@ -88,10 +88,10 @@ transport.
 
 - Differentiable, making it useful in ML pipelines
 
-- Very fast: O(n²) per iteration with typically O(1/ε²) iterations
+- Very fast: O(n^2) per iteration with typically O(1/tol^2) iterations
 
 Use
-[`sinkhorn_to_assignment()`](https://gcol33.github.io/couplr/reference/sinkhorn_to_assignment.md)
+[`sinkhorn_to_assignment()`](https://gillescolling.com/couplr/reference/sinkhorn_to_assignment.md)
 to round the soft assignment to a hard matching.
 
 ## References
@@ -102,9 +102,9 @@ Optimal Transport. *Advances in Neural Information Processing Systems*,
 
 ## See also
 
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 for hard 1-to-1 matching,
-[`sinkhorn_to_assignment()`](https://gcol33.github.io/couplr/reference/sinkhorn_to_assignment.md)
+[`sinkhorn_to_assignment()`](https://gillescolling.com/couplr/reference/sinkhorn_to_assignment.md)
 to round soft assignments.
 
 ## Examples

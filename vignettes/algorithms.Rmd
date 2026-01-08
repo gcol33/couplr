@@ -46,7 +46,7 @@ ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algo
   geom_text(aes(label = paste0(time_ms, " ms")),
             hjust = -0.1, size = 5, fontface = "bold") +
   geom_text(aes(label = paste0("(", year, ")")),
-            hjust = -0.1, vjust = 2.5, size = 3.5, color = "#6c757d") +
+            hjust = -0.1, vjust = 2.5, size = 3.5) +
   scale_fill_manual(values = c(
     "Hungarian" = "#d9534f",
     "Jonker-Volgenant" = "#5bc0de",
@@ -65,7 +65,7 @@ ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algo
   theme(
     legend.position = "none",
     plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11, color = "#6c757d"),
+    plot.subtitle = element_text(size = 11),
     axis.text.y = element_text(size = 12, face = "bold"),
     axis.text.x = element_text(size = 10),
     panel.grid.major.y = element_blank(),
@@ -313,7 +313,7 @@ ggplot(steps, aes(x = x, y = y)) +
   theme_void() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "#6c757d"),
+    plot.subtitle = element_text(hjust = 0.5, size = 11),
     plot.margin = margin(20, 20, 20, 20)
   ) +
   coord_cartesian(xlim = c(0.4, 3.6), ylim = c(0.4, 1.6))
@@ -406,7 +406,7 @@ ggplot() +
              aes(x = x + 0.6, y = y, label = paste0("p=", price)),
              fill = "#29abe0", color = "white", size = 5, label.padding = unit(0.25, "lines")) +
   annotate("text", x = 2.5, y = 0.3, label = "W1 bids for J1: bid = (value - price) - (2nd best - price) + ε",
-           size = 4, color = "#6c757d", fontface = "italic") +
+           size = 4, fontface = "italic") +
   scale_color_manual(values = c("TRUE" = "#93c54b", "FALSE" = "#f47c3c"), guide = "none") +
   labs(title = "Auction Algorithm: Bidding Phase",
        subtitle = "Workers bid for jobs; prices rise with competition until equilibrium") +
@@ -474,21 +474,21 @@ ggplot(phases, aes(x = x, y = 1)) +
   # Epsilon labels
   geom_text(aes(y = 0.7, label = paste0("ε=", epsilon)), vjust = -1.5, size = 4, fontface = "bold") +
   # Quality labels
-  geom_text(aes(y = 0.7, label = quality), vjust = 2.5, size = 3.5, color = "#6c757d") +
+  geom_text(aes(y = 0.7, label = quality), vjust = 2.5, size = 3.5) +
   # Phase numbers
-  geom_text(aes(y = 0.7, label = paste0("Phase ", phase)), vjust = 4.5, size = 3, color = "#aaa49b") +
+  geom_text(aes(y = 0.7, label = paste0("Phase ", phase)), vjust = 4.5, size = 3) +
   # Arrow showing direction
   annotate("segment", x = 0.5, xend = 5.5, y = 1.3, yend = 1.3,
-           arrow = arrow(length = unit(0.2, "cm")), color = "#6c757d") +
+           arrow = arrow(length = unit(0.2, "cm"))) +
   annotate("text", x = 3, y = 1.4, label = "ε shrinks, quality improves",
-           size = 4, fontface = "italic", color = "#6c757d") +
+           size = 4, fontface = "italic") +
   scale_size_identity() +
   labs(title = "CSA: Systematic ε-Scaling",
        subtitle = "Each phase halves ε and refines the assignment") +
   theme_void() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "#6c757d"),
+    plot.subtitle = element_text(hjust = 0.5, size = 11),
     plot.margin = margin(20, 20, 30, 20)
   ) +
   coord_cartesian(xlim = c(0.3, 5.7), ylim = c(0.3, 1.5))
@@ -542,12 +542,12 @@ ggplot() +
   geom_text(data = bits, aes(x = x, y = y, label = label),
             fontface = "bold", size = 5, color = "white") +
   geom_text(data = bits, aes(x = x, y = y - 0.5, label = paste0("bit ", 8 - bit)),
-            size = 3, color = "#6c757d") +
+            size = 3) +
   # Arrow showing processing direction
   annotate("segment", x = 1, xend = 8, y = 1.7, yend = 1.7,
-           arrow = arrow(length = unit(0.2, "cm")), color = "#6c757d", linewidth = 1) +
+           arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
   annotate("text", x = 4.5, y = 1.85, label = "Process high bits → low bits",
-           size = 4, fontface = "italic", color = "#6c757d") +
+           size = 4, fontface = "italic") +
   # Scale legend
   scale_fill_manual(values = c("Processed" = "#5cb85c", "Current" = "#f0ad4e", "Remaining" = "#aaa49b")) +
   labs(title = "Gabow-Tarjan: Bit-Scaling",
@@ -556,7 +556,7 @@ ggplot() +
   theme_void() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "#6c757d"),
+    plot.subtitle = element_text(hjust = 0.5, size = 11),
     legend.position = "bottom",
     plot.margin = margin(20, 20, 10, 20)
   ) +
@@ -670,10 +670,10 @@ ggplot() +
              aes(x = x, y = y), color = "#29abe0", size = 18) +
   geom_text(data = nodes, aes(x = x, y = y, label = label),
             color = "white", fontface = "bold", size = 5) +
-  annotate("text", x = 0, y = 0.3, label = "Source", size = 4, color = "#6c757d") +
+  annotate("text", x = 0, y = 0.3, label = "Source", size = 4) +
   annotate("text", x = 1.5, y = 0.3, label = "Workers", size = 4, color = "#f47c3c") +
   annotate("text", x = 3.5, y = 0.3, label = "Jobs", size = 4, color = "#29abe0") +
-  annotate("text", x = 5, y = 0.3, label = "Sink", size = 4, color = "#6c757d") +
+  annotate("text", x = 5, y = 0.3, label = "Sink", size = 4) +
   labs(title = "Network Simplex: Spanning Tree Basis",
        subtitle = "Green = tree edges (basis); dashed = non-basic edges. Pivots swap edges.") +
   theme_void() +
@@ -751,7 +751,7 @@ ggplot() +
             color = "white", fontface = "bold", size = 5) +
   # Height labels
   geom_text(data = nodes, aes(x = x, y = y - 0.35, label = paste0("h=", height)),
-            size = 3, color = "#6c757d") +
+            size = 3) +
   # Excess labels for nodes with excess
   geom_label(data = nodes[nodes$excess > 0, ],
              aes(x = x + 0.3, y = y + 0.25, label = paste0("+", excess)),
@@ -759,7 +759,7 @@ ggplot() +
   scale_size_identity() +
   annotate("text", x = 2.5, y = 0.8,
            label = "Push: move excess to lower-height neighbor. Relabel: raise height when stuck.",
-           size = 4, fontface = "italic", color = "#6c757d") +
+           size = 4, fontface = "italic") +
   labs(title = "Push-Relabel: Local Operations, Global Optimum",
        subtitle = "Yellow nodes have excess. Push to lower neighbors. Relabel when stuck.") +
   theme_void() +
@@ -962,7 +962,7 @@ ggplot(bench_results, aes(x = size, y = time, color = method, group = method)) +
   theme(
     legend.position = "bottom",
     plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11, color = "#6c757d"),
+    plot.subtitle = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
 ```
@@ -1000,7 +1000,7 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
   theme(
     legend.position = "bottom",
     plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11, color = "#6c757d")
+    plot.subtitle = element_text(size = 11)
   )
 ```
 

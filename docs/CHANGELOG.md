@@ -13,11 +13,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #### Matching Enhancements - Step 1: Automatic Scaling and Preprocessing
 
 - **Automatic preprocessing** with `auto_scale` parameter in
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   and
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 - **Variable health checks** via
-  [`check_variable_health()`](https://gcol33.github.io/couplr/reference/check_variable_health.md):
+  [`check_variable_health()`](https://gillescolling.com/couplr/reference/check_variable_health.md):
   - Detects constant columns (SD = 0) and excludes with warning
   - Detects nearly-constant columns (SD \< threshold) and warns
   - Detects all-NA columns and excludes with warning
@@ -26,32 +26,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     messages
   - Returns detailed diagnostics including per-variable statistics
 - **Smart scaling method selection** via
-  [`suggest_scaling()`](https://gcol33.github.io/couplr/reference/suggest_scaling.md):
+  [`suggest_scaling()`](https://gillescolling.com/couplr/reference/suggest_scaling.md):
   - Analyzes variable distributions and detects outliers using IQR
     method
   - Checks for different scales across variables
   - Recommends “robust”, “standardize”, “range”, or “none”
 - **Robust scaling method** added to
-  [`apply_scaling()`](https://gcol33.github.io/couplr/reference/apply_scaling.md):
+  [`apply_scaling()`](https://gillescolling.com/couplr/reference/apply_scaling.md):
   - Uses median and MAD (median absolute deviation)
   - Resistant to outliers and skewed distributions
   - Formula: `(x - median) / MAD`
 - **Categorical variable encoding** via
-  [`auto_encode_categorical()`](https://gcol33.github.io/couplr/reference/auto_encode_categorical.md):
+  [`auto_encode_categorical()`](https://gillescolling.com/couplr/reference/auto_encode_categorical.md):
   - Binary variables → 0/1 encoding
   - Ordered factors → numeric codes
   - Error for unordered categorical (requires Gower distance)
 - **Main preprocessing orchestrator**
-  [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md):
+  [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md):
   - Runs variable health checks
   - Automatically excludes problematic variables
   - Suggests and applies scaling method
   - Returns preprocessing result with metadata
   - Exported for direct user access
 - **Print methods** for preprocessing results:
-  - [`print.variable_health()`](https://gcol33.github.io/couplr/reference/print.variable_health.md) -
+  - [`print.variable_health()`](https://gillescolling.com/couplr/reference/print.variable_health.md) -
     Pretty printing for health diagnostics
-  - [`print.preprocessing_result()`](https://gcol33.github.io/couplr/reference/print.preprocessing_result.md) -
+  - [`print.preprocessing_result()`](https://gillescolling.com/couplr/reference/print.preprocessing_result.md) -
     Summary of preprocessing results
 - **10 comprehensive tests** for preprocessing functionality
 - **Example file** `examples/auto_scale_demo.R` with 5 demonstrations
@@ -59,7 +59,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #### Matching Enhancements - Step 2: Balance Diagnostics
 
 - **Balance diagnostics** via
-  [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md):
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md):
   - Computes standardized differences (mean diff / pooled SD)
   - Calculates variance ratios (SD_left / SD_right)
   - Performs Kolmogorov-Smirnov tests for distribution comparison
@@ -67,26 +67,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Per-block statistics with quality ratings when blocking used
   - Counts matched and unmatched units
   - Works with both
-    [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
     and
-    [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+    [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
     results
 - **Balance table formatting** via
-  [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md):
+  [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md):
   - Clean tabular output suitable for reports and publications
   - Configurable decimal precision
 - **Standardized difference calculation** via
-  [`standardized_difference()`](https://gcol33.github.io/couplr/reference/standardized_difference.md):
+  [`standardized_difference()`](https://gillescolling.com/couplr/reference/standardized_difference.md):
   - Internal function with robust edge case handling
   - Supports pooled or group-specific SD
   - Handles NA values, empty vectors, constant data
 - **Helper function**
-  [`calculate_var_balance()`](https://gcol33.github.io/couplr/reference/calculate_var_balance.md):
+  [`calculate_var_balance()`](https://gillescolling.com/couplr/reference/calculate_var_balance.md):
   - Per-variable balance statistics
   - Mean, SD, mean difference for both groups
   - Standardized difference, variance ratio, KS statistic
 - **Print method** for balance diagnostics:
-  - [`print.balance_diagnostics()`](https://gcol33.github.io/couplr/reference/print.balance_diagnostics.md) -
+  - [`print.balance_diagnostics()`](https://gillescolling.com/couplr/reference/print.balance_diagnostics.md) -
     Comprehensive output with:
     - Matching summary (method, matched/unmatched counts)
     - Variable-level balance table
@@ -112,7 +112,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #### Matching Enhancements - Step 3: Joined Matched Dataset Output
 
 - **Analysis-ready dataset creation** via
-  [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md):
+  [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md):
   - Automatically joins matched pairs with original left and right data
   - Eliminates manual data wrangling after matching
   - Selectable variables via `left_vars` and `right_vars` parameters
@@ -125,14 +125,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Works with all matching methods (optimal and greedy)
   - Preserves block information when blocking was used
 - **Broom-style interface** via
-  [`augment.matching_result()`](https://gcol33.github.io/couplr/reference/augment.matching_result.md):
+  [`augment.matching_result()`](https://gillescolling.com/couplr/reference/augment.matching_result.md):
   - S3 method following broom package conventions
   - Thin wrapper around
-    [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+    [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
     with sensible defaults
   - Integration with tidymodels workflows
   - Supports all
-    [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+    [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
     parameters via `...`
 - **Comprehensive input validation**:
   - Checks for matching_result object type
@@ -166,7 +166,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #### Matching Enhancements - Step 4: Precomputed and Reusable Distances
 
 - **Distance caching** via
-  [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md):
+  [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md):
   - Precomputes distance matrix between left and right datasets
   - Stores complete metadata (vars, distance metric, scaling,
     timestamps)
@@ -182,7 +182,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Example:
     `dist_obj <- compute_distances(left, right, vars); result <- match_couples(dist_obj)`
 - **Constraint modification** via
-  [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md):
+  [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md):
   - Apply new max_distance or calipers without recomputing distances
   - Creates new distance_object with updated cost matrix
   - Follows R’s copy-on-modify semantics
@@ -195,24 +195,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     handlers
   - 100% backward compatible with existing code
 - **Helper functions**:
-  - [`is_distance_object()`](https://gcol33.github.io/couplr/reference/is_distance_object.md) -
+  - [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md) -
     Type checking
-  - [`print.distance_object()`](https://gcol33.github.io/couplr/reference/print.distance_object.md) -
+  - [`print.distance_object()`](https://gillescolling.com/couplr/reference/print.distance_object.md) -
     Informative summary with distance statistics
-  - [`summary.distance_object()`](https://gcol33.github.io/couplr/reference/summary.distance_object.md) -
+  - [`summary.distance_object()`](https://gillescolling.com/couplr/reference/summary.distance_object.md) -
     Detailed statistics with quantiles and sparsity analysis
 - **Internal implementations**:
-  - [`match_couples_from_distance()`](https://gcol33.github.io/couplr/reference/match_couples_from_distance.md) -
+  - [`match_couples_from_distance()`](https://gillescolling.com/couplr/reference/match_couples_from_distance.md) -
     Handles optimal matching from cached distances
-  - [`greedy_couples_from_distance()`](https://gcol33.github.io/couplr/reference/greedy_couples_from_distance.md) -
+  - [`greedy_couples_from_distance()`](https://gillescolling.com/couplr/reference/greedy_couples_from_distance.md) -
     Handles greedy matching from cached distances
 
 #### Matching Enhancements - Step 5: Parallel Processing
 
 - **Parallel block matching** via `parallel` parameter in
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   and
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md):
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
   - Distributes blocked matching across multiple cores using the
     `future` package
   - Automatic worker setup with `parallel = TRUE` (uses
@@ -223,17 +223,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Graceful fallback to sequential processing if future packages
     unavailable
 - **Parallel infrastructure** in `R/matching_parallel.R`:
-  - [`setup_parallel()`](https://gcol33.github.io/couplr/reference/setup_parallel.md) -
+  - [`setup_parallel()`](https://gillescolling.com/couplr/reference/setup_parallel.md) -
     Configure parallel backend with auto-detection
-  - [`restore_parallel()`](https://gcol33.github.io/couplr/reference/restore_parallel.md) -
+  - [`restore_parallel()`](https://gillescolling.com/couplr/reference/restore_parallel.md) -
     Restore original future plan after execution
-  - [`can_parallelize()`](https://gcol33.github.io/couplr/reference/can_parallelize.md) -
+  - [`can_parallelize()`](https://gillescolling.com/couplr/reference/can_parallelize.md) -
     Check if future packages are available
-  - [`parallel_lapply()`](https://gcol33.github.io/couplr/reference/parallel_lapply.md) -
+  - [`parallel_lapply()`](https://gillescolling.com/couplr/reference/parallel_lapply.md) -
     Unified parallel/sequential lapply interface
-  - [`match_blocks_parallel()`](https://gcol33.github.io/couplr/reference/match_blocks_parallel.md) -
+  - [`match_blocks_parallel()`](https://gillescolling.com/couplr/reference/match_blocks_parallel.md) -
     Parallel optimal matching across blocks
-  - [`greedy_blocks_parallel()`](https://gcol33.github.io/couplr/reference/greedy_blocks_parallel.md) -
+  - [`greedy_blocks_parallel()`](https://gillescolling.com/couplr/reference/greedy_blocks_parallel.md) -
     Parallel greedy matching across blocks
 - **Performance benefits**:
   - Scales with number of blocks and block size
@@ -264,9 +264,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Automatic cost distribution checking** via `check_costs` parameter
   (default: `TRUE`):
   - Enabled by default in
-    [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
     and
-    [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+    [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
   - Detects common problems before matching begins
   - Can be disabled with `check_costs = FALSE` for production code
 - **Fun, couple-themed error messages** throughout the package:
@@ -284,28 +284,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - 🔍 for search/investigation
   - Automatically disabled in non-interactive sessions
 - **Message helper functions** in `R/matching_messages.R`:
-  - [`couplr_stop()`](https://gcol33.github.io/couplr/reference/couplr_stop.md) -
+  - [`couplr_stop()`](https://gillescolling.com/couplr/reference/couplr_stop.md) -
     Fun error messages with emoji
-  - [`couplr_warn()`](https://gcol33.github.io/couplr/reference/couplr_warn.md) -
+  - [`couplr_warn()`](https://gillescolling.com/couplr/reference/couplr_warn.md) -
     Fun warning messages
-  - [`couplr_inform()`](https://gcol33.github.io/couplr/reference/couplr_inform.md) -
+  - [`couplr_inform()`](https://gillescolling.com/couplr/reference/couplr_inform.md) -
     Info messages
-  - [`couplr_success()`](https://gcol33.github.io/couplr/reference/couplr_success.md) -
+  - [`couplr_success()`](https://gillescolling.com/couplr/reference/couplr_success.md) -
     Success messages
-  - [`couplr_emoji()`](https://gcol33.github.io/couplr/reference/couplr_emoji.md) -
+  - [`couplr_emoji()`](https://gillescolling.com/couplr/reference/couplr_emoji.md) -
     Get themed emoji
   - Specific error helpers:
-    [`err_missing_data()`](https://gcol33.github.io/couplr/reference/err_missing_data.md),
-    [`err_missing_vars()`](https://gcol33.github.io/couplr/reference/err_missing_vars.md),
-    [`err_no_valid_pairs()`](https://gcol33.github.io/couplr/reference/err_no_valid_pairs.md),
+    [`err_missing_data()`](https://gillescolling.com/couplr/reference/err_missing_data.md),
+    [`err_missing_vars()`](https://gillescolling.com/couplr/reference/err_missing_vars.md),
+    [`err_no_valid_pairs()`](https://gillescolling.com/couplr/reference/err_no_valid_pairs.md),
     etc.
   - Specific warning helpers:
-    [`warn_constant_var()`](https://gcol33.github.io/couplr/reference/warn_constant_var.md),
-    [`warn_many_zeros()`](https://gcol33.github.io/couplr/reference/warn_many_zeros.md),
-    [`warn_extreme_costs()`](https://gcol33.github.io/couplr/reference/warn_extreme_costs.md),
+    [`warn_constant_var()`](https://gillescolling.com/couplr/reference/warn_constant_var.md),
+    [`warn_many_zeros()`](https://gillescolling.com/couplr/reference/warn_many_zeros.md),
+    [`warn_extreme_costs()`](https://gillescolling.com/couplr/reference/warn_extreme_costs.md),
     etc.
 - **Cost distribution checking** via
-  [`check_cost_distribution()`](https://gcol33.github.io/couplr/reference/check_cost_distribution.md):
+  [`check_cost_distribution()`](https://gillescolling.com/couplr/reference/check_cost_distribution.md):
   - Detects too many zero distances (\>10%) - suggests checking for
     duplicates
   - Detects extreme cost ratios (99th percentile \> 10x 95th) - suggests
@@ -315,7 +315,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     informativeness
   - Returns detailed diagnostic information
 - **Comprehensive diagnostics** via
-  [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md)
+  [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
   (exported):
   - Full analysis of distance matrix quality
   - Variable-specific problem detection
@@ -324,8 +324,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Quality rating: “good”, “fair”, or “poor”
 - **Integration**:
   - Integrated into
-    [`match_couples_single()`](https://gcol33.github.io/couplr/reference/match_couples_single.md),
-    [`match_couples_from_distance()`](https://gcol33.github.io/couplr/reference/match_couples_from_distance.md)
+    [`match_couples_single()`](https://gillescolling.com/couplr/reference/match_couples_single.md),
+    [`match_couples_from_distance()`](https://gillescolling.com/couplr/reference/match_couples_from_distance.md)
   - Integrated into greedy matching functions
   - Warnings issued before LAP solving to catch problems early
   - Backward compatible - all tests pass with check_costs enabled
@@ -345,16 +345,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Updated `DESCRIPTION` to include new matching features
 - Enhanced `NAMESPACE` with new exports:
-  - [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md)
-  - [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
-  - [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md)
-  - [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
-  - [`augment.matching_result()`](https://gcol33.github.io/couplr/reference/augment.matching_result.md)
-  - [`augment()`](https://gcol33.github.io/couplr/reference/augment.md)
+  - [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  - [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  - [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
+  - [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
+  - [`augment.matching_result()`](https://gillescolling.com/couplr/reference/augment.matching_result.md)
+  - [`augment()`](https://gillescolling.com/couplr/reference/augment.md)
     generic
-  - [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md)
-  - [`is_distance_object()`](https://gcol33.github.io/couplr/reference/is_distance_object.md)
-  - [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md)
+  - [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  - [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md)
+  - [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md)
   - S3 print and summary methods for new classes
 - Modified function signatures to accept distance objects, parallel
   processing, and cost checking:
@@ -369,14 +369,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Updated error messages throughout package to use fun, couple-themed
   helpers
 - Added
-  [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md)
+  [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
   to NAMESPACE exports
 
 ### Fixed
 
 - Greedy matching functions now properly exported via Rcpp interface
 - Block statistics preserved correctly in
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
   when `return_diagnostics = FALSE`
 - Variable health checks now include all required fields for all edge
   cases

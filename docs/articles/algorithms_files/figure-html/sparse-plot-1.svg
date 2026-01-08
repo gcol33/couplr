@@ -91,7 +91,7 @@
 <text x='230.11' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='42.53px' lengthAdjust='spacingAndGlyphs'>JV (dense)</text>
 <text x='300.88' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='52.16px' lengthAdjust='spacingAndGlyphs'>SAP (sparse)</text>
 <text x='381.28' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='71.86px' lengthAdjust='spacingAndGlyphs'>LAPMOD (sparse)</text>
-<text x='38.02' y='31.80' style='font-size: 11.00px;fill: #6C757D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='346.58px' lengthAdjust='spacingAndGlyphs'>Sparse algorithms (SAP, LAPMOD) dramatically outperform dense (JV)</text>
+<text x='38.02' y='31.80' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='346.58px' lengthAdjust='spacingAndGlyphs'>Sparse algorithms (SAP, LAPMOD) dramatically outperform dense (JV)</text>
 <text x='38.02' y='15.50' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='272.23px' lengthAdjust='spacingAndGlyphs'>Sparse vs Dense: 80% Forbidden Entries</text>
 </g>
 </g>

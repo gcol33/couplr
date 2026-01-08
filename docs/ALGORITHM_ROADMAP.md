@@ -31,13 +31,13 @@
 
 | Algorithm | Function | Notes |
 |----|----|----|
-| **JV with Duals** | [`assignment_duals()`](https://gcol33.github.io/couplr/reference/assignment_duals.md) | Returns (u, v) potentials; sensitivity analysis; **NEW** |
+| **JV with Duals** | [`assignment_duals()`](https://gillescolling.com/couplr/reference/assignment_duals.md) | Returns (u, v) potentials; sensitivity analysis; **NEW** |
 
 ### Specialized Problem Variants
 
 | Algorithm | Function | Year | Complexity | Notes |
 |----|----|----|----|----|
-| **Bottleneck Assignment** | [`bottleneck_assignment()`](https://gcol33.github.io/couplr/reference/bottleneck_assignment.md) | 1959 | O(E√V log U) | Minimax objective; **NEW** |
+| **Bottleneck Assignment** | [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md) | 1959 | O(E√V log U) | Minimax objective; **NEW** |
 
 ### Approximate / Soft Solvers
 
@@ -46,14 +46,14 @@
 | Greedy (sorted) | `greedy_sorted` | O(n² log n) | ~5-15% gap |
 | Greedy (row-best) | `greedy_row_best` | O(n²) | ~5-15% gap |
 | Greedy (priority queue) | `greedy_pq` | O(n² log n) | ~3-10% gap |
-| **Sinkhorn-Knopp** | [`sinkhorn()`](https://gcol33.github.io/couplr/reference/sinkhorn.md) | O(n²/ε²) | Soft assignment; entropy-regularized OT; **NEW** |
+| **Sinkhorn-Knopp** | [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md) | O(n²/ε²) | Soft assignment; entropy-regularized OT; **NEW** |
 
 ### K-Best Solvers
 
 | Algorithm | Method | Complexity | Notes |
 |----|----|----|----|
 | Murty’s Algorithm | `murty` | O(k n⁴) | Lawler’s partitioning |
-| Batch k-best | [`lap_solve_kbest()`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md) | O(k n⁴) | Parallelizable |
+| Batch k-best | [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md) | O(k n⁴) | Parallelizable |
 
 ------------------------------------------------------------------------
 
@@ -273,6 +273,6 @@ problem
   subdirectory, wrapper in `rcpp_interface.cpp`
 - Test files go in `tests/testthat/test-assignment-{name}.R`
 - Method string added to
-  [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   switch in `R/lap_solve.R`
 - Benchmark against existing methods before merging

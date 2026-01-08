@@ -13,7 +13,7 @@ Ramshaw-Tarjan rectangular solver
 Assignment duals extraction
 
 All algorithms added to
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 main routine
 
 Run

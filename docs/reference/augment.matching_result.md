@@ -2,7 +2,7 @@
 
 S3 method for augmenting matching results following the broom package
 conventions. This is a thin wrapper around
-[`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+[`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
 with sensible defaults for quick exploration.
 
 ## Usage
@@ -29,24 +29,24 @@ augment(x, left, right, ...)
 - ...:
 
   Additional arguments passed to
-  [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+  [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
 
 ## Value
 
 A tibble with matched pairs and original data (see
-[`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md))
+[`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md))
 
 ## Details
 
 This method follows the
-[`augment()`](https://gcol33.github.io/couplr/reference/augment.md)
+[`augment()`](https://gillescolling.com/couplr/reference/augment.md)
 convention from the broom package, making it easy to integrate couplr
 into tidymodels workflows. It's equivalent to calling
-[`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+[`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
 with default parameters.
 
 If the broom package is not loaded, you can use
-[`couplr::augment()`](https://gcol33.github.io/couplr/reference/augment.md)
+[`couplr::augment()`](https://gillescolling.com/couplr/reference/augment.md)
 to access this function.
 
 ## Examples

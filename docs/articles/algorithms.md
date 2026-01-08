@@ -158,7 +158,7 @@ n <- 500
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "jv"))
 #>    user  system elapsed 
-#>    0.04    0.00    0.03
+#>    0.03    0.00    0.04
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 165.75
 ```
@@ -265,7 +265,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "csa"))
 #>    user  system elapsed 
-#>    0.06    0.00    0.08
+#>    0.08    0.00    0.08
 ```
 
 CSA often wins benchmarks for medium-large dense problems. It’s the
@@ -313,7 +313,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "gabow_tarjan"))
 #>    user  system elapsed 
-#>    3.00    0.02    3.03
+#>    3.21    0.02    3.26
 ```
 
 Gabow-Tarjan is primarily of theoretical interest—it provides the best
@@ -343,7 +343,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "orlin"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.01
+#>    0.00    0.00    0.02
 ```
 
 Orlin-Ahuja gives the best theoretical bounds for sparse problems with
@@ -400,7 +400,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "network_simplex"))
 #>    user  system elapsed 
-#>  846.12    4.53  872.05
+#>  574.36    2.36  582.96
 ```
 
 Network Simplex is a workhorse of operations research. It’s not always
@@ -442,7 +442,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "push_relabel"))
 #>    user  system elapsed 
-#>    0.46    0.00    0.46
+#>    0.47    0.00    0.45
 ```
 
 Two network perspectives. Same problem. Different algorithmic
@@ -471,7 +471,7 @@ n <- 500
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
 system.time(result <- lap_solve(cost, method = "hk01"))
 #>    user  system elapsed 
-#>    0.01    0.00    0.00
+#>    0.00    0.00    0.01
 ```
 
 When you have binary costs and large $`n`$, HK01 is dramatically faster.
@@ -498,7 +498,7 @@ cost[edges] <- runif(length(edges), 0, 100)
 
 system.time(result <- lap_solve(cost, method = "sap"))
 #>    user  system elapsed 
-#>    0.71    0.02    0.73
+#>    0.74    0.00    0.72
 ```
 
 For very sparse problems, SAP can be orders of magnitude faster than

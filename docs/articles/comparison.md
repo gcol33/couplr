@@ -13,7 +13,7 @@ performance characteristics, and appropriate use cases. We use simulated
 observational data to demonstrate practical differences.
 
 **Prerequisites**: Familiarity with
-[`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)
+[`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md)
 for couplr’s matching approach.
 
 ------------------------------------------------------------------------
@@ -192,7 +192,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 | **Distance metric** | PS logit, Mahalanobis | Euclidean (scaled) |
 | **Optimization** | Greedy nearest neighbor | Optimal assignment (LAP) |
 | **Data format** | Single data frame + formula | Separate left/right data frames |
-| **Diagnostics** | [`summary()`](https://rdrr.io/r/base/summary.html), [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md), [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md) |
+| **Diagnostics** | [`summary()`](https://rdrr.io/r/base/summary.html), [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md), [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md) |
 | **Caliper** | On PS or covariates | On multivariate distance |
 | **Algorithms** | 10+ methods | 20+ LAP solvers |
 
@@ -294,8 +294,8 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 |----|----|----|
 | **Matching types** | Full, pair, variable ratio | One-to-one only |
 | **Algorithm** | RELAX-IV network flow | 20+ solvers (JV, Hungarian, Auction, etc.) |
-| **Distance** | `match_on()` function | [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md) + caching |
-| **Constraints** | Caliper, exact matching | Caliper, blocking via [`matchmaker()`](https://gcol33.github.io/couplr/reference/matchmaker.md) |
+| **Distance** | `match_on()` function | [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) + caching |
+| **Constraints** | Caliper, exact matching | Caliper, blocking via [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md) |
 | **Optimization** | Always optimal | Optimal or greedy (user choice) |
 | **Large problems** | Sparse matrix support | Blocking, greedy, parallel |
 
@@ -477,7 +477,7 @@ if (requireNamespace("Matching", quietly = TRUE)) {
 | **Replacement** | With or without | Without only |
 | **Estimand** | ATT, ATE, ATC | ATT (one-to-one) |
 | **Stochastic** | Yes (genetic search) | No (deterministic) |
-| **Balance diagnostic** | `MatchBalance()` | [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md) |
+| **Balance diagnostic** | `MatchBalance()` | [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md) |
 
 ### When to Use Each
 
@@ -861,11 +861,11 @@ becomes critical.
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
   Basic couplr usage
-- [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
+- [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md) -
   Production matching pipelines
-- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+- [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -
   LAP algorithm selection guide
-- [`vignette("troubleshooting")`](https://gcol33.github.io/couplr/articles/troubleshooting.md) -
+- [`vignette("troubleshooting")`](https://gillescolling.com/couplr/articles/troubleshooting.md) -
   Common issues and solutions

@@ -22,7 +22,7 @@ working with observational data
 **Prerequisites**:
 
 - Familiarity with basic `couplr` usage
-  ([`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md))
+  ([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md))
 - Understanding of causal inference concepts (treatment effects,
   confounding)
 - Basic statistics (means, standard deviations, t-tests)
@@ -30,10 +30,10 @@ working with observational data
 **What You’ll Learn**:
 
 - How to match treatment and control units with
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 - Automatic preprocessing: scaling, health checks, categorical encoding
 - Assessing match quality with
-  [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
 - When to use optimal vs greedy matching
 - Creating publication-ready balance tables
 
@@ -138,7 +138,7 @@ works well for most applications.
 ### Creating a Matched Sample
 
 The simplest workflow uses
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 with automatic preprocessing:
 
 ``` r
@@ -281,7 +281,7 @@ calculations.
 ### Smart Scaling with `auto_scale = TRUE`
 
 When `auto_scale = TRUE`,
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 automatically:
 
 1.  **Detects problematic variables**
@@ -497,24 +497,24 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 89.67 seconds
+#>   Time: 88.53 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.97 seconds
+#>   Time: 0.94 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 92.4 x
+#>   Speedup: 94.2 x
 ```
 
 ### Greedy Strategies
 
 Three greedy strategies available via
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md):
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
 
 **1. Sorted** (`strategy = "sorted"`):
 
@@ -592,9 +592,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.05        0.0912          18.24
-#> elapsed1 row_best     0.03        0.0968          19.36
-#> elapsed2       pq     0.06        0.0912          18.24
+#> elapsed    sorted     0.04        0.0912          18.24
+#> elapsed1 row_best     0.05        0.0968          19.36
+#> elapsed2       pq     0.05        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -886,7 +886,7 @@ cluster_blocks$left %>%
 ## Balance Diagnostics
 
 After matching, assess balance quality using
-[`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md).
+[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md).
 
 ### Key Balance Metrics
 
@@ -1427,7 +1427,7 @@ Matching doesn’t always succeed. Here are common problems and solutions.
 ### Problem: Poor Balance Despite Matching
 
 **Symptom**:
-[`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
 shows \|std_diff\| \> 0.25 for some variables.
 
 **Causes**: - Groups are fundamentally too different (weak overlap) -
@@ -1481,7 +1481,7 @@ Accept that some treatment units are unmatchable (report this!)
 ### Problem: Matching Takes Too Long
 
 **Symptom**:
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 runs for minutes or doesn’t complete. **Cause**: $`O(n^3)`$ complexity
 for optimal matching.
 
@@ -1506,7 +1506,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars,
 needs ~800 MB.
 
 **Solutions**: - Use
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 which doesn’t require full matrix - Use blocking to create smaller
 sub-problems - Consider random sampling if sample size permits
 
@@ -1517,7 +1517,7 @@ training evaluation example:
 
 1.  **Problem framing**: Treatment effect estimation with selection bias
 2.  **Matching**: Creating comparable groups with
-    [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 3.  **Preprocessing**: Automatic scaling and variable health checks
 4.  **Assessment**: Balance diagnostics and interpretation
 5.  **Refinement**: Calipers, blocking, and greedy alternatives
@@ -1543,17 +1543,17 @@ loop](matching-workflows_files/figure-html/workflow-diagram-1.svg)
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
   Basic LAP solving
-- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+- [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -
   Mathematical foundations
-- [`vignette("comparison")`](https://gcol33.github.io/couplr/articles/comparison.md) -
+- [`vignette("comparison")`](https://gillescolling.com/couplr/articles/comparison.md) -
   How couplr compares to MatchIt, optmatch, designmatch
-- [`vignette("troubleshooting")`](https://gcol33.github.io/couplr/articles/troubleshooting.md) -
+- [`vignette("troubleshooting")`](https://gillescolling.com/couplr/articles/troubleshooting.md) -
   Common issues and solutions
-- [`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md) -
+- [`vignette("pixel-morphing")`](https://gillescolling.com/couplr/articles/pixel-morphing.md) -
   Large-scale approximation strategies
-- [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
-  [`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md),
-  [`?balance_diagnostics`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md),
-  [`?matchmaker`](https://gcol33.github.io/couplr/reference/matchmaker.md)
+- [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md),
+  [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
+  [`?matchmaker`](https://gillescolling.com/couplr/reference/matchmaker.md)

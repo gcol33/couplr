@@ -19,20 +19,20 @@ optimization problem. Provides modern, tidy implementations of
 
 ## Main functions
 
-- [`lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md):
+- [`lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md):
   Solve single assignment problems
 
-- [`lap_solve_batch`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md):
+- [`lap_solve_batch`](https://gillescolling.com/couplr/reference/lap_solve_batch.md):
   Solve multiple problems efficiently
 
-- [`lap_solve_kbest`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md):
+- [`lap_solve_kbest`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md):
   Find k-best optimal solutions
 
 ## See also
 
 Useful links:
 
-- <https://gcol33.github.io/couplr/>
+- <https://gillescolling.com/couplr/>
 
 - <https://github.com/gcol33/couplr>
 

@@ -64,7 +64,7 @@
 <text x='496.77' y='276.97' text-anchor='middle' style='font-size: 11.38px; font-weight: bold;fill: #5CB85C; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='87.22px' lengthAdjust='spacingAndGlyphs'>→ 100% optimal</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA=)'>
-<text x='324.00' y='51.73' text-anchor='middle' style='font-size: 11.00px;fill: #6C757D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='372.62px' lengthAdjust='spacingAndGlyphs'>Column reduction handles most assignments; augmentation finishes the rest</text>
+<text x='324.00' y='51.73' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='372.62px' lengthAdjust='spacingAndGlyphs'>Column reduction handles most assignments; augmentation finishes the rest</text>
 <text x='324.00' y='35.43' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='256.36px' lengthAdjust='spacingAndGlyphs'>Jonker-Volgenant: Start Fast, Fix Later</text>
 </g>
 </g>

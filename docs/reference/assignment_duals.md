@@ -58,7 +58,7 @@ This implies that `sum(u) + sum(v) = total_cost` (strong duality).
 
 ## See also
 
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 for standard assignment without duals
 
 ## Examples

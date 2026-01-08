@@ -21,7 +21,7 @@ A list containing eight related datasets:
   Values range from approximately 1-15, where lower values indicate
   better fit (less overtime, matches skills, respects preferences). Use
   with
-  [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+  [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
   for basic assignment.
 
 - preferences:
@@ -186,7 +186,7 @@ groups.
 The dataset is designed to demonstrate progressively complex scenarios:
 
 **Basic LAP**
-([`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md)):
+([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)):
 
 - `basic_costs`: Simple 10x10 assignment
 
@@ -197,14 +197,14 @@ The dataset is designed to demonstrate progressively complex scenarios:
 - `weekly_df`: Batch solving across days
 
 **Algorithm comparison**
-([`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md)):
+([`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md)):
 
 - Use `basic_costs` to compare algorithm behavior
 
 - Modify with NA values for sparse scenarios
 
 **Matching workflows**
-([`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)):
+([`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md)):
 
 - `nurses_extended`: Treatment group (full-time nurses)
 
@@ -214,13 +214,13 @@ The dataset is designed to demonstrate progressively complex scenarios:
 
 ## See also
 
-[`lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+[`lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md)
 for basic assignment solving,
-[`lap_solve_batch`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md)
+[`lap_solve_batch`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
 for batch solving,
-[`match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples`](https://gillescolling.com/couplr/reference/match_couples.md)
 for matching workflows,
-[`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md)
+[`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)
 for introductory tutorial
 
 ## Examples

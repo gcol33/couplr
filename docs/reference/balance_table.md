@@ -13,7 +13,7 @@ balance_table(balance, digits = 3)
 - balance:
 
   A balance_diagnostics object from
-  [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
 
 - digits:
 

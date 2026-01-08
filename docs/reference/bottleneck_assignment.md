@@ -60,9 +60,9 @@ that allows a perfect matching.
 
 ## See also
 
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 for standard LAP (sum objective),
-[`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 for tidy LAP interface
 
 ## Examples

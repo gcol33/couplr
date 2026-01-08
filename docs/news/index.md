@@ -10,9 +10,9 @@ The package now includes intelligent preprocessing to improve matching
 quality:
 
 - **New `auto_scale` parameter** in
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   and
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
   enables automatic preprocessing
 - **Variable health checks** detect and handle problematic variables:
   - Constant columns (SD = 0) are automatically excluded with warnings
@@ -23,7 +23,7 @@ quality:
   - “standardize” for traditional mean-centering and SD scaling
   - “range” for min-max normalization
 - New
-  [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md)
+  [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
   function for manual preprocessing control
 - Categorical variable encoding for binary and ordered factors
 
@@ -32,7 +32,7 @@ quality:
 Comprehensive tools to assess matching quality:
 
 - **New
-  [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
   function** computes multiple balance metrics:
   - Standardized differences: (mean_left - mean_right) / pooled_sd
   - Variance ratios: SD_left / SD_right
@@ -44,7 +44,7 @@ Comprehensive tools to assess matching quality:
   - \|Std Diff\| 0.25-0.50: Acceptable balance
   - \|Std Diff\| \> 0.50: Poor balance
 - Per-block statistics with quality ratings when blocking is used
-- [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md)
+- [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
   creates publication-ready formatted tables
 - Informative print methods with interpretation guides
 
@@ -53,7 +53,7 @@ Comprehensive tools to assess matching quality:
 Create analysis-ready datasets directly from matching results:
 
 - **New
-  [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+  [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
   function** automates data preparation:
   - Joins matched pairs with original left and right datasets
   - Eliminates manual data wrangling after matching
@@ -64,12 +64,12 @@ Create analysis-ready datasets directly from matching results:
   - Optional metadata: `pair_id`, `distance`, `block_id`
   - Works with both optimal and greedy matching
 - **Broom-style
-  [`augment()`](https://gcol33.github.io/couplr/reference/augment.md)
+  [`augment()`](https://gillescolling.com/couplr/reference/augment.md)
   method** for tidymodels integration:
   - S3 method following broom package conventions
   - Sensible defaults for quick exploration
   - Supports all
-    [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+    [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
     parameters
 - **Flexible output control**:
   - `include_distance` - Include/exclude matching distance
@@ -83,27 +83,27 @@ Create analysis-ready datasets directly from matching results:
 Performance optimization for exploring multiple matching strategies:
 
 - **New
-  [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md)
+  [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
   function** precomputes and caches distance matrices:
   - Compute distances once, reuse across multiple matching operations
   - Store complete metadata: variables, distance metric, scaling method,
     timestamps
   - Preserve original datasets for seamless integration with
-    [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+    [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
   - Enable rapid exploration of different matching parameters
   - Performance improvement: ~60% faster when trying multiple matching
     strategies
 - **Distance objects** (S3 class `distance_object`):
   - Self-contained: cost matrix, IDs, metadata, original data
   - Works with both
-    [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
     and
-    [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+    [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
   - Pass as first argument instead of datasets:
     `match_couples(dist_obj, max_distance = 5)`
   - Informative print and summary methods with distance statistics
 - **Constraint modification** via
-  [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md):
+  [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md):
   - Apply new `max_distance` or `calipers` without recomputing distances
   - Creates new distance object following copy-on-modify semantics
   - Experiment with different constraints efficiently
@@ -118,9 +118,9 @@ Performance optimization for exploring multiple matching strategies:
 Speed up blocked matching with multi-core processing:
 
 - **New `parallel` parameter** in
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   and
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md):
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
   - Enable with `parallel = TRUE` for automatic configuration
   - Specify plan with `parallel = "multisession"` or other future plan
   - Works with any number of blocks - automatically determines if
@@ -146,9 +146,9 @@ Like testthat, couplr makes errors light, memorable, and helpful with
 couple-themed messages:
 
 - **New `check_costs` parameter** (default: `TRUE`) in
-  [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   and
-  [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md):
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
   - Automatically checks distance distributions before matching
   - Provides friendly, actionable warnings for common problems
   - Set to `FALSE` to skip checks in production code
@@ -170,7 +170,7 @@ couple-themed messages:
   - **Constant variables**: Detects and excludes variables with no
     variation
 - **New diagnostic function**
-  [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md):
+  [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md):
   - Comprehensive analysis of cost distributions
   - Variable-specific problem detection
   - Actionable suggestions for fixes
@@ -182,25 +182,25 @@ couple-themed messages:
 
 #### New Functions
 
-- [`preprocess_matching_vars()`](https://gcol33.github.io/couplr/reference/preprocess_matching_vars.md) -
+- [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md) -
   Main preprocessing orchestrator
-- [`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md) -
+- [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md) -
   Comprehensive balance assessment
-- [`balance_table()`](https://gcol33.github.io/couplr/reference/balance_table.md) -
+- [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md) -
   Formatted balance tables for reporting
-- [`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md) -
+- [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md) -
   Create analysis-ready datasets from matching results
-- [`augment.matching_result()`](https://gcol33.github.io/couplr/reference/augment.matching_result.md) -
+- [`augment.matching_result()`](https://gillescolling.com/couplr/reference/augment.matching_result.md) -
   Broom-style interface for joined data
-- [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md) -
+- [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) -
   Precompute and cache distance matrices
-- [`update_constraints()`](https://gcol33.github.io/couplr/reference/update_constraints.md) -
+- [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md) -
   Modify constraints on distance objects
-- [`is_distance_object()`](https://gcol33.github.io/couplr/reference/is_distance_object.md) -
+- [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md) -
   Type checking for distance objects
-- [`diagnose_distance_matrix()`](https://gcol33.github.io/couplr/reference/diagnose_distance_matrix.md) -
+- [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md) -
   Comprehensive distance diagnostics
-- [`check_cost_distribution()`](https://gcol33.github.io/couplr/reference/check_cost_distribution.md) -
+- [`check_cost_distribution()`](https://gillescolling.com/couplr/reference/check_cost_distribution.md) -
   Check for distribution problems
 - Added robust scaling method using median and MAD
 
@@ -242,9 +242,9 @@ First official stable release with clean, well-organized codebase.
 - Eliminated 3 redundant files
 - Consistent `morph_*` naming prefix
 - Two-layer API:
-  [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   (low-level) +
-  [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+  [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
   (tidy)
 - 10 well-organized files (down from 13)
 
@@ -275,21 +275,21 @@ visualization
 
 ### API
 
-- [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md) -
+- [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md) -
   Main tidy interface
-- [`lap_solve_batch()`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md) -
+- [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md) -
   Batch solving
-- [`lap_solve_kbest()`](https://gcol33.github.io/couplr/reference/lap_solve_kbest.md) -
+- [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md) -
   K-best solutions
-- [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md) -
+- [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md) -
   Low-level solver
 - Utilities:
-  [`get_total_cost()`](https://gcol33.github.io/couplr/reference/get_total_cost.md),
-  [`as_assignment_matrix()`](https://gcol33.github.io/couplr/reference/as_assignment_matrix.md),
+  [`get_total_cost()`](https://gillescolling.com/couplr/reference/get_total_cost.md),
+  [`as_assignment_matrix()`](https://gillescolling.com/couplr/reference/as_assignment_matrix.md),
   etc.
 - Visualization:
-  [`pixel_morph()`](https://gcol33.github.io/couplr/reference/pixel_morph.md),
-  [`pixel_morph_animate()`](https://gcol33.github.io/couplr/reference/pixel_morph_animate.md)
+  [`pixel_morph()`](https://gillescolling.com/couplr/reference/pixel_morph.md),
+  [`pixel_morph_animate()`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
 
 ------------------------------------------------------------------------
 

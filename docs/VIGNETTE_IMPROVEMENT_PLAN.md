@@ -210,9 +210,9 @@ may find different optima with the same total cost.
 
 **Solution**: - For n \> 1000: Consider `method = "auction"` - For n \>
 5000: Use blocking or greedy matching
-([`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)) -
+([`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md)) -
 For n \> 10000: Use approximation strategies
-([`vignette("pixel-morphing")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md))
+([`vignette("pixel-morphing")`](https://gillescolling.com/couplr/articles/pixel-morphing.md))
 
 
     #### D. Improve Section Transitions
@@ -434,7 +434,7 @@ Restructure to follow the real-world example throughout:
 
 1.  **Introduction**: Present the job training evaluation scenario
 2.  **Basic matching**: First attempt with
-    [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 3.  **Preprocessing**: Why we need `auto_scale = TRUE`
 4.  **Balance assessment**: Is our match good enough?
 5.  **Refinements**: Adding calipers, trying greedy
@@ -500,7 +500,7 @@ matching with replacement (different estimand)
 #### 4. Computational Issues
 
 **Symptom**:
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 takes \> 1 minute or crashes.
 
 **Causes**: - n \> 5000 for optimal matching - Full cost matrix doesn’t
@@ -667,7 +667,7 @@ result <- greedy_couples(left, right, vars, strategy = "sorted")
 
 **For n \> 50000**: Consider the approximation strategies in this
 vignette, implemented via custom code using
-[`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 on subproblems.
 
 

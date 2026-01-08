@@ -14,9 +14,9 @@ This vignette serves three purposes:
 **This vignette is different**: Unlike the other couplr documentation,
 it emphasizes *understanding* over *doing*. If you’re looking to solve a
 matching problem today, start with
-[`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md)
+[`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)
 or
-[`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md).
+[`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md).
 Come here when you want to understand *why* these algorithms work and
 *when* approximations are appropriate.
 
@@ -28,8 +28,8 @@ minds
 **Prerequisites**:
 
 - Familiarity with
-  [`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
-  ([`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md))
+  [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
+  ([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md))
 - Basic complexity analysis (Big-O notation)
 - Interest in algorithm design or scientific computing
 
@@ -915,7 +915,7 @@ This appears in
 - Burkard, R., Dell’Amico, M., & Martello, S. (2009). *Assignment
   Problems*. SIAM.  
 - For implementation details in this package see
-  [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md).
+  [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md).
 
 ## Connection to couplr Workflows
 
@@ -934,7 +934,7 @@ working with couplr’s practical matching functions.
 ### Practical Recommendations
 
 **For n \< 3,000**: Use
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 with exact algorithms:
 
 ``` r
@@ -998,12 +998,12 @@ size and accuracy requirements.
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
   Basic LAP solving
-- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+- [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -
   Mathematical foundations
-- [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
+- [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md) -
   Production matching pipelines
-- [`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
-  [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
-  [`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+- [`?lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md),
+  [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md)

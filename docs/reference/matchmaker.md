@@ -106,9 +106,9 @@ A list with class "matchmaker_result" containing:
 
 This function does NOT perform matching - it only creates the block
 structure. Use
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 or
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 to perform matching within blocks.
 
 ## Examples

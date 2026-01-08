@@ -19,7 +19,7 @@ called from R (see `R/pixel_morph.R` and exports in
 # Files to reference when making changes
 
 - `R/assignment.R` — central auto-selection logic and the
-  [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   wrapper. Add new solver names here.
 - `R/lap_solve.R` — tidy user-facing functions, grouped-data handling
   and printing conventions.
@@ -56,7 +56,7 @@ called from R (see `R/pixel_morph.R` and exports in
 
 - Naming: R-facing solver wrappers use `lap_solve_<name>` in C++ and
   `method` strings in R map to these via
-  [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   (see [`switch()`](https://rdrr.io/r/base/switch.html) in
   `R/assignment.R`).
 - 0/1-based indexing: R uses 1-based assignment vectors; many C++
@@ -64,7 +64,7 @@ called from R (see `R/pixel_morph.R` and exports in
   `rcpp_interface.cpp` — preserve those conversions.
 - Forbidden edges: `NA` or `Inf` in the cost matrix marks forbidden
   assignments.
-  [`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
   converts inputs and relies on `prepare_cost_matrix` in C++ for
   masking.
 - Adding a new C++ solver:

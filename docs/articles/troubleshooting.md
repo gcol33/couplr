@@ -151,7 +151,7 @@ variable](troubleshooting_files/figure-html/unnamed-chunk-5-1.svg)
 ### Symptom
 
 After matching,
-[`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
 shows \|std_diff\| \> 0.25 for some variables.
 
 ``` r
@@ -287,9 +287,9 @@ for (scale_method in c("robust", "standardize", "range")) {
 
 ### Symptom
 
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 or
-[`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 takes too long or doesn’t complete.
 
 ### Cause
@@ -349,7 +349,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.23 seconds
+#> Greedy matching (n=500): 0.24 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -724,9 +724,9 @@ Make sure Rtools is installed and PATH is configured correctly.
 **Cause**: Result object wasn’t created properly.
 
 **Solution**: Use
-[`lap_solve()`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 instead of
-[`assignment()`](https://gcol33.github.io/couplr/reference/assignment.md)
+[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 for the tidy interface.
 
 ### “Cost matrix contains non-finite values”
@@ -769,8 +769,8 @@ stopifnot(nrow(left) > 0, nrow(right) > 0)
 If you encounter an issue not covered here:
 
 1.  **Check function documentation**:
-    [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md),
-    [`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md)
+    [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
+    [`?lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md)
 2.  **Search GitHub issues**:
     [github.com/gcol33/couplr/issues](https://github.com/gcol33/couplr/issues)
 3.  **Create a minimal reproducible example**:
@@ -803,11 +803,11 @@ sessionInfo()
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gcol33.github.io/couplr/articles/getting-started.md) -
+- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
   Basic usage
-- [`vignette("matching-workflows")`](https://gcol33.github.io/couplr/articles/matching-workflows.md) -
+- [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md) -
   Production matching pipelines
-- [`vignette("algorithms")`](https://gcol33.github.io/couplr/articles/algorithms.md) -
+- [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -
   Algorithm selection guide
-- [`vignette("comparison")`](https://gcol33.github.io/couplr/articles/comparison.md) -
+- [`vignette("comparison")`](https://gillescolling.com/couplr/articles/comparison.md) -
   Comparison with other packages

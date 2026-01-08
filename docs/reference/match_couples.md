@@ -122,7 +122,7 @@ A list with class "matching_result" containing:
 
 This function finds the matching that minimizes total distance among all
 feasible matchings, subject to constraints. Use
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 for faster approximate matching on large datasets.
 
 ## Examples

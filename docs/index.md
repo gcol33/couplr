@@ -112,10 +112,10 @@ result <- lap_solve(cost)
 
 ## Documentation
 
-- [`vignette("getting-started", package = "couplr")`](https://gcol33.github.io/couplr/articles/getting-started.md)
-- [`vignette("algorithms", package = "couplr")`](https://gcol33.github.io/couplr/articles/algorithms.md)
-- [`vignette("matching-workflows", package = "couplr")`](https://gcol33.github.io/couplr/articles/matching-workflows.md)
-- [`vignette("pixel-morphing", package = "couplr")`](https://gcol33.github.io/couplr/articles/pixel-morphing.md)
+- [`vignette("getting-started", package = "couplr")`](https://gillescolling.com/couplr/articles/getting-started.md)
+- [`vignette("algorithms", package = "couplr")`](https://gillescolling.com/couplr/articles/algorithms.md)
+- [`vignette("matching-workflows", package = "couplr")`](https://gillescolling.com/couplr/articles/matching-workflows.md)
+- [`vignette("pixel-morphing", package = "couplr")`](https://gillescolling.com/couplr/articles/pixel-morphing.md)
 
 ## Citation
 

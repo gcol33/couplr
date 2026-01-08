@@ -55,9 +55,9 @@ to a cost matrix for solving.
 
 ## See also
 
-[`lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md),
-[`lap_solve_batch`](https://gcol33.github.io/couplr/reference/lap_solve_batch.md),
-[`example_costs`](https://gcol33.github.io/couplr/reference/example_costs.md)
+[`lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md),
+[`lap_solve_batch`](https://gillescolling.com/couplr/reference/lap_solve_batch.md),
+[`example_costs`](https://gillescolling.com/couplr/reference/example_costs.md)
 
 ## Examples
 

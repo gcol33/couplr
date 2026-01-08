@@ -88,9 +88,9 @@ An S3 object of class "distance_object" containing:
 
 This function computes distances once and stores them in a reusable
 object. The resulting distance_object can be passed to
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md)
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 or
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 instead of providing datasets and variables.
 
 Benefits:
@@ -107,7 +107,7 @@ Benefits:
 
 The distance_object stores the original datasets, allowing downstream
 functions like
-[`join_matched()`](https://gcol33.github.io/couplr/reference/join_matched.md)
+[`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
 to work seamlessly.
 
 ## Examples

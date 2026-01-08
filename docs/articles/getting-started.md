@@ -17,10 +17,10 @@ you specify.
 
 | Vignette | Focus | Audience |
 |----|----|----|
-| **Quick Start** (this) | Basic matching with [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md) | Everyone |
-| [Matching Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md) | Full pipeline: preprocessing, blocking, diagnostics | Researchers |
-| [Algorithms](https://gcol33.github.io/couplr/articles/algorithms.md) | Mathematical foundations, solver selection | Technical users |
-| [Comparison](https://gcol33.github.io/couplr/articles/comparison.md) | vs MatchIt, optmatch, designmatch | Package evaluators |
+| **Quick Start** (this) | Basic matching with [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md) | Everyone |
+| [Matching Workflows](https://gillescolling.com/couplr/articles/matching-workflows.md) | Full pipeline: preprocessing, blocking, diagnostics | Researchers |
+| [Algorithms](https://gillescolling.com/couplr/articles/algorithms.md) | Mathematical foundations, solver selection | Technical users |
+| [Comparison](https://gillescolling.com/couplr/articles/comparison.md) | vs MatchIt, optmatch, designmatch | Package evaluators |
 
 **Start here**, then proceed to whichever vignette matches your use
 case.
@@ -30,7 +30,7 @@ case.
 ## Your First Match
 
 The simplest workflow uses
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md):
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
 
@@ -180,9 +180,9 @@ cat("  Income difference: $", round(mean(matched_treatment$income) - mean(matche
 ```
 
 For formal balance assessment, use
-[`balance_diagnostics()`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md)
+[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
 (covered in [Matching
-Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md)).
+Workflows](https://gillescolling.com/couplr/articles/matching-workflows.md)).
 
 ### Visualizing Match Quality
 
@@ -207,7 +207,7 @@ concentrated near zero indicates good matches.
 
 For datasets larger than a few thousand observations, optimal matching
 becomes slow. Use
-[`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md)
+[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 instead; it’s 10-100x faster with nearly identical results:
 
 ``` r
@@ -245,9 +245,9 @@ cat("Mean distance:", round(mean(result_greedy$pairs$distance), 3), "\n")
 
 | Dataset size | Recommended function |
 |----|----|
-| \< 1,000 per group | [`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md) |
+| \< 1,000 per group | [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md) |
 | 1,000 - 5,000 | Either works; greedy is faster |
-| \> 5,000 | [`greedy_couples()`](https://gcol33.github.io/couplr/reference/greedy_couples.md) |
+| \> 5,000 | [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md) |
 
 ------------------------------------------------------------------------
 
@@ -292,9 +292,9 @@ study sites), you can match within each group separately. This ensures
 exact balance on the grouping variable.
 
 First, create blocks with
-[`matchmaker()`](https://gcol33.github.io/couplr/reference/matchmaker.md),
+[`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md),
 then pass the result to
-[`match_couples()`](https://gcol33.github.io/couplr/reference/match_couples.md):
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
 
@@ -412,18 +412,18 @@ next:
 **For production research workflows:**
 
 - [Matching
-  Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md)
+  Workflows](https://gillescolling.com/couplr/articles/matching-workflows.md)
   covers preprocessing, blocking, formal balance diagnostics, and
   publication-ready output
 
 **For understanding algorithm choices:**
 
-- [Algorithms](https://gcol33.github.io/couplr/articles/algorithms.md)
+- [Algorithms](https://gillescolling.com/couplr/articles/algorithms.md)
   explains when different solvers are faster or more appropriate
 
 **For comparing with other packages:**
 
-- [Comparison](https://gcol33.github.io/couplr/articles/comparison.md)
+- [Comparison](https://gillescolling.com/couplr/articles/comparison.md)
   shows how couplr differs from MatchIt, optmatch, and designmatch
 
 ------------------------------------------------------------------------
@@ -596,11 +596,11 @@ print(kbest)
 
 ## See Also
 
-- [`?match_couples`](https://gcol33.github.io/couplr/reference/match_couples.md) -
+- [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md) -
   Optimal matching function reference
-- [`?greedy_couples`](https://gcol33.github.io/couplr/reference/greedy_couples.md) -
+- [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md) -
   Fast approximate matching
-- [`?balance_diagnostics`](https://gcol33.github.io/couplr/reference/balance_diagnostics.md) -
+- [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md) -
   Formal balance assessment
-- [`?lap_solve`](https://gcol33.github.io/couplr/reference/lap_solve.md) -
+- [`?lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md) -
   Direct assignment problem solving

@@ -15,7 +15,7 @@ update_constraints(dist_obj, max_distance = Inf, calipers = NULL)
 - dist_obj:
 
   A distance_object from
-  [`compute_distances()`](https://gcol33.github.io/couplr/reference/compute_distances.md)
+  [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
 
 - max_distance:
 

@@ -35,7 +35,7 @@
 #'     \item `"hk01"` — 'Hopcroft-Karp' for binary (0/1) costs only
 #'     \item `"ssap_bucket"` — 'Dial' algorithm for integer costs
 #'     \item `"line_metric"` — O(n log n) for 1D assignment problems
-#'     \item `"bruteforce"` — Exact enumeration for tiny problems (n ≤ 8)
+#'     \item `"bruteforce"` — Exact enumeration for tiny problems (n <= 8)
 #'   }
 #'
 #'   **Advanced solvers:**
@@ -45,9 +45,9 @@
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Cost-scaling network flow
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
-#'     \item `"orlin"` — 'Orlin-Ahuja' scaling O(√n · m · log(nC))
+#'     \item `"orlin"` — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
 #'     \item `"push_relabel"` — 'Push-relabel' max-flow based solver
-#'     \item `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular matrices (n ≠ m)
+#'     \item `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 #'   }
 #' @param auction_eps Optional numeric epsilon for the 'Auction'/'Auction-GS' methods.
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
@@ -67,12 +67,12 @@
 #' `method = "auto"` selects an algorithm based on problem size/shape and data
 #' characteristics:
 #' \itemize{
-#'   \item Very small (n≤8): `"bruteforce"` — exact enumeration
+#'   \item Very small (n <= 8): `"bruteforce"` — exact enumeration
 #'   \item Binary/constant costs: `"hk01"` — specialized for 0/1 costs
 #'   \item Large sparse (n>100, >50\% NA/Inf): `"lapmod"` — sparse JV variant
 #'   \item Sparse or very rectangular: `"sap"` — handles sparsity well
-#'   \item Small-medium (8<n≤50): `"hungarian"` — provides exact dual solutions
-#'   \item Medium (50<n≤75): `"jv"` — fast general-purpose solver
+#'   \item Small-medium (8 < n <= 50): `"hungarian"` — provides exact dual solutions
+#'   \item Medium (50 < n <= 75): `"jv"` — fast general-purpose solver
 #'   \item Large (n>75): `"auction_scaled"` — fastest for large dense problems
 #' }
 #' Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.
@@ -822,7 +822,7 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #' - Returns a soft assignment (probabilities) not a hard 1-to-1 matching
 #' - Supports unequal marginals (weighted distributions)
 #' - Differentiable, making it useful in ML pipelines
-#' - Very fast: O(n²) per iteration with typically O(1/ε²) iterations
+#' - Very fast: O(n^2) per iteration with typically O(1/tol^2) iterations
 #'
 #' Use [sinkhorn_to_assignment()] to round the soft assignment to a hard matching.
 #'

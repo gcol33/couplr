@@ -43,7 +43,7 @@ entries are treated as forbidden assignments.}
 \item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) costs only
 \item \code{"ssap_bucket"} — 'Dial' algorithm for integer costs
 \item \code{"line_metric"} — O(n log n) for 1D assignment problems
-\item \code{"bruteforce"} — Exact enumeration for tiny problems (n ≤ 8)
+\item \code{"bruteforce"} — Exact enumeration for tiny problems (n <= 8)
 }
 
 \strong{Advanced solvers:}
@@ -53,9 +53,9 @@ entries are treated as forbidden assignments.}
 \item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
 \item \code{"csflow"} — Cost-scaling network flow
 \item \code{"network_simplex"} — 'Network simplex' with spanning tree representation
-\item \code{"orlin"} — 'Orlin-Ahuja' scaling O(√n · m · log(nC))
+\item \code{"orlin"} — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
 \item \code{"push_relabel"} — 'Push-relabel' max-flow based solver
-\item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n ≠ m)
+\item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 }}
 
 \item{auction_eps}{Optional numeric epsilon for the 'Auction'/'Auction-GS' methods.
@@ -82,12 +82,12 @@ using several algorithms. Forbidden edges can be marked as \code{NA} or \code{In
 \code{method = "auto"} selects an algorithm based on problem size/shape and data
 characteristics:
 \itemize{
-\item Very small (n≤8): \code{"bruteforce"} — exact enumeration
+\item Very small (n <= 8): \code{"bruteforce"} — exact enumeration
 \item Binary/constant costs: \code{"hk01"} — specialized for 0/1 costs
 \item Large sparse (n>100, >50\\% NA/Inf): \code{"lapmod"} — sparse JV variant
 \item Sparse or very rectangular: \code{"sap"} — handles sparsity well
-\item Small-medium (8<n≤50): \code{"hungarian"} — provides exact dual solutions
-\item Medium (50<n≤75): \code{"jv"} — fast general-purpose solver
+\item Small-medium (8 < n <= 50): \code{"hungarian"} — provides exact dual solutions
+\item Medium (50 < n <= 75): \code{"jv"} — fast general-purpose solver
 \item Large (n>75): \code{"auction_scaled"} — fastest for large dense problems
 }
 Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.

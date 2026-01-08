@@ -64,7 +64,7 @@ the solution approaches the standard (unregularized) optimal transport.
 \item Returns a soft assignment (probabilities) not a hard 1-to-1 matching
 \item Supports unequal marginals (weighted distributions)
 \item Differentiable, making it useful in ML pipelines
-\item Very fast: O(n²) per iteration with typically O(1/ε²) iterations
+\item Very fast: O(n^2) per iteration with typically O(1/tol^2) iterations
 }
 
 Use \code{\link[=sinkhorn_to_assignment]{sinkhorn_to_assignment()}} to round the soft assignment to a hard matching.

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -239,14 +239,21 @@ is a matching assignment.</p>
 <div class="section level3">
 <h3 id="why-matching-matters">Why Matching Matters<a class="anchor" aria-label="anchor" href="#why-matching-matters"></a>
 </h3>
-<p><strong>Without matching:</strong> - Groups may differ systematically
-on important covariates - Treatment effect estimates are confounded by
-these differences - Statistical adjustments (regression) rely on
-untestable assumptions</p>
-<p><strong>With matching:</strong> - Create comparable groups that
-differ primarily in treatment status - Balance covariates to reduce
-confounding - Improve causal inference by mimicking randomized
-experiments - Transparent, non-parametric preprocessing step</p>
+<p><strong>Without matching:</strong></p>
+<ul>
+<li>Groups may differ systematically on important covariates</li>
+<li>Treatment effect estimates are confounded by these differences</li>
+<li>Statistical adjustments (regression) rely on untestable
+assumptions</li>
+</ul>
+<p><strong>With matching:</strong></p>
+<ul>
+<li>Create comparable groups that differ primarily in treatment
+status</li>
+<li>Balance covariates to reduce confounding</li>
+<li>Improve causal inference by mimicking randomized experiments</li>
+<li>Transparent, non-parametric preprocessing step</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="distance-metrics">Distance Metrics<a class="anchor" aria-label="anchor" href="#distance-metrics"></a>
@@ -769,18 +776,18 @@ matters</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 87.67 seconds</span></span>
+<span><span class="co">#&gt;   Time: 87.23 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.97 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.93 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 90.4 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 93.8 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -859,8 +866,8 @@ default):</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
 <span><span class="co">#&gt; elapsed    sorted     0.05        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.03        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq     0.04        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed1 row_best     0.04        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed2       pq     0.05        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li>Default to <code>strategy = "row_best"</code> for good speed/quality
@@ -1300,15 +1307,24 @@ blocks:</p>
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Std Diff</mtext><mo>=</mo><mfrac><mrow><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">left</mtext></msub><mo>−</mo><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">right</mtext></msub></mrow><msqrt><mrow><mo stretchy="false" form="prefix">(</mo><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mn>2</mn></mrow></msqrt></mfrac></mrow><annotation encoding="application/x-tex">
 \text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
 </annotation></semantics></math></p>
-<p><strong>Thresholds:</strong> - &lt; 0.1: Excellent balance - 0.1 -
-0.25: Good balance - 0.25 - 0.5: Acceptable (may need further
-adjustment) - &gt; 0.5: Poor balance (reconsider matching strategy)</p>
+<p><strong>Thresholds:</strong></p>
+<ul>
+<li>&lt; 0.1: Excellent balance</li>
+<li>0.1 - 0.25: Good balance</li>
+<li>0.25 - 0.5: Acceptable (may need further adjustment)</li>
+<li><blockquote>
+<p>0.5: Poor balance (reconsider matching strategy)</p>
+</blockquote></li>
+</ul>
 <p><strong>2. Variance ratios:</strong>
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">VR</mtext><mo>=</mo><mfrac><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup></mfrac></mrow><annotation encoding="application/x-tex">
 \text{VR} = \frac{s_{\text{left}}^2}{s_{\text{right}}^2}
 </annotation></semantics></math></p>
-<p><strong>Interpretation:</strong> - Close to 1.0: Similar variability
-(good) - &lt; 0.5 or &gt; 2.0: Concerning imbalance in spread</p>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li>Close to 1.0: Similar variability (good)</li>
+<li>&lt; 0.5 or &gt; 2.0: Concerning imbalance in spread</li>
+</ul>
 <p><strong>3. Kolmogorov-Smirnov tests:</strong></p>
 <ul>
 <li>Non-parametric test for distributional differences</li>
@@ -1597,10 +1613,13 @@ observational study.</p>
 <p>Evaluate the effect of a job training program on earnings.
 Participants self-selected into the program, creating potential
 selection bias.</p>
-<p><strong>Data:</strong> - Treatment: 200 program participants -
-Control: 500 non-participants - Covariates: age, education, prior
-earnings, employment status - Outcome: Earnings one year after
-program</p>
+<p><strong>Data:</strong></p>
+<ul>
+<li>Treatment: 200 program participants</li>
+<li>Control: 500 non-participants</li>
+<li>Covariates: age, education, prior earnings, employment status</li>
+<li>Outcome: Earnings one year after program</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="step-1-data-preparation">Step 1: Data Preparation<a class="anchor" aria-label="anchor" href="#step-1-data-preparation"></a>

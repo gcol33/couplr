@@ -831,11 +831,13 @@ outperform dense algorithms.
 | 500-2000 | Slow | Excellent | Excellent | Excellent | Excellent | Good | Good |
 | \> 2000 | Too slow | Good | Excellent | Excellent | Excellent | Good | Excellent |
 
-**Notes:** - SAP/LAPMOD: Best for sparse problems (\>50% forbidden
-entries) - HK01: Only for binary costs (0/1), then O(n^2.5) -
-Gabow-Tarjan: Best for large integer cost ranges; O(n³ log C) -
-Ramshaw-Tarjan: Best for rectangular problems (n ≠ m) - Push-Relabel:
-Competitive for max-flow style problems
+**Notes:**
+
+- SAP/LAPMOD: Best for sparse problems (\>50% forbidden entries)
+- HK01: Only for binary costs (0/1), then O(n^2.5)
+- Gabow-Tarjan: Best for large integer cost ranges; O(n³ log C)
+- Ramshaw-Tarjan: Best for rectangular problems (n ≠ m)
+- Push-Relabel: Competitive for max-flow style problems
 
 ------------------------------------------------------------------------
 

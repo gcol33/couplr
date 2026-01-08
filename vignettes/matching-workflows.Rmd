@@ -95,11 +95,13 @@ where $d(\cdot, \cdot)$ is a distance function (typically Euclidean or Mahalanob
 ### Why Matching Matters
 
 **Without matching:**
+
 - Groups may differ systematically on important covariates
 - Treatment effect estimates are confounded by these differences
 - Statistical adjustments (regression) rely on untestable assumptions
 
 **With matching:**
+
 - Create comparable groups that differ primarily in treatment status
 - Balance covariates to reduce confounding
 - Improve causal inference by mimicking randomized experiments
@@ -756,6 +758,7 @@ $$
 $$
 
 **Thresholds:**
+
 - < 0.1: Excellent balance
 - 0.1 - 0.25: Good balance
 - 0.25 - 0.5: Acceptable (may need further adjustment)
@@ -767,6 +770,7 @@ $$
 $$
 
 **Interpretation:**
+
 - Close to 1.0: Similar variability (good)
 - < 0.5 or > 2.0: Concerning imbalance in spread
 
@@ -893,6 +897,7 @@ Complete workflow for estimating treatment effects in an observational study.
 Evaluate the effect of a job training program on earnings. Participants self-selected into the program, creating potential selection bias.
 
 **Data:**
+
 - Treatment: 200 program participants
 - Control: 500 non-participants
 - Covariates: age, education, prior earnings, employment status

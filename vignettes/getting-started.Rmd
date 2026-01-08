@@ -17,78 +17,295 @@ knitr::opts_chunk$set(
   fig.height = 5
 )
 library(couplr)
+library(dplyr)
 ```
 
 ## What couplr Does
 
-couplr solves the Linear Assignment Problem (LAP): given a cost matrix where entry (i, j) represents the cost of assigning source i to target j, find the one-to-one assignment that minimizes total cost. It also provides production-ready matching workflows for observational studies.
+couplr creates matched pairs from two groups of observations. Given a "left" group (e.g., treatment) and a "right" group (e.g., control), it finds the best one-to-one pairing based on similarity across variables you specify.
+
+**Common use cases:**
+
+- Matching treated patients to similar controls in observational studies
+- Pairing survey respondents for comparison
+- Creating balanced samples for causal inference
 
 ### Documentation Roadmap
 
-| Vignette | Focus | Audience | Time |
-|----------|-------|----------|------|
-| **Quick Start** (this) | Basic LAP solving, API introduction | Everyone | 10 min |
-| [Algorithms](algorithms.html) | Mathematical foundations, solver selection | Technical users | 30 min |
-| [Matching Workflows](matching-workflows.html) | Production matching pipelines | Researchers | 45 min |
-| [Comparison](comparison.html) | vs MatchIt, optmatch, designmatch | Package evaluators | 20 min |
-| [Troubleshooting](troubleshooting.html) | Common issues and solutions | All users | As needed |
-| [Pixel Morphing](pixel-morphing.html) | Scientific applications | Advanced | 30 min |
+| Vignette | Focus | Audience |
+|----------|-------|----------|
+| **Quick Start** (this) | Basic matching with `match_couples()` | Everyone |
+| [Matching Workflows](matching-workflows.html) | Full pipeline: preprocessing, blocking, diagnostics | Researchers |
+| [Algorithms](algorithms.html) | Mathematical foundations, solver selection | Technical users |
+| [Comparison](comparison.html) | vs MatchIt, optmatch, designmatch | Package evaluators |
 
 **Start here**, then proceed to whichever vignette matches your use case.
 
-## Interface Hierarchy
+---
 
-couplr provides three levels of interface:
+## Your First Match
 
-### Level 1: LAP Solvers
+The simplest workflow uses `match_couples()`:
+```{r first-match}
+library(couplr)
+library(dplyr)
 
-**lap_solve()** - Core assignment problem solver:
+# Create example data: treatment and control groups
+set.seed(123)
+treatment <- tibble(
+  id = 1:50,
+  age = rnorm(50, mean = 45, sd = 10),
+  income = rnorm(50, mean = 55000, sd = 12000)
+)
 
-- Accepts matrices, data frames, or grouped data
-- Returns tidy tibble output
-- Automatic algorithm selection
+control <- tibble(
+  id = 1:80,
+  age = rnorm(80, mean = 50, sd = 12),
+  income = rnorm(80, mean = 48000, sd = 15000)
+)
 
-**assignment()** - Low-level solver:
+# Match on age and income
+result <- match_couples(
+  left = treatment,
+  right = control,
+  vars = c("age", "income"),
+  auto_scale = TRUE
+)
 
-- Direct C++ backend access
-- Returns list with match vector
+# View matched pairs
+head(result$pairs)
+```
 
-### Level 2: Extended Solving
+**What happened:**
 
-**lap_solve_batch()** - Solve many problems at once:
+1. couplr calculated how similar each treatment unit is to each control unit
+2. It found the optimal one-to-one pairing that minimizes total distance
+3. Each treatment unit gets matched to exactly one control unit
 
-- List of cost matrices input
-- Optional parallel execution
-- Efficient for many small problems
+### Understanding the Output
 
-**lap_solve_kbest()** - Find multiple solutions:
+```{r output-explained}
+# Quick overview with summary()
+summary(result)
 
-- Returns k-best assignments (Murty's algorithm)
-- Useful for robustness analysis
+# Or access specific info
+result$info$n_matched
+```
 
-### Level 3: Matching Workflows
+The `result$pairs` table contains:
 
-**match_couples()** - Optimal one-to-one matching:
-
-- Automatic preprocessing and scaling
-- Balance diagnostics
-- Production-ready for observational studies
-
-**greedy_couples()** - Fast approximate matching:
-
-- 10-100x faster than optimal
-- Three strategy options
+- `left_id`: Row number from the treatment group
+- `right_id`: Row number from the control group
+- `distance`: How different the matched units are (lower = more similar)
 
 ---
 
-## Quick Examples
+## Why Scaling Matters
 
-### lap_solve(): Basic Assignment
+Without scaling, variables with larger values dominate the matching. Income (measured in thousands) would overwhelm age (measured in decades):
 
-```{r}
-library(couplr)
+```{r scaling-demo}
+# BAD: Without scaling, income dominates
+result_unscaled <- match_couples(
+  treatment, control,
+  vars = c("age", "income"),
+  auto_scale = FALSE
+)
 
-# Cost matrix: 3 nurses × 3 shifts
+# GOOD: With scaling, both variables contribute equally
+result_scaled <- match_couples(
+  treatment, control,
+  vars = c("age", "income"),
+  auto_scale = TRUE
+)
+
+# Compare mean distances
+cat("Unscaled mean distance:", round(mean(result_unscaled$pairs$distance), 1), "\n")
+cat("Scaled mean distance:", round(mean(result_scaled$pairs$distance), 3), "\n")
+```
+
+**Rule of thumb:** Always use `auto_scale = TRUE` unless you have a specific reason not to.
+
+---
+
+## Checking Match Quality
+
+After matching, verify that treatment and control groups are now balanced:
+
+```{r balance-check}
+# Get the matched observations
+matched_treatment <- treatment[result$pairs$left_id, ]
+matched_control <- control[result$pairs$right_id, ]
+
+# Compare means before and after matching
+cat("BEFORE matching:\n")
+cat("  Age difference:", round(mean(treatment$age) - mean(control$age), 1), "years\n")
+cat("  Income difference: $", round(mean(treatment$income) - mean(control$income), 0), "\n\n")
+
+cat("AFTER matching:\n")
+cat("  Age difference:", round(mean(matched_treatment$age) - mean(matched_control$age), 1), "years\n")
+cat("  Income difference: $", round(mean(matched_treatment$income) - mean(matched_control$income), 0), "\n")
+```
+
+For formal balance assessment, use `balance_diagnostics()` (covered in [Matching Workflows](matching-workflows.html)).
+
+### Visualizing Match Quality
+
+Use `plot()` to see the distribution of match distances:
+
+```{r plot-result, fig.width=6, fig.height=4}
+plot(result)
+```
+
+The histogram shows how similar matched pairs are. A distribution concentrated near zero indicates good matches.
+
+---
+
+## Large Datasets: Use Greedy Matching
+
+For datasets larger than a few thousand observations, optimal matching becomes slow. Use `greedy_couples()` instead---it's 10-100x faster with nearly identical results:
+
+```{r greedy-example}
+# Create larger datasets
+set.seed(456)
+large_treatment <- tibble(
+  id = 1:2000,
+  age = rnorm(2000, 45, 10),
+  income = rnorm(2000, 55000, 12000)
+)
+
+large_control <- tibble(
+  id = 1:3000,
+  age = rnorm(3000, 50, 12),
+  income = rnorm(3000, 48000, 15000)
+)
+
+# Fast greedy matching
+result_greedy <- greedy_couples(
+  large_treatment, large_control,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  strategy = "row_best"  # fastest strategy
+)
+
+cat("Matched", result_greedy$info$n_matched, "pairs\n")
+cat("Mean distance:", round(mean(result_greedy$pairs$distance), 3), "\n")
+```
+
+**When to use which:**
+
+| Dataset size | Recommended function |
+|--------------|---------------------|
+| < 1,000 per group | `match_couples()` |
+| 1,000 - 5,000 | Either works; greedy is faster |
+| > 5,000 | `greedy_couples()` |
+
+---
+
+## Setting a Maximum Distance (Caliper)
+
+Sometimes you want to reject poor matches rather than force bad pairings. Use `max_distance` to set a caliper:
+
+```{r caliper-example}
+# Allow any match
+result_loose <- match_couples(
+  treatment, control,
+  vars = c("age", "income"),
+  auto_scale = TRUE
+)
+
+# Only allow close matches
+result_strict <- match_couples(
+  treatment, control,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  max_distance = 0.5  # reject pairs more different than this
+)
+
+cat("Without caliper:", result_loose$info$n_matched, "pairs\n")
+cat("With caliper:", result_strict$info$n_matched, "pairs\n")
+```
+
+Stricter calipers mean fewer but better matches.
+
+---
+
+## Complete Example
+
+Here's a realistic workflow from start to finish:
+
+```{r complete-example}
+# 1. Prepare your data
+set.seed(789)
+patients_treated <- tibble(
+  patient_id = paste0("T", 1:100),
+  age = rnorm(100, 62, 8),
+  bmi = rnorm(100, 28, 4),
+  smoker = sample(0:1, 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+
+patients_control <- tibble(
+  patient_id = paste0("C", 1:200),
+  age = rnorm(200, 58, 10),
+  bmi = rnorm(200, 26, 5),
+  smoker = sample(0:1, 200, replace = TRUE, prob = c(0.7, 0.3))
+)
+
+# 2. Match on clinical variables
+matched <- match_couples(
+  left = patients_treated,
+  right = patients_control,
+  vars = c("age", "bmi", "smoker"),
+  auto_scale = TRUE,
+  max_distance = 1.0  # optional caliper
+)
+
+# 3. Check how many matched
+cat("Treated patients:", nrow(patients_treated), "\n")
+cat("Successfully matched:", matched$info$n_matched, "\n")
+cat("Match rate:", round(100 * matched$info$n_matched / nrow(patients_treated), 1), "%\n")
+
+# 4. Extract matched samples for analysis
+treated_matched <- patients_treated[matched$pairs$left_id, ]
+control_matched <- patients_control[matched$pairs$right_id, ]
+
+# 5. Verify balance
+cat("\nBalance check (difference in means):\n")
+cat("  Age:", round(mean(treated_matched$age) - mean(control_matched$age), 2), "\n")
+cat("  BMI:", round(mean(treated_matched$bmi) - mean(control_matched$bmi), 2), "\n")
+cat("  Smoker %:", round(100*(mean(treated_matched$smoker) - mean(control_matched$smoker)), 1), "\n")
+```
+
+---
+
+## Next Steps
+
+You now know the basics of matching with couplr. Here's where to go next:
+
+**For production research workflows:**
+
+- [Matching Workflows](matching-workflows.html) covers preprocessing, blocking, formal balance diagnostics, and publication-ready output
+
+**For understanding algorithm choices:**
+
+- [Algorithms](algorithms.html) explains when different solvers are faster or more appropriate
+
+**For comparing with other packages:**
+
+- [Comparison](comparison.html) shows how couplr differs from MatchIt, optmatch, and designmatch
+
+---
+
+## Additional: Direct Assignment Problem Solving
+
+If you need to solve assignment problems directly (not matching workflows), couplr also provides lower-level functions.
+
+### lap_solve(): Matrix-Based Assignment
+
+Given a cost matrix where entry (i,j) is the cost of assigning row i to column j:
+
+```{r lap-solve-basic}
+# Cost matrix: 3 workers × 3 tasks
 cost <- matrix(c(
   4, 2, 5,
   3, 3, 6,
@@ -99,62 +316,27 @@ result <- lap_solve(cost)
 print(result)
 ```
 
-**Reading the output**: Row 1 shows source 1 assigned to target 2 with cost 2. The `total_cost` column shows the cumulative cost (9).
-
-### Data Frame Input
-
-```{r}
-library(dplyr)
-
-# Long-format data frame
-schedule_df <- tibble(
-
-  nurse = rep(1:3, each = 3),
-  shift = rep(1:3, times = 3),
-  cost = c(4, 2, 5, 3, 3, 6, 7, 5, 4)
-)
-
-# Solve using column names
-lap_solve(schedule_df, nurse, shift, cost)
-```
-
-### Rectangular Problems
-
-```{r}
-# 3 nurses, 5 shifts - assign each nurse to one shift
-cost_rect <- matrix(c(
-  1, 2, 3, 4, 5,
-  6, 5, 4, 3, 2,
-  2, 3, 4, 5, 6
-), nrow = 3, byrow = TRUE)
-
-lap_solve(cost_rect)
-```
-
-When rows < columns, each row gets one column, and some columns remain unassigned.
+Row 1 is assigned to column 2 (cost 2), row 2 to column 1 (cost 3), row 3 to column 3 (cost 4). Total cost: 9.
 
 ### Forbidden Assignments
 
-Use `NA` or `Inf` to mark impossible assignments:
+Use `NA` or `Inf` for impossible assignments:
 
-```{r}
+```{r forbidden}
 cost_forbidden <- matrix(c(
-  4, 2, NA,   # Source 1 cannot go to target 3
-  Inf, 3, 6,  # Source 2 cannot go to target 1
+  4, 2, NA,   # Row 1 cannot go to column 3
+  Inf, 3, 6,  # Row 2 cannot go to column 1
   7, 5, 4
 ), nrow = 3, byrow = TRUE)
 
 lap_solve(cost_forbidden)
 ```
 
----
+### Maximization
 
-## Maximization Problems
+For preference or profit maximization:
 
-Switch to maximization with `maximize = TRUE`:
-
-```{r}
-# Preference scores (higher = better)
+```{r maximize}
 preferences <- matrix(c(
   8, 5, 3,
   4, 7, 6,
@@ -164,171 +346,41 @@ preferences <- matrix(c(
 lap_solve(preferences, maximize = TRUE)
 ```
 
----
+### Batch Solving
 
-## Grouped Data
+Solve many independent problems at once:
 
-Solve multiple problems at once with grouped data frames:
-```{r}
-# Weekly schedule: 3 days × 3 nurses × 3 shifts
-weekly_df <- tibble(
-  day = rep(c("Mon", "Tue", "Wed"), each = 9),
-  nurse = rep(rep(1:3, each = 3), times = 3),
-  shift = rep(1:3, times = 9),
-  cost = runif(27, 1, 10)
-)
+```{r batch}
+# 50 random cost matrices
+cost_list <- lapply(1:50, function(i) matrix(runif(9, 1, 10), 3, 3))
 
-# Solve all days at once
-weekly_df |>
-  group_by(day) |>
-  lap_solve(nurse, shift, cost) |>
-  group_by(day) |>
-  summarise(total_cost = sum(cost), .groups = "drop")
-```
-
----
-
-## Batch Solving
-
-For many independent problems, use `lap_solve_batch()`:
-
-```{r}
-# 100 random cost matrices
-set.seed(123)
-cost_list <- lapply(1:100, function(i) matrix(runif(9, 1, 10), 3, 3))
-
-# Solve all at once
 batch_results <- lap_solve_batch(cost_list)
 
 # Summary
 batch_results |>
   distinct(problem_id, total_cost) |>
   summarise(
-    n_problems = n(),
-    mean_cost = mean(total_cost),
-    min_cost = min(total_cost),
-    max_cost = max(total_cost)
+    problems = n(),
+    mean_cost = mean(total_cost)
   )
 ```
 
-Enable parallel processing for large batches:
-
-```{r, eval=FALSE}
-lap_solve_batch(cost_list, n_threads = 4)
-```
-
----
-
-## K-Best Solutions
+### K-Best Solutions
 
 Find multiple near-optimal solutions:
 
-```{r}
+```{r kbest}
 cost <- matrix(c(1, 2, 3, 4, 3, 2, 5, 4, 1), nrow = 3, byrow = TRUE)
 
-# Find top 5 solutions
-kbest <- lap_solve_kbest(cost, k = 5)
+kbest <- lap_solve_kbest(cost, k = 3)
 print(kbest)
 ```
-
-Useful for exploring alternatives when the optimal solution is infeasible in practice.
-
----
-
-## Algorithm Selection
-
-couplr includes 12+ algorithms with automatic selection:
-
-```{r}
-# Let couplr choose (default)
-result <- lap_solve(cost, method = "auto")
-get_method_used(result)
-```
-
-Force specific algorithms:
-
-```{r, eval=FALSE}
-lap_solve(cost, method = "jv")         # Jonker-Volgenant (general purpose)
-lap_solve(cost, method = "hungarian")  # Hungarian algorithm
-lap_solve(cost, method = "auction")    # Auction algorithm
-lap_solve(cost, method = "hk01")       # For binary (0/1) costs
-```
-
-**Selection guide:**
-
-| Problem Type | Recommended Method |
-|--------------|-------------------|
-| General case | `"auto"` or `"jv"` |
-| Binary costs (0/1) | `"hk01"` |
-| Large dense (n > 1000) | `"auction"` |
-| Sparse/many forbidden | `"sap"` |
-
----
-
-## Utility Functions
-
-```{r}
-result <- lap_solve(cost)
-
-# Extract total cost
-get_total_cost(result)
-
-# Get algorithm used
-get_method_used(result)
-
-# Convert to binary assignment matrix
-as_assignment_matrix(result)
-```
-
----
-
-## Performance Guide
-
-| Problem Size | Typical Runtime | Notes |
-|--------------|-----------------|-------|
-| < 100×100 | < 0.01s | Any method works |
-| 100-500 | 0.01-0.1s | `method = "auto"` |
-| 500-1000 | 0.1-1s | Consider `"jv"` |
-| 1000-3000 | 1-30s | Use `"auction"` |
-| > 3000 | > 30s | See `vignette("matching-workflows")` |
-
----
-
-## Common Issues
-
-### "All assignments have Inf cost"
-
-**Cause**: Too many forbidden entries make the problem infeasible.
-
-**Solution**: Ensure each row has at least one finite value.
-
-```{r}
-cost_check <- matrix(c(1, NA, NA, NA, NA, NA, NA, 2, 3), nrow = 3, byrow = TRUE)
-feasible <- rowSums(is.finite(cost_check)) > 0
-if (!all(feasible)) cat("Infeasible rows:", which(!feasible), "\n")
-```
-
-### Different results with different methods
-
-**Cause**: Multiple optimal solutions may exist.
-
-**Solution**: Use `method = "hungarian"` for deterministic tie-breaking, or verify total costs match.
-
-### Slow performance on large problems
-
-**Solutions**:
-
-- n > 1000: Use `method = "auction"`
-- n > 3000: Use blocking via `vignette("matching-workflows")`
-- n > 5000: Use `greedy_couples()` for approximate solutions
 
 ---
 
 ## See Also
 
-- `vignette("algorithms")` - Mathematical foundations and solver internals
-- `vignette("matching-workflows")` - Production matching for observational studies
-- `vignette("comparison")` - How couplr compares to MatchIt, optmatch, designmatch
-- `vignette("troubleshooting")` - Common issues and solutions
-- `vignette("pixel-morphing")` - Large-scale approximation strategies
-- `?lap_solve`, `?lap_solve_batch`, `?lap_solve_kbest`, `?match_couples`
+- `?match_couples` - Optimal matching function reference
+- `?greedy_couples` - Fast approximate matching
+- `?balance_diagnostics` - Formal balance assessment
+- `?lap_solve` - Direct assignment problem solving

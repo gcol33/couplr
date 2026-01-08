@@ -95,15 +95,18 @@ Mahalanobis) and $`\pi`$ is a matching assignment.
 
 ### Why Matching Matters
 
-**Without matching:** - Groups may differ systematically on important
-covariates - Treatment effect estimates are confounded by these
-differences - Statistical adjustments (regression) rely on untestable
-assumptions
+**Without matching:**
 
-**With matching:** - Create comparable groups that differ primarily in
-treatment status - Balance covariates to reduce confounding - Improve
-causal inference by mimicking randomized experiments - Transparent,
-non-parametric preprocessing step
+- Groups may differ systematically on important covariates
+- Treatment effect estimates are confounded by these differences
+- Statistical adjustments (regression) rely on untestable assumptions
+
+**With matching:**
+
+- Create comparable groups that differ primarily in treatment status
+- Balance covariates to reduce confounding
+- Improve causal inference by mimicking randomized experiments
+- Transparent, non-parametric preprocessing step
 
 ### Distance Metrics
 
@@ -494,18 +497,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 87.67 seconds
+#>   Time: 87.23 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.97 seconds
+#>   Time: 0.93 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 90.4 x
+#>   Speedup: 93.8 x
 ```
 
 ### Greedy Strategies
@@ -590,8 +593,8 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
 #> elapsed    sorted     0.05        0.0912          18.24
-#> elapsed1 row_best     0.03        0.0968          19.36
-#> elapsed2       pq     0.04        0.0912          18.24
+#> elapsed1 row_best     0.04        0.0968          19.36
+#> elapsed2       pq     0.05        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -892,17 +895,25 @@ After matching, assess balance quality using
 \text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
 ```
 
-**Thresholds:** - \< 0.1: Excellent balance - 0.1 - 0.25: Good balance -
-0.25 - 0.5: Acceptable (may need further adjustment) - \> 0.5: Poor
-balance (reconsider matching strategy)
+**Thresholds:**
+
+- \< 0.1: Excellent balance
+
+- 0.1 - 0.25: Good balance
+
+- 0.25 - 0.5: Acceptable (may need further adjustment)
+
+- > 0.5: Poor balance (reconsider matching strategy)
 
 **2. Variance ratios:**
 ``` math
 \text{VR} = \frac{s_{\text{left}}^2}{s_{\text{right}}^2}
 ```
 
-**Interpretation:** - Close to 1.0: Similar variability (good) - \< 0.5
-or \> 2.0: Concerning imbalance in spread
+**Interpretation:**
+
+- Close to 1.0: Similar variability (good)
+- \< 0.5 or \> 2.0: Concerning imbalance in spread
 
 **3. Kolmogorov-Smirnov tests:**
 
@@ -1067,9 +1078,12 @@ study.
 Evaluate the effect of a job training program on earnings. Participants
 self-selected into the program, creating potential selection bias.
 
-**Data:** - Treatment: 200 program participants - Control: 500
-non-participants - Covariates: age, education, prior earnings,
-employment status - Outcome: Earnings one year after program
+**Data:**
+
+- Treatment: 200 program participants
+- Control: 500 non-participants
+- Covariates: age, education, prior earnings, employment status
+- Outcome: Earnings one year after program
 
 ### Step 1: Data Preparation
 

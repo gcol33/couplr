@@ -129,15 +129,15 @@ properties](algorithms_files/figure-html/decision-flowchart-1.svg)
 |----|----|----|----|
 | Hungarian | $`O(n^3)`$ | Small problems, pedagogy | n \> 500 |
 | Jonker-Volgenant | $`O(n^3)`$ expected | General purpose (default) | Extremely sparse |
-| Auction | $`O(n^2 \log nC/\epsilon)`$ | Large dense (n \> 1000) | Small problems |
+| Auction | $`O(n^2 \log(nC)/\epsilon)`$ | Large dense (n \> 1000) | Small problems |
 | SAP/LAPMOD | $`O(n^2 + nm)`$ | Sparse (\>50% forbidden) | Dense problems |
 | HK01 | $`O(n^{2.5})`$ | Binary costs only | Non-binary costs |
-| Gabow-Tarjan | $`O(n^3 \log C)`$ | Large integer cost ranges | Non-integer costs |
+| Gabow-Tarjan | $`O(n^3 \log(C))`$ | Large integer cost ranges | Non-integer costs |
 | CSA | $`O(n^3)`$ amortized | Medium-large dense | Small problems |
 | Network Simplex | $`O(n^3)`$ typical | General, good dual info | — |
-| Orlin-Ahuja | $`O(\sqrt{n} \cdot m \log nC)`$ | Large sparse with scaling | Small dense |
+| Orlin-Ahuja | $`O(\sqrt{n} \cdot m \log(nC))`$ | Large sparse with scaling | Small dense |
 | Push-Relabel | $`O(n^2 m)`$ | Max-flow formulations | Dense problems |
-| Ramshaw-Tarjan | $`O(nm\log n)`$ | Rectangular (n ≠ m) | Square dense |
+| Ramshaw-Tarjan | $`O(nm \log(n))`$ | Rectangular (n ≠ m) | Square dense |
 
 ------------------------------------------------------------------------
 
@@ -325,7 +325,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ### 6. Gabow-Tarjan (Bit-Scaling)
 
-**Complexity**: $`O(n^3 \log C)`$ where $`C`$ is the maximum cost
+**Complexity**: $`O(n^3 \log(C))`$ where $`C`$ is the maximum cost
 
 A sophisticated algorithm combining bit-scaling with Hungarian search
 (Gabow & Tarjan, 1989). Particularly effective for integer costs with
@@ -361,10 +361,10 @@ status:
 
 #### Complexity Analysis
 
-- $`O(\log C)`$ scaling phases
+- $`O(\log(C))`$ scaling phases
 - $`O(n)`$ augmenting paths per phase
 - $`O(n^2)`$ per augmenting path (Hungarian search)
-- **Total**: $`O(n^3 \log C)`$
+- **Total**: $`O(n^3 \log(C))`$
 
 #### When to Use
 
@@ -386,8 +386,8 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 | Property        | Gabow-Tarjan        | Hungarian      | JV                  |
 |-----------------|---------------------|----------------|---------------------|
-| Complexity      | $`O(n^3 \log C)`$   | $`O(n^3)`$     | $`O(n^3)`$ expected |
-| Cost dependence | Yes ($`\log C`$)    | No             | No                  |
+| Complexity      | $`O(n^3 \log(C))`$  | $`O(n^3)`$     | $`O(n^3)`$ expected |
+| Cost dependence | Yes ($`\log(C)`$)   | No             | No                  |
 | Best for        | Large integer costs | Small problems | General purpose     |
 
 ------------------------------------------------------------------------
@@ -530,7 +530,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ### 11. Ramshaw-Tarjan Algorithm
 
-**Complexity**: $`O(nm\log n)`$
+**Complexity**: $`O(nm \log(n))`$
 
 Optimized for rectangular assignment problems where $`n \neq m`$
 (Ramshaw & Tarjan, 2012).
@@ -835,7 +835,7 @@ outperform dense algorithms.
 
 - SAP/LAPMOD: Best for sparse problems (\>50% forbidden entries)
 - HK01: Only for binary costs (0/1), then O(n^2.5)
-- Gabow-Tarjan: Best for large integer cost ranges; O(n³ log C)
+- Gabow-Tarjan: Best for large integer cost ranges; O(n³ log(C))
 - Ramshaw-Tarjan: Best for rectangular problems (n ≠ m)
 - Push-Relabel: Competitive for max-flow style problems
 

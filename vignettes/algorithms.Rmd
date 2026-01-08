@@ -188,19 +188,19 @@ library(ggplot2)
 nodes <- data.frame(
   label = c("Binary\ncosts?", "Sparsity\n> 50%?", "n > 1000?",
             "HK01", "SAP", "Auction", "JV (default)"),
-  x = c(4, 6, 6, 2, 4, 5, 7),
+  x = c(4, 7, 7, 1.5, 4, 5.5, 8.5),
   y = c(4, 3, 2, 3, 2, 1, 1),
   type = c("question", "question", "question",
            "answer", "answer", "answer", "answer")
 )
 
 edges <- data.frame(
-  from_x = c(4, 4, 6, 6, 6, 6),
+  from_x = c(4, 4, 7, 7, 7, 7),
   from_y = c(4, 4, 3, 3, 2, 2),
-  to_x = c(2, 6, 4, 6, 5, 7),
+  to_x = c(1.5, 7, 4, 7, 5.5, 8.5),
   to_y = c(3, 3, 2, 2, 1, 1),
   label = c("Yes", "No", "Yes", "No", "Yes", "No"),
-  label_x = c(2.8, 5.2, 4.8, 6.2, 5.3, 6.7),
+  label_x = c(2.5, 5.7, 5.2, 7.3, 6.0, 8.0),
   label_y = c(3.6, 3.6, 2.6, 2.6, 1.55, 1.55)
 )
 
@@ -231,7 +231,7 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         panel.background = element_rect(fill = "transparent", color = NA),
         plot.margin = margin(15, 30, 15, 30)) +
-  coord_cartesian(xlim = c(1, 8), ylim = c(0.5, 4.5))
+  coord_cartesian(xlim = c(0.5, 9.5), ylim = c(0.5, 4.5))
 ```
 
 ### Quick Reference
@@ -240,15 +240,15 @@ ggplot() +
 |-----------|------------|----------|------------|
 | Hungarian | $O(n^3)$ | Small problems, pedagogy | n > 500 |
 | Jonker-Volgenant | $O(n^3)$ expected | General purpose (default) | Extremely sparse |
-| Auction | $O(n^2 \log nC/\epsilon)$ | Large dense (n > 1000) | Small problems |
+| Auction | $O(n^2 \log(nC)/\epsilon)$ | Large dense (n > 1000) | Small problems |
 | SAP/LAPMOD | $O(n^2 + nm)$ | Sparse (>50% forbidden) | Dense problems |
 | HK01 | $O(n^{2.5})$ | Binary costs only | Non-binary costs |
-| Gabow-Tarjan | $O(n^3 \log C)$ | Large integer cost ranges | Non-integer costs |
+| Gabow-Tarjan | $O(n^3 \log(C))$ | Large integer cost ranges | Non-integer costs |
 | CSA | $O(n^3)$ amortized | Medium-large dense | Small problems |
 | Network Simplex | $O(n^3)$ typical | General, good dual info | — |
-| Orlin-Ahuja | $O(\sqrt{n} \cdot m \log nC)$ | Large sparse with scaling | Small dense |
+| Orlin-Ahuja | $O(\sqrt{n} \cdot m \log(nC))$ | Large sparse with scaling | Small dense |
 | Push-Relabel | $O(n^2 m)$ | Max-flow formulations | Dense problems |
-| Ramshaw-Tarjan | $O(nm\log n)$ | Rectangular (n ≠ m) | Square dense |
+| Ramshaw-Tarjan | $O(nm \log(n))$ | Rectangular (n ≠ m) | Square dense |
 
 ---
 
@@ -375,7 +375,7 @@ ggplot() +
              fill = "#f47c3c", color = "white", fontface = "bold", size = 5) +
   geom_label(data = edges[edges$type == "considering", ],
              aes(x = (from_x + to_x)/2, y = (from_y + to_y)/2 - 0.15, label = label),
-             fill = "#6c757d", color = "white", size = 4.5) +
+             fill = "#6c757d", color = "white", fontface = "bold", size = 4.5) +
   # Source nodes
   geom_point(data = nodes[nodes$type == "source", ],
              aes(x = x, y = y, color = matched), size = 18) +
@@ -481,7 +481,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ## 6. Gabow-Tarjan (Bit-Scaling)
 
-**Complexity**: $O(n^3 \log C)$ where $C$ is the maximum cost
+**Complexity**: $O(n^3 \log(C))$ where $C$ is the maximum cost
 
 A sophisticated algorithm combining bit-scaling with Hungarian search (Gabow & Tarjan, 1989). Particularly effective for integer costs with large ranges.
 
@@ -506,10 +506,10 @@ $$\ell(i,j) = \begin{cases} c_{ij} & \text{if } (i,j) \text{ matched} \\ c_{ij} 
 
 ### Complexity Analysis
 
-- $O(\log C)$ scaling phases
+- $O(\log(C))$ scaling phases
 - $O(n)$ augmenting paths per phase
 - $O(n^2)$ per augmenting path (Hungarian search)
-- **Total**: $O(n^3 \log C)$
+- **Total**: $O(n^3 \log(C))$
 
 ### When to Use
 
@@ -529,8 +529,8 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 | Property | Gabow-Tarjan | Hungarian | JV |
 |----------|--------------|-----------|-----|
-| Complexity | $O(n^3 \log C)$ | $O(n^3)$ | $O(n^3)$ expected |
-| Cost dependence | Yes ($\log C$) | No | No |
+| Complexity | $O(n^3 \log(C))$ | $O(n^3)$ | $O(n^3)$ expected |
+| Cost dependence | Yes ($\log(C)$) | No | No |
 | Best for | Large integer costs | Small problems | General purpose |
 
 ---
@@ -721,7 +721,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ## 11. Ramshaw-Tarjan Algorithm
 
-**Complexity**: $O(nm\log n)$
+**Complexity**: $O(nm \log(n))$
 
 Optimized for rectangular assignment problems where $n \neq m$ (Ramshaw & Tarjan, 2012).
 
@@ -1013,7 +1013,7 @@ ggplot(sparse_results, aes(x = size, y = time * 1000, color = method, group = me
 
 - SAP/LAPMOD: Best for sparse problems (>50% forbidden entries)
 - HK01: Only for binary costs (0/1), then O(n^2.5)
-- Gabow-Tarjan: Best for large integer cost ranges; O(n³ log C)
+- Gabow-Tarjan: Best for large integer cost ranges; O(n³ log(C))
 - Ramshaw-Tarjan: Best for rectangular problems (n ≠ m)
 - Push-Relabel: Competitive for max-flow style problems
 

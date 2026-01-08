@@ -288,24 +288,26 @@ steps <- data.frame(
   ),
   icon = c("→ 85% matched", "→ 95% matched", "→ 100% optimal"),
   x = c(1, 2, 3),
-  y = c(1, 1, 1)
+  y = c(1, 1, 1),
+  box_fill = c("#5bc0de", "#5bc0de", "#5cb85c"),
+  icon_color = c("#6c757d", "#6c757d", "#5cb85c")
 )
 
 ggplot(steps, aes(x = x, y = y)) +
   # Connecting arrows
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 1, yend = 1),
-               arrow = arrow(length = unit(0.15, "cm")),
-               color = "#6c757d", linewidth = 1) +
-  geom_segment(aes(x = 2.35, xend = 2.65, y = 1, yend = 1),
-               arrow = arrow(length = unit(0.15, "cm")),
-               color = "#6c757d", linewidth = 1) +
+  annotate("segment", x = 1.35, xend = 1.65, y = 1, yend = 1,
+           arrow = arrow(length = unit(0.15, "cm")),
+           color = "#6c757d", linewidth = 1) +
+  annotate("segment", x = 2.35, xend = 2.65, y = 1, yend = 1,
+           arrow = arrow(length = unit(0.15, "cm")),
+           color = "#6c757d", linewidth = 1) +
   # Step boxes
-  geom_label(aes(label = step), y = 1.35, size = 4.5, fontface = "bold",
-             fill = c("#5bc0de", "#5bc0de", "#5cb85c"), color = "white",
-             label.padding = unit(0.4, "lines")) +
+  geom_label(aes(label = step, fill = box_fill), y = 1.35, size = 4.5, fontface = "bold",
+             color = "white", label.padding = unit(0.4, "lines")) +
   geom_text(aes(label = description), y = 1, size = 3.5, lineheight = 0.9) +
-  geom_text(aes(label = icon), y = 0.65, size = 4, fontface = "bold",
-            color = c("#6c757d", "#6c757d", "#5cb85c")) +
+  geom_text(aes(label = icon, color = icon_color), y = 0.65, size = 4, fontface = "bold") +
+  scale_fill_identity() +
+  scale_color_identity() +
   labs(title = "Jonker-Volgenant: Start Fast, Fix Later",
        subtitle = "Column reduction handles most assignments; augmentation finishes the rest") +
   theme_void() +
@@ -465,8 +467,8 @@ phases <- data.frame(
 
 ggplot(phases, aes(x = x, y = 1)) +
   # Connecting line
-  geom_segment(aes(x = 1, xend = 5, y = 0.7, yend = 0.7),
-               linewidth = 2, color = "#5cb85c") +
+  annotate("segment", x = 1, xend = 5, y = 0.7, yend = 0.7,
+           linewidth = 2, color = "#5cb85c") +
   # Phase points
   geom_point(aes(y = 0.7, size = 6 - phase), color = "#5cb85c") +
   # Epsilon labels
@@ -571,7 +573,7 @@ ggplot() +
 
 **Complexity**: $O(n^3 \log C)$ where $C$ is the maximum cost.
 
-**The flex**: This algorithm is rarely implemented outside academic code. The bookkeeping for 1-feasibility across scaling phases is intricate. We implemented it.
+Rarely seen outside academic papers. The bookkeeping for 1-feasibility across scaling phases is intricate enough that most implementations skip it.
 
 ```{r gabow-tarjan-example}
 set.seed(42)
@@ -593,7 +595,7 @@ James Orlin and Ravindra Ahuja developed a **double-scaling** algorithm: scale b
 
 For sparse problems, this is sublinear in $n$. Theoretically optimal for many cases.
 
-**The flex**: This is a textbook algorithm that almost nobody implements. It requires maintaining blocking flows across scaling phases, with careful data structure engineering. We implemented it.
+A textbook algorithm that rarely leaves textbooks. Maintaining blocking flows across scaling phases requires careful data structure engineering.
 
 ```{r orlin-example}
 set.seed(111)
@@ -843,7 +845,7 @@ Most algorithms assume square matrices. When $n \neq m$, they pad with dummy row
 
 Ramshaw and Tarjan (2012) developed an algorithm that handles rectangularity natively.
 
-**The flex**: This is the newest algorithm in the collection. Published in 2012. We have it.
+The newest algorithm here. Published in 2012, it handles the rectangular case without padding tricks.
 
 ```{r ramshaw-tarjan-example}
 set.seed(333)

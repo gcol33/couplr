@@ -135,13 +135,6 @@ and fix it?
 greedily assign each row to its cheapest available column. This often
 gets most of the matching right immediately.
 
-    #> Warning in geom_segment(aes(x = 1.35, xend = 1.65, y = 1, yend = 1), arrow = arrow(length = unit(0.15, : All aesthetics have length 1, but the data has 3 rows.
-    #> ℹ Please consider using `annotate()` or provide this layer with data containing
-    #>   a single row.
-    #> Warning in geom_segment(aes(x = 2.35, xend = 2.65, y = 1, yend = 1), arrow = arrow(length = unit(0.15, : All aesthetics have length 1, but the data has 3 rows.
-    #> ℹ Please consider using `annotate()` or provide this layer with data containing
-    #>   a single row.
-
 ![JV algorithm showing column reduction initialization followed by
 shortest path
 augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
@@ -165,7 +158,7 @@ n <- 500
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "jv"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.02
+#>    0.04    0.00    0.03
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 165.75
 ```
@@ -237,7 +230,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "auction"))
 #>    user  system elapsed 
-#>    0.14    0.00    0.16
+#>    0.27    0.00    0.27
 ```
 
 Auction shines for large dense problems. But it’s sensitive to ε. Get it
@@ -256,10 +249,6 @@ automatically?
 halve ε and refine the current solution. After $`O(\log C)`$ phases, ε
 is essentially zero: optimality.
 
-    #> Warning in geom_segment(aes(x = 1, xend = 5, y = 0.7, yend = 0.7), linewidth = 2, : All aesthetics have length 1, but the data has 5 rows.
-    #> ℹ Please consider using `annotate()` or provide this layer with data containing
-    #>   a single row.
-
 ![CSA algorithm showing epsilon-scaling phases converging to optimal
 solution](algorithms_files/figure-html/csa-diagram-1.svg)
 
@@ -276,7 +265,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "csa"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.03
+#>    0.06    0.00    0.08
 ```
 
 CSA often wins benchmarks for medium-large dense problems. It’s the
@@ -312,9 +301,9 @@ bits](algorithms_files/figure-html/gabow-tarjan-diagram-1.svg)
 
 **Complexity**: $`O(n^3 \log C)`$ where $`C`$ is the maximum cost.
 
-**The flex**: This algorithm is rarely implemented outside academic
-code. The bookkeeping for 1-feasibility across scaling phases is
-intricate. We implemented it.
+Rarely seen outside academic papers. The bookkeeping for 1-feasibility
+across scaling phases is intricate enough that most implementations skip
+it.
 
 ``` r
 
@@ -324,7 +313,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "gabow_tarjan"))
 #>    user  system elapsed 
-#>    0.39    0.00    0.39
+#>    3.00    0.02    3.03
 ```
 
 Gabow-Tarjan is primarily of theoretical interest—it provides the best
@@ -344,9 +333,8 @@ the number of edges.
 For sparse problems, this is sublinear in $`n`$. Theoretically optimal
 for many cases.
 
-**The flex**: This is a textbook algorithm that almost nobody
-implements. It requires maintaining blocking flows across scaling
-phases, with careful data structure engineering. We implemented it.
+A textbook algorithm that rarely leaves textbooks. Maintaining blocking
+flows across scaling phases requires careful data structure engineering.
 
 ``` r
 
@@ -355,7 +343,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "orlin"))
 #>    user  system elapsed 
-#>       0       0       0
+#>    0.02    0.00    0.01
 ```
 
 Orlin-Ahuja gives the best theoretical bounds for sparse problems with
@@ -412,7 +400,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "network_simplex"))
 #>    user  system elapsed 
-#>  130.21    0.06  131.00
+#>  846.12    4.53  872.05
 ```
 
 Network Simplex is a workhorse of operations research. It’s not always
@@ -454,7 +442,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "push_relabel"))
 #>    user  system elapsed 
-#>    0.08    0.00    0.07
+#>    0.46    0.00    0.46
 ```
 
 Two network perspectives. Same problem. Different algorithmic
@@ -483,7 +471,7 @@ n <- 500
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
 system.time(result <- lap_solve(cost, method = "hk01"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.01
+#>    0.01    0.00    0.00
 ```
 
 When you have binary costs and large $`n`$, HK01 is dramatically faster.
@@ -510,7 +498,7 @@ cost[edges] <- runif(length(edges), 0, 100)
 
 system.time(result <- lap_solve(cost, method = "sap"))
 #>    user  system elapsed 
-#>    0.14    0.00    0.15
+#>    0.71    0.02    0.73
 ```
 
 For very sparse problems, SAP can be orders of magnitude faster than
@@ -526,8 +514,8 @@ dummy rows/columns.
 Ramshaw and Tarjan (2012) developed an algorithm that handles
 rectangularity natively.
 
-**The flex**: This is the newest algorithm in the collection. Published
-in 2012. We have it.
+The newest algorithm here. Published in 2012, it handles the rectangular
+case without padding tricks.
 
 ``` r
 
@@ -538,7 +526,7 @@ cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 
 system.time(result <- lap_solve(cost, method = "ramshaw_tarjan"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.00
+#>       0       0       0
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
 #> Warning: Unknown or uninitialised column: `assignment`.
 #> Matched 0 of 100 rows

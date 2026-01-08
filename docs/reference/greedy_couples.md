@@ -151,5 +151,4 @@ result <- greedy_couples(left, right, vars = "x")
 result_opt <- match_couples(left, right, vars = "x")
 result_greedy <- greedy_couples(left, right, vars = "x")
 result_greedy$info$total_distance / result_opt$info$total_distance  # Quality ratio
-#> [1] 1.153738
 ```

@@ -74,7 +74,6 @@ cost <- matrix(c(1, 5, 3,
                  7, 1, 2), nrow = 3, byrow = TRUE)
 result <- bottleneck_assignment(cost)
 result$bottleneck  # Maximum edge cost in optimal assignment
-#> [1] 3
 
 # Maximize minimum (fair allocation)
 profits <- matrix(c(10, 5, 8,
@@ -82,7 +81,6 @@ profits <- matrix(c(10, 5, 8,
                     3, 7, 11), nrow = 3, byrow = TRUE)
 result <- bottleneck_assignment(profits, maximize = TRUE)
 result$bottleneck  # Minimum profit among all assignments
-#> [1] 10
 
 # With forbidden assignments
 cost <- matrix(c(1, NA, 3,

@@ -126,16 +126,6 @@ right <- data.frame(
 result <- match_couples(left, right, vars = c("age", "income"))
 matched_data <- join_matched(result, left, right)
 head(matched_data)
-#> # A tibble: 5 × 12
-#>   pair_id left_id right_id distance .age_diff .income_diff treatment_left
-#>     <int>   <int>    <int>    <dbl>     <dbl>        <dbl>          <dbl>
-#> 1       1       1        6    1000.         1        -1000              1
-#> 2       2       2        7     500.         1          500              1
-#> 3       3       3        8     500.        -1          500              1
-#> 4       4       4        9    1000.        -1         1000              1
-#> 5       5       5       10    1000.         1         1000              1
-#> # ℹ 5 more variables: age_left <dbl>, income_left <dbl>, treatment_right <dbl>,
-#> #   age_right <dbl>, income_right <dbl>
 
 # Specify which variables to include
 matched_data <- join_matched(

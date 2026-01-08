@@ -158,63 +158,29 @@ all variables, proportion of variables with large imbalance
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Create sample data</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">left</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span></span>
-<span class="r-in"><span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">45</span>, <span class="fl">10</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">50000</span>, <span class="fl">15000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">right</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fl">11</span><span class="op">:</span><span class="fl">30</span>,</span></span>
-<span class="r-in"><span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">47</span>, <span class="fl">10</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">52000</span>, <span class="fl">15000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Match</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Get balance diagnostics</span></span></span>
-<span class="r-in"><span><span class="va">balance</span> <span class="op">&lt;-</span> <span class="fu">balance_diagnostics</span><span class="op">(</span><span class="va">result</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Balance Diagnostics for Matched Pairs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ======================================</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Matching Summary:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method: lap</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Matched pairs: 10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Unmatched left: 0 (of 10)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Unmatched right: 10 (of 20)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Variable-level Balance:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 7</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> age             45.7         46.1       -<span style="color: #BB0000;">0.34</span>     -<span style="color: #BB0000;">0.044</span>        1.72       0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">53</span>129.       <span style="text-decoration: underline;">53</span>745.      -<span style="color: #BB0000;">616.</span>       -<span style="color: #BB0000;">0.042</span>        1.16       0.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Overall Balance:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Mean |Std Diff|: 0.043 (Excellent)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Max |Std Diff|: 0.044</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Vars with |Std Diff| &gt; 0.25: 0.0%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Balance Interpretation:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |Std Diff| &lt; 0.10: Excellent balance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |Std Diff| 0.10-0.25: Good balance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |Std Diff| 0.25-0.50: Acceptable balance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |Std Diff| &gt; 0.50: Poor balance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Get balance table</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="balance_table.html">balance_table</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 7</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> age             45.7         46.1       -<span style="color: #BB0000;">0.34</span>     -<span style="color: #BB0000;">0.044</span>        1.72       0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">53</span>129.       <span style="text-decoration: underline;">53</span>745.      -<span style="color: #BB0000;">616.</span>       -<span style="color: #BB0000;">0.042</span>        1.16       0.2</span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># Create sample data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
+<span><span class="va">left</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span>
+<span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">45</span>, <span class="fl">10</span><span class="op">)</span>,</span>
+<span>  income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">50000</span>, <span class="fl">15000</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">right</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="fl">11</span><span class="op">:</span><span class="fl">30</span>,</span>
+<span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">47</span>, <span class="fl">10</span><span class="op">)</span>,</span>
+<span>  income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">52000</span>, <span class="fl">15000</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Match</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get balance diagnostics</span></span>
+<span><span class="va">balance</span> <span class="op">&lt;-</span> <span class="fu">balance_diagnostics</span><span class="op">(</span><span class="va">result</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get balance table</span></span>
+<span><span class="fu"><a href="balance_table.html">balance_table</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
+<span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -188,22 +188,21 @@ a warning will be issued. The result may contain:</p><ul><li><p>Overlapped pixel
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="co"># Use bundled example images</span></span></span>
-<span class="r-in"><span><span class="va">imgA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/icons/circleA_40.png"</span>, package <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">imgB</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/icons/circleB_40.png"</span>, package <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Basic morph</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, n_frames <span class="op">=</span> <span class="fl">4</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Pure spatial rearrangement</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, alpha <span class="op">=</span> <span class="fl">0</span>, beta <span class="op">=</span> <span class="fl">1</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Exact mode for small images (guaranteed permutation)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, mode <span class="op">=</span> <span class="st">"exact"</span>, downscale_steps <span class="op">=</span> <span class="fl">0</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># \donttest{</span></span>
+<span><span class="co"># Use bundled example images</span></span>
+<span><span class="va">imgA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/icons/circleA_40.png"</span>, package <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span>
+<span><span class="va">imgB</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/icons/circleB_40.png"</span>, package <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Basic morph</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, n_frames <span class="op">=</span> <span class="fl">4</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Pure spatial rearrangement</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, alpha <span class="op">=</span> <span class="fl">0</span>, beta <span class="op">=</span> <span class="fl">1</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Exact mode for small images (guaranteed permutation)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">pixel_morph</span><span class="op">(</span><span class="va">imgA</span>, <span class="va">imgB</span>, mode <span class="op">=</span> <span class="st">"exact"</span>, downscale_steps <span class="op">=</span> <span class="fl">0</span>, show <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co"># }</span></span>
+<span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

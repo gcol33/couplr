@@ -87,8 +87,8 @@
 <div class="section level3">
 <h3 id="system-configuration-windows">System Configuration (Windows)<a class="anchor" aria-label="anchor" href="#system-configuration-windows"></a></h3>
 <div class="sourceCode" id="cb1"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># R paths</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.1\bin\Rscript.exe"</span> script<span class="op">.</span><span class="fu">R</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.1\bin\Rscript.exe"</span> <span class="op">-</span>e <span class="st">"command"</span></span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"</span> script<span class="op">.</span><span class="fu">R</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"</span> <span class="op">-</span>e <span class="st">"command"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="core-package-development">Core Package Development<a class="anchor" aria-label="anchor" href="#core-package-development"></a></h3>
@@ -114,7 +114,7 @@
 </div>
 <div class="section level3">
 <h3 id="building-the-pkgdown-website">Building the pkgdown Website<a class="anchor" aria-label="anchor" href="#building-the-pkgdown-website"></a></h3>
-<div class="sourceCode" id="cb5"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.1\bin\Rscript.exe"</span> build_site<span class="op">.</span><span class="fu">R</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="st">"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"</span> build_site<span class="op">.</span><span class="fu">R</span></span></code></pre></div>
 <p>The build script runs <code><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">pkgdown::build_site()</a></code> then post-processes SVGs for dark mode support.</p>
 <p><strong>Key files:</strong> <code>build_site.R</code>, <code>pkgdown/extra.css</code>, <code>_pkgdown.yml</code></p>
 <p><strong>Theme colors (Sandstone Bootstrap 5):</strong> - Light: bg=#F5F6F8, border=#DFD7CA, text=#3E3F3A - Dark: bg=#343739, border=#495057, text=#DFD7CA</p>

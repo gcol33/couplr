@@ -146,7 +146,7 @@ ggplot() +
   geom_label(data = edges_nonopt,
              aes(x = label_x, y = label_y, label = cost),
              size = 5, label.padding = unit(0.3, "lines"),
-             fill = "#dfd9d2", color = "#3e3f3a") +
+             fill = "#6c757d", color = "white") +
   # Optimal edge labels
   geom_label(data = edges_opt,
              aes(x = label_x, y = label_y, label = cost),
@@ -208,22 +208,23 @@ ggplot() +
   geom_segment(data = edges,
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
                arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
-               color = "#3e3f3a", linewidth = 1) +
-  geom_text(data = edges, aes(x = label_x, y = label_y, label = label),
-            size = 4.5, color = "#3e3f3a", fontface = "italic") +
+               color = "#6c757d", linewidth = 1) +
+  geom_label(data = edges, aes(x = label_x, y = label_y, label = label),
+             size = 4.5, fontface = "italic",
+             fill = "#6c757d", color = "white", label.size = 0) +
   geom_point(data = nodes[nodes$type == "question", ],
              aes(x = x, y = y), shape = 23, size = 24,
-             fill = "#ffc107", color = "#f47c3c", stroke = 2) +
+             fill = "#f0ad4e", color = "#f47c3c", stroke = 2) +
   geom_text(data = nodes[nodes$type == "question", ],
             aes(x = x, y = y, label = label), size = 4, lineheight = 0.9,
-            color = "#3e3f3a") +
+            color = "white", fontface = "bold") +
   geom_label(data = nodes[nodes$type == "answer", ],
              aes(x = x, y = y, label = label), size = 5, fontface = "bold",
              fill = "#93c54b", color = "white",
              label.padding = unit(0.5, "lines"), label.r = unit(0.25, "lines")) +
   labs(title = "Algorithm Selection Decision Tree") +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+  theme(plot.title = element_text(face = "bold", size = 14),
         axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
@@ -374,7 +375,7 @@ ggplot() +
              fill = "#f47c3c", color = "white", fontface = "bold", size = 4) +
   geom_label(data = edges[edges$type == "considering", ],
              aes(x = (from_x + to_x)/2, y = (from_y + to_y)/2 - 0.15, label = label),
-             fill = "#dfd9d2", color = "#3e3f3a", size = 3.5) +
+             fill = "#6c757d", color = "white", size = 3.5) +
   # Source nodes
   geom_point(data = nodes[nodes$type == "source", ],
              aes(x = x, y = y, color = matched), size = 16) +
@@ -581,9 +582,9 @@ The assignment problem is modeled as a minimum-cost flow network:
 ```{r network-simplex-diagram, fig.width=9, fig.height=6, echo=FALSE, fig.alt="Network simplex spanning tree structure for assignment problem"}
 library(ggplot2)
 
-# Network nodes
+# Network nodes - use "S" and "T" to fit in circles
 nodes <- data.frame(
-  label = c("Source", "R1", "R2", "R3", "C1", "C2", "C3", "Sink"),
+  label = c("S", "R1", "R2", "R3", "C1", "C2", "C3", "T"),
   x = c(0, 1.5, 1.5, 1.5, 3.5, 3.5, 3.5, 5),
   y = c(2, 3, 2, 1, 3, 2, 1, 2),
   type = c("super", "row", "row", "row", "col", "col", "col", "super")
@@ -627,11 +628,11 @@ ggplot() +
              aes(x = x, y = y), color = "#29abe0", size = 14) +
   geom_text(data = nodes, aes(x = x, y = y, label = label),
             color = "white", fontface = "bold", size = 4) +
-  # Layer labels
-  annotate("text", x = 0, y = 0.3, label = "Supply = n", size = 3.5, color = "#3e3f3a") +
+  # Layer labels - S = Source (supply), T = Sink (demand)
+  annotate("text", x = 0, y = 0.3, label = "S (supply=n)", size = 3.5, color = "#6c757d") +
   annotate("text", x = 1.5, y = 0.3, label = "Rows", size = 3.5, color = "#f47c3c") +
   annotate("text", x = 3.5, y = 0.3, label = "Columns", size = 3.5, color = "#29abe0") +
-  annotate("text", x = 5, y = 0.3, label = "Demand = n", size = 3.5, color = "#3e3f3a") +
+  annotate("text", x = 5, y = 0.3, label = "T (demand=n)", size = 3.5, color = "#6c757d") +
   labs(title = "Network Simplex: Spanning Tree Basis",
        subtitle = "Solid green = tree edges (basis); dashed = non-basic edges") +
   theme_void() +
@@ -904,9 +905,9 @@ bench_results <- data.frame(
 ```
 
 ```{r benchmark-plot, fig.width=8, fig.height=5, fig.alt="Runtime comparison of LAP algorithms across problem sizes"}
-ggplot(bench_results, aes(x = size, y = time * 1000, color = method, shape = method)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+ggplot(bench_results, aes(x = size, y = time * 1000, color = method, group = method)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3, aes(shape = method)) +
   scale_y_log10(labels = function(x) sprintf("%.1f", x)) +
   scale_color_manual(values = c(
     "Hungarian" = "#d9534f",
@@ -981,8 +982,8 @@ sparse_results <- data.frame(
 ```
 
 ```{r sparse-plot, fig.width=7, fig.height=4, fig.alt="Sparse algorithm performance comparison"}
-ggplot(sparse_results, aes(x = size, y = time * 1000, color = method)) +
-  geom_line(linewidth = 1) +
+ggplot(sparse_results, aes(x = size, y = time * 1000, color = method, group = method)) +
+  geom_line(linewidth = 1.2) +
   geom_point(size = 3) +
   labs(
     title = "Sparse vs Dense Algorithms (80% Forbidden Entries)",

@@ -114,6 +114,12 @@ total cost 2 + 1 + 2 = 5.
 
 ### Algorithm Selection Guide
 
+    #> Warning: The `label.size` argument of `geom_label()` is deprecated as of ggplot2 3.5.0.
+    #> ℹ Please use the `linewidth` argument instead.
+    #> This warning is displayed once every 8 hours.
+    #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    #> generated.
+
 ![Flowchart showing algorithm selection based on cost matrix
 properties](algorithms_files/figure-html/decision-flowchart-1.svg)
 
@@ -728,9 +734,9 @@ bench_results$method <- factor(bench_results$method,
 
 ``` r
 
-ggplot(bench_results, aes(x = size, y = time * 1000, color = method, shape = method)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 3) +
+ggplot(bench_results, aes(x = size, y = time * 1000, color = method, group = method)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3, aes(shape = method)) +
   scale_y_log10(labels = function(x) sprintf("%.1f", x)) +
   scale_color_manual(values = c(
     "Hungarian" = "#d9534f",
@@ -794,8 +800,8 @@ sparse_results$method <- factor(sparse_results$method,
 
 ``` r
 
-ggplot(sparse_results, aes(x = size, y = time * 1000, color = method)) +
-  geom_line(linewidth = 1) +
+ggplot(sparse_results, aes(x = size, y = time * 1000, color = method, group = method)) +
+  geom_line(linewidth = 1.2) +
   geom_point(size = 3) +
   labs(
     title = "Sparse vs Dense Algorithms (80% Forbidden Entries)",

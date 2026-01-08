@@ -57,9 +57,9 @@
 <polyline points='195.31,217.31 195.31,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polyline points='336.34,217.31 336.34,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polyline points='477.37,217.31 477.37,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='54.28,202.48 195.31,176.07 477.37,32.00 ' style='stroke-width: 2.13; stroke: #5BC0DE; stroke-linecap: butt;' />
-<polyline points='54.28,208.48 195.31,202.48 477.37,188.07 ' style='stroke-width: 2.13; stroke: #5CB85C; stroke-linecap: butt;' />
-<polyline points='54.28,208.48 195.31,203.68 477.37,190.47 ' style='stroke-width: 2.13; stroke: #F0AD4E; stroke-linecap: butt;' />
+<polyline points='54.28,202.48 195.31,176.07 477.37,32.00 ' style='stroke-width: 2.56; stroke: #5BC0DE; stroke-linecap: butt;' />
+<polyline points='54.28,208.48 195.31,202.48 477.37,188.07 ' style='stroke-width: 2.56; stroke: #5CB85C; stroke-linecap: butt;' />
+<polyline points='54.28,208.48 195.31,203.68 477.37,190.47 ' style='stroke-width: 2.56; stroke: #F0AD4E; stroke-linecap: butt;' />
 <circle cx='54.28' cy='202.48' r='3.56' style='stroke-width: 0.71; stroke: #5BC0DE; fill: #5BC0DE;' />
 <circle cx='54.28' cy='208.48' r='3.56' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
 <circle cx='54.28' cy='208.48' r='3.56' style='stroke-width: 0.71; stroke: #F0AD4E; fill: #F0AD4E;' />
@@ -82,11 +82,11 @@
 <text x='265.82' y='241.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='88.66px' lengthAdjust='spacingAndGlyphs'>Matrix Size (n x n)</text>
 <text transform='translate(13.36,120.24) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='94.31px' lengthAdjust='spacingAndGlyphs'>Time (milliseconds)</text>
 <text x='116.96' y='272.34' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='46.47px' lengthAdjust='spacingAndGlyphs'>Algorithm</text>
-<line x1='170.63' y1='268.40' x2='184.46' y2='268.40' style='stroke-width: 2.13; stroke: #5BC0DE; stroke-linecap: butt;' />
+<line x1='170.63' y1='268.40' x2='184.46' y2='268.40' style='stroke-width: 2.56; stroke: #5BC0DE; stroke-linecap: butt;' />
 <circle cx='177.55' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #5BC0DE; fill: #5BC0DE;' />
-<line x1='241.40' y1='268.40' x2='255.23' y2='268.40' style='stroke-width: 2.13; stroke: #5CB85C; stroke-linecap: butt;' />
+<line x1='241.40' y1='268.40' x2='255.23' y2='268.40' style='stroke-width: 2.56; stroke: #5CB85C; stroke-linecap: butt;' />
 <circle cx='248.32' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
-<line x1='321.80' y1='268.40' x2='335.62' y2='268.40' style='stroke-width: 2.13; stroke: #F0AD4E; stroke-linecap: butt;' />
+<line x1='321.80' y1='268.40' x2='335.62' y2='268.40' style='stroke-width: 2.56; stroke: #F0AD4E; stroke-linecap: butt;' />
 <circle cx='328.71' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #F0AD4E; fill: #F0AD4E;' />
 <text x='191.67' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='42.53px' lengthAdjust='spacingAndGlyphs'>JV (dense)</text>
 <text x='262.44' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='52.16px' lengthAdjust='spacingAndGlyphs'>SAP (sparse)</text>

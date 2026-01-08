@@ -7,8 +7,8 @@
 
 ### Core Topics
 
-- [Theory and
-  Algorithms](https://gcol33.github.io/couplr/articles/algorithms.md):
+- [The Algorithm
+  Collection](https://gcol33.github.io/couplr/articles/algorithms.md):
 - [Matching
   Workflows](https://gcol33.github.io/couplr/articles/matching-workflows.md):
 

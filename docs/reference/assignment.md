@@ -155,4 +155,6 @@ Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than
 cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
 res  <- assignment(cost)
 res$match; res$total_cost
+#> [1] 2 1 3
+#> [1] 9
 ```

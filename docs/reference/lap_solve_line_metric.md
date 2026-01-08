@@ -79,16 +79,43 @@ x <- c(1.5, 3.2, 5.1)
 y <- c(2.0, 3.0, 5.5)
 result <- lap_solve_line_metric(x, y, cost = "L1")
 print(result)
+#> 1-D Line Assignment Result
+#> ===========================
+#> 
+#> Assignments (1-based):
+#>   Source 1 -> Target 1
+#>   Source 2 -> Target 2
+#>   Source 3 -> Target 3
+#> 
+#> Total cost: 1.1 
 
 # Rectangular case: more targets than sources
 x <- c(1.0, 3.0, 5.0)
 y <- c(0.5, 2.0, 3.5, 4.5, 6.0)
 result <- lap_solve_line_metric(x, y, cost = "L2")
 print(result)
+#> 1-D Line Assignment Result
+#> ===========================
+#> 
+#> Assignments (1-based):
+#>   Source 1 -> Target 1
+#>   Source 2 -> Target 3
+#>   Source 3 -> Target 4
+#> 
+#> Total cost: 0.75 
 
 # With unsorted inputs (will be sorted internally)
 x <- c(5.0, 1.0, 3.0)
 y <- c(4.5, 0.5, 6.0, 2.0, 3.5)
 result <- lap_solve_line_metric(x, y, cost = "L1")
 print(result)
+#> 1-D Line Assignment Result
+#> ===========================
+#> 
+#> Assignments (1-based):
+#>   Source 1 -> Target 1
+#>   Source 2 -> Target 2
+#>   Source 3 -> Target 5
+#> 
+#> Total cost: 1.5 
 ```

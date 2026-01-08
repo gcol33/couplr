@@ -208,9 +208,11 @@ imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
 # Basic animation (writes to temp file)
 outfile <- tempfile(fileext = ".gif")
 pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
+#> Saved animation to: C:\Users\GILLES~1\AppData\Local\Temp\Rtmpi2e8Cg\file30fcc6ed011e4.gif
 
 # Pure spatial rearrangement (ignore B's colors in assignment)
 pixel_morph_animate(imgA, imgB, alpha = 0, beta = 1,
                     outfile = tempfile(fileext = ".gif"), show = FALSE)
+#> Saved animation to: C:\Users\GILLES~1\AppData\Local\Temp\Rtmpi2e8Cg\file30fcc4d1c1d4f.gif
 # }
 ```

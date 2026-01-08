@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='288.00pt' viewBox='0 0 648.00 288.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw2NDguMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='648.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwyODguMDA=)'>
+<rect x='0.00' y='0.00' width='648.00' height='288.00' style='stroke-width: 0.00; stroke: none;' />
+</g>
+<defs>
+  <clipPath id='cpMTkuOTN8NjI4LjA3fDU0LjA1fDI1OC4xMQ=='>
+    <rect x='19.93' y='54.05' width='608.15' height='204.07' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTkuOTN8NjI4LjA3fDU0LjA1fDI1OC4xMQ==)'>
+<line x1='119.24' y1='187.00' x2='528.76' y2='187.00' style='stroke-width: 4.27; stroke: #5CB85C; stroke-linecap: butt;' />
+<line x1='119.24' y1='187.00' x2='528.76' y2='187.00' style='stroke-width: 4.27; stroke: #5CB85C; stroke-linecap: butt;' />
+<line x1='119.24' y1='187.00' x2='528.76' y2='187.00' style='stroke-width: 4.27; stroke: #5CB85C; stroke-linecap: butt;' />
+<line x1='119.24' y1='187.00' x2='528.76' y2='187.00' style='stroke-width: 4.27; stroke: #5CB85C; stroke-linecap: butt;' />
+<line x1='119.24' y1='187.00' x2='528.76' y2='187.00' style='stroke-width: 4.27; stroke: #5CB85C; stroke-linecap: butt;' />
+<circle cx='119.24' cy='187.00' r='5.69' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
+<circle cx='221.62' cy='187.00' r='4.62' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
+<circle cx='324.00' cy='187.00' r='3.56' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
+<circle cx='426.38' cy='187.00' r='2.49' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
+<circle cx='528.76' cy='187.00' r='1.42' style='stroke-width: 0.71; stroke: #5CB85C; fill: #5CB85C;' />
+<text x='119.24' y='174.78' text-anchor='middle' style='font-size: 11.38px; font-weight: bold; font-family: "Arial";' textLength='31.03px' lengthAdjust='spacingAndGlyphs'>ε=100</text>
+<text x='221.62' y='174.78' text-anchor='middle' style='font-size: 11.38px; font-weight: bold; font-family: "Arial";' textLength='24.70px' lengthAdjust='spacingAndGlyphs'>ε=50</text>
+<text x='324.00' y='174.78' text-anchor='middle' style='font-size: 11.38px; font-weight: bold; font-family: "Arial";' textLength='24.70px' lengthAdjust='spacingAndGlyphs'>ε=25</text>
+<text x='426.38' y='174.78' text-anchor='middle' style='font-size: 11.38px; font-weight: bold; font-family: "Arial";' textLength='34.19px' lengthAdjust='spacingAndGlyphs'>ε=12.5</text>
+<text x='528.76' y='174.78' text-anchor='middle' style='font-size: 11.38px; font-weight: bold; font-family: "Arial";' textLength='34.19px' lengthAdjust='spacingAndGlyphs'>ε=6.25</text>
+<text x='119.24' y='204.82' text-anchor='middle' style='font-size: 9.96px;fill: #6C757D; font-family: "Arial";' textLength='77.45px' lengthAdjust='spacingAndGlyphs'>Very approximate</text>
+<text x='221.62' y='204.82' text-anchor='middle' style='font-size: 9.96px;fill: #6C757D; font-family: "Arial";' textLength='55.88px' lengthAdjust='spacingAndGlyphs'>Approximate</text>
+<text x='324.00' y='204.82' text-anchor='middle' style='font-size: 9.96px;fill: #6C757D; font-family: "Arial";' textLength='24.33px' lengthAdjust='spacingAndGlyphs'>Good</text>
+<text x='426.38' y='204.82' text-anchor='middle' style='font-size: 9.96px;fill: #6C757D; font-family: "Arial";' textLength='56.97px' lengthAdjust='spacingAndGlyphs'>Near-optimal</text>
+<text x='528.76' y='204.82' text-anchor='middle' style='font-size: 9.96px;fill: #6C757D; font-family: "Arial";' textLength='34.30px' lengthAdjust='spacingAndGlyphs'>Optimal</text>
+<text x='119.24' y='214.51' text-anchor='middle' style='font-size: 8.54px;fill: #AAA49B; font-family: "Arial";' textLength='31.33px' lengthAdjust='spacingAndGlyphs'>Phase 1</text>
+<text x='221.62' y='214.51' text-anchor='middle' style='font-size: 8.54px;fill: #AAA49B; font-family: "Arial";' textLength='31.33px' lengthAdjust='spacingAndGlyphs'>Phase 2</text>
+<text x='324.00' y='214.51' text-anchor='middle' style='font-size: 8.54px;fill: #AAA49B; font-family: "Arial";' textLength='31.33px' lengthAdjust='spacingAndGlyphs'>Phase 3</text>
+<text x='426.38' y='214.51' text-anchor='middle' style='font-size: 8.54px;fill: #AAA49B; font-family: "Arial";' textLength='31.33px' lengthAdjust='spacingAndGlyphs'>Phase 4</text>
+<text x='528.76' y='214.51' text-anchor='middle' style='font-size: 8.54px;fill: #AAA49B; font-family: "Arial";' textLength='31.33px' lengthAdjust='spacingAndGlyphs'>Phase 5</text>
+<line x1='68.04' y1='94.24' x2='579.96' y2='94.24' style='stroke-width: 1.07; stroke: #6C757D; stroke-linecap: butt;' />
+<polyline points='575.05,97.08 579.96,94.24 575.05,91.41 ' style='stroke-width: 1.07; stroke: #6C757D; stroke-linecap: butt;' />
+<text x='324.00' y='82.85' text-anchor='middle' style='font-size: 11.38px; font-style: italic;fill: #6C757D; font-family: "Arial";' textLength='132.69px' lengthAdjust='spacingAndGlyphs'>ε shrinks, quality improves</text>
+</g>
+<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwyODguMDA=)'>
+<text x='324.00' y='51.73' text-anchor='middle' style='font-size: 11.00px;fill: #6C757D; font-family: "Arial";' textLength='236.25px' lengthAdjust='spacingAndGlyphs'>Each phase halves ε and refines the assignment</text>
+<text x='324.00' y='35.43' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Arial";' textLength='176.98px' lengthAdjust='spacingAndGlyphs'>CSA: Systematic ε-Scaling</text>
+</g>
+</g>
+</svg>

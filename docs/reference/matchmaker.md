@@ -119,6 +119,11 @@ left <- data.frame(id = 1:10, region = rep(c("A", "B"), each = 5), x = rnorm(10)
 right <- data.frame(id = 11:20, region = rep(c("A", "B"), each = 5), x = rnorm(10))
 blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
 print(blocks$block_summary)
+#> # A tibble: 2 × 3
+#>   block_id n_left n_right
+#>   <chr>     <dbl>   <dbl>
+#> 1 A             5       5
+#> 2 B             5       5
 
 # Clustering
 blocks <- matchmaker(left, right, block_type = "cluster",

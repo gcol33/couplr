@@ -126,7 +126,40 @@ result <- match_couples(left, right, vars = c("age", "income"))
 # Get balance diagnostics
 balance <- balance_diagnostics(result, left, right, vars = c("age", "income"))
 print(balance)
+#> 
+#> Balance Diagnostics for Matched Pairs
+#> ======================================
+#> 
+#> Matching Summary:
+#>   Method: lap
+#>   Matched pairs: 10
+#>   Unmatched left: 0 (of 10)
+#>   Unmatched right: 10 (of 20)
+#> 
+#> Variable-level Balance:
+#> # A tibble: 2 × 7
+#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
+#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
+#> 1 age             45.7         46.1       -0.34     -0.044        1.72       0.3
+#> 2 income       53129.       53745.      -616.       -0.042        1.16       0.2
+#> 
+#> Overall Balance:
+#>   Mean |Std Diff|: 0.043 (Excellent)
+#>   Max |Std Diff|: 0.044
+#>   Vars with |Std Diff| > 0.25: 0.0%
+#> 
+#> Balance Interpretation:
+#>   |Std Diff| < 0.10: Excellent balance
+#>   |Std Diff| 0.10-0.25: Good balance
+#>   |Std Diff| 0.25-0.50: Acceptable balance
+#>   |Std Diff| > 0.50: Poor balance
+#> 
 
 # Get balance table
 balance_table(balance)
+#> # A tibble: 2 × 7
+#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
+#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
+#> 1 age             45.7         46.1       -0.34     -0.044        1.72       0.3
+#> 2 income       53129.       53745.      -616.       -0.042        1.16       0.2
 ```

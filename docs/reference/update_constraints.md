@@ -55,4 +55,22 @@ dist_obj <- compute_distances(left, right, vars = "age")
 # Apply constraints
 constrained <- update_constraints(dist_obj, max_distance = 2)
 result <- match_couples(constrained)
+#> Warning: All distances are identical (1.0000)
+#>   Your matching variables aren't informative!
+#>   Possible causes:
+#>     - Constant variables (no variation)
+#>     - Highly correlated variables
+#>     - Inappropriate distance metric
+#>   Try:
+#>     - Using auto_scale = TRUE
+#>     - Checking variable variation
+#>     - Adding more informative variables
+#> Warning: 80.0% of pairs are forbidden!
+#>   Only 5 valid pairs for 5 left units - the matching pool is shallow!
+#>   Your constraints might be concerningly strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 ```

@@ -66,4 +66,13 @@ right <- data.frame(
 
 result <- match_couples(left, right, vars = "age")
 couplr::augment(result, left, right)
+#> # A tibble: 5 × 9
+#>   pair_id left_id right_id distance .age_diff treatment_left age_left
+#>     <int>   <int>    <int>    <dbl>     <dbl>          <dbl>    <dbl>
+#> 1       1       1        6        1         1              1       25
+#> 2       2       2        7        1         1              1       30
+#> 3       3       3        8        1        -1              1       35
+#> 4       4       4        9        1        -1              1       40
+#> 5       5       5       10        1         1              1       45
+#> # ℹ 2 more variables: treatment_right <dbl>, age_right <dbl>
 ```

@@ -65,20 +65,68 @@ assignment uses all diagonal entries (total cost = 0).
 # Simple 3x3 assignment
 result <- lap_solve(example_costs$simple_3x3)
 print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      2     2
+#> 2      2      1     3
+#> 3      3      3     4
+#> 
+#> Total cost: 9 
+#> Method: bruteforce 
 # Optimal: sources 1,2,3 -> targets 2,1,3 with cost 9
 
 # Rectangular problem (3 sources, 5 targets)
 result <- lap_solve(example_costs$rectangular_3x5)
 print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      1     1
+#> 2      2      5     2
+#> 3      3      2     3
+#> 
+#> Total cost: 6 
+#> Method: bruteforce 
 # All 3 sources assigned; 2 targets unassigned
 
 # Sparse problem with forbidden assignments
 result <- lap_solve(example_costs$sparse_with_na)
 print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      2     2
+#> 2      2      1     3
+#> 3      3      3     4
+#> 
+#> Total cost: 9 
+#> Method: bruteforce 
 # Avoids NA positions
 
 # Binary costs - test HK01 algorithm
 result <- lap_solve(example_costs$binary_costs, method = "hk01")
 print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      1     0
+#> 2      2      2     0
+#> 3      3      3     0
+#> 
+#> Total cost: 0 
+#> Method: hk01 
 # Finds diagonal assignment (cost = 0)
 ```

@@ -3,24 +3,15 @@
 <g class='svglite'>
 <defs>
   <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
       fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
+      stroke: #000000;
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
     .svglite text {
       white-space: pre;
-      fill: #3E3F3A;
     }
     .svglite g.glyphgroup path {
       fill: inherit;
@@ -35,7 +26,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHw0MzIuMDA=)'>
-<rect x='0.00' y='-0.00000000000011' width='648.00' height='432.00' style='stroke-width: 0.00; stroke: none;' /> fill: #F5F6F8;' />
+<rect x='0.00' y='-0.00000000000011' width='648.00' height='432.00' style='stroke-width: 0.00; stroke: none;' />
 </g>
 <defs>
   <clipPath id='cpOS45Nnw2MzguMDR8NDQuMDh8NDIyLjA0'>
@@ -56,17 +47,17 @@
 <line x1='419.16' y1='208.52' x2='561.91' y2='208.52' style='stroke-width: 4.27; stroke: #93C54B; stroke-linecap: butt;' />
 <line x1='419.16' y1='306.69' x2='561.91' y2='208.52' style='stroke-width: 4.27; stroke: #93C54B; stroke-linecap: butt;' />
 <polygon points='319.19,118.85 328.81,118.85 328.70,118.85 329.12,118.83 329.52,118.75 329.90,118.61 330.26,118.40 330.58,118.14 330.85,117.83 331.07,117.48 331.24,117.10 331.33,116.70 331.37,116.29 331.37,116.29 331.37,104.40 331.37,104.40 331.33,103.99 331.24,103.59 331.07,103.21 330.85,102.87 330.58,102.56 330.26,102.30 329.90,102.09 329.52,101.94 329.12,101.86 328.81,101.84 319.19,101.84 319.50,101.86 319.09,101.85 318.68,101.90 318.29,102.01 317.91,102.19 317.57,102.42 317.28,102.71 317.03,103.04 316.84,103.40 316.71,103.79 316.64,104.20 316.63,104.40 316.63,116.29 316.64,116.09 316.64,116.50 316.71,116.91 316.84,117.30 317.03,117.66 317.28,117.99 317.57,118.28 317.91,118.51 318.29,118.69 318.68,118.80 319.09,118.85 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='324.00' y='115.44' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>3</text>
+<text x='324.00' y='115.44' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>3</text>
 <polygon points='319.19,167.94 328.81,167.94 328.70,167.94 329.12,167.92 329.52,167.84 329.90,167.69 330.26,167.48 330.58,167.22 330.85,166.92 331.07,166.57 331.24,166.19 331.33,165.79 331.37,165.38 331.37,165.38 331.37,153.49 331.37,153.49 331.33,153.08 331.24,152.68 331.07,152.30 330.85,151.95 330.58,151.64 330.26,151.38 329.90,151.18 329.52,151.03 329.12,150.95 328.81,150.93 319.19,150.93 319.50,150.95 319.09,150.93 318.68,150.98 318.29,151.10 317.91,151.27 317.57,151.51 317.28,151.79 317.03,152.12 316.84,152.49 316.71,152.88 316.64,153.28 316.63,153.49 316.63,165.38 316.64,165.17 316.64,165.58 316.71,165.99 316.84,166.38 317.03,166.75 317.28,167.08 317.57,167.36 317.91,167.60 318.29,167.77 318.68,167.89 319.09,167.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #AAA49B;' />
-<text x='324.00' y='164.52' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>5</text>
+<text x='324.00' y='164.52' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>5</text>
 <polygon points='319.19,217.02 328.81,217.02 328.70,217.02 329.12,217.00 329.52,216.92 329.90,216.78 330.26,216.57 330.58,216.31 330.85,216.00 331.07,215.65 331.24,215.27 331.33,214.87 331.37,214.46 331.37,214.46 331.37,202.57 331.37,202.57 331.33,202.16 331.24,201.76 331.07,201.38 330.85,201.04 330.58,200.73 330.26,200.47 329.90,200.26 329.52,200.11 329.12,200.03 328.81,200.01 319.19,200.01 319.50,200.03 319.09,200.02 318.68,200.07 318.29,200.18 317.91,200.36 317.57,200.59 317.28,200.88 317.03,201.21 316.84,201.57 316.71,201.96 316.64,202.37 316.63,202.57 316.63,214.46 316.64,214.26 316.64,214.67 316.71,215.08 316.84,215.47 317.03,215.83 317.28,216.16 317.57,216.45 317.91,216.68 318.29,216.86 318.68,216.97 319.09,217.02 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='324.00' y='213.61' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>2</text>
+<text x='324.00' y='213.61' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>2</text>
 <polygon points='319.19,167.94 328.81,167.94 328.70,167.94 329.12,167.92 329.52,167.84 329.90,167.69 330.26,167.48 330.58,167.22 330.85,166.92 331.07,166.57 331.24,166.19 331.33,165.79 331.37,165.38 331.37,165.38 331.37,153.49 331.37,153.49 331.33,153.08 331.24,152.68 331.07,152.30 330.85,151.95 330.58,151.64 330.26,151.38 329.90,151.18 329.52,151.03 329.12,150.95 328.81,150.93 319.19,150.93 319.50,150.95 319.09,150.93 318.68,150.98 318.29,151.10 317.91,151.27 317.57,151.51 317.28,151.79 317.03,152.12 316.84,152.49 316.71,152.88 316.64,153.28 316.63,153.49 316.63,165.38 316.64,165.17 316.64,165.58 316.71,165.99 316.84,166.38 317.03,166.75 317.28,167.08 317.57,167.36 317.91,167.60 318.29,167.77 318.68,167.89 319.09,167.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #AAA49B;' />
-<text x='324.00' y='164.52' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>7</text>
+<text x='324.00' y='164.52' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>7</text>
 <polygon points='319.19,315.19 328.81,315.19 328.70,315.19 329.12,315.17 329.52,315.09 329.90,314.95 330.26,314.74 330.58,314.48 330.85,314.17 331.07,313.82 331.24,313.44 331.33,313.04 331.37,312.63 331.37,312.63 331.37,300.74 331.37,300.74 331.33,300.33 331.24,299.93 331.07,299.55 330.85,299.21 330.58,298.90 330.26,298.64 329.90,298.43 329.52,298.28 329.12,298.20 328.81,298.18 319.19,298.18 319.50,298.20 319.09,298.19 318.68,298.23 318.29,298.35 317.91,298.53 317.57,298.76 317.28,299.05 317.03,299.38 316.84,299.74 316.71,300.13 316.64,300.54 316.63,300.74 316.63,312.63 316.64,312.43 316.64,312.84 316.71,313.24 316.84,313.64 317.03,314.00 317.28,314.33 317.57,314.62 317.91,314.85 318.29,315.03 318.68,315.14 319.09,315.19 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
-<text x='324.00' y='311.78' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>4</text>
+<text x='324.00' y='311.78' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>4</text>
 <polygon points='319.19,266.11 328.81,266.11 328.70,266.11 329.12,266.09 329.52,266.01 329.90,265.86 330.26,265.65 330.58,265.39 330.85,265.09 331.07,264.74 331.24,264.36 331.33,263.96 331.37,263.55 331.37,263.55 331.37,251.66 331.37,251.66 331.33,251.25 331.24,250.85 331.07,250.47 330.85,250.12 330.58,249.81 330.26,249.55 329.90,249.35 329.52,249.20 329.12,249.12 328.81,249.10 319.19,249.10 319.50,249.12 319.09,249.10 318.68,249.15 318.29,249.26 317.91,249.44 317.57,249.68 317.28,249.96 317.03,250.29 316.84,250.66 316.71,251.05 316.64,251.45 316.63,251.66 316.63,263.55 316.64,263.34 316.64,263.75 316.71,264.16 316.84,264.55 317.03,264.92 317.28,265.25 317.57,265.53 317.91,265.76 318.29,265.94 318.68,266.06 319.09,266.11 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #AAA49B;' />
-<text x='324.00' y='262.69' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>6</text>
+<text x='324.00' y='262.69' text-anchor='middle' style='font-size: 14.23px;fill: #FFFFFF; font-family: "Arial";' textLength='7.91px' lengthAdjust='spacingAndGlyphs'>6</text>
 <circle cx='86.09' cy='208.52' r='19.56' style='stroke-width: 0.71; stroke: #3E3F3A; fill: #3E3F3A;' />
 <circle cx='561.91' cy='208.52' r='19.56' style='stroke-width: 0.71; stroke: #3E3F3A; fill: #3E3F3A;' />
 <circle cx='228.84' cy='110.35' r='19.56' style='stroke-width: 0.71; stroke: #F47C3C; fill: #F47C3C;' />
@@ -75,22 +66,22 @@
 <circle cx='419.16' cy='110.35' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
 <circle cx='419.16' cy='208.52' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
 <circle cx='419.16' cy='306.69' r='19.56' style='stroke-width: 0.71; stroke: #29ABE0; fill: #29ABE0;' />
-<text x='86.09' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='9.48px' lengthAdjust='spacingAndGlyphs'>S</text>
-<text x='228.84' y='115.44' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R1</text>
-<text x='228.84' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R2</text>
-<text x='228.84' y='311.78' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R3</text>
-<text x='419.16' y='115.44' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C1</text>
-<text x='419.16' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C2</text>
-<text x='419.16' y='311.78' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C3</text>
-<text x='561.91' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='8.69px' lengthAdjust='spacingAndGlyphs'>T</text>
-<text x='86.09' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #6C757D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='64.17px' lengthAdjust='spacingAndGlyphs'>S (supply=n)</text>
-<text x='228.84' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #F47C3C; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='28.45px' lengthAdjust='spacingAndGlyphs'>Rows</text>
-<text x='419.16' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #29ABE0; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='44.89px' lengthAdjust='spacingAndGlyphs'>Columns</text>
-<text x='561.91' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #6C757D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='71.55px' lengthAdjust='spacingAndGlyphs'>T (demand=n)</text>
+<text x='86.09' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='9.48px' lengthAdjust='spacingAndGlyphs'>S</text>
+<text x='228.84' y='115.44' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R1</text>
+<text x='228.84' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R2</text>
+<text x='228.84' y='311.78' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>R3</text>
+<text x='419.16' y='115.44' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C1</text>
+<text x='419.16' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C2</text>
+<text x='419.16' y='311.78' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='18.17px' lengthAdjust='spacingAndGlyphs'>C3</text>
+<text x='561.91' y='213.61' text-anchor='middle' style='font-size: 14.23px; font-weight: bold;fill: #FFFFFF; font-family: "Arial";' textLength='8.69px' lengthAdjust='spacingAndGlyphs'>T</text>
+<text x='86.09' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #6C757D; font-family: "Arial";' textLength='36.05px' lengthAdjust='spacingAndGlyphs'>Source</text>
+<text x='228.84' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #F47C3C; font-family: "Arial";' textLength='42.12px' lengthAdjust='spacingAndGlyphs'>Workers</text>
+<text x='419.16' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #29ABE0; font-family: "Arial";' textLength='24.03px' lengthAdjust='spacingAndGlyphs'>Jobs</text>
+<text x='561.91' y='379.48' text-anchor='middle' style='font-size: 11.38px;fill: #6C757D; font-family: "Arial";' textLength='22.14px' lengthAdjust='spacingAndGlyphs'>Sink</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHw0MzIuMDA=)'>
-<text x='324.00' y='41.77' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='291.91px' lengthAdjust='spacingAndGlyphs'>Solid green = tree edges (basis); dashed = non-basic edges</text>
-<text x='324.00' y='25.46' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='259.02px' lengthAdjust='spacingAndGlyphs'>Network Simplex: Spanning Tree Basis</text>
+<text x='324.00' y='41.77' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='367.78px' lengthAdjust='spacingAndGlyphs'>Green = tree edges (basis); dashed = non-basic edges. Pivots swap edges.</text>
+<text x='324.00' y='25.46' text-anchor='middle' style='font-size: 14.00px; font-weight: bold; font-family: "Arial";' textLength='259.02px' lengthAdjust='spacingAndGlyphs'>Network Simplex: Spanning Tree Basis</text>
 </g>
 </g>
 </svg>

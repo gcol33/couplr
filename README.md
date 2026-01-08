@@ -1,8 +1,10 @@
 # couplr
 
-[![GitHub stars](https://img.shields.io/github/stars/gcol33/couplr)](https://github.com/gcol33/couplr)
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/gcol33/couplr)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![CRAN status](https://www.r-pkg.org/badges/version/couplr)](https://CRAN.R-project.org/package=couplr)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/couplr)](https://cran.r-project.org/package=couplr)
+[![Monthly downloads](https://cranlogs.r-pkg.org/badges/couplr)](https://cran.r-project.org/package=couplr)
+[![R-CMD-check](https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **couplr** is an R package for solving Linear Assignment Problems (LAP) with production-ready matching workflows. It provides optimal one-to-one matching between two groups, with automatic preprocessing, balance diagnostics, and analysis-ready output.
 
@@ -13,7 +15,7 @@ Existing R packages for optimal matching (MatchIt, optmatch) focus on propensity
 - **Direct covariate matching**: Match on observed variables without propensity score estimation
 - **Algorithm choice**: 20 LAP solvers let you pick the right algorithm for your problem size and structure
 - **Production workflows**: Preprocessing, diagnostics, and joined output in a single pipeline
-- **Beyond causal inference**: Match plots to controls, pair samples for experiments, align images pixel-by-pixel
+- **Beyond causal inference**: Pair samples for experiments, assign workers to tasks, align images pixel-by-pixel
 
 If you need propensity score matching with replacement or variable ratios, use MatchIt. If you need optimal one-to-one assignment with full control over the distance metric and algorithm, use couplr.
 

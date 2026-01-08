@@ -349,7 +349,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.23 seconds
+#> Greedy matching (n=500): 0.24 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -524,7 +524,7 @@ cat("Hungarian total cost:", get_total_cost(result_hungarian), "\n")
 ### Cause
 
 When multiple optimal solutions exist (tied costs), different algorithms
-may find different ones. **The total cost should be the same**—if not,
+may find different ones. **The total cost should be the same**; if not,
 report a bug.
 
 ### Diagnosis

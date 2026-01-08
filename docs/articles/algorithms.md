@@ -116,7 +116,7 @@ total cost 2 + 1 + 2 = 5.
 
     #> Warning: The `label.size` argument of `geom_label()` is deprecated as of ggplot2 3.5.0.
     #> ℹ Please use the `linewidth` argument instead.
-    #> This warning is displayed once every 8 hours.
+    #> This warning is displayed once per session.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
 
@@ -137,7 +137,7 @@ properties](algorithms_files/figure-html/decision-flowchart-1.svg)
 | Network Simplex | $`O(n^3)`$ typical | General, good dual info | — |
 | Orlin-Ahuja | $`O(\sqrt{n} \cdot m \log nC)`$ | Large sparse with scaling | Small dense |
 | Push-Relabel | $`O(n^2 m)`$ | Max-flow formulations | Dense problems |
-| Ramshaw-Tarjan | $`O(nm \log n)`$ | Rectangular (n ≠ m) | Square dense |
+| Ramshaw-Tarjan | $`O(nm\log n)`$ | Rectangular (n ≠ m) | Square dense |
 
 ------------------------------------------------------------------------
 
@@ -530,7 +530,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ### 11. Ramshaw-Tarjan Algorithm
 
-**Complexity**: $`O(nm \log n)`$
+**Complexity**: $`O(nm\log n)`$
 
 Optimized for rectangular assignment problems where $`n \neq m`$
 (Ramshaw & Tarjan, 2012).

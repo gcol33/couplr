@@ -248,7 +248,7 @@ ggplot() +
 | Network Simplex | $O(n^3)$ typical | General, good dual info | — |
 | Orlin-Ahuja | $O(\sqrt{n} \cdot m \log nC)$ | Large sparse with scaling | Small dense |
 | Push-Relabel | $O(n^2 m)$ | Max-flow formulations | Dense problems |
-| Ramshaw-Tarjan | $O(nm \log n)$ | Rectangular (n ≠ m) | Square dense |
+| Ramshaw-Tarjan | $O(nm\log n)$ | Rectangular (n ≠ m) | Square dense |
 
 ---
 
@@ -372,27 +372,27 @@ ggplot() +
   # Bid labels
   geom_label(data = edges[edges$type == "bid", ],
              aes(x = (from_x + to_x)/2, y = (from_y + to_y)/2 + 0.15, label = label),
-             fill = "#f47c3c", color = "white", fontface = "bold", size = 4) +
+             fill = "#f47c3c", color = "white", fontface = "bold", size = 5) +
   geom_label(data = edges[edges$type == "considering", ],
              aes(x = (from_x + to_x)/2, y = (from_y + to_y)/2 - 0.15, label = label),
-             fill = "#6c757d", color = "white", size = 3.5) +
+             fill = "#6c757d", color = "white", size = 4.5) +
   # Source nodes
   geom_point(data = nodes[nodes$type == "source", ],
-             aes(x = x, y = y, color = matched), size = 16) +
+             aes(x = x, y = y, color = matched), size = 18) +
   geom_text(data = nodes[nodes$type == "source", ],
-            aes(x = x, y = y, label = label), color = "white", fontface = "bold", size = 5) +
+            aes(x = x, y = y, label = label), color = "white", fontface = "bold", size = 6) +
   # Target nodes with prices
   geom_point(data = nodes[nodes$type == "target", ],
-             aes(x = x, y = y), color = "#29abe0", size = 16) +
+             aes(x = x, y = y), color = "#29abe0", size = 18) +
   geom_text(data = nodes[nodes$type == "target", ],
-            aes(x = x, y = y, label = label), color = "white", fontface = "bold", size = 5) +
+            aes(x = x, y = y, label = label), color = "white", fontface = "bold", size = 6) +
   # Price labels
   geom_label(data = nodes[nodes$type == "target", ],
              aes(x = x + 0.6, y = y, label = paste0("p=", price)),
-             fill = "#29abe0", color = "white", size = 4, label.padding = unit(0.2, "lines")) +
+             fill = "#29abe0", color = "white", size = 5, label.padding = unit(0.25, "lines")) +
   # Legend annotations
   annotate("text", x = 2.5, y = 0.3, label = "S1 bids for T1: increment = (best - 2nd best) + ε",
-           size = 3.5, color = "#3e3f3a", fontface = "italic") +
+           size = 4, color = "#6c757d", fontface = "italic") +
   scale_color_manual(values = c("TRUE" = "#93c54b", "FALSE" = "#f47c3c"), guide = "none") +
   labs(title = "Auction Algorithm: Bidding Phase",
        subtitle = "Sources bid for targets; prices rise with competition") +
@@ -617,22 +617,22 @@ ggplot() +
   geom_label(data = edges[edges$cost > 0, ],
              aes(x = (from_x + to_x)/2, y = (from_y + to_y)/2,
                  label = cost, fill = in_tree),
-             color = "white", size = 3.5, label.padding = unit(0.15, "lines")) +
+             color = "white", size = 5, label.padding = unit(0.2, "lines")) +
   scale_fill_manual(values = c("TRUE" = "#93c54b", "FALSE" = "#aaa49b"), guide = "none") +
   # Nodes
   geom_point(data = nodes[nodes$type == "super", ],
-             aes(x = x, y = y), color = "#3e3f3a", size = 14) +
+             aes(x = x, y = y), color = "#3e3f3a", size = 18) +
   geom_point(data = nodes[nodes$type == "row", ],
-             aes(x = x, y = y), color = "#f47c3c", size = 14) +
+             aes(x = x, y = y), color = "#f47c3c", size = 18) +
   geom_point(data = nodes[nodes$type == "col", ],
-             aes(x = x, y = y), color = "#29abe0", size = 14) +
+             aes(x = x, y = y), color = "#29abe0", size = 18) +
   geom_text(data = nodes, aes(x = x, y = y, label = label),
-            color = "white", fontface = "bold", size = 4) +
+            color = "white", fontface = "bold", size = 5) +
   # Layer labels - S = Source (supply), T = Sink (demand)
-  annotate("text", x = 0, y = 0.3, label = "S (supply=n)", size = 3.5, color = "#6c757d") +
-  annotate("text", x = 1.5, y = 0.3, label = "Rows", size = 3.5, color = "#f47c3c") +
-  annotate("text", x = 3.5, y = 0.3, label = "Columns", size = 3.5, color = "#29abe0") +
-  annotate("text", x = 5, y = 0.3, label = "T (demand=n)", size = 3.5, color = "#6c757d") +
+  annotate("text", x = 0, y = 0.3, label = "S (supply=n)", size = 4, color = "#6c757d") +
+  annotate("text", x = 1.5, y = 0.3, label = "Rows", size = 4, color = "#f47c3c") +
+  annotate("text", x = 3.5, y = 0.3, label = "Columns", size = 4, color = "#29abe0") +
+  annotate("text", x = 5, y = 0.3, label = "T (demand=n)", size = 4, color = "#6c757d") +
   labs(title = "Network Simplex: Spanning Tree Basis",
        subtitle = "Solid green = tree edges (basis); dashed = non-basic edges") +
   theme_void() +
@@ -721,7 +721,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 
 ## 11. Ramshaw-Tarjan Algorithm
 
-**Complexity**: $O(nm \log n)$
+**Complexity**: $O(nm\log n)$
 
 Optimized for rectangular assignment problems where $n \neq m$ (Ramshaw & Tarjan, 2012).
 

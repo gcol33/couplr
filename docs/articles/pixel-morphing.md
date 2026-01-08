@@ -60,7 +60,7 @@ Pixels provide an ideal testbed for understanding assignment problems:
 - Each pixel is an **entity** with measurable properties
 - **Color** = feature (what it looks like)
 - **Position** = spatial location (where it is)
-- The matching is **visually verifiable**—you can see if it worked
+- The matching is **visually verifiable**: you can see if it worked
 
 The same algorithms that morph images smoothly also track particles in
 physics, align molecules in chemistry, and match vegetation plots in
@@ -958,8 +958,8 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 ```
 
-**For n \> 50,000**: Combine strategies—blocking + greedy within blocks,
-or implement custom approximations using the techniques in this
+**For n \> 50,000**: Combine strategies (blocking + greedy within
+blocks), or implement custom approximations using the techniques in this
 vignette.
 
 ### Limitations of Approximation Strategies

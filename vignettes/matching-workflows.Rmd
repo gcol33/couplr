@@ -837,10 +837,10 @@ Variable Statistics:
 
 **Quality thresholds** for standardized differences:
 
-- **< 0.1**: Excellent balance---treat as successfully matched
-- **0.1--0.25**: Good balance---acceptable for most purposes
-- **0.25--0.5**: Marginal---consider refinement or sensitivity analysis
-- **> 0.5**: Poor balance---matching strategy needs revision
+- **< 0.1**: Excellent balance (treat as successfully matched)
+- **0.1-0.25**: Good balance (acceptable for most purposes)
+- **0.25-0.5**: Marginal (consider refinement or sensitivity analysis)
+- **> 0.5**: Poor balance (matching strategy needs revision)
 
 **What to do if balance is poor**:
 

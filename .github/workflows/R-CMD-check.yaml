@@ -43,6 +43,8 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
           cache-version: 2
+        env:
+          R_COMPILE_AND_INSTALL_PACKAGES: always
 
       - uses: r-lib/actions/check-r-package@v2
         with:

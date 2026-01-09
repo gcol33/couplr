@@ -89,7 +89,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-01-08</h4>
+            <h4 data-toc-skip class="date">2026-01-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/troubleshooting.Rmd" class="external-link"><code>vignettes/troubleshooting.Rmd</code></a></small>
       <div class="d-none name"><code>troubleshooting.Rmd</code></div>
@@ -156,7 +156,8 @@ and provides step-by-step solutions.</p>
 <code class="sourceCode R"><span><span class="co"># This fails: all assignments have Inf cost</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in lap_solve_bruteforce(work, maximize): Infeasible given forbidden edges</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_bruteforce()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Infeasible given forbidden edges</span></span></code></pre></div>
 <p>Error message: “No feasible assignment found” or total cost is
 Inf.</p>
 </div>
@@ -439,17 +440,21 @@ included in matching</li>
 <span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
-<span><span class="co">#&gt; Error in lap_solve_auction_scaled(work, maximize): Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Original matches:"</span>, <span class="va">result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Original matches: 100</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With caliper:"</span>, <span class="va">result_strict</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error: object 'result_strict' not found</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'result_strict' not found</span></span>
 <span></span>
 <span><span class="va">balance_strict</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result_strict</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error: object 'result_strict' not found</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'result_strict' not found</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance_strict</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error: object 'balance_strict' not found</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'balance_strict' not found</span></span></code></pre></div>
 <p><strong>3. Use blocking on problematic variable:</strong></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Block on income tertiles to ensure exact balance</span></span>
@@ -590,11 +595,14 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <span></span>
 <span><span class="co"># Fast: reuse cached distances</span></span>
 <span><span class="va">result1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in lap_solve_auction_scaled(work, maximize): Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
 <span><span class="va">result2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in lap_solve_auction_scaled(work, maximize): Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
 <span><span class="va">result3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in lap_solve_auction_scaled(work, maximize): Auction(scaled): iteration guard at eps=1126483316163258824588840464686822002040606866822442644006464204284244600860220408644206628884660088462204820084486686828448800068422244884462088864286246088448668606428686082644420022446608028628488602664280848840444608420828066682648826868226802866640024264200844882840648848844628646628040.000000, phase=20</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=1126483316163258824588840464686822002040606866822442644006464204284244600860220408644206628884660088462204820084486686828448800068422244884462088864286246088448668606428686082644420022446608028628488602664280848840444608420828066682648826868226802866640024264200844882840648848844628646628040.000000, phase=20</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -754,7 +762,8 @@ same</strong>; if not, report a bug.</p>
 <span></span>
 <span><span class="co"># This may fail or give unexpected results</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error: Missing values (NA) not allowed in matching variables</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Missing values (NA) not allowed in matching variables</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="cause-4">Cause<a class="anchor" aria-label="anchor" href="#cause-4"></a>

@@ -20,24 +20,24 @@ But first: the same problem, five different solutions.
 dramatically different
 speeds](algorithms_files/figure-html/the-race-1.svg)
 
-Five algorithms. Same input. Same optimal answer. **22× speed
-difference.**
+When you run five different assignment algorithms on identical input,
+they all find the same optimal answer—but the fastest finishes **22
+times quicker** than the slowest.
 
-The slowest (Hungarian) is the one everyone learns. The fastest (CSA)
-was published 40 years later. Between them: decades of algorithmic
-innovation that most software ignores.
+The slowest happens to be Hungarian, the algorithm everyone learns in
+textbooks. CSA, the fastest here, came out four decades later. That gap
+represents years of algorithmic refinement that most production software
+never adopted.
 
-Why would anyone need five ways to solve the same problem?
+Why would anyone need five ways to solve the same problem? Because they
+don’t all behave the same under different conditions. The Hungarian
+method that handles a 100×100 matrix without complaint becomes painfully
+slow at 1000×1000. The Auction algorithm that dominates large dense
+problems stumbles on small sparse ones. Different matrix sizes,
+different sparsity patterns, different cost distributions—each situation
+favors a different algorithm.
 
-Because they don’t all *behave* the same. Different matrix sizes,
-different sparsity patterns, different cost distributions—each favors a
-different algorithm. The Hungarian method that works fine on a 100×100
-matrix becomes painfully slow at 1000×1000. The Auction algorithm that
-dominates large dense problems struggles with small sparse ones.
-
-couplr gives you all of them. And it picks the right one automatically.
-
-Let’s see how they work.
+couplr gives you all of them, and it picks the right one automatically.
 
 ------------------------------------------------------------------------
 
@@ -135,6 +135,12 @@ and fix it?
 greedily assign each row to its cheapest available column. This often
 gets most of the matching right immediately.
 
+    #> Warning: The `label.size` argument of `geom_label()` is deprecated as of ggplot2 3.5.0.
+    #> ℹ Please use the `linewidth` argument instead.
+    #> This warning is displayed once per session.
+    #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    #> generated.
+
 ![JV algorithm showing column reduction initialization followed by
 shortest path
 augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
@@ -158,7 +164,7 @@ n <- 500
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "jv"))
 #>    user  system elapsed 
-#>    0.03    0.00    0.03
+#>    0.01    0.00    0.04
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 165.75
 ```
@@ -174,14 +180,16 @@ approach.
 
 ## The Scaling Revolution
 
-In the late 1980s, researchers discovered a powerful trick:
-**ε-scaling**. Instead of requiring exact optimality at every step,
-allow a small error ε. Start with large ε (fast, sloppy). Shrink ε over
-multiple phases. End with ε ≈ 0 (exact).
+In the late 1980s, researchers discovered a powerful trick called
+**ε-scaling**. The idea is to relax the optimality requirement: instead
+of demanding exact answers at every step, you tolerate a small error ε.
+You start with a large ε, which lets you make big sloppy steps and rapid
+progress. Then you shrink ε over multiple phases until it’s essentially
+zero—and you have an exact answer.
 
-This transforms the problem. Large ε means big steps, rapid progress.
-Small ε means careful refinement. The total work can be less than doing
-everything exactly from the start.
+This transforms how the algorithm behaves. Large ε means big steps and
+rapid progress; small ε means careful refinement. The total work can end
+up being less than doing everything exactly from the start.
 
 Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and
 Orlin-Ahuja.
@@ -230,7 +238,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "auction"))
 #>    user  system elapsed 
-#>    0.25    0.00    0.27
+#>    0.22    0.00    0.25
 ```
 
 Auction shines for large dense problems. But it’s sensitive to ε. Get it
@@ -265,7 +273,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "csa"))
 #>    user  system elapsed 
-#>    0.08    0.00    0.07
+#>    0.14    0.00    0.14
 ```
 
 CSA often wins benchmarks for medium-large dense problems. It’s the
@@ -313,7 +321,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "gabow_tarjan"))
 #>    user  system elapsed 
-#>    3.08    0.00    3.09
+#>    5.02    0.05    5.31
 ```
 
 Gabow-Tarjan is primarily of theoretical interest—it provides the best
@@ -351,10 +359,9 @@ large cost ranges. In practice, the overhead often makes it slower than
 CSA for dense problems. But for the right class of problems, it’s
 unbeatable.
 
-Four scaling algorithms. Four ways to trade precision for speed, then
-trade it back. Each optimized for different conditions.
-
-But there’s a completely different way to think about the problem.
+That’s four scaling algorithms, each trading precision for speed in a
+different way. But there’s a completely different way to think about the
+problem entirely.
 
 ------------------------------------------------------------------------
 
@@ -400,7 +407,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "network_simplex"))
 #>    user  system elapsed 
-#>  539.51    1.19  545.08
+#>  961.17    2.60  994.48
 ```
 
 Network Simplex is a workhorse of operations research. It’s not always
@@ -442,7 +449,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "push_relabel"))
 #>    user  system elapsed 
-#>    0.43    0.00    0.45
+#>    0.74    0.00    0.75
 ```
 
 Two network perspectives. Same problem. Different algorithmic
@@ -471,7 +478,7 @@ n <- 500
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
 system.time(result <- lap_solve(cost, method = "hk01"))
 #>    user  system elapsed 
-#>    0.00    0.00    0.02
+#>    0.02    0.00    0.02
 ```
 
 When you have binary costs and large $`n`$, HK01 is dramatically faster.
@@ -498,7 +505,7 @@ cost[edges] <- runif(length(edges), 0, 100)
 
 system.time(result <- lap_solve(cost, method = "sap"))
 #>    user  system elapsed 
-#>    0.69    0.00    0.72
+#>    1.12    0.00    1.11
 ```
 
 For very sparse problems, SAP can be orders of magnitude faster than
@@ -526,7 +533,7 @@ cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 
 system.time(result <- lap_solve(cost, method = "ramshaw_tarjan"))
 #>    user  system elapsed 
-#>    0.00    0.00    0.02
+#>    0.00    0.00    0.01
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
 #> Warning: Unknown or uninitialised column: `assignment`.
 #> Matched 0 of 100 rows

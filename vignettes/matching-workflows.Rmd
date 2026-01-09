@@ -204,7 +204,8 @@ ggplot(result$pairs, aes(x = distance)) +
   ) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "transparent", color = NA),
-        panel.background = element_rect(fill = "transparent", color = NA))
+        panel.background = element_rect(fill = "transparent", color = NA),
+        panel.grid = element_blank())
 ```
 
 **Interpretation:**
@@ -589,7 +590,8 @@ ggplot(result_no_cal$pairs, aes(x = distance)) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "transparent", color = NA),
         panel.background = element_rect(fill = "transparent", color = NA),
-        legend.background = element_rect(fill = "transparent", color = NA))
+        legend.background = element_rect(fill = "transparent", color = NA),
+        panel.grid = element_blank())
 ```
 
 ### Choosing Caliper Width
@@ -872,9 +874,15 @@ balance_comparison <- bind_rows(
 )
 
 ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
-  geom_col(position = "dodge") +
-  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b") +
-  geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c") +
+  geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b", linewidth = 0.8) +
+  geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c", linewidth = 0.8) +
+  geom_col(position = "dodge", width = 0.5) +
+  geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"),
+             fill = "#93c54b", color = "white", inherit.aes = FALSE,
+             size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
+  geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"),
+             fill = "#f47c3c", color = "white", inherit.aes = FALSE,
+             size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
   labs(
     title = "Covariate Balance Before and After Matching",
     x = "Variable",
@@ -884,7 +892,8 @@ ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "transparent", color = NA),
         panel.background = element_rect(fill = "transparent", color = NA),
-        legend.background = element_rect(fill = "transparent", color = NA)) +
+        legend.background = element_rect(fill = "transparent", color = NA),
+        panel.grid = element_blank()) +
   coord_flip()
 ```
 
@@ -1316,6 +1325,7 @@ ggplot() +
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
                arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
                color = "#3e3f3a", linewidth = 0.7) +
+
   # Draw decision branches
   geom_segment(data = edges[4:5, ],
                aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
@@ -1326,11 +1336,11 @@ ggplot() +
              aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
              arrow = arrow(length = unit(0.15, "cm"), type = "closed"),
              color = "#3e3f3a", linewidth = 0.7, curvature = 0.3) +
-  # Edge labels
+  # Edge labels - no explicit color so CSS can control dark mode
   geom_text(data = edges[!is.na(edges$label_x), ],
             aes(x = label_x, y = label_y, label = label),
-            size = 3, color = "#3e3f3a", fontface = "italic") +
-  # Step nodes (rectangles) - sandstone info color
+            size = 3, fontface = "italic") +
+  # Step nodes (rectangles) - sandstone info color with white text
   geom_label(data = nodes[nodes$type == "step", ],
              aes(x = x, y = y, label = label), size = 3,
              fill = "#29abe0", color = "white",
@@ -1340,9 +1350,9 @@ ggplot() +
   geom_point(data = nodes[nodes$type == "decision", ],
              aes(x = x, y = y), shape = 23, size = 20,
              fill = "#ffc107", color = "#f47c3c", stroke = 1.5) +
+  # Decision text - use default color that adapts to dark mode
   geom_text(data = nodes[nodes$type == "decision", ],
-            aes(x = x, y = y, label = label), size = 3, lineheight = 0.85,
-            color = "#3e3f3a") +
+            aes(x = x, y = y, label = label), size = 3, lineheight = 0.85) +
   # Title
   labs(title = "Matching Workflow") +
   theme_minimal() +

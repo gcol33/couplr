@@ -135,12 +135,6 @@ and fix it?
 greedily assign each row to its cheapest available column. This often
 gets most of the matching right immediately.
 
-    #> Warning: The `label.size` argument of `geom_label()` is deprecated as of ggplot2 3.5.0.
-    #> ℹ Please use the `linewidth` argument instead.
-    #> This warning is displayed once per session.
-    #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    #> generated.
-
 ![JV algorithm showing column reduction initialization followed by
 shortest path
 augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
@@ -164,7 +158,7 @@ n <- 500
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "jv"))
 #>    user  system elapsed 
-#>    0.01    0.00    0.04
+#>    0.03    0.00    0.03
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 165.75
 ```
@@ -238,7 +232,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "auction"))
 #>    user  system elapsed 
-#>    0.22    0.00    0.25
+#>    0.27    0.00    0.25
 ```
 
 Auction shines for large dense problems. But it’s sensitive to ε. Get it
@@ -273,7 +267,7 @@ n <- 800
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "csa"))
 #>    user  system elapsed 
-#>    0.14    0.00    0.14
+#>    0.08    0.00    0.07
 ```
 
 CSA often wins benchmarks for medium-large dense problems. It’s the
@@ -321,7 +315,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "gabow_tarjan"))
 #>    user  system elapsed 
-#>    5.02    0.05    5.31
+#>    3.14    0.00    3.17
 ```
 
 Gabow-Tarjan is primarily of theoretical interest—it provides the best
@@ -351,7 +345,7 @@ n <- 200
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 system.time(result <- lap_solve(cost, method = "orlin"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.01
+#>    0.00    0.00    0.02
 ```
 
 Orlin-Ahuja gives the best theoretical bounds for sparse problems with
@@ -407,7 +401,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "network_simplex"))
 #>    user  system elapsed 
-#>  961.17    2.60  994.48
+#>  533.94    1.66  538.83
 ```
 
 Network Simplex is a workhorse of operations research. It’s not always
@@ -449,7 +443,7 @@ n <- 300
 cost <- matrix(runif(n * n, 0, 100), n, n)
 system.time(result <- lap_solve(cost, method = "push_relabel"))
 #>    user  system elapsed 
-#>    0.74    0.00    0.75
+#>    0.42    0.00    0.45
 ```
 
 Two network perspectives. Same problem. Different algorithmic
@@ -478,7 +472,7 @@ n <- 500
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
 system.time(result <- lap_solve(cost, method = "hk01"))
 #>    user  system elapsed 
-#>    0.02    0.00    0.02
+#>    0.00    0.00    0.01
 ```
 
 When you have binary costs and large $`n`$, HK01 is dramatically faster.
@@ -505,7 +499,7 @@ cost[edges] <- runif(length(edges), 0, 100)
 
 system.time(result <- lap_solve(cost, method = "sap"))
 #>    user  system elapsed 
-#>    1.12    0.00    1.11
+#>    0.69    0.00    0.70
 ```
 
 For very sparse problems, SAP can be orders of magnitude faster than
@@ -533,7 +527,7 @@ cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 
 system.time(result <- lap_solve(cost, method = "ramshaw_tarjan"))
 #>    user  system elapsed 
-#>    0.00    0.00    0.01
+#>    0.02    0.00    0.00
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
 #> Warning: Unknown or uninitialised column: `assignment`.
 #> Matched 0 of 100 rows

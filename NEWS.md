@@ -1,3 +1,15 @@
+# couplr 1.0.2
+
+## Documentation
+
+* Added Overview section to algorithms vignette with audience and prerequisites
+* Fixed workflow diagram dark mode text handling in matching-workflows vignette
+* Improved SVG theme-awareness for multi-line text labels
+* Removed grid lines from matching-workflows plots for cleaner appearance
+* Added threshold labels to balance comparison plot
+
+---
+
 # couplr 1.0.0
 
 ## Major New Features (2025-11-19 Update)

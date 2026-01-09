@@ -256,8 +256,7 @@ entries, no valid assignment exists.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.background <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        panel.background <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-
-<div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
 <svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
 <g class='svglite'>
 <defs>
@@ -345,8 +344,7 @@ entries, no valid assignment exists.</p>
 <text x='40.46' y='14.93' style='font-size: 13.20px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='137.73px' lengthAdjust='spacingAndGlyphs'>Poor Covariate Overlap</text>
 </g>
 </g>
-</svg></div>
-
+</svg></div></p>
 <hr>
 </div>
 </div>
@@ -549,7 +547,7 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching (n=500):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Greedy matching (n=500): 0.24 seconds</span></span>
+<span><span class="co">#&gt; Greedy matching (n=500): 0.23 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Quality (mean distance):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Quality (mean distance): 0.2886</span></span></code></pre></div>
 <p><strong>2. Use blocking to divide the problem:</strong></p>
@@ -979,116 +977,78 @@ packages</li>
 
 
   <script>
-/* SVG Copy Button Functionality - Copy as PNG Image */
+/* SVG Copy Button Functionality */
 (function() {
   "use strict";
 
-  // Convert SVG to PNG and copy to clipboard
-  async function copySvgAsImage(svg, btn) {
-    try {
-      // Get SVG dimensions
-      var svgRect = svg.getBoundingClientRect();
-      var width = svgRect.width;
-      var height = svgRect.height;
-
-      // Use higher resolution for better quality (2x)
-      var scale = 2;
-      var canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      var ctx = canvas.getContext("2d");
-      ctx.scale(scale, scale);
-
-      // Clone SVG and prepare for rendering
-      var clone = svg.cloneNode(true);
-      clone.classList.remove("inline-svg");
-
-      // Get computed styles and inline them for proper rendering
-      var svgStyles = window.getComputedStyle(svg);
-
-      // Serialize SVG
-      var serializer = new XMLSerializer();
-      var svgString = serializer.serializeToString(clone);
-
-      // Create a blob and URL for the SVG
-      var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-      var url = URL.createObjectURL(svgBlob);
-
-      // Create image and draw to canvas
-      var img = new Image();
-      img.onload = async function() {
-        // Fill white background (for transparency)
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw the SVG
-        ctx.drawImage(img, 0, 0, width, height);
-        URL.revokeObjectURL(url);
-
-        // Convert canvas to blob and copy to clipboard
-        canvas.toBlob(async function(blob) {
-          try {
-            var item = new ClipboardItem({ "image/png": blob });
-            await navigator.clipboard.write([item]);
-
-            // Show success tooltip
-            showTooltip(btn, "Copied!");
-          } catch (err) {
-            console.error("Failed to copy image:", err);
-            showTooltip(btn, "Copy failed - try right-click");
-          }
-        }, "image/png");
-      };
-
-      img.onerror = function() {
-        URL.revokeObjectURL(url);
-        console.error("Failed to load SVG as image");
-        showTooltip(btn, "Copy failed");
-      };
-
-      img.src = url;
-
-    } catch (err) {
-      console.error("Error copying SVG:", err);
-      showTooltip(btn, "Copy failed");
-    }
-  }
-
-  // Show tooltip message
-  function showTooltip(btn, message) {
-    var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
-    btn.setAttribute("data-bs-original-title", message);
-    var tooltip = bootstrap.Tooltip.getInstance(btn);
-    if (tooltip) {
-      tooltip.show();
-    }
-    setTimeout(function() {
-      btn.setAttribute("data-bs-original-title", originalTitle);
-    }, 1500);
-  }
-
   // Initialize SVG copy buttons after DOM is ready
   document.addEventListener("DOMContentLoaded", function() {
-    // Check for Clipboard API support
-    if (!navigator.clipboard || !navigator.clipboard.write) {
-      console.warn("Clipboard API not supported - SVG copy buttons disabled");
+    if (typeof ClipboardJS === "undefined") {
+      console.warn("ClipboardJS not loaded - SVG copy buttons disabled");
       return;
     }
 
-    // Add click handlers to all SVG copy buttons
-    document.querySelectorAll(".btn-copy-svg").forEach(function(btn) {
-      btn.addEventListener("click", function(e) {
-        e.preventDefault();
-        var container = btn.closest(".svg-container");
-        if (!container) return;
+    // Initialize clipboard for SVG copy buttons
+    var svgClipboard = new ClipboardJS(".btn-copy-svg", {
+      text: function(trigger) {
+        var container = trigger.closest(".svg-container");
+        if (!container) return "";
 
         var svg = container.querySelector("svg");
-        if (!svg) return;
+        if (!svg) return "";
 
-        copySvgAsImage(svg, btn);
-      });
+        // Clone SVG to avoid modifying the original
+        var clone = svg.cloneNode(true);
 
-      // Initialize Bootstrap tooltip
+        // Remove inline-svg class (not needed in copied version)
+        clone.classList.remove("inline-svg");
+
+        // Add XML declaration and serialize
+        var serializer = new XMLSerializer();
+        var svgString = serializer.serializeToString(clone);
+
+        // Add XML declaration if not present
+        if (!svgString.startsWith("<?xml")) {
+          svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+        }
+
+        return svgString;
+      }
+    });
+
+    // Handle success
+    svgClipboard.on("success", function(e) {
+      var btn = e.trigger;
+      var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
+
+      // Update tooltip to show "Copied!"
+      btn.setAttribute("data-bs-original-title", "Copied!");
+      var tooltip = bootstrap.Tooltip.getInstance(btn);
+      if (tooltip) {
+        tooltip.show();
+      }
+
+      // Reset after delay
+      setTimeout(function() {
+        btn.setAttribute("data-bs-original-title", originalTitle);
+      }, 1500);
+
+      e.clearSelection();
+    });
+
+    // Handle error
+    svgClipboard.on("error", function(e) {
+      var btn = e.trigger;
+      btn.setAttribute("data-bs-original-title", "Press Ctrl+C to copy");
+      var tooltip = bootstrap.Tooltip.getInstance(btn);
+      if (tooltip) {
+        tooltip.show();
+      }
+    });
+
+    // Initialize tooltips for SVG copy buttons
+    var svgCopyButtons = document.querySelectorAll(".btn-copy-svg");
+    svgCopyButtons.forEach(function(btn) {
       new bootstrap.Tooltip(btn, { container: "body" });
     });
   });

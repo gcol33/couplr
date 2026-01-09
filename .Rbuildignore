@@ -37,3 +37,10 @@
 ^VIGNETTE_IMPROVEMENT_PLAN\.md$
 ^src/.*\.o$
 ^src/.*\.dll$
+^.*\.png$
+^.*\.pdf$
+^error\.txt$
+^fix_.*\.R$
+^fix_.*\.ps1$
+^iterate_plots$
+^vignettes/plans$

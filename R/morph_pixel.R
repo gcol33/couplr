@@ -105,18 +105,11 @@
 #' A warning is issued if overlaps/holes are detected in the final frame.
 #'
 #' @examples
-#' \donttest{
-#' # Use bundled example images
-#' imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
-#' imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-#'
-#' # Basic animation (writes to temp file)
-#' outfile <- tempfile(fileext = ".gif")
-#' pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
-#'
-#' # Pure spatial rearrangement (ignore B's colors in assignment)
-#' pixel_morph_animate(imgA, imgB, alpha = 0, beta = 1,
-#'                     outfile = tempfile(fileext = ".gif"), show = FALSE)
+#' if (requireNamespace("magick", quietly = TRUE)) {
+#'   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
+#'   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
+#'   outfile <- tempfile(fileext = ".gif")
+#'   pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
 #' }
 #'
 #' @export
@@ -504,19 +497,10 @@ pixel_morph_animate <- function(imgA,
 #' }
 #'
 #' @examples
-#' \donttest{
-#' # Use bundled example images
-#' imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
-#' imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-#'
-#' # Basic morph
-#' result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
-#'
-#' # Pure spatial rearrangement
-#' result <- pixel_morph(imgA, imgB, alpha = 0, beta = 1, show = FALSE)
-#'
-#' # Exact mode for small images (guaranteed permutation)
-#' result <- pixel_morph(imgA, imgB, mode = "exact", downscale_steps = 0, show = FALSE)
+#' if (requireNamespace("magick", quietly = TRUE)) {
+#'   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
+#'   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
+#'   result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
 #' }
 #'
 #' @seealso \code{\link{pixel_morph_animate}} for animated version

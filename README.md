@@ -36,7 +36,7 @@ Optimal matching is central to experimental design, causal inference, and resour
 
 This package addresses **direct covariate matching**: selecting optimal pairs based on observed variables without intermediate modeling. It provides:
 
-- 20 LAP algorithms for different problem sizes and structures,
+- 18 LAP algorithms for different problem sizes and structures,
 - automatic preprocessing with variable health checks,
 - balance diagnostics for assessing match quality,
 - analysis-ready joined output.
@@ -74,7 +74,7 @@ These features make the package useful in domains like:
 ### Low-Level LAP Solving
 
 - **`lap_solve()`**: Tidy interface for LAP algorithms
-  - 20 solvers: Hungarian, Jonker-Volgenant, Auction, Network Simplex, etc.
+  - 18 solvers: Hungarian, Jonker-Volgenant, Auction, Network Simplex, etc.
   - Automatic method selection via `method = "auto"`
   - Supports rectangular matrices and forbidden assignments
 

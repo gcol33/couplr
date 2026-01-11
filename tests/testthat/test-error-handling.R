@@ -13,7 +13,7 @@ test_that("assignment errors on NaN values", {
 })
 
 test_that("assignment errors on empty matrix", {
-  cost <- matrix(nrow = 0, ncol = 0)
+  cost <- matrix(numeric(0), nrow = 0, ncol = 0)
 
   expect_error(assignment(cost), "at least one row")
 })
@@ -43,10 +43,8 @@ test_that("assignment handles all-NA matrix", {
 test_that("assignment handles all-Inf matrix", {
   cost <- matrix(Inf, 2, 2)
 
-  result <- assignment(cost)
-
-  # Should return with infinite cost or infeasible
-  expect_true(is.infinite(result$total_cost) || result$status != "optimal")
+  # All-Inf means infeasible - should error
+  expect_error(assignment(cost), "Infeasible")
 })
 
 # ------------------------------------------------------------------------------
@@ -358,10 +356,9 @@ test_that("lap_solve_batch errors on invalid type", {
 test_that("lap_solve_kbest handles k=0 gracefully", {
   cost <- matrix(c(1, 2, 3, 4), 2, 2)
 
-  expect_error(
-    lap_solve_kbest(cost, k = 0),
-    NULL  # Some error or empty result
-  )
+  # k=0 returns empty result (not an error)
+  result <- lap_solve_kbest(cost, k = 0)
+  expect_equal(nrow(result), 0)
 })
 
 test_that("lap_solve_kbest handles k larger than possible solutions", {
@@ -383,7 +380,7 @@ test_that("bottleneck_assignment handles 1x1 matrix", {
 
   result <- bottleneck_assignment(cost)
 
-  expect_equal(result$bottleneck_cost, 5)
+  expect_equal(result$bottleneck, 5)
 })
 
 test_that("bottleneck_assignment handles all same values", {
@@ -391,7 +388,7 @@ test_that("bottleneck_assignment handles all same values", {
 
   result <- bottleneck_assignment(cost)
 
-  expect_equal(result$bottleneck_cost, 5)
+  expect_equal(result$bottleneck, 5)
 })
 
 # ------------------------------------------------------------------------------
@@ -403,14 +400,16 @@ test_that("sinkhorn handles uniform distributions", {
 
   result <- sinkhorn(cost)
 
-  expect_s3_class(result, "sinkhorn_result")
+  expect_type(result, "list")
+  expect_true(result$converged)
 })
 
-test_that("sinkhorn handles very small epsilon", {
+test_that("sinkhorn handles large lambda (sharp assignment)", {
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
 
-  # Small epsilon should still converge
-  result <- sinkhorn(cost, epsilon = 0.001, max_iter = 1000)
+  # Large lambda = sharper assignment (like small epsilon in other formulations)
+  result <- sinkhorn(cost, lambda = 100, max_iter = 1000)
 
-  expect_s3_class(result, "sinkhorn_result")
+  expect_type(result, "list")
+  expect_true(result$converged)
 })

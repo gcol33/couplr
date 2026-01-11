@@ -11,12 +11,16 @@ BIG_COST <- .Machine$double.xmax / 2
 #'
 #' @keywords internal
 apply_max_distance <- function(cost_matrix, max_distance = Inf) {
-  if (is.infinite(max_distance) || is.null(max_distance)) {
+  if (is.null(max_distance)) {
     return(cost_matrix)
   }
 
   if (!is.numeric(max_distance) || length(max_distance) != 1) {
     stop("max_distance must be a single numeric value", call. = FALSE)
+  }
+
+  if (is.infinite(max_distance)) {
+    return(cost_matrix)
   }
 
   if (max_distance <= 0) {

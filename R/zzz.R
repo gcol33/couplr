@@ -14,6 +14,9 @@
 #' @noRd
 prepare_cost_matrix <- function(cost, maximize = FALSE) {
   cost <- as.matrix(cost)
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix, got ", typeof(cost))
+  }
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
   lap_prepare_cost_matrix(cost, maximize)
 }

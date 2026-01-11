@@ -59,19 +59,19 @@ test_that("validate_cost_data errors on NaN values", {
 })
 
 test_that("validate_cost_data allows NA values", {
-  cost <- matrix(c(1, NA, 3, 4), 2, 2)
+  cost <- matrix(c(1, NA, 3, 4), 2, 2)  # NA is at [2,1] in column-major order
 
   result <- couplr:::validate_cost_data(cost)
 
-  expect_true(is.na(result[1, 2]))
+  expect_true(is.na(result[2, 1]))
 })
 
 test_that("validate_cost_data allows Inf values", {
-  cost <- matrix(c(1, Inf, 3, 4), 2, 2)
+  cost <- matrix(c(1, Inf, 3, 4), 2, 2)  # Inf is at [2,1] in column-major order
 
   result <- couplr:::validate_cost_data(cost)
 
-  expect_true(is.infinite(result[1, 2]))
+  expect_true(is.infinite(result[2, 1]))
 })
 
 # ------------------------------------------------------------------------------

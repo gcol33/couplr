@@ -102,7 +102,7 @@ test_that("lap_solve_batch errors on ungrouped data frame without columns", {
   df <- data.frame(x = 1:5, y = 1:5, z = 1:5)
 
   expect_error(
-    lap_solve_batch(df, source = x),
+    lap_solve_batch(df, source = "x"),
     "use group_by"
   )
 })

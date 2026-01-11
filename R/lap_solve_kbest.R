@@ -258,6 +258,9 @@ kbest_assignment <- function(cost, k = 3, maximize = FALSE,
   method <- match.arg(method)
   single_method <- match.arg(single_method)
   cost <- as.matrix(cost)
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix, got ", typeof(cost))
+  }
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
   x <- lap_kbest_murty(cost, as.integer(k), maximize, single_method)

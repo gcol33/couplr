@@ -23,12 +23,26 @@
 .generate_square_tiles <- function(W, H, P = 3L) {
   tiles <- list()
   covered <- matrix(FALSE, nrow = H, ncol = W)
-  
+
+  # Handle edge case: P larger than smallest image dimension
+  # In this case, use 1x1 tiles (each pixel is its own tile)
+  if (P > min(W, H)) {
+    tiles <- list()
+    for (x0 in seq(0, W - 1)) {
+      for (y0 in seq(0, H - 1)) {
+        tiles[[length(tiles) + 1L]] <- list(x0 = x0, y0 = y0, size = 1L)
+      }
+    }
+    return(tiles)
+  }
+
   # 1. Bulk region - fill with P×P tiles
   core_w <- (W %/% P) * P
   core_h <- (H %/% P) * P
-  
-  for (x0 in seq(0, core_w - P, by = P)) {
+
+  # Skip bulk if core dimensions are 0
+  if (core_w >= P && core_h >= P) {
+    for (x0 in seq(0, core_w - P, by = P)) {
     for (y0 in seq(0, core_h - P, by = P)) {
       tiles[[length(tiles) + 1L]] <- list(
         x0 = x0,
@@ -43,7 +57,8 @@
       }
     }
   }
-  
+  }  # End of core_w >= P && core_h >= P check
+
   # 2. Right strip - tile with largest squares possible
   if (core_w < W) {
     remaining_width <- W - core_w

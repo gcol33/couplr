@@ -108,14 +108,19 @@ assignment <- function(cost, maximize = FALSE,
   if (method == "ssp") method <- "sap"
 
   cost <- as.matrix(cost)
-  if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
   n <- nrow(cost); m <- ncol(cost)
 
-  # Validate non-empty matrix
+  # Validate non-empty matrix first (before type check)
+  # This ensures empty logical matrices get "empty" error not "must be numeric"
   if (n == 0 || m == 0) {
     stop("Cost matrix must have at least one row and one column.")
   }
+
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix, got ", typeof(cost))
+  }
+  if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
   if (method == "auto") {
     # Check for special cost structures first
@@ -667,15 +672,19 @@ print.lap_line_metric_result <- function(x, ...) {
 bottleneck_assignment <- function(cost, maximize = FALSE) {
   cost <- as.matrix(cost)
 
-  if (any(is.nan(cost))) {
-    stop("NaN not allowed in `cost`")
-  }
-
+  # Check empty first (before type check) so empty logical matrices get sensible error
   n <- nrow(cost)
   m <- ncol(cost)
-
   if (n == 0 || m == 0) {
     stop("Cost matrix must have at least one row and one column.")
+  }
+
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix, got ", typeof(cost))
+  }
+
+  if (any(is.nan(cost))) {
+    stop("NaN not allowed in `cost`")
   }
 
   if (n > m) {
@@ -971,6 +980,9 @@ sinkhorn_to_assignment <- function(result) {
 #' @export
 assignment_duals <- function(cost, maximize = FALSE) {
   cost <- as.matrix(cost)
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix, got ", typeof(cost))
+  }
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
   n <- nrow(cost)

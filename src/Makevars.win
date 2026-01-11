@@ -12,7 +12,6 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/greedy_matching.cpp \
           solvers/solve_auction.cpp \
           solvers/solve_bruteforce.cpp \
-          solvers/solve_cost_scaling.cpp \
           solvers/solve_csflow.cpp \
           solvers/solve_cycle_cancel.cpp \
           solvers/solve_hk01.cpp \
@@ -34,8 +33,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/network_simplex/solve_network_simplex.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
-          morph/morph_pixel_level.cpp \
-          morph/region_means.cpp
+          morph/morph_pixel_level.cpp
 
 # Convert to object files
 OBJECTS = RcppExports.o rcpp_interface.o \
@@ -44,7 +42,6 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/greedy_matching.o \
           solvers/solve_auction.o \
           solvers/solve_bruteforce.o \
-          solvers/solve_cost_scaling.o \
           solvers/solve_csflow.o \
           solvers/solve_cycle_cancel.o \
           solvers/solve_hk01.o \
@@ -66,5 +63,4 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/network_simplex/solve_network_simplex.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
-          morph/morph_pixel_level.o \
-          morph/region_means.o
+          morph/morph_pixel_level.o

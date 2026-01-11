@@ -16,11 +16,24 @@ knitr::opts_chunk$set(
   fig.width = 7,
   fig.height = 5
 )
+
+# Check for required packages - vignette needs visualization packages
+has_viz <- requireNamespace("ggraph", quietly = TRUE) &&
+           requireNamespace("tidygraph", quietly = TRUE) &&
+           requireNamespace("ggplot2", quietly = TRUE)
+
+if (!has_viz) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("This vignette requires ggraph, tidygraph, and ggplot2 packages for visualizations.")
+}
+
 library(couplr)
-library(ggplot2)
-library(ggraph)
-library(tidygraph)
 library(tibble)
+if (has_viz) {
+  library(ggplot2)
+  library(ggraph)
+  library(tidygraph)
+}
 
 # Color palette - professional, accessible
 col_worker <- "#E07B39"    # Warm orange for workers/left nodes

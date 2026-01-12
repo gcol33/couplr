@@ -28,6 +28,7 @@ Imports:
     magrittr (>= 2.0.0),
     methods
 Suggests: testthat (>= 3.0.0),
+    xml2,
     e1071,
     R.utils,
     microbenchmark,
@@ -50,7 +51,8 @@ Suggests: testthat (>= 3.0.0),
     combinat
 LinkingTo:
     Rcpp,
-    RcppEigen
+    RcppEigen,
+    testthat
 SystemRequirements: C++17
 LazyData: true
 VignetteBuilder: knitr

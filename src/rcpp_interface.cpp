@@ -377,10 +377,10 @@ Rcpp::List lap_solve_cycle_cancel(Rcpp::NumericMatrix cost, bool maximize) {
 // =======================
 
 // Forward declaration for production solver
-extern Rcpp::List oa_solve_impl(Rcpp::NumericMatrix cost_r, double alpha, int auction_rounds);
+extern Rcpp::List oa_solve_impl(Rcpp::NumericMatrix cost_r, bool maximize, double alpha, int auction_rounds);
 
 // [[Rcpp::export]]
 Rcpp::List oa_solve(Rcpp::NumericMatrix cost_r, double alpha = 5.0, int auction_rounds = 10) {
-    return oa_solve_impl(cost_r, alpha, auction_rounds);
+    return oa_solve_impl(cost_r, false, alpha, auction_rounds);
 }
 

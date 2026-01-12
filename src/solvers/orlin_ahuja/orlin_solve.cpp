@@ -1,77 +1,63 @@
 // src/solvers/orlin_ahuja/orlin_solve.cpp
-// Production Orlin-Ahuja solver implementation
+// Rcpp wrapper for Orlin-Ahuja solver - calls pure C++ implementation
 
 #include <Rcpp.h>
-#include <chrono>
-#include "orlin_types.h"
-#include "orlin_scaling.h"
+#include "orlin_solve_pure.h"
+#include "../../core/lap_error.h"
+#include "../../core/lap_utils.h"
 
-using namespace Rcpp;
-using namespace orlin;
+// Helper: Convert Rcpp::NumericMatrix to lap::CostMatrix
+static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
+    const int n = cost.nrow();
+    const int m = cost.ncol();
 
-// Full Orlin-Ahuja solve with detailed statistics
-List oa_solve_impl(NumericMatrix cost_r, double alpha = 5.0,
-                   int auction_rounds = 10) {
-    int n = cost_r.nrow();
-    int m = cost_r.ncol();
+    lap::CostMatrix cm(n, m);
 
-    std::vector<Cost> cost(n * m);
-    for (int ii = 0; ii < n; ++ii) {
-        for (int jj = 0; jj < m; ++jj) {
-            cost[ii * m + jj] = cost_r(ii, jj);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            double v = cost(i, j);
+            cm.at(i, j) = v;
+            cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
         }
     }
 
-    ScalingParams params;
-    params.alpha = alpha;
-    params.auction_rounds_per_scale = auction_rounds;
+    return cm;
+}
 
-    auto start = std::chrono::high_resolution_clock::now();
-    OrlinResult result = solve_orlin_ahuja(cost, n, m, params);
-    auto end = std::chrono::high_resolution_clock::now();
+// Helper: Convert lap::LapResult to Rcpp::List (with 1-based indexing)
+static Rcpp::List lap_result_to_rcpp(const lap::LapResult& result,
+                                      const Rcpp::NumericMatrix& original_cost) {
+    const int n = static_cast<int>(result.assignment.size());
 
-    double time_us = std::chrono::duration<double, std::micro>(end - start).count();
-
-    // Convert matching to R format (1-based)
-    IntegerVector row_to_col_r(n);
+    // Convert 0-based to 1-based
+    Rcpp::IntegerVector match(n);
     for (int i = 0; i < n; ++i) {
-        row_to_col_r[i] = result.row_to_col[i] == UNASSIGNED ? 0 : result.row_to_col[i] + 1;
+        match[i] = (result.assignment[i] >= 0) ? (result.assignment[i] + 1) : 0;
     }
 
-    // Extract per-scale statistics
-    int n_scales = result.scales.size();
-    IntegerVector scale_nums(n_scales);
-    NumericVector scale_eps(n_scales);
-    IntegerVector scale_auction_rounds(n_scales);
-    IntegerVector scale_auction_bids(n_scales);
-    IntegerVector scale_ssp_augs(n_scales);
-    IntegerVector scale_edges(n_scales);
+    // Use compute_total_cost for consistency with other solvers
+    double total = compute_total_cost(original_cost, match);
 
-    for (int s = 0; s < n_scales; ++s) {
-        scale_nums[s] = result.scales[s].scale_number;
-        scale_eps[s] = result.scales[s].epsilon;
-        scale_auction_rounds[s] = result.scales[s].auction_rounds;
-        scale_auction_bids[s] = result.scales[s].auction_bids;
-        scale_ssp_augs[s] = result.scales[s].ssp_augmentations;
-        scale_edges[s] = result.scales[s].edges_scanned;
+    return make_result(match, total);
+}
+
+// Rcpp-exported wrapper
+Rcpp::List oa_solve_impl(Rcpp::NumericMatrix cost, bool maximize = false,
+                         double alpha = 5.0, int auction_rounds = 10) {
+    try {
+        // Convert to pure C++ types
+        lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
+
+        // Call pure C++ solver
+        lap::LapResult result = lap::solve_orlin(cm, maximize, alpha, auction_rounds);
+
+        // Convert back to Rcpp
+        return lap_result_to_rcpp(result, cost);
+
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
     }
 
-    DataFrame scale_stats = DataFrame::create(
-        Named("scale") = scale_nums,
-        Named("epsilon") = scale_eps,
-        Named("auction_rounds") = scale_auction_rounds,
-        Named("auction_bids") = scale_auction_bids,
-        Named("ssp_augmentations") = scale_ssp_augs,
-        Named("edges_scanned") = scale_edges
-    );
-
-    return List::create(
-        Named("row_to_col") = row_to_col_r,
-        Named("total_cost") = result.total_cost,
-        Named("optimal") = result.optimal,
-        Named("n_scales") = result.total_scales,
-        Named("total_augmentations") = result.total_augmentations,
-        Named("scale_stats") = scale_stats,
-        Named("time_us") = time_us
-    );
+    // Should never reach here
+    return Rcpp::List();
 }

@@ -738,17 +738,17 @@ lap_solve_orlin <- function(cost, maximize = FALSE) {
 
   result <- oa_solve(work, alpha = 5.0, auction_rounds = 10)
 
-  # Compute total cost from original cost matrix
+  # Recompute total_cost from original cost matrix
   n <- nrow(cost)
   total_cost <- 0
   for (i in seq_len(n)) {
-    j <- result$row_to_col[i]
+    j <- result$match[i]
     if (j > 0 && is.finite(cost[i, j])) {
       total_cost <- total_cost + cost[i, j]
     }
   }
 
-  list(match = result$row_to_col, total_cost = total_cost)
+  list(match = result$match, total_cost = total_cost)
 }
 
 #' @keywords internal

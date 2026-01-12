@@ -1,235 +1,134 @@
 // src/solvers/solve_sinkhorn.cpp
-// Sinkhorn-Knopp Algorithm for Entropy-Regularized Optimal Transport
-// Reference: Cuturi (2013) "Sinkhorn Distances: Lightspeed Computation of
-//            Optimal Transport"
-// Complexity: O(n² / ε²) iterations, O(n²) per iteration
+// Rcpp wrapper for Sinkhorn solver - calls pure C++ implementation
 
 #include <Rcpp.h>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-#include <limits>
+#include "solve_sinkhorn_pure.h"
+#include "../core/lap_error.h"
 #include "../core/lap_utils.h"
 
 using namespace Rcpp;
 
-// Sinkhorn-Knopp computes the entropy-regularized optimal transport plan:
-//   P* = argmin_P <C, P> - (1/lambda) * H(P)
-// subject to P1 = r, P'1 = c (marginal constraints)
-//
-// The solution has form P = diag(u) * K * diag(v) where K = exp(-lambda * C)
-// Algorithm alternates scaling rows and columns until convergence.
-//
-// Returns:
-// - transport_plan: doubly stochastic matrix (soft assignment)
-// - cost: <C, P*> (transport cost without entropy term)
-// - u, v: scaling vectors
-// - converged: whether algorithm converged
-// - iterations: number of iterations used
+// Helper: Convert Rcpp::NumericMatrix to lap::CostMatrix
+static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
+    const int n = cost.nrow();
+    const int m = cost.ncol();
 
+    lap::CostMatrix cm(n, m);
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            double v = cost(i, j);
+            cm.at(i, j) = v;
+            cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
+        }
+    }
+
+    return cm;
+}
+
+// Helper: Convert std::vector<double> to Rcpp::NumericVector
+static Rcpp::NumericVector vec_to_rcpp(const std::vector<double>& vec) {
+    return Rcpp::NumericVector(vec.begin(), vec.end());
+}
+
+// Helper: Convert 2D vector to Rcpp::NumericMatrix
+static Rcpp::NumericMatrix matrix_to_rcpp(const std::vector<std::vector<double>>& mat) {
+    if (mat.empty()) {
+        return Rcpp::NumericMatrix(0, 0);
+    }
+    const int n = static_cast<int>(mat.size());
+    const int m = static_cast<int>(mat[0].size());
+
+    Rcpp::NumericMatrix result(n, m);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            result(i, j) = mat[i][j];
+        }
+    }
+    return result;
+}
+
+// Rcpp-exported wrapper for Sinkhorn solver
 Rcpp::List solve_sinkhorn_impl(
     Rcpp::NumericMatrix cost,
-    double lambda,           // Regularization parameter (higher = more peaked)
-    double tol,              // Convergence tolerance
-    int max_iter,            // Maximum iterations
-    Rcpp::Nullable<Rcpp::NumericVector> r_weights,  // Row marginals (default: uniform)
-    Rcpp::Nullable<Rcpp::NumericVector> c_weights   // Column marginals (default: uniform)
+    double lambda,
+    double tol,
+    int max_iter,
+    Rcpp::Nullable<Rcpp::NumericVector> r_weights,
+    Rcpp::Nullable<Rcpp::NumericVector> c_weights
 ) {
-  const int n = cost.nrow();
-  const int m = cost.ncol();
+    try {
+        // Convert to pure C++ types
+        lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
 
-  if (n == 0 || m == 0) {
-    return List::create(
-      _["transport_plan"] = NumericMatrix(0, 0),
-      _["cost"] = 0.0,
-      _["converged"] = true,
-      _["iterations"] = 0
-    );
-  }
+        // Convert marginals
+        std::vector<double> r_vec, c_vec;
 
-  // Set up marginals (default: uniform)
-  std::vector<double> r(n), c(m);
+        if (r_weights.isNotNull()) {
+            Rcpp::NumericVector rw(r_weights);
+            r_vec = std::vector<double>(rw.begin(), rw.end());
+        }
 
-  if (r_weights.isNotNull()) {
-    NumericVector rw(r_weights);
-    if (rw.size() != n) {
-      LAP_ERROR("r_weights must have length equal to number of rows");
-    }
-    double sum_r = 0.0;
-    for (int i = 0; i < n; ++i) {
-      r[i] = rw[i];
-      sum_r += r[i];
-    }
-    // Normalize
-    for (int i = 0; i < n; ++i) r[i] /= sum_r;
-  } else {
-    for (int i = 0; i < n; ++i) r[i] = 1.0 / n;
-  }
+        if (c_weights.isNotNull()) {
+            Rcpp::NumericVector cw(c_weights);
+            c_vec = std::vector<double>(cw.begin(), cw.end());
+        }
 
-  if (c_weights.isNotNull()) {
-    NumericVector cw(c_weights);
-    if (cw.size() != m) {
-      LAP_ERROR("c_weights must have length equal to number of columns");
-    }
-    double sum_c = 0.0;
-    for (int j = 0; j < m; ++j) {
-      c[j] = cw[j];
-      sum_c += c[j];
-    }
-    // Normalize
-    for (int j = 0; j < m; ++j) c[j] /= sum_c;
-  } else {
-    for (int j = 0; j < m; ++j) c[j] = 1.0 / m;
-  }
+        // Call pure C++ solver
+        lap::SinkhornResult result = lap::solve_sinkhorn(cm, lambda, tol, max_iter, r_vec, c_vec);
 
-  // Compute K = exp(-lambda * C)
-  // Use log-domain for numerical stability with large lambda
-  std::vector<double> K(n * m);
-  double max_cost = -std::numeric_limits<double>::infinity();
+        // Convert back to Rcpp
+        return List::create(
+            _["transport_plan"] = matrix_to_rcpp(result.transport_matrix),
+            _["cost"] = result.total_cost,
+            _["u"] = vec_to_rcpp(result.u),
+            _["v"] = vec_to_rcpp(result.v),
+            _["converged"] = result.converged,
+            _["iterations"] = result.iterations,
+            _["lambda"] = result.lambda
+        );
 
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      double cij = cost(i, j);
-      if (!std::isfinite(cij)) {
-        // Treat NA/Inf as very high cost
-        cij = 1e10;
-      }
-      if (cij > max_cost) max_cost = cij;
-    }
-  }
-
-  // Stabilized kernel: K_ij = exp(-lambda * (C_ij - max_cost)) * exp(-lambda * max_cost)
-  // We absorb the constant into the scaling vectors
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      double cij = cost(i, j);
-      if (!std::isfinite(cij)) cij = 1e10;
-      K[i * m + j] = std::exp(-lambda * cij);
-    }
-  }
-
-  // Initialize scaling vectors
-  std::vector<double> u(n, 1.0);
-  std::vector<double> v(m, 1.0);
-
-  // Sinkhorn iterations
-  bool converged = false;
-  int iter = 0;
-
-  // Temporary vectors for computing Kv and K'u
-  std::vector<double> Kv(n), Ktu(m);
-
-  for (iter = 0; iter < max_iter; ++iter) {
-    // Save old u for convergence check
-    std::vector<double> u_old = u;
-
-    // Update u: u = r / (K * v)
-    for (int i = 0; i < n; ++i) {
-      double sum = 0.0;
-      for (int j = 0; j < m; ++j) {
-        sum += K[i * m + j] * v[j];
-      }
-      Kv[i] = sum;
-      u[i] = (sum > 1e-300) ? r[i] / sum : r[i] * 1e300;
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
     }
 
-    // Update v: v = c / (K' * u)
-    for (int j = 0; j < m; ++j) {
-      double sum = 0.0;
-      for (int i = 0; i < n; ++i) {
-        sum += K[i * m + j] * u[i];
-      }
-      Ktu[j] = sum;
-      v[j] = (sum > 1e-300) ? c[j] / sum : c[j] * 1e300;
-    }
-
-    // Check convergence: ||u - u_old|| / ||u||
-    double diff = 0.0, norm = 0.0;
-    for (int i = 0; i < n; ++i) {
-      double d = u[i] - u_old[i];
-      diff += d * d;
-      norm += u[i] * u[i];
-    }
-
-    if (norm > 0 && std::sqrt(diff / norm) < tol) {
-      converged = true;
-      break;
-    }
-  }
-
-  // Compute transport plan P = diag(u) * K * diag(v)
-  NumericMatrix P(n, m);
-  double transport_cost = 0.0;
-
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      double pij = u[i] * K[i * m + j] * v[j];
-      P(i, j) = pij;
-      double cij = cost(i, j);
-      if (std::isfinite(cij)) {
-        transport_cost += pij * cij;
-      }
-    }
-  }
-
-  // Return scaling vectors as well
-  NumericVector u_out(n), v_out(m);
-  for (int i = 0; i < n; ++i) u_out[i] = u[i];
-  for (int j = 0; j < m; ++j) v_out[j] = v[j];
-
-  return List::create(
-    _["transport_plan"] = P,
-    _["cost"] = transport_cost,
-    _["u"] = u_out,
-    _["v"] = v_out,
-    _["converged"] = converged,
-    _["iterations"] = iter + 1,
-    _["lambda"] = lambda
-  );
+    // Should never reach here
+    return Rcpp::List();
 }
 
 // Convenience function to round soft assignment to hard assignment
-// Uses the transport plan to solve a standard LAP
 Rcpp::IntegerVector sinkhorn_round_impl(Rcpp::NumericMatrix P) {
-  const int n = P.nrow();
-  const int m = P.ncol();
+    try {
+        const int n = P.nrow();
+        const int m = P.ncol();
 
-  if (n == 0) return IntegerVector(0);
+        if (n == 0) {
+            return Rcpp::IntegerVector(0);
+        }
 
-  // Greedy rounding: iteratively assign row to its most likely column
-  std::vector<int> match(n, 0);
-  std::vector<bool> col_used(m, false);
+        // Convert to std::vector<std::vector<double>>
+        std::vector<std::vector<double>> mat(n, std::vector<double>(m));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                mat[i][j] = P(i, j);
+            }
+        }
 
-  // Create list of (probability, row, col) and sort descending
-  std::vector<std::tuple<double, int, int>> entries;
-  entries.reserve(n * m);
+        // Call pure C++ rounding
+        std::vector<int> match = lap::sinkhorn_round(mat);
 
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      entries.emplace_back(P(i, j), i, j);
+        // Convert to 1-based for R
+        Rcpp::IntegerVector result(n);
+        for (int i = 0; i < n; ++i) {
+            result[i] = (match[i] >= 0) ? (match[i] + 1) : 0;
+        }
+
+        return result;
+
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
     }
-  }
 
-  std::sort(entries.begin(), entries.end(),
-            [](const auto& a, const auto& b) {
-              return std::get<0>(a) > std::get<0>(b);
-            });
-
-  std::vector<bool> row_assigned(n, false);
-  int assigned = 0;
-
-  for (const auto& e : entries) {
-    int i = std::get<1>(e);
-    int j = std::get<2>(e);
-
-    if (!row_assigned[i] && !col_used[j]) {
-      match[i] = j + 1;  // 1-based
-      row_assigned[i] = true;
-      col_used[j] = true;
-      ++assigned;
-      if (assigned == std::min(n, m)) break;
-    }
-  }
-
-  return IntegerVector(match.begin(), match.end());
+    // Should never reach here
+    return Rcpp::IntegerVector();
 }

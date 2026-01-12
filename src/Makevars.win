@@ -11,28 +11,47 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           core/lap_utils.cpp \
           core/lap_utils_pure.cpp \
           solvers/greedy_matching.cpp \
+          solvers/greedy_matching_pure.cpp \
           solvers/solve_auction.cpp \
+          solvers/solve_auction_pure.cpp \
           solvers/solve_bruteforce.cpp \
+          solvers/solve_bruteforce_pure.cpp \
           solvers/solve_csflow.cpp \
+          solvers/solve_csflow_pure.cpp \
           solvers/solve_cycle_cancel.cpp \
+          solvers/solve_cycle_cancel_pure.cpp \
           solvers/solve_hk01.cpp \
+          solvers/solve_hk01_pure.cpp \
           solvers/solve_hungarian.cpp \
+          solvers/solve_hungarian_pure.cpp \
           solvers/solve_jv.cpp \
           solvers/solve_jv_pure.cpp \
           solvers/solve_kbest_lawler.cpp \
           solvers/solve_line_metric.cpp \
+          solvers/solve_line_metric_pure.cpp \
           solvers/solve_murty.cpp \
           solvers/solve_ssap_bucket.cpp \
+          solvers/solve_ssap_bucket_pure.cpp \
           solvers/solve_ssp.cpp \
+          solvers/solve_ssp_pure.cpp \
           solvers/solve_lapmod.cpp \
+          solvers/solve_lapmod_pure.cpp \
           solvers/solve_bottleneck.cpp \
+          solvers/solve_bottleneck_pure.cpp \
           solvers/solve_csa.cpp \
+          solvers/solve_csa_pure.cpp \
           solvers/solve_sinkhorn.cpp \
+          solvers/solve_sinkhorn_pure.cpp \
           solvers/solve_ramshaw_tarjan.cpp \
+          solvers/solve_ramshaw_tarjan_pure.cpp \
           solvers/solve_push_relabel.cpp \
+          solvers/solve_push_relabel_pure.cpp \
           solvers/solve_jv_duals.cpp \
+          solvers/solve_jv_duals_pure.cpp \
           solvers/orlin_ahuja/orlin_solve.cpp \
+          solvers/orlin_ahuja/orlin_solve_pure.cpp \
           solvers/network_simplex/solve_network_simplex.cpp \
+          solvers/network_simplex/solve_network_simplex_pure.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
           morph/morph_pixel_level.cpp
@@ -43,28 +62,47 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           core/lap_utils.o \
           core/lap_utils_pure.o \
           solvers/greedy_matching.o \
+          solvers/greedy_matching_pure.o \
           solvers/solve_auction.o \
+          solvers/solve_auction_pure.o \
           solvers/solve_bruteforce.o \
+          solvers/solve_bruteforce_pure.o \
           solvers/solve_csflow.o \
+          solvers/solve_csflow_pure.o \
           solvers/solve_cycle_cancel.o \
+          solvers/solve_cycle_cancel_pure.o \
           solvers/solve_hk01.o \
+          solvers/solve_hk01_pure.o \
           solvers/solve_hungarian.o \
+          solvers/solve_hungarian_pure.o \
           solvers/solve_jv.o \
           solvers/solve_jv_pure.o \
           solvers/solve_kbest_lawler.o \
           solvers/solve_line_metric.o \
+          solvers/solve_line_metric_pure.o \
           solvers/solve_murty.o \
           solvers/solve_ssap_bucket.o \
+          solvers/solve_ssap_bucket_pure.o \
           solvers/solve_ssp.o \
+          solvers/solve_ssp_pure.o \
           solvers/solve_lapmod.o \
+          solvers/solve_lapmod_pure.o \
           solvers/solve_bottleneck.o \
+          solvers/solve_bottleneck_pure.o \
           solvers/solve_csa.o \
+          solvers/solve_csa_pure.o \
           solvers/solve_sinkhorn.o \
+          solvers/solve_sinkhorn_pure.o \
           solvers/solve_ramshaw_tarjan.o \
+          solvers/solve_ramshaw_tarjan_pure.o \
           solvers/solve_push_relabel.o \
+          solvers/solve_push_relabel_pure.o \
           solvers/solve_jv_duals.o \
+          solvers/solve_jv_duals_pure.o \
           solvers/orlin_ahuja/orlin_solve.o \
+          solvers/orlin_ahuja/orlin_solve_pure.o \
           solvers/network_simplex/solve_network_simplex.o \
+          solvers/network_simplex/solve_network_simplex_pure.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
           morph/morph_pixel_level.o

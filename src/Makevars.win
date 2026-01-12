@@ -9,6 +9,7 @@ PKG_CPPFLAGS = -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE -I. -Icore -Ii
 SOURCES = RcppExports.cpp rcpp_interface.cpp \
           interface/prepare_cost_matrix.cpp \
           core/lap_utils.cpp \
+          core/lap_utils_pure.cpp \
           solvers/greedy_matching.cpp \
           solvers/solve_auction.cpp \
           solvers/solve_bruteforce.cpp \
@@ -17,6 +18,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_hk01.cpp \
           solvers/solve_hungarian.cpp \
           solvers/solve_jv.cpp \
+          solvers/solve_jv_pure.cpp \
           solvers/solve_kbest_lawler.cpp \
           solvers/solve_line_metric.cpp \
           solvers/solve_murty.cpp \
@@ -39,6 +41,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
 OBJECTS = RcppExports.o rcpp_interface.o \
           interface/prepare_cost_matrix.o \
           core/lap_utils.o \
+          core/lap_utils_pure.o \
           solvers/greedy_matching.o \
           solvers/solve_auction.o \
           solvers/solve_bruteforce.o \
@@ -47,6 +50,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_hk01.o \
           solvers/solve_hungarian.o \
           solvers/solve_jv.o \
+          solvers/solve_jv_pure.o \
           solvers/solve_kbest_lawler.o \
           solvers/solve_line_metric.o \
           solvers/solve_murty.o \

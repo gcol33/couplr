@@ -506,8 +506,6 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP run_testthat_tests(SEXP);
-
 static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_prepare_cost_matrix", (DL_FUNC) &_couplr_lap_prepare_cost_matrix, 2},
     {"_couplr_lap_solve_bruteforce", (DL_FUNC) &_couplr_lap_solve_bruteforce, 2},
@@ -547,7 +545,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_spatial_cost_matrix_cpp", (DL_FUNC) &_couplr_spatial_cost_matrix_cpp, 4},
     {"_couplr_lap_solve_cycle_cancel", (DL_FUNC) &_couplr_lap_solve_cycle_cancel, 2},
     {"_couplr_oa_solve", (DL_FUNC) &_couplr_oa_solve, 3},
-    {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };
 

@@ -21,6 +21,9 @@ test_that("lap_solve_batch parallel execution with matrices", {
 
 test_that("lap_solve_batch with n_threads = NULL uses all cores", {
   skip_if_not_installed("parallel")
+  skip_on_cran()
+  skip_if(nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_")),
+          "parallel tests limited in check environments")
 
   costs <- lapply(1:5, function(i) matrix(runif(4), 2, 2))
 

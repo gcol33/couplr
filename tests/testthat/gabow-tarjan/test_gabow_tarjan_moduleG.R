@@ -79,8 +79,6 @@ check_one_feasible <- function(cost, row_match, col_match, y_u, y_v) {
 }
 
 test_that("scale_match finds optimal matching on simple 3x3 matrix", {
-  skip_if_not_installed("lapr")
-  
   # Known optimal solution: matching (0->1, 1->0, 2->2) with cost 5
   cost <- matrix(c(
     4, 1, 3,
@@ -109,8 +107,6 @@ test_that("scale_match finds optimal matching on simple 3x3 matrix", {
 })
 
 test_that("scale_match is idempotent on optimal solution", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     4, 1, 3,
     2, 0, 5,
@@ -144,8 +140,6 @@ test_that("scale_match is idempotent on optimal solution", {
 })
 
 test_that("scale_match handles 2x2 matrices correctly", {
-  skip_if_not_installed("lapr")
-  
   # Simple 2x2 case
   cost <- matrix(c(
     1, 2,
@@ -165,8 +159,6 @@ test_that("scale_match handles 2x2 matrices correctly", {
 })
 
 test_that("scale_match handles identity-like costs", {
-  skip_if_not_installed("lapr")
-  
   # Identity-style matrix (diagonal is cheapest)
   cost <- matrix(c(
     1, 5, 5,
@@ -190,8 +182,6 @@ test_that("scale_match handles identity-like costs", {
 })
 
 test_that("scale_match handles anti-diagonal costs", {
-  skip_if_not_installed("lapr")
-  
   # Anti-diagonal is cheapest
   cost <- matrix(c(
     5, 5, 1,
@@ -215,8 +205,6 @@ test_that("scale_match handles anti-diagonal costs", {
 })
 
 test_that("scale_match handles uniform costs", {
-  skip_if_not_installed("lapr")
-  
   # All edges have same cost
   cost <- matrix(5, nrow = 3, ncol = 3)
   
@@ -233,8 +221,6 @@ test_that("scale_match handles uniform costs", {
 })
 
 test_that("scale_match handles large cost differences", {
-  skip_if_not_installed("lapr")
-  
   # Mix of very different costs
   cost <- matrix(c(
     1, 1000, 1000,
@@ -255,8 +241,6 @@ test_that("scale_match handles large cost differences", {
 })
 
 test_that("scale_match handles 4x4 matrix", {
-  skip_if_not_installed("lapr")
-  
   # Note: sum(row minimums) is NOT an upper bound on optimal cost
   # because the minimum in each row might map to the same column
   cost <- matrix(c(
@@ -282,8 +266,6 @@ test_that("scale_match handles 4x4 matrix", {
 })
 
 test_that("scale_match handles 5x5 matrix", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     7, 2, 1, 9, 4,
     9, 6, 9, 5, 5,
@@ -306,8 +288,6 @@ test_that("scale_match handles 5x5 matrix", {
 })
 
 test_that("scale_match handles negative costs", {
-  skip_if_not_installed("lapr")
-  
   # Matrix with negative costs
   cost <- matrix(c(
     -1, 5, 3,
@@ -328,8 +308,6 @@ test_that("scale_match handles negative costs", {
 })
 
 test_that("scale_match handles mix of positive and negative costs", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     10, -5, 3,
     -2, 8, -1,
@@ -352,8 +330,6 @@ test_that("scale_match handles mix of positive and negative costs", {
 })
 
 test_that("scale_match with pre-initialized duals converges correctly", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     4, 1, 3,
     2, 0, 5,
@@ -381,8 +357,6 @@ test_that("scale_match with pre-initialized duals converges correctly", {
 })
 
 test_that("scale_match with partial matching converges correctly", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     4, 1, 3,
     2, 0, 5,
@@ -410,8 +384,6 @@ test_that("scale_match with partial matching converges correctly", {
 })
 
 test_that("scale_match produces consistent duals across multiple calls", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     10, 20, 30,
     15, 25, 35,
@@ -442,8 +414,6 @@ test_that("scale_match produces consistent duals across multiple calls", {
 })
 
 test_that("scale_match handles zero costs correctly", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     0, 1, 2,
     1, 0, 1,
@@ -463,8 +433,6 @@ test_that("scale_match handles zero costs correctly", {
 })
 
 test_that("scale_match dual updates are cumulative", {
-  skip_if_not_installed("lapr")
-  
   cost <- matrix(c(
     4, 1, 3,
     2, 0, 5,
@@ -499,8 +467,6 @@ test_that("scale_match dual updates are cumulative", {
 })
 
 test_that("scale_match handles rectangular matrices (more rows than cols)", {
-  skip_if_not_installed("lapr")
-  
   # 4x3 matrix - not all rows can be matched to distinct columns
   # The algorithm will pad with dummy columns internally
   cost <- matrix(c(
@@ -546,7 +512,6 @@ test_that("scale_match handles rectangular matrices (more rows than cols)", {
 })
 
 test_that("scale_match performance on larger matrix (10x10)", {
-  skip_if_not_installed("lapr")
   skip_on_cran()
   
   set.seed(123)

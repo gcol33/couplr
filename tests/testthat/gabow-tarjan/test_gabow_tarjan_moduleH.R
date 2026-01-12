@@ -87,8 +87,6 @@ assignment_cost <- function(cost, row_match) {
 }
 
 test_that("Gabow-Tarjan solves simple 3x3 matrix", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
     4, 1, 3,
     2, 0, 5,
@@ -109,8 +107,6 @@ test_that("Gabow-Tarjan solves simple 3x3 matrix", {
 })
 
 test_that("Gabow-Tarjan handles identity-like matrix", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
     1,   100, 100,
     100,   1, 100,
@@ -129,8 +125,6 @@ test_that("Gabow-Tarjan handles identity-like matrix", {
 })
 
 test_that("Gabow-Tarjan handles maximization", {
-  skip_if_not_installed("lapr")
-
   profit <- matrix(c(
     10,  5,  3,
      7, 12,  4,
@@ -191,8 +185,6 @@ test_that("Gabow-Tarjan handles maximization", {
 })
 
 test_that("Module H handles 4x4 matrix", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
     10, 19,  8, 15,
     10, 18,  7, 17,
@@ -211,8 +203,6 @@ test_that("Module H handles 4x4 matrix", {
 })
 
 test_that("Module H handles 5x5 matrix", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
     7, 2, 1, 9, 4,
     9, 6, 9, 5, 5,
@@ -232,8 +222,6 @@ test_that("Module H handles 5x5 matrix", {
 })
 
 test_that("Module H handles negative costs", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
     -1,  5,  3,
      4, -2,  6,
@@ -253,8 +241,6 @@ test_that("Module H handles negative costs", {
 })
 
 test_that("Module H handles zero costs", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(0, nrow = 3, ncol = 3)
 
   result <- call_module_h(cost)
@@ -268,8 +254,6 @@ test_that("Module H handles zero costs", {
 })
 
 test_that("Module H handles uniform costs", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(5, nrow = 3, ncol = 3)
 
   result <- call_module_h(cost)
@@ -283,8 +267,6 @@ test_that("Module H handles uniform costs", {
 })
 
 test_that("Module H handles large cost differences (wide dynamic range)", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
       1, 1000, 1000,
    1000,    1, 1000,
@@ -303,8 +285,6 @@ test_that("Module H handles large cost differences (wide dynamic range)", {
 })
 
 test_that("Module H handles rectangular matrices (4x3)", {
-  skip_if_not_installed("lapr")
-
   cost <- matrix(c(
      1,  2,  3,
      4,  5,  6,
@@ -325,8 +305,6 @@ test_that("Module H handles rectangular matrices (4x3)", {
 })
 
 test_that("Module H produces same result as Hungarian on small matrices", {
-  skip_if_not_installed("lapr")
-
   set.seed(42)
   cost <- matrix(sample(1:20, 9, replace = TRUE), nrow = 3)
 
@@ -353,8 +331,6 @@ test_that("Module H produces same result as Hungarian on small matrices", {
 })
 
 test_that("Module H matches JV on larger matrices", {
-  skip_if_not_installed("lapr")
-
   set.seed(123)
   n <- 10
   cost <- matrix(sample(1:100, n * n, replace = TRUE), nrow = n)

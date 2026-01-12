@@ -149,6 +149,8 @@ test_that("lap_solve_batch falls back to sequential for few problems", {
 
 test_that("lap_solve_batch handles n_threads = NULL", {
   skip_on_cran()
+  skip_if(nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_")),
+          "parallel tests limited in check environments")
 
   costs <- list(
     matrix(runif(9), 3, 3),
@@ -333,6 +335,8 @@ test_that("lap_solve_batch parallel execution for many matrices", {
 
 test_that("lap_solve_batch grouped with n_threads = NULL", {
   skip_on_cran()
+  skip_if(nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_")),
+          "parallel tests limited in check environments")
 
   df <- tibble::tibble(
     sim = rep(1:5, each = 4),

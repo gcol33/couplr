@@ -1,18 +1,26 @@
 coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
   status:
     project:
       default:
-        target: auto
+        target: 90%
         threshold: 1%
     patch:
       default:
-        target: auto
+        target: 80%
+        threshold: 5%
 
 comment:
   layout: "reach,diff,flags,files"
   behavior: default
   require_changes: false
+  require_base: false
+  require_head: true
 
 ignore:
   - "R/RcppExports.R"
   - "src/RcppExports.cpp"
+  - "tests/**"

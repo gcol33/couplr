@@ -44,3 +44,7 @@
 ^fix_.*\.ps1$
 ^iterate_plots$
 ^vignettes/plans$
+^cookies\.txt$
+^CODE_OF_CONDUCT\.md$
+^codecov\.yml$
+^LICENSE\.md$

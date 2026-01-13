@@ -178,10 +178,10 @@ test_that("match_couples with identical data returns zero distances", {
   identical_left <- tibble::tibble(id = 1:5, val = c(1, 2, 3, 4, 5))
   identical_right <- tibble::tibble(id = 1:5, val = c(1, 2, 3, 4, 5))
 
-  result <- match_couples(
+  result <- suppressWarnings(match_couples(
     identical_left, identical_right,
     vars = "val"
-  )
+  ))
 
   expect_s3_class(result, "matching_result")
   # All distances should be 0

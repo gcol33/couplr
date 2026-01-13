@@ -204,7 +204,7 @@ test_that("preprocess_matching_vars with various data types", {
     const = 5
   )
 
-  result <- preprocess_matching_vars(left, right, c("num1", "num2", "const"))
+  result <- suppressWarnings(preprocess_matching_vars(left, right, c("num1", "num2", "const")))
 
   # Should warn about or exclude constant variable
   expect_true(length(result$vars) >= 1)

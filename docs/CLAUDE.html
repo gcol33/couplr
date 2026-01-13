@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -166,25 +166,23 @@
 </ol></div>
 <div class="section level3">
 <h3 id="c-code-organization">C++ Code Organization<a class="anchor" aria-label="anchor" href="#c-code-organization"></a></h3>
+<p><strong>Naming Convention:</strong> - <code>*.cpp</code> - Pure C++ implementation (no Rcpp dependencies) - <code>*_rcpp.cpp</code> - Rcpp wrapper (R bindings) - <code>*.h</code> - Pure C++ header - <code>*_rcpp.h</code> - Rcpp-dependent header (e.g., <code>lap_utils_rcpp.h</code>)</p>
 <pre><code>src/
-├── core/: lap_internal.h, lap_utils.cpp/.h
+├── core/: lap_utils.cpp/.h (pure C++), lap_utils_rcpp.cpp/.h (Rcpp), lap_internal.h
 ├── interface/: prepare_cost_matrix.cpp
-├── solvers/ (20+ files): greedy_matching.cpp, solve_auction.cpp,
-│   solve_hungarian.cpp, solve_jv.cpp, solve_murty.cpp, solve_push_relabel.cpp,
-│   solve_ramshaw_tarjan.cpp, etc.
-├── solvers/network_simplex/: ns_types.h, ns_graph.h, ns_init.h, ns_pivot.h,
-│   solve_network_simplex.cpp
-├── solvers/orlin_ahuja/: orlin_types.h, orlin_*.h
+├── solvers/ (20+ files): solve_jv.cpp (impl) + solve_jv_rcpp.cpp (wrapper),
+│   solve_hungarian.cpp/rcpp.cpp, solve_auction.cpp/rcpp.cpp, etc.
+├── solvers/network_simplex/: solve_network_simplex.cpp/rcpp.cpp, ns_*.h
+├── solvers/orlin_ahuja/: orlin_solve.cpp/rcpp.cpp, orlin_*.h
 ├── gabow_tarjan/: solve_gabow_tarjan.cpp, utils_gabow_tarjan.cpp/.h
-├── morph/: morph_pixel_level.cpp, region_means.cpp
+├── morph/: morph_pixel_level.cpp
 ├── rcpp_interface.cpp  # ALL [[Rcpp::export]] declarations
 └── RcppExports.cpp     # Auto-generated, DO NOT EDIT</code></pre>
 <p><strong>Export Pattern (CRITICAL):</strong></p>
 <p>Subdirectory files do NOT use <code>[[Rcpp::export]]</code> directly:</p>
-<ol style="list-style-type: decimal"><li>Implementation in subdirectory with <code>_impl</code> suffix</li>
-<li>Forward declaration in <code>src/rcpp_interface.cpp</code>
-</li>
-<li>Exported wrapper in <code>src/rcpp_interface.cpp</code> with <code>[[Rcpp::export]]</code>
+<ol style="list-style-type: decimal"><li>Pure C++ implementation in <code>solve_foo.cpp</code> with <code>solve_foo_impl()</code> function</li>
+<li>Thin Rcpp wrapper in <code>solve_foo_rcpp.cpp</code> calling the impl</li>
+<li>Forward declaration and <code>[[Rcpp::export]]</code> wrapper in <code>rcpp_interface.cpp</code>
 </li>
 </ol><p><strong>Why:</strong> Rcpp only scans root <code>src/*.cpp</code> files.</p>
 </div>
@@ -251,12 +249,15 @@
 <h2 id="adding-new-functionality">Adding New Functionality<a class="anchor" aria-label="anchor" href="#adding-new-functionality"></a></h2>
 <div class="section level3">
 <h3 id="new-lap-solver">New LAP Solver<a class="anchor" aria-label="anchor" href="#new-lap-solver"></a></h3>
-<ol style="list-style-type: decimal"><li>Create <code>src/solvers/solve_foo.cpp</code> with <code>solve_foo_impl()</code>
+<ol style="list-style-type: decimal"><li>Create <code>src/solvers/solve_foo.cpp</code> - Pure C++ implementation with <code>solve_foo_impl()</code>
 </li>
+<li>Create <code>src/solvers/solve_foo.h</code> - Header declaring the impl function</li>
+<li>Create <code>src/solvers/solve_foo_rcpp.cpp</code> - Thin Rcpp wrapper calling impl</li>
 <li>Forward declare in <code>src/rcpp_interface.cpp</code>
 </li>
 <li>Add <code>[[Rcpp::export]]</code> wrapper in <code>src/rcpp_interface.cpp</code>
 </li>
+<li>Update <code>src/Makevars</code> and <code>src/Makevars.win</code> with new source files</li>
 <li>Run <code><a href="https://rdrr.io/pkg/Rcpp/man/compileAttributes.html" class="external-link">Rcpp::compileAttributes()</a></code>
 </li>
 <li>Add case in <code><a href="reference/assignment.html">assignment()</a></code> (<a href="R/assignment.R">R/assignment.R</a>)</li>

@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/solve_cycle_cancel_pure.h"
+#include "solvers/solve_cycle_cancel.h"
 
 using Catch::Approx;
 

@@ -1,29 +1,18 @@
 // src/solvers/solve_bottleneck.cpp
-// Bottleneck Assignment Problem (BAP) solver
-// Minimizes the MAXIMUM edge cost in a perfect matching (minimax objective)
-//
-// Algorithm:
-// 1. Collect all unique finite costs and sort them
-// 2. Binary search on threshold T
-// 3. For each T, check if perfect matching exists using edges with cost <= T
-// 4. Use Hopcroft-Karp as the bipartite matching subroutine
-//
-// Complexity: O(E√V log(unique costs)) where E = edges, V = vertices
+// Pure C++ Bottleneck Assignment Problem (BAP) solver - NO Rcpp dependencies
 
-#include <Rcpp.h>
+#include "solve_bottleneck.h"
+#include "../core/lap_error.h"
+#include "../core/lap_utils.h"
 #include <vector>
 #include <queue>
 #include <algorithm>
 #include <limits>
 #include <cmath>
-#include "../core/lap_internal.h"
-#include "../core/lap_utils.h"
 
-using namespace Rcpp;
+namespace lap {
 
 namespace {
-
-constexpr double INF = std::numeric_limits<double>::infinity();
 
 // Hopcroft-Karp for bipartite matching
 // Returns size of maximum matching
@@ -107,19 +96,21 @@ public:
     }
 };
 
-} // namespace
+}  // anonymous namespace
 
 // Main Bottleneck Assignment solver
-Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
-    const int n = cost.nrow();
-    const int m = cost.ncol();
+LapResult solve_bottleneck(const CostMatrix& cost, bool maximize) {
+    const int n = cost.nrow;
+    const int m = cost.ncol;
 
+    // Handle empty case
     if (n == 0) {
-        return make_result(IntegerVector(), 0.0);
+        return LapResult({}, 0.0, "optimal");
     }
 
+    // Dimension check
     if (n > m) {
-        LAP_ERROR("Infeasible: rows (%d) > cols (%d)", n, m);
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
     }
 
     // Collect all unique finite costs
@@ -128,15 +119,16 @@ Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
 
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
-            double c = cost(i, j);
-            if (R_finite(c) && !NumericVector::is_na(c)) {
+            if (!cost.allowed(i, j)) continue;
+            double c = cost.at(i, j);
+            if (std::isfinite(c)) {
                 unique_costs.push_back(c);
             }
         }
     }
 
     if (unique_costs.empty()) {
-        LAP_ERROR("Infeasible: no finite costs in matrix");
+        LAP_THROW_INFEASIBLE("No finite costs in matrix");
     }
 
     // Sort and deduplicate
@@ -145,8 +137,7 @@ Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
                        unique_costs.end());
 
     // For maximize: we want to maximize the minimum edge cost
-    // Transform: negate costs, find minimum bottleneck, negate back
-    // Or equivalently: binary search from high to low
+    // Transform: reverse the sorted list and search from high to low
     if (maximize) {
         std::reverse(unique_costs.begin(), unique_costs.end());
     }
@@ -159,8 +150,9 @@ Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
 
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
-                double c = cost(i, j);
-                if (!R_finite(c) || NumericVector::is_na(c)) continue;
+                if (!cost.allowed(i, j)) continue;
+                double c = cost.at(i, j);
+                if (!std::isfinite(c)) continue;
 
                 if (maximize) {
                     // For maximize: include edges with cost >= threshold
@@ -180,12 +172,12 @@ Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
     };
 
     // Binary search on unique_costs
-    int lo = 0, hi = unique_costs.size() - 1;
+    int lo = 0, hi = static_cast<int>(unique_costs.size()) - 1;
     int best = -1;
 
     // First check if any matching is possible
     if (!can_match(unique_costs[hi])) {
-        LAP_ERROR("Infeasible: no perfect matching possible");
+        LAP_THROW_INFEASIBLE("No perfect matching possible");
     }
 
     while (lo <= hi) {
@@ -199,22 +191,33 @@ Rcpp::List solve_bottleneck_impl(NumericMatrix cost, bool maximize) {
     }
 
     if (best < 0) {
-        LAP_ERROR("Infeasible: no perfect matching found");
+        LAP_THROW_INFEASIBLE("No perfect matching found");
     }
 
     double bottleneck = unique_costs[best];
 
     // Reconstruct the matching at the optimal threshold
     can_match(bottleneck);  // This sets up hk with the matching
-    std::vector<int> matching = hk.get_matching();
+    std::vector<int> assignment = hk.get_matching();
 
-    // Convert to 1-based R output
-    IntegerVector match(n);
+    // Verify matching
     for (int i = 0; i < n; ++i) {
-        match[i] = matching[i] + 1;  // 0-based to 1-based
+        int j = assignment[i];
+        if (j < 0) {
+            LAP_THROW_INFEASIBLE("Could not find full matching");
+        }
+        if (!cost.allowed(i, j)) {
+            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
+        }
+        double c = cost.at(i, j);
+        if (!std::isfinite(c)) {
+            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
+        }
     }
 
     // For bottleneck, we return the bottleneck value as total_cost
     // (This is different from LAP where total_cost is the sum)
-    return make_result(match, bottleneck);
+    return LapResult(std::move(assignment), bottleneck, "optimal");
 }
+
+}  // namespace lap

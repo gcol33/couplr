@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/network_simplex/solve_network_simplex_pure.h"
+#include "solvers/network_simplex/solve_network_simplex.h"
 
 using Catch::Approx;
 

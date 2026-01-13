@@ -1,111 +1,65 @@
-// src/lap_utils.h
+// src/core/lap_utils.h
+// Pure C++ utility functions for LAP solvers - NO Rcpp dependencies
 #pragma once
 
-#include <Rcpp.h>
-#include <R_ext/Error.h>
+#include "lap_types.h"
+#include "lap_error.h"
 #include <vector>
 #include <string>
 #include <utility>
 
-// Error macro that uses Rf_error instead of Rcpp::stop to avoid linking abort
-// Rf_error uses R's longjmp mechanism, not C++ exceptions
-#define LAP_ERROR(...) Rf_error(__VA_ARGS__)
+namespace lap {
 
-// Constants
-constexpr double BIG = 1e100;  // Used for forbidden edges
-constexpr double TOL = 1e-12;  // Tolerance for zero comparisons
-
-// String key for 1-based match vectors (e.g., "3,1,2")
+// String key for match vectors (useful for deduplication in k-best)
+// e.g., {2, 0, 1} -> "2,0,1"
 std::string match_to_key(const std::vector<int>& match);
 
-// Apply NA exclusions (row,col are 0-based)
-Rcpp::NumericMatrix apply_exclusions(
-    Rcpp::NumericMatrix base,
-    const std::vector<std::pair<int,int>>& ex);
+// Build CSR-style "allowed" structure from a mask
+// mask: 0 = forbidden, nonzero = allowed (opposite of internal convention!)
+// row_ptr: size n+1, row_ptr[i] to row_ptr[i+1] gives range in cols
+// cols: allowed column indices (0-based) for each row
+void build_allowed(const std::vector<int>& mask, int n, int m,
+                   std::vector<int>& row_ptr, std::vector<int>& cols);
 
-// Apply Lawler-style constraints
-//  - force_cols: for rows 1..r, force row i to column force_cols[i-1] (1-based, 0 = no force)
-//  - forbid (i_forbid, j_forbid): forbid one 1-based pair (0 = no forbid)
-Rcpp::NumericMatrix apply_constraints(
-    const Rcpp::NumericMatrix& M,
-    const std::vector<int>& force_cols,
-    int i_forbid,
-    int j_forbid);
-
-// Build CSR-style "allowed" structure from a mask of size n*m.
-// mask is length n*m, row-major, with nonzero meaning allowed.
-// row_ptr size is n + 1; cols collects allowed column indices per row (0-based).
-void build_allowed(
-    const std::vector<int>& mask,
-    int n,
-    int m,
-    std::vector<int>& row_ptr,
-    std::vector<int>& cols);
-
-// Ensure each row has at least one finite option (used by some solvers)
+// Check that each row has at least one allowed edge
+// Throws InfeasibleException if any row has no options
 void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m);
 
-// Check if matrix is feasible (each row has at least one finite value)
+// Check if cost matrix is feasible (each row has at least one finite value)
 // Returns true if feasible, false otherwise (does not throw)
-bool is_feasible(const Rcpp::NumericMatrix& M);
+bool is_feasible(const CostMatrix& cost);
 
 // Check if a matching result is valid (no forbidden edges chosen)
-// Returns true if all matched edges are finite, false otherwise
-bool is_valid_matching(const Rcpp::NumericMatrix& cost,
-                       const std::vector<int>& match);
+// match: 0-based column indices, -1 = unmatched
+bool is_valid_matching(const CostMatrix& cost, const std::vector<int>& match);
 
-// Check if a perfect matching exists using greedy with backtracking
+// Check if a perfect matching exists using augmenting paths
 // More thorough than is_feasible() - actually tries to find a matching
-// Returns true if a valid matching exists, false otherwise
-bool has_valid_matching(const Rcpp::NumericMatrix& M);
+bool has_valid_matching(const CostMatrix& cost);
 
-// Overload for Rcpp::IntegerVector (converts and calls vector version)
-inline void ensure_each_row_has_option(const Rcpp::IntegerVector& mask, int n, int m) {
-  std::vector<int> mask_vec(mask.begin(), mask.end());
-  ensure_each_row_has_option(mask_vec, n, m);
-}
+// Compute total cost from a cost matrix and assignment
+// match: 0-based column indices, -1 = unmatched
+// Returns sum of cost[i, match[i]] for all matched rows
+double compute_total_cost(const CostMatrix& cost, const std::vector<int>& match);
 
-// Standard result builders
-Rcpp::List make_result(const std::vector<int>& match, double total);
-Rcpp::List make_result(const Rcpp::IntegerVector& match, double total);
+// Compute total cost using original cost matrix (for when we have transformed costs)
+// original_cost: the untransformed cost matrix
+// match: 0-based column indices, -1 = unmatched
+double compute_total_cost(const CostMatrix& original_cost,
+                          const CostMatrix& work_cost,
+                          const std::vector<int>& match);
 
-// Central cost computation: sum original_cost[i, match[i]] over all matched rows
-// This is the SINGLE SOURCE OF TRUTH for what "cost" means across all solvers.
-//
-// Parameters:
-//   original_cost: The original cost matrix as passed by the user (NumericMatrix)
-//   assignment: 1-based column indices (IntegerVector), 0 or NA_INTEGER for unmatched
-//
-// Returns: Total cost = sum of original_cost[i, assignment[i]-1] for all matched i
-//
-// Invariants:
-//   - Works for both minimize and maximize (no negation!)
-//   - Ignores dummy columns (assignment[i] > ncol(original_cost))
-//   - Ignores unmatched rows (assignment[i] == 0 or NA_INTEGER)
-//   - Only sums over real, finite edges
-double compute_total_cost(const Rcpp::NumericMatrix& original_cost,
-                          const Rcpp::IntegerVector& assignment);
+// Negate costs for maximization (returns new matrix)
+CostMatrix negate_costs(const CostMatrix& cost);
 
-// Transpose helper (inline for performance)
-inline Rcpp::NumericMatrix transpose(const Rcpp::NumericMatrix& M) {
-  const int r = M.nrow(), c = M.ncol();
-  Rcpp::NumericMatrix T(c, r);
-  for (int i = 0; i < r; ++i)
-    for (int j = 0; j < c; ++j)
-      T(j, i) = M(i, j);
-  return T;
-}
+// Prepare cost matrix for solving (handles maximization, padding for rectangular)
+// Returns: prepared CostMatrix (negated if maximize, padded if needed)
+CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize);
 
-// Base solver router (used by Murty, Lawler)
-Rcpp::List run_base_solver_by_name(
-    const Rcpp::NumericMatrix& cost,
-    bool maximize,
-    const std::string& method);
+// Convert 0-based match to 1-based (for R interface)
+std::vector<int> to_one_based(const std::vector<int>& match);
 
-// Non-throwing version: returns true on success, false on failure
-// On success, result contains the solution; on failure, result is empty
-bool try_run_base_solver(
-    const Rcpp::NumericMatrix& cost,
-    bool maximize,
-    const std::string& method,
-    Rcpp::List& result);
+// Convert 1-based match to 0-based (from R interface)
+std::vector<int> to_zero_based(const std::vector<int>& match);
+
+}  // namespace lap

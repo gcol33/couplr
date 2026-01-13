@@ -1,15 +1,16 @@
-// ==============================================================================
-// Greedy Matching Algorithm
-// ==============================================================================
-// Fast approximate one-to-one matching using greedy strategies
+// src/solvers/greedy_matching.cpp
+// Pure C++ Greedy Matching - NO Rcpp dependencies
 
-#include <Rcpp.h>
+#include "greedy_matching.h"
+#include "../core/lap_error.h"
+#include "../core/lap_utils.h"
 #include <algorithm>
 #include <vector>
 #include <queue>
-#include "../core/lap_utils.h"
+#include <limits>
+#include <cmath>
 
-using namespace Rcpp;
+namespace lap {
 
 // Candidate pair for greedy matching
 struct CandidatePair {
@@ -30,12 +31,19 @@ struct CandidatePair {
 // ==============================================================================
 // Collect all valid pairs, sort by cost, greedily assign
 
-// Implementation: Greedy matching using sorted pairs
-List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
-    int n = cost_matrix.nrow();
-    int m = cost_matrix.ncol();
+LapResult greedy_matching_sorted(const CostMatrix& cost, bool maximize) {
+    const int n = cost.nrow;
+    const int m = cost.ncol;
 
-    const double BIG_COST = std::numeric_limits<double>::max() / 2.0;
+    // Handle empty case
+    if (n == 0) {
+        return LapResult({}, 0.0, "optimal");
+    }
+
+    // Dimension check
+    if (n > m) {
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    }
 
     // Collect all valid candidate pairs
     std::vector<CandidatePair> candidates;
@@ -43,10 +51,10 @@ List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
-            double c = cost_matrix(i, j);
+            double c = cost.at(i, j);
 
-            // Skip forbidden pairs (NA, Inf, or BIG_COST)
-            if (std::isnan(c) || std::isinf(c) || c >= BIG_COST) {
+            // Skip forbidden pairs (non-finite costs)
+            if (!std::isfinite(c) || !cost.allowed(i, j)) {
                 continue;
             }
 
@@ -65,7 +73,7 @@ List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
     // Track which rows/cols are matched
     std::vector<bool> row_matched(n, false);
     std::vector<bool> col_matched(m, false);
-    std::vector<int> match(n, 0);  // 0 = unmatched (R indexing)
+    std::vector<int> assignment(n, -1);  // 0-based, -1 = unmatched
 
     double total_cost = 0.0;
     int n_matched = 0;
@@ -74,12 +82,12 @@ List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
     for (const auto& pair : candidates) {
         if (!row_matched[pair.row] && !col_matched[pair.col]) {
             // Match this pair
-            match[pair.row] = pair.col + 1;  // Convert to 1-based for R
+            assignment[pair.row] = pair.col;
             row_matched[pair.row] = true;
             col_matched[pair.col] = true;
 
             // Get actual cost (not negated)
-            double actual_cost = cost_matrix(pair.row, pair.col);
+            double actual_cost = cost.at(pair.row, pair.col);
             total_cost += actual_cost;
             n_matched++;
 
@@ -90,11 +98,13 @@ List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
         }
     }
 
-    return List::create(
-        Named("match") = match,
-        Named("total_cost") = total_cost,
-        Named("n_matched") = n_matched
-    );
+    // Check feasibility (at least try to match all rows)
+    // For greedy, we accept partial matchings, but warn if infeasible
+    if (n_matched == 0) {
+        LAP_THROW_INFEASIBLE("Could not find any valid matches");
+    }
+
+    return LapResult(std::move(assignment), total_cost, "optimal");
 }
 
 // ==============================================================================
@@ -102,15 +112,22 @@ List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
 // ==============================================================================
 // For each unmatched row, find its best available column
 
-// Implementation: Greedy matching using row-best strategy
-List greedy_matching_row_best_impl(NumericMatrix cost_matrix, bool maximize) {
-    int n = cost_matrix.nrow();
-    int m = cost_matrix.ncol();
+LapResult greedy_matching_row_best(const CostMatrix& cost, bool maximize) {
+    const int n = cost.nrow;
+    const int m = cost.ncol;
 
-    const double BIG_COST = std::numeric_limits<double>::max() / 2.0;
+    // Handle empty case
+    if (n == 0) {
+        return LapResult({}, 0.0, "optimal");
+    }
+
+    // Dimension check
+    if (n > m) {
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    }
 
     std::vector<bool> col_matched(m, false);
-    std::vector<int> match(n, 0);  // 0 = unmatched
+    std::vector<int> assignment(n, -1);  // 0-based, -1 = unmatched
 
     double total_cost = 0.0;
     int n_matched = 0;
@@ -125,10 +142,10 @@ List greedy_matching_row_best_impl(NumericMatrix cost_matrix, bool maximize) {
         for (int j = 0; j < m; j++) {
             if (col_matched[j]) continue;
 
-            double c = cost_matrix(i, j);
+            double c = cost.at(i, j);
 
             // Skip forbidden pairs
-            if (std::isnan(c) || std::isinf(c) || c >= BIG_COST) {
+            if (!std::isfinite(c) || !cost.allowed(i, j)) {
                 continue;
             }
 
@@ -142,18 +159,19 @@ List greedy_matching_row_best_impl(NumericMatrix cost_matrix, bool maximize) {
 
         // If found a valid match, assign it
         if (best_col >= 0) {
-            match[i] = best_col + 1;  // 1-based for R
+            assignment[i] = best_col;
             col_matched[best_col] = true;
             total_cost += best_cost;
             n_matched++;
         }
     }
 
-    return List::create(
-        Named("match") = match,
-        Named("total_cost") = total_cost,
-        Named("n_matched") = n_matched
-    );
+    // Check feasibility
+    if (n_matched == 0) {
+        LAP_THROW_INFEASIBLE("Could not find any valid matches");
+    }
+
+    return LapResult(std::move(assignment), total_cost, "optimal");
 }
 
 // ==============================================================================
@@ -161,12 +179,19 @@ List greedy_matching_row_best_impl(NumericMatrix cost_matrix, bool maximize) {
 // ==============================================================================
 // Use priority queue for efficient selection (good for very large problems)
 
-// Implementation: Greedy matching using priority queue
-List greedy_matching_pq_impl(NumericMatrix cost_matrix, bool maximize) {
-    int n = cost_matrix.nrow();
-    int m = cost_matrix.ncol();
+LapResult greedy_matching_pq(const CostMatrix& cost, bool maximize) {
+    const int n = cost.nrow;
+    const int m = cost.ncol;
 
-    const double BIG_COST = std::numeric_limits<double>::max() / 2.0;
+    // Handle empty case
+    if (n == 0) {
+        return LapResult({}, 0.0, "optimal");
+    }
+
+    // Dimension check
+    if (n > m) {
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    }
 
     // Min-heap priority queue
     std::priority_queue<CandidatePair, std::vector<CandidatePair>,
@@ -175,9 +200,9 @@ List greedy_matching_pq_impl(NumericMatrix cost_matrix, bool maximize) {
     // Build priority queue
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
-            double c = cost_matrix(i, j);
+            double c = cost.at(i, j);
 
-            if (std::isnan(c) || std::isinf(c) || c >= BIG_COST) {
+            if (!std::isfinite(c) || !cost.allowed(i, j)) {
                 continue;
             }
 
@@ -189,57 +214,51 @@ List greedy_matching_pq_impl(NumericMatrix cost_matrix, bool maximize) {
     // Track matched units
     std::vector<bool> row_matched(n, false);
     std::vector<bool> col_matched(m, false);
-    std::vector<int> match(n, 0);
+    std::vector<int> assignment(n, -1);  // 0-based, -1 = unmatched
 
     double total_cost = 0.0;
     int n_matched = 0;
 
     // Greedily assign from priority queue
-    while (!pq.empty() && n_matched < std::min(n, m)) {
+    int max_matches = (n < m) ? n : m;
+    while (!pq.empty() && n_matched < max_matches) {
         CandidatePair pair = pq.top();
         pq.pop();
 
         if (!row_matched[pair.row] && !col_matched[pair.col]) {
-            match[pair.row] = pair.col + 1;
+            assignment[pair.row] = pair.col;
             row_matched[pair.row] = true;
             col_matched[pair.col] = true;
 
-            double actual_cost = cost_matrix(pair.row, pair.col);
+            double actual_cost = cost.at(pair.row, pair.col);
             total_cost += actual_cost;
             n_matched++;
         }
     }
 
-    return List::create(
-        Named("match") = match,
-        Named("total_cost") = total_cost,
-        Named("n_matched") = n_matched
-    );
+    // Check feasibility
+    if (n_matched == 0) {
+        LAP_THROW_INFEASIBLE("Could not find any valid matches");
+    }
+
+    return LapResult(std::move(assignment), total_cost, "optimal");
 }
 
 // ==============================================================================
 // Main dispatcher
 // ==============================================================================
 
-// Implementation: Greedy matching dispatcher
-List greedy_matching_impl(NumericMatrix cost_matrix, bool maximize,
-                         std::string strategy) {
-
-    List result;
-
+LapResult greedy_matching(const CostMatrix& cost, bool maximize,
+                          const std::string& strategy) {
     if (strategy == "sorted") {
-        result = greedy_matching_sorted_impl(cost_matrix, maximize);
+        return greedy_matching_sorted(cost, maximize);
     } else if (strategy == "row_best") {
-        result = greedy_matching_row_best_impl(cost_matrix, maximize);
+        return greedy_matching_row_best(cost, maximize);
     } else if (strategy == "pq") {
-        result = greedy_matching_pq_impl(cost_matrix, maximize);
+        return greedy_matching_pq(cost, maximize);
     } else {
-        LAP_ERROR("Unknown greedy strategy: %s", strategy.c_str());
+        LAP_THROW("Unknown greedy strategy: " + strategy);
     }
-
-    // Add metadata
-    result["status"] = "optimal";  // Greedy is "optimal" for its strategy
-    result["method_used"] = "greedy_" + strategy;
-
-    return result;
 }
+
+}  // namespace lap

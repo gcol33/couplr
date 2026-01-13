@@ -4,7 +4,7 @@
 
 #include "utils_gabow_tarjan.h"
 #include <Rcpp.h>
-#include "../core/lap_utils.h"
+#include "../core/lap_utils_rcpp.h"
 #include <set>
 #include <utility>
 #include <queue>

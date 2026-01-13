@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/orlin_ahuja/orlin_solve_pure.h"
+#include "solvers/orlin_ahuja/orlin_solve.h"
 
 using Catch::Approx;
 

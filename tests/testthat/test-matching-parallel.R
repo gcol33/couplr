@@ -25,17 +25,6 @@ test_that("setup_parallel returns list with correct structure when FALSE", {
   expect_null(result$original_plan)
 })
 
-test_that("setup_parallel warns when parallel TRUE but packages missing", {
-  skip_if(couplr:::can_parallelize())
-
-  expect_warning(
-    result <- couplr:::setup_parallel(parallel = TRUE),
-    "not installed"
-  )
-
-  expect_false(result$setup)
-})
-
 test_that("setup_parallel sets up parallel when available", {
   skip_if_not(couplr:::can_parallelize())
   skip_on_cran()

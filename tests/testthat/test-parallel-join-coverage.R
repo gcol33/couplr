@@ -29,6 +29,7 @@ test_that("setup_parallel with TRUE and available packages", {
 test_that("setup_parallel with character plan name", {
   skip_on_cran()
   result <- couplr:::setup_parallel(parallel = "sequential")
+  expect_true(is.list(result))
   if (result$setup) {
     couplr:::restore_parallel(result)
   }

@@ -35,7 +35,9 @@ test_that("assignment handles all-NA matrix", {
   )
 
   # Either an error or a result with status != "optimal"
-  if (!identical(result, "error")) {
+  if (identical(result, "error")) {
+    expect_true(TRUE)  # Error is acceptable
+ } else {
     expect_true(result$status != "optimal" || is.infinite(result$total_cost))
   }
 })

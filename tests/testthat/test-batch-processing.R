@@ -180,26 +180,6 @@ test_that("lap_solve_batch grouped requires all columns", {
   )
 })
 
-test_that("lap_solve_batch parallel execution produces same results", {
-  skip_on_cran()
-  skip_if_not_installed("parallel")
-  # Skip due to function export issues with parallel clusters
-  skip("Parallel execution requires special package setup for worker nodes")
-
-  set.seed(123)
-  costs <- lapply(1:10, function(i) matrix(runif(9), 3, 3))
-
-  result_seq <- lap_solve_batch(costs, n_threads = 1)
-  result_par <- lap_solve_batch(costs, n_threads = 2)
-
-  # Results should be the same
-  expect_equal(
-    sum(result_seq$total_cost),
-    sum(result_par$total_cost),
-    tolerance = 1e-10
-  )
-})
-
 test_that("lap_solve_batch handles 1x1 matrices", {
   costs <- list(
     matrix(5, 1, 1),

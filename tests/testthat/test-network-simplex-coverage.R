@@ -4,14 +4,6 @@
 
 # Test the edge cases in solve_network_simplex.cpp that are not hit by normal tests
 
-test_that("network_simplex handles empty matrix", {
-  skip("network_simplex may not support empty matrices")
-  # Empty matrix should return early with status = "empty"
-  cost <- matrix(nrow = 0, ncol = 0)
-  result <- assignment(cost, method = "network_simplex")
-  expect_equal(result$status, "empty")
-})
-
 test_that("network_simplex handles 1x1 matrix", {
   cost <- matrix(5, 1, 1)
   result <- assignment(cost, method = "network_simplex")

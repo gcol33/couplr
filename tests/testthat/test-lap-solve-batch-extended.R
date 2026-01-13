@@ -120,32 +120,6 @@ test_that("lap_solve_batch_grouped errors without column specs", {
   )
 })
 
-# ------------------------------------------------------------------------------
-# Parallel execution
-# ------------------------------------------------------------------------------
-
-test_that("lap_solve_batch handles n_threads parameter", {
-  # Skip parallel test as it requires exported functions in worker nodes
-  skip("Parallel execution requires special setup for worker nodes")
-
-  costs <- list(
-    matrix(c(1, 2, 3, 4), 2, 2),
-    matrix(c(5, 6, 7, 8), 2, 2),
-    matrix(c(1, 3, 2, 4), 2, 2),
-    matrix(c(2, 1, 4, 3), 2, 2),
-    matrix(c(3, 4, 1, 2), 2, 2)
-  )
-
-  # With n_threads = 1 (sequential)
-  result_seq <- lap_solve_batch(costs, n_threads = 1)
-
-  # With n_threads = 2 (parallel, if problems > 3)
-  result_par <- lap_solve_batch(costs, n_threads = 2)
-
-  # Results should be equivalent
-  expect_equal(result_seq$total_cost, result_par$total_cost)
-})
-
 test_that("lap_solve_batch with n_threads = NULL uses all cores", {
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),

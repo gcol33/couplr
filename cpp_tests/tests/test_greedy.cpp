@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/greedy_matching_pure.h"
+#include "solvers/greedy_matching.h"
 
 using Catch::Approx;
 

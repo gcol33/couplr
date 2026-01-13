@@ -38,34 +38,36 @@ include_directories(
     ${SRC_DIR}/solvers/orlin_ahuja
 )
 
-# Pure C++ sources from the package (NO Rcpp dependencies)
-set(PURE_CPP_SOURCES
+# Pure C++ implementation sources (NO Rcpp dependencies)
+# These are the main algorithm implementations (foo.cpp)
+# Rcpp wrappers are in foo_rcpp.cpp files (not needed for C++ tests)
+set(CPP_IMPL_SOURCES
     # Core utilities
-    ${SRC_DIR}/core/lap_utils_pure.cpp
+    ${SRC_DIR}/core/lap_utils.cpp
 
     # Solvers
-    ${SRC_DIR}/solvers/solve_jv_pure.cpp
-    ${SRC_DIR}/solvers/solve_hungarian_pure.cpp
-    ${SRC_DIR}/solvers/solve_auction_pure.cpp
-    ${SRC_DIR}/solvers/solve_ssp_pure.cpp
-    ${SRC_DIR}/solvers/solve_bruteforce_pure.cpp
-    ${SRC_DIR}/solvers/solve_csa_pure.cpp
-    ${SRC_DIR}/solvers/solve_csflow_pure.cpp
-    ${SRC_DIR}/solvers/solve_bottleneck_pure.cpp
-    ${SRC_DIR}/solvers/greedy_matching_pure.cpp
-    ${SRC_DIR}/solvers/solve_hk01_pure.cpp
-    ${SRC_DIR}/solvers/solve_lapmod_pure.cpp
-    ${SRC_DIR}/solvers/solve_line_metric_pure.cpp
-    ${SRC_DIR}/solvers/solve_push_relabel_pure.cpp
-    ${SRC_DIR}/solvers/solve_ramshaw_tarjan_pure.cpp
-    ${SRC_DIR}/solvers/solve_sinkhorn_pure.cpp
-    ${SRC_DIR}/solvers/solve_ssap_bucket_pure.cpp
-    ${SRC_DIR}/solvers/solve_cycle_cancel_pure.cpp
-    ${SRC_DIR}/solvers/solve_jv_duals_pure.cpp
+    ${SRC_DIR}/solvers/solve_jv.cpp
+    ${SRC_DIR}/solvers/solve_hungarian.cpp
+    ${SRC_DIR}/solvers/solve_auction.cpp
+    ${SRC_DIR}/solvers/solve_ssp.cpp
+    ${SRC_DIR}/solvers/solve_bruteforce.cpp
+    ${SRC_DIR}/solvers/solve_csa.cpp
+    ${SRC_DIR}/solvers/solve_csflow.cpp
+    ${SRC_DIR}/solvers/solve_bottleneck.cpp
+    ${SRC_DIR}/solvers/greedy_matching.cpp
+    ${SRC_DIR}/solvers/solve_hk01.cpp
+    ${SRC_DIR}/solvers/solve_lapmod.cpp
+    ${SRC_DIR}/solvers/solve_line_metric.cpp
+    ${SRC_DIR}/solvers/solve_push_relabel.cpp
+    ${SRC_DIR}/solvers/solve_ramshaw_tarjan.cpp
+    ${SRC_DIR}/solvers/solve_sinkhorn.cpp
+    ${SRC_DIR}/solvers/solve_ssap_bucket.cpp
+    ${SRC_DIR}/solvers/solve_cycle_cancel.cpp
+    ${SRC_DIR}/solvers/solve_jv_duals.cpp
 
     # Subdirectory solvers
-    ${SRC_DIR}/solvers/network_simplex/solve_network_simplex_pure.cpp
-    ${SRC_DIR}/solvers/orlin_ahuja/orlin_solve_pure.cpp
+    ${SRC_DIR}/solvers/network_simplex/solve_network_simplex.cpp
+    ${SRC_DIR}/solvers/orlin_ahuja/orlin_solve.cpp
 )
 
 # Test sources
@@ -93,7 +95,7 @@ set(TEST_SOURCES
 # Main test executable
 add_executable(couplr_tests
     ${TEST_SOURCES}
-    ${PURE_CPP_SOURCES}
+    ${CPP_IMPL_SOURCES}
 )
 
 target_link_libraries(couplr_tests PRIVATE Catch2::Catch2WithMain)

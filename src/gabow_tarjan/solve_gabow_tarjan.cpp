@@ -4,7 +4,7 @@
 #include <Rcpp.h>
 #include <cmath>                // for std::abs, std::round, std::llround, std::fabs
 #include "utils_gabow_tarjan.h"
-#include "../core/lap_utils.h"
+#include "../core/lap_utils_rcpp.h"
 
 using namespace Rcpp;
 

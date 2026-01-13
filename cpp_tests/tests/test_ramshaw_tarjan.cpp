@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/solve_ramshaw_tarjan_pure.h"
+#include "solvers/solve_ramshaw_tarjan.h"
 
 using Catch::Approx;
 

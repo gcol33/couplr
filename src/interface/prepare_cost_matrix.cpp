@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 #include "../core/lap_internal.h"
-#include "../core/lap_utils.h"
+#include "../core/lap_utils_rcpp.h"
 using namespace Rcpp;
 
 // Internal implementation only (no Rcpp export)

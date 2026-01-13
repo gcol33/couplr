@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/solve_auction_pure.h"
+#include "solvers/solve_auction.h"
 
 using Catch::Approx;
 

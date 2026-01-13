@@ -7,7 +7,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/solve_jv_pure.h"
+#include "solvers/solve_jv.h"
 
 using Catch::Approx;
 

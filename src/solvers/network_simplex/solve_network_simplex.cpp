@@ -1,92 +1,113 @@
-// Network Simplex algorithm for the assignment problem
-// Implementation based on LEMON library and Király-Kovács (2012)
+// src/solvers/network_simplex/solve_network_simplex.cpp
+// Pure C++ Network Simplex LAP solver - NO Rcpp dependencies
 
+#include "solve_network_simplex.h"
+#include "../../core/lap_error.h"
+#include "../../core/lap_utils.h"
 #include "ns_types.h"
 #include "ns_graph.h"
 #include "ns_init.h"
 #include "ns_pivot.h"
-#include <Rcpp.h>
+#include <vector>
+#include <limits>
+#include <cmath>
 
-namespace couplr {
-namespace ns {
+namespace lap {
 
-// Main solver function
-NSResult solve_network_simplex_impl(const Rcpp::NumericMatrix& cost_matrix) {
-    int n_rows = cost_matrix.nrow();
-    int n_cols = cost_matrix.ncol();
+// Convert CostMatrix to flat array for network simplex functions
+// Network simplex expects column-major layout (R convention)
+static std::vector<double> convert_to_column_major(const CostMatrix& cost) {
+    int n = cost.nrow;
+    int m = cost.ncol;
+    std::vector<double> result(n * m);
 
-    // Handle edge cases
-    if (n_rows == 0 || n_cols == 0) {
-        NSResult result;
-        result.optimal = false;
-        result.status = "empty";
-        result.total_cost = 0.0;
-        result.pivot_count = 0;
-        return result;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            // cost.at(i,j) is row-major access
+            // result[i + j*n] is column-major storage
+            result[i + j * n] = cost.at(i, j);
+        }
     }
 
+    return result;
+}
+
+LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
+    const int n_rows = cost.nrow;
+    const int n_cols = cost.ncol;
+
+    // Handle empty case
+    if (n_rows == 0) {
+        return LapResult({}, 0.0, "optimal");
+    }
+
+    // Dimension check
     if (n_rows > n_cols) {
-        // More rows than columns - some rows cannot be matched
-        NSResult result;
-        result.optimal = false;
-        result.status = "infeasible";
-        result.total_cost = 0.0;
-        result.pivot_count = 0;
-        result.assignment.resize(n_rows, -1);
-        return result;
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
     }
+
+    // Prepare working costs (negated if maximize, BIG for forbidden)
+    CostMatrix work = prepare_for_solve(cost, maximize);
+
+    // Check feasibility
+    ensure_each_row_has_option(work.mask, n_rows, n_cols);
+
+    // Convert to column-major for network simplex internal functions
+    std::vector<double> cost_data = convert_to_column_major(work);
 
     // Build network
-    NSState state;
-    build_assignment_network(state, &cost_matrix[0], n_rows, n_cols);
+    couplr::ns::NSState state;
+    couplr::ns::build_assignment_network(state, cost_data.data(), n_rows, n_cols);
 
     // Initialize spanning tree with greedy solution
-    initialize_spanning_tree_greedy(state);
+    couplr::ns::initialize_spanning_tree_greedy(state);
 
     // Compute initial potentials
-    compute_potentials(state);
+    couplr::ns::compute_potentials(state);
 
     // Main simplex loop
     int max_iterations = state.num_arcs * state.num_nodes;
 
     for (int iter = 0; iter < max_iterations; ++iter) {
         // Find entering arc
-        int entering = find_entering_arc(state);
+        int entering = couplr::ns::find_entering_arc(state);
 
-        if (entering == NO_ARC) {
+        if (entering == couplr::ns::NO_ARC) {
             // Optimal: no arc with negative reduced cost
             break;
         }
 
         // Find leaving arc and compute delta
-        PivotInfo info = find_leaving_arc(state, entering);
+        couplr::ns::PivotInfo info = couplr::ns::find_leaving_arc(state, entering);
 
         // Perform pivot
-        do_pivot(state, info);
+        couplr::ns::do_pivot(state, info);
     }
 
     // Extract assignment from solution
-    return extract_assignment(state);
-}
+    couplr::ns::NSResult ns_result = couplr::ns::extract_assignment(state);
 
-} // namespace ns
-} // namespace couplr
+    // Convert NSResult to LapResult
+    std::vector<int> assignment = std::move(ns_result.assignment);
 
-// Implementation function called from rcpp_interface.cpp
-Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix) {
-    couplr::ns::NSResult result = couplr::ns::solve_network_simplex_impl(cost_matrix);
-
-    // Convert to 1-indexed for R
-    Rcpp::IntegerVector assignment(result.assignment.size());
-    for (size_t i = 0; i < result.assignment.size(); ++i) {
-        assignment[i] = result.assignment[i] + 1;  // 1-indexed
+    // Verify matching and compute total cost using ORIGINAL costs
+    double total = 0.0;
+    for (int i = 0; i < n_rows; ++i) {
+        int j = assignment[i];
+        if (j < 0) {
+            LAP_THROW_INFEASIBLE("Could not find full matching");
+        }
+        if (!cost.allowed(i, j)) {
+            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
+        }
+        double c = cost.at(i, j);
+        if (!std::isfinite(c)) {
+            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
+        }
+        total += c;
     }
 
-    return Rcpp::List::create(
-        Rcpp::Named("match") = assignment,
-        Rcpp::Named("total_cost") = result.total_cost,
-        Rcpp::Named("status") = result.status,
-        Rcpp::Named("method_used") = "network_simplex",
-        Rcpp::Named("n_pivots") = result.pivot_count
-    );
+    return LapResult(std::move(assignment), total, "optimal");
 }
+
+}  // namespace lap

@@ -14,7 +14,7 @@
 //       This makes alpha/beta commensurate: alpha=1, beta in [0,1] behaves as expected.
 //
 
-#include "../core/lap_utils.h"
+#include "../core/lap_utils_rcpp.h"
 // INDEXING CONVENTION: All functions use COLUMN-MAJOR indexing to match R's planar data layout.
 //       For an image with height H and width W:
 //       - Linear index: i = x*H + y

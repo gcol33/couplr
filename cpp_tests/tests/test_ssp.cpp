@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/solve_ssp_pure.h"
+#include "solvers/solve_ssp.h"
 
 using Catch::Approx;
 

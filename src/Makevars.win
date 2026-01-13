@@ -6,52 +6,54 @@ CXX_STD = CXX17
 PKG_CPPFLAGS = -DNDEBUG -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph -Isolvers/orlin_ahuja -Isolvers/network_simplex
 
 # Explicitly list all C++ sources (avoid GNU wildcard extension)
+# Implementation files: foo.cpp (pure C++ logic)
+# Rcpp wrapper files: foo_rcpp.cpp (R bindings)
 SOURCES = RcppExports.cpp rcpp_interface.cpp \
           interface/prepare_cost_matrix.cpp \
           core/lap_utils.cpp \
-          core/lap_utils_pure.cpp \
+          core/lap_utils_rcpp.cpp \
           solvers/greedy_matching.cpp \
-          solvers/greedy_matching_pure.cpp \
+          solvers/greedy_matching_rcpp.cpp \
           solvers/solve_auction.cpp \
-          solvers/solve_auction_pure.cpp \
+          solvers/solve_auction_rcpp.cpp \
           solvers/solve_bruteforce.cpp \
-          solvers/solve_bruteforce_pure.cpp \
+          solvers/solve_bruteforce_rcpp.cpp \
           solvers/solve_csflow.cpp \
-          solvers/solve_csflow_pure.cpp \
+          solvers/solve_csflow_rcpp.cpp \
           solvers/solve_cycle_cancel.cpp \
-          solvers/solve_cycle_cancel_pure.cpp \
+          solvers/solve_cycle_cancel_rcpp.cpp \
           solvers/solve_hk01.cpp \
-          solvers/solve_hk01_pure.cpp \
+          solvers/solve_hk01_rcpp.cpp \
           solvers/solve_hungarian.cpp \
-          solvers/solve_hungarian_pure.cpp \
+          solvers/solve_hungarian_rcpp.cpp \
           solvers/solve_jv.cpp \
-          solvers/solve_jv_pure.cpp \
+          solvers/solve_jv_rcpp.cpp \
           solvers/solve_kbest_lawler.cpp \
           solvers/solve_line_metric.cpp \
-          solvers/solve_line_metric_pure.cpp \
+          solvers/solve_line_metric_rcpp.cpp \
           solvers/solve_murty.cpp \
           solvers/solve_ssap_bucket.cpp \
-          solvers/solve_ssap_bucket_pure.cpp \
+          solvers/solve_ssap_bucket_rcpp.cpp \
           solvers/solve_ssp.cpp \
-          solvers/solve_ssp_pure.cpp \
+          solvers/solve_ssp_rcpp.cpp \
           solvers/solve_lapmod.cpp \
-          solvers/solve_lapmod_pure.cpp \
+          solvers/solve_lapmod_rcpp.cpp \
           solvers/solve_bottleneck.cpp \
-          solvers/solve_bottleneck_pure.cpp \
+          solvers/solve_bottleneck_rcpp.cpp \
           solvers/solve_csa.cpp \
-          solvers/solve_csa_pure.cpp \
+          solvers/solve_csa_rcpp.cpp \
           solvers/solve_sinkhorn.cpp \
-          solvers/solve_sinkhorn_pure.cpp \
+          solvers/solve_sinkhorn_rcpp.cpp \
           solvers/solve_ramshaw_tarjan.cpp \
-          solvers/solve_ramshaw_tarjan_pure.cpp \
+          solvers/solve_ramshaw_tarjan_rcpp.cpp \
           solvers/solve_push_relabel.cpp \
-          solvers/solve_push_relabel_pure.cpp \
+          solvers/solve_push_relabel_rcpp.cpp \
           solvers/solve_jv_duals.cpp \
-          solvers/solve_jv_duals_pure.cpp \
+          solvers/solve_jv_duals_rcpp.cpp \
           solvers/orlin_ahuja/orlin_solve.cpp \
-          solvers/orlin_ahuja/orlin_solve_pure.cpp \
+          solvers/orlin_ahuja/orlin_solve_rcpp.cpp \
           solvers/network_simplex/solve_network_simplex.cpp \
-          solvers/network_simplex/solve_network_simplex_pure.cpp \
+          solvers/network_simplex/solve_network_simplex_rcpp.cpp \
           gabow_tarjan/solve_gabow_tarjan.cpp \
           gabow_tarjan/utils_gabow_tarjan.cpp \
           morph/morph_pixel_level.cpp
@@ -60,49 +62,49 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
 OBJECTS = RcppExports.o rcpp_interface.o \
           interface/prepare_cost_matrix.o \
           core/lap_utils.o \
-          core/lap_utils_pure.o \
+          core/lap_utils_rcpp.o \
           solvers/greedy_matching.o \
-          solvers/greedy_matching_pure.o \
+          solvers/greedy_matching_rcpp.o \
           solvers/solve_auction.o \
-          solvers/solve_auction_pure.o \
+          solvers/solve_auction_rcpp.o \
           solvers/solve_bruteforce.o \
-          solvers/solve_bruteforce_pure.o \
+          solvers/solve_bruteforce_rcpp.o \
           solvers/solve_csflow.o \
-          solvers/solve_csflow_pure.o \
+          solvers/solve_csflow_rcpp.o \
           solvers/solve_cycle_cancel.o \
-          solvers/solve_cycle_cancel_pure.o \
+          solvers/solve_cycle_cancel_rcpp.o \
           solvers/solve_hk01.o \
-          solvers/solve_hk01_pure.o \
+          solvers/solve_hk01_rcpp.o \
           solvers/solve_hungarian.o \
-          solvers/solve_hungarian_pure.o \
+          solvers/solve_hungarian_rcpp.o \
           solvers/solve_jv.o \
-          solvers/solve_jv_pure.o \
+          solvers/solve_jv_rcpp.o \
           solvers/solve_kbest_lawler.o \
           solvers/solve_line_metric.o \
-          solvers/solve_line_metric_pure.o \
+          solvers/solve_line_metric_rcpp.o \
           solvers/solve_murty.o \
           solvers/solve_ssap_bucket.o \
-          solvers/solve_ssap_bucket_pure.o \
+          solvers/solve_ssap_bucket_rcpp.o \
           solvers/solve_ssp.o \
-          solvers/solve_ssp_pure.o \
+          solvers/solve_ssp_rcpp.o \
           solvers/solve_lapmod.o \
-          solvers/solve_lapmod_pure.o \
+          solvers/solve_lapmod_rcpp.o \
           solvers/solve_bottleneck.o \
-          solvers/solve_bottleneck_pure.o \
+          solvers/solve_bottleneck_rcpp.o \
           solvers/solve_csa.o \
-          solvers/solve_csa_pure.o \
+          solvers/solve_csa_rcpp.o \
           solvers/solve_sinkhorn.o \
-          solvers/solve_sinkhorn_pure.o \
+          solvers/solve_sinkhorn_rcpp.o \
           solvers/solve_ramshaw_tarjan.o \
-          solvers/solve_ramshaw_tarjan_pure.o \
+          solvers/solve_ramshaw_tarjan_rcpp.o \
           solvers/solve_push_relabel.o \
-          solvers/solve_push_relabel_pure.o \
+          solvers/solve_push_relabel_rcpp.o \
           solvers/solve_jv_duals.o \
-          solvers/solve_jv_duals_pure.o \
+          solvers/solve_jv_duals_rcpp.o \
           solvers/orlin_ahuja/orlin_solve.o \
-          solvers/orlin_ahuja/orlin_solve_pure.o \
+          solvers/orlin_ahuja/orlin_solve_rcpp.o \
           solvers/network_simplex/solve_network_simplex.o \
-          solvers/network_simplex/solve_network_simplex_pure.o \
+          solvers/network_simplex/solve_network_simplex_rcpp.o \
           gabow_tarjan/solve_gabow_tarjan.o \
           gabow_tarjan/utils_gabow_tarjan.o \
           morph/morph_pixel_level.o

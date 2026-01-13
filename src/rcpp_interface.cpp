@@ -7,7 +7,7 @@
 #include <string>
 #include <algorithm>
 #include "../core/lap_internal.h"
-#include "../core/lap_utils.h"
+#include "../core/lap_utils_rcpp.h"
 #include "../gabow_tarjan/utils_gabow_tarjan.h"
 
 using namespace Rcpp;

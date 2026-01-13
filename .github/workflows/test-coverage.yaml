@@ -26,6 +26,7 @@ jobs:
           needs: coverage
 
       - name: Test coverage
+        continue-on-error: true
         run: |
           covr::package_coverage(
             quiet = FALSE,

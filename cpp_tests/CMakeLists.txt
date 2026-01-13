@@ -34,17 +34,60 @@ include_directories(
     ${SRC_DIR}
     ${SRC_DIR}/core
     ${SRC_DIR}/solvers
+    ${SRC_DIR}/solvers/network_simplex
+    ${SRC_DIR}/solvers/orlin_ahuja
 )
 
 # Pure C++ sources from the package (NO Rcpp dependencies)
 set(PURE_CPP_SOURCES
+    # Core utilities
     ${SRC_DIR}/core/lap_utils_pure.cpp
+
+    # Solvers
     ${SRC_DIR}/solvers/solve_jv_pure.cpp
+    ${SRC_DIR}/solvers/solve_hungarian_pure.cpp
+    ${SRC_DIR}/solvers/solve_auction_pure.cpp
+    ${SRC_DIR}/solvers/solve_ssp_pure.cpp
+    ${SRC_DIR}/solvers/solve_bruteforce_pure.cpp
+    ${SRC_DIR}/solvers/solve_csa_pure.cpp
+    ${SRC_DIR}/solvers/solve_csflow_pure.cpp
+    ${SRC_DIR}/solvers/solve_bottleneck_pure.cpp
+    ${SRC_DIR}/solvers/greedy_matching_pure.cpp
+    ${SRC_DIR}/solvers/solve_hk01_pure.cpp
+    ${SRC_DIR}/solvers/solve_lapmod_pure.cpp
+    ${SRC_DIR}/solvers/solve_line_metric_pure.cpp
+    ${SRC_DIR}/solvers/solve_push_relabel_pure.cpp
+    ${SRC_DIR}/solvers/solve_ramshaw_tarjan_pure.cpp
+    ${SRC_DIR}/solvers/solve_sinkhorn_pure.cpp
+    ${SRC_DIR}/solvers/solve_ssap_bucket_pure.cpp
+    ${SRC_DIR}/solvers/solve_cycle_cancel_pure.cpp
+    ${SRC_DIR}/solvers/solve_jv_duals_pure.cpp
+
+    # Subdirectory solvers
+    ${SRC_DIR}/solvers/network_simplex/solve_network_simplex_pure.cpp
+    ${SRC_DIR}/solvers/orlin_ahuja/orlin_solve_pure.cpp
 )
 
 # Test sources
 set(TEST_SOURCES
     tests/test_jv.cpp
+    tests/test_hungarian.cpp
+    tests/test_auction.cpp
+    tests/test_greedy.cpp
+    tests/test_bottleneck.cpp
+    tests/test_ssp.cpp
+    tests/test_bruteforce.cpp
+    tests/test_csa.cpp
+    tests/test_csflow.cpp
+    tests/test_cycle_cancel.cpp
+    tests/test_hk01.cpp
+    tests/test_lapmod.cpp
+    tests/test_network_simplex.cpp
+    tests/test_orlin.cpp
+    tests/test_push_relabel.cpp
+    tests/test_ramshaw_tarjan.cpp
+    tests/test_sinkhorn.cpp
+    tests/test_ssap_bucket.cpp
 )
 
 # Main test executable

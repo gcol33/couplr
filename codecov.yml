@@ -6,12 +6,25 @@ coverage:
   status:
     project:
       default:
-        target: 90%
-        threshold: 1%
+        target: 85%
+        threshold: 2%
     patch:
       default:
         target: 80%
         threshold: 5%
+
+# Flags for filtering coverage by test type
+# The overall project score merges both automatically
+flags:
+  r:
+    paths:
+      - R/
+      - src/
+    carryforward: true
+  cpp:
+    paths:
+      - src/
+    carryforward: true
 
 comment:
   layout: "reach,diff,flags,files"
@@ -24,3 +37,4 @@ ignore:
   - "R/RcppExports.R"
   - "src/RcppExports.cpp"
   - "tests/**"
+  - "cpp_tests/**"

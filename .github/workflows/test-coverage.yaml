@@ -7,7 +7,8 @@ on:
 name: test-coverage
 
 jobs:
-  test-coverage:
+  # R coverage (covers R code + Rcpp wrappers)
+  r-coverage:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -33,10 +34,11 @@ jobs:
           ) |> covr::to_cobertura("coverage.xml")
         shell: Rscript {0}
 
-      - name: Upload coverage to Codecov
+      - name: Upload R coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           files: coverage.xml
+          flags: r
           fail_ci_if_error: false
           verbose: true
 
@@ -52,3 +54,39 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
+
+  # C++ coverage (covers pure C++ solvers directly)
+  cpp-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Configure CMake with coverage
+        run: |
+          cd cpp_tests
+          cmake -B build -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build cpp_tests/build -j$(nproc)
+
+      - name: Run tests
+        run: cd cpp_tests/build && ctest --output-on-failure
+
+      - name: Generate coverage report
+        run: |
+          cd cpp_tests/build
+          lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch
+          lcov --remove coverage.info '/usr/*' '*/Catch2/*' '*/catch2/*' '*/_deps/*' --output-file coverage.info
+          lcov --list coverage.info
+
+      - name: Upload C++ coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: cpp_tests/build/coverage.info
+          flags: cpp
+          fail_ci_if_error: false
+          verbose: true

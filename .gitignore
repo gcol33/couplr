@@ -25,3 +25,6 @@ src/**/*.so
 nul
 cookies.txt
 Rplots.pdf
+
+# C++ test build directory
+cpp_tests/build/

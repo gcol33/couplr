@@ -11,11 +11,11 @@ figures:
   bg: "#F5F6F8"
 
 home:
-  title: "couplr: Linear Assignment Problems and Matching in R"
+  title: "couplr: Optimal Pairing and Matching via Linear Assignment"
   description: >
-    Efficient algorithms for linear assignment problems (LAP) with tidy
-    integration, production-ready matching workflows, and comprehensive
-    balance diagnostics.
+    20 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods.
+    Production-ready matching workflows with automatic preprocessing, greedy
+    algorithms for large-scale problems, and comprehensive balance diagnostics.
 
 authors:
   Gilles Colling:

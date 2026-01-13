@@ -13,7 +13,7 @@ figures:
 home:
   title: "couplr: Optimal Pairing and Matching via Linear Assignment"
   description: >
-    20 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods.
+    18 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods.
     Production-ready matching workflows with automatic preprocessing, greedy
     algorithms for large-scale problems, and comprehensive balance diagnostics.
 

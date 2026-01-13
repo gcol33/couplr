@@ -27,15 +27,11 @@ jobs:
 
       - name: Test coverage
         run: |
-          # Exclude *_pure.cpp (tested by C++ suite) to reduce coverage data
-          pure_files <- list.files("src", pattern = "_pure\\.(cpp|h)$",
-                                   recursive = TRUE, full.names = TRUE)
           cov <- covr::package_coverage(
             type = "tests",
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package"),
-            exclusions = pure_files
+            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package")
           )
           covr::to_cobertura(cov, "coverage.xml")
         shell: Rscript {0}

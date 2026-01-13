@@ -73,6 +73,7 @@ set(CPP_IMPL_SOURCES
 # Test sources
 set(TEST_SOURCES
     tests/test_jv.cpp
+    tests/test_jv_duals.cpp
     tests/test_hungarian.cpp
     tests/test_auction.cpp
     tests/test_greedy.cpp
@@ -84,6 +85,7 @@ set(TEST_SOURCES
     tests/test_cycle_cancel.cpp
     tests/test_hk01.cpp
     tests/test_lapmod.cpp
+    tests/test_line_metric.cpp
     tests/test_network_simplex.cpp
     tests/test_orlin.cpp
     tests/test_push_relabel.cpp

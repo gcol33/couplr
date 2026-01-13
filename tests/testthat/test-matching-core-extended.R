@@ -51,7 +51,7 @@ test_that("match_couples from distance object with max_distance constraint error
 
   # With very restrictive max_distance - errors because no valid pairs
   expect_error(
-    match_couples(dist_obj, max_distance = 0.1),
+    suppressWarnings(match_couples(dist_obj, max_distance = 0.1)),
     "No valid pairs"
   )
 })
@@ -435,10 +435,10 @@ test_that("plot.matching_result density", {
   left <- data.frame(id = 1:50, x = 1:50)
   right <- data.frame(id = 51:100, x = seq(1.1, 50.1, by = 1))
 
-  result <- match_couples(left, right, vars = "x")
+  result <- suppressWarnings(match_couples(left, right, vars = "x"))
 
   # May produce tie warnings, just check it works
-  expect_error(plot(result, type = "density"), NA)
+  expect_error(suppressWarnings(plot(result, type = "density")), NA)
 })
 
 test_that("plot.matching_result ecdf", {

@@ -219,8 +219,8 @@ test_that("pixel_morph_animate works with all modes", {
 test_that("pixel_morph_animate handles downscale_steps", {
   imgs <- get_test_images()
 
-  result <- pixel_morph_animate(imgs$A, imgs$B, downscale_steps = 1,
-                                n_frames = 2, show = FALSE)
+  result <- suppressWarnings(pixel_morph_animate(imgs$A, imgs$B, downscale_steps = 1,
+                                n_frames = 2, show = FALSE))
 
   expect_type(result, "list")
   # Original dimensions preserved in output

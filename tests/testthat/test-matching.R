@@ -494,7 +494,7 @@ test_that("balance_diagnostics computes correct statistics", {
     x = rep(10, 30)  # Same constant value
   )
 
-  result <- match_couples(left, right, vars = "x")
+  result <- suppressWarnings(match_couples(left, right, vars = "x"))
   balance <- balance_diagnostics(result, left, right, vars = "x")
 
   # With identical values, standardized difference should be 0
@@ -879,7 +879,7 @@ test_that("join_matched handles empty matches", {
 
   # With strict caliper, should throw error (no valid pairs)
   expect_error(
-    match_couples(left, right, vars = "x", max_distance = 1),
+    suppressWarnings(match_couples(left, right, vars = "x", max_distance = 1)),
     "No valid pairs"
   )
 })
@@ -1268,7 +1268,7 @@ test_that("distance object works with join_matched", {
 
   # Create distance object and match
   dist_obj <- compute_distances(left, right, vars = c("x", "y"))
-  result <- match_couples(dist_obj)
+  result <- suppressWarnings(match_couples(dist_obj))
 
   # Join should work seamlessly
   joined <- join_matched(result, left, right)
@@ -1361,6 +1361,6 @@ test_that("distance object with custom ID columns", {
   expect_equal(dist_obj$right_ids, as.character(201:205))
 
   # Should work with match_couples
-  result <- match_couples(dist_obj)
+  result <- suppressWarnings(match_couples(dist_obj))
   expect_s3_class(result, "matching_result")
 })

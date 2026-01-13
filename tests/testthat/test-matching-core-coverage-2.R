@@ -23,7 +23,7 @@ test_that("match_couples handles single row", {
   left <- test_left[1, ]
   right <- test_right[1, ]
 
-  result <- match_couples(left, right, vars = c("age", "income"))
+  result <- suppressWarnings(match_couples(left, right, vars = c("age", "income")))
 
   expect_s3_class(result, "matching_result")
   expect_equal(nrow(result$pairs), 1)

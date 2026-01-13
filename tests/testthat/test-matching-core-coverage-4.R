@@ -377,11 +377,11 @@ test_that("match_couples errors when no valid pairs exist", {
   right_small <- data.frame(id = "R1", age = 1000)
 
   expect_error(
-    match_couples(
+    suppressWarnings(match_couples(
       left_small, right_small,
       vars = "age",
       max_distance = 0.001  # Very tight constraint
-    ),
+    )),
     "No valid pairs"
   )
 })

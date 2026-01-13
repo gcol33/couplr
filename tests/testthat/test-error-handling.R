@@ -123,7 +123,7 @@ test_that("match_couples errors when no valid pairs after constraints", {
   right <- data.frame(id = 4:6, x = c(100, 200, 300))
 
   expect_error(
-    match_couples(left, right, vars = "x", max_distance = 1),
+    suppressWarnings(match_couples(left, right, vars = "x", max_distance = 1)),
     "No valid pairs"
   )
 })

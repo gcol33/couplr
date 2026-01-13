@@ -310,7 +310,7 @@ test_that("update_constraints then match workflow", {
 
   # Apply constraints and match - use a less restrictive max_distance
   constrained <- update_constraints(dist_obj, max_distance = 1.0)
-  result <- match_couples(constrained)
+  result <- suppressWarnings(match_couples(constrained))
 
   # Should still match all since distances are 0.5
 

@@ -244,7 +244,7 @@ test_that("match_couples works with distance_object", {
   right <- data.frame(id = 6:10, x = 2:6, y = 2:6)
 
   dist_obj <- compute_distances(left, right, vars = c("x", "y"))
-  result <- match_couples(dist_obj)
+  result <- suppressWarnings(match_couples(dist_obj))
 
   expect_s3_class(result, "matching_result")
 })
@@ -284,7 +284,7 @@ test_that("match_couples check_costs produces warnings for skewed costs", {
   right <- data.frame(id = 11:20, x = c(rep(0, 9), 1000))
 
   # This should run without error even if costs are skewed
-  result <- match_couples(left, right, vars = "x", check_costs = TRUE)
+  result <- suppressWarnings(match_couples(left, right, vars = "x", check_costs = TRUE))
 
   expect_s3_class(result, "matching_result")
 })
@@ -306,7 +306,7 @@ test_that("match_couples handles single observation", {
   left <- data.frame(id = 1, x = 1)
   right <- data.frame(id = 2, x = 1.5)
 
-  result <- match_couples(left, right, vars = "x")
+  result <- suppressWarnings(match_couples(left, right, vars = "x"))
 
   expect_equal(nrow(result$pairs), 1)
 })
@@ -315,7 +315,7 @@ test_that("match_couples handles unequal group sizes", {
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:8, x = 1:5)
 
-  result <- match_couples(left, right, vars = "x")
+  result <- suppressWarnings(match_couples(left, right, vars = "x"))
 
   expect_equal(nrow(result$pairs), 3)  # Matches min(3, 5)
 })
@@ -380,7 +380,7 @@ test_that("match_couples errors for no valid pairs", {
 
   # When constraints are too strict, the function throws an error
   expect_error(
-    match_couples(left, right, vars = "x", max_distance = 0.1),
+    suppressWarnings(match_couples(left, right, vars = "x", max_distance = 0.1)),
     "No valid pairs"
   )
 })

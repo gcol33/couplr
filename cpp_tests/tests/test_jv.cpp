@@ -12,7 +12,7 @@
 using Catch::Approx;
 
 // Helper to create cost matrix from initializer list
-lap::CostMatrix make_cost(std::initializer_list<std::initializer_list<double>> rows) {
+inline lap::CostMatrix make_cost(std::initializer_list<std::initializer_list<double>> rows) {
     std::vector<std::vector<double>> data;
     for (const auto& row : rows) {
         data.push_back(std::vector<double>(row));

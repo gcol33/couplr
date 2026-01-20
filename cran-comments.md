@@ -13,12 +13,18 @@ This is a network-related check that does not affect package functionality.
 
 ## Downstream dependencies
 
-None (new package).
+None.
 
-## Notes
+## Resubmission
 
-This is a new submission.
+This is a **hotfix** addressing failures on the M1-SAN (UndefinedBehaviorSanitizer) checks:
 
-couplr provides optimal pairing and matching via linear assignment algorithms,
-with 20 LAP solvers and production-ready matching workflows for causal inference
-and observational studies.
+1. **C++ undefined behavior**: Fixed left bit-shift of negative value in
+   Gabow-Tarjan algorithm (`utils_gabow_tarjan.cpp:1398`). Replaced `(y << 1) - 1`
+   with `2 * y - 1` to avoid UB when dual variables are negative (which is
+   expected behavior in this scaling algorithm).
+
+2. **Vignette build failure**: Fixed `select()` namespace conflict by using
+   explicit `dplyr::select()` to prevent masking by MASS or other packages.
+
+See: https://www.stats.ox.ac.uk/pub/bdr/M1-SAN/couplr/

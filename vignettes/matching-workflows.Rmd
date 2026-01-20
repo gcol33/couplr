@@ -776,8 +776,8 @@ result_blocked <- match_couples(
 # Verify exact site balance
 result_blocked$pairs %>%
   mutate(left_id = as.integer(left_id), right_id = as.integer(right_id)) %>%
-  left_join(left_site %>% select(id, site), by = c("left_id" = "id")) %>%
-  left_join(right_site %>% select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) %>%
+  left_join(left_site %>% dplyr::select(id, site), by = c("left_id" = "id")) %>%
+  left_join(right_site %>% dplyr::select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) %>%
   count(site_left, site_right)
 ```
 
@@ -951,7 +951,7 @@ pre_match_stats <- tibble(
 # Combine for plotting
 balance_comparison <- bind_rows(
   pre_match_stats,
-  balance$var_stats %>% select(variable, std_diff) %>% mutate(when = "After")
+  balance$var_stats %>% dplyr::select(variable, std_diff) %>% mutate(when = "After")
 )
 
 ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +

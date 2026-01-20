@@ -1391,11 +1391,12 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         }
         
         // Update duals: y(v) ← 2y(v) - 1
+        // Use multiplication instead of bit shift to avoid UB with negative values
         for (int i = 0; i < n; ++i) {
-            y_u[i] = (y_u[i] << 1) - 1;
+            y_u[i] = 2 * y_u[i] - 1;
         }
         for (int j = 0; j < m; ++j) {
-            y_v[j] = (y_v[j] << 1) - 1;
+            y_v[j] = 2 * y_v[j] - 1;
         }
         
         // Step 2: Find 1-optimal matching with scale_match

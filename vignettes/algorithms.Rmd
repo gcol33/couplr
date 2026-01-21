@@ -135,8 +135,8 @@ ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algo
   )) +
   coord_flip(clip = "off") +
   labs(
-    title = "Same Problem, Same Answer, 22× Speed Difference",
-    subtitle = "400 × 400 dense cost matrix, median of 5 runs",
+    title = "Same Problem, Same Answer, 22x Speed Difference",
+    subtitle = "400 x 400 dense cost matrix, median of 5 runs",
     x = NULL,
     y = "Time (milliseconds)"
   ) +
@@ -158,7 +158,7 @@ When you run five different assignment algorithms on identical input, they all f
 
 The slowest happens to be Hungarian, the algorithm everyone learns in textbooks. CSA, the fastest here, came out four decades later. That gap represents years of algorithmic refinement that most production software never adopted.
 
-Why would anyone need five ways to solve the same problem? Because they don't all behave the same under different conditions. The Hungarian method that handles a 100×100 matrix without complaint becomes painfully slow at 1000×1000. The Auction algorithm that dominates large dense problems stumbles on small sparse ones. Different matrix sizes, different sparsity patterns, different cost distributions: each situation favors a different algorithm.
+Why would anyone need five ways to solve the same problem? Because they don't all behave the same under different conditions. The Hungarian method that handles a 100x100 matrix without complaint becomes painfully slow at 1000x1000. The Auction algorithm that dominates large dense problems stumbles on small sparse ones. Different matrix sizes, different sparsity patterns, different cost distributions: each situation favors a different algorithm.
 
 couplr gives you all of them, and it picks the right one automatically.
 
@@ -241,7 +241,7 @@ ggraph(g, layout = "manual", x = layout$x, y = layout$y) +
                            name = NULL) +
   scale_edge_width_manual(values = c("Optimal" = 1.5, "Available" = 0.8), guide = "none") +
   labs(title = "Assignment as Bipartite Matching",
-       subtitle = "Optimal: W1→J1 (2) + W2→J2 (1) + W3→J3 (2) = 5") +
+       subtitle = "Optimal: W1->J1 (2) + W2->J2 (1) + W3->J3 (2) = 5") +
   theme_graph_clean() +
   coord_fixed(clip = "off")
 ```
@@ -288,7 +288,7 @@ Different algorithms exploit this duality in different ways.
 
 ### Hungarian Algorithm (1955)
 
-The algorithm everyone learns. Published by Harold Kuhn, based on work by Hungarian mathematicians Kőnig and Egerváry.
+The algorithm everyone learns. Published by Harold Kuhn, based on work by Hungarian mathematicians Koenig and Egervary.
 
 **The idea**: Maintain dual prices $(u_i, v_j)$ such that $u_i + v_j \leq c_{ij}$ for all pairs. Edges where equality holds are "tight": the only edges that can appear in an optimal solution.
 
@@ -351,7 +351,7 @@ ggraph(g, layout = "manual", x = layout$x, y = layout$y) +
 
 **Complexity**: $O(n^3)$
 
-**The problem**: That $O(n^3)$ hides a large constant. The price updates and augmenting path searches are expensive. For a 1000×1000 matrix, you might wait 10+ seconds.
+**The problem**: That $O(n^3)$ hides a large constant. The price updates and augmenting path searches are expensive. For a 1000x1000 matrix, you might wait 10+ seconds.
 
 ```{r hungarian-example}
 cost <- matrix(c(10, 19, 8, 15, 10, 11, 9, 12, 14), nrow = 3, byrow = TRUE)
@@ -419,7 +419,7 @@ ggplot(steps) +
 
 3. **Augmentation**: For any remaining unmatched rows, use Dijkstra-style shortest path search.
 
-**Complexity**: Still $O(n^3)$, but with a much smaller constant. Often 10-50× faster than Hungarian in practice.
+**Complexity**: Still $O(n^3)$, but with a much smaller constant. Often 10-50x faster than Hungarian in practice.
 
 ```{r jv-example}
 set.seed(123)
@@ -437,9 +437,9 @@ But JV has a limitation: it's fundamentally serial. Each augmenting path depends
 
 ## The Scaling Revolution
 
-In the late 1980s, researchers discovered a powerful trick called **ε-scaling**. The idea: relax the optimality requirement. Instead of demanding exact answers at every step, tolerate a small error ε. Start with a large ε, which lets you make big sloppy steps and rapid progress. Then shrink ε over multiple phases until it's essentially zero. Now you have an exact answer.
+In the late 1980s, researchers discovered a powerful trick called **epsilon-scaling**. The idea: relax the optimality requirement. Instead of demanding exact answers at every step, tolerate a small error epsilon. Start with a large epsilon, which lets you make big sloppy steps and rapid progress. Then shrink epsilon over multiple phases until it's essentially zero. Now you have an exact answer.
 
-This transforms how the algorithm behaves. Large ε means big steps and rapid progress; small ε means careful refinement. The total work can end up being less than doing everything exactly from the start.
+This transforms how the algorithm behaves. Large epsilon means big steps and rapid progress; small epsilon means careful refinement. The total work can end up being less than doing everything exactly from the start.
 
 Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and Orlin-Ahuja.
 
@@ -531,13 +531,13 @@ ggraph(g, layout = "manual", x = layout$x, y = layout$y) +
 
 1. Each unassigned worker finds their best job (highest value minus price).
 
-2. The worker bids: new price = old price + (best value - second-best value) + ε.
+2. The worker bids: new price = old price + (best value - second-best value) + epsilon.
 
 3. If someone else held that job, they become unassigned.
 
 4. Repeat until everyone is assigned.
 
-**Why ε matters**: Without ε, two workers could bid infinitely against each other, each raising the price by 0. The ε ensures progress.
+**Why epsilon matters**: Without epsilon, two workers could bid infinitely against each other, each raising the price by 0. The epsilon ensures progress.
 
 **Complexity**: $O(n^2 \log(nC) / \epsilon)$ where $C$ is the cost range.
 
@@ -545,8 +545,8 @@ couplr offers three Auction variants:
 
 | Variant | `method =` | Key Feature |
 |---------|------------|-------------|
-| Standard | `"auction"` | Adaptive ε, queue-based |
-| Scaled | `"auction_scaled"` | ε-scaling phases |
+| Standard | `"auction"` | Adaptive epsilon, queue-based |
+| Scaled | `"auction_scaled"` | Epsilon-scaling phases |
 | Gauss-Seidel | `"auction_gs"` | Sequential sweep |
 
 ```{r auction-example}
@@ -557,17 +557,17 @@ result <- lap_solve(cost, method = "auction")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 ```
 
-Auction shines for large dense problems. But it's sensitive to ε. Get it wrong and performance degrades, or the algorithm cycles forever.
+Auction shines for large dense problems. But it's sensitive to epsilon. Get it wrong and performance degrades, or the algorithm cycles forever.
 
-The next algorithm makes ε-scaling systematic.
+The next algorithm makes epsilon-scaling systematic.
 
 ---
 
 ### Cost-Scaling Algorithm / CSA (1995)
 
-Andrew Goldberg and Robert Kennedy asked: what if we scale ε automatically?
+Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon automatically?
 
-**The idea**: Start with $\epsilon = \max(c_{ij})$. In each phase, halve ε and refine the current solution. After $O(\log C)$ phases, ε is essentially zero: optimality.
+**The idea**: Start with $\epsilon = \max(c_{ij})$. In each phase, halve epsilon and refine the current solution. After $O(\log C)$ phases, epsilon is essentially zero: optimality.
 
 ```{r csa-diagram, fig.width=9, fig.height=4, echo=FALSE, fig.alt="CSA algorithm showing epsilon-scaling phases converging to optimal solution"}
 # CSA visualization: epsilon scaling progression
@@ -590,7 +590,7 @@ ggplot(phases) +
   geom_point(aes(x = x, y = 0.5), size = c(13, 14, 15, 16, 18),
              color = phase_colors) +
   # Epsilon labels inside circles (dark text, same size)
-  geom_text(aes(x = x, y = 0.5, label = paste0("\u03b5=", epsilon)),
+  geom_text(aes(x = x, y = 0.5, label = paste0("e=", epsilon)),
             color = "#3E3F3A", fontface = "bold", size = 3.5) +
   # Phase labels below
   geom_text(aes(x = x, y = 0.15, label = paste0("Phase ", phase)),
@@ -599,10 +599,10 @@ ggplot(phases) +
   annotate("segment", x = 1, xend = 5, y = 0.9, yend = 0.9,
            arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
            linewidth = 1, color = col_text) +
-  annotate("text", x = 3, y = 0.98, label = "\u03b5 halves each phase \u2192 precision improves",
+  annotate("text", x = 3, y = 0.98, label = "epsilon halves each phase -> precision improves",
            size = 3.8, color = col_text) +
-  labs(title = "CSA: Systematic \u03b5-Scaling",
-       subtitle = "Each phase halves \u03b5 and refines the assignment until optimal") +
+  labs(title = "CSA: Systematic Epsilon-Scaling",
+       subtitle = "Each phase halves epsilon and refines the assignment until optimal") +
   theme_diagram() +
   coord_fixed(ratio = 1.5, xlim = c(0.3, 5.7), ylim = c(0, 1.15))
 ```
@@ -660,10 +660,10 @@ ggplot(bits) +
   annotate("segment", x = 1, xend = 8, y = 1.05, yend = 1.05,
            arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
            linewidth = 1.2, color = col_text) +
-  annotate("text", x = 4.5, y = 1.18, label = "Process most significant \u2192 least significant",
+  annotate("text", x = 4.5, y = 1.18, label = "Process most significant -> least significant",
            size = 3.8, color = col_text) +
   labs(title = "Gabow-Tarjan: Bit-Scaling",
-       subtitle = "Process integer costs bit-by-bit from coarse to fine. Complexity: O(n\u00b3 log C)") +
+       subtitle = "Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^3 log C)") +
   theme_diagram() +
   theme(legend.position = "bottom",
         legend.text = element_text(size = 10, color = col_text)) +
@@ -981,7 +981,7 @@ For highly rectangular problems (e.g., matching 100 treatments to 10,000 control
 ```{r ramshaw-tarjan-example}
 set.seed(333)
 n_rows <- 30
-n_cols <- 100  # Highly rectangular: 30 × 100
+n_cols <- 100  # Highly rectangular: 30 x 100
 cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 result <- lap_solve(cost, method = "ramshaw_tarjan")
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
@@ -1083,7 +1083,7 @@ ggplot(bench_results, aes(x = size, y = time, color = method, group = method)) +
   labs(
     title = "Algorithm Scaling: Dense Matrices",
     subtitle = "Log scale. CSA and JV consistently fastest. Hungarian falls behind.",
-    x = "Matrix Size (n × n)",
+    x = "Matrix Size (n x n)",
     y = "Time (milliseconds, log scale)",
     color = "Algorithm",
     shape = "Algorithm"
@@ -1121,7 +1121,7 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
   labs(
     title = "Sparse vs Dense: 80% Forbidden Entries",
     subtitle = "Sparse algorithms (SAP, LAPMOD) dramatically outperform dense (JV)",
-    x = "Matrix Size (n × n)",
+    x = "Matrix Size (n x n)",
     y = "Time (milliseconds)",
     color = "Algorithm"
   ) +
@@ -1134,7 +1134,7 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
   )
 ```
 
-**For sparse matrices**: SAP and LAPMOD are 10× faster than dense algorithms. Use them.
+**For sparse matrices**: SAP and LAPMOD are 10x faster than dense algorithms. Use them.
 
 ---
 

@@ -358,7 +358,7 @@ If you need to solve assignment problems directly (not matching workflows), coup
 Given a cost matrix where entry (i,j) is the cost of assigning row i to column j:
 
 ```{r lap-solve-basic}
-# Cost matrix: 3 workers × 3 tasks
+# Cost matrix: 3 workers x 3 tasks
 cost <- matrix(c(
   4, 2, 5,
   3, 3, 6,

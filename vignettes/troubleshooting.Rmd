@@ -352,7 +352,7 @@ R crashes or shows: "Error: cannot allocate vector of size X GB"
 
 ### Cause
 
-A full distance matrix for n×n requires 8n² bytes:
+A full distance matrix for nxn requires 8n² bytes:
 
 ```{r}
 # Memory requirements

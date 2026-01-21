@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.0.8
+Version: 1.0.9
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com", role = c("aut", "cre", "cph"))
 Description: Solves optimal pairing and matching problems using linear assignment

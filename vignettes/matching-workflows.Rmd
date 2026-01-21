@@ -256,25 +256,25 @@ When `auto_scale = TRUE`, `match_couples()` automatically:
 
 1. **Detects problematic variables**
 
-   - Constant variables (SD = 0) → excluded with warning
+   - Constant variables (SD = 0) -> excluded with warning
 
-   - High missingness (>50%) → warned
+   - High missingness (>50%) -> warned
 
-   - Extreme skewness (|skew| > 2) → informed
+   - Extreme skewness (|skew| > 2) -> informed
 
 2. **Applies appropriate scaling**
 
-   - Continuous variables → scaled by selected method
+   - Continuous variables -> scaled by selected method
 
-   - Binary variables (0/1) → used as-is
+   - Binary variables (0/1) -> used as-is
 
-   - Categorical → converted to numeric if ordered
+   - Categorical -> converted to numeric if ordered
 
 3. **Handles categorical variables**
 
-   - Unordered factors → converted to binary indicators
+   - Unordered factors -> converted to binary indicators
 
-   - Ordered factors → converted to numeric ranks
+   - Ordered factors -> converted to numeric ranks
 
 ```{r preprocessing-demo}
 # Create data with scaling challenges

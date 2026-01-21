@@ -238,9 +238,10 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
         if (!MASK[i * m + j]) cols[fill[i]++] = j;
   }
 
-  // Find max cost for epsilon
+  // Find max cost for epsilon - ONLY from original rows (not dummy rows)
+  // Dummy rows have artificially large costs that would make epsilon overflow
   double max_abs_cost = 0.0;
-  for (int i = 0; i < nn; ++i) {
+  for (int i = 0; i < n; ++i) {
     const int start = row_ptr[i], end = row_ptr[i + 1];
     for (int k = start; k < end; ++k) {
       int j = cols[k];

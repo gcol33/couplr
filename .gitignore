@@ -26,5 +26,8 @@ nul
 cookies.txt
 Rplots.pdf
 
+# Package build artifacts
+*.tar.gz
+
 # C++ test build directory
 cpp_tests/build/

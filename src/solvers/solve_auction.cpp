@@ -265,6 +265,9 @@ LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize,
     std::vector<int> a_of_i(n, -1);
     std::vector<int> i_of_j(m, -1);
 
+    // Price bounds to prevent overflow (scaled relative to problem size)
+    const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
+
     // C reference formulation: MINIMIZE (cost - price)
     auto reduced_cost = [&](int i, int j) {
         return work.at(i, j) - price[j];
@@ -337,12 +340,22 @@ LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize,
                 LAP_THROW_INFEASIBLE("Person has no valid neighbors");
             }
 
-            // Compute gamma
-            double gamma = (second_rc == std::numeric_limits<double>::infinity()) ?
-                          1e6 : (second_rc - best_rc);
+            // Compute gamma - use epsilon-scaled default when only one option
+            double gamma;
+            if (second_rc == std::numeric_limits<double>::infinity() || !std::isfinite(second_rc)) {
+                // Only one valid option: use small multiple of epsilon
+                gamma = epsilon;
+            } else {
+                gamma = second_rc - best_rc;
+                // Clamp gamma to prevent runaway prices
+                if (gamma > price_bound) gamma = price_bound;
+                if (gamma < 0.0) gamma = 0.0;  // Should not happen, but defensive
+            }
 
-            // DECREASE price
-            price[best_j] -= (gamma + epsilon);
+            // DECREASE price with overflow protection
+            double new_price = price[best_j] - (gamma + epsilon);
+            if (new_price < -price_bound) new_price = -price_bound;
+            price[best_j] = new_price;
 
             // Assignment
             int old = i_of_j[best_j];
@@ -485,6 +498,9 @@ LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize,
     std::vector<int> a_of_i(n, -1);
     std::vector<int> i_of_j(m, -1);
 
+    // Price bounds to prevent overflow (scaled relative to problem size)
+    const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
+
     // C reference formulation: MINIMIZE (cost - price)
     auto reduced_cost = [&](int i, int j) {
         return work.at(i, j) - price[j];
@@ -557,12 +573,22 @@ LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize,
                 LAP_THROW_INFEASIBLE("Person has no valid neighbors");
             }
 
-            // Compute gamma
-            double gamma = (second_rc == std::numeric_limits<double>::infinity()) ?
-                          1e6 : (second_rc - best_rc);
+            // Compute gamma - use epsilon-scaled default when only one option
+            double gamma;
+            if (second_rc == std::numeric_limits<double>::infinity() || !std::isfinite(second_rc)) {
+                // Only one valid option: use small multiple of epsilon
+                gamma = epsilon;
+            } else {
+                gamma = second_rc - best_rc;
+                // Clamp gamma to prevent runaway prices
+                if (gamma > price_bound) gamma = price_bound;
+                if (gamma < 0.0) gamma = 0.0;  // Should not happen, but defensive
+            }
 
-            // DECREASE price
-            price[best_j] -= (gamma + epsilon);
+            // DECREASE price with overflow protection
+            double new_price = price[best_j] - (gamma + epsilon);
+            if (new_price < -price_bound) new_price = -price_bound;
+            price[best_j] = new_price;
 
             // Assignment
             int old = i_of_j[best_j];

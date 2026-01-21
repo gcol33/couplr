@@ -258,6 +258,9 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
   std::vector<int> a_of_i(nn, -1);  // nn rows (including dummies if padded)
   std::vector<int> i_of_j(m, -1);
 
+  // Price bounds to prevent overflow (scaled relative to problem size)
+  const double price_bound = std::max(1e12, max_abs_cost * nn * 1000.0);
+
   // C reference formulation: MINIMIZE (cost - price)
   auto reduced_cost = [&](int i, int j) {
     return W[i * m + j] - price[j];
@@ -324,11 +327,22 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
 
       if (best_j < 0) LAP_ERROR("Infeasible: person %d has no valid neighbors", i + 1);
 
-      // Compute gamma
-      double gamma = (second_rc == INFINITY) ? 1e6 : (second_rc - best_rc);
+      // Compute gamma - use epsilon-scaled default when only one option
+      double gamma;
+      if (second_rc == INFINITY || !std::isfinite(second_rc)) {
+        // Only one valid option: use small multiple of epsilon
+        gamma = epsilon;
+      } else {
+        gamma = second_rc - best_rc;
+        // Clamp gamma to prevent runaway prices
+        if (gamma > price_bound) gamma = price_bound;
+        if (gamma < 0.0) gamma = 0.0;  // Should not happen, but defensive
+      }
 
-      // DECREASE price
-      price[best_j] -= (gamma + epsilon);
+      // DECREASE price with overflow protection
+      double new_price = price[best_j] - (gamma + epsilon);
+      if (new_price < -price_bound) new_price = -price_bound;
+      price[best_j] = new_price;
 
       // Assignment
       int old = i_of_j[best_j];

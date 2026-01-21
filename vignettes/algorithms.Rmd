@@ -81,7 +81,7 @@ theme_diagram <- function() {
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R packages still use nothing else.
 
-couplr implements **eighteen algorithms**, including methods that exist in no other R package: Gabow-Tarjan, Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan.
+couplr implements **20 algorithms** (19 solvers plus automatic selection), including methods that exist in no other R package: Gabow-Tarjan, Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan.
 
 ### Who This Vignette Is For
 

@@ -549,7 +549,8 @@ couplr offers three Auction variants:
 | Scaled | `"auction_scaled"` | Epsilon-scaling phases |
 | Gauss-Seidel | `"auction_gs"` | Sequential sweep |
 
-```{r auction-example}
+```{r auction-example, eval=FALSE}
+# Example code - auction algorithm for large problems
 set.seed(123)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)

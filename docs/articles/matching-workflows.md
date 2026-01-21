@@ -311,25 +311,25 @@ automatically:
 
 1.  **Detects problematic variables**
 
-    - Constant variables (SD = 0) → excluded with warning
+    - Constant variables (SD = 0) -\> excluded with warning
 
-    - High missingness (\>50%) → warned
+    - High missingness (\>50%) -\> warned
 
-    - Extreme skewness (\|skew\| \> 2) → informed
+    - Extreme skewness (\|skew\| \> 2) -\> informed
 
 2.  **Applies appropriate scaling**
 
-    - Continuous variables → scaled by selected method
+    - Continuous variables -\> scaled by selected method
 
-    - Binary variables (0/1) → used as-is
+    - Binary variables (0/1) -\> used as-is
 
-    - Categorical → converted to numeric if ordered
+    - Categorical -\> converted to numeric if ordered
 
 3.  **Handles categorical variables**
 
-    - Unordered factors → converted to binary indicators
+    - Unordered factors -\> converted to binary indicators
 
-    - Ordered factors → converted to numeric ranks
+    - Ordered factors -\> converted to numeric ranks
 
 ``` r
 
@@ -544,18 +544,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 135.64 seconds
+#>   Time: 96.42 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.42 seconds
+#>   Time: 0.94 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 95.5 x
+#>   Speedup: 102.6 x
 ```
 
 ### Greedy Strategies
@@ -655,9 +655,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.04        0.0912          18.24
+#> elapsed    sorted     0.03        0.0912          18.24
 #> elapsed1 row_best     0.05        0.0968          19.36
-#> elapsed2       pq     0.07        0.0912          18.24
+#> elapsed2       pq     0.10        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -894,8 +894,8 @@ result_blocked <- match_couples(
 # Verify exact site balance
 result_blocked$pairs %>%
   mutate(left_id = as.integer(left_id), right_id = as.integer(right_id)) %>%
-  left_join(left_site %>% select(id, site), by = c("left_id" = "id")) %>%
-  left_join(right_site %>% select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) %>%
+  left_join(left_site %>% dplyr::select(id, site), by = c("left_id" = "id")) %>%
+  left_join(right_site %>% dplyr::select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) %>%
   count(site_left, site_right)
 #> # A tibble: 3 × 3
 #>   site_left site_right     n
@@ -1125,7 +1125,7 @@ pre_match_stats <- tibble(
 # Combine for plotting
 balance_comparison <- bind_rows(
   pre_match_stats,
-  balance$var_stats %>% select(variable, std_diff) %>% mutate(when = "After")
+  balance$var_stats %>% dplyr::select(variable, std_diff) %>% mutate(when = "After")
 )
 
 ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +

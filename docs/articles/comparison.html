@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-01-20</h4>
+            <h4 data-toc-skip class="date">2026-01-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -269,7 +269,7 @@ matches directly on covariates (multivariate distance).</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">couplr_balance_df</span> <span class="op">&lt;-</span> <span class="va">couplr_balance</span><span class="op">$</span><span class="va">var_stats</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># Combine and plot</span></span>
@@ -900,115 +900,115 @@ greedy modes.</p>
 <tbody>
 <tr class="odd">
 <td><strong>One-to-one matching</strong></td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr class="even">
 <td><strong>Full matching</strong></td>
-<td>✗</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✗</td>
+<td>No</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
 </tr>
 <tr class="odd">
 <td><strong>Optimal assignment</strong></td>
-<td>✓ (20 algorithms)</td>
-<td>✓ (1 algorithm)</td>
-<td>✓</td>
-<td>✓</td>
-<td>✗</td>
+<td>Yes (20 algorithms)</td>
+<td>Yes (1 algorithm)</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
 </tr>
 <tr class="even">
 <td><strong>Greedy matching</strong></td>
-<td>✓ (3 strategies)</td>
-<td>✓</td>
-<td>✗</td>
-<td>✗</td>
-<td>✓</td>
+<td>Yes (3 strategies)</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
 </tr>
 <tr class="odd">
 <td><strong>Propensity scores</strong></td>
-<td>✗ (external)</td>
-<td>✓</td>
-<td>✓</td>
-<td>✗</td>
-<td>✓</td>
+<td>No (external)</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
 </tr>
 <tr class="even">
 <td><strong>Direct covariate</strong></td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr class="odd">
 <td><strong>Blocking/exact</strong></td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr class="even">
 <td><strong>Caliper</strong></td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr class="odd">
 <td><strong>Balance constraints</strong></td>
-<td>✗</td>
-<td>✗</td>
-<td>✗</td>
-<td>✓</td>
-<td>✗</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+<td>No</td>
 </tr>
 <tr class="even">
 <td><strong>Genetic optimization</strong></td>
-<td>✗</td>
-<td>✓ (GenMatch)</td>
-<td>✗</td>
-<td>✗</td>
-<td>✓</td>
+<td>No</td>
+<td>Yes (GenMatch)</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
 </tr>
 <tr class="odd">
 <td><strong>Distance caching</strong></td>
-<td>✓</td>
-<td>✗</td>
-<td>✓</td>
-<td>✗</td>
-<td>✗</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
 </tr>
 <tr class="even">
 <td><strong>Parallel processing</strong></td>
-<td>✓ (blocks)</td>
-<td>✗</td>
-<td>✗</td>
-<td>✗</td>
-<td>✗</td>
+<td>Yes (blocks)</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
 </tr>
 <tr class="odd">
 <td><strong>Deterministic</strong></td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>✗</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
 </tr>
 <tr class="even">
 <td><strong>Tidy interface</strong></td>
-<td>✓</td>
+<td>Yes</td>
 <td>Partial</td>
-<td>✗</td>
-<td>✗</td>
-<td>✗</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
 </tr>
 </tbody>
 </table>
@@ -1253,7 +1253,7 @@ efficient matching. couplr handles this with greedy matching:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">after_df</span> <span class="op">&lt;-</span> <span class="va">balance_lalonde</span><span class="op">$</span><span class="va">var_stats</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"After"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">balance_plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">before_df</span>, <span class="va">after_df</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -1404,7 +1404,7 @@ efficient matching. couplr handles this with greedy matching:</p>
 <span><span class="co">#&gt;   Max |std diff| after: 1.97</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">balance_lalonde</span><span class="op">$</span><span class="va">overall</span><span class="op">$</span><span class="va">max_abs_std_diff</span> <span class="op">&lt;</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n✓ All variables within acceptable balance threshold (0.25)\n"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nYes All variables within acceptable balance threshold (0.25)\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n⚠ Some variables exceed 0.25 threshold - consider calipers or blocking\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>

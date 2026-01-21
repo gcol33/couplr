@@ -1,5 +1,20 @@
 # Changelog
 
+## couplr 1.0.7
+
+### Bug Fixes
+
+- Fixed undefined behavior (UB) in Gabow-Tarjan algorithm: replaced left
+  bit-shift of potentially negative values with multiplication to avoid
+  sanitizer errors on M1-SAN checks
+- Fixed namespace conflict with
+  [`select()`](https://dplyr.tidyverse.org/reference/select.html) in
+  vignettes by using explicit
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html)
+  to prevent masking by MASS or other packages
+
+------------------------------------------------------------------------
+
 ## couplr 1.0.6
 
 CRAN release: 2026-01-20

@@ -63,11 +63,11 @@
 <circle cx='324.00' cy='172.53' r='16.36' style='stroke-width: 0.71; stroke: #82D58B; fill: #82D58B;' />
 <circle cx='429.74' cy='172.53' r='17.43' style='stroke-width: 0.71; stroke: #6FD574; fill: #6FD574;' />
 <circle cx='535.47' cy='172.53' r='19.56' style='stroke-width: 0.71; stroke: #5DD65D; fill: #5DD65D;' />
-<text x='112.53' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='27.12px' lengthAdjust='spacingAndGlyphs'>ε=100</text>
-<text x='218.26' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=50</text>
-<text x='324.00' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=25</text>
-<text x='429.74' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=12</text>
-<text x='535.47' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.06px' lengthAdjust='spacingAndGlyphs'>ε=6</text>
+<text x='112.53' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='27.94px' lengthAdjust='spacingAndGlyphs'>e=100</text>
+<text x='218.26' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=50</text>
+<text x='324.00' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=25</text>
+<text x='429.74' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=12</text>
+<text x='535.47' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.88px' lengthAdjust='spacingAndGlyphs'>e=6</text>
 <text x='112.53' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 1</text>
 <text x='218.26' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 2</text>
 <text x='324.00' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 3</text>
@@ -75,11 +75,11 @@
 <text x='535.47' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 5</text>
 <line x1='112.53' y1='109.09' x2='535.47' y2='109.09' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polygon points='530.56,111.92 535.47,109.09 530.56,106.25 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<text x='324.00' y='100.27' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='204.67px' lengthAdjust='spacingAndGlyphs'>ε halves each phase → precision improves</text>
+<text x='324.00' y='100.27' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='233.19px' lengthAdjust='spacingAndGlyphs'>epsilon halves each phase -&gt; precision improves</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwyODguMDA=)'>
-<text x='324.00' y='50.24' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='270.77px' lengthAdjust='spacingAndGlyphs'>Each phase halves ε and refines the assignment until optimal</text>
-<text x='324.00' y='36.36' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='164.41px' lengthAdjust='spacingAndGlyphs'>CSA: Systematic ε-Scaling</text>
+<text x='324.00' y='50.24' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='298.00px' lengthAdjust='spacingAndGlyphs'>Each phase halves epsilon and refines the assignment until optimal</text>
+<text x='324.00' y='36.36' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='205.17px' lengthAdjust='spacingAndGlyphs'>CSA: Systematic Epsilon-Scaling</text>
 </g>
 </g>
 </svg>

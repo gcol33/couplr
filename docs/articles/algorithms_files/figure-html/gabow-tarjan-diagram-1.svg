@@ -78,7 +78,7 @@
 <text x='561.91' y='209.40' text-anchor='middle' style='font-size: 8.54px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.14px' lengthAdjust='spacingAndGlyphs'>bit 8</text>
 <line x1='86.09' y1='122.33' x2='561.91' y2='122.33' style='stroke-width: 2.56; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polygon points='557.00,125.16 561.91,122.33 557.00,119.49 ' style='stroke-width: 2.56; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<text x='324.00' y='115.59' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='207.09px' lengthAdjust='spacingAndGlyphs'>Process most significant → least significant</text>
+<text x='324.00' y='115.59' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='206.20px' lengthAdjust='spacingAndGlyphs'>Process most significant -&gt; least significant</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzMjQuMDA=)'>
 <rect x='225.76' y='245.60' width='11.61' height='11.61' style='stroke-width: 4.27; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #F39C12;' />
@@ -87,7 +87,7 @@
 <text x='245.69' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='33.34px' lengthAdjust='spacingAndGlyphs'>Current</text>
 <text x='307.27' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.25px' lengthAdjust='spacingAndGlyphs'>Processed</text>
 <text x='382.76' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.80px' lengthAdjust='spacingAndGlyphs'>Remaining</text>
-<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='332.38px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(n³ log C)</text>
+<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='339.30px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^3 log C)</text>
 <text x='324.00' y='67.78' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='161.53px' lengthAdjust='spacingAndGlyphs'>Gabow-Tarjan: Bit-Scaling</text>
 </g>
 </g>

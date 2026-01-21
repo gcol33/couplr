@@ -54,8 +54,8 @@ never adopted.
 
 Why would anyone need five ways to solve the same problem? Because they
 don’t all behave the same under different conditions. The Hungarian
-method that handles a 100×100 matrix without complaint becomes painfully
-slow at 1000×1000. The Auction algorithm that dominates large dense
+method that handles a 100x100 matrix without complaint becomes painfully
+slow at 1000x1000. The Auction algorithm that dominates large dense
 problems stumbles on small sparse ones. Different matrix sizes,
 different sparsity patterns, different cost distributions: each
 situation favors a different algorithm.
@@ -137,7 +137,7 @@ Different algorithms exploit this duality in different ways.
 ### Hungarian Algorithm (1955)
 
 The algorithm everyone learns. Published by Harold Kuhn, based on work
-by Hungarian mathematicians Kőnig and Egerváry.
+by Hungarian mathematicians Koenig and Egervary.
 
 **The idea**: Maintain dual prices $`(u_i, v_j)`$ such that
 $`u_i + v_j \leq c_{ij}`$ for all pairs. Edges where equality holds are
@@ -159,7 +159,7 @@ tight edges](algorithms_files/figure-html/hungarian-diagram-1.svg)
 **Complexity**: $`O(n^3)`$
 
 **The problem**: That $`O(n^3)`$ hides a large constant. The price
-updates and augmenting path searches are expensive. For a 1000×1000
+updates and augmenting path searches are expensive. For a 1000x1000
 matrix, you might wait 10+ seconds.
 
 ``` r
@@ -211,7 +211,7 @@ augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
     Dijkstra-style shortest path search.
 
 **Complexity**: Still $`O(n^3)`$, but with a much smaller constant.
-Often 10-50× faster than Hungarian in practice.
+Often 10-50x faster than Hungarian in practice.
 
 ``` r
 
@@ -235,15 +235,15 @@ approach.
 ## The Scaling Revolution
 
 In the late 1980s, researchers discovered a powerful trick called
-**ε-scaling**. The idea: relax the optimality requirement. Instead of
-demanding exact answers at every step, tolerate a small error ε. Start
-with a large ε, which lets you make big sloppy steps and rapid progress.
-Then shrink ε over multiple phases until it’s essentially zero. Now you
-have an exact answer.
+**epsilon-scaling**. The idea: relax the optimality requirement. Instead
+of demanding exact answers at every step, tolerate a small error
+epsilon. Start with a large epsilon, which lets you make big sloppy
+steps and rapid progress. Then shrink epsilon over multiple phases until
+it’s essentially zero. Now you have an exact answer.
 
-This transforms how the algorithm behaves. Large ε means big steps and
-rapid progress; small ε means careful refinement. The total work can end
-up being less than doing everything exactly from the start.
+This transforms how the algorithm behaves. Large epsilon means big steps
+and rapid progress; small epsilon means careful refinement. The total
+work can end up being less than doing everything exactly from the start.
 
 Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and
 Orlin-Ahuja.
@@ -268,25 +268,26 @@ with prices](algorithms_files/figure-html/auction-diagram-1.svg)
     price).
 
 2.  The worker bids: new price = old price + (best value - second-best
-    value) + ε.
+    value) + epsilon.
 
 3.  If someone else held that job, they become unassigned.
 
 4.  Repeat until everyone is assigned.
 
-**Why ε matters**: Without ε, two workers could bid infinitely against
-each other, each raising the price by 0. The ε ensures progress.
+**Why epsilon matters**: Without epsilon, two workers could bid
+infinitely against each other, each raising the price by 0. The epsilon
+ensures progress.
 
 **Complexity**: $`O(n^2 \log(nC) / \epsilon)`$ where $`C`$ is the cost
 range.
 
 couplr offers three Auction variants:
 
-| Variant      | `method =`         | Key Feature             |
-|--------------|--------------------|-------------------------|
-| Standard     | `"auction"`        | Adaptive ε, queue-based |
-| Scaled       | `"auction_scaled"` | ε-scaling phases        |
-| Gauss-Seidel | `"auction_gs"`     | Sequential sweep        |
+| Variant      | `method =`         | Key Feature                   |
+|--------------|--------------------|-------------------------------|
+| Standard     | `"auction"`        | Adaptive epsilon, queue-based |
+| Scaled       | `"auction_scaled"` | Epsilon-scaling phases        |
+| Gauss-Seidel | `"auction_gs"`     | Sequential sweep              |
 
 ``` r
 
@@ -298,21 +299,21 @@ cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 149.09
 ```
 
-Auction shines for large dense problems. But it’s sensitive to ε. Get it
-wrong and performance degrades, or the algorithm cycles forever.
+Auction shines for large dense problems. But it’s sensitive to epsilon.
+Get it wrong and performance degrades, or the algorithm cycles forever.
 
-The next algorithm makes ε-scaling systematic.
+The next algorithm makes epsilon-scaling systematic.
 
 ------------------------------------------------------------------------
 
 ### Cost-Scaling Algorithm / CSA (1995)
 
-Andrew Goldberg and Robert Kennedy asked: what if we scale ε
+Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon
 automatically?
 
 **The idea**: Start with $`\epsilon = \max(c_{ij})`$. In each phase,
-halve ε and refine the current solution. After $`O(\log C)`$ phases, ε
-is essentially zero: optimality.
+halve epsilon and refine the current solution. After $`O(\log C)`$
+phases, epsilon is essentially zero: optimality.
 
 ![CSA algorithm showing epsilon-scaling phases converging to optimal
 solution](algorithms_files/figure-html/csa-diagram-1.svg)
@@ -688,7 +689,7 @@ controls), this avoids the $`O(m^3)`$ cost of padding to square.
 
 set.seed(333)
 n_rows <- 30
-n_cols <- 100  # Highly rectangular: 30 × 100
+n_cols <- 100  # Highly rectangular: 30 x 100
 cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 result <- lap_solve(cost, method = "ramshaw_tarjan")
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
@@ -797,7 +798,7 @@ middle-ground choices.
 ![Sparse algorithm performance showing SAP and LAPMOD outperforming
 dense algorithms](algorithms_files/figure-html/sparse-plot-1.svg)
 
-**For sparse matrices**: SAP and LAPMOD are 10× faster than dense
+**For sparse matrices**: SAP and LAPMOD are 10x faster than dense
 algorithms. Use them.
 
 ------------------------------------------------------------------------

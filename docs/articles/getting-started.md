@@ -446,7 +446,7 @@ column j:
 
 ``` r
 
-# Cost matrix: 3 workers × 3 tasks
+# Cost matrix: 3 workers x 3 tasks
 cost <- matrix(c(
   4, 2, 5,
   3, 3, 6,

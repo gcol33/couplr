@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-01-20</h4>
+            <h4 data-toc-skip class="date">2026-01-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/algorithms.Rmd" class="external-link"><code>vignettes/algorithms.Rmd</code></a></small>
       <div class="d-none name"><code>algorithms.Rmd</code></div>
@@ -219,8 +219,8 @@ work</p></li>
 <text x='418.47' y='335.00' text-anchor='middle' style='font-size: 10.00px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.69px' lengthAdjust='spacingAndGlyphs'>150</text>
 <text x='519.51' y='335.00' text-anchor='middle' style='font-size: 10.00px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.69px' lengthAdjust='spacingAndGlyphs'>200</text>
 <text x='351.78' y='347.72' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='94.31px' lengthAdjust='spacingAndGlyphs'>Time (milliseconds)</text>
-<text x='115.33' y='36.29' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='226.73px' lengthAdjust='spacingAndGlyphs'>400 × 400 dense cost matrix, median of 5 runs</text>
-<text x='115.33' y='19.99' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='345.31px' lengthAdjust='spacingAndGlyphs'>Same Problem, Same Answer, 22× Speed Difference</text>
+<text x='115.33' y='36.29' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='225.81px' lengthAdjust='spacingAndGlyphs'>400 x 400 dense cost matrix, median of 5 runs</text>
+<text x='115.33' y='19.99' style='font-size: 14.00px; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='344.92px' lengthAdjust='spacingAndGlyphs'>Same Problem, Same Answer, 22x Speed Difference</text>
 </g>
 </g>
 </svg></div></p>
@@ -233,8 +233,8 @@ represents years of algorithmic refinement that most production software
 never adopted.</p>
 <p>Why would anyone need five ways to solve the same problem? Because
 they don’t all behave the same under different conditions. The Hungarian
-method that handles a 100×100 matrix without complaint becomes painfully
-slow at 1000×1000. The Auction algorithm that dominates large dense
+method that handles a 100x100 matrix without complaint becomes painfully
+slow at 1000x1000. The Auction algorithm that dominates large dense
 problems stumbles on small sparse ones. Different matrix sizes,
 different sparsity patterns, different cost distributions: each
 situation favors a different algorithm.</p>
@@ -352,7 +352,7 @@ exactly one worker).</p>
 <line x1='308.59' y1='299.92' x2='322.41' y2='299.92' style='stroke-width: 1.07; stroke: #B8B8B8; stroke-linecap: butt;' />
 <text x='273.80' y='302.78' style='font-size: 8.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='27.58px' lengthAdjust='spacingAndGlyphs'>Optimal</text>
 <text x='329.62' y='302.78' style='font-size: 8.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='32.36px' lengthAdjust='spacingAndGlyphs'>Available</text>
-<text x='252.00' y='47.10' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='231.48px' lengthAdjust='spacingAndGlyphs'>Optimal: W1→J1 (2) + W2→J2 (1) + W3→J3 (2) = 5</text>
+<text x='252.00' y='47.10' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='229.00px' lengthAdjust='spacingAndGlyphs'>Optimal: W1-&gt;J1 (2) + W2-&gt;J2 (1) + W3-&gt;J3 (2) = 5</text>
 <text x='252.00' y='29.23' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='209.48px' lengthAdjust='spacingAndGlyphs'>Assignment as Bipartite Matching</text>
 </g>
 </g>
@@ -426,7 +426,7 @@ An edge is tight when
 <h3 id="hungarian-algorithm-1955">Hungarian Algorithm (1955)<a class="anchor" aria-label="anchor" href="#hungarian-algorithm-1955"></a>
 </h3>
 <p>The algorithm everyone learns. Published by Harold Kuhn, based on
-work by Hungarian mathematicians Kőnig and Egerváry.</p>
+work by Hungarian mathematicians Koenig and Egervary.</p>
 <p><strong>The idea</strong>: Maintain dual prices
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>u</mi><mi>i</mi></msub><mo>,</mo><msub><mi>v</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(u_i, v_j)</annotation></semantics></math>
 such that
@@ -535,7 +535,7 @@ Repeat.</p></li>
 <p><strong>The problem</strong>: That
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 hides a large constant. The price updates and augmenting path searches
-are expensive. For a 1000×1000 matrix, you might wait 10+ seconds.</p>
+are expensive. For a 1000x1000 matrix, you might wait 10+ seconds.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">19</span>, <span class="fl">8</span>, <span class="fl">15</span>, <span class="fl">10</span>, <span class="fl">11</span>, <span class="fl">9</span>, <span class="fl">12</span>, <span class="fl">14</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
@@ -661,7 +661,7 @@ use Dijkstra-style shortest path search.</p></li>
 </ol>
 <p><strong>Complexity</strong>: Still
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>,
-but with a much smaller constant. Often 10-50× faster than Hungarian in
+but with a much smaller constant. Often 10-50x faster than Hungarian in
 practice.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
@@ -682,14 +682,15 @@ different approach.</p>
 <h2 id="the-scaling-revolution">The Scaling Revolution<a class="anchor" aria-label="anchor" href="#the-scaling-revolution"></a>
 </h2>
 <p>In the late 1980s, researchers discovered a powerful trick called
-<strong>ε-scaling</strong>. The idea: relax the optimality requirement.
-Instead of demanding exact answers at every step, tolerate a small error
-ε. Start with a large ε, which lets you make big sloppy steps and rapid
-progress. Then shrink ε over multiple phases until it’s essentially
-zero. Now you have an exact answer.</p>
-<p>This transforms how the algorithm behaves. Large ε means big steps
-and rapid progress; small ε means careful refinement. The total work can
-end up being less than doing everything exactly from the start.</p>
+<strong>epsilon-scaling</strong>. The idea: relax the optimality
+requirement. Instead of demanding exact answers at every step, tolerate
+a small error epsilon. Start with a large epsilon, which lets you make
+big sloppy steps and rapid progress. Then shrink epsilon over multiple
+phases until it’s essentially zero. Now you have an exact answer.</p>
+<p>This transforms how the algorithm behaves. Large epsilon means big
+steps and rapid progress; small epsilon means careful refinement. The
+total work can end up being less than doing everything exactly from the
+start.</p>
 <p>Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and
 Orlin-Ahuja.</p>
 <hr>
@@ -806,13 +807,13 @@ when there’s competition. Equilibrium = optimal assignment.</p>
 <li><p>Each unassigned worker finds their best job (highest value minus
 price).</p></li>
 <li><p>The worker bids: new price = old price + (best value -
-second-best value) + ε.</p></li>
+second-best value) + epsilon.</p></li>
 <li><p>If someone else held that job, they become unassigned.</p></li>
 <li><p>Repeat until everyone is assigned.</p></li>
 </ol>
-<p><strong>Why ε matters</strong>: Without ε, two workers could bid
-infinitely against each other, each raising the price by 0. The ε
-ensures progress.</p>
+<p><strong>Why epsilon matters</strong>: Without epsilon, two workers
+could bid infinitely against each other, each raising the price by 0.
+The epsilon ensures progress.</p>
 <p><strong>Complexity</strong>:
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mi>ϵ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log(nC) / \epsilon)</annotation></semantics></math>
 where
@@ -829,12 +830,12 @@ is the cost range.</p>
 <tr class="odd">
 <td>Standard</td>
 <td><code>"auction"</code></td>
-<td>Adaptive ε, queue-based</td>
+<td>Adaptive epsilon, queue-based</td>
 </tr>
 <tr class="even">
 <td>Scaled</td>
 <td><code>"auction_scaled"</code></td>
-<td>ε-scaling phases</td>
+<td>Epsilon-scaling phases</td>
 </tr>
 <tr class="odd">
 <td>Gauss-Seidel</td>
@@ -850,21 +851,22 @@ is the cost range.</p>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"auction"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Total cost:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_total_cost.html">get_total_cost</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Total cost: 149.09</span></span></code></pre></div>
-<p>Auction shines for large dense problems. But it’s sensitive to ε. Get
-it wrong and performance degrades, or the algorithm cycles forever.</p>
-<p>The next algorithm makes ε-scaling systematic.</p>
+<p>Auction shines for large dense problems. But it’s sensitive to
+epsilon. Get it wrong and performance degrades, or the algorithm cycles
+forever.</p>
+<p>The next algorithm makes epsilon-scaling systematic.</p>
 <hr>
 </div>
 <div class="section level3">
 <h3 id="cost-scaling-algorithm-csa-1995">Cost-Scaling Algorithm / CSA (1995)<a class="anchor" aria-label="anchor" href="#cost-scaling-algorithm-csa-1995"></a>
 </h3>
-<p>Andrew Goldberg and Robert Kennedy asked: what if we scale ε
+<p>Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon
 automatically?</p>
 <p><strong>The idea</strong>: Start with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>=</mo><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\epsilon = \max(c_{ij})</annotation></semantics></math>.
-In each phase, halve ε and refine the current solution. After
+In each phase, halve epsilon and refine the current solution. After
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>C</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(\log C)</annotation></semantics></math>
-phases, ε is essentially zero: optimality.</p>
+phases, epsilon is essentially zero: optimality.</p>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
 <svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='288.00pt' viewBox='0 0 648.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
 <g class='svglite'>
@@ -930,11 +932,11 @@ phases, ε is essentially zero: optimality.</p>
 <circle cx='324.00' cy='172.53' r='16.36' style='stroke-width: 0.71; stroke: #82D58B; fill: #82D58B;' />
 <circle cx='429.74' cy='172.53' r='17.43' style='stroke-width: 0.71; stroke: #6FD574; fill: #6FD574;' />
 <circle cx='535.47' cy='172.53' r='19.56' style='stroke-width: 0.71; stroke: #5DD65D; fill: #5DD65D;' />
-<text x='112.53' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='27.12px' lengthAdjust='spacingAndGlyphs'>ε=100</text>
-<text x='218.26' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=50</text>
-<text x='324.00' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=25</text>
-<text x='429.74' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='21.59px' lengthAdjust='spacingAndGlyphs'>ε=12</text>
-<text x='535.47' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.06px' lengthAdjust='spacingAndGlyphs'>ε=6</text>
+<text x='112.53' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='27.94px' lengthAdjust='spacingAndGlyphs'>e=100</text>
+<text x='218.26' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=50</text>
+<text x='324.00' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=25</text>
+<text x='429.74' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='22.41px' lengthAdjust='spacingAndGlyphs'>e=12</text>
+<text x='535.47' y='176.09' text-anchor='middle' style='font-size: 9.96px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.88px' lengthAdjust='spacingAndGlyphs'>e=6</text>
 <text x='112.53' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 1</text>
 <text x='218.26' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 2</text>
 <text x='324.00' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 3</text>
@@ -942,11 +944,11 @@ phases, ε is essentially zero: optimality.</p>
 <text x='535.47' y='231.60' text-anchor='middle' style='font-size: 9.96px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='36.52px' lengthAdjust='spacingAndGlyphs'>Phase 5</text>
 <line x1='112.53' y1='109.09' x2='535.47' y2='109.09' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polygon points='530.56,111.92 535.47,109.09 530.56,106.25 ' style='stroke-width: 2.13; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<text x='324.00' y='100.27' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='204.67px' lengthAdjust='spacingAndGlyphs'>ε halves each phase → precision improves</text>
+<text x='324.00' y='100.27' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='233.19px' lengthAdjust='spacingAndGlyphs'>epsilon halves each phase -&gt; precision improves</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwyODguMDA=)'>
-<text x='324.00' y='50.24' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='270.77px' lengthAdjust='spacingAndGlyphs'>Each phase halves ε and refines the assignment until optimal</text>
-<text x='324.00' y='36.36' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='164.41px' lengthAdjust='spacingAndGlyphs'>CSA: Systematic ε-Scaling</text>
+<text x='324.00' y='50.24' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='298.00px' lengthAdjust='spacingAndGlyphs'>Each phase halves epsilon and refines the assignment until optimal</text>
+<text x='324.00' y='36.36' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='205.17px' lengthAdjust='spacingAndGlyphs'>CSA: Systematic Epsilon-Scaling</text>
 </g>
 </g>
 </svg></div></p>
@@ -1059,7 +1061,7 @@ warm-start the next scale.</p>
 <text x='561.91' y='209.40' text-anchor='middle' style='font-size: 8.54px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='16.14px' lengthAdjust='spacingAndGlyphs'>bit 8</text>
 <line x1='86.09' y1='122.33' x2='561.91' y2='122.33' style='stroke-width: 2.56; stroke: #3E3F3A; stroke-linecap: butt;' />
 <polygon points='557.00,125.16 561.91,122.33 557.00,119.49 ' style='stroke-width: 2.56; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
-<text x='324.00' y='115.59' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='207.09px' lengthAdjust='spacingAndGlyphs'>Process most significant → least significant</text>
+<text x='324.00' y='115.59' text-anchor='middle' style='font-size: 10.81px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='206.20px' lengthAdjust='spacingAndGlyphs'>Process most significant -&gt; least significant</text>
 </g>
 <g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzMjQuMDA=)'>
 <rect x='225.76' y='245.60' width='11.61' height='11.61' style='stroke-width: 4.27; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #F39C12;' />
@@ -1068,7 +1070,7 @@ warm-start the next scale.</p>
 <text x='245.69' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='33.34px' lengthAdjust='spacingAndGlyphs'>Current</text>
 <text x='307.27' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.25px' lengthAdjust='spacingAndGlyphs'>Processed</text>
 <text x='382.76' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.80px' lengthAdjust='spacingAndGlyphs'>Remaining</text>
-<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='332.38px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(n³ log C)</text>
+<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='339.30px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^3 log C)</text>
 <text x='324.00' y='67.78' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='161.53px' lengthAdjust='spacingAndGlyphs'>Gabow-Tarjan: Bit-Scaling</text>
 </g>
 </g>
@@ -1540,7 +1542,7 @@ cost of padding to square.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">333</span><span class="op">)</span></span>
 <span><span class="va">n_rows</span> <span class="op">&lt;-</span> <span class="fl">30</span></span>
-<span><span class="va">n_cols</span> <span class="op">&lt;-</span> <span class="fl">100</span>  <span class="co"># Highly rectangular: 30 × 100</span></span>
+<span><span class="va">n_cols</span> <span class="op">&lt;-</span> <span class="fl">100</span>  <span class="co"># Highly rectangular: 30 x 100</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n_rows</span> <span class="op">*</span> <span class="va">n_cols</span>, <span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span>, <span class="va">n_rows</span>, <span class="va">n_cols</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"ramshaw_tarjan"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Matched"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">assignment</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span>, <span class="st">"of"</span>, <span class="va">n_rows</span>, <span class="st">"rows\n"</span><span class="op">)</span></span>
@@ -1728,7 +1730,7 @@ assignments. Marginal cost analysis.</p>
 <text x='148.04' y='372.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>200</text>
 <text x='303.78' y='372.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>400</text>
 <text x='615.27' y='372.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>800</text>
-<text x='342.71' y='385.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='89.58px' lengthAdjust='spacingAndGlyphs'>Matrix Size (n × n)</text>
+<text x='342.71' y='385.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='88.66px' lengthAdjust='spacingAndGlyphs'>Matrix Size (n x n)</text>
 <text transform='translate(13.36,200.45) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='143.88px' lengthAdjust='spacingAndGlyphs'>Time (milliseconds, log scale)</text>
 <text x='137.64' y='416.34' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='46.47px' lengthAdjust='spacingAndGlyphs'>Algorithm</text>
 <line x1='191.32' y1='412.40' x2='205.14' y2='412.40' style='stroke-width: 2.56; stroke: #D9534F; stroke-linecap: butt;' />
@@ -1838,7 +1840,7 @@ solid middle-ground choices.</p>
 <text x='62.22' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>100</text>
 <text x='223.59' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>200</text>
 <text x='546.32' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>400</text>
-<text x='304.27' y='241.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='89.58px' lengthAdjust='spacingAndGlyphs'>Matrix Size (n × n)</text>
+<text x='304.27' y='241.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='88.66px' lengthAdjust='spacingAndGlyphs'>Matrix Size (n x n)</text>
 <text transform='translate(13.36,128.45) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='94.31px' lengthAdjust='spacingAndGlyphs'>Time (milliseconds)</text>
 <text x='155.40' y='272.34' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='46.47px' lengthAdjust='spacingAndGlyphs'>Algorithm</text>
 <line x1='209.08' y1='268.40' x2='222.90' y2='268.40' style='stroke-width: 2.56; stroke: #5BC0DE; stroke-linecap: butt;' />
@@ -1855,7 +1857,7 @@ solid middle-ground choices.</p>
 </g>
 </g>
 </svg></div></p>
-<p><strong>For sparse matrices</strong>: SAP and LAPMOD are 10× faster
+<p><strong>For sparse matrices</strong>: SAP and LAPMOD are 10x faster
 than dense algorithms. Use them.</p>
 <hr>
 </div>

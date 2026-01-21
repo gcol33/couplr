@@ -161,7 +161,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
   )
 
   couplr_balance_df <- couplr_balance$var_stats %>%
-    select(variable, std_diff) %>%
+    dplyr::select(variable, std_diff) %>%
     mutate(method = "couplr")
 
   # Combine and plot
@@ -563,20 +563,20 @@ modes.
 
 | Feature | couplr | MatchIt | optmatch | designmatch | Matching |
 |----|----|----|----|----|----|
-| **One-to-one matching** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Full matching** | ✗ | ✓ | ✓ | ✓ | ✗ |
-| **Optimal assignment** | ✓ (20 algorithms) | ✓ (1 algorithm) | ✓ | ✓ | ✗ |
-| **Greedy matching** | ✓ (3 strategies) | ✓ | ✗ | ✗ | ✓ |
-| **Propensity scores** | ✗ (external) | ✓ | ✓ | ✗ | ✓ |
-| **Direct covariate** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Blocking/exact** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Caliper** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Balance constraints** | ✗ | ✗ | ✗ | ✓ | ✗ |
-| **Genetic optimization** | ✗ | ✓ (GenMatch) | ✗ | ✗ | ✓ |
-| **Distance caching** | ✓ | ✗ | ✓ | ✗ | ✗ |
-| **Parallel processing** | ✓ (blocks) | ✗ | ✗ | ✗ | ✗ |
-| **Deterministic** | ✓ | ✓ | ✓ | ✓ | ✗ |
-| **Tidy interface** | ✓ | Partial | ✗ | ✗ | ✗ |
+| **One-to-one matching** | Yes | Yes | Yes | Yes | Yes |
+| **Full matching** | No | Yes | Yes | Yes | No |
+| **Optimal assignment** | Yes (20 algorithms) | Yes (1 algorithm) | Yes | Yes | No |
+| **Greedy matching** | Yes (3 strategies) | Yes | No | No | Yes |
+| **Propensity scores** | No (external) | Yes | Yes | No | Yes |
+| **Direct covariate** | Yes | Yes | Yes | Yes | Yes |
+| **Blocking/exact** | Yes | Yes | Yes | Yes | Yes |
+| **Caliper** | Yes | Yes | Yes | Yes | Yes |
+| **Balance constraints** | No | No | No | Yes | No |
+| **Genetic optimization** | No | Yes (GenMatch) | No | No | Yes |
+| **Distance caching** | Yes | No | Yes | No | No |
+| **Parallel processing** | Yes (blocks) | No | No | No | No |
+| **Deterministic** | Yes | Yes | Yes | Yes | No |
+| **Tidy interface** | Yes | Partial | No | No | No |
 
 ------------------------------------------------------------------------
 
@@ -810,7 +810,7 @@ before_df <- tibble(
 )
 
 after_df <- balance_lalonde$var_stats %>%
-  select(variable, std_diff) %>%
+  dplyr::select(variable, std_diff) %>%
   mutate(stage = "After")
 
 balance_plot_df <- bind_rows(before_df, after_df) %>%
@@ -860,7 +860,7 @@ cat("  Max |std diff| after:",
 #>   Max |std diff| after: 1.97
 
 if (balance_lalonde$overall$max_abs_std_diff < 0.25) {
-  cat("\n✓ All variables within acceptable balance threshold (0.25)\n")
+  cat("\nYes All variables within acceptable balance threshold (0.25)\n")
 } else {
   cat("\n⚠ Some variables exceed 0.25 threshold - consider calipers or blocking\n")
 }

@@ -357,7 +357,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.37 seconds
+#> Greedy matching (n=500): 0.25 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -435,7 +435,7 @@ R crashes or shows: “Error: cannot allocate vector of size X GB”
 
 ### Cause
 
-A full distance matrix for n×n requires 8n² bytes:
+A full distance matrix for nxn requires 8n² bytes:
 
 ``` r
 

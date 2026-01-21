@@ -380,42 +380,42 @@ series of much smaller ones.
 
       // Base case: region small enough for exact LAP
       IF size(region_A) <= threshold THEN
-        cost ← compute_cost_matrix(region_A, region_B, α, β)
+        cost <- compute_cost_matrix(region_A, region_B, α, β)
         RETURN lap_solve(cost)
       END IF
 
-      // Divide into 2×2 spatial grid (4 patches)
-      patches_A ← spatial_partition(region_A, grid = 2×2)
-      patches_B ← spatial_partition(region_B, grid = 2×2)
+      // Divide into 2x2 spatial grid (4 patches)
+      patches_A <- spatial_partition(region_A, grid = 2x2)
+      patches_B <- spatial_partition(region_B, grid = 2x2)
 
       // Compute patch representatives
       FOR each patch p DO
-        centroid[p]      ← mean(positions in p)
-        mean_feature[p]  ← mean(features in p)
+        centroid[p]      <- mean(positions in p)
+        mean_feature[p]  <- mean(features in p)
       END FOR
 
-      // Match patches using 4×4 LAP
-      patch_cost ← matrix(4, 4)
+      // Match patches using 4x4 LAP
+      patch_cost <- matrix(4, 4)
       FOR i = 1 TO 4 DO
         FOR j = 1 TO 4 DO
-          patch_cost[i, j] ← α·distance(mean_feature_A[i], mean_feature_B[j]) +
+          patch_cost[i, j] <- α·distance(mean_feature_A[i], mean_feature_B[j]) +
                              β·distance(centroid_A[i], centroid_B[j])
         END FOR
       END FOR
 
-      patch_assignment ← lap_solve(patch_cost)
+      patch_assignment <- lap_solve(patch_cost)
 
       // Recursively solve within matched patches
-      assignments ← []
+      assignments <- []
       FOR i = 1 TO 4 DO
-        j ← patch_assignment[i]
-        sub_assignment ← match_hierarchical(
+        j <- patch_assignment[i]
+        sub_assignment <- match_hierarchical(
           patches_A[i],
           patches_B[j],
           threshold,
           level + 1
         )
-        assignments ← append(assignments, sub_assignment)
+        assignments <- append(assignments, sub_assignment)
       END FOR
 
       RETURN concatenate(assignments)
@@ -530,44 +530,44 @@ The algorithm:
     // Pseudocode for exact pixel matching
 
     // Step 1: Compute full cost matrix (normalized)
-    n_pixels ← height × width
-    cost ← matrix(0, n_pixels, n_pixels)
+    n_pixels <- height x width
+    cost <- matrix(0, n_pixels, n_pixels)
 
     FOR i = 1 TO n_pixels DO
       FOR j = 1 TO n_pixels DO
         // RGB color distance (normalized to [0, sqrt(3)])
-        color_dist ← sqrt((R_A[i] - R_B[j])^2 +
+        color_dist <- sqrt((R_A[i] - R_B[j])^2 +
                           (G_A[i] - G_B[j])^2 +
                           (B_A[i] - B_B[j])^2) / (255 · sqrt(3))
 
         // Spatial distance (normalized to [0, 1] by diagonal)
-        spatial_dist ← sqrt((x_A[i] - x_B[j])^2 +
+        spatial_dist <- sqrt((x_A[i] - x_B[j])^2 +
                             (y_A[i] - y_B[j])^2) / diagonal_length
 
         // Combined cost
-        cost[i, j] ← α · color_dist + β · spatial_dist
+        cost[i, j] <- α · color_dist + β · spatial_dist
       END FOR
     END FOR
 
     // Step 2: Solve with Jonker-Volgenant
-    assignment ← lap_solve(cost, method = "jv")
+    assignment <- lap_solve(cost, method = "jv")
 
     // Step 3: Generate morph frames by linear interpolation
     FOR frame_idx = 1 TO n_frames DO
-      t ← frame_idx / n_frames  // Time parameter in [0, 1]
+      t <- frame_idx / n_frames  // Time parameter in [0, 1]
 
       FOR pixel_i = 1 TO n_pixels DO
-        j ← assignment[pixel_i]  // Matched target pixel
+        j <- assignment[pixel_i]  // Matched target pixel
 
         // Interpolate position
-        x_new[pixel_i] ← (1 - t) · x_A[pixel_i] + t · x_B[j]
-        y_new[pixel_i] ← (1 - t) · y_A[pixel_i] + t · y_B[j]
+        x_new[pixel_i] <- (1 - t) · x_A[pixel_i] + t · x_B[j]
+        y_new[pixel_i] <- (1 - t) · y_A[pixel_i] + t · y_B[j]
 
         // Keep source color (transport-only, no blending)
-        RGB_new[pixel_i] ← RGB_A[pixel_i]
+        RGB_new[pixel_i] <- RGB_A[pixel_i]
       END FOR
 
-      frames[frame_idx] ← render(x_new, y_new, RGB_new)
+      frames[frame_idx] <- render(x_new, y_new, RGB_new)
     END FOR
 
 The `couplr` implementation handles indexing, raster layout, and shows
@@ -608,53 +608,53 @@ Exact solution for small studies ($`n < 100`$):
       FOR j = 1 TO n_plots_tplus DO
 
         // Bray-Curtis dissimilarity for species composition
-        numerator   ← sum over species s of |abundance_t[i, s] - abundance_tplus[j, s]|
-        denominator ← sum over species s of (abundance_t[i, s] + abundance_tplus[j, s])
-        bc_distance ← numerator / denominator
+        numerator   <- sum over species s of |abundance_t[i, s] - abundance_tplus[j, s]|
+        denominator <- sum over species s of (abundance_t[i, s] + abundance_tplus[j, s])
+        bc_distance <- numerator / denominator
 
         // Geographic distance (kilometers)
-        geo_distance ← sqrt((x_t[i] - x_tplus[j])^2 +
+        geo_distance <- sqrt((x_t[i] - x_tplus[j])^2 +
                             (y_t[i] - y_tplus[j])^2)
 
         // Combined cost (α = 0.7 emphasizes species composition)
-        cost[i, j] ← 0.7 · bc_distance + 0.3 · (geo_distance / max_distance)
+        cost[i, j] <- 0.7 · bc_distance + 0.3 · (geo_distance / max_distance)
 
       END FOR
     END FOR
 
-    plot_correspondence ← lap_solve(cost)
+    plot_correspondence <- lap_solve(cost)
 
 For large studies ($`n > 1000`$) a hierarchical approach by region is
 more practical:
 
     // Hierarchical decomposition by geographic region
 
-    // 1. Divide landscape into spatial grid (e.g. 10 km × 10 km cells)
-    regions_t     ← spatial_partition(plots_t,     grid_size = 10 km)
-    regions_tplus ← spatial_partition(plots_tplus, grid_size = 10 km)
+    // 1. Divide landscape into spatial grid (e.g. 10 km x 10 km cells)
+    regions_t     <- spatial_partition(plots_t,     grid_size = 10 km)
+    regions_tplus <- spatial_partition(plots_tplus, grid_size = 10 km)
 
     // 2. Compute region representatives
     FOR each region r DO
-      mean_composition[r] ← average species vector across plots in r
-      centroid[r]         ← geographic center of r
+      mean_composition[r] <- average species vector across plots in r
+      centroid[r]         <- geographic center of r
     END FOR
 
     // 3. Match regions (small LAP: ~100 regions)
-    region_cost       ← compute_cost(mean_composition, centroids, α = 0.7, β = 0.3)
-    region_assignment ← lap_solve(region_cost)
+    region_cost       <- compute_cost(mean_composition, centroids, α = 0.7, β = 0.3)
+    region_assignment <- lap_solve(region_cost)
 
     // 4. Within matched regions, solve plot-level LAP
-    full_assignment ← []
+    full_assignment <- []
     FOR r = 1 TO n_regions DO
-      r_matched ← region_assignment[r]
-      plots_A   ← plots in regions_t[r]
-      plots_B   ← plots in regions_tplus[r_matched]
+      r_matched <- region_assignment[r]
+      plots_A   <- plots in regions_t[r]
+      plots_B   <- plots in regions_tplus[r_matched]
 
-      // Local LAP (smaller problem, e.g. 50 × 50)
-      cost_local       ← compute_plot_cost(plots_A, plots_B, α = 0.7, β = 0.3)
-      local_assignment ← lap_solve(cost_local)
+      // Local LAP (smaller problem, e.g. 50 x 50)
+      cost_local       <- compute_plot_cost(plots_A, plots_B, α = 0.7, β = 0.3)
+      local_assignment <- lap_solve(cost_local)
 
-      full_assignment ← append(full_assignment, local_assignment)
+      full_assignment <- append(full_assignment, local_assignment)
     END FOR
 
     RETURN full_assignment
@@ -687,37 +687,37 @@ Exact solution (moderate $`n`$):
     // Pseudocode for particle tracking with velocity prediction
 
     // Initialize cost matrix as forbidden everywhere
-    cost ← matrix(Inf, n_particles_t, n_particles_tplus)
+    cost <- matrix(Inf, n_particles_t, n_particles_tplus)
 
     FOR i = 1 TO n_particles_t DO
       // Predict position using previous velocity
-      x_predicted ← x_t[i] + v_x_t[i] · Δt
-      y_predicted ← y_t[i] + v_y_t[i] · Δt
+      x_predicted <- x_t[i] + v_x_t[i] · Δt
+      y_predicted <- y_t[i] + v_y_t[i] · Δt
 
       FOR j = 1 TO n_particles_tplus DO
         // Distance from predicted position
-        dx ← x_predicted - x_tplus[j]
-        dy ← y_predicted - y_tplus[j]
-        spatial_distance ← sqrt(dx^2 + dy^2)
+        dx <- x_predicted - x_tplus[j]
+        dy <- y_predicted - y_tplus[j]
+        spatial_distance <- sqrt(dx^2 + dy^2)
 
         // Only consider physically plausible matches
         IF spatial_distance <= max_displacement THEN
           // Feature similarity (intensity, size, etc.)
-          feature_distance ← |intensity_t[i] - intensity_tplus[j]|
+          feature_distance <- |intensity_t[i] - intensity_tplus[j]|
 
           // Combined cost
-          cost[i, j] ← α · feature_distance + β · spatial_distance
+          cost[i, j] <- α · feature_distance + β · spatial_distance
         END IF
       END FOR
     END FOR
 
     // Solve assignment (Inf entries are forbidden)
-    particle_tracks ← lap_solve(cost)
+    particle_tracks <- lap_solve(cost)
 
     // Update velocities from assignments
     FOR i = 1 TO n_particles_t DO
-      j ← particle_tracks[i]
-      velocity_new[i] ← (position_tplus[j] - position_t[i]) / Δt
+      j <- particle_tracks[i]
+      velocity_new[i] <- (position_tplus[j] - position_t[i]) / Δt
     END FOR
 
 For dense tracking ($`n > 5000`$), we can first cluster particles:
@@ -725,36 +725,36 @@ For dense tracking ($`n > 5000`$), we can first cluster particles:
     // Two-stage: clustering then local matching
 
     // Stage 1: spatial clustering
-    clusters_t     ← spatial_cluster(particles_t,     radius = 2 · pixel_size)
-    clusters_tplus ← spatial_cluster(particles_tplus, radius = 2 · pixel_size)
+    clusters_t     <- spatial_cluster(particles_t,     radius = 2 · pixel_size)
+    clusters_tplus <- spatial_cluster(particles_tplus, radius = 2 · pixel_size)
 
     // Compute cluster representatives
     FOR each cluster c DO
-      centroid[c]       ← mean position of particles in c
-      mean_intensity[c] ← mean intensity
-      mean_velocity[c]  ← mean velocity (if available)
+      centroid[c]       <- mean position of particles in c
+      mean_intensity[c] <- mean intensity
+      mean_velocity[c]  <- mean velocity (if available)
     END FOR
 
     // Match clusters
-    cluster_cost   ← compute_cluster_similarity(clusters_t, clusters_tplus)
-    cluster_tracks ← lap_solve(cluster_cost)
+    cluster_cost   <- compute_cluster_similarity(clusters_t, clusters_tplus)
+    cluster_tracks <- lap_solve(cluster_cost)
 
     // Stage 2: within matched clusters, track individual particles
-    full_tracks ← []
+    full_tracks <- []
     FOR c = 1 TO n_clusters DO
-      c_matched   ← cluster_tracks[c]
-      particles_A ← particles in clusters_t[c]
-      particles_B ← particles in clusters_tplus[c_matched]
+      c_matched   <- cluster_tracks[c]
+      particles_A <- particles in clusters_t[c]
+      particles_B <- particles in clusters_tplus[c_matched]
 
-      cost_local ← compute_particle_distance(
+      cost_local <- compute_particle_distance(
         particles_A, particles_B,
         max_displacement = 5,
         α = 0.3,
         β = 0.7
       )
 
-      local_tracks ← lap_solve(cost_local)
-      full_tracks  ← append(full_tracks, local_tracks)
+      local_tracks <- lap_solve(cost_local)
+      full_tracks  <- append(full_tracks, local_tracks)
     END FOR
 
     RETURN full_tracks
@@ -783,36 +783,36 @@ Exact LAP for small molecules:
 
     // Pseudocode for molecular conformation alignment
 
-    n_atoms ← number of atoms in molecule
-    cost    ← matrix(0, n_atoms, n_atoms)
+    n_atoms <- number of atoms in molecule
+    cost    <- matrix(0, n_atoms, n_atoms)
 
     FOR i = 1 TO n_atoms DO
       FOR j = 1 TO n_atoms DO
 
         // Enforce strict element type matching
         IF element_type_A[i] ≠ element_type_B[j] THEN
-          cost[i, j] ← Inf
+          cost[i, j] <- Inf
         ELSE
-          dx ← x_A[i] - x_B[j]
-          dy ← y_A[i] - y_B[j]
-          dz ← z_A[i] - z_B[j]
-          cost[i, j] ← sqrt(dx^2 + dy^2 + dz^2)
+          dx <- x_A[i] - x_B[j]
+          dy <- y_A[i] - y_B[j]
+          dz <- z_A[i] - z_B[j]
+          cost[i, j] <- sqrt(dx^2 + dy^2 + dz^2)
         END IF
 
       END FOR
     END FOR
 
     // Solve alignment
-    alignment ← lap_solve(cost)
+    alignment <- lap_solve(cost)
 
     // Compute RMSD
-    sum_sq_dist ← 0
+    sum_sq_dist <- 0
     FOR i = 1 TO n_atoms DO
-      j            ← alignment[i]
-      sum_sq_dist ← sum_sq_dist + cost[i, j]^2
+      j            <- alignment[i]
+      sum_sq_dist <- sum_sq_dist + cost[i, j]^2
     END FOR
 
-    rmsd ← sqrt(sum_sq_dist / n_atoms)
+    rmsd <- sqrt(sum_sq_dist / n_atoms)
 
 For large biomolecules, we again use a hierarchical strategy, this time
 by secondary structure elements (helices, sheets, loops, etc.), aligning

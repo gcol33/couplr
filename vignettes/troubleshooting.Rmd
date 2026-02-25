@@ -122,8 +122,8 @@ right <- tibble(id = 1:50, age = rnorm(50, mean = 55, sd = 3))
 # Visualize overlap
 library(ggplot2)
 combined <- bind_rows(
-  left %>% mutate(group = "Left"),
-  right %>% mutate(group = "Right")
+  left |> mutate(group = "Left"),
+  right |> mutate(group = "Right")
 )
 
 ggplot(combined, aes(x = age, fill = group)) +
@@ -510,8 +510,8 @@ couplr requires complete cases for distance computation. NA values in matching v
 **1. Remove rows with NA (before matching):**
 
 ```{r}
-left_clean <- left %>% filter(!is.na(age))
-right_clean <- right %>% filter(!is.na(age))
+left_clean <- left |> filter(!is.na(age))
+right_clean <- right |> filter(!is.na(age))
 
 result <- match_couples(left_clean, right_clean, vars = "age")
 cat("Matched", result$info$n_matched, "pairs (excluded 1 left unit with NA)\n")
@@ -521,7 +521,7 @@ cat("Matched", result$info$n_matched, "pairs (excluded 1 left unit with NA)\n")
 
 ```{r}
 # Simple mean imputation
-left_imputed <- left %>%
+left_imputed <- left |>
   mutate(age = if_else(is.na(age), mean(age, na.rm = TRUE), age))
 
 result <- match_couples(left_imputed, right, vars = "age")

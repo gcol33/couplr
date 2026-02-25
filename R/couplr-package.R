@@ -23,7 +23,6 @@
 #' @importFrom tibble tibble as_tibble
 #' @importFrom dplyr group_by group_vars group_keys group_split bind_rows bind_cols summarise first n arrange
 #' @importFrom purrr map_dfr
-#' @importFrom magrittr %>%
 #' @importFrom stats dist median quantile sd
 #' @importFrom utils type.convert
 NULL
@@ -38,17 +37,3 @@ NULL
 #' @importFrom dplyr group_by
 NULL
 
-#' Pipe operator
-#'
-#' See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
-#'
-#' @name %>%
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-#' @param lhs A value or the magrittr placeholder.
-#' @param rhs A function call using the magrittr semantics.
-#' @return The result of calling `rhs(lhs)`.
-NULL

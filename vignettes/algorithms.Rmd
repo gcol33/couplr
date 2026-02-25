@@ -219,7 +219,7 @@ edge_label_data$angle <- atan2(edge_label_data$to_y - edge_label_data$from_y,
 edge_label_data$edge_color <- ifelse(edge_label_data$optimal, col_optimal, col_nonopt)
 
 # Create edge type factor for legend
-edges <- edges %>%
+edges <- edges |>
   mutate(edge_type = factor(ifelse(optimal, "Optimal", "Available"),
                             levels = c("Optimal", "Available")))
 g <- tbl_graph(nodes = nodes, edges = edges, directed = FALSE)
@@ -502,11 +502,11 @@ ggraph(g, layout = "manual", x = layout$x, y = layout$y) +
              fill = edge_label_data$edge_color,
              color = "#3E3F3A", fontface = "bold", size = 5,
              label.padding = unit(0.2, "lines"), linewidth = 0) +
-  geom_node_point(data = . %>% filter(type == "Worker"),
+  geom_node_point(data = \(x) filter(x, type == "Worker"),
                   aes(fill = ifelse(state == "bidding", "Bidding",
                                     ifelse(state == "matched", "Matched", "Worker"))),
                   shape = 21, size = 14, color = "white", stroke = 1.5) +
-  geom_node_point(data = . %>% filter(type == "Job"),
+  geom_node_point(data = \(x) filter(x, type == "Job"),
                   aes(fill = ifelse(state == "matched", "Matched", "Job")),
                   shape = 21, size = 14, color = "white", stroke = 1.5) +
   geom_node_text(aes(label = name), color = "white", fontface = "bold", size = 3.5,

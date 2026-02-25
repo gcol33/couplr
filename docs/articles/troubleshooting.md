@@ -128,8 +128,8 @@ right <- tibble(id = 1:50, age = rnorm(50, mean = 55, sd = 3))
 # Visualize overlap
 library(ggplot2)
 combined <- bind_rows(
-  left %>% mutate(group = "Left"),
-  right %>% mutate(group = "Right")
+  left |> mutate(group = "Left"),
+  right |> mutate(group = "Right")
 )
 
 ggplot(combined, aes(x = age, fill = group)) +
@@ -357,7 +357,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.25 seconds
+#> Greedy matching (n=500): 0.23 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -623,8 +623,8 @@ matching variables cause issues.
 
 ``` r
 
-left_clean <- left %>% filter(!is.na(age))
-right_clean <- right %>% filter(!is.na(age))
+left_clean <- left |> filter(!is.na(age))
+right_clean <- right |> filter(!is.na(age))
 
 result <- match_couples(left_clean, right_clean, vars = "age")
 cat("Matched", result$info$n_matched, "pairs (excluded 1 left unit with NA)\n")
@@ -636,7 +636,7 @@ cat("Matched", result$info$n_matched, "pairs (excluded 1 left unit with NA)\n")
 ``` r
 
 # Simple mean imputation
-left_imputed <- left %>%
+left_imputed <- left |>
   mutate(age = if_else(is.na(age), mean(age, na.rm = TRUE), age))
 
 result <- match_couples(left_imputed, right, vars = "age")

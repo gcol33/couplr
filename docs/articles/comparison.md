@@ -52,7 +52,7 @@ control <- tibble(
 )
 
 # Combine for packages that expect single data frame
-combined <- bind_rows(treatment, control) %>%
+combined <- bind_rows(treatment, control) |>
   mutate(treated = as.integer(group == "treatment"))
 
 cat("Treatment units:", nrow(treatment), "\n")
@@ -142,8 +142,8 @@ cat("  Mean distance:", round(mean(result_couplr$pairs$distance), 4), "\n")
 
 if (requireNamespace("MatchIt", quietly = TRUE)) {
   # MatchIt balance
-  matched_treated_ps <- matched_ps %>% filter(treated == 1)
-  matched_control_ps <- matched_ps %>% filter(treated == 0)
+  matched_treated_ps <- matched_ps |> filter(treated == 1)
+  matched_control_ps <- matched_ps |> filter(treated == 0)
 
   matchit_balance <- tibble(
     variable = vars,
@@ -160,8 +160,8 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
     result_couplr, treatment, control, vars
   )
 
-  couplr_balance_df <- couplr_balance$var_stats %>%
-    dplyr::select(variable, std_diff) %>%
+  couplr_balance_df <- couplr_balance$var_stats |>
+    dplyr::select(variable, std_diff) |>
     mutate(method = "couplr")
 
   # Combine and plot
@@ -809,11 +809,11 @@ before_df <- tibble(
   stage = "Before"
 )
 
-after_df <- balance_lalonde$var_stats %>%
-  dplyr::select(variable, std_diff) %>%
+after_df <- balance_lalonde$var_stats |>
+  dplyr::select(variable, std_diff) |>
   mutate(stage = "After")
 
-balance_plot_df <- bind_rows(before_df, after_df) %>%
+balance_plot_df <- bind_rows(before_df, after_df) |>
   mutate(stage = factor(stage, levels = c("Before", "After")))
 
 ggplot(balance_plot_df, aes(x = reorder(variable, abs(std_diff)),

@@ -128,7 +128,7 @@
 <p>Optimal matching is central to experimental design, causal inference, and resource allocation. Existing R packages (MatchIt, optmatch) focus on propensity score workflows, requiring users to estimate scores before matching. This adds complexity and can obscure the direct relationship between covariates and match quality.</p>
 <p>This package addresses <strong>direct covariate matching</strong>: selecting optimal pairs based on observed variables without intermediate modeling. It provides:</p>
 <ul>
-<li>18 LAP algorithms for different problem sizes and structures,</li>
+<li>20 LAP algorithms for different problem sizes and structures,</li>
 <li>automatic preprocessing with variable health checks,</li>
 <li>balance diagnostics for assessing match quality,</li>
 <li>analysis-ready joined output.</li>
@@ -191,7 +191,7 @@
 <li>
 <strong><code><a href="reference/lap_solve.html">lap_solve()</a></code></strong>: Tidy interface for LAP algorithms
 <ul>
-<li>18 solvers: Hungarian, Jonker-Volgenant, Auction, Network Simplex, etc.</li>
+<li>20 solvers: Hungarian, Jonker-Volgenant, Auction, Network Simplex, etc.</li>
 <li>Automatic method selection via <code>method = "auto"</code>
 </li>
 <li>Supports rectangular matrices and forbidden assignments</li>

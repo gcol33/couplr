@@ -22,7 +22,7 @@ library(dplyr)
 
 ## What couplr Does
 
-couplr creates matched pairs from two groups of observations. Given a "left" group (e.g., treatment) and a "right" group (e.g., control), it finds the best one-to-one pairing based on similarity across variables you specify.
+couplr creates matched samples from two groups of observations. Given a "left" group (e.g., treatment) and a "right" group (e.g., control), it finds optimal pairings based on similarity across variables you specify. couplr supports both **one-to-one matching** (each treatment unit paired with one control) and **full matching** (variable-ratio groups where every unit is assigned).
 
 **Common use cases:**
 
@@ -31,6 +31,8 @@ couplr creates matched pairs from two groups of observations. Given a "left" gro
 - Pairing survey respondents for comparison
 
 - Creating balanced samples for causal inference
+
+- Full matching when discarding unmatched units is undesirable
 
 ### Documentation Roadmap
 
@@ -284,6 +286,27 @@ Blocking guarantees that Hospital A patients are only matched to Hospital A cont
 
 ---
 
+## Full Matching: Keep Every Unit
+
+One-to-one matching discards unmatched controls. If you want every unit in a group, use `full_match()`. It creates variable-ratio groups (e.g., 1 treatment + 3 controls) that minimize total distance:
+
+```{r full-match-example}
+result_full <- full_match(
+  left = treatment,
+  right = control,
+  vars = c("age", "income")
+)
+
+result_full
+
+# Each group has one or more left and right units with matching weights
+head(result_full$groups)
+```
+
+Full matching is useful when your control pool is much larger than treatment and you don't want to waste data. See `vignette("matching-workflows")` for details on constraints (`min_controls`, `max_controls`, `caliper`) and the choice between `method = "optimal"` (default, globally optimal) and `method = "greedy"` (faster).
+
+---
+
 ## Complete Example
 
 Here's a realistic workflow from start to finish:
@@ -437,7 +460,9 @@ print(kbest)
 
 ## See Also
 
-- `?match_couples` - Optimal matching function reference
+- `?match_couples` - Optimal one-to-one matching
+
+- `?full_match` - Full matching (variable-ratio groups)
 
 - `?greedy_couples` - Fast approximate matching
 

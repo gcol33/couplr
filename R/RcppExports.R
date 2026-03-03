@@ -101,6 +101,10 @@ lap_solve_network_simplex <- function(cost) {
     .Call(`_couplr_lap_solve_network_simplex`, cost)
 }
 
+lap_solve_full_matching <- function(cost, min_controls, max_controls_val) {
+    .Call(`_couplr_lap_solve_full_matching`, cost, min_controls, max_controls_val)
+}
+
 greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
     .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
 }

@@ -27,6 +27,9 @@
 #' @param sigma Optional covariance matrix for Mahalanobis distance
 #' @param left_id Name of ID column in left (default: \code{"id"})
 #' @param right_id Name of ID column in right (default: \code{"id"})
+#' @param method Matching algorithm: \code{"optimal"} (default) uses min-cost
+#'   max-flow to find the globally optimal group assignment minimizing total
+#'   distance; \code{"greedy"} uses a fast two-pass heuristic.
 #'
 #' @return An S3 object of class \code{c("full_matching_result", "couplr_result")}
 #'   containing:
@@ -41,24 +44,27 @@
 #' }
 #'
 #' @details
-#' Full matching creates matched groups of variable size. The algorithm:
+#' Full matching creates matched groups of variable size. Two algorithms are
+#' available:
+#'
+#' \strong{Optimal} (\code{method = "optimal"}, default): Solves a min-cost
+#' max-flow problem that minimizes total distance across all group assignments
+#' simultaneously. Each left unit becomes a group center absorbing 1 to
+#' \code{max_controls} right units, with the globally optimal assignment found
+#' via Dijkstra's algorithm with Johnson potentials. When \code{n_left > n_right},
+#' roles are transposed automatically.
+#'
+#' \strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 #' \enumerate{
-#'   \item Computes the distance matrix between all left and right units
-#'   \item Applies caliper constraints (if specified)
-#'   \item Assigns each left unit to its nearest eligible right unit (forming
-#'     initial 1:1 pairs)
-#'   \item Assigns remaining unmatched right units to their nearest
-#'     already-matched left unit, respecting \code{max_controls}
-#'   \item Computes weights inversely proportional to group size
+#'   \item Each left unit picks its nearest eligible right unit
+#'   \item Remaining right units are assigned to their nearest already-matched
+#'     left unit, respecting \code{max_controls}
 #' }
+#' This is faster but does not guarantee globally optimal results.
 #'
 #' Weights are computed so that within each group, the total weight of right
 #' units equals the total weight of left units (which is 1). For a group with
 #' 1 left and k right units, each right unit receives weight 1/k.
-#'
-#' For optimal full matching (minimizing total distance across all groups),
-#' consider the \pkg{optmatch} package. This implementation uses a greedy
-#' approach that is fast and produces good (but not necessarily optimal) results.
 #'
 #' @examples
 #' set.seed(42)
@@ -79,7 +85,8 @@ full_match <- function(left, right, vars,
                        auto_scale = FALSE,
                        sigma = NULL,
                        left_id = "id",
-                       right_id = "id") {
+                       right_id = "id",
+                       method = "optimal") {
 
   # --- Input validation ---
   if (!is.data.frame(left) || !is.data.frame(right)) {
@@ -96,6 +103,9 @@ full_match <- function(left, right, vars,
     stop(sprintf("right_id column '%s' not found in right data", right_id),
          call. = FALSE)
   }
+
+  method <- match.arg(method, c("optimal", "greedy"))
+
   min_controls <- as.integer(min_controls)
   if (is.na(min_controls) || min_controls < 1) {
     stop("min_controls must be a positive integer", call. = FALSE)
@@ -151,119 +161,154 @@ full_match <- function(left, right, vars,
   n_left <- nrow(cost_matrix)
   n_right <- ncol(cost_matrix)
 
-  # --- Greedy group formation ---
-  # Step 1: Each left unit picks its nearest eligible right unit
-  left_to_right <- integer(n_left)  # which right unit each left is paired with
-  right_assigned <- logical(n_right)
-  group_of_left <- integer(n_left)  # group id for each left unit
-
-  # Sort left units by their minimum distance (hardest-to-match first)
-  min_dists <- apply(cost_matrix, 1, function(row) {
-    finite <- row[is.finite(row)]
-    if (length(finite) == 0) Inf else min(finite)
-  })
-  left_order <- order(min_dists)
-
-  group_id <- 0L
-  # groups_list: list of lists, each with left_idx, right_idxs
-  groups_list <- vector("list", n_left)
-  unmatched_left_idx <- integer(0)
-
-  for (i in left_order) {
-    row <- cost_matrix[i, ]
-    # Find nearest unassigned right unit
-    available <- which(is.finite(row) & !right_assigned)
-    if (length(available) == 0) {
-      # No eligible right unit within caliper
-      unmatched_left_idx <- c(unmatched_left_idx, i)
-      next
+  if (method == "optimal") {
+    # --- Optimal full matching via min-cost max-flow ---
+    max_controls_int <- if (is.infinite(max_controls)) {
+      .Machine$integer.max
+    } else {
+      as.integer(max_controls)
     }
-    best_j <- available[which.min(row[available])]
-    group_id <- group_id + 1L
-    left_to_right[i] <- best_j
-    right_assigned[best_j] <- TRUE
-    group_of_left[i] <- group_id
-    groups_list[[group_id]] <- list(left_idx = i, right_idxs = best_j)
-  }
 
-  # Step 2: Assign remaining right units to nearest already-matched left unit
-  # (respecting max_controls)
-  remaining_right <- which(!right_assigned)
-  unmatched_right_idx <- integer(0)
+    mcmf_result <- lap_solve_full_matching(cost_matrix, min_controls,
+                                           max_controls_int)
 
-  if (length(remaining_right) > 0) {
-    # For each unmatched right unit, find nearest matched left unit
-    matched_left_idxs <- which(group_of_left > 0)
+    # group_of_left / group_of_right: 1-based group IDs, 0 = unmatched
+    gol <- mcmf_result$group_of_left
+    gor <- mcmf_result$group_of_right
 
-    for (j in remaining_right) {
-      col <- cost_matrix[matched_left_idxs, j]
-      # Find eligible left units (finite distance and group not at max_controls)
-      eligible <- rep(TRUE, length(matched_left_idxs))
-      if (!is.infinite(max_controls)) {
-        for (k in seq_along(matched_left_idxs)) {
-          li <- matched_left_idxs[k]
-          gi <- group_of_left[li]
-          if (length(groups_list[[gi]]$right_idxs) >= max_controls) {
-            eligible[k] <- FALSE
-          }
-        }
+    groups_rows <- list()
+    n_groups_out <- mcmf_result$n_groups
+
+    for (g in seq_len(n_groups_out)) {
+      left_in_g <- which(gol == g)
+      right_in_g <- which(gor == g)
+      n_right_in_group <- length(right_in_g)
+      n_left_in_group <- length(left_in_g)
+
+      if (n_left_in_group > 0 && n_right_in_group > 0) {
+        # Weights: the smaller side gets weight 1, the larger side gets
+        # weight (n_small / n_large) so total weights balance.
+        # Standard convention: left weight = 1, right weight = n_left / n_right
+        left_weight <- 1.0
+        right_weight <- n_left_in_group / n_right_in_group
+        groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
+          group_id = rep(g, n_left_in_group),
+          id = l_ids[left_in_g],
+          side = rep("left", n_left_in_group),
+          weight = rep(left_weight, n_left_in_group)
+        )
+        groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
+          group_id = rep(g, n_right_in_group),
+          id = r_ids[right_in_g],
+          side = rep("right", n_right_in_group),
+          weight = rep(right_weight, n_right_in_group)
+        )
       }
-      eligible <- eligible & is.finite(col)
+    }
 
-      if (!any(eligible)) {
-        unmatched_right_idx <- c(unmatched_right_idx, j)
+    unmatched_left_idx <- which(gol == 0)
+    unmatched_right_idx <- which(gor == 0)
+
+  } else {
+    # --- Greedy group formation ---
+    # Step 1: Each left unit picks its nearest eligible right unit
+    left_to_right <- integer(n_left)
+    right_assigned <- logical(n_right)
+    group_of_left <- integer(n_left)
+
+    min_dists <- apply(cost_matrix, 1, function(row) {
+      finite <- row[is.finite(row)]
+      if (length(finite) == 0) Inf else min(finite)
+    })
+    left_order <- order(min_dists)
+
+    group_id <- 0L
+    groups_list <- vector("list", n_left)
+    unmatched_left_idx <- integer(0)
+
+    for (i in left_order) {
+      row <- cost_matrix[i, ]
+      available <- which(is.finite(row) & !right_assigned)
+      if (length(available) == 0) {
+        unmatched_left_idx <- c(unmatched_left_idx, i)
         next
       }
-
-      best_k <- which(eligible)[which.min(col[eligible])]
-      best_left <- matched_left_idxs[best_k]
-      gi <- group_of_left[best_left]
-      groups_list[[gi]]$right_idxs <- c(groups_list[[gi]]$right_idxs, j)
+      best_j <- available[which.min(row[available])]
+      group_id <- group_id + 1L
+      left_to_right[i] <- best_j
+      right_assigned[best_j] <- TRUE
+      group_of_left[i] <- group_id
+      groups_list[[group_id]] <- list(left_idx = i, right_idxs = best_j)
     }
-  }
 
-  # Step 3: Check min_controls constraint
-  # Mark groups that don't meet minimum (set to NULL after collecting)
-  if (min_controls > 1) {
-    keep <- rep(TRUE, length(groups_list))
-    for (g in seq_len(group_id)) {
-      if (is.null(groups_list[[g]])) { keep[g] <- FALSE; next }
-      if (length(groups_list[[g]]$right_idxs) < min_controls) {
-        unmatched_left_idx <- c(unmatched_left_idx, groups_list[[g]]$left_idx)
-        unmatched_right_idx <- c(unmatched_right_idx, groups_list[[g]]$right_idxs)
-        keep[g] <- FALSE
+    # Step 2: Assign remaining right units to nearest already-matched left unit
+    remaining_right <- which(!right_assigned)
+    unmatched_right_idx <- integer(0)
+
+    if (length(remaining_right) > 0) {
+      matched_left_idxs <- which(group_of_left > 0)
+      for (j in remaining_right) {
+        col <- cost_matrix[matched_left_idxs, j]
+        eligible <- rep(TRUE, length(matched_left_idxs))
+        if (!is.infinite(max_controls)) {
+          for (k in seq_along(matched_left_idxs)) {
+            li <- matched_left_idxs[k]
+            gi <- group_of_left[li]
+            if (length(groups_list[[gi]]$right_idxs) >= max_controls) {
+              eligible[k] <- FALSE
+            }
+          }
+        }
+        eligible <- eligible & is.finite(col)
+        if (!any(eligible)) {
+          unmatched_right_idx <- c(unmatched_right_idx, j)
+          next
+        }
+        best_k <- which(eligible)[which.min(col[eligible])]
+        best_left <- matched_left_idxs[best_k]
+        gi <- group_of_left[best_left]
+        groups_list[[gi]]$right_idxs <- c(groups_list[[gi]]$right_idxs, j)
       }
     }
-    groups_list <- groups_list[keep]
+
+    # Step 3: Check min_controls constraint
+    if (min_controls > 1) {
+      keep <- rep(TRUE, length(groups_list))
+      for (g in seq_len(group_id)) {
+        if (is.null(groups_list[[g]])) { keep[g] <- FALSE; next }
+        if (length(groups_list[[g]]$right_idxs) < min_controls) {
+          unmatched_left_idx <- c(unmatched_left_idx, groups_list[[g]]$left_idx)
+          unmatched_right_idx <- c(unmatched_right_idx, groups_list[[g]]$right_idxs)
+          keep[g] <- FALSE
+        }
+      }
+      groups_list <- groups_list[keep]
+    }
+
+    groups_rows <- list()
+    n_groups_out <- 0L
+    for (g in seq_along(groups_list)) {
+      grp <- groups_list[[g]]
+      if (is.null(grp)) next
+      n_groups_out <- n_groups_out + 1L
+      n_right_in_group <- length(grp$right_idxs)
+      right_weight <- 1 / n_right_in_group
+      groups_rows[[length(groups_rows) + 1]] <- tibble::tibble(
+        group_id = n_groups_out,
+        id = l_ids[grp$left_idx],
+        side = "left",
+        weight = 1.0
+      )
+      groups_rows[[length(groups_rows) + 1]] <- tibble::tibble(
+        group_id = rep(n_groups_out, n_right_in_group),
+        id = r_ids[grp$right_idxs],
+        side = rep("right", n_right_in_group),
+        weight = rep(right_weight, n_right_in_group)
+      )
+    }
   }
 
   # --- Build output tibble ---
-  groups_rows <- list()
-  final_group_id <- 0L
-
-  for (g in seq_along(groups_list)) {
-    grp <- groups_list[[g]]
-    if (is.null(grp)) next
-    final_group_id <- final_group_id + 1L
-    n_right_in_group <- length(grp$right_idxs)
-    right_weight <- 1 / n_right_in_group
-
-    # Left unit
-    groups_rows[[length(groups_rows) + 1]] <- tibble::tibble(
-      group_id = final_group_id,
-      id = l_ids[grp$left_idx],
-      side = "left",
-      weight = 1.0
-    )
-    # Right units
-    groups_rows[[length(groups_rows) + 1]] <- tibble::tibble(
-      group_id = rep(final_group_id, n_right_in_group),
-      id = r_ids[grp$right_idxs],
-      side = rep("right", n_right_in_group),
-      weight = rep(right_weight, n_right_in_group)
-    )
-  }
-
   if (length(groups_rows) > 0) {
     groups_tbl <- dplyr::bind_rows(groups_rows)
   } else {
@@ -280,14 +325,14 @@ full_match <- function(left, right, vars,
   )
 
   info <- list(
-    n_groups = final_group_id,
+    n_groups = n_groups_out,
     n_left = n_left,
     n_right = n_right,
     n_matched_left = n_left - length(unmatched_left_idx),
     n_matched_right = n_right - length(unmatched_right_idx),
     n_unmatched_left = length(unmatched_left_idx),
     n_unmatched_right = length(unmatched_right_idx),
-    method = "full",
+    method = paste0("full_", method),
     distance_metric = if (is.function(distance)) "custom" else distance,
     vars = vars
   )

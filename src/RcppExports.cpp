@@ -325,6 +325,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_solve_full_matching
+Rcpp::List lap_solve_full_matching(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val);
+RcppExport SEXP _couplr_lap_solve_full_matching(SEXP costSEXP, SEXP min_controlsSEXP, SEXP max_controls_valSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< int >::type min_controls(min_controlsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_controls_val(max_controls_valSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_full_matching(cost, min_controls, max_controls_val));
+    return rcpp_result_gen;
+END_RCPP
+}
 // greedy_matching_sorted
 Rcpp::List greedy_matching_sorted(Rcpp::NumericMatrix cost_matrix, bool maximize);
 RcppExport SEXP _couplr_greedy_matching_sorted(SEXP cost_matrixSEXP, SEXP maximizeSEXP) {
@@ -532,6 +545,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_push_relabel", (DL_FUNC) &_couplr_lap_solve_push_relabel, 2},
     {"_couplr_lap_solve_jv_duals", (DL_FUNC) &_couplr_lap_solve_jv_duals, 2},
     {"_couplr_lap_solve_network_simplex", (DL_FUNC) &_couplr_lap_solve_network_simplex, 1},
+    {"_couplr_lap_solve_full_matching", (DL_FUNC) &_couplr_lap_solve_full_matching, 3},
     {"_couplr_greedy_matching_sorted", (DL_FUNC) &_couplr_greedy_matching_sorted, 2},
     {"_couplr_greedy_matching_row_best", (DL_FUNC) &_couplr_greedy_matching_row_best, 2},
     {"_couplr_greedy_matching_pq", (DL_FUNC) &_couplr_greedy_matching_pq, 2},

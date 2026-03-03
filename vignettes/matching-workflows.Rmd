@@ -1477,6 +1477,79 @@ ggplot() +
 
 ## Advanced Matching Techniques
 
+### Full Matching (Variable-Ratio Groups)
+
+Standard one-to-one matching discards unmatched units — a significant loss when control pools are large. Full matching assigns *every* unit to a matched group with variable ratios (1:k or k:1), maximizing sample size while preserving balance.
+
+```{r full-matching}
+# Full matching: every unit gets assigned to a group
+result_full <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  method = "optimal"   # min-cost max-flow (default)
+)
+
+result_full
+```
+
+The `method` argument controls the algorithm:
+
+- `"optimal"` (default) — Solves a min-cost max-flow problem that minimizes total distance across all group assignments simultaneously. Uses Dijkstra's algorithm with Johnson potentials. Guarantees the globally optimal solution.
+
+- `"greedy"` — A fast two-pass heuristic: (1) each left unit picks its nearest right unit, (2) remaining right units are assigned to their nearest matched left unit. Faster but not globally optimal.
+
+```{r full-matching-comparison}
+# Compare optimal vs greedy
+result_full_greedy <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  method = "greedy"
+)
+
+cat("Optimal: ", result_full$info$n_groups, "groups,",
+    result_full$info$n_unmatched_left, "unmatched left,",
+    result_full$info$n_unmatched_right, "unmatched right\n")
+cat("Greedy:  ", result_full_greedy$info$n_groups, "groups,",
+    result_full_greedy$info$n_unmatched_left, "unmatched left,",
+    result_full_greedy$info$n_unmatched_right, "unmatched right\n")
+```
+
+Full matching supports `min_controls` and `max_controls` to constrain group sizes, and `caliper` to exclude poor matches:
+
+```{r full-matching-constraints}
+# Constrain: each group gets 2-5 right units, caliper of 1.5
+result_constrained <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  min_controls = 2,
+  max_controls = 5,
+  caliper = 1.5
+)
+
+cat("Groups:", result_constrained$info$n_groups, "\n")
+cat("Unmatched left:", result_constrained$info$n_unmatched_left, "\n")
+cat("Unmatched right:", result_constrained$info$n_unmatched_right, "\n")
+```
+
+The output is an S3 object of class `full_matching_result` with a `groups` tibble containing `group_id`, `id`, `side`, and `weight`. Within each group, right-unit weights sum to the number of left units, enabling unbiased estimation:
+
+```{r full-matching-weights}
+head(result_full$groups, 10)
+```
+
+**When to use full matching vs one-to-one:**
+
+| Criterion | One-to-one (`match_couples`) | Full (`full_match`) |
+|-----------|------------------------------|---------------------|
+| Sample size | Discards excess units | Uses every unit |
+| Estimand | ATT (treatment on treated) | ATT or ATE (with weights) |
+| Group structure | Pairs (1:1) | Variable-ratio groups |
+| Balance | Excellent within pairs | Good overall (weighted) |
+| Precision | Lower (smaller n) | Higher (larger effective n) |
+
 ### Ratio Matching (k:1)
 
 Sometimes matching multiple controls per treated unit improves precision. Use the `ratio` parameter:
@@ -1655,6 +1728,6 @@ All `autoplot()` methods return `ggplot` objects, so you can add layers, themes,
 
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 
-- `?match_couples`, `?greedy_couples`, `?balance_diagnostics`, `?matchmaker`
+- `?match_couples`, `?greedy_couples`, `?full_match`, `?balance_diagnostics`, `?matchmaker`
 
 - `?ps_match`, `?cardinality_match`, `?sensitivity_analysis`

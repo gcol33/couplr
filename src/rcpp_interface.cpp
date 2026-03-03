@@ -56,6 +56,7 @@ Rcpp::List solve_line_metric_impl(const Rcpp::NumericVector& x,
                                   const std::string& cost,
                                   bool maximize);
 Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_full_matching_impl(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val);
 
 // =======================
 // Pixel morphing core (implemented in morph_pixel_level.cpp)
@@ -249,6 +250,11 @@ Rcpp::List lap_solve_jv_duals(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_network_simplex(Rcpp::NumericMatrix cost) {
   return solve_network_simplex_rcpp(cost);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_full_matching(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val) {
+  return solve_full_matching_impl(cost, min_controls, max_controls_val);
 }
 
 // =======================

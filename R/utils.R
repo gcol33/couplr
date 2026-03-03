@@ -1,4 +1,5 @@
-utils::globalVariables(c(".data", "solution_id", "total_cost"))
+utils::globalVariables(c(".data", "solution_id", "total_cost",
+                        "lap_solve_full_matching"))
 
 #' Validate and prepare cost data
 #'

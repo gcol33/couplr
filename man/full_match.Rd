@@ -18,7 +18,8 @@ full_match(
   auto_scale = FALSE,
   sigma = NULL,
   left_id = "id",
-  right_id = "id"
+  right_id = "id",
+  method = "optimal"
 )
 }
 \arguments{
@@ -53,6 +54,10 @@ of the pooled distance distribution rather than absolute units.}
 \item{left_id}{Name of ID column in left (default: \code{"id"})}
 
 \item{right_id}{Name of ID column in right (default: \code{"id"})}
+
+\item{method}{Matching algorithm: \code{"optimal"} (default) uses min-cost
+max-flow to find the globally optimal group assignment minimizing total
+distance; \code{"greedy"} uses a fast two-pass heuristic.}
 }
 \value{
 An S3 object of class \code{c("full_matching_result", "couplr_result")}
@@ -74,24 +79,27 @@ producing matched groups where each group contains at least one left and one
 right unit.
 }
 \details{
-Full matching creates matched groups of variable size. The algorithm:
+Full matching creates matched groups of variable size. Two algorithms are
+available:
+
+\strong{Optimal} (\code{method = "optimal"}, default): Solves a min-cost
+max-flow problem that minimizes total distance across all group assignments
+simultaneously. Each left unit becomes a group center absorbing 1 to
+\code{max_controls} right units, with the globally optimal assignment found
+via Dijkstra's algorithm with Johnson potentials. When \code{n_left > n_right},
+roles are transposed automatically.
+
+\strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 \enumerate{
-\item Computes the distance matrix between all left and right units
-\item Applies caliper constraints (if specified)
-\item Assigns each left unit to its nearest eligible right unit (forming
-initial 1:1 pairs)
-\item Assigns remaining unmatched right units to their nearest
-already-matched left unit, respecting \code{max_controls}
-\item Computes weights inversely proportional to group size
+\item Each left unit picks its nearest eligible right unit
+\item Remaining right units are assigned to their nearest already-matched
+left unit, respecting \code{max_controls}
 }
+This is faster but does not guarantee globally optimal results.
 
 Weights are computed so that within each group, the total weight of right
 units equals the total weight of left units (which is 1). For a group with
 1 left and k right units, each right unit receives weight 1/k.
-
-For optimal full matching (minimizing total distance across all groups),
-consider the \pkg{optmatch} package. This implementation uses a greedy
-approach that is fast and produces good (but not necessarily optimal) results.
 }
 \examples{
 set.seed(42)

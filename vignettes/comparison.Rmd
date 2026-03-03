@@ -203,7 +203,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 **MatchIt**:
 - Propensity score methods are preferred (common in epidemiology)
 
-- Need full matching, CEM, or genetic matching
+- Need **CEM** or **genetic matching** (couplr does not support these)
 
 - Following published protocols that specify MatchIt
 
@@ -228,7 +228,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 
 optmatch (Hansen & Klopfer, 2006) specializes in optimal matching using network flow algorithms. It emphasizes full matching and variable ratio matching.
 
-**Key difference**: optmatch excels at optimal full matching (variable ratios); couplr focuses on optimal one-to-one matching with 20+ algorithm choices.
+**Key difference**: optmatch pioneered optimal full matching via network flow; couplr now also supports optimal full matching (via `full_match()`) alongside one-to-one matching with 20+ algorithm choices.
 
 ### optmatch Approach
 
@@ -276,7 +276,7 @@ Both packages use optimal assignment algorithms, so they should achieve similar 
 
 2. **Algorithm selection**: optmatch uses RELAX-IV; couplr offers 20+ algorithms
 
-3. **Full matching**: optmatch supports variable-ratio matching; couplr is one-to-one only
+3. **Full matching**: Both packages support variable-ratio matching (`full_match()` in couplr, `fullmatch()` in optmatch)
 
 ```{r, eval = requireNamespace("optmatch", quietly = TRUE)}
 if (requireNamespace("optmatch", quietly = TRUE)) {
@@ -291,7 +291,7 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 
 | Feature | optmatch | couplr |
 |---------|----------|--------|
-| **Matching types** | Full, pair, variable ratio | One-to-one only |
+| **Matching types** | Full, pair, variable ratio | One-to-one and full matching |
 | **Algorithm** | RELAX-IV network flow | 20+ solvers (JV, Hungarian, Auction, etc.) |
 | **Distance** | `match_on()` function | `compute_distances()` + caching |
 | **Constraints** | Caliper, exact matching | Caliper, blocking via `matchmaker()` |
@@ -301,16 +301,16 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 ### When to Use Each
 
 **optmatch**:
-- Full matching or variable ratio matching needed
-
-- Network flow formulation is preferred
-
 - Integration with RItools for diagnostics
 
-**couplr**:
-- One-to-one matching is sufficient
+- Sparse distance matrix support for very large problems
 
-- Need algorithm flexibility (auction for n > 1000, sparse methods, etc.)
+- Established package with extensive literature references
+
+**couplr**:
+- Need both one-to-one and full matching in one package
+
+- Need algorithm flexibility (20+ LAP solvers, greedy and optimal full matching)
 
 - Large-scale problems requiring greedy approximations
 
@@ -529,7 +529,7 @@ For very large problems (n > 10,000), use couplr's blocking or greedy modes.
 | Feature | couplr | MatchIt | optmatch | designmatch | Matching |
 |---------|--------|---------|----------|-------------|----------|
 | **One-to-one matching** | Yes | Yes | Yes | Yes | Yes |
-| **Full matching** | No | Yes | Yes | Yes | No |
+| **Full matching** | Yes | Yes | Yes | Yes | No |
 | **Optimal assignment** | Yes (20 algorithms) | Yes (1 algorithm) | Yes | Yes | No |
 | **Greedy matching** | Yes (3 strategies) | Yes | No | No | Yes |
 | **Propensity scores** | No (external) | Yes | Yes | No | Yes |
@@ -551,7 +551,7 @@ For very large problems (n > 10,000), use couplr's blocking or greedy modes.
 
 1. **Direct covariate matching** is preferred over propensity scores
 
-2. **Optimal one-to-one matching** is the goal
+2. **Optimal one-to-one or full matching** is the goal
 
 3. **Large datasets** (n > 5,000) with greedy or blocking options
 
@@ -567,7 +567,7 @@ For very large problems (n > 10,000), use couplr's blocking or greedy modes.
 
 1. **Propensity score matching** is standard in your field
 
-2. Need **full matching** or **CEM** (coarsened exact matching)
+2. Need **CEM** (coarsened exact matching) or genetic matching
 
 3. Following a **published protocol** that specifies MatchIt
 
@@ -615,10 +615,9 @@ balance <- balance_diagnostics(matched, treatment_data, control_data, covariates
 
 # Stage 3: If balance insufficient, consider alternatives
 if (balance$overall$max_abs_std_diff > 0.25) {
-  # Try MatchIt with propensity scores
-  library(MatchIt)
-  combined <- bind_rows(treatment_data, control_data)
-  m_ps <- matchit(treated ~ ., data = combined, method = "full")
+  # Try full matching (variable-ratio groups)
+  result_full <- full_match(treatment_data, control_data, vars = covariates,
+                            auto_scale = TRUE)
 }
 
 # Stage 4: Analysis on matched data
@@ -631,9 +630,9 @@ model <- lm(outcome ~ treatment, data = matched_data)
 Different packages excel at different tasks:
 
 ```{r, eval = FALSE}
-# Use couplr for: initial exploration, large-scale matching, distance caching
-# Use MatchIt for: propensity scores, full matching, published protocols
-# Use optmatch for: optimal full matching with sparse distances
+# Use couplr for: one-to-one matching, full matching, large-scale matching, distance caching
+# Use MatchIt for: propensity scores, CEM, genetic matching, published protocols
+# Use optmatch for: sparse distance matrices, RItools integration
 # Use designmatch for: guaranteed balance constraints
 ```
 

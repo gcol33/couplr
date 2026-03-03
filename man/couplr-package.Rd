@@ -32,7 +32,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gilles Colling \email{gilles.colling051@gmail.com} [copyright holder]
+\strong{Maintainer}: Gilles Colling \email{gilles.colling051@gmail.com} (\href{https://orcid.org/0000-0003-3070-6066}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

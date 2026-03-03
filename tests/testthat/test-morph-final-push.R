@@ -276,11 +276,14 @@ test_that("pixel_morph works with downscale_steps", {
   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
   skip_if(imgA == "" || imgB == "")
 
-  result <- pixel_morph(
-    imgA, imgB,
-    downscale_steps = 1,
-    n_frames = 2,
-    show = FALSE
+  expect_warning(
+    result <- pixel_morph(
+      imgA, imgB,
+      downscale_steps = 1,
+      n_frames = 2,
+      show = FALSE
+    ),
+    "overlaps and.*holes"
   )
 
   expect_s3_class(result, "magick-image")

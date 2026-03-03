@@ -1,8 +1,10 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.0.10
+Version: 1.1.0
 Authors@R:
-    person("Gilles", "Colling", email = "gilles.colling051@gmail.com", role = c("aut", "cre", "cph"))
+    person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
+           role = c("aut", "cre", "cph"),
+           comment = c(ORCID = "0000-0003-3070-6066"))
 Description: Solves optimal pairing and matching problems using linear assignment
     algorithms. Provides implementations of the Hungarian method (Kuhn 1955)
     <doi:10.1002/nav.3800020109>, Jonker-Volgenant shortest path algorithm

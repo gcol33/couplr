@@ -4,5 +4,5 @@ bibentry("Manual",
          title = "couplr: Optimal Pairing and Matching via Linear Assignment",
          author = person("Gilles", "Colling"),
          year = "2026",
-         note = "R package version 1.0.6",
+         note = "R package version 1.0.10",
          url = "https://github.com/gcol33/couplr")

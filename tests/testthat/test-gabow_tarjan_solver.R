@@ -3,41 +3,7 @@
 
 library(testthat)
 
-# 1-feasible complementary slackness check (Gabow–Tarjan style)
-check_complementary_slackness <- function(cost, row_match, col_match, u, v, tol = 1e-6) {
-  n <- nrow(cost)
-  m <- ncol(cost)
-  BIG_INT <- 1e15
-
-  if (length(u) != n || length(v) != m) return(FALSE)
-  if (length(row_match) != n || length(col_match) != m) return(FALSE)
-
-  for (i in seq_len(n)) {
-    for (j in seq_len(m)) {
-      cij <- cost[i, j]
-      if (is.finite(cij) && cij < BIG_INT) {
-        sum_duals <- u[i] + v[j]
-
-        # upper: u + v <= c + 1
-        if (sum_duals - (cij + 1) > tol) {
-          return(FALSE)
-        }
-
-        # matched: u + v >= c
-        if (!is.na(row_match[i]) &&
-            row_match[i] == j &&
-            !is.na(col_match[j]) &&
-            col_match[j] == i) {
-          if (cij - sum_duals > tol) {
-            return(FALSE)
-          }
-        }
-      }
-    }
-  }
-
-  TRUE
-}
+# check_complementary_slackness() and assignment_cost() are in helper-gabow_tarjan.R
 
 # Helper: build col_match from row_match
 build_col_match <- function(row_match, m) {
@@ -49,19 +15,6 @@ build_col_match <- function(row_match, m) {
     }
   }
   col_match
-}
-
-# Helper: compute assignment cost
-assignment_cost <- function(cost, row_match) {
-  n <- length(row_match)
-  total <- 0
-  for (i in seq_len(n)) {
-    j <- row_match[i]
-    if (!is.na(j) && j >= 1 && j <= ncol(cost)) {
-      total <- total + cost[i, j]
-    }
-  }
-  total
 }
 
 test_that("Gabow-Tarjan solves simple 3x3 matrix", {

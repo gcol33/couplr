@@ -180,12 +180,6 @@
            Ap, Bp, as.integer(H), as.integer(W), as.integer(bits))
 }
 
-#' @noRd
-.cpp_extract_patches <- function(P, H, W, patch) {
-  .call_or("_extract_patches", "extract_patches_cpp",
-           P, as.integer(H), as.integer(W), as.integer(patch))
-}
-
 # -------------------------------------------------------------------
 # Downscale helpers for orchestration
 # -------------------------------------------------------------------

@@ -2,6 +2,458 @@
 # Matching Core - match_couples() and greedy_couples()
 # ==============================================================================
 
+# ==============================================================================
+# Shared Internal Implementations
+# ==============================================================================
+
+#' Shared single matching implementation
+#'
+#' Core logic for both optimal (LAP) and greedy matching without blocking.
+#' Called by match_couples_single() and greedy_couples_single().
+#'
+#' @param solver_fn Solver function (assignment or greedy_matching)
+#' @param solver_params Named list of extra args passed to solver_fn
+#' @param check_costs If TRUE, run check_cost_distribution before solving
+#' @param strict_no_pairs If TRUE, call err_no_valid_pairs (stops); else warn
+#' @return List with pairs tibble, unmatched list, and info list.
+#' @keywords internal
+.couples_single <- function(left, right, left_ids, right_ids,
+                            vars, distance, weights, scale,
+                            max_distance, calipers,
+                            solver_fn, solver_params = list(),
+                            check_costs = FALSE,
+                            strict_no_pairs = FALSE) {
+
+  # Build cost matrix
+  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
+
+  # Apply constraints
+  cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
+                                       max_distance, calipers)
+
+  # Check cost distribution if requested
+  if (check_costs) {
+    check_cost_distribution(cost_matrix, warn = TRUE)
+  }
+
+  # Check for valid pairs
+  if (!has_valid_pairs(cost_matrix)) {
+    if (strict_no_pairs) {
+      err_no_valid_pairs("No valid pairs after applying constraints")
+    } else {
+      warning("No valid pairs found after applying constraints", call. = FALSE)
+    }
+
+    return(list(
+      pairs = tibble::tibble(
+        left_id = character(0),
+        right_id = character(0),
+        distance = numeric(0)
+      ),
+      unmatched = list(
+        left = left_ids,
+        right = right_ids
+      ),
+      info = list(
+        n_matched = 0,
+        total_distance = 0
+      )
+    ))
+  }
+
+  # Solve
+  solver_result <- do.call(solver_fn, c(list(cost_matrix, maximize = FALSE),
+                                        solver_params))
+
+  # Extract matches
+  matched_rows <- which(solver_result$match > 0)
+
+  if (length(matched_rows) == 0) {
+    pairs <- tibble::tibble(
+      left_id = character(0),
+      right_id = character(0),
+      distance = numeric(0)
+    )
+  } else {
+    # Get actual distances (not BIG_COST)
+    distances <- numeric(length(matched_rows))
+    for (i in seq_along(matched_rows)) {
+      row <- matched_rows[i]
+      col <- solver_result$match[row]
+      distances[i] <- cost_matrix[row, col]
+    }
+
+    # Filter out BIG_COST matches
+    valid <- distances < BIG_COST
+    matched_rows <- matched_rows[valid]
+    distances <- distances[valid]
+
+    pairs <- tibble::tibble(
+      left_id = left_ids[matched_rows],
+      right_id = right_ids[solver_result$match[matched_rows]],
+      distance = distances
+    )
+
+    # Add variable differences
+    for (v in vars) {
+      left_vals <- left[[v]][matched_rows]
+      right_vals <- right[[v]][solver_result$match[matched_rows]]
+      pairs[[paste0(".", v, "_diff")]] <- left_vals - right_vals
+    }
+  }
+
+  # Unmatched units
+  matched_left <- matched_rows
+  matched_right <- solver_result$match[matched_rows]
+
+  unmatched_left <- setdiff(seq_len(nrow(left)), matched_left)
+  unmatched_right <- setdiff(seq_len(nrow(right)), matched_right)
+
+  list(
+    pairs = pairs,
+    unmatched = list(
+      left = left_ids[unmatched_left],
+      right = right_ids[unmatched_right]
+    ),
+    info = list(
+      solver = solver_result$method_used,
+      n_matched = nrow(pairs),
+      total_distance = sum(pairs$distance, na.rm = TRUE)
+    )
+  )
+}
+
+#' Shared matching from precomputed distance object
+#'
+#' Core logic for both optimal (LAP) and greedy matching from distance objects.
+#' Called by match_couples_from_distance() and greedy_couples_from_distance().
+#'
+#' @param solver_fn Solver function (assignment or greedy_matching)
+#' @param solver_params Named list of extra args passed to solver_fn
+#' @param check_costs If TRUE, run check_cost_distribution before solving
+#' @param strict_no_pairs If TRUE, call err_no_valid_pairs (stops); else warn
+#' @param method_label String for info$method (e.g., "from_distance_object")
+#' @param extra_info Named list of extra fields to add to info
+#' @return A matching_result object with pairs, info, and optional diagnostics.
+#' @keywords internal
+.couples_from_distance <- function(dist_obj,
+                                   max_distance = Inf,
+                                   calipers = NULL,
+                                   ignore_blocks = FALSE,
+                                   require_full_matching = FALSE,
+                                   return_unmatched = TRUE,
+                                   return_diagnostics = FALSE,
+                                   solver_fn, solver_params = list(),
+                                   check_costs = FALSE,
+                                   strict_no_pairs = FALSE,
+                                   method_label = "from_distance_object",
+                                   extra_info = list(),
+                                   diagnostics_fields = c("method", "n_matched",
+                                                          "total_distance")) {
+
+  # Extract from distance object
+  cost_matrix <- dist_obj$cost_matrix
+  left <- dist_obj$original_left
+  right <- dist_obj$original_right
+  left_ids <- dist_obj$left_ids
+  right_ids <- dist_obj$right_ids
+
+  # Apply additional constraints if specified
+  if (!is.infinite(max_distance) || !is.null(calipers)) {
+    cost_matrix <- apply_all_constraints(
+      cost_matrix,
+      left, right,
+      dist_obj$metadata$vars,
+      max_distance,
+      calipers
+    )
+  }
+
+  # Check cost distribution if requested
+  if (check_costs) {
+    check_cost_distribution(cost_matrix, warn = TRUE)
+  }
+
+  # Check for valid pairs
+  if (!has_valid_pairs(cost_matrix)) {
+    if (strict_no_pairs) {
+      err_no_valid_pairs("No valid pairs after applying constraints")
+    } else {
+      warning("No valid pairs found after applying constraints", call. = FALSE)
+    }
+
+    info <- c(
+      list(
+        method = method_label,
+        n_matched = 0,
+        total_distance = 0,
+        n_left = length(left_ids),
+        n_right = length(right_ids)
+      ),
+      extra_info
+    )
+
+    return(structure(
+      list(
+        pairs = tibble::tibble(
+          left_id = character(0),
+          right_id = character(0),
+          distance = numeric(0)
+        ),
+        unmatched = list(
+          left = left_ids,
+          right = right_ids
+        ),
+        info = info
+      ),
+      class = c("matching_result", "couplr_result")
+    ))
+  }
+
+  # Solve
+  solver_result <- do.call(solver_fn, c(list(cost_matrix, maximize = FALSE),
+                                        solver_params))
+
+  # Extract matches
+  matched_rows <- which(solver_result$match > 0)
+
+  if (length(matched_rows) == 0) {
+    pairs <- tibble::tibble(
+      left_id = character(0),
+      right_id = character(0),
+      distance = numeric(0)
+    )
+  } else {
+    # Get actual distances
+    distances <- numeric(length(matched_rows))
+    for (i in seq_along(matched_rows)) {
+      row <- matched_rows[i]
+      col <- solver_result$match[row]
+      distances[i] <- cost_matrix[row, col]
+    }
+
+    # Filter out BIG_COST matches
+    valid <- distances < BIG_COST
+    matched_rows <- matched_rows[valid]
+    distances <- distances[valid]
+
+    pairs <- tibble::tibble(
+      left_id = left_ids[matched_rows],
+      right_id = right_ids[solver_result$match[matched_rows]],
+      distance = distances
+    )
+  }
+
+  # Unmatched units
+  matched_left <- matched_rows
+  matched_right <- solver_result$match[matched_rows]
+  unmatched_left <- setdiff(seq_along(left_ids), matched_left)
+  unmatched_right <- setdiff(seq_along(right_ids), matched_right)
+
+  info <- c(
+    list(
+      method = method_label,
+      solver = solver_result$method_used,
+      n_matched = nrow(pairs),
+      total_distance = sum(pairs$distance),
+      distance_metric = dist_obj$metadata$distance,
+      scaled = !identical(dist_obj$metadata$scale, FALSE),
+      n_left = length(left_ids),
+      n_right = length(right_ids)
+    ),
+    extra_info
+  )
+
+  result <- list(
+    pairs = pairs,
+    unmatched = list(
+      left = left_ids[unmatched_left],
+      right = right_ids[unmatched_right]
+    ),
+    info = info
+  )
+
+  # Check for full matching if required
+  if (require_full_matching) {
+    check_full_matching(result)
+  }
+
+  if (!return_unmatched) {
+    result$unmatched <- NULL
+  }
+
+  if (!return_diagnostics) {
+    result$info <- result$info[diagnostics_fields]
+  }
+
+  structure(result, class = c("matching_result", "couplr_result"))
+}
+
+#' Shared blocked matching implementation
+#'
+#' Core logic for both optimal (LAP) and greedy blocked matching.
+#' Called by match_couples_blocked() and greedy_couples_blocked().
+#'
+#' @param solver_fn Solver function (assignment or greedy_matching)
+#' @param solver_params Named list of extra args passed to solver_fn
+#' @param check_costs If TRUE, passed through to .couples_single
+#' @param strict_no_pairs If TRUE, passed through to .couples_single
+#' @return List with pairs tibble, unmatched list, and info list.
+#' @keywords internal
+.couples_blocked <- function(left, right, left_ids, right_ids,
+                             block_col, vars, distance, weights, scale,
+                             max_distance, calipers,
+                             solver_fn, solver_params = list(),
+                             check_costs = FALSE,
+                             strict_no_pairs = FALSE,
+                             parallel = FALSE) {
+
+  blocks <- unique(c(left[[block_col]], right[[block_col]]))
+
+  # Use parallel processing if requested and available
+  if (parallel && length(blocks) > 1) {
+    result <- .blocks_parallel(
+      blocks, left, right, left_ids, right_ids,
+      block_col, vars, distance, weights, scale,
+      max_distance, calipers,
+      solver_fn = solver_fn, solver_params = solver_params,
+      check_costs = check_costs, strict_no_pairs = strict_no_pairs,
+      parallel = TRUE
+    )
+
+    # Reorder columns to put block_id first
+    if (nrow(result$pairs) > 0) {
+      result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
+    }
+
+    # Add additional summary statistics
+    if (nrow(result$block_summary) > 0) {
+      result$block_summary <- dplyr::mutate(
+        result$block_summary,
+        n_pairs = .data$n_matched,
+        total_distance = .data$n_matched * .data$mean_distance,
+        n_unmatched_left = .data$n_left - .data$n_matched,
+        n_unmatched_right = .data$n_right - .data$n_matched
+      )
+    }
+
+    return(list(
+      pairs = result$pairs,
+      unmatched = result$unmatched,
+      info = list(
+        n_matched = nrow(result$pairs),
+        total_distance = sum(result$pairs$distance, na.rm = TRUE),
+        blocked = TRUE,
+        n_blocks = length(blocks),
+        block_summary = result$block_summary
+      )
+    ))
+  }
+
+  # Sequential processing
+  all_pairs <- list()
+  all_unmatched_left <- character(0)
+  all_unmatched_right <- character(0)
+  block_summaries <- list()
+
+  for (block in blocks) {
+    left_block <- left[left[[block_col]] == block, ]
+    right_block <- right[right[[block_col]] == block, ]
+
+    if (nrow(left_block) == 0 || nrow(right_block) == 0) {
+      # Skip blocks with no units on one side
+      if (nrow(left_block) > 0) {
+        block_left_ids <- left_ids[left[[block_col]] == block]
+        all_unmatched_left <- c(all_unmatched_left, block_left_ids)
+      }
+      if (nrow(right_block) > 0) {
+        block_right_ids <- right_ids[right[[block_col]] == block]
+        all_unmatched_right <- c(all_unmatched_right, block_right_ids)
+      }
+      next
+    }
+
+    # Get IDs for this block
+    block_left_ids <- left_ids[left[[block_col]] == block]
+    block_right_ids <- right_ids[right[[block_col]] == block]
+
+    # Match within block
+    block_result <- .couples_single(
+      left_block, right_block, block_left_ids, block_right_ids,
+      vars, distance, weights, scale,
+      max_distance, calipers,
+      solver_fn = solver_fn, solver_params = solver_params,
+      check_costs = check_costs, strict_no_pairs = strict_no_pairs
+    )
+
+    # Add block_id column
+    if (nrow(block_result$pairs) > 0) {
+      block_result$pairs$block_id <- block
+      all_pairs[[length(all_pairs) + 1]] <- block_result$pairs
+    }
+
+    # Accumulate unmatched
+    all_unmatched_left <- c(all_unmatched_left, block_result$unmatched$left)
+    all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
+
+    # Block summary
+    block_summaries[[length(block_summaries) + 1]] <- tibble::tibble(
+      block_id = block,
+      n_pairs = nrow(block_result$pairs),
+      total_distance = sum(block_result$pairs$distance, na.rm = TRUE),
+      mean_distance = mean(block_result$pairs$distance, na.rm = TRUE),
+      n_unmatched_left = length(block_result$unmatched$left),
+      n_unmatched_right = length(block_result$unmatched$right)
+    )
+  }
+
+  # Combine results
+  if (length(all_pairs) > 0) {
+    pairs <- dplyr::bind_rows(all_pairs)
+    # Reorder columns to put block_id first
+    pairs <- dplyr::select(pairs, "block_id", dplyr::everything())
+  } else {
+    pairs <- tibble::tibble(
+      block_id = character(0),
+      left_id = character(0),
+      right_id = character(0),
+      distance = numeric(0)
+    )
+  }
+
+  block_summary_df <- if (length(block_summaries) > 0) {
+    dplyr::bind_rows(block_summaries)
+  } else {
+    tibble::tibble(
+      block_id = character(0),
+      n_pairs = integer(0),
+      total_distance = numeric(0),
+      mean_distance = numeric(0),
+      n_unmatched_left = integer(0),
+      n_unmatched_right = integer(0)
+    )
+  }
+
+  list(
+    pairs = pairs,
+    unmatched = list(
+      left = all_unmatched_left,
+      right = all_unmatched_right
+    ),
+    info = list(
+      solver = solver_params$method,
+      n_blocks = length(blocks),
+      n_matched = nrow(pairs),
+      total_distance = sum(pairs$distance, na.rm = TRUE),
+      block_summary = block_summary_df
+    )
+  )
+}
+
+# ==============================================================================
+# Exported Matching Functions
+# ==============================================================================
+
 #' Optimal matching using linear assignment
 #'
 #' Performs optimal one-to-one matching between two datasets using linear
@@ -208,129 +660,21 @@ match_couples_from_distance <- function(dist_obj,
                                         return_unmatched = TRUE,
                                         return_diagnostics = FALSE,
                                         check_costs = TRUE) {
-
-  # Extract from distance object
-  cost_matrix <- dist_obj$cost_matrix
-  left <- dist_obj$original_left
-  right <- dist_obj$original_right
-  left_ids <- dist_obj$left_ids
-  right_ids <- dist_obj$right_ids
-
-  # Apply additional constraints if specified
-  if (!is.infinite(max_distance) || !is.null(calipers)) {
-    cost_matrix <- apply_all_constraints(
-      cost_matrix,
-      left, right,
-      dist_obj$metadata$vars,
-      max_distance,
-      calipers
-    )
-  }
-
-  # Check cost distribution if requested
-  if (check_costs) {
-    check_cost_distribution(cost_matrix, warn = TRUE)
-  }
-
-  # Check for valid pairs
-  if (!has_valid_pairs(cost_matrix)) {
-    err_no_valid_pairs("No valid pairs after applying constraints")
-
-    return(structure(
-      list(
-        pairs = tibble::tibble(
-          left_id = character(0),
-          right_id = character(0),
-          distance = numeric(0)
-        ),
-        unmatched = list(
-          left = left_ids,
-          right = right_ids
-        ),
-        info = list(
-          method = "from_distance_object",
-          solver = NA_character_,
-          n_matched = 0,
-          total_distance = 0,
-          n_left = length(left_ids),
-          n_right = length(right_ids)
-        )
-      ),
-      class = c("matching_result", "couplr_result")
-    ))
-  }
-
-  # Solve LAP
-  lap_result <- assignment(cost_matrix, maximize = FALSE, method = method)
-
-  # Extract matches
-  matched_rows <- which(lap_result$match > 0)
-
-  if (length(matched_rows) == 0) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    # Get actual distances
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- lap_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
-
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[lap_result$match[matched_rows]],
-      distance = distances
-    )
-  }
-
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- lap_result$match[matched_rows]
-  unmatched_left <- setdiff(seq_along(left_ids), matched_left)
-  unmatched_right <- setdiff(seq_along(right_ids), matched_right)
-
-  result <- list(
-    pairs = pairs,
-    unmatched = list(
-      left = left_ids[unmatched_left],
-      right = right_ids[unmatched_right]
-    ),
-    info = list(
-      method = "from_distance_object",
-      solver = lap_result$solver,
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance),
-      distance_metric = dist_obj$metadata$distance,
-      scaled = !identical(dist_obj$metadata$scale, FALSE),
-      n_left = length(left_ids),
-      n_right = length(right_ids)
-    )
+  .couples_from_distance(
+    dist_obj,
+    max_distance = max_distance,
+    calipers = calipers,
+    ignore_blocks = ignore_blocks,
+    require_full_matching = require_full_matching,
+    return_unmatched = return_unmatched,
+    return_diagnostics = return_diagnostics,
+    solver_fn = assignment,
+    solver_params = list(method = method),
+    check_costs = check_costs,
+    strict_no_pairs = TRUE,
+    method_label = "from_distance_object",
+    diagnostics_fields = c("method", "n_matched", "total_distance")
   )
-
-  # Check for full matching if required
-  if (require_full_matching) {
-    check_full_matching(result)
-  }
-
-  if (!return_unmatched) {
-    result$unmatched <- NULL
-  }
-
-  if (!return_diagnostics) {
-    result$info <- result$info[c("method", "n_matched", "total_distance")]
-  }
-
-  structure(result, class = c("matching_result", "couplr_result"))
 }
 
 #' Match without blocking (single problem)
@@ -341,99 +685,14 @@ match_couples_single <- function(left, right, left_ids, right_ids,
                                  vars, distance, weights, scale,
                                  max_distance, calipers, method,
                                  check_costs = TRUE) {
-
-  # Build cost matrix
-  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
-
-  # Apply constraints
-  cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
-                                       max_distance, calipers)
-
-  # Check cost distribution if requested
-  if (check_costs) {
-    check_cost_distribution(cost_matrix, warn = TRUE)
-  }
-
-  # Check for valid pairs
-  if (!has_valid_pairs(cost_matrix)) {
-    err_no_valid_pairs("No valid pairs after applying constraints")
-
-    return(list(
-      pairs = tibble::tibble(
-        left_id = character(0),
-        right_id = character(0),
-        distance = numeric(0)
-      ),
-      unmatched = list(
-        left = left_ids,
-        right = right_ids
-      ),
-      info = list(
-        solver = NA_character_,
-        n_matched = 0,
-        total_distance = 0
-      )
-    ))
-  }
-
-  # Solve LAP
-  lap_result <- assignment(cost_matrix, maximize = FALSE, method = method)
-
-  # Extract matches
-  matched_rows <- which(lap_result$match > 0)
-
-  if (length(matched_rows) == 0) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    # Get actual distances (not BIG_COST)
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- lap_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches (shouldn't happen, but safety check)
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
-
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[lap_result$match[matched_rows]],
-      distance = distances
-    )
-
-    # Add variable differences if requested
-    for (v in vars) {
-      left_vals <- left[[v]][matched_rows]
-      right_vals <- right[[v]][lap_result$match[matched_rows]]
-      pairs[[paste0(".", v, "_diff")]] <- left_vals - right_vals
-    }
-  }
-
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- lap_result$match[matched_rows]
-
-  unmatched_left <- setdiff(seq_len(nrow(left)), matched_left)
-  unmatched_right <- setdiff(seq_len(nrow(right)), matched_right)
-
-  list(
-    pairs = pairs,
-    unmatched = list(
-      left = left_ids[unmatched_left],
-      right = right_ids[unmatched_right]
-    ),
-    info = list(
-      solver = lap_result$method_used,
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE)
-    )
+  .couples_single(
+    left, right, left_ids, right_ids,
+    vars, distance, weights, scale,
+    max_distance, calipers,
+    solver_fn = assignment,
+    solver_params = list(method = method),
+    check_costs = check_costs,
+    strict_no_pairs = TRUE
   )
 }
 
@@ -445,142 +704,15 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   block_col, vars, distance, weights, scale,
                                   max_distance, calipers, method,
                                   parallel = FALSE) {
-
-  blocks <- unique(c(left[[block_col]], right[[block_col]]))
-
-  # Use parallel processing if requested and available
-  if (parallel && length(blocks) > 1) {
-    result <- match_blocks_parallel(
-      blocks, left, right, left_ids, right_ids,
-      block_col, vars, distance, weights, scale,
-      max_distance, calipers, method,
-      parallel = TRUE
-    )
-
-    # Reorder columns to put block_id first
-    if (nrow(result$pairs) > 0) {
-      result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
-    }
-
-    # Add additional summary statistics
-    if (nrow(result$block_summary) > 0) {
-      result$block_summary <- dplyr::mutate(
-        result$block_summary,
-        n_pairs = .data$n_matched,
-        total_distance = .data$n_matched * .data$mean_distance,
-        n_unmatched_left = .data$n_left - .data$n_matched,
-        n_unmatched_right = .data$n_right - .data$n_matched
-      )
-    }
-
-    return(list(
-      pairs = result$pairs,
-      unmatched = result$unmatched,
-      info = list(
-        n_matched = nrow(result$pairs),
-        total_distance = sum(result$pairs$distance, na.rm = TRUE),
-        blocked = TRUE,
-        n_blocks = length(blocks),
-        block_summary = result$block_summary
-      )
-    ))
-  }
-
-  # Sequential processing (original code)
-  all_pairs <- list()
-  all_unmatched_left <- character(0)
-  all_unmatched_right <- character(0)
-  block_summaries <- list()
-
-  for (block in blocks) {
-    left_block <- left[left[[block_col]] == block, ]
-    right_block <- right[right[[block_col]] == block, ]
-
-    if (nrow(left_block) == 0 || nrow(right_block) == 0) {
-      # Skip blocks with no units on one side
-      if (nrow(left_block) > 0) {
-        block_left_ids <- left_ids[left[[block_col]] == block]
-        all_unmatched_left <- c(all_unmatched_left, block_left_ids)
-      }
-      if (nrow(right_block) > 0) {
-        block_right_ids <- right_ids[right[[block_col]] == block]
-        all_unmatched_right <- c(all_unmatched_right, block_right_ids)
-      }
-      next
-    }
-
-    # Get IDs for this block
-    block_left_ids <- left_ids[left[[block_col]] == block]
-    block_right_ids <- right_ids[right[[block_col]] == block]
-
-    # Match within block
-    block_result <- match_couples_single(
-      left_block, right_block, block_left_ids, block_right_ids,
-      vars, distance, weights, scale,
-      max_distance, calipers, method
-    )
-
-    # Add block_id column
-    if (nrow(block_result$pairs) > 0) {
-      block_result$pairs$block_id <- block
-      all_pairs[[length(all_pairs) + 1]] <- block_result$pairs
-    }
-
-    # Accumulate unmatched
-    all_unmatched_left <- c(all_unmatched_left, block_result$unmatched$left)
-    all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
-
-    # Block summary
-    block_summaries[[length(block_summaries) + 1]] <- tibble::tibble(
-      block_id = block,
-      n_pairs = nrow(block_result$pairs),
-      total_distance = sum(block_result$pairs$distance, na.rm = TRUE),
-      mean_distance = mean(block_result$pairs$distance, na.rm = TRUE),
-      n_unmatched_left = length(block_result$unmatched$left),
-      n_unmatched_right = length(block_result$unmatched$right)
-    )
-  }
-
-  # Combine results
-  if (length(all_pairs) > 0) {
-    pairs <- dplyr::bind_rows(all_pairs)
-    # Reorder columns to put block_id first
-    pairs <- dplyr::select(pairs, "block_id", dplyr::everything())
-  } else {
-    pairs <- tibble::tibble(
-      block_id = character(0),
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  }
-
-  block_summary_df <- if (length(block_summaries) > 0) {
-    dplyr::bind_rows(block_summaries)
-  } else {
-    tibble::tibble(
-      block_id = character(0),
-      n_pairs = integer(0),
-      total_distance = numeric(0),
-      mean_distance = numeric(0),
-      n_unmatched_left = integer(0),
-      n_unmatched_right = integer(0)
-    )
-  }
-
-  list(
-    pairs = pairs,
-    unmatched = list(
-      left = all_unmatched_left,
-      right = all_unmatched_right
-    ),
-    info = list(
-      solver = method,
-      n_blocks = length(blocks),
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE),
-      block_summary = block_summary_df
-    )
+  .couples_blocked(
+    left, right, left_ids, right_ids,
+    block_col, vars, distance, weights, scale,
+    max_distance, calipers,
+    solver_fn = assignment,
+    solver_params = list(method = method),
+    check_costs = FALSE,
+    strict_no_pairs = TRUE,
+    parallel = parallel
   )
 }
 
@@ -825,124 +957,22 @@ greedy_couples_from_distance <- function(dist_obj,
                                         strategy = "row_best",
                                         return_unmatched = TRUE,
                                         return_diagnostics = FALSE) {
-
-  # Extract from distance object
-  cost_matrix <- dist_obj$cost_matrix
-  left <- dist_obj$original_left
-  right <- dist_obj$original_right
-  left_ids <- dist_obj$left_ids
-  right_ids <- dist_obj$right_ids
-
-  # Apply additional constraints if specified
-  if (!is.infinite(max_distance) || !is.null(calipers)) {
-    cost_matrix <- apply_all_constraints(
-      cost_matrix,
-      left, right,
-      dist_obj$metadata$vars,
-      max_distance,
-      calipers
-    )
-  }
-
-  # Check for valid pairs
-  if (!has_valid_pairs(cost_matrix)) {
-    warning("No valid pairs found after applying constraints", call. = FALSE)
-
-    return(structure(
-      list(
-        pairs = tibble::tibble(
-          left_id = character(0),
-          right_id = character(0),
-          distance = numeric(0)
-        ),
-        unmatched = list(
-          left = left_ids,
-          right = right_ids
-        ),
-        info = list(
-          method = "greedy",
-          strategy = strategy,
-          n_matched = 0,
-          total_distance = 0,
-          n_left = length(left_ids),
-          n_right = length(right_ids)
-        )
-      ),
-      class = c("matching_result", "couplr_result")
-    ))
-  }
-
-  # Call greedy matching implementation
-  greedy_result <- greedy_matching(cost_matrix, maximize = FALSE, strategy = strategy)
-
-  # Extract matches
-  matched_rows <- which(greedy_result$match > 0)
-
-  if (length(matched_rows) == 0) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    # Get actual distances
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- greedy_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
-
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[greedy_result$match[matched_rows]],
-      distance = distances
-    )
-  }
-
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- greedy_result$match[matched_rows]
-  unmatched_left <- setdiff(seq_along(left_ids), matched_left)
-  unmatched_right <- setdiff(seq_along(right_ids), matched_right)
-
-  result <- list(
-    pairs = pairs,
-    unmatched = list(
-      left = left_ids[unmatched_left],
-      right = right_ids[unmatched_right]
-    ),
-    info = list(
-      method = "greedy",
-      strategy = strategy,
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance),
-      distance_metric = dist_obj$metadata$distance,
-      scaled = !identical(dist_obj$metadata$scale, FALSE),
-      n_left = length(left_ids),
-      n_right = length(right_ids)
-    )
+  .couples_from_distance(
+    dist_obj,
+    max_distance = max_distance,
+    calipers = calipers,
+    ignore_blocks = ignore_blocks,
+    require_full_matching = require_full_matching,
+    return_unmatched = return_unmatched,
+    return_diagnostics = return_diagnostics,
+    solver_fn = greedy_matching,
+    solver_params = list(strategy = strategy),
+    check_costs = FALSE,
+    strict_no_pairs = FALSE,
+    method_label = "greedy",
+    extra_info = list(strategy = strategy),
+    diagnostics_fields = c("method", "strategy", "n_matched", "total_distance")
   )
-
-  # Check for full matching if required
-  if (require_full_matching) {
-    check_full_matching(result)
-  }
-
-  if (!return_unmatched) {
-    result$unmatched <- NULL
-  }
-
-  if (!return_diagnostics) {
-    result$info <- result$info[c("method", "strategy", "n_matched", "total_distance")]
-  }
-
-  structure(result, class = c("matching_result", "couplr_result"))
 }
 
 #' Greedy matching without blocking
@@ -952,92 +982,14 @@ greedy_couples_from_distance <- function(dist_obj,
 greedy_couples_single <- function(left, right, left_ids, right_ids,
                                   vars, distance, weights, scale,
                                   max_distance, calipers, strategy) {
-
-  # Build cost matrix
-  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
-
-  # Apply constraints
-  cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
-                                       max_distance, calipers)
-
-  # Check for valid pairs
-  if (!has_valid_pairs(cost_matrix)) {
-    warning("No valid pairs found after applying constraints", call. = FALSE)
-
-    return(list(
-      pairs = tibble::tibble(
-        left_id = character(0),
-        right_id = character(0),
-        distance = numeric(0)
-      ),
-      unmatched = list(
-        left = left_ids,
-        right = right_ids
-      ),
-      info = list(
-        n_matched = 0,
-        total_distance = 0
-      )
-    ))
-  }
-
-  # Solve using greedy algorithm
-  greedy_result <- greedy_matching(cost_matrix, maximize = FALSE, strategy = strategy)
-
-  # Extract matches
-  matched_rows <- which(greedy_result$match > 0)
-
-  if (length(matched_rows) == 0) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    # Get actual distances
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- greedy_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
-
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[greedy_result$match[matched_rows]],
-      distance = distances
-    )
-
-    # Add variable differences
-    for (v in vars) {
-      left_vals <- left[[v]][matched_rows]
-      right_vals <- right[[v]][greedy_result$match[matched_rows]]
-      pairs[[paste0(".", v, "_diff")]] <- left_vals - right_vals
-    }
-  }
-
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- greedy_result$match[matched_rows]
-
-  unmatched_left <- setdiff(seq_len(nrow(left)), matched_left)
-  unmatched_right <- setdiff(seq_len(nrow(right)), matched_right)
-
-  list(
-    pairs = pairs,
-    unmatched = list(
-      left = left_ids[unmatched_left],
-      right = right_ids[unmatched_right]
-    ),
-    info = list(
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE)
-    )
+  .couples_single(
+    left, right, left_ids, right_ids,
+    vars, distance, weights, scale,
+    max_distance, calipers,
+    solver_fn = greedy_matching,
+    solver_params = list(strategy = strategy),
+    check_costs = FALSE,
+    strict_no_pairs = FALSE
   )
 }
 
@@ -1049,140 +1001,15 @@ greedy_couples_blocked <- function(left, right, left_ids, right_ids,
                                    block_col, vars, distance, weights, scale,
                                    max_distance, calipers, strategy,
                                    parallel = FALSE) {
-
-  blocks <- unique(c(left[[block_col]], right[[block_col]]))
-
-  # Use parallel processing if requested and available
-  if (parallel && length(blocks) > 1) {
-    result <- greedy_blocks_parallel(
-      blocks, left, right, left_ids, right_ids,
-      block_col, vars, distance, weights, scale,
-      max_distance, calipers, strategy,
-      parallel = TRUE
-    )
-
-    # Reorder columns to put block_id first
-    if (nrow(result$pairs) > 0) {
-      result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
-    }
-
-    # Add additional summary statistics
-    if (nrow(result$block_summary) > 0) {
-      result$block_summary <- dplyr::mutate(
-        result$block_summary,
-        n_pairs = .data$n_matched,
-        total_distance = .data$n_matched * .data$mean_distance,
-        n_unmatched_left = .data$n_left - .data$n_matched,
-        n_unmatched_right = .data$n_right - .data$n_matched
-      )
-    }
-
-    return(list(
-      pairs = result$pairs,
-      unmatched = result$unmatched,
-      info = list(
-        n_matched = nrow(result$pairs),
-        total_distance = sum(result$pairs$distance, na.rm = TRUE),
-        blocked = TRUE,
-        n_blocks = length(blocks),
-        block_summary = result$block_summary
-      )
-    ))
-  }
-
-  # Sequential processing (original code)
-  all_pairs <- list()
-  all_unmatched_left <- character(0)
-  all_unmatched_right <- character(0)
-  block_summaries <- list()
-
-  for (block in blocks) {
-    left_block <- left[left[[block_col]] == block, ]
-    right_block <- right[right[[block_col]] == block, ]
-
-    if (nrow(left_block) == 0 || nrow(right_block) == 0) {
-      # Skip blocks with no units on one side
-      if (nrow(left_block) > 0) {
-        block_left_ids <- left_ids[left[[block_col]] == block]
-        all_unmatched_left <- c(all_unmatched_left, block_left_ids)
-      }
-      if (nrow(right_block) > 0) {
-        block_right_ids <- right_ids[right[[block_col]] == block]
-        all_unmatched_right <- c(all_unmatched_right, block_right_ids)
-      }
-      next
-    }
-
-    # Get IDs for this block
-    block_left_ids <- left_ids[left[[block_col]] == block]
-    block_right_ids <- right_ids[right[[block_col]] == block]
-
-    # Match within block
-    block_result <- greedy_couples_single(
-      left_block, right_block, block_left_ids, block_right_ids,
-      vars, distance, weights, scale,
-      max_distance, calipers, strategy
-    )
-
-    # Add block_id column
-    if (nrow(block_result$pairs) > 0) {
-      block_result$pairs$block_id <- block
-      all_pairs[[length(all_pairs) + 1]] <- block_result$pairs
-    }
-
-    # Accumulate unmatched
-    all_unmatched_left <- c(all_unmatched_left, block_result$unmatched$left)
-    all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
-
-    # Block summary
-    block_summaries[[length(block_summaries) + 1]] <- tibble::tibble(
-      block_id = block,
-      n_pairs = nrow(block_result$pairs),
-      total_distance = sum(block_result$pairs$distance, na.rm = TRUE),
-      mean_distance = mean(block_result$pairs$distance, na.rm = TRUE),
-      n_unmatched_left = length(block_result$unmatched$left),
-      n_unmatched_right = length(block_result$unmatched$right)
-    )
-  }
-
-  # Combine results
-  if (length(all_pairs) > 0) {
-    pairs <- dplyr::bind_rows(all_pairs)
-    pairs <- dplyr::select(pairs, "block_id", dplyr::everything())
-  } else {
-    pairs <- tibble::tibble(
-      block_id = character(0),
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  }
-
-  block_summary_df <- if (length(block_summaries) > 0) {
-    dplyr::bind_rows(block_summaries)
-  } else {
-    tibble::tibble(
-      block_id = character(0),
-      n_pairs = integer(0),
-      total_distance = numeric(0),
-      mean_distance = numeric(0),
-      n_unmatched_left = integer(0),
-      n_unmatched_right = integer(0)
-    )
-  }
-
-  list(
-    pairs = pairs,
-    unmatched = list(
-      left = all_unmatched_left,
-      right = all_unmatched_right
-    ),
-    info = list(
-      n_blocks = length(blocks),
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE),
-      block_summary = block_summary_df
-    )
+  .couples_blocked(
+    left, right, left_ids, right_ids,
+    block_col, vars, distance, weights, scale,
+    max_distance, calipers,
+    solver_fn = greedy_matching,
+    solver_params = list(strategy = strategy),
+    check_costs = FALSE,
+    strict_no_pairs = FALSE,
+    parallel = parallel
   )
 }
 

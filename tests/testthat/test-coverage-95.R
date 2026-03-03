@@ -512,7 +512,10 @@ test_that("match_couples handles single pair", {
   left <- data.frame(id = 1, x = 0)
   right <- data.frame(id = 2, x = 1)
 
-  result <- match_couples(left, right, vars = "x")
+  expect_warning(
+    result <- match_couples(left, right, vars = "x"),
+    "identical"
+  )
 
   expect_equal(nrow(result$pairs), 1)
 })

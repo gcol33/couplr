@@ -391,11 +391,14 @@ test_that("pixel_morph_animate with downscale_steps > 0", {
   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
   skip_if(imgA == "" || imgB == "")
 
-  result <- pixel_morph_animate(
-    imgA, imgB,
-    downscale_steps = 1,
-    n_frames = 2,
-    show = FALSE
+  expect_warning(
+    result <- pixel_morph_animate(
+      imgA, imgB,
+      downscale_steps = 1,
+      n_frames = 2,
+      show = FALSE
+    ),
+    "overlaps and.*holes"
   )
 
   expect_true(!is.null(result$animation))

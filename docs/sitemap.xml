@@ -31,6 +31,9 @@
 <url><loc>https://gillescolling.com/couplr/reference/as_assignment_matrix.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/augment.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/augment.matching_result.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/autoplot.matching_result.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/auto_encode_categorical.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/balance_diagnostics.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/balance_table.html</loc></url>
@@ -39,6 +42,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/build_cost_matrix.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/calculate_var_balance.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/can_parallelize.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/cardinality_match.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/check_cost_distribution.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/check_full_matching.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/check_variable_health.html</loc></url>
@@ -54,6 +58,18 @@
 <url><loc>https://gillescolling.com/couplr/reference/couplr_warn.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/detect_blocking.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/diagnose_distance_matrix.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_hist.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_love.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_variance.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-blocks_parallel.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-compute_pair_balance.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-couples_blocked.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-couples_from_distance.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-couples_ratio.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-couples_replace.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-couples_single.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-pair_var_diffs.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-rosenbaum_bounds.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/err_invalid_param.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/err_missing_data.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/err_missing_vars.html</loc></url>
@@ -99,6 +115,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/pixel_morph_animate.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/plot.balance_diagnostics.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/plot.matching_result.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/plot.sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/preprocess_matching_vars.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.balance_diagnostics.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.distance_object.html</loc></url>
@@ -108,8 +125,11 @@
 <url><loc>https://gillescolling.com/couplr/reference/print.matching_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.matchmaker_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.preprocessing_result.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/print.sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.variable_health.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/ps_match.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/restore_parallel.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/setup_parallel.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/sinkhorn.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/sinkhorn_to_assignment.html</loc></url>
@@ -121,6 +141,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/summary.distance_object.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/summary.lap_solve_kbest_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/summary.matching_result.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/summary.sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/update_constraints.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/use_emoji.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/validate_calipers.html</loc></url>

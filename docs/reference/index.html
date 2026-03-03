@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -174,10 +175,24 @@
 
         </dt>
         <dd>Create blocks for stratified matching</dd>
-      </dl></div><div class="section level2">
-      <h2 id="balance-diagnostics">Balance Diagnostics<a class="anchor" aria-label="anchor" href="#balance-diagnostics"></a></h2>
 
-      <div class="section-desc"><p>Assess and report match quality</p></div>
+        <dt>
+
+          <code><a href="ps_match.html">ps_match()</a></code>
+
+        </dt>
+        <dd>Propensity Score Matching</dd>
+
+        <dt>
+
+          <code><a href="cardinality_match.html">cardinality_match()</a></code>
+
+        </dt>
+        <dd>Cardinality Matching</dd>
+      </dl></div><div class="section level2">
+      <h2 id="balance-diagnostics-analysis">Balance Diagnostics &amp; Analysis<a class="anchor" aria-label="anchor" href="#balance-diagnostics-analysis"></a></h2>
+
+      <div class="section-desc"><p>Assess match quality and sensitivity to hidden bias</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -197,6 +212,13 @@
 
         </dt>
         <dd>Create Balance Table</dd>
+
+        <dt>
+
+          <code><a href="sensitivity_analysis.html">sensitivity_analysis()</a></code>
+
+        </dt>
+        <dd>Rosenbaum Sensitivity Analysis</dd>
       </dl></div><div class="section level2">
       <h2 id="distance-and-preprocessing">Distance and Preprocessing<a class="anchor" aria-label="anchor" href="#distance-and-preprocessing"></a></h2>
 
@@ -478,6 +500,13 @@
 
         <dt>
 
+          <code><a href="summary.sensitivity_analysis.html">summary(<i>&lt;sensitivity_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Summary method for sensitivity analysis</dd>
+
+        <dt>
+
           <code><a href="plot.matching_result.html">plot(<i>&lt;matching_result&gt;</i>)</a></code>
 
         </dt>
@@ -489,6 +518,41 @@
 
         </dt>
         <dd>Plot method for balance diagnostics</dd>
+
+        <dt>
+
+          <code><a href="plot.sensitivity_analysis.html">plot(<i>&lt;sensitivity_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot method for sensitivity analysis (base graphics)</dd>
+
+        <dt>
+
+          <code><a href="print.sensitivity_analysis.html">print(<i>&lt;sensitivity_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print method for sensitivity analysis</dd>
+
+        <dt>
+
+          <code><a href="autoplot.balance_diagnostics.html">autoplot(<i>&lt;balance_diagnostics&gt;</i>)</a></code>
+
+        </dt>
+        <dd>ggplot2 autoplot for balance diagnostics</dd>
+
+        <dt>
+
+          <code><a href="autoplot.matching_result.html">autoplot(<i>&lt;matching_result&gt;</i>)</a></code>
+
+        </dt>
+        <dd>ggplot2 autoplot for matching results</dd>
+
+        <dt>
+
+          <code><a href="autoplot.sensitivity_analysis.html">autoplot(<i>&lt;sensitivity_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>ggplot2 autoplot for sensitivity analysis</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -214,7 +214,6 @@ may find different optima with the same total cost.
 For n \> 10000: Use approximation strategies
 ([`vignette("pixel-morphing")`](https://gillescolling.com/couplr/articles/pixel-morphing.md))
 
-
     #### D. Improve Section Transitions
 
     Add transition paragraphs. Example between "Basic Usage" and "Working with Rectangular Problems":
@@ -309,7 +308,6 @@ Before diving into individual algorithms, here's a decision framework:
                                       approximations
 ```
 
-
     ### Head-to-Head Comparisons
 
     | Scenario | Hungarian | JV | Auction | SAP | HK01 |
@@ -357,7 +355,6 @@ For very large cost ranges (\> 10^10), dual variable updates may
 overflow:
 
 ``` r
-
 # Problematic: cost range is 10^15
 cost <- matrix(c(1e-5, 1e10, 1e10, 1e-5), nrow = 2)
 ```
@@ -374,7 +371,6 @@ solving.
 | Auction   | Slow convergence for small epsilon | Use scaled variant       |
 | SAP       | Inefficient for dense problems     | Use JV instead           |
 | HK01      | Only for binary costs              | Not applicable otherwise |
-
 
     #### D. Add Conceptual Diagram Section
 
@@ -404,7 +400,6 @@ S₃ ────3───╳───── T₃
 
 Edge weights = costs Goal: Select one edge per source, one per target,
 minimizing total weight
-
 
     **Complementary Slackness Intuition**
 
@@ -509,7 +504,6 @@ fit in memory
 **Solutions**:
 
 ``` r
-
 # For n > 5000: use greedy
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 
@@ -517,7 +511,6 @@ result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
 result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
 ```
-
 
     #### C. Add Interpretation Guidance Throughout
 
@@ -553,7 +546,6 @@ analysis.
 **If balance were poor** (\|std_diff\| \> 0.25): 1. Check for outliers
 in the problematic variable 2. Consider adding the variable to blocking
 3. Tighten caliper 4. Report and discuss in limitations
-
 
     #### D. Add Section Transitions
 
@@ -625,7 +617,6 @@ Physics: particles │ 3. Resolution reduction Chemistry: atoms │ │ │ ▼ 
 ▼ Visual demo: Visual comparison Pseudocode for pixel morphing of
 approximations each domain
 
-
     **Key insight**: The pixel morph is not just decoration—it's a computational testbed. Each pixel is an entity with features (color) and position, making the abstract matching problem concrete and visual.
 
 #### C. Add “Connection to Workflows” Section
@@ -660,7 +651,6 @@ result <- match_couples(blocks$left, blocks$right, vars, block_id = "block_id")
 **For n \> 10000**:
 
 ``` r
-
 # Use greedy matching
 result <- greedy_couples(left, right, vars, strategy = "sorted")
 ```
@@ -669,7 +659,6 @@ result <- greedy_couples(left, right, vars, strategy = "sorted")
 vignette, implemented via custom code using
 [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 on subproblems.
-
 
     #### D. Add Limitations Section
 

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -73,6 +74,79 @@
       <small>Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="couplr-110">couplr 1.1.0<a class="anchor" aria-label="anchor" href="#couplr-110"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-1-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-1-0"></a></h3>
+<div class="section level4">
+<h4 id="ratio-and-replacement-matching-1-1-0">Ratio and Replacement Matching<a class="anchor" aria-label="anchor" href="#ratio-and-replacement-matching-1-1-0"></a></h4>
+<ul><li>
+<strong>k:1 ratio matching</strong> via <code>ratio</code> parameter in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>. Matches k control units to each treated unit by replicating the cost matrix, then deduplicates assignments.</li>
+<li>
+<strong>With-replacement matching</strong> via <code>replace</code> parameter. Each treated unit independently selects its nearest control, allowing controls to be reused across multiple treated units.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="propensity-score-matching-1-1-0">Propensity Score Matching<a class="anchor" aria-label="anchor" href="#propensity-score-matching-1-1-0"></a></h4>
+<ul><li>
+<strong>New <code><a href="../reference/ps_match.html">ps_match()</a></code> function</strong> wraps <code><a href="../reference/match_couples.html">match_couples()</a></code> with logistic regression:
+<ul><li>Accepts a formula or pre-fitted <code>glm</code> object</li>
+<li>Matches on the logit of propensity scores with a caliper</li>
+<li>Default caliper: 0.2 SD of logit(PS) (Rosenbaum and Rubin recommendation)</li>
+<li>Returns matching_result with PS model metadata</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="cardinality-matching-1-1-0">Cardinality Matching<a class="anchor" aria-label="anchor" href="#cardinality-matching-1-1-0"></a></h4>
+<ul><li>
+<strong>New <code><a href="../reference/cardinality_match.html">cardinality_match()</a></code> function</strong> maximizes sample size subject to balance constraints:
+<ul><li>Starts with a full optimal match, then iteratively prunes imbalanced pairs</li>
+<li>Balance threshold via <code>max_std_diff</code> (default: 0.1 for excellent balance)</li>
+<li>Configurable pruning speed with <code>batch_fraction</code>
+</li>
+<li>Returns pruning diagnostics: iterations, pairs removed, final balance</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="sensitivity-analysis-1-1-0">Sensitivity Analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis-1-1-0"></a></h4>
+<ul><li>
+<strong>New <code><a href="../reference/sensitivity_analysis.html">sensitivity_analysis()</a></code> function</strong> implements Rosenbaum bounds:
+<ul><li>Tests sensitivity of matched comparisons to hidden bias</li>
+<li>Uses Wilcoxon signed-rank statistic with upper/lower p-value bounds</li>
+<li>Reports critical gamma (smallest gamma at which significance is lost)</li>
+<li>S3 methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="visualization-1-1-0">Visualization<a class="anchor" aria-label="anchor" href="#visualization-1-1-0"></a></h4>
+<ul><li>
+<strong><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods</strong> for ggplot2-based visualizations (requires ggplot2):
+<ul><li>
+<code><a href="../reference/autoplot.matching_result.html">autoplot.matching_result()</a></code>: histogram, density, or ecdf of distances</li>
+<li>
+<code><a href="../reference/autoplot.balance_diagnostics.html">autoplot.balance_diagnostics()</a></code>: love plot, histogram, or variance ratio plot</li>
+<li>
+<code><a href="../reference/autoplot.sensitivity_analysis.html">autoplot.sensitivity_analysis()</a></code>: gamma vs p-value curve</li>
+</ul></li>
+<li>
+<strong>Enhanced <code><a href="../reference/summary.matching_result.html">summary.matching_result()</a></code></strong> now reports match rate and distance percentiles</li>
+</ul></div>
+<div class="section level4">
+<h4 id="new-functions-1-1-0">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-1-1-0"></a></h4>
+<ul><li>
+<code><a href="../reference/ps_match.html">ps_match()</a></code> - Propensity score matching with logit caliper</li>
+<li>
+<code><a href="../reference/cardinality_match.html">cardinality_match()</a></code> - Balance-constrained cardinality matching</li>
+<li>
+<code><a href="../reference/sensitivity_analysis.html">sensitivity_analysis()</a></code> - Rosenbaum bounds sensitivity analysis</li>
+</ul></div>
+<div class="section level4">
+<h4 id="tests-1-1-0">Tests<a class="anchor" aria-label="anchor" href="#tests-1-1-0"></a></h4>
+<ul><li>Added 58 new tests across 7 test files</li>
+<li>All 4916 tests passing across platforms</li>
+</ul><hr></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.7" id="couplr-107">couplr 1.0.7<a class="anchor" aria-label="anchor" href="#couplr-107"></a></h2>
 <div class="section level3">

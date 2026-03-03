@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/getting-started.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
@@ -67,6 +67,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -103,7 +104,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-02-25</h4>
+            <h4 data-toc-skip class="date">2026-03-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -239,11 +240,11 @@ describing characteristics we want to balance (age, income, education,
 etc.).</p>
 <p><strong>Goal:</strong> Find one-to-one matches that minimize total
 distance:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">min</mi><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msubsup><mi>𝐱</mi><mi>i</mi><mi>L</mi></msubsup><mo>,</mo><msubsup><mi>𝐱</mi><mrow><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><mi>R</mi></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>𝐱</mi><mi>i</mi><mi>L</mi></msubsup><mo>,</mo><msubsup><mi>𝐱</mi><mrow><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mi>R</mi></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \min_{\pi} \sum_{i=1}^{n} d(\mathbf{x}_i^L, \mathbf{x}_{\pi(i)}^R)
 </annotation></semantics></math></p>
 <p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false" form="prefix">(</mo><mi>⋅</mi><mo>,</mo><mi>⋅</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">d(\cdot, \cdot)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>⋅</mi><mo>,</mo><mi>⋅</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">d(\cdot, \cdot)</annotation></semantics></math>
 is a distance function (typically Euclidean or Mahalanobis) and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
 is a matching assignment.</p>
@@ -274,19 +275,19 @@ experiments</p></li>
 </h3>
 <p>The quality of matching depends on the distance metric:</p>
 <p><strong>Euclidean distance</strong> (after scaling):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msqrt><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msqrt><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">
 d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{\sum_{k=1}^{p} (x_{ik} - x_{jk})^2}
 </annotation></semantics></math></p>
 <p><strong>Mahalanobis distance</strong> (accounts for correlations):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msqrt><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><msup><mo stretchy="false" form="postfix">)</mo><mi>⊤</mi></msup><msup><mi mathvariant="normal">Σ</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow></msqrt></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msqrt><mrow><msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>⊤</mi></msup><msup><mi>Σ</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msqrt></mrow><annotation encoding="application/x-tex">
 d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i - \mathbf{x}_j)^\top \Sigma^{-1} (\mathbf{x}_i - \mathbf{x}_j)}
 </annotation></semantics></math></p>
 <p><strong>Propensity score distance</strong> (single dimension):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">|</mo><msub><mi>p</mi><mi>i</mi></msub><mo>−</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>p</mi><mi>i</mi></msub><mo>−</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">
 d(i, j) = |p_i - p_j|
 </annotation></semantics></math></p>
 <p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub><mo>=</mo><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">treatment</mtext><mo>∣</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">p_i = P(\text{treatment} \mid \mathbf{x}_i)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub><mo>=</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">treatment</mtext><mo>∣</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">p_i = P(\text{treatment} \mid \mathbf{x}_i)</annotation></semantics></math>
 is the propensity score.</p>
 <p><code>couplr</code> defaults to Euclidean distance with automatic
 scaling, which works well for most applications.</p>
@@ -609,7 +610,7 @@ automatically:</p>
 parameter:</p>
 <p><strong>1. Robust scaling</strong> (<code>scale = "robust"</code>,
 default):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">median</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mtext mathvariant="normal">MAD</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">median</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mtext mathvariant="normal">MAD</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
 x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
 </annotation></semantics></math></p>
 <ul>
@@ -619,7 +620,7 @@ x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
 </ul>
 <p><strong>2. Standardization</strong>
 (<code>scale = "standardize"</code>):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">mean</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mtext mathvariant="normal">SD</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">mean</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mtext mathvariant="normal">SD</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
 x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
 </annotation></semantics></math></p>
 <ul>
@@ -628,7 +629,7 @@ x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
 <li><p>Best for: Clean, normally-distributed data</p></li>
 </ul>
 <p><strong>3. Range scaling</strong> (<code>scale = "range"</code>):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mo>min</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mo>max</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mo>min</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
 x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
 </annotation></semantics></math></p>
 <ul>
@@ -714,7 +715,7 @@ alternatives.</p>
 <ul>
 <li><p>Minimizes total distance (globally optimal solution)</p></li>
 <li><p>Uses linear assignment algorithms
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 complexity)</p></li>
 <li><p>Suitable for: n &lt; 5,000, when optimality is critical</p></li>
 <li><p>Typical runtime: &lt;1 second for n=1,000, ~10 seconds for
@@ -768,18 +769,18 @@ matters</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 198.77 seconds</span></span>
+<span><span class="co">#&gt;   Time: 185.56 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 1.6 seconds</span></span>
+<span><span class="co">#&gt;   Time: 1.44 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 124.2 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 128.9 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -864,8 +865,8 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted     0.07        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.06        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed    sorted     0.06        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed1 row_best     0.04        0.0968          19.36</span></span>
 <span><span class="co">#&gt; elapsed2       pq     0.08        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
@@ -1291,7 +1292,7 @@ blocks:</p>
 <h3 id="key-balance-metrics">Key Balance Metrics<a class="anchor" aria-label="anchor" href="#key-balance-metrics"></a>
 </h3>
 <p><strong>1. Standardized differences:</strong>
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Std Diff</mtext><mo>=</mo><mfrac><mrow><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">left</mtext></msub><mo>−</mo><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">right</mtext></msub></mrow><msqrt><mrow><mo stretchy="false" form="prefix">(</mo><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mn>2</mn></mrow></msqrt></mfrac></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Std Diff</mtext><mo>=</mo><mfrac><mrow><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">left</mtext></msub><mo>−</mo><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">right</mtext></msub></mrow><msqrt><mrow><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mn>2</mn></mrow></msqrt></mfrac></mrow><annotation encoding="application/x-tex">
 \text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
 </annotation></semantics></math></p>
 <p><strong>Thresholds:</strong></p>
@@ -1868,7 +1869,7 @@ status</p></li>
 <h3 id="scalability">Scalability<a class="anchor" aria-label="anchor" href="#scalability"></a>
 </h3>
 <p><strong>Optimal matching complexity:</strong>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 using Jonker-Volgenant</p>
 <ul>
 <li><p>n = 100: &lt; 0.01 seconds</p></li>
@@ -1878,9 +1879,9 @@ using Jonker-Volgenant</p>
 <li><p>n = 5,000: ~ 30-60 seconds</p></li>
 </ul>
 <p><strong>Greedy matching complexity:</strong>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2 \log n)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log n)</annotation></semantics></math>
 for sorted,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math>
 for row-best</p>
 <ul>
 <li><p>n = 5,000: ~ 1 second</p></li>
@@ -2015,7 +2016,7 @@ this!)</p></li>
 </h3>
 <p><strong>Symptom</strong>: <code><a href="../reference/match_couples.html">match_couples()</a></code> runs for
 minutes or doesn’t complete. <strong>Cause</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 complexity for optimal matching.</p>
 <p><strong>Solutions</strong>:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
@@ -2183,6 +2184,515 @@ reason not to</td>
 <hr>
 </div>
 <div class="section level2">
+<h2 id="advanced-matching-techniques">Advanced Matching Techniques<a class="anchor" aria-label="anchor" href="#advanced-matching-techniques"></a>
+</h2>
+<div class="section level3">
+<h3 id="ratio-matching-k1">Ratio Matching (k:1)<a class="anchor" aria-label="anchor" href="#ratio-matching-k1"></a>
+</h3>
+<p>Sometimes matching multiple controls per treated unit improves
+precision. Use the <code>ratio</code> parameter:</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Match 2 controls per treated unit</span></span>
+<span><span class="va">result_2to1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  ratio <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
+<span></span>
+<span><span class="va">result_2to1</span><span class="op">$</span><span class="va">pairs</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 150 × 5</span></span></span>
+<span><span class="co">#&gt;    left_id right_id distance .age_diff .income_diff</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 3       52        1.07     -<span style="color: #BB0000;">11.6</span>          <span style="text-decoration: underline;">5</span>127. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 3       5         0.270     -<span style="color: #BB0000;">2.96</span>         <span style="text-decoration: underline;">1</span>144. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 4       100       1.05     -<span style="color: #BB0000;">10.8</span>          <span style="text-decoration: underline;">7</span>159. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 4       81        0.121      0.567        <span style="text-decoration: underline;">1</span>820. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 5       3         0.690     -<span style="color: #BB0000;">6.78</span>         <span style="text-decoration: underline;">5</span>721. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 5       71        0.469     -<span style="color: #BB0000;">3.30</span>         <span style="text-decoration: underline;">6</span>065. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 6       30        1.08     -<span style="color: #BB0000;">12.3</span>          <span style="text-decoration: underline;">1</span>426. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 6       25        0.231     -<span style="color: #BB0000;">2.50</span>         <span style="text-decoration: underline;">1</span>139. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 7       143       0.735     -<span style="color: #BB0000;">5.12</span>         <span style="text-decoration: underline;">9</span>559. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 7       94        0.006<span style="text-decoration: underline;">53</span>    0.072<span style="text-decoration: underline;">8</span>        -<span style="color: #BB0000;">20.9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 140 more rows</span></span></span></code></pre></div>
+<p>Higher ratios increase sample size at the cost of slightly worse
+individual match quality. A common choice is 2:1 or 3:1.</p>
+</div>
+<div class="section level3">
+<h3 id="with-replacement-matching">With-Replacement Matching<a class="anchor" aria-label="anchor" href="#with-replacement-matching"></a>
+</h3>
+<p>When controls are scarce relative to treated units, allowing
+replacement lets each control serve as a match for multiple treated
+units:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Allow controls to be reused</span></span>
+<span><span class="va">result_wr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  replace <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
+<span></span>
+<span><span class="co"># Some controls may appear multiple times</span></span>
+<span><span class="va">n_distinct_controls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">result_wr</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">right_id</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Unique controls used:"</span>, <span class="va">n_distinct_controls</span>, <span class="st">"out of"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">right_data</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unique controls used: 52 out of 150</span></span></code></pre></div>
+<p>With-replacement matching reduces bias (each treated unit gets its
+closest match) but increases variance.</p>
+</div>
+<div class="section level3">
+<h3 id="propensity-score-matching">Propensity Score Matching<a class="anchor" aria-label="anchor" href="#propensity-score-matching"></a>
+</h3>
+<p>Instead of matching directly on covariates, you can match on the
+estimated probability of treatment — the propensity score.
+<code><a href="../reference/ps_match.html">ps_match()</a></code> automates this:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Combine data for propensity score estimation</span></span>
+<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">left_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">right_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Match on propensity scores (wider caliper for this example)</span></span>
+<span><span class="va">ps_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_match.html">ps_match</a></span><span class="op">(</span></span>
+<span>  formula <span class="op">=</span> <span class="va">treated</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">income</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">combined</span>,</span>
+<span>  treatment <span class="op">=</span> <span class="st">"treated"</span>,</span>
+<span>  caliper_sd <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ps_result</span></span>
+<span><span class="co">#&gt; Matching Result</span></span>
+<span><span class="co">#&gt; ===============</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Method: lap </span></span>
+<span><span class="co">#&gt; Pairs matched: 99 </span></span>
+<span><span class="co">#&gt; Unmatched (left): 1 </span></span>
+<span><span class="co">#&gt; Unmatched (right): 51 </span></span>
+<span><span class="co">#&gt; Total distance: 9.8133 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matched pairs:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 99 × 4</span></span></span>
+<span><span class="co">#&gt;    left_id right_id distance .logit_ps_diff</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 1       139       0.285          0.285  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 2       117       0.123          0.123  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 3       100       0.014<span style="text-decoration: underline;">1</span>         0.014<span style="text-decoration: underline;">1</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 4       103       0.246          0.246  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 5       133       0.221          0.221  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 6       148       0.009<span style="text-decoration: underline;">31</span>        0.009<span style="text-decoration: underline;">31</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 7       111       0.102          0.102  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 8       124       0.351          0.351  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 9       128       0.069<span style="text-decoration: underline;">2</span>         0.069<span style="text-decoration: underline;">2</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 10      110       0.013<span style="text-decoration: underline;">1</span>         0.013<span style="text-decoration: underline;">1</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 89 more rows</span></span></span></code></pre></div>
+<p>The function fits a logistic regression, transforms scores to the
+logit scale, and calls <code><a href="../reference/match_couples.html">match_couples()</a></code> with a caliper
+constraint. The default caliper is 0.2 SD of logit(PS) (Rosenbaum and
+Rubin recommendation); we use 0.5 here for this small simulated dataset.
+You can also supply a pre-fitted model via the <code>ps_model</code>
+argument.</p>
+</div>
+<div class="section level3">
+<h3 id="cardinality-matching">Cardinality Matching<a class="anchor" aria-label="anchor" href="#cardinality-matching"></a>
+</h3>
+<p>Standard matching minimizes total distance. Cardinality matching
+instead maximizes the number of matched pairs while enforcing strict
+balance constraints:</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Maximize pairs subject to balance threshold</span></span>
+<span><span class="va">card_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,  <span class="co"># Excellent balance threshold</span></span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs matched:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Pairs matched: 81</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pruning iterations:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pruning_iterations</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Pruning iterations: 2</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs removed:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pairs_removed</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Pairs removed: 19</span></span></code></pre></div>
+<p>This is useful when you need strict balance guarantees and are
+willing to sacrifice some sample size.</p>
+<hr>
+</div>
+</div>
+<div class="section level2">
+<h2 id="sensitivity-analysis">Sensitivity Analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a>
+</h2>
+<p>After matching, a natural question is: <em>how much hidden bias would
+be needed to invalidate the results?</em> Rosenbaum bounds address this
+by computing p-values under varying degrees of unobserved
+confounding.</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Add an outcome variable</span></span>
+<span><span class="va">left_outcome</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">left_data</span>, outcome <span class="op">=</span> <span class="va">age</span> <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="va">income</span> <span class="op">/</span> <span class="fl">10000</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">left_data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">right_outcome</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">right_data</span>, outcome <span class="op">=</span> <span class="va">age</span> <span class="op">*</span> <span class="fl">0.3</span> <span class="op">+</span> <span class="va">income</span> <span class="op">/</span> <span class="fl">10000</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">right_data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Run matching first</span></span>
+<span><span class="va">result_sa</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_outcome</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_outcome</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
+<span></span>
+<span><span class="co"># Sensitivity analysis</span></span>
+<span><span class="va">sa</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivity_analysis.html">sensitivity_analysis</a></span><span class="op">(</span></span>
+<span>  result <span class="op">=</span> <span class="va">result_sa</span>,</span>
+<span>  left <span class="op">=</span> <span class="va">left_outcome</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_outcome</span>,</span>
+<span>  outcome_var <span class="op">=</span> <span class="st">"outcome"</span>,</span>
+<span>  gamma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sa</span></span>
+<span><span class="co">#&gt; Rosenbaum Sensitivity Analysis</span></span>
+<span><span class="co">#&gt; ==============================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matched pairs: 100 </span></span>
+<span><span class="co">#&gt; Alternative: greater </span></span>
+<span><span class="co">#&gt; Test statistic (T+): 4939.0 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Gamma    p (upper bound)</span></span>
+<span><span class="co">#&gt; -----    ---------------</span></span>
+<span><span class="co">#&gt; 1.00     0.0000 *</span></span>
+<span><span class="co">#&gt; 1.50     0.0000 *</span></span>
+<span><span class="co">#&gt; 2.00     0.0000 *</span></span>
+<span><span class="co">#&gt; 2.50     0.0000 *</span></span>
+<span><span class="co">#&gt; 3.00     0.0000 *</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; * significant at alpha = 0.05</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Result is insensitive to bias at all tested Gamma values</span></span></code></pre></div>
+<p>The <strong>critical gamma</strong>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Γ</mi><annotation encoding="application/x-tex">\Gamma</annotation></semantics></math>)
+is the smallest value at which the upper-bound p-value crosses 0.05. A
+critical gamma of 2.0, for example, means an unobserved confounder would
+need to change the odds of treatment by a factor of 2 to explain away
+the result.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="visualizing-results-with-autoplot">Visualizing Results with autoplot<a class="anchor" aria-label="anchor" href="#visualizing-results-with-autoplot"></a>
+</h2>
+<p>If <code>ggplot2</code> is available, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods
+produce publication-ready plots:</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="co"># Distance distribution</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">result</span>, type <span class="op">=</span> <span class="st">"histogram"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzguMDJ8NDk4LjUyfDIzLjE4fDI1Ni41MA=='>
+    <rect x='38.02' y='23.18' width='460.50' height='233.33' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzguMDJ8NDk4LjUyfDIzLjE4fDI1Ni41MA==)'>
+<polyline points='38.02,210.31 498.52,210.31 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,139.13 498.52,139.13 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,67.95 498.52,67.95 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='136.16,256.50 136.16,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='276.64,256.50 276.64,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='417.12,256.50 417.12,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,245.90 498.52,245.90 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,174.72 498.52,174.72 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,103.54 498.52,103.54 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.02,32.36 498.52,32.36 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='65.93,256.50 65.93,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='206.40,256.50 206.40,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='346.88,256.50 346.88,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='487.35,256.50 487.35,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<rect x='58.95' y='33.78' width='13.95' height='212.11' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='72.90' y='207.46' width='13.95' height='38.44' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='86.86' y='237.36' width='13.95' height='8.54' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='100.81' y='238.78' width='13.95' height='7.12' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='114.77' y='237.36' width='13.95' height='8.54' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='128.72' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='142.68' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='156.63' y='243.05' width='13.95' height='2.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='170.59' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='184.54' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='198.50' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='212.45' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='226.41' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='240.36' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='254.31' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='268.27' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='282.22' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='296.18' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='310.13' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='324.09' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='338.04' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='352.00' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='365.95' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='379.91' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='393.86' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='407.82' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='421.77' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='435.72' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='449.68' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='463.63' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='33.09' y='249.05' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>0</text>
+<text x='33.09' y='177.87' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='9.78px' lengthAdjust='spacingAndGlyphs'>50</text>
+<text x='33.09' y='106.69' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>100</text>
+<text x='33.09' y='35.51' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>150</text>
+<text x='65.93' y='267.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>0</text>
+<text x='206.40' y='267.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>1</text>
+<text x='346.88' y='267.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>2</text>
+<text x='487.35' y='267.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>3</text>
+<text x='268.27' y='280.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='42.81px' lengthAdjust='spacingAndGlyphs'>Distance</text>
+<text transform='translate(13.36,139.84) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='29.38px' lengthAdjust='spacingAndGlyphs'>Count</text>
+<text x='38.02' y='14.93' style='font-size: 13.20px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='164.48px' lengthAdjust='spacingAndGlyphs'>Matching Distances (n=200)</text>
+</g>
+</g>
+</svg></div></p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Balance diagnostics love plot</span></span>
+<span>  <span class="va">bal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bal</span>, type <span class="op">=</span> <span class="st">"love"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzguNzd8NDk4LjUyfDIzLjE4fDIxNy4zMQ=='>
+    <rect x='38.77' y='23.18' width='459.75' height='194.13' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzguNzd8NDk4LjUyfDIzLjE4fDIxNy4zMQ==)'>
+<polyline points='88.92,217.31 88.92,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='174.94,217.31 174.94,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='260.96,217.31 260.96,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='346.98,217.31 346.98,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='433.00,217.31 433.00,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.77,164.36 498.52,164.36 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='38.77,76.12 498.52,76.12 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='45.91,217.31 45.91,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='131.93,217.31 131.93,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='217.95,217.31 217.95,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='303.97,217.31 303.97,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='389.99,217.31 389.99,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='476.01,217.31 476.01,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<circle cx='59.67' cy='76.12' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<circle cx='477.62' cy='164.36' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<line x1='303.97' y1='217.31' x2='303.97' y2='23.18' style='stroke-width: 1.07; stroke: #7F7F7F; stroke-linecap: butt;' />
+<line x1='260.96' y1='217.31' x2='260.96' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<line x1='346.98' y1='217.31' x2='346.98' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='33.84' y='167.51' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='28.36px' lengthAdjust='spacingAndGlyphs'>income</text>
+<text x='33.84' y='79.27' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='14.67px' lengthAdjust='spacingAndGlyphs'>age</text>
+<text x='45.91' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='15.14px' lengthAdjust='spacingAndGlyphs'>-0.6</text>
+<text x='131.93' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='15.14px' lengthAdjust='spacingAndGlyphs'>-0.4</text>
+<text x='217.95' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='15.14px' lengthAdjust='spacingAndGlyphs'>-0.2</text>
+<text x='303.97' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.0</text>
+<text x='389.99' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.2</text>
+<text x='476.01' y='228.54' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.4</text>
+<text x='268.65' y='241.00' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='117.89px' lengthAdjust='spacingAndGlyphs'>Standardized Difference</text>
+<circle cx='243.17' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<text x='257.29' y='271.55' style='font-size: 8.80px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='45.47px' lengthAdjust='spacingAndGlyphs'>Imbalanced</text>
+<text x='38.77' y='14.93' style='font-size: 13.20px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='202.72px' lengthAdjust='spacingAndGlyphs'>Balance: Standardized Differences</text>
+</g>
+</g>
+</svg></div></p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Sensitivity analysis curve</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpNDAuNDZ8NDk4LjUyfDIzLjE4fDI1NC4wNg=='>
+    <rect x='40.46' y='23.18' width='458.07' height='230.88' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpNDAuNDZ8NDk4LjUyfDIzLjE4fDI1NC4wNg==)'>
+<polyline points='40.46,222.57 498.52,222.57 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,180.59 498.52,180.59 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,138.62 498.52,138.62 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,96.64 498.52,96.64 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,54.66 498.52,54.66 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='113.33,254.06 113.33,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='217.44,254.06 217.44,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='321.54,254.06 321.54,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='425.65,254.06 425.65,23.18 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,243.56 498.52,243.56 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,201.58 498.52,201.58 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,159.61 498.52,159.61 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,117.63 498.52,117.63 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,75.65 498.52,75.65 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='40.46,33.67 498.52,33.67 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='61.28,254.06 61.28,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='165.38,254.06 165.38,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='269.49,254.06 269.49,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='373.59,254.06 373.59,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='477.70,254.06 477.70,23.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polyline points='61.28,243.56 165.38,243.56 269.49,243.56 373.59,243.56 477.70,243.55 ' style='stroke-width: 2.13; stroke: #4682B4; stroke-linecap: butt;' />
+<circle cx='61.28' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='165.38' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='269.49' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='373.59' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='477.70' cy='243.55' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<line x1='40.46' y1='33.67' x2='498.52' y2='33.67' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='35.52' y='246.71' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.00</text>
+<text x='35.52' y='204.73' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.01</text>
+<text x='35.52' y='162.76' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.02</text>
+<text x='35.52' y='120.78' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.03</text>
+<text x='35.52' y='78.80' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.04</text>
+<text x='35.52' y='36.82' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>0.05</text>
+<text x='61.28' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>1.0</text>
+<text x='165.38' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>1.5</text>
+<text x='269.49' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>2.0</text>
+<text x='373.59' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>2.5</text>
+<text x='477.70' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>3.0</text>
+<text x='210.82' y='277.88' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='6.06px' lengthAdjust='spacingAndGlyphs'>Γ</text>
+<text x='216.88' y='277.88' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='3.06px' lengthAdjust='spacingAndGlyphs'> </text>
+<text x='219.94' y='277.88' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='108.22px' lengthAdjust='spacingAndGlyphs'>(sensitivity parameter)</text>
+<text transform='translate(13.36,138.62) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='102.81px' lengthAdjust='spacingAndGlyphs'>Upper bound p-value</text>
+<text x='40.46' y='14.93' style='font-size: 13.20px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='186.12px' lengthAdjust='spacingAndGlyphs'>Rosenbaum Sensitivity Analysis</text>
+</g>
+</g>
+</svg></div></p>
+<p>All <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods return <code>ggplot</code>
+objects, so you can add layers, themes, and labels as needed.</p>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
 </h2>
 <ul>
@@ -2198,6 +2708,8 @@ solutions</p></li>
 approximation strategies</p></li>
 <li><p><code><a href="../reference/match_couples.html">?match_couples</a></code>, <code><a href="../reference/greedy_couples.html">?greedy_couples</a></code>,
 <code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code>, <code><a href="../reference/matchmaker.html">?matchmaker</a></code></p></li>
+<li><p><code><a href="../reference/ps_match.html">?ps_match</a></code>, <code><a href="../reference/cardinality_match.html">?cardinality_match</a></code>,
+<code><a href="../reference/sensitivity_analysis.html">?sensitivity_analysis</a></code></p></li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

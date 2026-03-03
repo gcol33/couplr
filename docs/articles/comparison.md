@@ -27,7 +27,6 @@ for couplr’s matching approach.
 We simulate a job training evaluation scenario with selection bias:
 
 ``` r
-
 set.seed(42)
 
 # Treatment group: younger, more educated, higher prior earnings
@@ -94,7 +93,6 @@ covariates (multivariate distance).
 ### MatchIt Approach
 
 ``` r
-
 if (requireNamespace("MatchIt", quietly = TRUE)) {
   library(MatchIt)
 
@@ -117,7 +115,6 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 ### couplr Approach
 
 ``` r
-
 # couplr: Direct covariate matching
 result_couplr <- match_couples(
   left = treatment,
@@ -139,7 +136,6 @@ cat("  Mean distance:", round(mean(result_couplr$pairs$distance), 4), "\n")
 ### Balance Comparison
 
 ``` r
-
 if (requireNamespace("MatchIt", quietly = TRUE)) {
   # MatchIt balance
   matched_treated_ps <- matched_ps |> filter(treated == 1)
@@ -239,7 +235,6 @@ algorithm choices.
 ### optmatch Approach
 
 ``` r
-
 if (requireNamespace("optmatch", quietly = TRUE)) {
   library(optmatch)
 
@@ -262,7 +257,6 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 ### couplr Approach
 
 ``` r
-
 # couplr with Mahalanobis-like scaling
 result_couplr_maha <- match_couples(
   left = treatment,
@@ -294,7 +288,6 @@ similar total distances. The key differences are in:
     is one-to-one only
 
 ``` r
-
 if (requireNamespace("optmatch", quietly = TRUE)) {
   # Compare total distances
   # (Note: Direct comparison is complex due to different distance scaling)
@@ -349,7 +342,6 @@ a constraint).
 ### designmatch Approach
 
 ``` r
-
 if (requireNamespace("designmatch", quietly = TRUE)) {
   library(designmatch)
 
@@ -390,7 +382,6 @@ couplr doesn’t constrain balance directly but achieves balance through
 distance minimization:
 
 ``` r
-
 # couplr: Optimize distance, then check balance
 result_couplr_dm <- match_couples(
   left = treatment,
@@ -461,7 +452,6 @@ optimizes assignment.
 ### Matching Package Approach
 
 ``` r
-
 if (requireNamespace("Matching", quietly = TRUE)) {
   library(Matching)
 
@@ -485,7 +475,6 @@ if (requireNamespace("Matching", quietly = TRUE)) {
 ### Balance Comparison
 
 ``` r
-
 if (requireNamespace("Matching", quietly = TRUE)) {
   # Check balance from Matching package
   mb <- MatchBalance(
@@ -638,7 +627,6 @@ modes.
 ### Sequential Pipeline
 
 ``` r
-
 # Stage 1: couplr for initial matching
 matched <- match_couples(
   left = treatment_data,
@@ -667,7 +655,12 @@ model <- lm(outcome ~ treatment, data = matched_data)
 
 Different packages excel at different tasks:
 
-`{r, eval = FALSE } # Use couplr for: initial exploration, large-scale matching, distance caching # Use MatchIt for: propensity scores, full matching, published protocols # Use optmatch for: optimal full matching with sparse distances # Use designmatch for: guaranteed balance constraints`
+``` r
+# Use couplr for: initial exploration, large-scale matching, distance caching
+# Use MatchIt for: propensity scores, full matching, published protocols
+# Use optmatch for: optimal full matching with sparse distances
+# Use designmatch for: guaranteed balance constraints
+```
 
 ------------------------------------------------------------------------
 
@@ -690,7 +683,6 @@ earnings (re74, re75), employment status.
 ### Simulating Lalonde-Style Data
 
 ``` r
-
 set.seed(1986)
 
 # NSW treatment group (randomized) - smaller sample for CRAN
@@ -758,7 +750,6 @@ With treatment vs control groups of different sizes, we need efficient
 matching. couplr handles this with greedy matching:
 
 ``` r
-
 # Greedy matching (fast for large control pools)
 result_lalonde <- greedy_couples(
   left = nsw_treat,
@@ -778,7 +769,6 @@ cat("Mean distance:", round(mean(result_lalonde$pairs$distance), 4), "\n")
 ### Balance Assessment
 
 ``` r
-
 balance_lalonde <- balance_diagnostics(
   result_lalonde, nsw_treat, cps_control, vars_lalonde
 )
@@ -846,7 +836,6 @@ differences](comparison_files/figure-html/lalonde-balance-1.svg)
 The matching dramatically reduces imbalance:
 
 ``` r
-
 cat("Balance summary:\n")
 #> Balance summary:
 cat("  Mean |std diff| before:",

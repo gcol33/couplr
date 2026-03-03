@@ -39,7 +39,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="news/index.html">Changelog</a></li>
@@ -169,7 +170,32 @@
 </ul>
 </div>
 <div class="section level3">
-<h3 id="balance-diagnostics">Balance Diagnostics<a class="anchor" aria-label="anchor" href="#balance-diagnostics"></a>
+<h3 id="matching-extensions">Matching Extensions<a class="anchor" aria-label="anchor" href="#matching-extensions"></a>
+</h3>
+<ul>
+<li>
+<strong><code><a href="reference/ps_match.html">ps_match()</a></code></strong>: Propensity score matching
+<ul>
+<li>Logistic regression or pre-fitted model</li>
+<li>Logit caliper (default: 0.2 SD per Rosenbaum &amp; Rubin)</li>
+<li>Supports ratio and replacement matching</li>
+</ul>
+</li>
+<li>
+<strong><code><a href="reference/cardinality_match.html">cardinality_match()</a></code></strong>: Balance-constrained matching
+<ul>
+<li>Maximizes sample size subject to balance thresholds</li>
+<li>Iterative pruning of imbalanced pairs</li>
+</ul>
+</li>
+<li>
+<strong>Ratio matching</strong>: k:1 matching via <code>ratio</code> parameter</li>
+<li>
+<strong>Replacement matching</strong>: with-replacement via <code>replace</code> parameter</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="balance-diagnostics--analysis">Balance Diagnostics &amp; Analysis<a class="anchor" aria-label="anchor" href="#balance-diagnostics--analysis"></a>
 </h3>
 <ul>
 <li>
@@ -182,6 +208,15 @@
 </li>
 </ul>
 </li>
+<li>
+<strong><code><a href="reference/sensitivity_analysis.html">sensitivity_analysis()</a></code></strong>: Rosenbaum bounds
+<ul>
+<li>Assesses sensitivity to hidden bias</li>
+<li>Reports critical gamma for inference robustness</li>
+</ul>
+</li>
+<li>
+<strong><code>autoplot()</code> methods</strong> for ggplot2 visualizations of matching results, balance diagnostics, and sensitivity analysis</li>
 </ul>
 </div>
 <div class="section level3">
@@ -354,10 +389,30 @@
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="propensity-score-matching">Propensity Score Matching<a class="anchor" aria-label="anchor" href="#propensity-score-matching"></a>
+</h3>
+<p>Match on estimated propensity scores with a logit caliper:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ps_match.html">ps_match</a></span><span class="op">(</span></span>
+<span>  <span class="va">treatment</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">education</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">combined_data</span>,</span>
+<span>  treatment <span class="op">=</span> <span class="st">"treated"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="sensitivity-analysis">Sensitivity Analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a>
+</h3>
+<p>Assess robustness of matched comparisons to hidden bias:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sa</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sensitivity_analysis.html">sensitivity_analysis</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">treated</span>, <span class="va">control</span>, outcome_var <span class="op">=</span> <span class="st">"outcome"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
+<span><span class="co"># Critical gamma: 1.75 — results robust to moderate hidden bias</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="pixel-morphing">Pixel Morphing<a class="anchor" aria-label="anchor" href="#pixel-morphing"></a>
 </h3>
 <p>Align images pixel-by-pixel using optimal assignment:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">morph</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pixel_morph.html">pixel_morph</a></span><span class="op">(</span><span class="va">image_a</span>, <span class="va">image_b</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/pixel_morph_animate.html">pixel_morph_animate</a></span><span class="op">(</span><span class="va">morph</span>, <span class="st">"output.gif"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -390,12 +445,12 @@
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co">@software{couplr,</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">  author = {Colling, Gilles},</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">  title = {couplr: Optimal Matching via Linear Assignment},</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">  year = {2026},</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">  url = {https://github.com/gcol33/couplr}</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co">@software{couplr,</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">  author = {Colling, Gilles},</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">  title = {couplr: Optimal Matching via Linear Assignment},</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">  year = {2026},</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">  url = {https://github.com/gcol33/couplr}</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -434,7 +489,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://github.com/gcol33" class="external-link">Gilles Colling</a> <br><small class="roles"> Author, maintainer, copyright holder </small>   </li>
+<a href="https://github.com/gcol33" class="external-link">Gilles Colling</a> <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0003-3070-6066" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 

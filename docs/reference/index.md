@@ -33,15 +33,21 @@ High-level matching for observational studies
   : Fast approximate matching using greedy algorithm
 - [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
   : Create blocks for stratified matching
+- [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+  : Propensity Score Matching
+- [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+  : Cardinality Matching
 
-## Balance Diagnostics
+## Balance Diagnostics & Analysis
 
-Assess and report match quality
+Assess match quality and sensitivity to hidden bias
 
 - [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
   : Balance Diagnostics for Matched Pairs
 - [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
   : Create Balance Table
+- [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  : Rosenbaum Sensitivity Analysis
 
 ## Distance and Preprocessing
 
@@ -136,7 +142,19 @@ S3 methods for displaying and visualizing results
   : Summary method for matching results
 - [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/summary.balance_diagnostics.md)
   : Summary method for balance diagnostics
+- [`summary(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/summary.sensitivity_analysis.md)
+  : Summary method for sensitivity analysis
 - [`plot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/plot.matching_result.md)
   : Plot method for matching results
 - [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/plot.balance_diagnostics.md)
   : Plot method for balance diagnostics
+- [`plot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/plot.sensitivity_analysis.md)
+  : Plot method for sensitivity analysis (base graphics)
+- [`print(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/print.sensitivity_analysis.md)
+  : Print method for sensitivity analysis
+- [`autoplot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.md)
+  : ggplot2 autoplot for balance diagnostics
+- [`autoplot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/autoplot.matching_result.md)
+  : ggplot2 autoplot for matching results
+- [`autoplot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.md)
+  : ggplot2 autoplot for sensitivity analysis

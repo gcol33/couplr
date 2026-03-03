@@ -63,13 +63,34 @@ These features make the package useful in domains like:
   - 10-100x faster than optimal for large datasets
   - Same preprocessing and constraint options
 
-### Balance Diagnostics
+### Matching Extensions
+
+- **`ps_match()`**: Propensity score matching
+  - Logistic regression or pre-fitted model
+  - Logit caliper (default: 0.2 SD per Rosenbaum & Rubin)
+  - Supports ratio and replacement matching
+
+- **`cardinality_match()`**: Balance-constrained matching
+  - Maximizes sample size subject to balance thresholds
+  - Iterative pruning of imbalanced pairs
+
+- **Ratio matching**: k:1 matching via `ratio` parameter
+- **Replacement matching**: with-replacement via `replace` parameter
+
+### Balance Diagnostics & Analysis
 
 - **`balance_diagnostics()`**: Comprehensive balance assessment
   - Standardized differences, variance ratios, KS tests
   - Quality thresholds: <0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable
   - Per-block statistics when blocking is used
   - Publication-ready tables via `balance_table()`
+
+- **`sensitivity_analysis()`**: Rosenbaum bounds
+  - Assesses sensitivity to hidden bias
+  - Reports critical gamma for inference robustness
+
+- **`autoplot()` methods** for ggplot2 visualizations of matching results,
+  balance diagnostics, and sensitivity analysis
 
 ### Low-Level LAP Solving
 
@@ -199,6 +220,28 @@ result <- match_couples(
   block_by = "site",
   parallel = TRUE
 )
+```
+
+### Propensity Score Matching
+
+Match on estimated propensity scores with a logit caliper:
+
+```r
+result <- ps_match(
+  treatment ~ age + income + education,
+  data = combined_data,
+  treatment = "treated"
+)
+```
+
+### Sensitivity Analysis
+
+Assess robustness of matched comparisons to hidden bias:
+
+```r
+sa <- sensitivity_analysis(result, treated, control, outcome_var = "outcome")
+summary(sa)
+# Critical gamma: 1.75 — results robust to moderate hidden bias
 ```
 
 ### Pixel Morphing

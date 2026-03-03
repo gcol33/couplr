@@ -24,6 +24,8 @@ match_couples(
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   parallel = FALSE,
+  replace = FALSE,
+  ratio = 1L,
   check_costs = TRUE
 )
 ```
@@ -102,6 +104,16 @@ match_couples(
   - `TRUE`: Auto-configure parallel backend
 
   - Character: Specify future plan (e.g., "multisession", "multicore")
+
+- replace:
+
+  If TRUE, allow matching with replacement (same right unit can be
+  matched to multiple left units). Default: FALSE.
+
+- ratio:
+
+  Integer, number of right units to match per left unit. Default: 1
+  (one-to-one matching). For k:1 matching, set ratio = k.
 
 - check_costs:
 

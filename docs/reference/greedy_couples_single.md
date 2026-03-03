@@ -16,7 +16,9 @@ greedy_couples_single(
   scale,
   max_distance,
   calipers,
-  strategy
+  strategy,
+  replace = FALSE,
+  ratio = 1L
 )
 ```
 

@@ -99,6 +99,7 @@ etc.).
 **Goal:** Find one-to-one matches that minimize total distance:
 
 ``` math
+
 \min_{\pi} \sum_{i=1}^{n} d(\mathbf{x}_i^L, \mathbf{x}_{\pi(i)}^R)
 ```
 
@@ -131,16 +132,19 @@ The quality of matching depends on the distance metric:
 
 **Euclidean distance** (after scaling):
 ``` math
+
 d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{\sum_{k=1}^{p} (x_{ik} - x_{jk})^2}
 ```
 
 **Mahalanobis distance** (accounts for correlations):
 ``` math
+
 d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i - \mathbf{x}_j)^\top \Sigma^{-1} (\mathbf{x}_i - \mathbf{x}_j)}
 ```
 
 **Propensity score distance** (single dimension):
 ``` math
+
 d(i, j) = |p_i - p_j|
 ```
 
@@ -159,7 +163,6 @@ The simplest workflow uses
 with automatic preprocessing:
 
 ``` r
-
 # Simulate observational data
 set.seed(123)
 n_left <- 100
@@ -245,7 +248,6 @@ The result contains:
 ### Understanding the Output
 
 ``` r
-
 # How many matched?
 cat("Matched pairs:", result$info$n_matched, "\n")
 #> Matched pairs: 100
@@ -332,7 +334,6 @@ automatically:
     - Ordered factors -\> converted to numeric ranks
 
 ``` r
-
 # Create data with scaling challenges
 set.seed(456)
 challenging_data <- tibble(
@@ -379,6 +380,7 @@ Three scaling strategies available via `scale` parameter:
 
 **1. Robust scaling** (`scale = "robust"`, default):
 ``` math
+
 x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
 ```
 
@@ -390,6 +392,7 @@ x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
 
 **2. Standardization** (`scale = "standardize"`):
 ``` math
+
 x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
 ```
 
@@ -401,6 +404,7 @@ x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
 
 **3. Range scaling** (`scale = "range"`):
 ``` math
+
 x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
 ```
 
@@ -411,7 +415,6 @@ x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
 - Best for: Bounded variables, visualization
 
 ``` r
-
 # Demonstrate scaling methods
 demo_var <- c(10, 20, 25, 30, 100)  # Contains outlier (100)
 
@@ -453,7 +456,6 @@ show_scaling(demo_var, "range")
 The preprocessing system provides informative diagnostics:
 
 ``` r
-
 # Create data with issues
 problematic_data <- tibble(
   id = 1:100,
@@ -505,7 +507,6 @@ computationally expensive. `couplr` provides fast greedy alternatives.
 - Typical runtime: \<1 second for n=10,000
 
 ``` r
-
 # Create moderately large dataset
 set.seed(789)
 n <- 1000
@@ -544,18 +545,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 198.77 seconds
+#>   Time: 185.56 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.6 seconds
+#>   Time: 1.44 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 124.2 x
+#>   Speedup: 128.9 x
 ```
 
 ### Greedy Strategies
@@ -618,7 +619,6 @@ Three greedy strategies available via
 - Fastest option
 
 ``` r
-
 # Compare greedy strategies on same data
 set.seed(101)
 test_left <- tibble(id = 1:200, x = rnorm(200))
@@ -655,8 +655,8 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.07        0.0912          18.24
-#> elapsed1 row_best     0.06        0.0968          19.36
+#> elapsed    sorted     0.06        0.0912          18.24
+#> elapsed1 row_best     0.04        0.0968          19.36
 #> elapsed2       pq     0.08        0.0912          18.24
 ```
 
@@ -687,7 +687,6 @@ to maximize the number of matches. Calipers prevent this by:
   matching
 
 ``` r
-
 # Create data where some units are far apart
 set.seed(202)
 left_cal <- tibble(
@@ -766,7 +765,6 @@ Common approaches:
 **1. Standard deviation rule**: Caliper = 0.1 to 0.25 pooled SD
 
 ``` r
-
 # Calculate pooled SD
 combined <- bind_rows(
   left_data |> mutate(group = "left"),
@@ -789,7 +787,6 @@ result <- match_couples(
 tail
 
 ``` r
-
 # Fit all matches first
 all_matches <- match_couples(left_cal, right_cal, vars = "x")
 
@@ -840,7 +837,6 @@ matching on remaining covariates is a powerful strategy.
 ### Exact Blocking with `matchmaker()`
 
 ``` r
-
 # Create multi-site data
 set.seed(303)
 multi_site <- bind_rows(
@@ -910,7 +906,6 @@ result_blocked$pairs |>
 For continuous variables, use k-means clustering to create blocks:
 
 ``` r
-
 # Create blocks based on age groups (data-driven)
 cluster_blocks <- matchmaker(
   left = left_site,
@@ -965,6 +960,7 @@ After matching, assess balance quality using
 
 **1. Standardized differences:**
 ``` math
+
 \text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
 ```
 
@@ -980,6 +976,7 @@ After matching, assess balance quality using
 
 **2. Variance ratios:**
 ``` math
+
 \text{VR} = \frac{s_{\text{left}}^2}{s_{\text{right}}^2}
 ```
 
@@ -998,7 +995,6 @@ After matching, assess balance quality using
 - P-value \> 0.05 suggests similar distributions
 
 ``` r
-
 # Perform matching
 match_result <- match_couples(
   left = left_data,
@@ -1108,7 +1104,6 @@ Here’s how to read it:
 ### Visualizing Balance
 
 ``` r
-
 # Before-after balance plot
 # (Requires creating pre-match balance for comparison)
 
@@ -1186,7 +1181,6 @@ self-selected into the program, creating potential selection bias.
 ### Step 1: Data Preparation
 
 ``` r
-
 set.seed(404)
 
 # Simulate realistic scenario with selection bias
@@ -1250,7 +1244,6 @@ cat("Prior earnings diff:",
 ### Step 2: Perform Matching
 
 ``` r
-
 # Match on baseline covariates
 job_match <- match_couples(
   left = treatment_group,
@@ -1275,7 +1268,6 @@ cat("  Match rate:",
 ### Step 3: Assess Balance
 
 ``` r
-
 # Extract matched samples
 matched_treated <- treatment_group |>
   filter(id %in% job_match$pairs$left_id)
@@ -1340,7 +1332,6 @@ cat("  % with |std diff| > 0.1:",
 ### Step 4: Estimate Treatment Effect
 
 ``` r
-
 # Naive estimate (without matching) - BIASED
 naive_effect <- mean(treatment_group$earnings) - mean(control_group$earnings)
 
@@ -1384,7 +1375,6 @@ cat("  (Closer to true effect of $5,000)\n")
 ### Step 5: Publication-Ready Output
 
 ``` r
-
 # Table 1: Balance table
 balance_publication <- balance_table(job_balance)
 print(balance_publication)
@@ -1479,7 +1469,6 @@ For very large problems:
 **1. Use blocking for large datasets**
 
 ``` r
-
 # Instead of matching 10,000 × 10,000:
 # Create 10 blocks of ~1,000 × 1,000 each
 blocks <- matchmaker(
@@ -1500,7 +1489,6 @@ result <- match_couples(
 **2. Start with greedy, refine if needed**
 
 ``` r
-
 # Quick greedy match for exploration
 quick <- greedy_couples(
   left_data, right_data,
@@ -1518,7 +1506,6 @@ balance_quick <- balance_diagnostics(quick, left_data, right_data, vars = covari
 **3. Use calipers to reduce problem size**
 
 ``` r
-
 # Caliper removes distant pairs from cost matrix
 # Can dramatically reduce effective problem size
 result <- match_couples(
@@ -1548,7 +1535,6 @@ shows \|std_diff\| \> 0.25 for some variables.
 **Solutions**:
 
 ``` r
-
 # 1. Add more matching variables
 result <- match_couples(left, right,
                         vars = c("age", "income", "education", "region"),  # Added!
@@ -1577,7 +1563,6 @@ result <- match_couples(blocks$left, blocks$right, vars = other_vars,
 **Diagnosis**:
 
 ``` r
-
 # Check covariate overlap
 library(ggplot2)
 combined <- bind_rows(
@@ -1605,7 +1590,6 @@ for optimal matching.
 **Solutions**:
 
 ``` r
-
 # For n > 3000: use greedy
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 
@@ -1666,6 +1650,261 @@ loop](matching-workflows_files/figure-html/workflow-diagram-1.svg)
 
 ------------------------------------------------------------------------
 
+## Advanced Matching Techniques
+
+### Ratio Matching (k:1)
+
+Sometimes matching multiple controls per treated unit improves
+precision. Use the `ratio` parameter:
+
+``` r
+# Match 2 controls per treated unit
+result_2to1 <- match_couples(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  ratio = 2,
+  method = "hungarian"
+)
+#> Auto-selected scaling method: standardize
+
+result_2to1$pairs
+#> # A tibble: 150 × 5
+#>    left_id right_id distance .age_diff .income_diff
+#>    <chr>   <chr>       <dbl>     <dbl>        <dbl>
+#>  1 3       52        1.07     -11.6          5127. 
+#>  2 3       5         0.270     -2.96         1144. 
+#>  3 4       100       1.05     -10.8          7159. 
+#>  4 4       81        0.121      0.567        1820. 
+#>  5 5       3         0.690     -6.78         5721. 
+#>  6 5       71        0.469     -3.30         6065. 
+#>  7 6       30        1.08     -12.3          1426. 
+#>  8 6       25        0.231     -2.50         1139. 
+#>  9 7       143       0.735     -5.12         9559. 
+#> 10 7       94        0.00653    0.0728        -20.9
+#> # ℹ 140 more rows
+```
+
+Higher ratios increase sample size at the cost of slightly worse
+individual match quality. A common choice is 2:1 or 3:1.
+
+### With-Replacement Matching
+
+When controls are scarce relative to treated units, allowing replacement
+lets each control serve as a match for multiple treated units:
+
+``` r
+# Allow controls to be reused
+result_wr <- match_couples(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  replace = TRUE,
+  method = "hungarian"
+)
+#> Auto-selected scaling method: standardize
+
+# Some controls may appear multiple times
+n_distinct_controls <- length(unique(result_wr$pairs$right_id))
+cat("Unique controls used:", n_distinct_controls, "out of", nrow(right_data), "\n")
+#> Unique controls used: 52 out of 150
+```
+
+With-replacement matching reduces bias (each treated unit gets its
+closest match) but increases variance.
+
+### Propensity Score Matching
+
+Instead of matching directly on covariates, you can match on the
+estimated probability of treatment — the propensity score.
+[`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+automates this:
+
+``` r
+# Combine data for propensity score estimation
+combined <- rbind(
+  transform(left_data[, c("id", "age", "income")], treated = 1L),
+  transform(right_data[, c("id", "age", "income")], treated = 0L)
+)
+
+# Match on propensity scores (wider caliper for this example)
+ps_result <- ps_match(
+  formula = treated ~ age + income,
+  data = combined,
+  treatment = "treated",
+  caliper_sd = 0.5,
+  method = "hungarian"
+)
+
+ps_result
+#> Matching Result
+#> ===============
+#> 
+#> Method: lap 
+#> Pairs matched: 99 
+#> Unmatched (left): 1 
+#> Unmatched (right): 51 
+#> Total distance: 9.8133 
+#> 
+#> Matched pairs:
+#> # A tibble: 99 × 4
+#>    left_id right_id distance .logit_ps_diff
+#>    <chr>   <chr>       <dbl>          <dbl>
+#>  1 1       139       0.285          0.285  
+#>  2 2       117       0.123          0.123  
+#>  3 3       100       0.0141         0.0141 
+#>  4 4       103       0.246          0.246  
+#>  5 5       133       0.221          0.221  
+#>  6 6       148       0.00931        0.00931
+#>  7 7       111       0.102          0.102  
+#>  8 8       124       0.351          0.351  
+#>  9 9       128       0.0692         0.0692 
+#> 10 10      110       0.0131         0.0131 
+#> # ℹ 89 more rows
+```
+
+The function fits a logistic regression, transforms scores to the logit
+scale, and calls
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+with a caliper constraint. The default caliper is 0.2 SD of logit(PS)
+(Rosenbaum and Rubin recommendation); we use 0.5 here for this small
+simulated dataset. You can also supply a pre-fitted model via the
+`ps_model` argument.
+
+### Cardinality Matching
+
+Standard matching minimizes total distance. Cardinality matching instead
+maximizes the number of matched pairs while enforcing strict balance
+constraints:
+
+``` r
+# Maximize pairs subject to balance threshold
+card_result <- cardinality_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  max_std_diff = 0.1,  # Excellent balance threshold
+  auto_scale = TRUE,
+  method = "hungarian"
+)
+#> Auto-selected scaling method: standardize
+
+cat("Pairs matched:", card_result$info$n_matched, "\n")
+#> Pairs matched: 81
+cat("Pruning iterations:", card_result$info$pruning_iterations, "\n")
+#> Pruning iterations: 2
+cat("Pairs removed:", card_result$info$pairs_removed, "\n")
+#> Pairs removed: 19
+```
+
+This is useful when you need strict balance guarantees and are willing
+to sacrifice some sample size.
+
+------------------------------------------------------------------------
+
+## Sensitivity Analysis
+
+After matching, a natural question is: *how much hidden bias would be
+needed to invalidate the results?* Rosenbaum bounds address this by
+computing p-values under varying degrees of unobserved confounding.
+
+``` r
+# Add an outcome variable
+left_outcome <- transform(left_data, outcome = age * 0.5 + income / 10000 + rnorm(nrow(left_data)))
+right_outcome <- transform(right_data, outcome = age * 0.3 + income / 10000 + rnorm(nrow(right_data)))
+
+# Run matching first
+result_sa <- match_couples(
+  left = left_outcome,
+  right = right_outcome,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  method = "hungarian"
+)
+#> Auto-selected scaling method: standardize
+
+# Sensitivity analysis
+sa <- sensitivity_analysis(
+  result = result_sa,
+  left = left_outcome,
+  right = right_outcome,
+  outcome_var = "outcome",
+  gamma = seq(1, 3, by = 0.5)
+)
+
+sa
+#> Rosenbaum Sensitivity Analysis
+#> ==============================
+#> 
+#> Matched pairs: 100 
+#> Alternative: greater 
+#> Test statistic (T+): 4939.0 
+#> 
+#> Gamma    p (upper bound)
+#> -----    ---------------
+#> 1.00     0.0000 *
+#> 1.50     0.0000 *
+#> 2.00     0.0000 *
+#> 2.50     0.0000 *
+#> 3.00     0.0000 *
+#> 
+#> * significant at alpha = 0.05
+#> 
+#> Result is insensitive to bias at all tested Gamma values
+```
+
+The **critical gamma** ($`\Gamma`$) is the smallest value at which the
+upper-bound p-value crosses 0.05. A critical gamma of 2.0, for example,
+means an unobserved confounder would need to change the odds of
+treatment by a factor of 2 to explain away the result.
+
+------------------------------------------------------------------------
+
+## Visualizing Results with autoplot
+
+If `ggplot2` is available,
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+methods produce publication-ready plots:
+
+``` r
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  library(ggplot2)
+
+  # Distance distribution
+  autoplot(result, type = "histogram")
+}
+```
+
+![](matching-workflows_files/figure-html/autoplot-examples-1.svg)
+
+``` r
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  # Balance diagnostics love plot
+  bal <- balance_diagnostics(result, left_data, right_data, vars = c("age", "income"))
+  autoplot(bal, type = "love")
+}
+```
+
+![](matching-workflows_files/figure-html/autoplot-balance-1.svg)
+
+``` r
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  # Sensitivity analysis curve
+  autoplot(sa)
+}
+```
+
+![](matching-workflows_files/figure-html/autoplot-sensitivity-1.svg)
+
+All
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+methods return `ggplot` objects, so you can add layers, themes, and
+labels as needed.
+
+------------------------------------------------------------------------
+
 ## See Also
 
 - [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
@@ -1687,3 +1926,7 @@ loop](matching-workflows_files/figure-html/workflow-diagram-1.svg)
   [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md),
   [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
   [`?matchmaker`](https://gillescolling.com/couplr/reference/matchmaker.md)
+
+- [`?ps_match`](https://gillescolling.com/couplr/reference/ps_match.md),
+  [`?cardinality_match`](https://gillescolling.com/couplr/reference/cardinality_match.md),
+  [`?sensitivity_analysis`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)

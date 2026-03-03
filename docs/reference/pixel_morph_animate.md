@@ -136,7 +136,6 @@ semantics:
 
 The assignment is computed by minimizing:
 
-
       cost(i,j) = alpha * color_distance(A[i], B[j]) +
                   beta * spatial_distance(pos_i, pos_j)
 
@@ -167,16 +166,13 @@ The renderer uses ONLY A's colors:
 
 **For pure spatial rearrangement (ignore B's colors in assignment):**
 
-
       pixel_morph_animate(A, B, alpha = 0, beta = 1)
 
 **For color-similarity matching (default):**
 
-
       pixel_morph_animate(A, B, alpha = 1, beta = 0)
 
 **For hybrid (color + spatial):**
-
 
       pixel_morph_animate(A, B, alpha = 1, beta = 0.2)
 

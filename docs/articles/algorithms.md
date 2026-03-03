@@ -75,6 +75,7 @@ Before the algorithms, the problem. It’s simple to state:
 Mathematically:
 
 ``` math
+
 \min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
 ```
 
@@ -96,6 +97,7 @@ The assignment problem is a linear program. Let $`x_{ij} \in \{0,1\}`$
 indicate whether worker $`i`$ is assigned to job $`j`$:
 
 ``` math
+
 \begin{aligned}
 \min \quad & \sum_{i,j} c_{ij} x_{ij} \\
 \text{s.t.} \quad & \sum_j x_{ij} = 1 \quad \forall i \quad \text{(each worker assigned once)} \\
@@ -113,6 +115,7 @@ we relax $`x_{ij} \in \{0,1\}`$ to $`x_{ij} \geq 0`$.
 The dual LP introduces prices $`u_i`$ for workers and $`v_j`$ for jobs:
 
 ``` math
+
 \begin{aligned}
 \max \quad & \sum_i u_i + \sum_j v_j \\
 \text{s.t.} \quad & u_i + v_j \leq c_{ij} \quad \forall i,j
@@ -163,7 +166,6 @@ updates and augmenting path searches are expensive. For a 1000x1000
 matrix, you might wait 10+ seconds.
 
 ``` r
-
 cost <- matrix(c(10, 19, 8, 15, 10, 11, 9, 12, 14), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost, method = "hungarian")
 print(result)
@@ -214,7 +216,6 @@ augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
 Often 10-50x faster than Hungarian in practice.
 
 ``` r
-
 set.seed(123)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -290,7 +291,6 @@ couplr offers three Auction variants:
 | Gauss-Seidel | `"auction_gs"`     | Sequential sweep              |
 
 ``` r
-
 set.seed(123)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -325,7 +325,6 @@ progress.
 **Complexity**: $`O(n^3)`$ amortized, often faster in practice.
 
 ``` r
-
 set.seed(456)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -382,7 +381,6 @@ Rarely seen outside academic papers. The bookkeeping across scaling
 phases is complex enough that most implementations skip it.
 
 ``` r
-
 set.seed(42)
 n <- 50
 # Use integer costs with large range - Gabow-Tarjan's strength
@@ -435,7 +433,6 @@ For sparse problems where $`m \ll n^2`$, this is dramatically better
 than $`O(n^3)`$.
 
 ``` r
-
 set.seed(111)
 n <- 50
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
@@ -520,7 +517,6 @@ analysis. Problems already formulated as network flows. Cases where you
 want guaranteed finite convergence.
 
 ``` r
-
 set.seed(789)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -583,7 +579,6 @@ Excellent cache behavior. Dominates in practice for max-flow;
 competitive for min-cost flow on dense graphs.
 
 ``` r
-
 set.seed(222)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -612,7 +607,6 @@ on zero-cost edges first. Then add 1-cost edges as needed.
 **Complexity**: $`O(n^{2.5})`$ for binary costs.
 
 ``` r
-
 set.seed(101)
 n <- 100
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
@@ -636,7 +630,6 @@ representations: adjacency lists instead of dense matrices.
 edges.
 
 ``` r
-
 set.seed(789)
 n <- 100
 cost <- matrix(Inf, n, n)
@@ -686,7 +679,6 @@ For highly rectangular problems (e.g., matching 100 treatments to 10,000
 controls), this avoids the $`O(m^3)`$ cost of padding to square.
 
 ``` r
-
 set.seed(333)
 n_rows <- 30
 n_cols <- 100  # Highly rectangular: 30 x 100
@@ -714,7 +706,6 @@ problem.
 What if you want the 2nd best assignment? The 3rd best? The k-th best?
 
 ``` r
-
 cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13, 16, 9, 14, 12, 19, 8, 18),
                nrow = 4, byrow = TRUE)
 kbest <- lap_solve_kbest(cost, k = 5)
@@ -737,7 +728,6 @@ is infeasible. Understanding how costs affect solutions.
 Minimize the **maximum** edge cost instead of the sum.
 
 ``` r
-
 cost <- matrix(c(5, 9, 2, 10, 3, 7, 8, 4, 6), nrow = 3, byrow = TRUE)
 result <- bottleneck_assignment(cost)
 cat("Bottleneck (max edge):", result$bottleneck, "\n")
@@ -753,7 +743,6 @@ Entropy-regularized optimal transport. Instead of hard 0/1 assignment,
 produce a doubly-stochastic transport plan.
 
 ``` r
-
 cost <- matrix(c(1, 2, 3, 4), nrow = 2)
 result <- sinkhorn(cost, lambda = 10)
 print(round(result$transport_plan, 3))
@@ -770,7 +759,6 @@ distances.
 Extract dual prices for sensitivity analysis.
 
 ``` r
-
 cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13), nrow = 3, byrow = TRUE)
 result <- assignment_duals(cost)
 cat("Row duals (u):", result$u, "\n")

@@ -1475,6 +1475,165 @@ ggplot() +
 
 ---
 
+## Advanced Matching Techniques
+
+### Ratio Matching (k:1)
+
+Sometimes matching multiple controls per treated unit improves precision. Use the `ratio` parameter:
+
+```{r ratio-matching}
+# Match 2 controls per treated unit
+result_2to1 <- match_couples(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  ratio = 2,
+  method = "hungarian"
+)
+
+result_2to1$pairs
+```
+
+Higher ratios increase sample size at the cost of slightly worse individual match quality. A common choice is 2:1 or 3:1.
+
+### With-Replacement Matching
+
+When controls are scarce relative to treated units, allowing replacement lets each control serve as a match for multiple treated units:
+
+```{r replacement-matching}
+# Allow controls to be reused
+result_wr <- match_couples(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  replace = TRUE,
+  method = "hungarian"
+)
+
+# Some controls may appear multiple times
+n_distinct_controls <- length(unique(result_wr$pairs$right_id))
+cat("Unique controls used:", n_distinct_controls, "out of", nrow(right_data), "\n")
+```
+
+With-replacement matching reduces bias (each treated unit gets its closest match) but increases variance.
+
+### Propensity Score Matching
+
+Instead of matching directly on covariates, you can match on the estimated probability of treatment — the propensity score. `ps_match()` automates this:
+
+```{r ps-matching}
+# Combine data for propensity score estimation
+combined <- rbind(
+  transform(left_data[, c("id", "age", "income")], treated = 1L),
+  transform(right_data[, c("id", "age", "income")], treated = 0L)
+)
+
+# Match on propensity scores (wider caliper for this example)
+ps_result <- ps_match(
+  formula = treated ~ age + income,
+  data = combined,
+  treatment = "treated",
+  caliper_sd = 0.5,
+  method = "hungarian"
+)
+
+ps_result
+```
+
+The function fits a logistic regression, transforms scores to the logit scale, and calls `match_couples()` with a caliper constraint. The default caliper is 0.2 SD of logit(PS) (Rosenbaum and Rubin recommendation); we use 0.5 here for this small simulated dataset. You can also supply a pre-fitted model via the `ps_model` argument.
+
+### Cardinality Matching
+
+Standard matching minimizes total distance. Cardinality matching instead maximizes the number of matched pairs while enforcing strict balance constraints:
+
+```{r cardinality-matching}
+# Maximize pairs subject to balance threshold
+card_result <- cardinality_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  max_std_diff = 0.1,  # Excellent balance threshold
+  auto_scale = TRUE,
+  method = "hungarian"
+)
+
+cat("Pairs matched:", card_result$info$n_matched, "\n")
+cat("Pruning iterations:", card_result$info$pruning_iterations, "\n")
+cat("Pairs removed:", card_result$info$pairs_removed, "\n")
+```
+
+This is useful when you need strict balance guarantees and are willing to sacrifice some sample size.
+
+---
+
+## Sensitivity Analysis
+
+After matching, a natural question is: *how much hidden bias would be needed to invalidate the results?* Rosenbaum bounds address this by computing p-values under varying degrees of unobserved confounding.
+
+```{r sensitivity-analysis}
+# Add an outcome variable
+left_outcome <- transform(left_data, outcome = age * 0.5 + income / 10000 + rnorm(nrow(left_data)))
+right_outcome <- transform(right_data, outcome = age * 0.3 + income / 10000 + rnorm(nrow(right_data)))
+
+# Run matching first
+result_sa <- match_couples(
+  left = left_outcome,
+  right = right_outcome,
+  vars = c("age", "income"),
+  auto_scale = TRUE,
+  method = "hungarian"
+)
+
+# Sensitivity analysis
+sa <- sensitivity_analysis(
+  result = result_sa,
+  left = left_outcome,
+  right = right_outcome,
+  outcome_var = "outcome",
+  gamma = seq(1, 3, by = 0.5)
+)
+
+sa
+```
+
+The **critical gamma** ($\Gamma$) is the smallest value at which the upper-bound p-value crosses 0.05. A critical gamma of 2.0, for example, means an unobserved confounder would need to change the odds of treatment by a factor of 2 to explain away the result.
+
+---
+
+## Visualizing Results with autoplot
+
+If `ggplot2` is available, `autoplot()` methods produce publication-ready plots:
+
+```{r autoplot-examples, fig.width=7, fig.height=4}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  library(ggplot2)
+
+  # Distance distribution
+  autoplot(result, type = "histogram")
+}
+```
+
+```{r autoplot-balance, fig.width=7, fig.height=4}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  # Balance diagnostics love plot
+  bal <- balance_diagnostics(result, left_data, right_data, vars = c("age", "income"))
+  autoplot(bal, type = "love")
+}
+```
+
+```{r autoplot-sensitivity, fig.width=7, fig.height=4}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  # Sensitivity analysis curve
+  autoplot(sa)
+}
+```
+
+All `autoplot()` methods return `ggplot` objects, so you can add layers, themes, and labels as needed.
+
+---
+
 ## See Also
 
 - `vignette("getting-started")` - Basic LAP solving
@@ -1488,3 +1647,5 @@ ggplot() +
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 
 - `?match_couples`, `?greedy_couples`, `?balance_diagnostics`, `?matchmaker`
+
+- `?ps_match`, `?cardinality_match`, `?sensitivity_analysis`

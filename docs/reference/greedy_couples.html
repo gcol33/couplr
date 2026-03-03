@@ -24,7 +24,7 @@ datasets. Supports blocking, distance constraints, and various distance metrics.
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +52,7 @@ datasets. Supports blocking, distance constraints, and various distance metrics.
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -103,6 +104,8 @@ datasets. Supports blocking, distance constraints, and various distance metrics.
 <span>  return_unmatched <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  return_diagnostics <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  replace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ratio <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  check_costs <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -182,6 +185,16 @@ Requires 'future' and 'future.apply' packages. Can be:</p><ul><li><p><code>FALSE
 <li><p><code>TRUE</code>: Auto-configure parallel backend</p></li>
 <li><p>Character: Specify future plan (e.g., "multisession", "multicore")</p></li>
 </ul></dd>
+
+
+<dt id="arg-replace">replace<a class="anchor" aria-label="anchor" href="#arg-replace"></a></dt>
+<dd><p>If TRUE, allow matching with replacement (same right unit
+can be matched to multiple left units). Default: FALSE.</p></dd>
+
+
+<dt id="arg-ratio">ratio<a class="anchor" aria-label="anchor" href="#arg-ratio"></a></dt>
+<dd><p>Integer, number of right units to match per left unit.
+Default: 1 (one-to-one matching). For k:1 matching, set ratio = k.</p></dd>
 
 
 <dt id="arg-check-costs">check_costs<a class="anchor" aria-label="anchor" href="#arg-check-costs"></a></dt>

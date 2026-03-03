@@ -1,5 +1,90 @@
 # Changelog
 
+## couplr 1.1.0
+
+### New Features
+
+#### Ratio and Replacement Matching
+
+- **k:1 ratio matching** via `ratio` parameter in
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  and
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md).
+  Matches k control units to each treated unit by replicating the cost
+  matrix, then deduplicates assignments.
+- **With-replacement matching** via `replace` parameter. Each treated
+  unit independently selects its nearest control, allowing controls to
+  be reused across multiple treated units.
+
+#### Propensity Score Matching
+
+- **New
+  [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+  function** wraps
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  with logistic regression:
+  - Accepts a formula or pre-fitted `glm` object
+  - Matches on the logit of propensity scores with a caliper
+  - Default caliper: 0.2 SD of logit(PS) (Rosenbaum and Rubin
+    recommendation)
+  - Returns matching_result with PS model metadata
+
+#### Cardinality Matching
+
+- **New
+  [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+  function** maximizes sample size subject to balance constraints:
+  - Starts with a full optimal match, then iteratively prunes imbalanced
+    pairs
+  - Balance threshold via `max_std_diff` (default: 0.1 for excellent
+    balance)
+  - Configurable pruning speed with `batch_fraction`
+  - Returns pruning diagnostics: iterations, pairs removed, final
+    balance
+
+#### Sensitivity Analysis
+
+- **New
+  [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  function** implements Rosenbaum bounds:
+  - Tests sensitivity of matched comparisons to hidden bias
+  - Uses Wilcoxon signed-rank statistic with upper/lower p-value bounds
+  - Reports critical gamma (smallest gamma at which significance is
+    lost)
+  - S3 methods: [`print()`](https://rdrr.io/r/base/print.html),
+    [`summary()`](https://rdrr.io/r/base/summary.html),
+    [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
+
+#### Visualization
+
+- **[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  methods** for ggplot2-based visualizations (requires ggplot2):
+  - [`autoplot.matching_result()`](https://gillescolling.com/couplr/reference/autoplot.matching_result.md):
+    histogram, density, or ecdf of distances
+  - [`autoplot.balance_diagnostics()`](https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.md):
+    love plot, histogram, or variance ratio plot
+  - [`autoplot.sensitivity_analysis()`](https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.md):
+    gamma vs p-value curve
+- **Enhanced
+  [`summary.matching_result()`](https://gillescolling.com/couplr/reference/summary.matching_result.md)**
+  now reports match rate and distance percentiles
+
+#### New Functions
+
+- [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md) -
+  Propensity score matching with logit caliper
+- [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md) -
+  Balance-constrained cardinality matching
+- [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md) -
+  Rosenbaum bounds sensitivity analysis
+
+#### Tests
+
+- Added 58 new tests across 7 test files
+- All 4916 tests passing across platforms
+
+------------------------------------------------------------------------
+
 ## couplr 1.0.7
 
 ### Bug Fixes

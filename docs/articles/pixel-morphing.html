@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/getting-started.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
@@ -67,6 +67,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -103,7 +104,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-02-25</h4>
+            <h4 data-toc-skip class="date">2026-03-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/pixel-morphing.Rmd" class="external-link"><code>vignettes/pixel-morphing.Rmd</code></a></small>
       <div class="d-none name"><code>pixel-morphing.Rmd</code></div>
@@ -289,11 +290,11 @@ ecology.</p>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><mo stretchy="false" form="prefix">{</mo><msub><mi>b</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>b</mi><mi>n</mi></msub><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">B = \{b_1, \ldots, b_n\}</annotation></semantics></math>,
 find the optimal one-to-one correspondence by minimizing</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">min</mi><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow></msub></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub></mrow><annotation encoding="application/x-tex">
 \min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
 </annotation></semantics></math></p>
 <p>where the cost combines feature similarity and spatial proximity:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mi>d</mi><mtext mathvariant="normal">feature</mtext></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mi>i</mi></msub><mo>,</mo><msub><mi>b</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mi>d</mi><mtext mathvariant="normal">spatial</mtext></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mi>d</mi><mtext mathvariant="normal">feature</mtext></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>a</mi><mi>i</mi></msub><mo>,</mo><msub><mi>b</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mi>d</mi><mtext mathvariant="normal">spatial</mtext></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
 c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\mathbf{x}_i, \mathbf{x}_j).
 </annotation></semantics></math></p>
 <p><strong>Feature distance</strong>
@@ -328,7 +329,7 @@ balance feature matching vs. spatial coherence.</p>
 LAP.</p>
 <ul>
 <li><p>Complexity:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 using Jonker-Volgenant</p></li>
 <li><p>Feasible: up to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>≈</mo><mn>1000</mn></mrow><annotation encoding="application/x-tex">n \approx 1000</annotation></semantics></math>
@@ -370,7 +371,7 @@ morphing where</p>
 <li><p>entities = pixels</p></li>
 <li><p>features = RGB color values</p></li>
 <li><p>spatial position =
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x, y)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x, y)</annotation></semantics></math>
 coordinates</p></li>
 </ul>
 <p>We first show the static input images (all at
@@ -392,18 +393,18 @@ purely for clearer display.</p>
 <p>The exact pixel morph uses a full LAP solution on a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1600</mn><mo>×</mo><mn>1600</mn></mrow><annotation encoding="application/x-tex">1600 \times 1600</annotation></semantics></math>
 cost matrix. For each pair of pixels
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i, j)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i, j)</annotation></semantics></math>
 we compute</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>i</mi><mi>A</mi></msubsup><mo>−</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>j</mi><mi>B</mi></msubsup><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>y</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>i</mi><mi>A</mi></msubsup><mo>−</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>j</mi><mi>B</mi></msubsup><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>y</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
 c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
          \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2,
 </annotation></semantics></math></p>
 <p>where color distances are normalized to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><msqrt><mn>3</mn></msqrt><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0, \sqrt{3}]</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><msqrt><mn>3</mn></msqrt><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0, \sqrt{3}]</annotation></semantics></math>
 (RGB in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>)
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>)
 and spatial distances to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0,1]</annotation></semantics></math>
 using the image diagonal.</p>
 <div class="pixel-row">
 <p><img src="images/image_exact.gif" alt="Animated GIF showing exact pixel morphing between two photographs"><img src="images/circle_exact.gif" alt="Animated GIF showing exact pixel morphing between two circle icons"></p>
@@ -465,7 +466,7 @@ for
 <li><strong>Group by palette</strong></li>
 </ol>
 <p>Form groups
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>G</mi><mi>A</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>i</mi><mo>:</mo><mtext mathvariant="normal">quantize</mtext><mo stretchy="false" form="prefix">(</mo><msub><mi>f</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>c</mi><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>G</mi><mi>A</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>c</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>i</mi><mo>:</mo><mtext mathvariant="normal">quantize</mtext><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>f</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>c</mi><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">
 G_A^{(c)} = \{ i : \text{quantize}(f_i) = c \}
 </annotation></semantics></math> and similarly for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>.</p>
@@ -475,7 +476,7 @@ G_A^{(c)} = \{ i : \text{quantize}(f_i) = c \}
 <p>Solve a
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>×</mo><mi>k</mi></mrow><annotation encoding="application/x-tex">k \times k</annotation></semantics></math>
 LAP between palette entries with costs</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow><mo>′</mo></msubsup><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>p</mi><mi>i</mi></msub><mo>,</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msub><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>i</mi></msub><mo>,</mo><msub><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><msub><mi>′</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>p</mi><mi>i</mi></msub><mo>,</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>i</mi></msub><mo>,</mo><msub><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
 c'_{ij} = \alpha \, d(p_i, p_j) + \beta \, d(\bar{\mathbf{x}}_i, \bar{\mathbf{x}}_j),
 </annotation></semantics></math></p>
 <p>where
@@ -488,7 +489,7 @@ the centroid position of group
 <li><strong>Assign entities</strong></li>
 </ol>
 <p>Every entity in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>G</mi><mi>A</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">G_A^{(c)}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>G</mi><mi>A</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>c</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">G_A^{(c)}</annotation></semantics></math>
 is assigned according to the group-to-group match.</p>
 </div>
 <div class="section level4">
@@ -496,17 +497,17 @@ is assigned according to the group-to-group match.</p>
 </h4>
 <ul>
 <li><p>Original:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 for an
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">n \times n</annotation></semantics></math>
 LAP</p></li>
 <li><p>Quantized:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>k</mi><mn>3</mn></msup><mo>+</mo><mi>n</mi><mi>k</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(k^3 + n k)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>k</mi><mn>3</mn></msup><mo>+</mo><mi>n</mi><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(k^3 + n k)</annotation></semantics></math>
 for the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>×</mo><mi>k</mi></mrow><annotation encoding="application/x-tex">k \times k</annotation></semantics></math>
 LAP plus group assignment</p></li>
 <li><p>Speedup: approximately
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mi>/</mi><mi>k</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">(n/k)^3</annotation></semantics></math></p></li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>/</mi><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msup><annotation encoding="application/x-tex">(n/k)^3</annotation></semantics></math></p></li>
 </ul>
 <p>For example, with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>1600</mn></mrow><annotation encoding="application/x-tex">n = 1600</annotation></semantics></math>
@@ -566,7 +567,7 @@ patches). Denote the subset of entities of
 in patch
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
 by</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">{</mo><msub><mi>a</mi><mi>i</mi></msub><mo>:</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>∈</mo><msub><mtext mathvariant="normal">Patch</mtext><mi>k</mi></msub><mo stretchy="false" form="postfix">}</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">{</mo><msub><mi>a</mi><mi>i</mi></msub><mo>:</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>∈</mo><msub><mtext mathvariant="normal">Patch</mtext><mi>k</mi></msub><mo stretchy="false" form="postfix">}</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
 P_A^{(k)} = \{ a_i : \mathbf{x}_i \in \text{Patch}_k \}.
 </annotation></semantics></math></p>
 <ol start="2" style="list-style-type: decimal">
@@ -581,10 +582,10 @@ spatial distances but now at patch level.</p>
 <li><strong>Recursive refinement</strong></li>
 </ol>
 <p>Within each matched patch pair
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>P</mi><mi>B</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>l</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(P_A^{(k)}, P_B^{(l)})</annotation></semantics></math>:</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>P</mi><mi>B</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>l</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(P_A^{(k)}, P_B^{(l)})</annotation></semantics></math>:</p>
 <ul>
 <li><p>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">|</mo><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">|</mo><mo>≤</mo><mi>τ</mi></mrow><annotation encoding="application/x-tex">\lvert P_A^{(k)} \rvert \le \tau</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">|</mo><msubsup><mi>P</mi><mi>A</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">|</mo><mo>≤</mo><mi>τ</mi></mrow><annotation encoding="application/x-tex">\lvert P_A^{(k)} \rvert \le \tau</annotation></semantics></math>
 (a threshold,
 e.g. <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi><mo>=</mo><mn>50</mn></mrow><annotation encoding="application/x-tex">\tau = 50</annotation></semantics></math>)
 solve the subproblem exactly.</p></li>
@@ -603,9 +604,9 @@ global matching.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>d</mi><annotation encoding="application/x-tex">d</annotation></semantics></math>
 levels of decomposition (each level splitting into four patches), the
 work can be made close to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n \log n)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n \log n)</annotation></semantics></math>
 in practice, compared to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 for a single full LAP. Intuitively, the LAPs near the leaves are very
 small, and the costly large LAP is replaced by a series of much smaller
 ones.</p>
@@ -683,7 +684,7 @@ FUNCTION match_hierarchical(region_A, region_B, threshold, level):
 END FUNCTION</code></pre>
 <p>The <code>couplr</code> implementation adds pragmatic details such as
 normalization of color and spatial distances, conversion between
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x, y)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x, y)</annotation></semantics></math>
 coordinates and raster indexing, and handling remainder patches when the
 grid does not divide evenly.</p>
 </div>
@@ -703,30 +704,30 @@ lift/upscale the assignment to the full-resolution grid.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
 (for example
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">s = 2</annotation></semantics></math>):</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>A</mi><mo>′</mo></msup><mo>=</mo><mtext mathvariant="normal">downsample</mtext><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo>,</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><msup><mi>B</mi><mo>′</mo></msup><mo>=</mo><mtext mathvariant="normal">downsample</mtext><mo stretchy="false" form="prefix">(</mo><mi>B</mi><mo>,</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>′</mi><mo>=</mo><mtext mathvariant="normal">downsample</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>A</mi><mo>,</mo><mi>s</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mspace width="2.0em"></mspace><mi>B</mi><mi>′</mi><mo>=</mo><mtext mathvariant="normal">downsample</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>B</mi><mo>,</mo><mi>s</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
 A' = \text{downsample}(A, s), \qquad B' = \text{downsample}(B, s).
 </annotation></semantics></math></p>
 <p>Now
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>A</mi><mo>′</mo></msup><annotation encoding="application/x-tex">A'</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>′</mi></mrow><annotation encoding="application/x-tex">A'</annotation></semantics></math>
 and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>B</mi><mo>′</mo></msup><annotation encoding="application/x-tex">B'</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>′</mi></mrow><annotation encoding="application/x-tex">B'</annotation></semantics></math>
 each have
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>n</mi><mo>′</mo></msup><mo>=</mo><mi>n</mi><mi>/</mi><msup><mi>s</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">n' = n / s^2</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>′</mi><mo>=</mo><mi>n</mi><mi>/</mi><msup><mi>s</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">n' = n / s^2</annotation></semantics></math>
 entities.</p>
 <ol start="2" style="list-style-type: decimal">
 <li><strong>Solve at low resolution</strong></li>
 </ol>
 <p>Compute an exact LAP solution on the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>n</mi><mo>′</mo></msup><mo>×</mo><msup><mi>n</mi><mo>′</mo></msup></mrow><annotation encoding="application/x-tex">n' \times n'</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>′</mi><mo>×</mo><mi>n</mi><mi>′</mi></mrow><annotation encoding="application/x-tex">n' \times n'</annotation></semantics></math>
 problem:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>π</mi><mo>′</mo></msup><mo>=</mo><mrow><mi mathvariant="normal">arg</mi><mo>⁡</mo></mrow><munder><mi mathvariant="normal">min</mi><msup><mi>π</mi><mo>′</mo></msup></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><msup><mi>n</mi><mo>′</mo></msup></munderover><msubsup><mi>c</mi><mrow><mi>i</mi><mo>,</mo><msup><mi>π</mi><mo>′</mo></msup><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><mo>′</mo></msubsup><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi><mi>′</mi><mo>=</mo><mo>arg</mo><munder><mo>min</mo><mrow><mi>π</mi><mi>′</mi></mrow></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi>n</mi><mi>′</mi></mrow></munderover><mi>c</mi><msub><mi>′</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mi>′</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \pi' = \arg\min_{\pi'} \sum_{i=1}^{n'} c'_{i,\pi'(i)}.
 </annotation></semantics></math></p>
 <ol start="3" style="list-style-type: decimal">
 <li><strong>Upscale assignment</strong></li>
 </ol>
 <p>Map the low-resolution assignment back to full resolution:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mtext mathvariant="normal">upscale</mtext><mspace width="-0.167em"></mspace><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">(</mo><msup><mi>π</mi><mo>′</mo></msup><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">coarse_index</mtext><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mi>s</mi><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">upscale</mtext><mspace width="-0.167em"></mspace><mo minsize="1.2" maxsize="1.2" stretchy="false" form="prefix">(</mo><mi>π</mi><mi>′</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">coarse_index</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mi>s</mi><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
 \pi(i) = \text{upscale}\!\bigl(\pi'(\text{coarse\_index}(i)), s\bigr),
 </annotation></semantics></math></p>
 <p>where each full-resolution entity inherits the assignment of its
@@ -737,9 +738,9 @@ coarse cell.</p>
 </h4>
 <ul>
 <li><p>Original:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></p></li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></p></li>
 <li><p>Downscaled:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">(</mo><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mi>/</mi><msup><mi>s</mi><mn>2</mn></msup><msup><mo stretchy="false" form="postfix">)</mo><mn>3</mn></msup><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">)</mo><mo>=</mo><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mi>/</mi><msup><mi>s</mi><mn>6</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O\bigl((n/s^2)^3\bigr) = O(n^3 / s^6)</annotation></semantics></math></p></li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo minsize="1.2" maxsize="1.2" stretchy="false" form="prefix">(</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>/</mi><msup><mi>s</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msup><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">)</mo><mo>=</mo><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mi>/</mi><msup><mi>s</mi><mn>6</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O\bigl((n/s^2)^3\bigr) = O(n^3 / s^6)</annotation></semantics></math></p></li>
 <li><p>Speedup:
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>s</mi><mn>6</mn></msup><annotation encoding="application/x-tex">s^6</annotation></semantics></math></p></li>
 </ul>
@@ -797,7 +798,7 @@ initialization step for very large problems
 </tr>
 <tr class="even">
 <td>Feature quantization</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mi>/</mi><mi>k</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">(n/k)^3</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>/</mi><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msup><annotation encoding="application/x-tex">(n/k)^3</annotation></semantics></math></td>
 <td>Good global structure</td>
 <td>Distinct feature groups</td>
 </tr>
@@ -839,7 +840,7 @@ resolution reduction with a hierarchical method.</p></li>
 </h2>
 <p>We now spell out the exact LAP-based morph more concretely.</p>
 <p>We again use the cost</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>i</mi><mi>A</mi></msubsup><mo>−</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>j</mi><mi>B</mi></msubsup><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>y</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>α</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>i</mi><mi>A</mi></msubsup><mo>−</mo><msubsup><mtext mathvariant="normal">RGB</mtext><mi>j</mi><mi>B</mi></msubsup><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mo>+</mo><mi>β</mi><mspace width="0.167em"></mspace><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>y</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
 c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
          \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2.
 </annotation></semantics></math></p>
@@ -907,11 +908,11 @@ vegetation plots surveyed at time
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
 plots at time
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">t + \Delta t</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi>Δ</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">t + \Delta t</annotation></semantics></math>
 to track community dynamics.</p>
 <p><strong>Feature distance</strong>: Bray-Curtis dissimilarity between
 species abundance vectors</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">BC</mtext></msub><mo stretchy="false" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mrow><munder><mo>∑</mo><mi>s</mi></munder><mo stretchy="false" form="prefix">|</mo><msub><mi>a</mi><mi>s</mi></msub><mo>−</mo><msub><mi>b</mi><mi>s</mi></msub><mo stretchy="false" form="postfix">|</mo></mrow><mrow><munder><mo>∑</mo><mi>s</mi></munder><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mi>s</mi></msub><mo>+</mo><msub><mi>b</mi><mi>s</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">BC</mtext></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mfrac><mrow><munder><mo>∑</mo><mi>s</mi></munder><mo stretchy="false" form="prefix">|</mo><msub><mi>a</mi><mi>s</mi></msub><mo>−</mo><msub><mi>b</mi><mi>s</mi></msub><mo stretchy="false" form="postfix">|</mo></mrow><mrow><munder><mo>∑</mo><mi>s</mi></munder><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>a</mi><mi>s</mi></msub><mo>+</mo><msub><mi>b</mi><mi>s</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
 d_{\text{BC}}(a, b) =
 \frac{\sum_s \lvert a_s - b_s \rvert}
      {\sum_s (a_s + b_s)},
@@ -994,13 +995,13 @@ fronts.</p>
 particles between frame
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
 and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">t + \Delta t</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mi>Δ</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">t + \Delta t</annotation></semantics></math>
 in experimental video.</p>
 <p><strong>Feature distance</strong>: differences in intensity, size, or
 shape.</p>
 <p><strong>Spatial distance</strong>: displacement relative to predicted
 motion:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">spatial</mtext></msub><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">∥</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>+</mo><msub><mi>𝐯</mi><mi>i</mi></msub><mi mathvariant="normal">Δ</mi><mi>t</mi><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><msub><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">∥</mo><mn>2</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">spatial</mtext></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">∥</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>+</mo><msub><mi>𝐯</mi><mi>i</mi></msub><mi>Δ</mi><mi>t</mi><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><msub><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">∥</mo><mn>2</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
 d_{\text{spatial}}(i, j) =
 \bigl\| \mathbf{x}_i + \mathbf{v}_i \Delta t - \mathbf{x}_j \bigr\|_2,
 </annotation></semantics></math></p>
@@ -1008,7 +1009,7 @@ d_{\text{spatial}}(i, j) =
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐯</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\mathbf{v}_i</annotation></semantics></math>
 is the estimated velocity from previous frames.</p>
 <p>We also impose a maximum displacement
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>d</mi><mi mathvariant="normal">max</mi></msub><annotation encoding="application/x-tex">d_{\max}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>d</mi><mo>max</mo></msub><annotation encoding="application/x-tex">d_{\max}</annotation></semantics></math>
 beyond which matches are physically implausible.</p>
 <p>Exact solution (moderate
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>):</p>
@@ -1097,7 +1098,7 @@ molecule (e.g. a protein) with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
 atoms to compute RMSD and analyze structural change.</p>
 <p><strong>Feature distance</strong>: strict element matching</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">element</mtext></msub><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mo stretchy="true" form="prefix">{</mo><mtable><mtr><mtd columnalign="left" style="text-align: left"><mn>0</mn><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mrow><mtext mathvariant="normal">if </mtext><mspace width="0.333em"></mspace></mrow><msub><mtext mathvariant="normal">element</mtext><mi>i</mi></msub><mo>=</mo><msub><mtext mathvariant="normal">element</mtext><mi>j</mi></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="left" style="text-align: left"><mi>∞</mi><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mtext mathvariant="normal">otherwise.</mtext></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext mathvariant="normal">element</mtext></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">{</mo><mtable><mtr><mtd columnalign="left" style="text-align: left"><mn>0</mn><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mrow><mtext mathvariant="normal">if </mtext><mspace width="0.333em"></mspace></mrow><msub><mtext mathvariant="normal">element</mtext><mi>i</mi></msub><mo>=</mo><msub><mtext mathvariant="normal">element</mtext><mi>j</mi></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="left" style="text-align: left"><mi>∞</mi><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mtext mathvariant="normal">otherwise.</mtext></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">
 d_{\text{element}}(i, j) =
 \begin{cases}
 0, &amp; \text{if } \text{element}_i = \text{element}_j, \\
@@ -1204,7 +1205,7 @@ optimal transport.</p>
 <p>The original Monge formulation (1781) seeks a transport map
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>:</mo><mi>A</mi><mo>→</mo><mi>B</mi></mrow><annotation encoding="application/x-tex">T: A \to B</annotation></semantics></math>
 minimizing</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∫</mo><mi>A</mi></msub><mi>c</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi mathvariant="normal">d</mi><mi>μ</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∫</mo><mi>A</mi></msub><mi>c</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>T</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐱</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi mathvariant="normal">d</mi><mi>μ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐱</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \int_A c(\mathbf{x}, T(\mathbf{x})) \,\mathrm{d}\mu(\mathbf{x}).
 </annotation></semantics></math></p>
 </div>
@@ -1215,7 +1216,7 @@ minimizing</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>
 on
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>×</mo><mi>B</mi></mrow><annotation encoding="application/x-tex">A \times B</annotation></semantics></math>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">min</mi><mi>γ</mi></munder><msub><mo>∫</mo><mrow><mi>A</mi><mo>×</mo><mi>B</mi></mrow></msub><mi>c</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>𝐲</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi mathvariant="normal">d</mi><mi>γ</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>𝐲</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mi>γ</mi></munder><msub><mo>∫</mo><mrow><mi>A</mi><mo>×</mo><mi>B</mi></mrow></msub><mi>c</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>𝐲</mi><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.167em"></mspace><mi mathvariant="normal">d</mi><mi>γ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝐱</mi><mo>,</mo><mi>𝐲</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \min_{\gamma} \int_{A \times B} c(\mathbf{x}, \mathbf{y}) \,\mathrm{d}\gamma(\mathbf{x}, \mathbf{y})
 </annotation></semantics></math></p>
 <p>subject to marginal constraints on
@@ -1231,7 +1232,7 @@ points in
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>
 we obtain exactly the linear assignment problem:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">min</mi><mrow><mi>π</mi><mo>∈</mo><msub><mi>S</mi><mi>n</mi></msub></mrow></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mrow><mi>π</mi><mo>∈</mo><msub><mi>S</mi><mi>n</mi></msub></mrow></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
 \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)},
 </annotation></semantics></math></p>
 <p>which is what <code>couplr</code> solves efficiently.</p>
@@ -1240,11 +1241,11 @@ we obtain exactly the linear assignment problem:</p>
 <h3 id="wasserstein-distance">Wasserstein Distance<a class="anchor" aria-label="anchor" href="#wasserstein-distance"></a>
 </h3>
 <p>With
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>d</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">c_{ij} = d(\mathbf{x}_i, \mathbf{x}_j)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">c_{ij} = d(\mathbf{x}_i, \mathbf{x}_j)</annotation></semantics></math>
 (often Euclidean distance), the optimal cost defines the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>‑Wasserstein
 distance:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>1</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>ν</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><munder><mi mathvariant="normal">min</mi><mrow><mi>π</mi><mo>∈</mo><msub><mi>S</mi><mi>n</mi></msub></mrow></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>ν</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><munder><mo>min</mo><mrow><mi>π</mi><mo>∈</mo><msub><mi>S</mi><mi>n</mi></msub></mrow></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
 W_1(\mu, \nu) = \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)}.
 </annotation></semantics></math></p>
 <p>This appears in</p>
@@ -1414,7 +1415,7 @@ morphing and scientific applications.</p>
 <li><p><strong>Assignment = matching</strong>: LAP finds optimal
 correspondences between two sets</p></li>
 <li><p><strong>Scalability matters</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 becomes prohibitive for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>&gt;</mo><mn>3</mn><mo>,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">n &gt; 3{,}000</annotation></semantics></math></p></li>
 <li><p><strong>Three approximations</strong>: Feature quantization,

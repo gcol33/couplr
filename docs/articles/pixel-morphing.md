@@ -94,12 +94,14 @@ $`B = \{b_1, \ldots, b_n\}`$, find the optimal one-to-one correspondence
 by minimizing
 
 ``` math
+
 \min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
 ```
 
 where the cost combines feature similarity and spatial proximity:
 
 ``` math
+
 c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\mathbf{x}_i, \mathbf{x}_j).
 ```
 
@@ -182,6 +184,7 @@ The exact pixel morph uses a full LAP solution on a $`1600 \times 1600`$
 cost matrix. For each pair of pixels $`(i, j)`$ we compute
 
 ``` math
+
 c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
          \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2,
 ```
@@ -238,6 +241,7 @@ features, then match groups.
 Map continuous feature space to a finite palette
 
 ``` math
+
 \text{quantize}: \mathbb{R}^d \to \{1, \ldots, k\},
 ```
 
@@ -247,6 +251,7 @@ where $`k \ll n`$ (for example $`k \approx 64`$ for $`n = 1600`$).
 
 Form groups
 ``` math
+
 G_A^{(c)} = \{ i : \text{quantize}(f_i) = c \}
 ```
 and similarly for $`B`$.
@@ -256,6 +261,7 @@ and similarly for $`B`$.
 Solve a $`k \times k`$ LAP between palette entries with costs
 
 ``` math
+
 c'_{ij} = \alpha \, d(p_i, p_j) + \beta \, d(\bar{\mathbf{x}}_i, \bar{\mathbf{x}}_j),
 ```
 
@@ -280,6 +286,7 @@ For example, with $`n = 1600`$ (a $`40 \times 40`$ image) and $`k = 64`$
 you get
 
 ``` math
+
 \left(\frac{1600}{64}\right)^3 = 25^3 \approx 15\,000
 ```
 
@@ -320,6 +327,7 @@ you get $`16`$ patches). Denote the subset of entities of $`A`$ in patch
 $`k`$ by
 
 ``` math
+
 P_A^{(k)} = \{ a_i : \mathbf{x}_i \in \text{Patch}_k \}.
 ```
 
@@ -438,6 +446,7 @@ assignment to the full-resolution grid.
 Reduce spatial resolution by a factor $`s`$ (for example $`s = 2`$):
 
 ``` math
+
 A' = \text{downsample}(A, s), \qquad B' = \text{downsample}(B, s).
 ```
 
@@ -448,6 +457,7 @@ Now $`A'`$ and $`B'`$ each have $`n' = n / s^2`$ entities.
 Compute an exact LAP solution on the $`n' \times n'`$ problem:
 
 ``` math
+
 \pi' = \arg\min_{\pi'} \sum_{i=1}^{n'} c'_{i,\pi'(i)}.
 ```
 
@@ -456,6 +466,7 @@ Compute an exact LAP solution on the $`n' \times n'`$ problem:
 Map the low-resolution assignment back to full resolution:
 
 ``` math
+
 \pi(i) = \text{upscale}\!\bigl(\pi'(\text{coarse\_index}(i)), s\bigr),
 ```
 
@@ -521,6 +532,7 @@ We now spell out the exact LAP-based morph more concretely.
 We again use the cost
 
 ``` math
+
 c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
          \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2.
 ```
@@ -590,6 +602,7 @@ $`n`$ plots at time $`t + \Delta t`$ to track community dynamics.
 abundance vectors
 
 ``` math
+
 d_{\text{BC}}(a, b) =
 \frac{\sum_s \lvert a_s - b_s \rvert}
      {\sum_s (a_s + b_s)},
@@ -673,6 +686,7 @@ $`t + \Delta t`$ in experimental video.
 **Spatial distance**: displacement relative to predicted motion:
 
 ``` math
+
 d_{\text{spatial}}(i, j) =
 \bigl\| \mathbf{x}_i + \mathbf{v}_i \Delta t - \mathbf{x}_j \bigr\|_2,
 ```
@@ -770,6 +784,7 @@ protein) with $`n`$ atoms to compute RMSD and analyze structural change.
 **Feature distance**: strict element matching
 
 ``` math
+
 d_{\text{element}}(i, j) =
 \begin{cases}
 0, & \text{if } \text{element}_i = \text{element}_j, \\
@@ -826,7 +841,6 @@ The morphing examples use default settings, but you can customize the
 number of frames and speed:
 
 ``` r
-
 # From inst/scripts/generate_examples.R
 generate_morph <- function(assignment, pixels_A, pixels_B,
                            n_frames    = 30,   # number of frames
@@ -848,7 +862,6 @@ The morphing implementation is provided in
 `inst/scripts/generate_examples.R`:
 
 ``` r
-
 # View the source
 example_script <- system.file("scripts", "generate_examples.R", package = "couplr")
 file.show(example_script)
@@ -866,7 +879,6 @@ my_assignment <- lap_solve(my_cost)
 To regenerate all demo GIFs and PNGs:
 
 ``` r
-
 source("inst/scripts/generate_examples.R")
 ```
 
@@ -883,6 +895,7 @@ The original Monge formulation (1781) seeks a transport map
 $`T: A \to B`$ minimizing
 
 ``` math
+
 \int_A c(\mathbf{x}, T(\mathbf{x})) \,\mathrm{d}\mu(\mathbf{x}).
 ```
 
@@ -892,6 +905,7 @@ Kantorovich (1942) relaxed this to a transport plan $`\gamma`$ on
 $`A \times B`$:
 
 ``` math
+
 \min_{\gamma} \int_{A \times B} c(\mathbf{x}, \mathbf{y}) \,\mathrm{d}\gamma(\mathbf{x}, \mathbf{y})
 ```
 
@@ -903,6 +917,7 @@ For discrete uniform distributions with $`n`$ points in $`A`$ and $`B`$
 we obtain exactly the linear assignment problem:
 
 ``` math
+
 \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)},
 ```
 
@@ -914,6 +929,7 @@ With $`c_{ij} = d(\mathbf{x}_i, \mathbf{x}_j)`$ (often Euclidean
 distance), the optimal cost defines the $`1`$‑Wasserstein distance:
 
 ``` math
+
 W_1(\mu, \nu) = \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)}.
 ```
 
@@ -988,7 +1004,6 @@ working with couplr’s practical matching functions.
 with exact algorithms:
 
 ``` r
-
 result <- match_couples(left, right, vars = c("x", "y", "z"), auto_scale = TRUE)
 ```
 
@@ -996,7 +1011,6 @@ result <- match_couples(left, right, vars = c("x", "y", "z"), auto_scale = TRUE)
 subproblems:
 
 ``` r
-
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 10)
 result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
 ```
@@ -1004,7 +1018,6 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 **For n \> 10,000**: Use greedy matching:
 
 ``` r
-
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 ```
 

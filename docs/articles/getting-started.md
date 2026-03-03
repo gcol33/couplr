@@ -35,7 +35,6 @@ The simplest workflow uses
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
-
 library(couplr)
 library(dplyr)
 
@@ -88,7 +87,6 @@ head(result$pairs)
 ### Understanding the Output
 
 ``` r
-
 # Quick overview with summary()
 summary(result)
 #> Matching Result Summary
@@ -106,7 +104,16 @@ summary(result)
 #>   Median: 0.2967 
 #>   Q3: 0.5039 
 #>   Max: 1.2184 
-#>   SD: 0.2863
+#>   SD: 0.2863 
+#> 
+#> Distance Percentiles:
+#>   5%: 0.0993
+#>   10%: 0.1234
+#>   25%: 0.1845
+#>   50%: 0.2967
+#>   75%: 0.5039
+#>   90%: 0.7819
+#>   95%: 1.0396
 
 # Or access specific info
 result$info$n_matched
@@ -130,7 +137,6 @@ Income (measured in thousands) would overwhelm age (measured in
 decades):
 
 ``` r
-
 # BAD: Without scaling, income dominates
 result_unscaled <- match_couples(
   treatment, control,
@@ -164,7 +170,6 @@ After matching, verify that treatment and control groups are now
 balanced:
 
 ``` r
-
 # Get the matched observations
 matched_treatment <- treatment[result$pairs$left_id, ]
 matched_control <- control[result$pairs$right_id, ]
@@ -196,7 +201,6 @@ Use [`plot()`](https://rdrr.io/r/graphics/plot.default.html) to see the
 distribution of match distances:
 
 ``` r
-
 plot(result)
 ```
 
@@ -217,7 +221,6 @@ becomes slow. Use
 instead; it’s 10-100x faster with nearly identical results:
 
 ``` r
-
 # Create larger datasets
 set.seed(456)
 large_treatment <- tibble(
@@ -263,7 +266,6 @@ Sometimes you want to reject poor matches rather than force bad
 pairings. Use `max_distance` to set a caliper:
 
 ``` r
-
 # Allow any match
 result_loose <- match_couples(
   treatment, control,
@@ -303,7 +305,6 @@ then pass the result to
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
-
 # Data from multiple hospital sites
 set.seed(321)
 treated <- tibble(
@@ -358,7 +359,6 @@ Hospital A controls, etc.
 Here’s a realistic workflow from start to finish:
 
 ``` r
-
 # 1. Prepare your data
 set.seed(789)
 patients_treated <- tibble(
@@ -445,7 +445,6 @@ Given a cost matrix where entry (i,j) is the cost of assigning row i to
 column j:
 
 ``` r
-
 # Cost matrix: 3 workers x 3 tasks
 cost <- matrix(c(
   4, 2, 5,
@@ -477,7 +476,6 @@ Row 1 is assigned to column 2 (cost 2), row 2 to column 1 (cost 3), row
 Use `NA` or `Inf` for impossible assignments:
 
 ``` r
-
 cost_forbidden <- matrix(c(
   4, 2, NA,   # Row 1 cannot go to column 3
   Inf, 3, 6,  # Row 2 cannot go to column 1
@@ -504,7 +502,6 @@ lap_solve(cost_forbidden)
 For preference or profit maximization:
 
 ``` r
-
 preferences <- matrix(c(
   8, 5, 3,
   4, 7, 6,
@@ -531,7 +528,6 @@ lap_solve(preferences, maximize = TRUE)
 Solve multiple assignment problems at once using grouped data frames:
 
 ``` r
-
 # Weekly nurse-shift scheduling: solve each day separately
 schedule <- tibble(
   day = rep(c("Mon", "Tue", "Wed"), each = 9),
@@ -568,7 +564,6 @@ results in one tidy table.
 Find multiple near-optimal solutions:
 
 ``` r
-
 cost <- matrix(c(1, 2, 3, 4, 3, 2, 5, 4, 1), nrow = 3, byrow = TRUE)
 
 kbest <- lap_solve_kbest(cost, k = 3)

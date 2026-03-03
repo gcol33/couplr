@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/getting-started.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
@@ -67,6 +67,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -103,7 +104,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-02-25</h4>
+            <h4 data-toc-skip class="date">2026-03-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/troubleshooting.Rmd" class="external-link"><code>vignettes/troubleshooting.Rmd</code></a></small>
       <div class="d-none name"><code>troubleshooting.Rmd</code></div>
@@ -384,7 +385,8 @@ entries, no valid assignment exists.</p>
 <span>  income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">40000</span>, <span class="fl">10000</span><span class="op">)</span>  <span class="co"># Very different income</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, auto_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                        method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
 <span><span class="va">balance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
@@ -447,24 +449,45 @@ weighted</p></li>
 <span>  <span class="va">left</span>, <span class="va">right</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
 <span>  max_distance <span class="op">=</span> <span class="fl">0.3</span>,  <span class="co"># Stricter caliper</span></span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Original matches:"</span>, <span class="va">result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Original matches: 100</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With caliper:"</span>, <span class="va">result_strict</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'result_strict' not found</span></span>
+<span><span class="co">#&gt; With caliper: 23</span></span>
 <span></span>
 <span><span class="va">balance_strict</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result_strict</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'result_strict' not found</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance_strict</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> object 'balance_strict' not found</span></span></code></pre></div>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Balance Diagnostics for Matched Pairs</span></span>
+<span><span class="co">#&gt; ======================================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matching Summary:</span></span>
+<span><span class="co">#&gt;   Method: lap</span></span>
+<span><span class="co">#&gt;   Matched pairs: 23</span></span>
+<span><span class="co">#&gt;   Unmatched left: 0 (of 100)</span></span>
+<span><span class="co">#&gt;   Unmatched right: 77 (of 100)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Variable-level Balance:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
+<span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             31.5         31.6      -<span style="color: #BB0000;">0.084</span>     -<span style="color: #BB0000;">0.018</span>        1.03     0.13 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">53</span>974.       <span style="text-decoration: underline;">51</span>903.     <span style="text-decoration: underline;">2</span>071.         0.283        1.11     0.217</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Overall Balance:</span></span>
+<span><span class="co">#&gt;   Mean |Std Diff|: 0.151 (Good)</span></span>
+<span><span class="co">#&gt;   Max |Std Diff|: 0.283</span></span>
+<span><span class="co">#&gt;   Vars with |Std Diff| &gt; 0.25: 50.0%</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Balance Interpretation:</span></span>
+<span><span class="co">#&gt;   |Std Diff| &lt; 0.10: Excellent balance</span></span>
+<span><span class="co">#&gt;   |Std Diff| 0.10-0.25: Good balance</span></span>
+<span><span class="co">#&gt;   |Std Diff| 0.25-0.50: Acceptable balance</span></span>
+<span><span class="co">#&gt;   |Std Diff| &gt; 0.50: Poor balance</span></span></code></pre></div>
 <p><strong>3. Use blocking on problematic variable:</strong></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Block on income tertiles to ensure exact balance</span></span>
@@ -482,7 +505,8 @@ weighted</p></li>
 <code class="sourceCode R"><span><span class="co"># Compare scaling methods</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">scale_method</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"robust"</span>, <span class="st">"standardize"</span>, <span class="st">"range"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>                       auto_scale <span class="op">=</span> <span class="cn">TRUE</span>, scale <span class="op">=</span> <span class="va">scale_method</span><span class="op">)</span></span>
+<span>                       auto_scale <span class="op">=</span> <span class="cn">TRUE</span>, scale <span class="op">=</span> <span class="va">scale_method</span>,</span>
+<span>                       method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
 <span>  <span class="va">bal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">scale_method</span>, <span class="st">"- max |std_diff|:"</span>,</span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">bal</span><span class="op">$</span><span class="va">overall</span><span class="op">$</span><span class="va">max_abs_std_diff</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -506,7 +530,7 @@ long or doesn’t complete.</p>
 <h3 id="cause-1">Cause<a class="anchor" aria-label="anchor" href="#cause-1"></a>
 </h3>
 <p>Optimal matching has
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
 complexity. For n = 5,000, this means ~125 billion operations.</p>
 </div>
 <div class="section level3">
@@ -559,7 +583,7 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching (n=500):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Greedy matching (n=500): 0.23 seconds</span></span>
+<span><span class="co">#&gt; Greedy matching (n=500): 0.21 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Quality (mean distance):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Quality (mean distance): 0.2886</span></span></code></pre></div>
 <p><strong>2. Use blocking to divide the problem:</strong></p>
@@ -604,15 +628,9 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fast: reuse cached distances</span></span>
-<span><span class="va">result1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
-<span><span class="va">result2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=7885383213142811494408480082840444688844086424042268422604802684204020084804602286084062426808668246202024044680060000888826240426666820268808860060886662888880668826624624282408686624866884640486622460688806226620844868208208262004280626244240268286668462608648088464686088602226464888282882.000000, phase=19</span></span>
-<span><span class="va">result3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `lap_solve_auction_scaled()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Auction(scaled): iteration guard at eps=1126483316163258824588840464686822002040606866822442644006464204284244600860220408644206628884660088462204820084486686828448800068422244884462088864286246088448668606428686082644420022446608028628488602664280848840444608420828066682648826868226802866640024264200844882840648848844628646628040.000000, phase=20</span></span></code></pre></div>
+<span><span class="va">result1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.3</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
+<span><span class="va">result2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">0.5</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
+<span><span class="va">result3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_cache</span>, max_distance <span class="op">=</span> <span class="fl">1.0</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>

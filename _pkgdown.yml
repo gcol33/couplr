@@ -75,11 +75,14 @@ reference:
   - match_couples
   - greedy_couples
   - matchmaker
-- title: Balance Diagnostics
-  desc: Assess and report match quality
+  - ps_match
+  - cardinality_match
+- title: Balance Diagnostics & Analysis
+  desc: Assess match quality and sensitivity to hidden bias
   contents:
   - balance_diagnostics
   - balance_table
+  - sensitivity_analysis
 - title: Distance and Preprocessing
   desc: Distance computation and data preparation
   contents:
@@ -130,8 +133,12 @@ reference:
   - summary.distance_object
   - summary.matching_result
   - summary.balance_diagnostics
+  - summary.sensitivity_analysis
   - plot.matching_result
   - plot.balance_diagnostics
+  - plot.sensitivity_analysis
+  - print.sensitivity_analysis
+  - starts_with("autoplot")
 articles:
 - title: Getting Started
   navbar: ~
@@ -151,6 +158,8 @@ articles:
   contents: pixel-morphing
 news:
   releases:
+  - text: Version 1.1.0
+    href: news/index.html
   - text: Version 1.0.0
     href: news/index.html
 footer:

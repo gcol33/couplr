@@ -22,7 +22,6 @@ automatic preprocessing and balance diagnostics.
 ## Quick Start
 
 ``` r
-
 library(couplr)
 
 # Match treatment and control groups on covariates
@@ -79,7 +78,21 @@ These features make the package useful in domains like:
   - 10-100x faster than optimal for large datasets
   - Same preprocessing and constraint options
 
-### Balance Diagnostics
+### Matching Extensions
+
+- **[`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)**:
+  Propensity score matching
+  - Logistic regression or pre-fitted model
+  - Logit caliper (default: 0.2 SD per Rosenbaum & Rubin)
+  - Supports ratio and replacement matching
+- **[`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)**:
+  Balance-constrained matching
+  - Maximizes sample size subject to balance thresholds
+  - Iterative pruning of imbalanced pairs
+- **Ratio matching**: k:1 matching via `ratio` parameter
+- **Replacement matching**: with-replacement via `replace` parameter
+
+### Balance Diagnostics & Analysis
 
 - **[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)**:
   Comprehensive balance assessment
@@ -89,6 +102,12 @@ These features make the package useful in domains like:
   - Per-block statistics when blocking is used
   - Publication-ready tables via
     [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
+- **[`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)**:
+  Rosenbaum bounds
+  - Assesses sensitivity to hidden bias
+  - Reports critical gamma for inference robustness
+- **`autoplot()` methods** for ggplot2 visualizations of matching
+  results, balance diagnostics, and sensitivity analysis
 
 ### Low-Level LAP Solving
 
@@ -106,7 +125,6 @@ These features make the package useful in domains like:
 ## Installation
 
 ``` r
-
 # Install from CRAN
 install.packages("couplr")
 
@@ -120,7 +138,6 @@ pak::pak("gcol33/couplr")
 ### Optimal Matching (`match_couples`)
 
 ``` r
-
 library(couplr)
 
 # Basic matching with automatic scaling
@@ -153,7 +170,6 @@ result$pairs
 ### Greedy Matching (`greedy_couples`)
 
 ``` r
-
 # Fast matching for large datasets
 result <- greedy_couples(
   treated, control,
@@ -173,7 +189,6 @@ result <- greedy_couples(
 ### Low-Level LAP Solving
 
 ``` r
-
 # Solve a cost matrix
 cost <- matrix(c(4, 2, 8, 4, 3, 7, 3, 1, 6), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost)
@@ -210,7 +225,6 @@ if runtime is too long.
 Precompute distances for rapid experimentation:
 
 ``` r
-
 # Compute once
 dist_obj <- compute_distances(treated, control, vars = c("age", "income"))
 
@@ -224,7 +238,6 @@ result2 <- match_couples(dist_obj, max_distance = 0.5)
 Speed up blocked matching with multi-core processing:
 
 ``` r
-
 result <- match_couples(
   treated, control,
   vars = c("age", "income"),
@@ -233,12 +246,33 @@ result <- match_couples(
 )
 ```
 
+### Propensity Score Matching
+
+Match on estimated propensity scores with a logit caliper:
+
+``` r
+result <- ps_match(
+  treatment ~ age + income + education,
+  data = combined_data,
+  treatment = "treated"
+)
+```
+
+### Sensitivity Analysis
+
+Assess robustness of matched comparisons to hidden bias:
+
+``` r
+sa <- sensitivity_analysis(result, treated, control, outcome_var = "outcome")
+summary(sa)
+# Critical gamma: 1.75 — results robust to moderate hidden bias
+```
+
 ### Pixel Morphing
 
 Align images pixel-by-pixel using optimal assignment:
 
 ``` r
-
 morph <- pixel_morph(image_a, image_b)
 pixel_morph_animate(morph, "output.gif")
 ```
@@ -318,15 +352,21 @@ High-level matching for observational studies
   : Fast approximate matching using greedy algorithm
 - [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
   : Create blocks for stratified matching
+- [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+  : Propensity Score Matching
+- [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+  : Cardinality Matching
 
-## Balance Diagnostics
+## Balance Diagnostics & Analysis
 
-Assess and report match quality
+Assess match quality and sensitivity to hidden bias
 
 - [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
   : Balance Diagnostics for Matched Pairs
 - [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
   : Create Balance Table
+- [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  : Rosenbaum Sensitivity Analysis
 
 ## Distance and Preprocessing
 
@@ -421,10 +461,22 @@ S3 methods for displaying and visualizing results
   : Summary method for matching results
 - [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/summary.balance_diagnostics.md)
   : Summary method for balance diagnostics
+- [`summary(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/summary.sensitivity_analysis.md)
+  : Summary method for sensitivity analysis
 - [`plot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/plot.matching_result.md)
   : Plot method for matching results
 - [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/plot.balance_diagnostics.md)
   : Plot method for balance diagnostics
+- [`plot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/plot.sensitivity_analysis.md)
+  : Plot method for sensitivity analysis (base graphics)
+- [`print(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/print.sensitivity_analysis.md)
+  : Print method for sensitivity analysis
+- [`autoplot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.md)
+  : ggplot2 autoplot for balance diagnostics
+- [`autoplot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/autoplot.matching_result.md)
+  : ggplot2 autoplot for matching results
+- [`autoplot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.md)
+  : ggplot2 autoplot for sensitivity analysis
 
 # Articles
 

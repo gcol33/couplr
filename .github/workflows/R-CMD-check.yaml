@@ -17,8 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # macOS temporarily disabled - CRAN ARM binaries unavailable for later/parallelly
-          # - {os: macos-latest,   r: 'release'}
+          - {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
@@ -41,10 +40,19 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        if: matrix.config.r != 'oldrel-1'
         with:
           extra-packages: any::rcmdcheck
           needs: check
           cache-version: 1
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: matrix.config.r == 'oldrel-1'
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+          cache-version: 1
+          dependencies: '"hard"'
 
       - uses: r-lib/actions/check-r-package@v2
         with:

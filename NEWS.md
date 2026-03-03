@@ -1,3 +1,27 @@
+# couplr 1.3.0
+
+## New Features
+
+### Optimal Full Matching
+
+* **`full_match()` gains `method = "optimal"` (new default)** using a min-cost
+  max-flow solver (Dijkstra + Johnson potentials) that finds the globally
+  optimal group assignment minimizing total distance:
+  - Standard lower bound transformation enforces `min_controls` per group
+  - Automatic transposition when `n_left > n_right`
+  - New C++ solver: `solve_full_matching.cpp` (self-contained MCMF)
+  - `method = "greedy"` preserved for fast approximate matching
+
+### Vignette Updates
+
+* **Getting Started**: Added full matching section with `full_match()` example
+* **Matching Workflows**: New "Full Matching (Variable-Ratio Groups)" section
+  covering optimal vs greedy, constraints, weights, and comparison table
+* **Comparison**: Updated feature table and all sections to reflect couplr's
+  full matching support (previously listed as "No")
+
+---
+
 # couplr 1.2.0
 
 ## New Features

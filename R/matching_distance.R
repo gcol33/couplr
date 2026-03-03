@@ -4,9 +4,16 @@
 
 #' Compute pairwise distance matrix
 #'
+#' @param left_mat Numeric matrix of left units (rows = units, cols = variables).
+#' @param right_mat Numeric matrix of right units (rows = units, cols = variables).
+#' @param distance Character string specifying distance metric, or a function.
+#' @param sigma Optional covariance matrix for Mahalanobis distance. If NULL
+#'   (default), the pooled covariance is estimated from data.
+#'
 #' @return Numeric matrix of pairwise distances (n_left x n_right).
 #' @keywords internal
-compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean") {
+compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
+                                    sigma = NULL) {
   n_left <- nrow(left_mat)
   n_right <- nrow(right_mat)
   n_vars <- ncol(left_mat)
@@ -62,23 +69,35 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean")
     }
   } else if (distance %in% c("mahalanobis", "maha")) {
     # Mahalanobis distance: sqrt((x-y)' * Sigma^-1 * (x-y))
-    # Use pooled covariance matrix
-    combined <- rbind(left_mat, right_mat)
-    cov_mat <- stats::cov(combined)
+    if (!is.null(sigma)) {
+      # User-supplied covariance matrix
+      if (!is.matrix(sigma) || nrow(sigma) != n_vars || ncol(sigma) != n_vars) {
+        stop(sprintf("sigma must be a %d x %d matrix matching the number of variables",
+                     n_vars, n_vars), call. = FALSE)
+      }
+      cov_mat <- sigma
+    } else {
+      # Estimate pooled covariance from data
+      combined <- rbind(left_mat, right_mat)
+      cov_mat <- stats::cov(combined)
+    }
 
-    # Check for singularity
-    if (det(cov_mat) == 0) {
-      stop("Covariance matrix is singular; cannot compute Mahalanobis distance",
+    # Robust singularity check using rcond (not det == 0)
+    inv_cov <- tryCatch(
+      solve(cov_mat),
+      error = function(e) NULL
+    )
+    if (is.null(inv_cov) || rcond(cov_mat) < .Machine$double.eps) {
+      stop("Covariance matrix is singular or near-singular; cannot compute Mahalanobis distance. ",
+           "Consider removing collinear variables or supplying a regularized sigma.",
            call. = FALSE)
     }
 
-    inv_cov <- solve(cov_mat)
-
+    # Vectorized computation: for each left row, compute distances to all right rows
+    # D_ij = sqrt( (L_i - R_j) %*% inv_cov %*% (L_i - R_j)' )
     for (i in seq_len(n_left)) {
-      for (j in seq_len(n_right)) {
-        diff <- left_mat[i, ] - right_mat[j, ]
-        dist_matrix[i, j] <- sqrt(as.numeric(t(diff) %*% inv_cov %*% diff))
-      }
+      diff_mat <- sweep(right_mat, 2, left_mat[i, ])  # n_right x n_vars
+      dist_matrix[i, ] <- sqrt(pmax(rowSums(diff_mat * (diff_mat %*% inv_cov)), 0))
     }
   } else {
     stop(sprintf("Unknown distance metric: %s", distance), call. = FALSE)
@@ -177,7 +196,7 @@ apply_weights <- function(mat, weights) {
 #' @return Numeric matrix of distances with optional scaling/weights applied.
 #' @keywords internal
 build_cost_matrix <- function(left, right, vars, distance = "euclidean",
-                               weights = NULL, scale = FALSE) {
+                               weights = NULL, scale = FALSE, sigma = NULL) {
   # Extract variable matrices
   left_mat <- extract_matching_vars(left, vars)
   right_mat <- extract_matching_vars(right, vars)
@@ -200,7 +219,8 @@ build_cost_matrix <- function(left, right, vars, distance = "euclidean",
   right_mat <- apply_weights(right_mat, weights)
 
   # Compute distance matrix
-  dist_matrix <- compute_distance_matrix(left_mat, right_mat, distance)
+  dist_matrix <- compute_distance_matrix(left_mat, right_mat, distance,
+                                         sigma = sigma)
 
   # Add metadata as attributes
   attr(dist_matrix, "distance") <- distance

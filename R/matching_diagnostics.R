@@ -116,14 +116,16 @@ calculate_var_balance <- function(left_vals, right_vals, var_name) {
 #' Computes comprehensive balance statistics comparing the distribution of
 #' matching variables between left and right units in the matched sample.
 #'
-#' @param result A matching result object from \code{match_couples()} or
-#'   \code{greedy_couples()}
+#' @param result A matching result object from \code{match_couples()},
+#'   \code{greedy_couples()}, \code{full_match()}, \code{cem_match()}, or
+#'   \code{subclass_match()}
 #' @param left Data frame of left units
 #' @param right Data frame of right units
 #' @param vars Character vector of variable names to check balance for.
 #'   Defaults to the variables used in matching (if available in result).
 #' @param left_id Character, name of ID column in left data (default: "id")
 #' @param right_id Character, name of ID column in right data (default: "id")
+#' @param ... Additional arguments passed to methods
 #'
 #' @return An S3 object of class \code{balance_diagnostics} containing:
 #' \describe{
@@ -180,17 +182,26 @@ calculate_var_balance <- function(left_vals, right_vals, var_name) {
 #' balance_table(balance)
 #'
 #' @export
-balance_diagnostics <- function(result,
-                                left,
-                                right,
-                                vars = NULL,
-                                left_id = "id",
-                                right_id = "id") {
+balance_diagnostics <- function(result, ...) {
+  UseMethod("balance_diagnostics")
+}
 
-  # Validate inputs
-  if (!inherits(result, "matching_result")) {
-    stop("result must be a matching_result object from match_couples() or greedy_couples()")
-  }
+
+#' @export
+balance_diagnostics.default <- function(result, ...) {
+  stop("result must be a matching_result object from match_couples() or greedy_couples()")
+}
+
+
+#' @rdname balance_diagnostics
+#' @export
+balance_diagnostics.matching_result <- function(result,
+                                                left,
+                                                right,
+                                                vars = NULL,
+                                                left_id = "id",
+                                                right_id = "id",
+                                                ...) {
 
   if (!left_id %in% names(left)) {
     stop("left_id '", left_id, "' not found in left data")
@@ -356,6 +367,179 @@ balance_diagnostics <- function(result,
 
   class(result_obj) <- "balance_diagnostics"
   return(result_obj)
+}
+
+
+#' @rdname balance_diagnostics
+#' @export
+balance_diagnostics.full_matching_result <- function(result,
+                                                     left, right,
+                                                     vars = NULL,
+                                                     left_id = "id",
+                                                     right_id = "id",
+                                                     ...) {
+  if (is.null(vars)) vars <- result$info$vars
+  if (is.null(vars)) stop("vars must be specified", call. = FALSE)
+
+  groups <- result$groups
+  left_in <- groups[groups$side == "left", ]
+  right_in <- groups[groups$side == "right", ]
+
+  left_matched <- left[as.character(left[[left_id]]) %in% left_in$id, ]
+  right_matched <- right[as.character(right[[right_id]]) %in% right_in$id, ]
+
+  # Weighted balance: apply group weights
+  right_weights <- stats::setNames(right_in$weight, right_in$id)
+
+  var_stats_list <- lapply(vars, function(v) {
+    lv <- left_matched[[v]]
+    rv <- right_matched[[v]]
+    rw <- right_weights[as.character(right_matched[[right_id]])]
+    calculate_var_balance(lv, rv, v)
+  })
+
+  var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  abs_std_diffs <- abs(var_stats$std_diff)
+
+  overall <- list(
+    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
+    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
+    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
+    n_vars = length(vars)
+  )
+
+  result_obj <- list(
+    var_stats = var_stats,
+    overall = overall,
+    pairs = NULL,
+    n_matched = nrow(left_matched) + nrow(right_matched),
+    n_unmatched_left = result$info$n_unmatched_left,
+    n_unmatched_right = result$info$n_unmatched_right,
+    n_total_left = result$info$n_left,
+    n_total_right = result$info$n_right,
+    method = "full",
+    has_blocks = FALSE,
+    block_stats = NULL
+  )
+
+  class(result_obj) <- "balance_diagnostics"
+  result_obj
+}
+
+
+#' @rdname balance_diagnostics
+#' @export
+balance_diagnostics.cem_result <- function(result,
+                                           left, right,
+                                           vars = NULL,
+                                           left_id = "id",
+                                           right_id = "id",
+                                           ...) {
+  if (is.null(vars)) vars <- result$info$vars
+  if (is.null(vars)) stop("vars must be specified", call. = FALSE)
+
+  matched <- result$matched
+  matched_ids_left <- matched$id[matched$side == "left" & matched$weight > 0]
+  matched_ids_right <- matched$id[matched$side == "right" & matched$weight > 0]
+
+  left_matched <- left[as.character(left[[left_id]]) %in% matched_ids_left, ]
+  right_matched <- right[as.character(right[[right_id]]) %in% matched_ids_right, ]
+
+  var_stats_list <- lapply(vars, function(v) {
+    calculate_var_balance(left_matched[[v]], right_matched[[v]], v)
+  })
+
+  var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  abs_std_diffs <- abs(var_stats$std_diff)
+
+  overall <- list(
+    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
+    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
+    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
+    n_vars = length(vars)
+  )
+
+  result_obj <- list(
+    var_stats = var_stats,
+    overall = overall,
+    pairs = NULL,
+    n_matched = nrow(left_matched) + nrow(right_matched),
+    n_unmatched_left = result$info$n_pruned_left,
+    n_unmatched_right = result$info$n_pruned_right,
+    n_total_left = result$info$n_matched_left + result$info$n_pruned_left,
+    n_total_right = result$info$n_matched_right + result$info$n_pruned_right,
+    method = "cem",
+    has_blocks = FALSE,
+    block_stats = NULL
+  )
+
+  class(result_obj) <- "balance_diagnostics"
+  result_obj
+}
+
+
+#' @rdname balance_diagnostics
+#' @param data Data frame used for subclassification (when \code{result} is a
+#'   subclass_result)
+#' @export
+balance_diagnostics.subclass_result <- function(result,
+                                                data = NULL,
+                                                vars = NULL,
+                                                ...) {
+  if (is.null(vars)) vars <- result$info$vars
+  if (is.null(vars) && !is.null(data)) {
+    # Infer from data (exclude treatment, id, etc.)
+    exclude <- c("id", "treatment", "weights", "subclass", "ps", "weight")
+    vars <- setdiff(names(data), exclude)
+  }
+  if (is.null(vars)) stop("vars must be specified", call. = FALSE)
+
+  matched <- result$matched
+  weighted <- matched[matched$weight > 0, ]
+
+  left_ids <- weighted$id[weighted$side == "left"]
+  right_ids <- weighted$id[weighted$side == "right"]
+
+  if (!is.null(data)) {
+    left_data <- data[as.character(data$id) %in% left_ids, ]
+    right_data <- data[as.character(data$id) %in% right_ids, ]
+  } else {
+    stop("data must be provided for subclass_result balance diagnostics",
+         call. = FALSE)
+  }
+
+  var_stats_list <- lapply(vars, function(v) {
+    if (!v %in% names(data)) return(NULL)
+    calculate_var_balance(left_data[[v]], right_data[[v]], v)
+  })
+  var_stats_list <- var_stats_list[!sapply(var_stats_list, is.null)]
+
+  var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  abs_std_diffs <- abs(var_stats$std_diff)
+
+  overall <- list(
+    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
+    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
+    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
+    n_vars = length(vars)
+  )
+
+  result_obj <- list(
+    var_stats = var_stats,
+    overall = overall,
+    pairs = NULL,
+    n_matched = nrow(weighted),
+    n_unmatched_left = result$info$n_left - length(left_ids),
+    n_unmatched_right = result$info$n_right - length(right_ids),
+    n_total_left = result$info$n_left,
+    n_total_right = result$info$n_right,
+    method = "subclassification",
+    has_blocks = FALSE,
+    block_stats = NULL
+  )
+
+  class(result_obj) <- "balance_diagnostics"
+  result_obj
 }
 
 

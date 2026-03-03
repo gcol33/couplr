@@ -23,7 +23,8 @@ greedy_couples(
   parallel = FALSE,
   replace = FALSE,
   ratio = 1L,
-  check_costs = TRUE
+  check_costs = TRUE,
+  sigma = NULL
 )
 }
 \arguments{
@@ -80,6 +81,10 @@ Default: 1 (one-to-one matching). For k:1 matching, set ratio = k.}
 
 \item{check_costs}{If TRUE, check distance distribution for potential problems
 and provide helpful warnings before matching (default: TRUE)}
+
+\item{sigma}{Optional covariance matrix for Mahalanobis distance. If NULL
+(default), the pooled sample covariance is used. Only relevant when
+\code{distance = "mahalanobis"}.}
 }
 \value{
 A list with class "matching_result" (same structure as match_couples)

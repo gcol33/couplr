@@ -2,20 +2,52 @@
 % Please edit documentation in R/matching_diagnostics.R
 \name{balance_diagnostics}
 \alias{balance_diagnostics}
+\alias{balance_diagnostics.matching_result}
+\alias{balance_diagnostics.full_matching_result}
+\alias{balance_diagnostics.cem_result}
+\alias{balance_diagnostics.subclass_result}
 \title{Balance Diagnostics for Matched Pairs}
 \usage{
-balance_diagnostics(
+balance_diagnostics(result, ...)
+
+\method{balance_diagnostics}{matching_result}(
   result,
   left,
   right,
   vars = NULL,
   left_id = "id",
-  right_id = "id"
+  right_id = "id",
+  ...
 )
+
+\method{balance_diagnostics}{full_matching_result}(
+  result,
+  left,
+  right,
+  vars = NULL,
+  left_id = "id",
+  right_id = "id",
+  ...
+)
+
+\method{balance_diagnostics}{cem_result}(
+  result,
+  left,
+  right,
+  vars = NULL,
+  left_id = "id",
+  right_id = "id",
+  ...
+)
+
+\method{balance_diagnostics}{subclass_result}(result, data = NULL, vars = NULL, ...)
 }
 \arguments{
-\item{result}{A matching result object from \code{match_couples()} or
-\code{greedy_couples()}}
+\item{result}{A matching result object from \code{match_couples()},
+\code{greedy_couples()}, \code{full_match()}, \code{cem_match()}, or
+\code{subclass_match()}}
+
+\item{...}{Additional arguments passed to methods}
 
 \item{left}{Data frame of left units}
 
@@ -27,6 +59,9 @@ Defaults to the variables used in matching (if available in result).}
 \item{left_id}{Character, name of ID column in left data (default: "id")}
 
 \item{right_id}{Character, name of ID column in right data (default: "id")}
+
+\item{data}{Data frame used for subclassification (when \code{result} is a
+subclass_result)}
 }
 \value{
 An S3 object of class \code{balance_diagnostics} containing:

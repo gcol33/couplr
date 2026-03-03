@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.1.0
+Version: 1.2.0
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
            role = c("aut", "cre", "cph"),
@@ -57,7 +57,10 @@ Suggests:
     av,
     reticulate,
     png,
-    combinat
+    combinat,
+    cobalt,
+    MatchIt,
+    marginaleffects
 LinkingTo:
     Rcpp,
     RcppEigen,

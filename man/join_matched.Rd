@@ -2,9 +2,15 @@
 % Please edit documentation in R/matching_join.R
 \name{join_matched}
 \alias{join_matched}
+\alias{join_matched.matching_result}
+\alias{join_matched.full_matching_result}
+\alias{join_matched.cem_result}
+\alias{join_matched.subclass_result}
 \title{Join Matched Pairs with Original Data}
 \usage{
-join_matched(
+join_matched(result, ...)
+
+\method{join_matched}{matching_result}(
   result,
   left,
   right,
@@ -15,12 +21,21 @@ join_matched(
   suffix = c("_left", "_right"),
   include_distance = TRUE,
   include_pair_id = TRUE,
-  include_block_id = TRUE
+  include_block_id = TRUE,
+  ...
 )
+
+\method{join_matched}{full_matching_result}(result, left, right, left_id = "id", right_id = "id", ...)
+
+\method{join_matched}{cem_result}(result, left, right, left_id = "id", right_id = "id", ...)
+
+\method{join_matched}{subclass_result}(result, data = NULL, ...)
 }
 \arguments{
-\item{result}{A matching_result object from \code{match_couples()} or
-\code{greedy_couples()}}
+\item{result}{A result object from \code{match_couples()},
+\code{greedy_couples()}, \code{full_match()}, or \code{cem_match()}}
+
+\item{...}{Additional arguments passed to methods}
 
 \item{left}{The original left dataset}
 
@@ -44,6 +59,8 @@ left and right variables (default: c("_left", "_right"))}
 \item{include_pair_id}{Include pair_id column (default: TRUE)}
 
 \item{include_block_id}{Include block_id if blocking was used (default: TRUE)}
+
+\item{data}{Data frame used for subclassification}
 }
 \value{
 A tibble with one row per matched pair, containing:

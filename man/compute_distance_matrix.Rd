@@ -4,7 +4,22 @@
 \alias{compute_distance_matrix}
 \title{Compute pairwise distance matrix}
 \usage{
-compute_distance_matrix(left_mat, right_mat, distance = "euclidean")
+compute_distance_matrix(
+  left_mat,
+  right_mat,
+  distance = "euclidean",
+  sigma = NULL
+)
+}
+\arguments{
+\item{left_mat}{Numeric matrix of left units (rows = units, cols = variables).}
+
+\item{right_mat}{Numeric matrix of right units (rows = units, cols = variables).}
+
+\item{distance}{Character string specifying distance metric, or a function.}
+
+\item{sigma}{Optional covariance matrix for Mahalanobis distance. If NULL
+(default), the pooled covariance is estimated from data.}
 }
 \value{
 Numeric matrix of pairwise distances (n_left x n_right).

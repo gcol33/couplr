@@ -24,10 +24,12 @@
                             check_costs = FALSE,
                             strict_no_pairs = FALSE,
                             replace = FALSE,
-                            ratio = 1L) {
+                            ratio = 1L,
+                            sigma = NULL) {
 
   # Build cost matrix
-  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
+  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale,
+                                   sigma = sigma)
 
   # Apply constraints
   cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
@@ -468,7 +470,8 @@
                              strict_no_pairs = FALSE,
                              parallel = FALSE,
                              replace = FALSE,
-                             ratio = 1L) {
+                             ratio = 1L,
+                             sigma = NULL) {
 
   blocks <- unique(c(left[[block_col]], right[[block_col]]))
 
@@ -481,7 +484,8 @@
       solver_fn = solver_fn, solver_params = solver_params,
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
       parallel = TRUE,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
 
     # Reorder columns to put block_id first
@@ -547,7 +551,8 @@
       max_distance, calipers,
       solver_fn = solver_fn, solver_params = solver_params,
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
 
     # Add block_id column
@@ -656,6 +661,9 @@
 #'   Default: 1 (one-to-one matching). For k:1 matching, set ratio = k.
 #' @param check_costs If TRUE, check distance distribution for potential problems
 #'   and provide helpful warnings before matching (default: TRUE)
+#' @param sigma Optional covariance matrix for Mahalanobis distance. If NULL
+#'   (default), the pooled sample covariance is used. Only relevant when
+#'   \code{distance = "mahalanobis"}.
 #'
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
@@ -698,7 +706,8 @@ match_couples <- function(left, right = NULL,
                           parallel = FALSE,
                           replace = FALSE,
                           ratio = 1L,
-                          check_costs = TRUE) {
+                          check_costs = TRUE,
+                          sigma = NULL) {
 
   # Validate replace and ratio
   if (!is.logical(replace) || length(replace) != 1) {
@@ -785,7 +794,8 @@ match_couples <- function(left, right = NULL,
       max_distance = max_distance, calipers = calipers,
       method = method,
       parallel = parallel_state$setup,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
   } else {
     # Single matching
@@ -795,7 +805,8 @@ match_couples <- function(left, right = NULL,
       max_distance = max_distance, calipers = calipers,
       method = method,
       check_costs = check_costs,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
   }
 
@@ -868,7 +879,8 @@ match_couples_single <- function(left, right, left_ids, right_ids,
                                  vars, distance, weights, scale,
                                  max_distance, calipers, method,
                                  check_costs = TRUE,
-                                 replace = FALSE, ratio = 1L) {
+                                 replace = FALSE, ratio = 1L,
+                                 sigma = NULL) {
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
@@ -877,7 +889,8 @@ match_couples_single <- function(left, right, left_ids, right_ids,
     solver_params = list(method = method),
     check_costs = check_costs,
     strict_no_pairs = TRUE,
-    replace = replace, ratio = ratio
+    replace = replace, ratio = ratio,
+    sigma = sigma
   )
 }
 
@@ -889,7 +902,8 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   block_col, vars, distance, weights, scale,
                                   max_distance, calipers, method,
                                   parallel = FALSE,
-                                  replace = FALSE, ratio = 1L) {
+                                  replace = FALSE, ratio = 1L,
+                                  sigma = NULL) {
   .couples_blocked(
     left, right, left_ids, right_ids,
     block_col, vars, distance, weights, scale,
@@ -899,7 +913,8 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
     check_costs = FALSE,
     strict_no_pairs = TRUE,
     parallel = parallel,
-    replace = replace, ratio = ratio
+    replace = replace, ratio = ratio,
+    sigma = sigma
   )
 }
 
@@ -1014,7 +1029,8 @@ greedy_couples <- function(left, right = NULL,
                            parallel = FALSE,
                            replace = FALSE,
                            ratio = 1L,
-                           check_costs = TRUE) {
+                           check_costs = TRUE,
+                           sigma = NULL) {
 
   strategy <- match.arg(strategy)
 
@@ -1097,7 +1113,8 @@ greedy_couples <- function(left, right = NULL,
       max_distance = max_distance, calipers = calipers,
       strategy = strategy,
       parallel = parallel_state$setup,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
   } else {
     # Single matching
@@ -1106,7 +1123,8 @@ greedy_couples <- function(left, right = NULL,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
       strategy = strategy,
-      replace = replace, ratio = ratio
+      replace = replace, ratio = ratio,
+      sigma = sigma
     )
   }
 
@@ -1184,7 +1202,8 @@ greedy_couples_from_distance <- function(dist_obj,
 greedy_couples_single <- function(left, right, left_ids, right_ids,
                                   vars, distance, weights, scale,
                                   max_distance, calipers, strategy,
-                                  replace = FALSE, ratio = 1L) {
+                                  replace = FALSE, ratio = 1L,
+                                  sigma = NULL) {
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
@@ -1193,7 +1212,8 @@ greedy_couples_single <- function(left, right, left_ids, right_ids,
     solver_params = list(strategy = strategy),
     check_costs = FALSE,
     strict_no_pairs = FALSE,
-    replace = replace, ratio = ratio
+    replace = replace, ratio = ratio,
+    sigma = sigma
   )
 }
 
@@ -1205,7 +1225,8 @@ greedy_couples_blocked <- function(left, right, left_ids, right_ids,
                                    block_col, vars, distance, weights, scale,
                                    max_distance, calipers, strategy,
                                    parallel = FALSE,
-                                   replace = FALSE, ratio = 1L) {
+                                   replace = FALSE, ratio = 1L,
+                                   sigma = NULL) {
   .couples_blocked(
     left, right, left_ids, right_ids,
     block_col, vars, distance, weights, scale,
@@ -1215,7 +1236,8 @@ greedy_couples_blocked <- function(left, right, left_ids, right_ids,
     check_costs = FALSE,
     strict_no_pairs = FALSE,
     parallel = parallel,
-    replace = replace, ratio = ratio
+    replace = replace, ratio = ratio,
+    sigma = sigma
   )
 }
 

@@ -4,8 +4,8 @@
 #' from the original left and right datasets. This eliminates the need for
 #' manual joins and provides a convenient format for downstream analysis.
 #'
-#' @param result A matching_result object from \code{match_couples()} or
-#'   \code{greedy_couples()}
+#' @param result A result object from \code{match_couples()},
+#'   \code{greedy_couples()}, \code{full_match()}, or \code{cem_match()}
 #' @param left The original left dataset
 #' @param right The original right dataset
 #' @param left_vars Character vector of variable names to include from left.
@@ -19,6 +19,7 @@
 #' @param include_distance Include the matching distance in output (default: TRUE)
 #' @param include_pair_id Include pair_id column (default: TRUE)
 #' @param include_block_id Include block_id if blocking was used (default: TRUE)
+#' @param ... Additional arguments passed to methods
 #'
 #' @return A tibble with one row per matched pair, containing:
 #'   - \code{pair_id}: Sequential pair identifier (if include_pair_id = TRUE)
@@ -75,7 +76,20 @@
 #' )
 #'
 #' @export
-join_matched <- function(result,
+join_matched <- function(result, ...) {
+  UseMethod("join_matched")
+}
+
+
+#' @export
+join_matched.default <- function(result, ...) {
+  stop("result must be a matching_result object from match_couples() or greedy_couples()")
+}
+
+
+#' @rdname join_matched
+#' @export
+join_matched.matching_result <- function(result,
                          left,
                          right,
                          left_vars = NULL,
@@ -85,12 +99,8 @@ join_matched <- function(result,
                          suffix = c("_left", "_right"),
                          include_distance = TRUE,
                          include_pair_id = TRUE,
-                         include_block_id = TRUE) {
-
-  # Validate inputs
-  if (!inherits(result, "matching_result")) {
-    stop("result must be a matching_result object from match_couples() or greedy_couples()")
-  }
+                         include_block_id = TRUE,
+                         ...) {
 
   if (!is.data.frame(left) || !is.data.frame(right)) {
     stop("left and right must be data frames")
@@ -244,6 +254,35 @@ join_matched <- function(result,
   matched <- matched[, col_order, drop = FALSE]
 
   dplyr::as_tibble(matched)
+}
+
+
+#' @rdname join_matched
+#' @export
+join_matched.full_matching_result <- function(result, left, right,
+                                              left_id = "id",
+                                              right_id = "id",
+                                              ...) {
+  # For full matching, return the stacked match_data format
+  match_data(result, left, right, left_id = left_id, right_id = right_id)
+}
+
+
+#' @rdname join_matched
+#' @export
+join_matched.cem_result <- function(result, left, right,
+                                    left_id = "id",
+                                    right_id = "id",
+                                    ...) {
+  match_data(result, left, right, left_id = left_id, right_id = right_id)
+}
+
+
+#' @rdname join_matched
+#' @param data Data frame used for subclassification
+#' @export
+join_matched.subclass_result <- function(result, data = NULL, ...) {
+  match_data(result, data = data)
 }
 
 

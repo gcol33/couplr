@@ -2,6 +2,15 @@
 # Additional tests for lap_solve_batch to increase coverage
 # ==============================================================================
 
+# Helper: check if parallel socket creation works in this environment
+can_open_server_socket <- function() {
+  tryCatch({
+    s <- serverSocket(port = 0L)
+    close(s)
+    TRUE
+  }, error = function(e) FALSE)
+}
+
 # ------------------------------------------------------------------------------
 # Basic input validation
 # ------------------------------------------------------------------------------
@@ -151,6 +160,7 @@ test_that("lap_solve_batch handles n_threads = NULL", {
   skip_on_cran()
   skip_if(nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_")),
           "parallel tests limited in check environments")
+  skip_if_not(can_open_server_socket(), "server sockets unavailable")
 
   costs <- list(
     matrix(runif(9), 3, 3),
@@ -301,6 +311,7 @@ test_that("lap_solve_batch handles sparse matrices", {
 
 test_that("lap_solve_batch grouped parallel handles many groups", {
   skip_on_cran()
+  skip_if_not(can_open_server_socket(), "server sockets unavailable")
 
   df <- tibble::tibble(
     sim = rep(1:10, each = 4),
@@ -323,6 +334,7 @@ test_that("lap_solve_batch grouped parallel handles many groups", {
 
 test_that("lap_solve_batch parallel execution for many matrices", {
   skip_on_cran()
+  skip_if_not(can_open_server_socket(), "server sockets unavailable")
 
   # Need >= 4 problems to trigger parallel execution
   costs <- lapply(1:6, function(i) matrix(runif(9), 3, 3))
@@ -337,6 +349,7 @@ test_that("lap_solve_batch grouped with n_threads = NULL", {
   skip_on_cran()
   skip_if(nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_")),
           "parallel tests limited in check environments")
+  skip_if_not(can_open_server_socket(), "server sockets unavailable")
 
   df <- tibble::tibble(
     sim = rep(1:5, each = 4),

@@ -19,7 +19,8 @@ greedy_couples_blocked(
   strategy,
   parallel = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 }
 \value{

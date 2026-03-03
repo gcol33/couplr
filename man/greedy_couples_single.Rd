@@ -17,7 +17,8 @@ greedy_couples_single(
   calipers,
   strategy,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 }
 \value{

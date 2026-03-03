@@ -22,7 +22,8 @@
   strict_no_pairs = FALSE,
   parallel = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 }
 \arguments{

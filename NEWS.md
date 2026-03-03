@@ -1,3 +1,69 @@
+# couplr 1.2.0
+
+## New Features
+
+### Full Matching
+
+* **New `full_match()` function** assigns every unit to a matched group
+  with variable ratios (1:k or k:1):
+  - Greedy group formation: match each left to nearest right, then assign
+    remaining right units to nearest matched left
+  - Caliper support: `caliper` (absolute) or `caliper_sd` (SD-based)
+  - Control group size constraints: `min_controls`, `max_controls`
+  - Weights inversely proportional to group size
+  - Returns `full_matching_result` S3 class
+
+### Coarsened Exact Matching (CEM)
+
+* **New `cem_match()` function** implements coarsened exact matching:
+  - Coarsens continuous variables into bins (Sturges, FD, Scott, or custom)
+  - Exact matching on coarsened values with stratum-based weights
+  - Support for categorical grouping variables via `grouping` parameter
+  - Custom cutpoints per variable via `cutpoints` parameter
+  - Returns `cem_result` S3 class with matched units and strata summary
+
+### Subclassification
+
+* **New `subclass_match()` function** divides units into propensity score
+  strata:
+  - Quantile-based stratification with configurable number of subclasses
+  - Supports pre-computed PS, pre-fitted models, or formula interface
+  - Target estimands: ATT, ATE, ATC with appropriate weighting
+  - Returns `subclass_result` S3 class with subclass summary
+
+### Output Layer & Ecosystem Integration
+
+* **New `match_data()` generic** converts any couplr result to analysis-ready
+  format with `treatment`, `weights`, `subclass`, and `distance` columns.
+  Methods for all result types (matching, full, CEM, subclass).
+* **New `as_matchit()` converter** creates `matchit`-class objects from couplr
+  results, enabling interop with cobalt, marginaleffects, and other MatchIt
+  ecosystem packages.
+* **cobalt `bal.tab()` methods** for all couplr result types. Requires
+  cobalt package (in Suggests).
+
+### Mahalanobis Distance Improvements
+
+* **Robust singularity check** using `rcond()` instead of fragile `det() == 0`
+* **Custom `sigma` parameter** in `match_couples()`, `greedy_couples()`, and
+  `compute_distance_matrix()` for user-supplied covariance matrices
+* **Vectorized computation** replacing nested R for-loops for ~10x speedup
+
+### S3 Generics
+
+* `balance_diagnostics()` and `join_matched()` are now S3 generics with
+  methods for all result types. Existing code is 100% backward-compatible.
+
+### New Functions
+
+* `full_match()` - Variable-ratio full matching
+* `cem_match()` - Coarsened exact matching
+* `subclass_match()` - Propensity score subclassification
+* `match_data()` - Unified analysis-ready output
+* `as_matchit()` - Convert to MatchIt format
+
+---
+
 # couplr 1.1.0
 
 ## New Features

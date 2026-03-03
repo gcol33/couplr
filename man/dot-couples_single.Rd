@@ -20,7 +20,8 @@
   check_costs = FALSE,
   strict_no_pairs = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 }
 \arguments{

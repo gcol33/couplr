@@ -77,6 +77,9 @@ reference:
   - matchmaker
   - ps_match
   - cardinality_match
+  - full_match
+  - cem_match
+  - subclass_match
 - title: Balance Diagnostics & Analysis
   desc: Assess match quality and sensitivity to hidden bias
   contents:
@@ -90,11 +93,17 @@ reference:
   - update_constraints
   - preprocess_matching_vars
   - diagnose_distance_matrix
-- title: Joined Datasets
+- title: Joined Datasets & Output
   desc: Create analysis-ready merged datasets
   contents:
   - join_matched
+  - match_data
   - starts_with("augment")
+- title: Ecosystem Integration
+  desc: Interoperability with MatchIt, cobalt, and marginaleffects
+  contents:
+  - as_matchit
+  - starts_with("bal.tab")
 - title: Utility Functions
   desc: Helper functions for working with results
   contents:
@@ -128,6 +137,9 @@ reference:
   - print.balance_diagnostics
   - print.distance_object
   - print.preprocessing_result
+  - print.full_matching_result
+  - print.cem_result
+  - print.subclass_result
   - print.variable_health
   - summary.lap_solve_kbest_result
   - summary.distance_object

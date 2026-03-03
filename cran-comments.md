@@ -15,7 +15,7 @@
 
 None.
 
-## Changes in this version (1.2.0)
+## Changes in this version (1.1.0)
 
 Feature release adding matching extensions and analysis tools:
 

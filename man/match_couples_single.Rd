@@ -16,7 +16,9 @@ match_couples_single(
   max_distance,
   calipers,
   method,
-  check_costs = TRUE
+  check_costs = TRUE,
+  replace = FALSE,
+  ratio = 1L
 )
 }
 \value{

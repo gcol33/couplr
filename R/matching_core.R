@@ -22,7 +22,9 @@
                             max_distance, calipers,
                             solver_fn, solver_params = list(),
                             check_costs = FALSE,
-                            strict_no_pairs = FALSE) {
+                            strict_no_pairs = FALSE,
+                            replace = FALSE,
+                            ratio = 1L) {
 
   # Build cost matrix
   cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
@@ -61,6 +63,22 @@
     ))
   }
 
+  # --- Replacement matching ---
+  if (replace) {
+    return(.couples_replace(
+      cost_matrix, left, right, left_ids, right_ids, vars, ratio
+    ))
+  }
+
+  # --- k:1 matching (ratio > 1, without replacement) ---
+  if (ratio > 1L) {
+    return(.couples_ratio(
+      cost_matrix, left, right, left_ids, right_ids, vars, ratio,
+      solver_fn, solver_params
+    ))
+  }
+
+  # --- Standard 1:1 matching ---
   # Solve
   solver_result <- do.call(solver_fn, c(list(cost_matrix, maximize = FALSE),
                                         solver_params))
@@ -119,6 +137,148 @@
       solver = solver_result$method_used,
       n_matched = nrow(pairs),
       total_distance = sum(pairs$distance, na.rm = TRUE)
+    )
+  )
+}
+
+#' Replacement matching: each left picks its best right independently
+#'
+#' @return List with pairs tibble, unmatched list, and info list.
+#' @keywords internal
+.couples_replace <- function(cost_matrix, left, right,
+                             left_ids, right_ids, vars, ratio = 1L) {
+  n_left <- nrow(cost_matrix)
+  n_right <- ncol(cost_matrix)
+  all_pairs <- list()
+
+  for (i in seq_len(n_left)) {
+    row_costs <- cost_matrix[i, ]
+    # Find the k best right units
+    k <- min(ratio, n_right)
+    ordered_cols <- order(row_costs)[seq_len(k)]
+    ordered_dists <- row_costs[ordered_cols]
+
+    # Keep only valid (< BIG_COST)
+    valid <- ordered_dists < BIG_COST
+    if (any(valid)) {
+      cols <- ordered_cols[valid]
+      dists <- ordered_dists[valid]
+
+      pair_df <- tibble::tibble(
+        left_id = rep(left_ids[i], length(cols)),
+        right_id = right_ids[cols],
+        distance = dists
+      )
+
+      # Add variable differences
+      for (v in vars) {
+        pair_df[[paste0(".", v, "_diff")]] <- left[[v]][i] - right[[v]][cols]
+      }
+
+      all_pairs[[length(all_pairs) + 1]] <- pair_df
+    }
+  }
+
+  if (length(all_pairs) > 0) {
+    pairs <- dplyr::bind_rows(all_pairs)
+  } else {
+    pairs <- tibble::tibble(
+      left_id = character(0), right_id = character(0), distance = numeric(0)
+    )
+  }
+
+  # Unmatched: left units with no valid match
+  matched_left_ids <- unique(pairs$left_id)
+  matched_right_ids <- unique(pairs$right_id)
+
+  list(
+    pairs = pairs,
+    unmatched = list(
+      left = setdiff(left_ids, matched_left_ids),
+      right = setdiff(right_ids, matched_right_ids)
+    ),
+    info = list(
+      n_matched = nrow(pairs),
+      total_distance = sum(pairs$distance, na.rm = TRUE),
+      replace = TRUE,
+      ratio = ratio
+    )
+  )
+}
+
+#' k:1 matching via cost matrix expansion
+#'
+#' Replicates left-side rows k times so each left unit can match up to k
+#' different right units. Solves as standard LAP, then maps expanded rows
+#' back to original left indices.
+#'
+#' @return List with pairs tibble, unmatched list, and info list.
+#' @keywords internal
+.couples_ratio <- function(cost_matrix, left, right,
+                           left_ids, right_ids, vars, ratio,
+                           solver_fn, solver_params) {
+  n_left <- nrow(cost_matrix)
+  n_right <- ncol(cost_matrix)
+
+  # Expand: replicate each left row `ratio` times
+  row_map <- rep(seq_len(n_left), each = ratio)
+  expanded_cost <- cost_matrix[row_map, , drop = FALSE]
+
+  # Solve the expanded problem
+  solver_result <- do.call(solver_fn, c(list(expanded_cost, maximize = FALSE),
+                                        solver_params))
+
+  # Extract matches and map back to original left indices
+  matched_exp_rows <- which(solver_result$match > 0)
+
+  if (length(matched_exp_rows) == 0) {
+    pairs <- tibble::tibble(
+      left_id = character(0), right_id = character(0), distance = numeric(0)
+    )
+    original_rows <- integer(0)
+    matched_cols <- integer(0)
+  } else {
+    original_rows <- row_map[matched_exp_rows]
+    matched_cols <- solver_result$match[matched_exp_rows]
+
+    # Get distances from original cost matrix
+    distances <- vapply(seq_along(matched_exp_rows), function(i) {
+      cost_matrix[original_rows[i], matched_cols[i]]
+    }, numeric(1))
+
+    # Filter out BIG_COST
+    valid <- distances < BIG_COST
+    original_rows <- original_rows[valid]
+    matched_cols <- matched_cols[valid]
+    distances <- distances[valid]
+
+    pairs <- tibble::tibble(
+      left_id = left_ids[original_rows],
+      right_id = right_ids[matched_cols],
+      distance = distances
+    )
+
+    for (v in vars) {
+      pairs[[paste0(".", v, "_diff")]] <- left[[v]][original_rows] -
+        right[[v]][matched_cols]
+    }
+  }
+
+  # Unmatched
+  unmatched_left <- setdiff(seq_len(n_left), unique(original_rows))
+  unmatched_right <- setdiff(seq_len(n_right), unique(matched_cols))
+
+  list(
+    pairs = pairs,
+    unmatched = list(
+      left = left_ids[unmatched_left],
+      right = right_ids[unmatched_right]
+    ),
+    info = list(
+      solver = solver_result$method_used,
+      n_matched = nrow(pairs),
+      total_distance = sum(pairs$distance, na.rm = TRUE),
+      ratio = ratio
     )
   )
 }
@@ -306,7 +466,9 @@
                              solver_fn, solver_params = list(),
                              check_costs = FALSE,
                              strict_no_pairs = FALSE,
-                             parallel = FALSE) {
+                             parallel = FALSE,
+                             replace = FALSE,
+                             ratio = 1L) {
 
   blocks <- unique(c(left[[block_col]], right[[block_col]]))
 
@@ -318,7 +480,8 @@
       max_distance, calipers,
       solver_fn = solver_fn, solver_params = solver_params,
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
-      parallel = TRUE
+      parallel = TRUE,
+      replace = replace, ratio = ratio
     )
 
     # Reorder columns to put block_id first
@@ -383,7 +546,8 @@
       vars, distance, weights, scale,
       max_distance, calipers,
       solver_fn = solver_fn, solver_params = solver_params,
-      check_costs = check_costs, strict_no_pairs = strict_no_pairs
+      check_costs = check_costs, strict_no_pairs = strict_no_pairs,
+      replace = replace, ratio = ratio
     )
 
     # Add block_id column
@@ -486,6 +650,10 @@
 #'   - `FALSE`: Sequential processing (default)
 #'   - `TRUE`: Auto-configure parallel backend
 #'   - Character: Specify future plan (e.g., "multisession", "multicore")
+#' @param replace If TRUE, allow matching with replacement (same right unit
+#'   can be matched to multiple left units). Default: FALSE.
+#' @param ratio Integer, number of right units to match per left unit.
+#'   Default: 1 (one-to-one matching). For k:1 matching, set ratio = k.
 #' @param check_costs If TRUE, check distance distribution for potential problems
 #'   and provide helpful warnings before matching (default: TRUE)
 #'
@@ -528,7 +696,18 @@ match_couples <- function(left, right = NULL,
                           return_unmatched = TRUE,
                           return_diagnostics = FALSE,
                           parallel = FALSE,
+                          replace = FALSE,
+                          ratio = 1L,
                           check_costs = TRUE) {
+
+  # Validate replace and ratio
+  if (!is.logical(replace) || length(replace) != 1) {
+    stop("replace must be TRUE or FALSE", call. = FALSE)
+  }
+  ratio <- as.integer(ratio)
+  if (length(ratio) != 1 || is.na(ratio) || ratio < 1L) {
+    stop("ratio must be a positive integer", call. = FALSE)
+  }
 
   # Check if left is a distance_object
   if (is_distance_object(left)) {
@@ -605,7 +784,8 @@ match_couples <- function(left, right = NULL,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
       method = method,
-      parallel = parallel_state$setup
+      parallel = parallel_state$setup,
+      replace = replace, ratio = ratio
     )
   } else {
     # Single matching
@@ -614,7 +794,8 @@ match_couples <- function(left, right = NULL,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
       method = method,
-      check_costs = check_costs
+      check_costs = check_costs,
+      replace = replace, ratio = ratio
     )
   }
 
@@ -633,6 +814,8 @@ match_couples <- function(left, right = NULL,
   result$info$scaled <- !identical(scale, FALSE)
   result$info$n_left <- nrow(left)
   result$info$n_right <- nrow(right)
+  if (replace) result$info$replace <- TRUE
+  if (ratio > 1L) result$info$ratio <- ratio
 
   if (!return_unmatched) {
     result$unmatched <- NULL
@@ -684,7 +867,8 @@ match_couples_from_distance <- function(dist_obj,
 match_couples_single <- function(left, right, left_ids, right_ids,
                                  vars, distance, weights, scale,
                                  max_distance, calipers, method,
-                                 check_costs = TRUE) {
+                                 check_costs = TRUE,
+                                 replace = FALSE, ratio = 1L) {
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
@@ -692,7 +876,8 @@ match_couples_single <- function(left, right, left_ids, right_ids,
     solver_fn = assignment,
     solver_params = list(method = method),
     check_costs = check_costs,
-    strict_no_pairs = TRUE
+    strict_no_pairs = TRUE,
+    replace = replace, ratio = ratio
   )
 }
 
@@ -703,7 +888,8 @@ match_couples_single <- function(left, right, left_ids, right_ids,
 match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   block_col, vars, distance, weights, scale,
                                   max_distance, calipers, method,
-                                  parallel = FALSE) {
+                                  parallel = FALSE,
+                                  replace = FALSE, ratio = 1L) {
   .couples_blocked(
     left, right, left_ids, right_ids,
     block_col, vars, distance, weights, scale,
@@ -712,7 +898,8 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
     solver_params = list(method = method),
     check_costs = FALSE,
     strict_no_pairs = TRUE,
-    parallel = parallel
+    parallel = parallel,
+    replace = replace, ratio = ratio
   )
 }
 
@@ -825,9 +1012,20 @@ greedy_couples <- function(left, right = NULL,
                            return_unmatched = TRUE,
                            return_diagnostics = FALSE,
                            parallel = FALSE,
+                           replace = FALSE,
+                           ratio = 1L,
                            check_costs = TRUE) {
 
   strategy <- match.arg(strategy)
+
+  # Validate replace and ratio
+  if (!is.logical(replace) || length(replace) != 1) {
+    stop("replace must be TRUE or FALSE", call. = FALSE)
+  }
+  ratio <- as.integer(ratio)
+  if (length(ratio) != 1 || is.na(ratio) || ratio < 1L) {
+    stop("ratio must be a positive integer", call. = FALSE)
+  }
 
   # Check if left is a distance_object
   if (is_distance_object(left)) {
@@ -898,7 +1096,8 @@ greedy_couples <- function(left, right = NULL,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
       strategy = strategy,
-      parallel = parallel_state$setup
+      parallel = parallel_state$setup,
+      replace = replace, ratio = ratio
     )
   } else {
     # Single matching
@@ -906,7 +1105,8 @@ greedy_couples <- function(left, right = NULL,
       left, right, left_ids, right_ids,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      strategy = strategy
+      strategy = strategy,
+      replace = replace, ratio = ratio
     )
   }
 
@@ -926,6 +1126,8 @@ greedy_couples <- function(left, right = NULL,
   result$info$scaled <- !identical(scale, FALSE)
   result$info$n_left <- nrow(left)
   result$info$n_right <- nrow(right)
+  if (replace) result$info$replace <- TRUE
+  if (ratio > 1L) result$info$ratio <- ratio
 
   if (!return_unmatched) {
     result$unmatched <- NULL
@@ -981,7 +1183,8 @@ greedy_couples_from_distance <- function(dist_obj,
 #' @keywords internal
 greedy_couples_single <- function(left, right, left_ids, right_ids,
                                   vars, distance, weights, scale,
-                                  max_distance, calipers, strategy) {
+                                  max_distance, calipers, strategy,
+                                  replace = FALSE, ratio = 1L) {
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
@@ -989,7 +1192,8 @@ greedy_couples_single <- function(left, right, left_ids, right_ids,
     solver_fn = greedy_matching,
     solver_params = list(strategy = strategy),
     check_costs = FALSE,
-    strict_no_pairs = FALSE
+    strict_no_pairs = FALSE,
+    replace = replace, ratio = ratio
   )
 }
 
@@ -1000,7 +1204,8 @@ greedy_couples_single <- function(left, right, left_ids, right_ids,
 greedy_couples_blocked <- function(left, right, left_ids, right_ids,
                                    block_col, vars, distance, weights, scale,
                                    max_distance, calipers, strategy,
-                                   parallel = FALSE) {
+                                   parallel = FALSE,
+                                   replace = FALSE, ratio = 1L) {
   .couples_blocked(
     left, right, left_ids, right_ids,
     block_col, vars, distance, weights, scale,
@@ -1009,7 +1214,8 @@ greedy_couples_blocked <- function(left, right, left_ids, right_ids,
     solver_params = list(strategy = strategy),
     check_costs = FALSE,
     strict_no_pairs = FALSE,
-    parallel = parallel
+    parallel = parallel,
+    replace = replace, ratio = ratio
   )
 }
 
@@ -1068,6 +1274,23 @@ summary.matching_result <- function(object, ...) {
   mean_dist <- if (n_matched > 0) total_dist / n_matched else NA_real_
   distances <- object$pairs$distance
 
+  # Match rate: proportion of the smaller side that was matched
+  n_left <- object$info$n_left %||% NA_integer_
+  n_right <- object$info$n_right %||% NA_integer_
+  match_rate <- if (!is.na(n_left) && !is.na(n_right) && min(n_left, n_right) > 0) {
+    n_matched / min(n_left, n_right)
+  } else {
+    NA_real_
+  }
+
+  # Distance percentiles
+  distance_percentiles <- if (length(distances) > 0) {
+    stats::quantile(distances, c(0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95),
+                    na.rm = TRUE)
+  } else {
+    NULL
+  }
+
   # Build summary list
   out <- list(
     method = object$info$method,
@@ -1076,6 +1299,7 @@ summary.matching_result <- function(object, ...) {
     n_blocks = object$info$n_blocks %||% 1L,
     total_distance = total_dist,
     mean_distance = mean_dist,
+    match_rate = match_rate,
     distance_stats = if (length(distances) > 0) {
       list(
         min = min(distances, na.rm = TRUE),
@@ -1086,8 +1310,11 @@ summary.matching_result <- function(object, ...) {
         sd = stats::sd(distances, na.rm = TRUE)
       )
     } else NULL,
+    distance_percentiles = distance_percentiles,
     n_unmatched_left = if (!is.null(object$unmatched)) length(object$unmatched$left) else NA_integer_,
-    n_unmatched_right = if (!is.null(object$unmatched)) length(object$unmatched$right) else NA_integer_
+    n_unmatched_right = if (!is.null(object$unmatched)) length(object$unmatched$right) else NA_integer_,
+    replace = object$info$replace %||% FALSE,
+    ratio = object$info$ratio %||% 1L
   )
 
   class(out) <- "summary.matching_result"
@@ -1106,6 +1333,13 @@ print.summary.matching_result <- function(x, ...) {
   cat("Pairs matched:", x$n_matched, "\n")
   if (x$n_blocks > 1) cat("Blocks:", x$n_blocks, "\n")
 
+  if (!is.na(x$match_rate)) {
+    cat("Match rate:", sprintf("%.1f%%", x$match_rate * 100), "\n")
+  }
+
+  if (isTRUE(x$replace)) cat("Replacement: yes\n")
+  if (!is.null(x$ratio) && x$ratio > 1) cat("Ratio:", x$ratio, ":1\n")
+
   if (!is.na(x$n_unmatched_left)) {
     cat("Unmatched: ", x$n_unmatched_left, " left, ",
         x$n_unmatched_right, " right\n", sep = "")
@@ -1123,6 +1357,14 @@ print.summary.matching_result <- function(x, ...) {
     cat("  Q3:", sprintf("%.4f", ds$q3), "\n")
     cat("  Max:", sprintf("%.4f", ds$max), "\n")
     cat("  SD:", sprintf("%.4f", ds$sd), "\n")
+  }
+
+  if (!is.null(x$distance_percentiles)) {
+    cat("\nDistance Percentiles:\n")
+    pct_names <- names(x$distance_percentiles)
+    for (i in seq_along(x$distance_percentiles)) {
+      cat(sprintf("  %s: %.4f\n", pct_names[i], x$distance_percentiles[i]))
+    }
   }
 
   invisible(x)

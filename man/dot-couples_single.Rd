@@ -18,7 +18,9 @@
   solver_fn,
   solver_params = list(),
   check_costs = FALSE,
-  strict_no_pairs = FALSE
+  strict_no_pairs = FALSE,
+  replace = FALSE,
+  ratio = 1L
 )
 }
 \arguments{

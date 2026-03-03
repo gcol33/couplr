@@ -21,6 +21,8 @@ match_couples(
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   parallel = FALSE,
+  replace = FALSE,
+  ratio = 1L,
   check_costs = TRUE
 )
 }
@@ -64,6 +66,12 @@ Requires 'future' and 'future.apply' packages. Can be:
 \item \code{TRUE}: Auto-configure parallel backend
 \item Character: Specify future plan (e.g., "multisession", "multicore")
 }}
+
+\item{replace}{If TRUE, allow matching with replacement (same right unit
+can be matched to multiple left units). Default: FALSE.}
+
+\item{ratio}{Integer, number of right units to match per left unit.
+Default: 1 (one-to-one matching). For k:1 matching, set ratio = k.}
 
 \item{check_costs}{If TRUE, check distance distribution for potential problems
 and provide helpful warnings before matching (default: TRUE)}

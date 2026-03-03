@@ -17,7 +17,9 @@ match_couples_blocked(
   max_distance,
   calipers,
   method,
-  parallel = FALSE
+  parallel = FALSE,
+  replace = FALSE,
+  ratio = 1L
 )
 }
 \value{

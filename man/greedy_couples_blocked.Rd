@@ -17,7 +17,9 @@ greedy_couples_blocked(
   max_distance,
   calipers,
   strategy,
-  parallel = FALSE
+  parallel = FALSE,
+  replace = FALSE,
+  ratio = 1L
 )
 }
 \value{

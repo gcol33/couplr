@@ -630,8 +630,7 @@ model <- lm(outcome ~ treatment, data = matched_data)
 
 Different packages excel at different tasks:
 
-```{r, eval = FALSE
-}
+```{r, eval = FALSE}
 # Use couplr for: initial exploration, large-scale matching, distance caching
 # Use MatchIt for: propensity scores, full matching, published protocols
 # Use optmatch for: optimal full matching with sparse distances

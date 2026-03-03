@@ -1573,32 +1573,41 @@ This is useful when you need strict balance guarantees and are willing to sacrif
 After matching, a natural question is: *how much hidden bias would be needed to invalidate the results?* Rosenbaum bounds address this by computing p-values under varying degrees of unobserved confounding.
 
 ```{r sensitivity-analysis}
-# Add an outcome variable
-left_outcome <- transform(left_data, outcome = age * 0.5 + income / 10000 + rnorm(nrow(left_data)))
-right_outcome <- transform(right_data, outcome = age * 0.3 + income / 10000 + rnorm(nrow(right_data)))
+# Simulate a modest treatment effect (small enough that hidden bias matters)
+set.seed(99)
+n_sa <- 50
+left_sa <- data.frame(
+  id = 1:n_sa,
+  x = rnorm(n_sa, 5, 2),
+  outcome = rnorm(n_sa, mean = 1.0, sd = 2)
+)
+right_sa <- data.frame(
+  id = (n_sa + 1):(2 * n_sa),
+  x = rnorm(n_sa, 5, 2),
+  outcome = rnorm(n_sa, mean = 0.3, sd = 2)
+)
 
-# Run matching first
+# Match on covariate x
 result_sa <- match_couples(
-  left = left_outcome,
-  right = right_outcome,
-  vars = c("age", "income"),
-  auto_scale = TRUE,
+  left = left_sa,
+  right = right_sa,
+  vars = "x",
   method = "hungarian"
 )
 
-# Sensitivity analysis
+# How robust is the result to hidden bias?
 sa <- sensitivity_analysis(
   result = result_sa,
-  left = left_outcome,
-  right = right_outcome,
+  left = left_sa,
+  right = right_sa,
   outcome_var = "outcome",
-  gamma = seq(1, 3, by = 0.5)
+  gamma = seq(1, 2, by = 0.25)
 )
 
 sa
 ```
 
-The **critical gamma** ($\Gamma$) is the smallest value at which the upper-bound p-value crosses 0.05. A critical gamma of 2.0, for example, means an unobserved confounder would need to change the odds of treatment by a factor of 2 to explain away the result.
+The **critical gamma** ($\Gamma$) is the smallest value at which the upper-bound p-value crosses 0.05. A larger critical gamma means the finding is more robust: a critical gamma of 1.75, for example, means an unobserved confounder would need to change the odds of treatment by a factor of 1.75 to explain away the result.
 
 ---
 

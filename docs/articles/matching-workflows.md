@@ -545,7 +545,7 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 185.56 seconds
+#>   Time: 182.39 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
@@ -556,7 +556,7 @@ cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 128.9 x
+#>   Speedup: 126.7 x
 ```
 
 ### Greedy Strategies
@@ -655,8 +655,8 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.06        0.0912          18.24
-#> elapsed1 row_best     0.04        0.0968          19.36
+#> elapsed    sorted     0.07        0.0912          18.24
+#> elapsed1 row_best     0.06        0.0968          19.36
 #> elapsed2       pq     0.08        0.0912          18.24
 ```
 
@@ -1811,54 +1811,64 @@ needed to invalidate the results?* Rosenbaum bounds address this by
 computing p-values under varying degrees of unobserved confounding.
 
 ``` r
-# Add an outcome variable
-left_outcome <- transform(left_data, outcome = age * 0.5 + income / 10000 + rnorm(nrow(left_data)))
-right_outcome <- transform(right_data, outcome = age * 0.3 + income / 10000 + rnorm(nrow(right_data)))
+# Simulate a modest treatment effect (small enough that hidden bias matters)
+set.seed(99)
+n_sa <- 50
+left_sa <- data.frame(
+  id = 1:n_sa,
+  x = rnorm(n_sa, 5, 2),
+  outcome = rnorm(n_sa, mean = 1.0, sd = 2)
+)
+right_sa <- data.frame(
+  id = (n_sa + 1):(2 * n_sa),
+  x = rnorm(n_sa, 5, 2),
+  outcome = rnorm(n_sa, mean = 0.3, sd = 2)
+)
 
-# Run matching first
+# Match on covariate x
 result_sa <- match_couples(
-  left = left_outcome,
-  right = right_outcome,
-  vars = c("age", "income"),
-  auto_scale = TRUE,
+  left = left_sa,
+  right = right_sa,
+  vars = "x",
   method = "hungarian"
 )
-#> Auto-selected scaling method: standardize
 
-# Sensitivity analysis
+# How robust is the result to hidden bias?
 sa <- sensitivity_analysis(
   result = result_sa,
-  left = left_outcome,
-  right = right_outcome,
+  left = left_sa,
+  right = right_sa,
   outcome_var = "outcome",
-  gamma = seq(1, 3, by = 0.5)
+  gamma = seq(1, 2, by = 0.25)
 )
 
 sa
 #> Rosenbaum Sensitivity Analysis
 #> ==============================
 #> 
-#> Matched pairs: 100 
+#> Matched pairs: 50 
 #> Alternative: greater 
-#> Test statistic (T+): 4939.0 
+#> Test statistic (T+): 850.0 
 #> 
 #> Gamma    p (upper bound)
 #> -----    ---------------
-#> 1.00     0.0000 *
-#> 1.50     0.0000 *
-#> 2.00     0.0000 *
-#> 2.50     0.0000 *
-#> 3.00     0.0000 *
+#> 1.00     0.0204 *
+#> 1.25     0.0852
+#> 1.50     0.2026
+#> 1.75     0.3510
+#> 2.00     0.5020
 #> 
 #> * significant at alpha = 0.05
 #> 
-#> Result is insensitive to bias at all tested Gamma values
+#> Insensitive to hidden bias up to Gamma = 1.00
+#> To explain away the effect, hidden bias would need Gamma >= 1.25
 ```
 
 The **critical gamma** ($`\Gamma`$) is the smallest value at which the
-upper-bound p-value crosses 0.05. A critical gamma of 2.0, for example,
-means an unobserved confounder would need to change the odds of
-treatment by a factor of 2 to explain away the result.
+upper-bound p-value crosses 0.05. A larger critical gamma means the
+finding is more robust: a critical gamma of 1.75, for example, means an
+unobserved confounder would need to change the odds of treatment by a
+factor of 1.75 to explain away the result.
 
 ------------------------------------------------------------------------
 

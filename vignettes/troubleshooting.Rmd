@@ -157,7 +157,8 @@ right <- tibble(
   income = rnorm(100, 40000, 10000)  # Very different income
 )
 
-result <- match_couples(left, right, vars = c("age", "income"), auto_scale = TRUE)
+result <- match_couples(left, right, vars = c("age", "income"), auto_scale = TRUE,
+                        method = "hungarian")
 balance <- balance_diagnostics(result, left, right, vars = c("age", "income"))
 print(balance)
 ```
@@ -192,7 +193,8 @@ result_strict <- match_couples(
   left, right,
   vars = c("age", "income"),
   max_distance = 0.3,  # Stricter caliper
-  auto_scale = TRUE
+  auto_scale = TRUE,
+  method = "hungarian"
 )
 
 cat("Original matches:", result$info$n_matched, "\n")
@@ -223,7 +225,8 @@ result_blocked <- match_couples(
 # Compare scaling methods
 for (scale_method in c("robust", "standardize", "range")) {
   res <- match_couples(left, right, vars = c("age", "income"),
-                       auto_scale = TRUE, scale = scale_method)
+                       auto_scale = TRUE, scale = scale_method,
+                       method = "hungarian")
   bal <- balance_diagnostics(res, left, right, vars = c("age", "income"))
   cat(scale_method, "- max |std_diff|:",
       round(bal$overall$max_abs_std_diff, 3), "\n")
@@ -337,9 +340,9 @@ dist_cache <- compute_distances(
 )
 
 # Fast: reuse cached distances
-result1 <- match_couples(dist_cache, max_distance = 0.3)
-result2 <- match_couples(dist_cache, max_distance = 0.5)
-result3 <- match_couples(dist_cache, max_distance = 1.0)
+result1 <- match_couples(dist_cache, max_distance = 0.3, method = "hungarian")
+result2 <- match_couples(dist_cache, max_distance = 0.5, method = "hungarian")
+result3 <- match_couples(dist_cache, max_distance = 1.0, method = "hungarian")
 ```
 
 ---

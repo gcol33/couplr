@@ -307,6 +307,21 @@ Full matching is useful when your control pool is much larger than treatment and
 
 ---
 
+## Other Matching Methods
+
+couplr also supports several alternative matching strategies. Each is covered in detail in `vignette("matching-workflows")`:
+- **`cem_match()`** — Coarsened exact matching: bins continuous variables and matches exactly within strata, avoiding model dependence
+
+- **`subclass_match()`** — Propensity score subclassification: divides units into PS strata with target estimand weighting (ATT, ATE, ATC)
+
+- **`ps_match()`** — Propensity score matching with a logit caliper
+
+- **`cardinality_match()`** — Maximizes sample size subject to strict balance constraints
+
+All result types work with `balance_diagnostics()`, `match_data()`, and `as_matchit()` for ecosystem interoperability with cobalt and marginaleffects.
+
+---
+
 ## Complete Example
 
 Here's a realistic workflow from start to finish:

@@ -22,6 +22,7 @@ automatic preprocessing and balance diagnostics.
 ## Quick Start
 
 ``` r
+
 library(couplr)
 
 # Match treatment and control groups on covariates
@@ -83,8 +84,20 @@ These features make the package useful in domains like:
 - **[`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)**:
   Propensity score matching
   - Logistic regression or pre-fitted model
-  - Logit caliper (default: 0.2 SD per Rosenbaum & Rubin)
+  - Logit caliper (default: 0.2 SD per [Rosenbaum & Rubin,
+    1985](https://doi.org/10.1080/00031305.1985.10479383))
   - Supports ratio and replacement matching
+- **[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)**:
+  Variable-ratio full matching
+  - Optimal (min-cost max-flow) or greedy group formation
+  - Constraints: `min_controls`, `max_controls`, `caliper`
+- **[`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)**:
+  Coarsened exact matching
+  - Automatic binning (Sturges, FD, Scott) or custom cutpoints
+  - Model-free: no distance function or propensity score needed
+- **[`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)**:
+  Propensity score subclassification
+  - Quantile-based stratification with ATT/ATE/ATC weighting
 - **[`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)**:
   Balance-constrained matching
   - Maximizes sample size subject to balance thresholds
@@ -92,18 +105,28 @@ These features make the package useful in domains like:
 - **Ratio matching**: k:1 matching via `ratio` parameter
 - **Replacement matching**: with-replacement via `replace` parameter
 
+### Ecosystem Integration
+
+- **[`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)**:
+  Unified analysis-ready output with treatment, weights, subclass
+  columns
+- **[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)**:
+  Convert any couplr result to `matchit`-class for cobalt and
+  marginaleffects
+- **`bal.tab()` methods** for direct cobalt integration
+
 ### Balance Diagnostics & Analysis
 
 - **[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)**:
   Comprehensive balance assessment
   - Standardized differences, variance ratios, KS tests
   - Quality thresholds: \<0.1 excellent, 0.1-0.25 good, 0.25-0.5
-    acceptable
+    acceptable ([Austin, 2009](https://doi.org/10.1002/sim.3697))
   - Per-block statistics when blocking is used
   - Publication-ready tables via
     [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
 - **[`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)**:
-  Rosenbaum bounds
+  [Rosenbaum bounds](https://doi.org/10.1007/978-1-4757-3692-2)
   - Assesses sensitivity to hidden bias
   - Reports critical gamma for inference robustness
 - **`autoplot()` methods** for ggplot2 visualizations of matching
@@ -125,6 +148,7 @@ These features make the package useful in domains like:
 ## Installation
 
 ``` r
+
 # Install from CRAN
 install.packages("couplr")
 
@@ -138,6 +162,7 @@ pak::pak("gcol33/couplr")
 ### Optimal Matching (`match_couples`)
 
 ``` r
+
 library(couplr)
 
 # Basic matching with automatic scaling
@@ -170,6 +195,7 @@ result$pairs
 ### Greedy Matching (`greedy_couples`)
 
 ``` r
+
 # Fast matching for large datasets
 result <- greedy_couples(
   treated, control,
@@ -189,6 +215,7 @@ result <- greedy_couples(
 ### Low-Level LAP Solving
 
 ``` r
+
 # Solve a cost matrix
 cost <- matrix(c(4, 2, 8, 4, 3, 7, 3, 1, 6), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost)
@@ -225,6 +252,7 @@ if runtime is too long.
 Precompute distances for rapid experimentation:
 
 ``` r
+
 # Compute once
 dist_obj <- compute_distances(treated, control, vars = c("age", "income"))
 
@@ -238,6 +266,7 @@ result2 <- match_couples(dist_obj, max_distance = 0.5)
 Speed up blocked matching with multi-core processing:
 
 ``` r
+
 result <- match_couples(
   treated, control,
   vars = c("age", "income"),
@@ -251,6 +280,7 @@ result <- match_couples(
 Match on estimated propensity scores with a logit caliper:
 
 ``` r
+
 result <- ps_match(
   treatment ~ age + income + education,
   data = combined_data,
@@ -263,6 +293,7 @@ result <- ps_match(
 Assess robustness of matched comparisons to hidden bias:
 
 ``` r
+
 sa <- sensitivity_analysis(result, treated, control, outcome_var = "outcome")
 summary(sa)
 # Critical gamma: 1.75 — results robust to moderate hidden bias
@@ -273,6 +304,7 @@ summary(sa)
 Align images pixel-by-pixel using optimal assignment:
 
 ``` r
+
 morph <- pixel_morph(image_a, image_b)
 pixel_morph_animate(morph, "output.gif")
 ```

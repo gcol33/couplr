@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>couplr: Optimal Pairing and Matching via Linear Assignment • couplr</title>
-<script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -39,7 +45,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +77,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="news/index.html">Version 1.3.0</a></li>
+    <li><a class="dropdown-item" href="news/index.html">Version 1.2.0</a></li>
     <li><a class="dropdown-item" href="news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -177,8 +185,29 @@
 <strong><code><a href="reference/ps_match.html">ps_match()</a></code></strong>: Propensity score matching
 <ul>
 <li>Logistic regression or pre-fitted model</li>
-<li>Logit caliper (default: 0.2 SD per Rosenbaum &amp; Rubin)</li>
+<li>Logit caliper (default: 0.2 SD per <a href="https://doi.org/10.1080/00031305.1985.10479383" class="external-link">Rosenbaum &amp; Rubin, 1985</a>)</li>
 <li>Supports ratio and replacement matching</li>
+</ul>
+</li>
+<li>
+<strong><code><a href="reference/full_match.html">full_match()</a></code></strong>: Variable-ratio full matching
+<ul>
+<li>Optimal (min-cost max-flow) or greedy group formation</li>
+<li>Constraints: <code>min_controls</code>, <code>max_controls</code>, <code>caliper</code>
+</li>
+</ul>
+</li>
+<li>
+<strong><code><a href="reference/cem_match.html">cem_match()</a></code></strong>: Coarsened exact matching
+<ul>
+<li>Automatic binning (Sturges, FD, Scott) or custom cutpoints</li>
+<li>Model-free: no distance function or propensity score needed</li>
+</ul>
+</li>
+<li>
+<strong><code><a href="reference/subclass_match.html">subclass_match()</a></code></strong>: Propensity score subclassification
+<ul>
+<li>Quantile-based stratification with ATT/ATE/ATC weighting</li>
 </ul>
 </li>
 <li>
@@ -195,6 +224,18 @@
 </ul>
 </div>
 <div class="section level3">
+<h3 id="ecosystem-integration">Ecosystem Integration<a class="anchor" aria-label="anchor" href="#ecosystem-integration"></a>
+</h3>
+<ul>
+<li>
+<strong><code><a href="reference/match_data.html">match_data()</a></code></strong>: Unified analysis-ready output with treatment, weights, subclass columns</li>
+<li>
+<strong><code><a href="reference/as_matchit.html">as_matchit()</a></code></strong>: Convert any couplr result to <code>matchit</code>-class for cobalt and marginaleffects</li>
+<li>
+<strong><code>bal.tab()</code> methods</strong> for direct cobalt integration</li>
+</ul>
+</div>
+<div class="section level3">
 <h3 id="balance-diagnostics--analysis">Balance Diagnostics &amp; Analysis<a class="anchor" aria-label="anchor" href="#balance-diagnostics--analysis"></a>
 </h3>
 <ul>
@@ -202,14 +243,14 @@
 <strong><code><a href="reference/balance_diagnostics.html">balance_diagnostics()</a></code></strong>: Comprehensive balance assessment
 <ul>
 <li>Standardized differences, variance ratios, KS tests</li>
-<li>Quality thresholds: &lt;0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable</li>
+<li>Quality thresholds: &lt;0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable (<a href="https://doi.org/10.1002/sim.3697" class="external-link">Austin, 2009</a>)</li>
 <li>Per-block statistics when blocking is used</li>
 <li>Publication-ready tables via <code><a href="reference/balance_table.html">balance_table()</a></code>
 </li>
 </ul>
 </li>
 <li>
-<strong><code><a href="reference/sensitivity_analysis.html">sensitivity_analysis()</a></code></strong>: Rosenbaum bounds
+<strong><code><a href="reference/sensitivity_analysis.html">sensitivity_analysis()</a></code></strong>: <a href="https://doi.org/10.1007/978-1-4757-3692-2" class="external-link">Rosenbaum bounds</a>
 <ul>
 <li>Assesses sensitivity to hidden bias</li>
 <li>Reports critical gamma for inference robustness</li>

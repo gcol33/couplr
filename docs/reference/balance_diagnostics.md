@@ -6,14 +6,43 @@ matching variables between left and right units in the matched sample.
 ## Usage
 
 ``` r
+balance_diagnostics(result, ...)
+
+# S3 method for class 'matching_result'
 balance_diagnostics(
   result,
   left,
   right,
   vars = NULL,
   left_id = "id",
-  right_id = "id"
+  right_id = "id",
+  ...
 )
+
+# S3 method for class 'full_matching_result'
+balance_diagnostics(
+  result,
+  left,
+  right,
+  vars = NULL,
+  left_id = "id",
+  right_id = "id",
+  ...
+)
+
+# S3 method for class 'cem_result'
+balance_diagnostics(
+  result,
+  left,
+  right,
+  vars = NULL,
+  left_id = "id",
+  right_id = "id",
+  ...
+)
+
+# S3 method for class 'subclass_result'
+balance_diagnostics(result, data = NULL, vars = NULL, ...)
 ```
 
 ## Arguments
@@ -21,9 +50,16 @@ balance_diagnostics(
 - result:
 
   A matching result object from
-  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md),
+  [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md),
+  [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md),
   or
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
+  [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+
+- ...:
+
+  Additional arguments passed to methods
 
 - left:
 
@@ -45,6 +81,11 @@ balance_diagnostics(
 - right_id:
 
   Character, name of ID column in right data (default: "id")
+
+- data:
+
+  Data frame used for subclassification (when `result` is a
+  subclass_result)
 
 ## Value
 

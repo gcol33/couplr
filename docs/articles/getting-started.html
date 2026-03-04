@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Quick Start • couplr</title>
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -35,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +73,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -104,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-03-03</h4>
+            <h4 data-toc-skip class="date">2026-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -115,16 +123,21 @@ Colling</h4>
 <div class="section level2">
 <h2 id="what-couplr-does">What couplr Does<a class="anchor" aria-label="anchor" href="#what-couplr-does"></a>
 </h2>
-<p>couplr creates matched pairs from two groups of observations. Given a
-“left” group (e.g., treatment) and a “right” group (e.g., control), it
-finds the best one-to-one pairing based on similarity across variables
-you specify.</p>
+<p>couplr creates matched samples from two groups of observations. Given
+a “left” group (e.g., treatment) and a “right” group (e.g., control), it
+finds optimal pairings based on similarity across variables you specify.
+couplr supports both <strong>one-to-one matching</strong> (each
+treatment unit paired with one control) and <strong>full
+matching</strong> (variable-ratio groups where every unit is
+assigned).</p>
 <p><strong>Common use cases:</strong></p>
 <ul>
 <li><p>Matching treated patients to similar controls in observational
 studies</p></li>
 <li><p>Pairing survey respondents for comparison</p></li>
 <li><p>Creating balanced samples for causal inference</p></li>
+<li><p>Full matching when discarding unmatched units is
+undesirable</p></li>
 </ul>
 <div class="section level3">
 <h3 id="documentation-roadmap">Documentation Roadmap<a class="anchor" aria-label="anchor" href="#documentation-roadmap"></a>
@@ -564,10 +577,77 @@ Hospital A controls, etc.</p>
 <hr>
 </div>
 <div class="section level2">
+<h2 id="full-matching-keep-every-unit">Full Matching: Keep Every Unit<a class="anchor" aria-label="anchor" href="#full-matching-keep-every-unit"></a>
+</h2>
+<p>One-to-one matching discards unmatched controls. If you want every
+unit in a group, use <code><a href="../reference/full_match.html">full_match()</a></code>. It creates
+variable-ratio groups (e.g., 1 treatment + 3 controls) that minimize
+total distance:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">control</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_full</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Full Matching Result</span></span>
+<span><span class="co">#&gt; ====================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Groups formed: 50</span></span>
+<span><span class="co">#&gt;   Left units:  50 matched, 0 unmatched (of 50)</span></span>
+<span><span class="co">#&gt;   Right units: 80 matched, 0 unmatched (of 80)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Right units per group: min=1, median=1, max=13</span></span>
+<span></span>
+<span><span class="co"># Each group has one or more left and right units with matching weights</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_full</span><span class="op">$</span><span class="va">groups</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
+<span><span class="co">#&gt;   group_id id    side  weight</span></span>
+<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1 1     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1 42    right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        2 2     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        2 11    right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        3 3     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>        3 59    right      1</span></span></code></pre></div>
+<p>Full matching is useful when your control pool is much larger than
+treatment and you don’t want to waste data. See
+<code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> for details on constraints
+(<code>min_controls</code>, <code>max_controls</code>,
+<code>caliper</code>) and the choice between
+<code>method = "optimal"</code> (default, globally optimal) and
+<code>method = "greedy"</code> (faster).</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="other-matching-methods">Other Matching Methods<a class="anchor" aria-label="anchor" href="#other-matching-methods"></a>
+</h2>
+<p>couplr also supports several alternative matching strategies. Each is
+covered in detail in <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code>: -
+<strong><code><a href="../reference/cem_match.html">cem_match()</a></code></strong> — Coarsened exact matching:
+bins continuous variables and matches exactly within strata, avoiding
+model dependence</p>
+<ul>
+<li><p><strong><code><a href="../reference/subclass_match.html">subclass_match()</a></code></strong> — Propensity score
+subclassification: divides units into PS strata with target estimand
+weighting (ATT, ATE, ATC)</p></li>
+<li><p><strong><code><a href="../reference/ps_match.html">ps_match()</a></code></strong> — Propensity score
+matching with a logit caliper</p></li>
+<li><p><strong><code><a href="../reference/cardinality_match.html">cardinality_match()</a></code></strong> — Maximizes
+sample size subject to strict balance constraints</p></li>
+</ul>
+<p>All result types work with <code><a href="../reference/balance_diagnostics.html">balance_diagnostics()</a></code>,
+<code><a href="../reference/match_data.html">match_data()</a></code>, and <code><a href="../reference/as_matchit.html">as_matchit()</a></code> for ecosystem
+interoperability with cobalt and marginaleffects.</p>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="complete-example">Complete Example<a class="anchor" aria-label="anchor" href="#complete-example"></a>
 </h2>
 <p>Here’s a realistic workflow from start to finish:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Prepare your data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">789</span><span class="op">)</span></span>
 <span><span class="va">patients_treated</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -653,7 +733,7 @@ workflows), couplr also provides lower-level functions.</p>
 </h3>
 <p>Given a cost matrix where entry (i,j) is the cost of assigning row i
 to column j:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Cost matrix: 3 workers x 3 tasks</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>,</span>
@@ -683,7 +763,7 @@ row 3 to column 3 (cost 4). Total cost: 9.</p>
 </h3>
 <p>Use <code>NA</code> or <code>Inf</code> for impossible
 assignments:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost_forbidden</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="cn">NA</span>,   <span class="co"># Row 1 cannot go to column 3</span></span>
 <span>  <span class="cn">Inf</span>, <span class="fl">3</span>, <span class="fl">6</span>,  <span class="co"># Row 2 cannot go to column 1</span></span>
@@ -708,7 +788,7 @@ assignments:</p>
 <h3 id="maximization">Maximization<a class="anchor" aria-label="anchor" href="#maximization"></a>
 </h3>
 <p>For preference or profit maximization:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">preferences</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">3</span>,</span>
 <span>  <span class="fl">4</span>, <span class="fl">7</span>, <span class="fl">6</span>,</span>
@@ -734,7 +814,7 @@ assignments:</p>
 </h3>
 <p>Solve multiple assignment problems at once using grouped data
 frames:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Weekly nurse-shift scheduling: solve each day separately</span></span>
 <span><span class="va">schedule</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mon"</span>, <span class="st">"Tue"</span>, <span class="st">"Wed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
@@ -768,7 +848,7 @@ all results in one tidy table.</p>
 <h3 id="k-best-solutions">K-Best Solutions<a class="anchor" aria-label="anchor" href="#k-best-solutions"></a>
 </h3>
 <p>Find multiple near-optimal solutions:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">kbest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_kbest.html">lap_solve_kbest</a></span><span class="op">(</span><span class="va">cost</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
@@ -803,8 +883,10 @@ all results in one tidy table.</p>
 <h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
 </h2>
 <ul>
-<li><p><code><a href="../reference/match_couples.html">?match_couples</a></code> - Optimal matching function
-reference</p></li>
+<li><p><code><a href="../reference/match_couples.html">?match_couples</a></code> - Optimal one-to-one
+matching</p></li>
+<li><p><code><a href="../reference/full_match.html">?full_match</a></code> - Full matching (variable-ratio
+groups)</p></li>
 <li><p><code><a href="../reference/greedy_couples.html">?greedy_couples</a></code> - Fast approximate matching</p></li>
 <li><p><code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code> - Formal balance
 assessment</p></li>

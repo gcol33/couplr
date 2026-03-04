@@ -2,10 +2,12 @@
 
 ## What couplr Does
 
-couplr creates matched pairs from two groups of observations. Given a
+couplr creates matched samples from two groups of observations. Given a
 “left” group (e.g., treatment) and a “right” group (e.g., control), it
-finds the best one-to-one pairing based on similarity across variables
-you specify.
+finds optimal pairings based on similarity across variables you specify.
+couplr supports both **one-to-one matching** (each treatment unit paired
+with one control) and **full matching** (variable-ratio groups where
+every unit is assigned).
 
 **Common use cases:**
 
@@ -14,6 +16,8 @@ you specify.
 - Pairing survey respondents for comparison
 
 - Creating balanced samples for causal inference
+
+- Full matching when discarding unmatched units is undesirable
 
 ### Documentation Roadmap
 
@@ -35,6 +39,7 @@ The simplest workflow uses
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
+
 library(couplr)
 library(dplyr)
 
@@ -87,6 +92,7 @@ head(result$pairs)
 ### Understanding the Output
 
 ``` r
+
 # Quick overview with summary()
 summary(result)
 #> Matching Result Summary
@@ -137,6 +143,7 @@ Income (measured in thousands) would overwhelm age (measured in
 decades):
 
 ``` r
+
 # BAD: Without scaling, income dominates
 result_unscaled <- match_couples(
   treatment, control,
@@ -170,6 +177,7 @@ After matching, verify that treatment and control groups are now
 balanced:
 
 ``` r
+
 # Get the matched observations
 matched_treatment <- treatment[result$pairs$left_id, ]
 matched_control <- control[result$pairs$right_id, ]
@@ -201,6 +209,7 @@ Use [`plot()`](https://rdrr.io/r/graphics/plot.default.html) to see the
 distribution of match distances:
 
 ``` r
+
 plot(result)
 ```
 
@@ -221,6 +230,7 @@ becomes slow. Use
 instead; it’s 10-100x faster with nearly identical results:
 
 ``` r
+
 # Create larger datasets
 set.seed(456)
 large_treatment <- tibble(
@@ -266,6 +276,7 @@ Sometimes you want to reject poor matches rather than force bad
 pairings. Use `max_distance` to set a caliper:
 
 ``` r
+
 # Allow any match
 result_loose <- match_couples(
   treatment, control,
@@ -305,6 +316,7 @@ then pass the result to
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md):
 
 ``` r
+
 # Data from multiple hospital sites
 set.seed(321)
 treated <- tibble(
@@ -354,11 +366,89 @@ Hospital A controls, etc.
 
 ------------------------------------------------------------------------
 
+## Full Matching: Keep Every Unit
+
+One-to-one matching discards unmatched controls. If you want every unit
+in a group, use
+[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md).
+It creates variable-ratio groups (e.g., 1 treatment + 3 controls) that
+minimize total distance:
+
+``` r
+
+result_full <- full_match(
+  left = treatment,
+  right = control,
+  vars = c("age", "income")
+)
+
+result_full
+#> 
+#> Full Matching Result
+#> ====================
+#> 
+#>   Groups formed: 50
+#>   Left units:  50 matched, 0 unmatched (of 50)
+#>   Right units: 80 matched, 0 unmatched (of 80)
+#> 
+#>   Right units per group: min=1, median=1, max=13
+
+# Each group has one or more left and right units with matching weights
+head(result_full$groups)
+#> # A tibble: 6 × 4
+#>   group_id id    side  weight
+#>      <int> <chr> <chr>  <dbl>
+#> 1        1 1     left       1
+#> 2        1 42    right      1
+#> 3        2 2     left       1
+#> 4        2 11    right      1
+#> 5        3 3     left       1
+#> 6        3 59    right      1
+```
+
+Full matching is useful when your control pool is much larger than
+treatment and you don’t want to waste data. See
+[`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md)
+for details on constraints (`min_controls`, `max_controls`, `caliper`)
+and the choice between `method = "optimal"` (default, globally optimal)
+and `method = "greedy"` (faster).
+
+------------------------------------------------------------------------
+
+## Other Matching Methods
+
+couplr also supports several alternative matching strategies. Each is
+covered in detail in
+[`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md): -
+**[`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)**
+— Coarsened exact matching: bins continuous variables and matches
+exactly within strata, avoiding model dependence
+
+- **[`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)**
+  — Propensity score subclassification: divides units into PS strata
+  with target estimand weighting (ATT, ATE, ATC)
+
+- **[`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)**
+  — Propensity score matching with a logit caliper
+
+- **[`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)**
+  — Maximizes sample size subject to strict balance constraints
+
+All result types work with
+[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
+[`match_data()`](https://gillescolling.com/couplr/reference/match_data.md),
+and
+[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+for ecosystem interoperability with cobalt and marginaleffects.
+
+------------------------------------------------------------------------
+
 ## Complete Example
 
 Here’s a realistic workflow from start to finish:
 
 ``` r
+
 # 1. Prepare your data
 set.seed(789)
 patients_treated <- tibble(
@@ -445,6 +535,7 @@ Given a cost matrix where entry (i,j) is the cost of assigning row i to
 column j:
 
 ``` r
+
 # Cost matrix: 3 workers x 3 tasks
 cost <- matrix(c(
   4, 2, 5,
@@ -476,6 +567,7 @@ Row 1 is assigned to column 2 (cost 2), row 2 to column 1 (cost 3), row
 Use `NA` or `Inf` for impossible assignments:
 
 ``` r
+
 cost_forbidden <- matrix(c(
   4, 2, NA,   # Row 1 cannot go to column 3
   Inf, 3, 6,  # Row 2 cannot go to column 1
@@ -502,6 +594,7 @@ lap_solve(cost_forbidden)
 For preference or profit maximization:
 
 ``` r
+
 preferences <- matrix(c(
   8, 5, 3,
   4, 7, 6,
@@ -528,6 +621,7 @@ lap_solve(preferences, maximize = TRUE)
 Solve multiple assignment problems at once using grouped data frames:
 
 ``` r
+
 # Weekly nurse-shift scheduling: solve each day separately
 schedule <- tibble(
   day = rep(c("Mon", "Tue", "Wed"), each = 9),
@@ -564,6 +658,7 @@ results in one tidy table.
 Find multiple near-optimal solutions:
 
 ``` r
+
 cost <- matrix(c(1, 2, 3, 4, 3, 2, 5, 4, 1), nrow = 3, byrow = TRUE)
 
 kbest <- lap_solve_kbest(cost, k = 3)
@@ -598,7 +693,10 @@ print(kbest)
 ## See Also
 
 - [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md) -
-  Optimal matching function reference
+  Optimal one-to-one matching
+
+- [`?full_match`](https://gillescolling.com/couplr/reference/full_match.md) -
+  Full matching (variable-ratio groups)
 
 - [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md) -
   Fast approximate matching

@@ -11,7 +11,8 @@ build_cost_matrix(
   vars,
   distance = "euclidean",
   weights = NULL,
-  scale = FALSE
+  scale = FALSE,
+  sigma = NULL
 )
 ```
 

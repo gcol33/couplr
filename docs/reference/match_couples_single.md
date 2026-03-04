@@ -19,7 +19,8 @@ match_couples_single(
   method,
   check_costs = TRUE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 ```
 

@@ -26,7 +26,8 @@ match_couples(
   parallel = FALSE,
   replace = FALSE,
   ratio = 1L,
-  check_costs = TRUE
+  check_costs = TRUE,
+  sigma = NULL
 )
 ```
 
@@ -119,6 +120,12 @@ match_couples(
 
   If TRUE, check distance distribution for potential problems and
   provide helpful warnings before matching (default: TRUE)
+
+- sigma:
+
+  Optional covariance matrix for Mahalanobis distance. If NULL
+  (default), the pooled sample covariance is used. Only relevant when
+  `distance = "mahalanobis"`.
 
 ## Value
 

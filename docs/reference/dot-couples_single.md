@@ -22,7 +22,8 @@ Called by match_couples_single() and greedy_couples_single().
   check_costs = FALSE,
   strict_no_pairs = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 ```
 

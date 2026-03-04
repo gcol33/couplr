@@ -27,6 +27,7 @@ for couplr’s matching approach.
 We simulate a job training evaluation scenario with selection bias:
 
 ``` r
+
 set.seed(42)
 
 # Treatment group: younger, more educated, higher prior earnings
@@ -93,6 +94,7 @@ covariates (multivariate distance).
 ### MatchIt Approach
 
 ``` r
+
 if (requireNamespace("MatchIt", quietly = TRUE)) {
   library(MatchIt)
 
@@ -115,6 +117,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 ### couplr Approach
 
 ``` r
+
 # couplr: Direct covariate matching
 result_couplr <- match_couples(
   left = treatment,
@@ -136,6 +139,7 @@ cat("  Mean distance:", round(mean(result_couplr$pairs$distance), 4), "\n")
 ### Balance Comparison
 
 ``` r
+
 if (requireNamespace("MatchIt", quietly = TRUE)) {
   # MatchIt balance
   matched_treated_ps <- matched_ps |> filter(treated == 1)
@@ -189,19 +193,23 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 | Feature | MatchIt | couplr |
 |----|----|----|
 | **Primary approach** | Propensity score | Direct covariate distance |
-| **Distance metric** | PS logit, Mahalanobis | Euclidean (scaled) |
+| **Distance metric** | PS logit, Mahalanobis | Euclidean (scaled), Mahalanobis |
 | **Optimization** | Greedy nearest neighbor | Optimal assignment (LAP) |
 | **Data format** | Single data frame + formula | Separate left/right data frames |
 | **Diagnostics** | [`summary()`](https://rdrr.io/r/base/summary.html), [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md), [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md) |
 | **Caliper** | On PS or covariates | On multivariate distance |
+| **CEM** | `method = "cem"` | [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md) |
+| **Subclassification** | `method = "subclass"` | [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md) |
+| **Full matching** | `method = "full"` | [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md) |
 | **Algorithms** | 10+ methods | 20+ LAP solvers |
+| **Interoperability** | Native ecosystem | [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md) for cobalt/marginaleffects |
 
 ### When to Use Each
 
 **MatchIt**: - Propensity score methods are preferred (common in
 epidemiology)
 
-- Need full matching, CEM, or genetic matching
+- Need **genetic matching** (couplr does not support this)
 
 - Following published protocols that specify MatchIt
 
@@ -218,6 +226,9 @@ treatment)
 
 - Matching on continuous variables where Euclidean distance is natural
 
+- Need CEM, subclassification, or full matching with LAP-based
+  optimization
+
 ------------------------------------------------------------------------
 
 ## Comparison 2: optmatch
@@ -228,13 +239,15 @@ optmatch (Hansen & Klopfer, 2006) specializes in optimal matching using
 network flow algorithms. It emphasizes full matching and variable ratio
 matching.
 
-**Key difference**: optmatch excels at optimal full matching (variable
-ratios); couplr focuses on optimal one-to-one matching with 20+
-algorithm choices.
+**Key difference**: optmatch pioneered optimal full matching via network
+flow; couplr now also supports optimal full matching (via
+[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md))
+alongside one-to-one matching with 20+ algorithm choices.
 
 ### optmatch Approach
 
 ``` r
+
 if (requireNamespace("optmatch", quietly = TRUE)) {
   library(optmatch)
 
@@ -257,6 +270,7 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 ### couplr Approach
 
 ``` r
+
 # couplr with Mahalanobis-like scaling
 result_couplr_maha <- match_couples(
   left = treatment,
@@ -284,10 +298,12 @@ similar total distances. The key differences are in:
 2.  **Algorithm selection**: optmatch uses RELAX-IV; couplr offers 20+
     algorithms
 
-3.  **Full matching**: optmatch supports variable-ratio matching; couplr
-    is one-to-one only
+3.  **Full matching**: Both packages support variable-ratio matching
+    ([`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+    in couplr, `fullmatch()` in optmatch)
 
 ``` r
+
 if (requireNamespace("optmatch", quietly = TRUE)) {
   # Compare total distances
   # (Note: Direct comparison is complex due to different distance scaling)
@@ -300,7 +316,7 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 
 | Feature | optmatch | couplr |
 |----|----|----|
-| **Matching types** | Full, pair, variable ratio | One-to-one only |
+| **Matching types** | Full, pair, variable ratio | One-to-one and full matching |
 | **Algorithm** | RELAX-IV network flow | 20+ solvers (JV, Hungarian, Auction, etc.) |
 | **Distance** | `match_on()` function | [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) + caching |
 | **Constraints** | Caliper, exact matching | Caliper, blocking via [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md) |
@@ -309,16 +325,16 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 
 ### When to Use Each
 
-**optmatch**: - Full matching or variable ratio matching needed
+**optmatch**: - Integration with RItools for diagnostics
 
-- Network flow formulation is preferred
+- Sparse distance matrix support for very large problems
 
-- Integration with RItools for diagnostics
+- Established package with extensive literature references
 
-**couplr**: - One-to-one matching is sufficient
+**couplr**: - Need both one-to-one and full matching in one package
 
-- Need algorithm flexibility (auction for n \> 1000, sparse methods,
-  etc.)
+- Need algorithm flexibility (20+ LAP solvers, greedy and optimal full
+  matching)
 
 - Large-scale problems requiring greedy approximations
 
@@ -342,6 +358,7 @@ a constraint).
 ### designmatch Approach
 
 ``` r
+
 if (requireNamespace("designmatch", quietly = TRUE)) {
   library(designmatch)
 
@@ -382,6 +399,7 @@ couplr doesn’t constrain balance directly but achieves balance through
 distance minimization:
 
 ``` r
+
 # couplr: Optimize distance, then check balance
 result_couplr_dm <- match_couples(
   left = treatment,
@@ -452,6 +470,7 @@ optimizes assignment.
 ### Matching Package Approach
 
 ``` r
+
 if (requireNamespace("Matching", quietly = TRUE)) {
   library(Matching)
 
@@ -475,6 +494,7 @@ if (requireNamespace("Matching", quietly = TRUE)) {
 ### Balance Comparison
 
 ``` r
+
 if (requireNamespace("Matching", quietly = TRUE)) {
   # Check balance from Matching package
   mb <- MatchBalance(
@@ -553,19 +573,22 @@ modes.
 | Feature | couplr | MatchIt | optmatch | designmatch | Matching |
 |----|----|----|----|----|----|
 | **One-to-one matching** | Yes | Yes | Yes | Yes | Yes |
-| **Full matching** | No | Yes | Yes | Yes | No |
+| **Full matching** | Yes (optimal + greedy) | Yes | Yes | Yes | No |
+| **CEM** | Yes ([`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)) | Yes | No | No | No |
+| **Subclassification** | Yes ([`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)) | Yes | No | No | No |
 | **Optimal assignment** | Yes (20 algorithms) | Yes (1 algorithm) | Yes | Yes | No |
 | **Greedy matching** | Yes (3 strategies) | Yes | No | No | Yes |
-| **Propensity scores** | No (external) | Yes | Yes | No | Yes |
+| **Propensity scores** | Yes ([`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)) | Yes | Yes | No | Yes |
 | **Direct covariate** | Yes | Yes | Yes | Yes | Yes |
 | **Blocking/exact** | Yes | Yes | Yes | Yes | Yes |
 | **Caliper** | Yes | Yes | Yes | Yes | Yes |
-| **Balance constraints** | No | No | No | Yes | No |
+| **Balance constraints** | Yes ([`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)) | No | No | Yes | No |
 | **Genetic optimization** | No | Yes (GenMatch) | No | No | Yes |
 | **Distance caching** | Yes | No | Yes | No | No |
 | **Parallel processing** | Yes (blocks) | No | No | No | No |
 | **Deterministic** | Yes | Yes | Yes | Yes | No |
 | **Tidy interface** | Yes | Partial | No | No | No |
+| **MatchIt interop** | Yes ([`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)) | Native | No | No | No |
 
 ------------------------------------------------------------------------
 
@@ -575,7 +598,7 @@ modes.
 
 1.  **Direct covariate matching** is preferred over propensity scores
 
-2.  **Optimal one-to-one matching** is the goal
+2.  **Optimal one-to-one or full matching** is the goal
 
 3.  **Large datasets** (n \> 5,000) with greedy or blocking options
 
@@ -592,7 +615,7 @@ modes.
 
 1.  **Propensity score matching** is standard in your field
 
-2.  Need **full matching** or **CEM** (coarsened exact matching)
+2.  Need **CEM** (coarsened exact matching) or genetic matching
 
 3.  Following a **published protocol** that specifies MatchIt
 
@@ -627,6 +650,7 @@ modes.
 ### Sequential Pipeline
 
 ``` r
+
 # Stage 1: couplr for initial matching
 matched <- match_couples(
   left = treatment_data,
@@ -640,10 +664,9 @@ balance <- balance_diagnostics(matched, treatment_data, control_data, covariates
 
 # Stage 3: If balance insufficient, consider alternatives
 if (balance$overall$max_abs_std_diff > 0.25) {
-  # Try MatchIt with propensity scores
-  library(MatchIt)
-  combined <- bind_rows(treatment_data, control_data)
-  m_ps <- matchit(treated ~ ., data = combined, method = "full")
+  # Try full matching (variable-ratio groups)
+  result_full <- full_match(treatment_data, control_data, vars = covariates,
+                            auto_scale = TRUE)
 }
 
 # Stage 4: Analysis on matched data
@@ -656,9 +679,10 @@ model <- lm(outcome ~ treatment, data = matched_data)
 Different packages excel at different tasks:
 
 ``` r
-# Use couplr for: initial exploration, large-scale matching, distance caching
-# Use MatchIt for: propensity scores, full matching, published protocols
-# Use optmatch for: optimal full matching with sparse distances
+
+# Use couplr for: one-to-one matching, full matching, large-scale matching, distance caching
+# Use MatchIt for: propensity scores, CEM, genetic matching, published protocols
+# Use optmatch for: sparse distance matrices, RItools integration
 # Use designmatch for: guaranteed balance constraints
 ```
 
@@ -683,6 +707,7 @@ earnings (re74, re75), employment status.
 ### Simulating Lalonde-Style Data
 
 ``` r
+
 set.seed(1986)
 
 # NSW treatment group (randomized) - smaller sample for CRAN
@@ -750,6 +775,7 @@ With treatment vs control groups of different sizes, we need efficient
 matching. couplr handles this with greedy matching:
 
 ``` r
+
 # Greedy matching (fast for large control pools)
 result_lalonde <- greedy_couples(
   left = nsw_treat,
@@ -769,6 +795,7 @@ cat("Mean distance:", round(mean(result_lalonde$pairs$distance), 4), "\n")
 ### Balance Assessment
 
 ``` r
+
 balance_lalonde <- balance_diagnostics(
   result_lalonde, nsw_treat, cps_control, vars_lalonde
 )
@@ -836,6 +863,7 @@ differences](comparison_files/figure-html/lalonde-balance-1.svg)
 The matching dramatically reduces imbalance:
 
 ``` r
+
 cat("Balance summary:\n")
 #> Balance summary:
 cat("  Mean |std diff| before:",

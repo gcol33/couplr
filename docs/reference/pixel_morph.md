@@ -127,6 +127,7 @@ warning will be issued. The result may contain:
 
 For guaranteed pixel-perfect results, use:
 
+
       pixel_morph(A, B, mode = "exact", downscale_steps = 0)
 
 ## See also

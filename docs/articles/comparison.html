@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Comparison with Alternatives • couplr</title>
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -35,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +73,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -104,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-03-03</h4>
+            <h4 data-toc-skip class="date">2026-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -319,7 +327,7 @@ matches directly on covariates (multivariate distance).</p>
 <tr class="even">
 <td><strong>Distance metric</strong></td>
 <td>PS logit, Mahalanobis</td>
-<td>Euclidean (scaled)</td>
+<td>Euclidean (scaled), Mahalanobis</td>
 </tr>
 <tr class="odd">
 <td><strong>Optimization</strong></td>
@@ -347,9 +355,30 @@ matches directly on covariates (multivariate distance).</p>
 <td>On multivariate distance</td>
 </tr>
 <tr class="odd">
+<td><strong>CEM</strong></td>
+<td><code>method = "cem"</code></td>
+<td><code><a href="../reference/cem_match.html">cem_match()</a></code></td>
+</tr>
+<tr class="even">
+<td><strong>Subclassification</strong></td>
+<td><code>method = "subclass"</code></td>
+<td><code><a href="../reference/subclass_match.html">subclass_match()</a></code></td>
+</tr>
+<tr class="odd">
+<td><strong>Full matching</strong></td>
+<td><code>method = "full"</code></td>
+<td><code><a href="../reference/full_match.html">full_match()</a></code></td>
+</tr>
+<tr class="even">
 <td><strong>Algorithms</strong></td>
 <td>10+ methods</td>
 <td>20+ LAP solvers</td>
+</tr>
+<tr class="odd">
+<td><strong>Interoperability</strong></td>
+<td>Native ecosystem</td>
+<td>
+<code><a href="../reference/as_matchit.html">as_matchit()</a></code> for cobalt/marginaleffects</td>
 </tr>
 </tbody>
 </table>
@@ -360,7 +389,8 @@ matches directly on covariates (multivariate distance).</p>
 <p><strong>MatchIt</strong>: - Propensity score methods are preferred
 (common in epidemiology)</p>
 <ul>
-<li><p>Need full matching, CEM, or genetic matching</p></li>
+<li><p>Need <strong>genetic matching</strong> (couplr does not support
+this)</p></li>
 <li><p>Following published protocols that specify MatchIt</p></li>
 <li><p>Familiar with propensity score theory</p></li>
 </ul>
@@ -373,6 +403,8 @@ scales)</p></li>
 <li><p>Need fine-grained control over distance computation</p></li>
 <li><p>Matching on continuous variables where Euclidean distance is
 natural</p></li>
+<li><p>Need CEM, subclassification, or full matching with LAP-based
+optimization</p></li>
 </ul>
 <hr>
 </div>
@@ -386,9 +418,10 @@ natural</p></li>
 <p>optmatch (Hansen &amp; Klopfer, 2006) specializes in optimal matching
 using network flow algorithms. It emphasizes full matching and variable
 ratio matching.</p>
-<p><strong>Key difference</strong>: optmatch excels at optimal full
-matching (variable ratios); couplr focuses on optimal one-to-one
-matching with 20+ algorithm choices.</p>
+<p><strong>Key difference</strong>: optmatch pioneered optimal full
+matching via network flow; couplr now also supports optimal full
+matching (via <code><a href="../reference/full_match.html">full_match()</a></code>) alongside one-to-one matching
+with 20+ algorithm choices.</p>
 </div>
 <div class="section level3">
 <h3 id="optmatch-approach">optmatch Approach<a class="anchor" aria-label="anchor" href="#optmatch-approach"></a>
@@ -441,8 +474,9 @@ achieve similar total distances. The key differences are in:</p>
 couplr uses separate data frames</p></li>
 <li><p><strong>Algorithm selection</strong>: optmatch uses RELAX-IV;
 couplr offers 20+ algorithms</p></li>
-<li><p><strong>Full matching</strong>: optmatch supports variable-ratio
-matching; couplr is one-to-one only</p></li>
+<li><p><strong>Full matching</strong>: Both packages support
+variable-ratio matching (<code><a href="../reference/full_match.html">full_match()</a></code> in couplr,
+<code>fullmatch()</code> in optmatch)</p></li>
 </ol>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"optmatch"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -470,7 +504,7 @@ matching; couplr is one-to-one only</p></li>
 <tr class="odd">
 <td><strong>Matching types</strong></td>
 <td>Full, pair, variable ratio</td>
-<td>One-to-one only</td>
+<td>One-to-one and full matching</td>
 </tr>
 <tr class="even">
 <td><strong>Algorithm</strong></td>
@@ -506,16 +540,17 @@ matching; couplr is one-to-one only</p></li>
 <div class="section level3">
 <h3 id="when-to-use-each-1">When to Use Each<a class="anchor" aria-label="anchor" href="#when-to-use-each-1"></a>
 </h3>
-<p><strong>optmatch</strong>: - Full matching or variable ratio matching
-needed</p>
+<p><strong>optmatch</strong>: - Integration with RItools for
+diagnostics</p>
 <ul>
-<li><p>Network flow formulation is preferred</p></li>
-<li><p>Integration with RItools for diagnostics</p></li>
+<li><p>Sparse distance matrix support for very large problems</p></li>
+<li><p>Established package with extensive literature references</p></li>
 </ul>
-<p><strong>couplr</strong>: - One-to-one matching is sufficient</p>
+<p><strong>couplr</strong>: - Need both one-to-one and full matching in
+one package</p>
 <ul>
-<li><p>Need algorithm flexibility (auction for n &gt; 1000, sparse
-methods, etc.)</p></li>
+<li><p>Need algorithm flexibility (20+ LAP solvers, greedy and optimal
+full matching)</p></li>
 <li><p>Large-scale problems requiring greedy approximations</p></li>
 <li><p>Distance caching for iterative analysis</p></li>
 </ul>
@@ -909,10 +944,26 @@ greedy modes.</p>
 </tr>
 <tr class="even">
 <td><strong>Full matching</strong></td>
+<td>Yes (optimal + greedy)</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
 <td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>CEM</strong></td>
+<td>Yes (<code><a href="../reference/cem_match.html">cem_match()</a></code>)</td>
 <td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>Subclassification</strong></td>
+<td>Yes (<code><a href="../reference/subclass_match.html">subclass_match()</a></code>)</td>
 <td>Yes</td>
-<td>Yes</td>
+<td>No</td>
+<td>No</td>
 <td>No</td>
 </tr>
 <tr class="odd">
@@ -933,7 +984,7 @@ greedy modes.</p>
 </tr>
 <tr class="odd">
 <td><strong>Propensity scores</strong></td>
-<td>No (external)</td>
+<td>Yes (<code><a href="../reference/ps_match.html">ps_match()</a></code>)</td>
 <td>Yes</td>
 <td>Yes</td>
 <td>No</td>
@@ -965,7 +1016,7 @@ greedy modes.</p>
 </tr>
 <tr class="odd">
 <td><strong>Balance constraints</strong></td>
-<td>No</td>
+<td>Yes (<code><a href="../reference/cardinality_match.html">cardinality_match()</a></code>)</td>
 <td>No</td>
 <td>No</td>
 <td>Yes</td>
@@ -1011,6 +1062,14 @@ greedy modes.</p>
 <td>No</td>
 <td>No</td>
 </tr>
+<tr class="odd">
+<td><strong>MatchIt interop</strong></td>
+<td>Yes (<code><a href="../reference/as_matchit.html">as_matchit()</a></code>)</td>
+<td>Native</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1024,7 +1083,8 @@ greedy modes.</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Direct covariate matching</strong> is preferred over
 propensity scores</p></li>
-<li><p><strong>Optimal one-to-one matching</strong> is the goal</p></li>
+<li><p><strong>Optimal one-to-one or full matching</strong> is the
+goal</p></li>
 <li><p><strong>Large datasets</strong> (n &gt; 5,000) with greedy or
 blocking options</p></li>
 <li><p><strong>Algorithm flexibility</strong> is needed (auction for
@@ -1043,8 +1103,8 @@ algorithms</p></li>
 <ol style="list-style-type: decimal">
 <li><p><strong>Propensity score matching</strong> is standard in your
 field</p></li>
-<li><p>Need <strong>full matching</strong> or <strong>CEM</strong>
-(coarsened exact matching)</p></li>
+<li><p>Need <strong>CEM</strong> (coarsened exact matching) or genetic
+matching</p></li>
 <li><p>Following a <strong>published protocol</strong> that specifies
 MatchIt</p></li>
 <li><p>Need <strong>genetic matching</strong> for automatic weight
@@ -1100,10 +1160,9 @@ required</p></li>
 <span></span>
 <span><span class="co"># Stage 3: If balance insufficient, consider alternatives</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">balance</span><span class="op">$</span><span class="va">overall</span><span class="op">$</span><span class="va">max_abs_std_diff</span> <span class="op">&gt;</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Try MatchIt with propensity scores</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kosukeimai.github.io/MatchIt/" class="external-link">MatchIt</a></span><span class="op">)</span></span>
-<span>  <span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">treatment_data</span>, <span class="va">control_data</span><span class="op">)</span></span>
-<span>  <span class="va">m_ps</span> <span class="op">&lt;-</span> <span class="fu">matchit</span><span class="op">(</span><span class="va">treated</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">combined</span>, method <span class="op">=</span> <span class="st">"full"</span><span class="op">)</span></span>
+<span>  <span class="co"># Try full matching (variable-ratio groups)</span></span>
+<span>  <span class="va">result_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span><span class="va">treatment_data</span>, <span class="va">control_data</span>, vars <span class="op">=</span> <span class="va">covariates</span>,</span>
+<span>                            auto_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Stage 4: Analysis on matched data</span></span>
@@ -1115,9 +1174,9 @@ required</p></li>
 </h3>
 <p>Different packages excel at different tasks:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Use couplr for: initial exploration, large-scale matching, distance caching</span></span>
-<span><span class="co"># Use MatchIt for: propensity scores, full matching, published protocols</span></span>
-<span><span class="co"># Use optmatch for: optimal full matching with sparse distances</span></span>
+<code class="sourceCode R"><span><span class="co"># Use couplr for: one-to-one matching, full matching, large-scale matching, distance caching</span></span>
+<span><span class="co"># Use MatchIt for: propensity scores, CEM, genetic matching, published protocols</span></span>
+<span><span class="co"># Use optmatch for: sparse distance matrices, RItools integration</span></span>
 <span><span class="co"># Use designmatch for: guaranteed balance constraints</span></span></code></pre></div>
 <hr>
 </div>

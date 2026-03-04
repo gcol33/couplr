@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>The Algorithm Collection • couplr</title>
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -35,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +73,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -104,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-03-03</h4>
+            <h4 data-toc-skip class="date">2026-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/algorithms.Rmd" class="external-link"><code>vignettes/algorithms.Rmd</code></a></small>
       <div class="d-none name"><code>algorithms.Rmd</code></div>
@@ -248,26 +256,15 @@ automatically.</p>
 </h2>
 <p>Before the algorithms, the problem. It’s simple to state:</p>
 <blockquote>
-<p>Given
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-workers and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-jobs, where assigning worker
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
-to job
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-costs
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">c_{ij}</annotation></semantics></math>,
-find the assignment that minimizes total cost.</p>
+<p>Given <span class="math inline">\(n\)</span> workers and <span class="math inline">\(n\)</span> jobs, where assigning worker <span class="math inline">\(i\)</span> to job <span class="math inline">\(j\)</span> costs <span class="math inline">\(c_{ij}\)</span>, find the assignment that
+minimizes total cost.</p>
 </blockquote>
 <p>Mathematically:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>c</mi><mrow><mi>i</mi><mo>,</mo><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub></mrow><annotation encoding="application/x-tex">
+<p><span class="math display">\[
 \min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
-is a permutation (each worker gets exactly one job, each job gets
-exactly one worker).</p>
+\]</span></p>
+<p>where <span class="math inline">\(\pi\)</span> is a permutation (each
+worker gets exactly one job, each job gets exactly one worker).</p>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
 <svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='324.00pt' viewBox='0 0 504.00 324.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
 <g class='svglite'>
@@ -359,63 +356,50 @@ exactly one worker).</p>
 </g>
 </svg></div></p>
 <p>Simple to state. Not simple to solve efficiently.</p>
-<p>There are
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math>
-possible assignments. For
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">n = 20</annotation></semantics></math>,
-that’s 2.4 quintillion possibilities. Brute force is impossible. We need
+<p>There are <span class="math inline">\(n!\)</span> possible
+assignments. For <span class="math inline">\(n = 20\)</span>, that’s 2.4
+quintillion possibilities. Brute force is impossible. We need
 structure.</p>
 <div class="section level3">
 <h3 id="the-lp-formulation">The LP Formulation<a class="anchor" aria-label="anchor" href="#the-lp-formulation"></a>
 </h3>
-<p>The assignment problem is a linear program. Let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">x_{ij} \in \{0,1\}</annotation></semantics></math>
-indicate whether worker
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
-is assigned to job
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mo>min</mo><mspace width="1.0em"></mspace></mtd><mtd columnalign="left" style="text-align: left"><munder><mo>∑</mo><mrow><mi>i</mi><mo>,</mo><mi>j</mi></mrow></munder><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">s.t.</mtext><mspace width="1.0em"></mspace></mtd><mtd columnalign="left" style="text-align: left"><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn><mspace width="1.0em"></mspace><mo>∀</mo><mi>i</mi><mspace width="1.0em"></mspace><mtext mathvariant="normal">(each worker assigned once)</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn><mspace width="1.0em"></mspace><mo>∀</mo><mi>j</mi><mspace width="1.0em"></mspace><mtext mathvariant="normal">(each job filled once)</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>≥</mo><mn>0</mn></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p>The assignment problem is a linear program. Let <span class="math inline">\(x_{ij} \in \{0,1\}\)</span> indicate whether
+worker <span class="math inline">\(i\)</span> is assigned to job <span class="math inline">\(j\)</span>:</p>
+<p><span class="math display">\[
 \begin{aligned}
 \min \quad &amp; \sum_{i,j} c_{ij} x_{ij} \\
-\text{s.t.} \quad &amp; \sum_j x_{ij} = 1 \quad \forall i \quad \text{(each worker assigned once)} \\
-&amp; \sum_i x_{ij} = 1 \quad \forall j \quad \text{(each job filled once)} \\
+\text{s.t.} \quad &amp; \sum_j x_{ij} = 1 \quad \forall i \quad
+\text{(each worker assigned once)} \\
+&amp; \sum_i x_{ij} = 1 \quad \forall j \quad \text{(each job filled
+once)} \\
 &amp; x_{ij} \geq 0
 \end{aligned}
-</annotation></semantics></math></p>
+\]</span></p>
 <p>The constraint matrix is <strong>totally unimodular</strong>: every
 square submatrix has determinant 0, 1, or -1. This guarantees integer
-solutions even when we relax
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">x_{ij} \in \{0,1\}</annotation></semantics></math>
-to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>≥</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x_{ij} \geq 0</annotation></semantics></math>.</p>
+solutions even when we relax <span class="math inline">\(x_{ij} \in
+\{0,1\}\)</span> to <span class="math inline">\(x_{ij} \geq
+0\)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="duality-the-key-to-efficiency">Duality: The Key to Efficiency<a class="anchor" aria-label="anchor" href="#duality-the-key-to-efficiency"></a>
 </h3>
-<p>The dual LP introduces prices
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>u</mi><mi>i</mi></msub><annotation encoding="application/x-tex">u_i</annotation></semantics></math>
-for workers and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>v</mi><mi>j</mi></msub><annotation encoding="application/x-tex">v_j</annotation></semantics></math>
-for jobs:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mo>max</mo><mspace width="1.0em"></mspace></mtd><mtd columnalign="left" style="text-align: left"><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>v</mi><mi>j</mi></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">s.t.</mtext><mspace width="1.0em"></mspace></mtd><mtd columnalign="left" style="text-align: left"><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mspace width="1.0em"></mspace><mo>∀</mo><mi>i</mi><mo>,</mo><mi>j</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p>The dual LP introduces prices <span class="math inline">\(u_i\)</span> for workers and <span class="math inline">\(v_j\)</span> for jobs:</p>
+<p><span class="math display">\[
 \begin{aligned}
 \max \quad &amp; \sum_i u_i + \sum_j v_j \\
 \text{s.t.} \quad &amp; u_i + v_j \leq c_{ij} \quad \forall i,j
 \end{aligned}
-</annotation></semantics></math></p>
+\]</span></p>
 <p><strong>Complementary slackness</strong> links primal and dual: if
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x_{ij} = 1</annotation></semantics></math>
-in an optimal assignment, then
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>=</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">u_i + v_j = c_{ij}</annotation></semantics></math>
+<span class="math inline">\(x_{ij} = 1\)</span> in an optimal
+assignment, then <span class="math inline">\(u_i + v_j = c_{ij}\)</span>
 (the constraint is tight). This means optimal assignments use only
 <strong>tight edges</strong> where the dual constraint holds with
 equality.</p>
-<p>The <strong>reduced cost</strong> of edge
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i,j)</annotation></semantics></math>
-is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>c</mi><mo accent="true">‾</mo></mover><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mi>u</mi><mi>i</mi></msub><mo>−</mo><msub><mi>v</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">\bar{c}_{ij} = c_{ij} - u_i - v_j</annotation></semantics></math>.
-An edge is tight when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>c</mi><mo accent="true">‾</mo></mover><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\bar{c}_{ij} = 0</annotation></semantics></math>.</p>
+<p>The <strong>reduced cost</strong> of edge <span class="math inline">\((i,j)\)</span> is <span class="math inline">\(\bar{c}_{ij} = c_{ij} - u_i - v_j\)</span>. An
+edge is tight when <span class="math inline">\(\bar{c}_{ij} =
+0\)</span>.</p>
 <p>Different algorithms exploit this duality in different ways.</p>
 <hr>
 </div>
@@ -428,12 +412,9 @@ An edge is tight when
 </h3>
 <p>The algorithm everyone learns. Published by Harold Kuhn, based on
 work by Hungarian mathematicians Koenig and Egervary.</p>
-<p><strong>The idea</strong>: Maintain dual prices
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>u</mi><mi>i</mi></msub><mo>,</mo><msub><mi>v</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(u_i, v_j)</annotation></semantics></math>
-such that
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">u_i + v_j \leq c_{ij}</annotation></semantics></math>
-for all pairs. Edges where equality holds are “tight”: the only edges
-that can appear in an optimal solution.</p>
+<p><strong>The idea</strong>: Maintain dual prices <span class="math inline">\((u_i, v_j)\)</span> such that <span class="math inline">\(u_i + v_j \leq c_{ij}\)</span> for all pairs.
+Edges where equality holds are “tight”: the only edges that can appear
+in an optimal solution.</p>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
 <svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
 <g class='svglite'>
@@ -531,12 +512,10 @@ that can appear in an optimal solution.</p>
 <li><p>Otherwise, update prices to create new tight edges.
 Repeat.</p></li>
 </ol>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></p>
-<p><strong>The problem</strong>: That
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-hides a large constant. The price updates and augmenting path searches
-are expensive. For a 1000x1000 matrix, you might wait 10+ seconds.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3)\)</span></p>
+<p><strong>The problem</strong>: That <span class="math inline">\(O(n^3)\)</span> hides a large constant. The price
+updates and augmenting path searches are expensive. For a 1000x1000
+matrix, you might wait 10+ seconds.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">19</span>, <span class="fl">8</span>, <span class="fl">15</span>, <span class="fl">10</span>, <span class="fl">11</span>, <span class="fl">9</span>, <span class="fl">12</span>, <span class="fl">14</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
@@ -660,10 +639,8 @@ handling conflicts by dual variable updates.</p></li>
 <li><p><strong>Augmentation</strong>: For any remaining unmatched rows,
 use Dijkstra-style shortest path search.</p></li>
 </ol>
-<p><strong>Complexity</strong>: Still
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>,
-but with a much smaller constant. Often 10-50x faster than Hungarian in
-practice.</p>
+<p><strong>Complexity</strong>: Still <span class="math inline">\(O(n^3)\)</span>, but with a much smaller constant.
+Often 10-50x faster than Hungarian in practice.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -815,11 +792,8 @@ second-best value) + epsilon.</p></li>
 <p><strong>Why epsilon matters</strong>: Without epsilon, two workers
 could bid infinitely against each other, each raising the price by 0.
 The epsilon ensures progress.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mi>ϵ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log(nC) / \epsilon)</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
-is the cost range.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^2
+\log(nC) / \epsilon)\)</span> where <span class="math inline">\(C\)</span> is the cost range.</p>
 <p>couplr offers three Auction variants:</p>
 <table class="table">
 <thead><tr class="header">
@@ -863,11 +837,9 @@ forever.</p>
 </h3>
 <p>Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon
 automatically?</p>
-<p><strong>The idea</strong>: Start with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>=</mo><mo>max</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\epsilon = \max(c_{ij})</annotation></semantics></math>.
-In each phase, halve epsilon and refine the current solution. After
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\log C)</annotation></semantics></math>
-phases, epsilon is essentially zero: optimality.</p>
+<p><strong>The idea</strong>: Start with <span class="math inline">\(\epsilon = \max(c_{ij})\)</span>. In each phase,
+halve epsilon and refine the current solution. After <span class="math inline">\(O(\log C)\)</span> phases, epsilon is essentially
+zero: optimality.</p>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
 <svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='288.00pt' viewBox='0 0 648.00 288.00' class="r-plt inline-svg" style="max-width:100%;width:100%;height:auto;">
 <g class='svglite'>
@@ -956,9 +928,8 @@ phases, epsilon is essentially zero: optimality.</p>
 <p><strong>Why it’s fast</strong>: Each phase is cheap because the
 previous phase’s solution is a good starting point. The algorithm
 exploits its own progress.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-amortized, often faster in practice.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3)\)</span> amortized, often faster in
+practice.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">456</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -1087,21 +1058,15 @@ current solution’s slack.</p></li>
 <li><p>Repeat until all bits are processed.</p></li>
 </ol>
 <p><strong>What is 1-feasibility?</strong> Standard dual feasibility
-requires
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">u_i + v_j \leq c_{ij}</annotation></semantics></math>
-for all edges. 1-feasibility relaxes this: we allow
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">u_i + v_j \leq c_{ij} + 1</annotation></semantics></math>.
-The “1” comes from the current bit position. At each scaling phase, we
-only need reduced costs to be within 1 of optimal. When we refine to the
-next bit, we tighten the bound. After processing all
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>log</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">\log C</annotation></semantics></math>
-bits, the slack is less than 1, which for integers means exactly 0: true
-optimality.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo>log</mo><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3 \log C)</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
-is the maximum cost.</p>
+requires <span class="math inline">\(u_i + v_j \leq c_{ij}\)</span> for
+all edges. 1-feasibility relaxes this: we allow <span class="math inline">\(u_i + v_j \leq c_{ij} + 1\)</span>. The “1” comes
+from the current bit position. At each scaling phase, we only need
+reduced costs to be within 1 of optimal. When we refine to the next bit,
+we tighten the bound. After processing all <span class="math inline">\(\log C\)</span> bits, the slack is less than 1,
+which for integers means exactly 0: true optimality.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3 \log
+C)\)</span> where <span class="math inline">\(C\)</span> is the maximum
+cost.</p>
 <p>Rarely seen outside academic papers. The bookkeeping across scaling
 phases is complex enough that most implementations skip it.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -1123,12 +1088,10 @@ scaling algorithm, with even better theoretical complexity.</p>
 <p>James Orlin and Ravindra Ahuja developed a
 <strong>double-scaling</strong> algorithm that scales both costs AND
 capacities simultaneously.</p>
-<p><strong>The insight</strong>: Cost-scaling alone gives
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo>log</mo><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3 \log C)</annotation></semantics></math>.
-But if we also scale <em>flow capacities</em>, we can exploit the
-structure of sparse graphs. At each scale, we only need to push
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msqrt><mi>n</mi></msqrt><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\sqrt{n})</annotation></semantics></math>
-units of flow before refining.</p>
+<p><strong>The insight</strong>: Cost-scaling alone gives <span class="math inline">\(O(n^3 \log C)\)</span>. But if we also scale
+<em>flow capacities</em>, we can exploit the structure of sparse graphs.
+At each scale, we only need to push <span class="math inline">\(O(\sqrt{n})\)</span> units of flow before
+refining.</p>
 <p><strong>The algorithm</strong>:</p>
 <ol style="list-style-type: decimal">
 <li><p>Scale costs as in Gabow-Tarjan (process bits from high to
@@ -1136,40 +1099,23 @@ low).</p></li>
 <li>
 <p>At each cost scale, use <strong>capacity scaling</strong>:</p>
 <ul>
-<li><p>Start with large capacity increments
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mo>=</mo><msup><mn>2</mn><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">\Delta = 2^k</annotation></semantics></math></p></li>
-<li><p>Find augmenting paths that can carry
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>
-flow</p></li>
-<li><p>Halve
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>
-and repeat until
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\Delta = 1</annotation></semantics></math></p></li>
+<li><p>Start with large capacity increments <span class="math inline">\(\Delta = 2^k\)</span></p></li>
+<li><p>Find augmenting paths that can carry <span class="math inline">\(\Delta\)</span> flow</p></li>
+<li><p>Halve <span class="math inline">\(\Delta\)</span> and repeat
+until <span class="math inline">\(\Delta = 1\)</span></p></li>
 </ul>
 </li>
-<li><p>The capacity scaling limits work per phase to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(m)</annotation></semantics></math>
-augmentations.</p></li>
+<li><p>The capacity scaling limits work per phase to <span class="math inline">\(O(m)\)</span> augmentations.</p></li>
 </ol>
-<p><strong>Why
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msqrt><mi>n</mi></msqrt><annotation encoding="application/x-tex">\sqrt{n}</annotation></semantics></math>
-appears</strong>: The assignment problem has
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-units of flow total. With capacity scaling, each phase handles
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msqrt><mi>n</mi></msqrt><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\sqrt{n})</annotation></semantics></math>
-flow units, and there are
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msqrt><mi>n</mi></msqrt><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\sqrt{n})</annotation></semantics></math>
-phases per cost scale. This geometric structure yields the improved
-bound.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msqrt><mi>n</mi></msqrt><mo>⋅</mo><mi>m</mi><mo>⋅</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\sqrt{n} \cdot m \cdot \log(nC))</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math>
-is the number of edges.</p>
-<p>For sparse problems where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>≪</mo><msup><mi>n</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">m \ll n^2</annotation></semantics></math>,
-this is dramatically better than
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>.</p>
+<p><strong>Why <span class="math inline">\(\sqrt{n}\)</span>
+appears</strong>: The assignment problem has <span class="math inline">\(n\)</span> units of flow total. With capacity
+scaling, each phase handles <span class="math inline">\(O(\sqrt{n})\)</span> flow units, and there are
+<span class="math inline">\(O(\sqrt{n})\)</span> phases per cost scale.
+This geometric structure yields the improved bound.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(\sqrt{n}
+\cdot m \cdot \log(nC))\)</span> where <span class="math inline">\(m\)</span> is the number of edges.</p>
+<p>For sparse problems where <span class="math inline">\(m \ll
+n^2\)</span>, this is dramatically better than <span class="math inline">\(O(n^3)\)</span>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">111</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">50</span></span>
@@ -1200,8 +1146,7 @@ workers (capacity 1 each)</p>
 <ul>
 <li><p>Workers connected to jobs (with costs)</p></li>
 <li><p>Jobs connected to a sink node (capacity 1 each)</p></li>
-<li><p>Find minimum-cost flow of value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math></p></li>
+<li><p>Find minimum-cost flow of value <span class="math inline">\(n\)</span></p></li>
 </ul>
 <p>This perspective gives us two more algorithms.</p>
 <hr>
@@ -1304,25 +1249,16 @@ network flow problems, the simplex basis corresponds to a
 </svg></div></p>
 <p><strong>The algorithm</strong>:</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Initialize</strong>: Find a spanning tree
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>
-that supports a feasible flow (e.g., all flow through a single
-hub).</p></li>
-<li><p><strong>Compute potentials</strong>: For tree edges, set
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>π</mi><mi>i</mi></msub><mo>−</mo><msub><mi>π</mi><mi>j</mi></msub><mo>=</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\pi_i - \pi_j = c_{ij}</annotation></semantics></math>.
-This determines all node potentials uniquely (up to a
-constant).</p></li>
-<li><p><strong>Price non-tree edges</strong>: For each edge
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>∉</mo><mi>T</mi></mrow><annotation encoding="application/x-tex">(i,j) \notin T</annotation></semantics></math>,
-compute reduced cost
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>c</mi><mo accent="true">‾</mo></mover><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mi>π</mi><mi>i</mi></msub><mo>+</mo><msub><mi>π</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">\bar{c}_{ij} = c_{ij} - \pi_i + \pi_j</annotation></semantics></math>.</p></li>
-<li><p><strong>Pivot</strong>: If any non-tree edge has
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>c</mi><mo accent="true">‾</mo></mover><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>&lt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\bar{c}_{ij} &lt; 0</annotation></semantics></math>,
-adding it to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>
-creates a cycle. Push flow around the cycle until some tree edge
-saturates. Remove that edge; the non-tree edge enters the
-basis.</p></li>
+<li><p><strong>Initialize</strong>: Find a spanning tree <span class="math inline">\(T\)</span> that supports a feasible flow (e.g.,
+all flow through a single hub).</p></li>
+<li><p><strong>Compute potentials</strong>: For tree edges, set <span class="math inline">\(\pi_i - \pi_j = c_{ij}\)</span>. This determines
+all node potentials uniquely (up to a constant).</p></li>
+<li><p><strong>Price non-tree edges</strong>: For each edge <span class="math inline">\((i,j) \notin T\)</span>, compute reduced cost
+<span class="math inline">\(\bar{c}_{ij} = c_{ij} - \pi_i +
+\pi_j\)</span>.</p></li>
+<li><p><strong>Pivot</strong>: If any non-tree edge has <span class="math inline">\(\bar{c}_{ij} &lt; 0\)</span>, adding it to <span class="math inline">\(T\)</span> creates a cycle. Push flow around the
+cycle until some tree edge saturates. Remove that edge; the non-tree
+edge enters the basis.</p></li>
 <li><p><strong>Repeat</strong> until all reduced costs are non-negative
 (optimality).</p></li>
 </ol>
@@ -1330,17 +1266,12 @@ basis.</p></li>
 between any two nodes. This means: - Flow is uniquely determined by
 supplies/demands</p>
 <ul>
-<li><p>Potentials can be computed in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math>
-by tree traversal</p></li>
-<li><p>Each pivot changes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math>
-potentials (along a tree path), not
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math></p></li>
+<li><p>Potentials can be computed in <span class="math inline">\(O(n)\)</span> by tree traversal</p></li>
+<li><p>Each pivot changes <span class="math inline">\(O(n)\)</span>
+potentials (along a tree path), not <span class="math inline">\(O(n^2)\)</span></p></li>
 </ul>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-typical, strongly polynomial with anti-cycling rules.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^3)\)</span> typical, strongly polynomial with
+anti-cycling rules.</p>
 <p><strong>Best for</strong>: Problems where you need dual variables for
 sensitivity analysis. Problems already formulated as network flows.
 Cases where you want guaranteed finite convergence.</p>
@@ -1366,45 +1297,27 @@ maintain a <strong>preflow</strong> (flow that may violate conservation
 at intermediate nodes) and work locally to eliminate violations.</p>
 <p><strong>Key concepts</strong>:</p>
 <ul>
-<li><p><strong>Excess</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">flow in</mtext><mo>−</mo><mtext mathvariant="normal">flow out</mtext></mrow><annotation encoding="application/x-tex">e(v) = \text{flow in} - \text{flow out}</annotation></semantics></math>.
-Preflow allows
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>≥</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">e(v) \geq 0</annotation></semantics></math>
-at non-sink nodes.</p></li>
-<li><p><strong>Height function</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>:</mo><mi>V</mi><mo>→</mo><msub><mi>ℤ</mi><mrow><mo>≥</mo><mn>0</mn></mrow></msub></mrow><annotation encoding="application/x-tex">h: V \to \mathbb{Z}_{\geq 0}</annotation></semantics></math>
-with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">h(t) = 0</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>≤</mo><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">h(u) \leq h(v) + 1</annotation></semantics></math>
-for residual edges
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo>,</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(u,v)</annotation></semantics></math>.</p></li>
-<li><p><strong>Admissible edge</strong>: Residual edge
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo>,</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(u,v)</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">h(u) = h(v) + 1</annotation></semantics></math>
-(flow goes “downhill”).</p></li>
+<li><p><strong>Excess</strong>: <span class="math inline">\(e(v) =
+\text{flow in} - \text{flow out}\)</span>. Preflow allows <span class="math inline">\(e(v) \geq 0\)</span> at non-sink nodes.</p></li>
+<li><p><strong>Height function</strong>: <span class="math inline">\(h:
+V \to \mathbb{Z}_{\geq 0}\)</span> with <span class="math inline">\(h(t)
+= 0\)</span> and <span class="math inline">\(h(u) \leq h(v) + 1\)</span>
+for residual edges <span class="math inline">\((u,v)\)</span>.</p></li>
+<li><p><strong>Admissible edge</strong>: Residual edge <span class="math inline">\((u,v)\)</span> where <span class="math inline">\(h(u) = h(v) + 1\)</span> (flow goes
+“downhill”).</p></li>
 </ul>
 <p><strong>The algorithm</strong>:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Initialize</strong>: Saturate all edges from source. Set
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>s</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">h(s) = n</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">h(v) = 0</annotation></semantics></math>
-for
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi><mo>≠</mo><mi>s</mi></mrow><annotation encoding="application/x-tex">v \neq s</annotation></semantics></math>.</p></li>
+<span class="math inline">\(h(s) = n\)</span>, <span class="math inline">\(h(v) = 0\)</span> for <span class="math inline">\(v \neq s\)</span>.</p></li>
 <li>
-<p>While any node
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>v</mi><annotation encoding="application/x-tex">v</annotation></semantics></math>
-has excess
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">e(v) &gt; 0</annotation></semantics></math>:</p>
+<p>While any node <span class="math inline">\(v\)</span> has excess
+<span class="math inline">\(e(v) &gt; 0\)</span>:</p>
 <ul>
-<li><p><strong>Push</strong>: If admissible edge
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo>,</mo><mi>w</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(v, w)</annotation></semantics></math>
-exists, push
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>min</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mtext mathvariant="normal">capacity</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\min(e(v), \text{capacity})</annotation></semantics></math>
-flow along it.</p></li>
-<li><p><strong>Relabel</strong>: If no admissible edge, set
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>+</mo><mo>min</mo><mo stretchy="false" form="prefix">{</mo><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>w</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>:</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo>,</mo><mi>w</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> is residual</mtext></mrow><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">h(v) = 1 + \min\{h(w) : (v,w) \text{ is residual}\}</annotation></semantics></math>.</p></li>
+<li><p><strong>Push</strong>: If admissible edge <span class="math inline">\((v, w)\)</span> exists, push <span class="math inline">\(\min(e(v), \text{capacity})\)</span> flow along
+it.</p></li>
+<li><p><strong>Relabel</strong>: If no admissible edge, set <span class="math inline">\(h(v) = 1 + \min\{h(w) : (v,w) \text{ is
+residual}\}\)</span>.</p></li>
 </ul>
 </li>
 <li><p>When no excess remains at intermediate nodes, we have a valid
@@ -1413,11 +1326,9 @@ maximum flow.</p></li>
 <p><strong>For minimum-cost flow</strong>: Modify to only push along
 edges with zero reduced cost, and relabel using potential updates. This
 gives the <strong>cost-scaling push-relabel</strong> variant.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 m)</annotation></semantics></math>
-for max-flow,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3 \log(nC))</annotation></semantics></math>
-for min-cost flow.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^2
+m)\)</span> for max-flow, <span class="math inline">\(O(n^3
+\log(nC))\)</span> for min-cost flow.</p>
 <p><strong>Strengths</strong>: Highly parallelizable since pushes are
 local operations. Excellent cache behavior. Dominates in practice for
 max-flow; competitive for min-cost flow on dense graphs.</p>
@@ -1445,9 +1356,7 @@ are messier.</p>
 <p><strong>The algorithm</strong>: Hopcroft-Karp for maximum cardinality
 matching, run on zero-cost edges first. Then add 1-cost edges as
 needed.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2.5</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^{2.5})</annotation></semantics></math>
-for binary costs.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^{2.5})\)</span> for binary costs.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">101</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -1455,9 +1364,7 @@ for binary costs.</p>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hk01"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Total cost:"</span>, <span class="fu"><a href="../reference/get_total_cost.html">get_total_cost</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Total cost: 0</span></span></code></pre></div>
-<p>When you have binary costs and large
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>,
-HK01 is dramatically faster.</p>
+<p>When you have binary costs and large <span class="math inline">\(n\)</span>, HK01 is dramatically faster.</p>
 <hr>
 </div>
 <div class="section level3">
@@ -1467,11 +1374,9 @@ HK01 is dramatically faster.</p>
 <p><strong>SAP</strong> (Shortest Augmenting Path) and
 <strong>LAPMOD</strong> use sparse representations: adjacency lists
 instead of dense matrices.</p>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math>
-is the number of allowed edges.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(n^2 +
+nm)\)</span> where <span class="math inline">\(m\)</span> is the number
+of allowed edges.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">789</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -1488,58 +1393,34 @@ dense algorithms.</p>
 <div class="section level3">
 <h3 id="ramshaw-tarjan-rectangular-problems-2012">Ramshaw-Tarjan: Rectangular Problems (2012)<a class="anchor" aria-label="anchor" href="#ramshaw-tarjan-rectangular-problems-2012"></a>
 </h3>
-<p>Most algorithms assume square matrices. When you have
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-workers and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>&gt;</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">m &gt; n</annotation></semantics></math>
-jobs, standard approaches pad with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>−</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">m - n</annotation></semantics></math>
-dummy workers at zero cost. This works but wastes effort: the algorithm
-processes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">m \times m</annotation></semantics></math>
-entries when only
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n \times m</annotation></semantics></math>
-matter.</p>
+<p>Most algorithms assume square matrices. When you have <span class="math inline">\(n\)</span> workers and <span class="math inline">\(m &gt; n\)</span> jobs, standard approaches pad
+with <span class="math inline">\(m - n\)</span> dummy workers at zero
+cost. This works but wastes effort: the algorithm processes <span class="math inline">\(m \times m\)</span> entries when only <span class="math inline">\(n \times m\)</span> matter.</p>
 <p>Ramshaw and Tarjan (2012) developed an algorithm that handles
 rectangularity natively by exploiting the structure of
 <strong>unbalanced bipartite graphs</strong>.</p>
 <p><strong>The key insight</strong>: In a rectangular assignment, we
-match all
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-rows but only
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-of the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math>
-columns. The dual problem has different structure: row duals
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>u</mi><mi>i</mi></msub><annotation encoding="application/x-tex">u_i</annotation></semantics></math>
-are unconstrained, but column duals
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>v</mi><mi>j</mi></msub><annotation encoding="application/x-tex">v_j</annotation></semantics></math>
-must satisfy
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">v_j \leq 0</annotation></semantics></math>
-for unmatched columns.</p>
+match all <span class="math inline">\(n\)</span> rows but only <span class="math inline">\(n\)</span> of the <span class="math inline">\(m\)</span> columns. The dual problem has different
+structure: row duals <span class="math inline">\(u_i\)</span> are
+unconstrained, but column duals <span class="math inline">\(v_j\)</span>
+must satisfy <span class="math inline">\(v_j \leq 0\)</span> for
+unmatched columns.</p>
 <p><strong>The algorithm</strong>:</p>
 <ol style="list-style-type: decimal">
-<li><p>Maintain dual variables
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo>,</mo><mi>v</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(u, v)</annotation></semantics></math>
-with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>i</mi></msub><mo>+</mo><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">u_i + v_j \leq c_{ij}</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>v</mi><mi>j</mi></msub><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">v_j \leq 0</annotation></semantics></math>
-for free columns.</p></li>
+<li><p>Maintain dual variables <span class="math inline">\((u,
+v)\)</span> with <span class="math inline">\(u_i + v_j \leq
+c_{ij}\)</span> and <span class="math inline">\(v_j \leq 0\)</span> for
+free columns.</p></li>
 <li><p>Use a modified Dijkstra search that respects the asymmetric dual
 constraints.</p></li>
 <li><p>When augmenting, update duals to preserve feasibility without
 padding.</p></li>
 </ol>
-<p><strong>Complexity</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>m</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(nm \log n)</annotation></semantics></math>
-using Fibonacci heaps, or
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>m</mi><mo>+</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(nm + n^2 \log n)</annotation></semantics></math>
-with simpler structures.</p>
+<p><strong>Complexity</strong>: <span class="math inline">\(O(nm \log
+n)\)</span> using Fibonacci heaps, or <span class="math inline">\(O(nm +
+n^2 \log n)\)</span> with simpler structures.</p>
 <p>For highly rectangular problems (e.g., matching 100 treatments to
-10,000 controls), this avoids the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>m</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(m^3)</annotation></semantics></math>
-cost of padding to square.</p>
+10,000 controls), this avoids the <span class="math inline">\(O(m^3)\)</span> cost of padding to square.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">333</span><span class="op">)</span></span>
 <span><span class="va">n_rows</span> <span class="op">&lt;-</span> <span class="fl">30</span></span>
@@ -1881,119 +1762,114 @@ than dense algorithms. Use them.</p>
 <tbody>
 <tr class="odd">
 <td>Hungarian</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></td>
-<td>Pedagogy, small
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+<td><span class="math inline">\(O(n^3)\)</span></td>
+<td>Pedagogy, small <span class="math inline">\(n\)</span>
 </td>
 <td><code>"hungarian"</code></td>
 </tr>
 <tr class="even">
 <td>Jonker-Volgenant</td>
 <td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-expected</td>
+<span class="math inline">\(O(n^3)\)</span> expected</td>
 <td>General purpose</td>
 <td><code>"jv"</code></td>
 </tr>
 <tr class="odd">
 <td>Auction</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mi>ϵ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log(nC)/\epsilon)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 \log(nC)/\epsilon)\)</span></td>
 <td>Large dense</td>
 <td><code>"auction"</code></td>
 </tr>
 <tr class="even">
 <td>Auction (Gauss-Seidel)</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mi>ϵ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log(nC)/\epsilon)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 \log(nC)/\epsilon)\)</span></td>
 <td>Spatial structure</td>
 <td><code>"auction_gs"</code></td>
 </tr>
 <tr class="odd">
 <td>Auction (Scaled)</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mi>ϵ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log(nC)/\epsilon)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 \log(nC)/\epsilon)\)</span></td>
 <td>Large dense, fastest</td>
 <td><code>"auction_scaled"</code></td>
 </tr>
 <tr class="even">
 <td>CSA</td>
 <td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-amortized</td>
+<span class="math inline">\(O(n^3)\)</span> amortized</td>
 <td>Medium-large dense</td>
 <td><code>"csa"</code></td>
 </tr>
 <tr class="odd">
 <td>Cost-Scaling Flow</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3 \log(nC))</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^3 \log(nC))\)</span></td>
 <td>General min-cost flow</td>
 <td><code>"csflow"</code></td>
 </tr>
 <tr class="even">
 <td>Gabow-Tarjan</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo>log</mo><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3 \log C)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^3 \log C)\)</span></td>
 <td>Large integer costs</td>
 <td><code>"gabow_tarjan"</code></td>
 </tr>
 <tr class="odd">
 <td>Orlin-Ahuja</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msqrt><mi>n</mi></msqrt><mi>m</mi><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(\sqrt{n} m \log(nC))</annotation></semantics></math></td>
+<td><span class="math inline">\(O(\sqrt{n} m \log(nC))\)</span></td>
 <td>Large sparse</td>
 <td><code>"orlin"</code></td>
 </tr>
 <tr class="even">
 <td>Network Simplex</td>
 <td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-typical</td>
+<span class="math inline">\(O(n^3)\)</span> typical</td>
 <td>Dual info needed</td>
 <td><code>"network_simplex"</code></td>
 </tr>
 <tr class="odd">
 <td>Push-Relabel</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 m)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 m)\)</span></td>
 <td>Max-flow style</td>
 <td><code>"push_relabel"</code></td>
 </tr>
 <tr class="even">
 <td>Cycle Canceling</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mi>m</mi><mo>⋅</mo><mi>C</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 m \cdot C)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 m \cdot C)\)</span></td>
 <td>Theoretical interest</td>
 <td><code>"cycle_cancel"</code></td>
 </tr>
 <tr class="odd">
 <td>HK01</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2.5</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^{2.5})</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^{2.5})\)</span></td>
 <td>Binary costs only</td>
 <td><code>"hk01"</code></td>
 </tr>
 <tr class="even">
 <td>SSAP (Dial)</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 + nm)\)</span></td>
 <td>Integer costs, buckets</td>
 <td><code>"ssap_bucket"</code></td>
 </tr>
 <tr class="odd">
 <td>SAP</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 + nm)\)</span></td>
 <td>Sparse (&gt;50% forbidden)</td>
 <td><code>"sap"</code></td>
 </tr>
 <tr class="even">
 <td>LAPMOD</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mi>n</mi><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 + nm)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(n^2 + nm)\)</span></td>
 <td>Sparse (&gt;50% forbidden)</td>
 <td><code>"lapmod"</code></td>
 </tr>
 <tr class="odd">
 <td>Ramshaw-Tarjan</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>m</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(nm \log n)</annotation></semantics></math></td>
+<td><span class="math inline">\(O(nm \log n)\)</span></td>
 <td>Rectangular matrices</td>
 <td><code>"ramshaw_tarjan"</code></td>
 </tr>
 <tr class="even">
 <td>Brute Force</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>!</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n!)</annotation></semantics></math></td>
-<td>Tiny
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>≤</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">n \leq 8</annotation></semantics></math>)</td>
+<td><span class="math inline">\(O(n!)\)</span></td>
+<td>Tiny (<span class="math inline">\(n \leq 8\)</span>)</td>
 <td><code>"bruteforce"</code></td>
 </tr>
 </tbody>

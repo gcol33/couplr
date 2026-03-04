@@ -8,6 +8,9 @@ analysis.
 ## Usage
 
 ``` r
+join_matched(result, ...)
+
+# S3 method for class 'matching_result'
 join_matched(
   result,
   left,
@@ -19,18 +22,34 @@ join_matched(
   suffix = c("_left", "_right"),
   include_distance = TRUE,
   include_pair_id = TRUE,
-  include_block_id = TRUE
+  include_block_id = TRUE,
+  ...
 )
+
+# S3 method for class 'full_matching_result'
+join_matched(result, left, right, left_id = "id", right_id = "id", ...)
+
+# S3 method for class 'cem_result'
+join_matched(result, left, right, left_id = "id", right_id = "id", ...)
+
+# S3 method for class 'subclass_result'
+join_matched(result, data = NULL, ...)
 ```
 
 ## Arguments
 
 - result:
 
-  A matching_result object from
-  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  A result object from
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md),
+  [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md),
   or
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
+  [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)
+
+- ...:
+
+  Additional arguments passed to methods
 
 - left:
 
@@ -74,6 +93,10 @@ join_matched(
 - include_block_id:
 
   Include block_id if blocking was used (default: TRUE)
+
+- data:
+
+  Data frame used for subclassification
 
 ## Value
 

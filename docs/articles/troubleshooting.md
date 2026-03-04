@@ -25,6 +25,7 @@ provides step-by-step solutions.
 ### Symptom
 
 ``` r
+
 # This fails: all assignments have Inf cost
 cost <- matrix(c(1, Inf, Inf, Inf, Inf, Inf, Inf, 2, 3), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost)
@@ -43,6 +44,7 @@ entries, no valid assignment exists.
 ### Diagnosis
 
 ``` r
+
 # Check for infeasible rows
 check_feasibility <- function(cost_matrix) {
   finite_per_row <- rowSums(is.finite(cost_matrix))
@@ -77,6 +79,7 @@ check_feasibility(cost)
 **1. Remove infeasible rows/columns:**
 
 ``` r
+
 # Remove rows with no valid assignments
 cost <- matrix(c(1, Inf, Inf, Inf, Inf, Inf, Inf, 2, 3), nrow = 3, byrow = TRUE)
 valid_rows <- rowSums(is.finite(cost)) > 0
@@ -92,6 +95,7 @@ if (nrow(cost_valid) > 0) {
 **2. Add fallback costs:**
 
 ``` r
+
 # Replace Inf with high (but finite) penalty
 cost_with_fallback <- cost
 cost_with_fallback[!is.finite(cost_with_fallback)] <- 1e6  # Large penalty
@@ -115,6 +119,7 @@ print(result)
 **3. For matching: check covariate overlap:**
 
 ``` r
+
 # Simulate poor overlap scenario
 set.seed(123)
 left <- tibble(id = 1:50, age = rnorm(50, mean = 25, sd = 3))
@@ -151,6 +156,7 @@ After matching,
 shows \|std_diff\| \> 0.25 for some variables.
 
 ``` r
+
 # Example of poor balance
 set.seed(456)
 left <- tibble(
@@ -214,6 +220,7 @@ print(balance)
 **1. Add more matching variables:**
 
 ``` r
+
 # Include additional relevant variables
 result <- match_couples(
   left, right,
@@ -225,6 +232,7 @@ result <- match_couples(
 **2. Tighten caliper (fewer but better matches):**
 
 ``` r
+
 result_strict <- match_couples(
   left, right,
   vars = c("age", "income"),
@@ -273,6 +281,7 @@ print(balance_strict)
 **3. Use blocking on problematic variable:**
 
 ``` r
+
 # Block on income tertiles to ensure exact balance
 left$income_cat <- cut(left$income, breaks = 3, labels = c("low", "mid", "high"))
 right$income_cat <- cut(right$income, breaks = 3, labels = c("low", "mid", "high"))
@@ -288,6 +297,7 @@ result_blocked <- match_couples(
 **4. Try different scaling:**
 
 ``` r
+
 # Compare scaling methods
 for (scale_method in c("robust", "standardize", "range")) {
   res <- match_couples(left, right, vars = c("age", "income"),
@@ -315,12 +325,13 @@ takes too long or doesn’t complete.
 
 ### Cause
 
-Optimal matching has $`O(n^3)`$ complexity. For n = 5,000, this means
+Optimal matching has \\O(n^3)\\ complexity. For n = 5,000, this means
 ~125 billion operations.
 
 ### Diagnosis
 
 ``` r
+
 # Estimate runtime
 estimate_runtime <- function(n, seconds_per_billion = 1) {
   ops <- n^3
@@ -353,6 +364,7 @@ for (n in c(100, 500, 1000, 3000, 5000, 10000)) {
 **1. Use greedy matching for large problems:**
 
 ``` r
+
 set.seed(789)
 n <- 500
 large_left <- tibble(id = 1:n, x1 = rnorm(n), x2 = rnorm(n))
@@ -368,7 +380,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.23 seconds
+#> Greedy matching (n=500): 0.33 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -376,6 +388,7 @@ cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\
 **2. Use blocking to divide the problem:**
 
 ``` r
+
 # Create clusters to match within
 blocks <- matchmaker(
   large_left, large_right,
@@ -395,6 +408,7 @@ result_blocked <- match_couples(
 **3. Choose a faster algorithm:**
 
 ``` r
+
 # For n > 1000, auction algorithm often faster
 result <- match_couples(
   large_left, large_right,
@@ -414,6 +428,7 @@ result <- match_couples(
 **4. Pre-compute and cache distances:**
 
 ``` r
+
 # Compute once, reuse multiple times
 dist_cache <- compute_distances(
   large_left, large_right,
@@ -440,6 +455,7 @@ R crashes or shows: “Error: cannot allocate vector of size X GB”
 A full distance matrix for nxn requires 8n² bytes:
 
 ``` r
+
 # Memory requirements
 memory_needed <- function(n) {
   bytes <- 8 * n^2
@@ -469,6 +485,7 @@ for (n in c(1000, 5000, 10000, 20000, 50000)) {
 **1. Use greedy matching (avoids full matrix):**
 
 ``` r
+
 # Greedy computes distances on-the-fly
 result <- greedy_couples(
   left, right,
@@ -480,6 +497,7 @@ result <- greedy_couples(
 **2. Use blocking to create smaller subproblems:**
 
 ``` r
+
 # Each block is much smaller
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
 result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
@@ -488,6 +506,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 **3. Use caliper to create sparse matrix:**
 
 ``` r
+
 # Caliper excludes distant pairs (sparse representation)
 result <- match_couples(
   left, right,
@@ -500,6 +519,7 @@ result <- match_couples(
 **4. Increase R’s memory limit (Windows):**
 
 ``` r
+
 # Increase to 16 GB (if available)
 memory.limit(size = 16000)
 ```
@@ -513,6 +533,7 @@ memory.limit(size = 16000)
 Different algorithms return different assignments:
 
 ``` r
+
 cost <- matrix(c(1, 2, 2, 2, 1, 2, 2, 2, 1), nrow = 3, byrow = TRUE)
 
 result_jv <- lap_solve(cost, method = "jv")
@@ -537,6 +558,7 @@ report a bug.
 ### Diagnosis
 
 ``` r
+
 # Check for ties
 check_ties <- function(cost_matrix) {
   n <- nrow(cost_matrix)
@@ -564,6 +586,7 @@ check_ties(cost)
 **1. Verify total costs match:**
 
 ``` r
+
 # Total cost should be identical
 stopifnot(get_total_cost(result_jv) == get_total_cost(result_hungarian))
 cat("Both methods found optimal solutions (same total cost)\n")
@@ -573,6 +596,7 @@ cat("Both methods found optimal solutions (same total cost)\n")
 **2. Use Hungarian for deterministic tie-breaking:**
 
 ``` r
+
 # Hungarian has consistent tie-breaking
 result <- lap_solve(cost, method = "hungarian")
 ```
@@ -580,6 +604,7 @@ result <- lap_solve(cost, method = "hungarian")
 **3. Add small noise to break ties:**
 
 ``` r
+
 set.seed(42)
 cost_perturbed <- cost + matrix(rnorm(9, 0, 1e-10), 3, 3)
 result <- lap_solve(cost_perturbed)
@@ -594,6 +619,7 @@ result <- lap_solve(cost_perturbed)
 Matching fails or produces unexpected results due to NA values.
 
 ``` r
+
 left <- tibble(id = 1:5, age = c(25, 30, NA, 35, 40))
 right <- tibble(id = 1:5, age = c(28, 32, 33, 36, 42))
 
@@ -613,6 +639,7 @@ matching variables cause issues.
 **1. Remove rows with NA (before matching):**
 
 ``` r
+
 left_clean <- left |> filter(!is.na(age))
 right_clean <- right |> filter(!is.na(age))
 
@@ -624,6 +651,7 @@ cat("Matched", result$info$n_matched, "pairs (excluded 1 left unit with NA)\n")
 **2. Impute missing values:**
 
 ``` r
+
 # Simple mean imputation
 left_imputed <- left |>
   mutate(age = if_else(is.na(age), mean(age, na.rm = TRUE), age))
@@ -636,6 +664,7 @@ cat("Matched", result$info$n_matched, "pairs (imputed 1 NA with mean)\n")
 **3. Use preprocessing to diagnose:**
 
 ``` r
+
 health <- preprocess_matching_vars(
   left, right,
   vars = "age"
@@ -671,6 +700,7 @@ C++ code not compiled properly, or object files are stale.
 **1. Clean and reinstall:**
 
 ``` r
+
 # In R:
 remove.packages("couplr")
 install.packages("couplr")
@@ -694,6 +724,7 @@ rm src/*.o src/*.so
 Then rebuild:
 
 ``` r
+
 devtools::clean_dll()
 devtools::load_all()
 ```
@@ -701,6 +732,7 @@ devtools::load_all()
 **3. Check Rtools/compiler (Windows):**
 
 ``` r
+
 # Check if Rtools is properly configured
 Sys.which("make")
 #>                               make 
@@ -734,6 +766,7 @@ for the tidy interface.
 rows/cols.
 
 ``` r
+
 cost <- matrix(c(1, NA, 3, 4), 2, 2)
 cost[is.na(cost)] <- Inf  # Mark as forbidden
 result <- lap_solve(cost)
@@ -753,6 +786,7 @@ threshold.
 **Solution**: Check data dimensions and ID column consistency.
 
 ``` r
+
 # Always verify data before matching
 stopifnot(nrow(left) > 0, nrow(right) > 0)
 ```
@@ -773,6 +807,7 @@ If you encounter an issue not covered here:
 3.  **Create a minimal reproducible example**:
 
 ``` r
+
 # Minimal example template
 library(couplr)
 

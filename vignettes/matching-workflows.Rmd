@@ -1639,6 +1639,71 @@ cat("Pairs removed:", card_result$info$pairs_removed, "\n")
 
 This is useful when you need strict balance guarantees and are willing to sacrifice some sample size.
 
+### Coarsened Exact Matching (CEM)
+
+CEM coarsens continuous variables into bins, then performs exact matching within strata. This avoids model dependence — results don't rely on a distance function or propensity score model:
+
+```{r cem-matching}
+cem_result <- cem_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  n_bins = "sturges"   # automatic bin width; also "fd", "scott", or an integer
+)
+
+cem_result
+
+# Strata summary: how many units in each coarsened cell
+head(cem_result$strata_summary)
+```
+
+You can supply custom cutpoints per variable with the `cutpoints` argument, or pass categorical grouping variables with `grouping`. Each matched unit receives a weight inversely proportional to the stratum size, ensuring balance across strata.
+
+### Subclassification
+
+Subclassification (stratification on the propensity score) divides the sample into strata of similar PS, then computes within-stratum effects. Unlike one-to-one matching, no units are discarded:
+
+```{r subclass-matching}
+# Combine data
+combined <- rbind(
+  transform(left_data[, c("id", "age", "income")], treated = 1L),
+  transform(right_data[, c("id", "age", "income")], treated = 0L)
+)
+
+sub_result <- subclass_match(
+  formula = treated ~ age + income,
+  data = combined,
+  treatment = "treated",
+  n_subclasses = 5,
+  estimand = "ATT"
+)
+
+sub_result
+head(sub_result$subclass_summary)
+```
+
+### Ecosystem Integration
+
+All couplr result types can be converted to a unified analysis-ready format or to MatchIt-class objects for interoperability with cobalt and marginaleffects.
+
+**`match_data()`** produces a single data frame with `treatment`, `weights`, `subclass`, and `distance` columns — ready for downstream modelling:
+
+```{r match-data-example}
+md <- match_data(result, left_data, right_data)
+head(md)
+```
+
+**`as_matchit()`** constructs a `matchit`-class object, enabling direct use with `cobalt::bal.tab()`, `cobalt::love.plot()`, and `marginaleffects::avg_comparisons()`:
+```{r as-matchit-example, eval=FALSE}
+mi <- as_matchit(result, left_data, right_data)
+
+# cobalt balance table
+cobalt::bal.tab(mi)
+
+# marginaleffects
+marginaleffects::avg_comparisons(model, vcov = "HC3", newdata = match.data(mi))
+```
+
 ---
 
 ## Sensitivity Analysis
@@ -1730,4 +1795,6 @@ All `autoplot()` methods return `ggplot` objects, so you can add layers, themes,
 
 - `?match_couples`, `?greedy_couples`, `?full_match`, `?balance_diagnostics`, `?matchmaker`
 
-- `?ps_match`, `?cardinality_match`, `?sensitivity_analysis`
+- `?ps_match`, `?cardinality_match`, `?sensitivity_analysis`, `?cem_match`, `?subclass_match`
+
+- `?match_data`, `?as_matchit` — ecosystem integration

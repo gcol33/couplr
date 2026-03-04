@@ -20,7 +20,8 @@ match_couples_blocked(
   method,
   parallel = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 ```
 

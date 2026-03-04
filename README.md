@@ -67,8 +67,19 @@ These features make the package useful in domains like:
 
 - **`ps_match()`**: Propensity score matching
   - Logistic regression or pre-fitted model
-  - Logit caliper (default: 0.2 SD per Rosenbaum & Rubin)
+  - Logit caliper (default: 0.2 SD per [Rosenbaum & Rubin, 1985](https://doi.org/10.1080/00031305.1985.10479383))
   - Supports ratio and replacement matching
+
+- **`full_match()`**: Variable-ratio full matching
+  - Optimal (min-cost max-flow) or greedy group formation
+  - Constraints: `min_controls`, `max_controls`, `caliper`
+
+- **`cem_match()`**: Coarsened exact matching
+  - Automatic binning (Sturges, FD, Scott) or custom cutpoints
+  - Model-free: no distance function or propensity score needed
+
+- **`subclass_match()`**: Propensity score subclassification
+  - Quantile-based stratification with ATT/ATE/ATC weighting
 
 - **`cardinality_match()`**: Balance-constrained matching
   - Maximizes sample size subject to balance thresholds
@@ -77,15 +88,21 @@ These features make the package useful in domains like:
 - **Ratio matching**: k:1 matching via `ratio` parameter
 - **Replacement matching**: with-replacement via `replace` parameter
 
+### Ecosystem Integration
+
+- **`match_data()`**: Unified analysis-ready output with treatment, weights, subclass columns
+- **`as_matchit()`**: Convert any couplr result to `matchit`-class for cobalt and marginaleffects
+- **`bal.tab()` methods** for direct cobalt integration
+
 ### Balance Diagnostics & Analysis
 
 - **`balance_diagnostics()`**: Comprehensive balance assessment
   - Standardized differences, variance ratios, KS tests
-  - Quality thresholds: <0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable
+  - Quality thresholds: <0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable ([Austin, 2009](https://doi.org/10.1002/sim.3697))
   - Per-block statistics when blocking is used
   - Publication-ready tables via `balance_table()`
 
-- **`sensitivity_analysis()`**: Rosenbaum bounds
+- **`sensitivity_analysis()`**: [Rosenbaum bounds](https://doi.org/10.1007/978-1-4757-3692-2)
   - Assesses sensitivity to hidden bias
   - Reports critical gamma for inference robustness
 

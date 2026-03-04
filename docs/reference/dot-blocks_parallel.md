@@ -25,7 +25,8 @@ Called by match_blocks_parallel() and greedy_blocks_parallel().
   strict_no_pairs = FALSE,
   parallel = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 ```
 

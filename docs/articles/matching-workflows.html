@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Matching Workflows • couplr</title>
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -35,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +73,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
     <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -104,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-03-03</h4>
+            <h4 data-toc-skip class="date">2026-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -225,29 +233,21 @@ scaling</p></li>
 </h3>
 <p>Given two groups of units:</p>
 <ul>
-<li><p><strong>Left group</strong> (treatment, exposed, cases):
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>n</mi><mi>L</mi></msub><annotation encoding="application/x-tex">n_L</annotation></semantics></math>
-units</p></li>
+<li><p><strong>Left group</strong> (treatment, exposed, cases): <span class="math inline">\(n_L\)</span> units</p></li>
 <li><p><strong>Right group</strong> (control, unexposed, controls):
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>n</mi><mi>R</mi></msub><annotation encoding="application/x-tex">n_R</annotation></semantics></math>
-units</p></li>
+<span class="math inline">\(n_R\)</span> units</p></li>
 </ul>
-<p>Each unit
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
-has a covariate vector
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐱</mi><mi>i</mi></msub><mo>∈</mo><msup><mi>ℝ</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\mathbf{x}_i \in \mathbb{R}^p</annotation></semantics></math>
-describing characteristics we want to balance (age, income, education,
-etc.).</p>
+<p>Each unit <span class="math inline">\(i\)</span> has a covariate
+vector <span class="math inline">\(\mathbf{x}_i \in
+\mathbb{R}^p\)</span> describing characteristics we want to balance
+(age, income, education, etc.).</p>
 <p><strong>Goal:</strong> Find one-to-one matches that minimize total
 distance:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>min</mo><mi>π</mi></munder><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>𝐱</mi><mi>i</mi><mi>L</mi></msubsup><mo>,</mo><msubsup><mi>𝐱</mi><mrow><mi>π</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mi>R</mi></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+<p><span class="math display">\[
 \min_{\pi} \sum_{i=1}^{n} d(\mathbf{x}_i^L, \mathbf{x}_{\pi(i)}^R)
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>⋅</mi><mo>,</mo><mi>⋅</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">d(\cdot, \cdot)</annotation></semantics></math>
-is a distance function (typically Euclidean or Mahalanobis) and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>
-is a matching assignment.</p>
+\]</span></p>
+<p>where <span class="math inline">\(d(\cdot, \cdot)\)</span> is a
+distance function (typically Euclidean or Mahalanobis) and <span class="math inline">\(\pi\)</span> is a matching assignment.</p>
 </div>
 <div class="section level3">
 <h3 id="why-matching-matters">Why Matching Matters<a class="anchor" aria-label="anchor" href="#why-matching-matters"></a>
@@ -274,21 +274,20 @@ experiments</p></li>
 <h3 id="distance-metrics">Distance Metrics<a class="anchor" aria-label="anchor" href="#distance-metrics"></a>
 </h3>
 <p>The quality of matching depends on the distance metric:</p>
-<p><strong>Euclidean distance</strong> (after scaling):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msqrt><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">
-d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{\sum_{k=1}^{p} (x_{ik} - x_{jk})^2}
-</annotation></semantics></math></p>
+<p><strong>Euclidean distance</strong> (after scaling): <span class="math display">\[
+d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{\sum_{k=1}^{p} (x_{ik} -
+x_{jk})^2}
+\]</span></p>
 <p><strong>Mahalanobis distance</strong> (accounts for correlations):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>,</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msqrt><mrow><msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>⊤</mi></msup><msup><mi>Σ</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>−</mo><msub><mi>𝐱</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msqrt></mrow><annotation encoding="application/x-tex">
-d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i - \mathbf{x}_j)^\top \Sigma^{-1} (\mathbf{x}_i - \mathbf{x}_j)}
-</annotation></semantics></math></p>
-<p><strong>Propensity score distance</strong> (single dimension):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">|</mo><msub><mi>p</mi><mi>i</mi></msub><mo>−</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">
+<span class="math display">\[
+d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i - \mathbf{x}_j)^\top
+\Sigma^{-1} (\mathbf{x}_i - \mathbf{x}_j)}
+\]</span></p>
+<p><strong>Propensity score distance</strong> (single dimension): <span class="math display">\[
 d(i, j) = |p_i - p_j|
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub><mo>=</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">treatment</mtext><mo>∣</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">p_i = P(\text{treatment} \mid \mathbf{x}_i)</annotation></semantics></math>
-is the propensity score.</p>
+\]</span></p>
+<p>where <span class="math inline">\(p_i = P(\text{treatment} \mid
+\mathbf{x}_i)\)</span> is the propensity score.</p>
 <p><code>couplr</code> defaults to Euclidean distance with automatic
 scaling, which works well for most applications.</p>
 </div>
@@ -609,29 +608,27 @@ automatically:</p>
 <p>Three scaling strategies available via <code>scale</code>
 parameter:</p>
 <p><strong>1. Robust scaling</strong> (<code>scale = "robust"</code>,
-default):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">median</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mtext mathvariant="normal">MAD</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+default): <span class="math display">\[
 x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
-</annotation></semantics></math></p>
+\]</span></p>
 <ul>
 <li><p>Uses median and median absolute deviation (MAD)</p></li>
 <li><p>Resistant to outliers and skewness</p></li>
 <li><p>Best for: Real-world data with potential outliers</p></li>
 </ul>
 <p><strong>2. Standardization</strong>
-(<code>scale = "standardize"</code>):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mtext mathvariant="normal">mean</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mtext mathvariant="normal">SD</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+(<code>scale = "standardize"</code>): <span class="math display">\[
 x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
-</annotation></semantics></math></p>
+\]</span></p>
 <ul>
 <li><p>Classical z-score normalization</p></li>
 <li><p>Assumes approximate normality</p></li>
 <li><p>Best for: Clean, normally-distributed data</p></li>
 </ul>
 <p><strong>3. Range scaling</strong> (<code>scale = "range"</code>):
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mtext mathvariant="normal">scaled</mtext></msub><mo>=</mo><mfrac><mrow><mi>x</mi><mo>−</mo><mo>min</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mo>max</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mo>min</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+<span class="math display">\[
 x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
-</annotation></semantics></math></p>
+\]</span></p>
 <ul>
 <li><p>Scales to [0, 1] range</p></li>
 <li><p>Preserves exact relationships</p></li>
@@ -714,9 +711,7 @@ alternatives.</p>
 (<code>method = "optimal"</code>):</p>
 <ul>
 <li><p>Minimizes total distance (globally optimal solution)</p></li>
-<li><p>Uses linear assignment algorithms
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-complexity)</p></li>
+<li><p>Uses linear assignment algorithms (<span class="math inline">\(O(n^3)\)</span> complexity)</p></li>
 <li><p>Suitable for: n &lt; 5,000, when optimality is critical</p></li>
 <li><p>Typical runtime: &lt;1 second for n=1,000, ~10 seconds for
 n=3,000</p></li>
@@ -769,18 +764,18 @@ matters</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 182.39 seconds</span></span>
+<span><span class="co">#&gt;   Time: 183.56 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 1.44 seconds</span></span>
+<span><span class="co">#&gt;   Time: 1.56 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 126.7 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 117.7 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -867,7 +862,7 @@ default):</p>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
 <span><span class="co">#&gt; elapsed    sorted     0.07        0.0912          18.24</span></span>
 <span><span class="co">#&gt; elapsed1 row_best     0.06        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq     0.08        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed2       pq     0.07        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li><p>Default to <code>strategy = "row_best"</code> for good
@@ -1291,10 +1286,11 @@ blocks:</p>
 <div class="section level3">
 <h3 id="key-balance-metrics">Key Balance Metrics<a class="anchor" aria-label="anchor" href="#key-balance-metrics"></a>
 </h3>
-<p><strong>1. Standardized differences:</strong>
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Std Diff</mtext><mo>=</mo><mfrac><mrow><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">left</mtext></msub><mo>−</mo><msub><mover><mi>x</mi><mo accent="true">‾</mo></mover><mtext mathvariant="normal">right</mtext></msub></mrow><msqrt><mrow><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mn>2</mn></mrow></msqrt></mfrac></mrow><annotation encoding="application/x-tex">
-\text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
-</annotation></semantics></math></p>
+<p><strong>1. Standardized differences:</strong> <span class="math display">\[
+\text{Std Diff} = \frac{\bar{x}_{\text{left}} -
+\bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) /
+2}}
+\]</span></p>
 <p><strong>Thresholds:</strong></p>
 <ul>
 <li><p>&lt; 0.1: Excellent balance</p></li>
@@ -1304,10 +1300,9 @@ blocks:</p>
 <p>0.5: Poor balance (reconsider matching strategy)</p>
 </blockquote></li>
 </ul>
-<p><strong>2. Variance ratios:</strong>
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">VR</mtext><mo>=</mo><mfrac><msubsup><mi>s</mi><mtext mathvariant="normal">left</mtext><mn>2</mn></msubsup><msubsup><mi>s</mi><mtext mathvariant="normal">right</mtext><mn>2</mn></msubsup></mfrac></mrow><annotation encoding="application/x-tex">
+<p><strong>2. Variance ratios:</strong> <span class="math display">\[
 \text{VR} = \frac{s_{\text{left}}^2}{s_{\text{right}}^2}
-</annotation></semantics></math></p>
+\]</span></p>
 <p><strong>Interpretation:</strong></p>
 <ul>
 <li><p>Close to 1.0: Similar variability (good)</p></li>
@@ -1868,9 +1863,7 @@ status</p></li>
 <div class="section level3">
 <h3 id="scalability">Scalability<a class="anchor" aria-label="anchor" href="#scalability"></a>
 </h3>
-<p><strong>Optimal matching complexity:</strong>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-using Jonker-Volgenant</p>
+<p><strong>Optimal matching complexity:</strong> <span class="math inline">\(O(n^3)\)</span> using Jonker-Volgenant</p>
 <ul>
 <li><p>n = 100: &lt; 0.01 seconds</p></li>
 <li><p>n = 500: ~ 0.1 seconds</p></li>
@@ -1878,11 +1871,7 @@ using Jonker-Volgenant</p>
 <li><p>n = 3,000: ~ 10 seconds</p></li>
 <li><p>n = 5,000: ~ 30-60 seconds</p></li>
 </ul>
-<p><strong>Greedy matching complexity:</strong>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2 \log n)</annotation></semantics></math>
-for sorted,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math>
-for row-best</p>
+<p><strong>Greedy matching complexity:</strong> <span class="math inline">\(O(n^2 \log n)\)</span> for sorted, <span class="math inline">\(O(n^2)\)</span> for row-best</p>
 <ul>
 <li><p>n = 5,000: ~ 1 second</p></li>
 <li><p>n = 10,000: ~ 3-5 seconds</p></li>
@@ -2015,9 +2004,8 @@ this!)</p></li>
 <h3 id="problem-matching-takes-too-long">Problem: Matching Takes Too Long<a class="anchor" aria-label="anchor" href="#problem-matching-takes-too-long"></a>
 </h3>
 <p><strong>Symptom</strong>: <code><a href="../reference/match_couples.html">match_couples()</a></code> runs for
-minutes or doesn’t complete. <strong>Cause</strong>:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math>
-complexity for optimal matching.</p>
+minutes or doesn’t complete. <strong>Cause</strong>: <span class="math inline">\(O(n^3)\)</span> complexity for optimal
+matching.</p>
 <p><strong>Solutions</strong>:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># For n &gt; 3000: use greedy</span></span>
@@ -2187,11 +2175,141 @@ reason not to</td>
 <h2 id="advanced-matching-techniques">Advanced Matching Techniques<a class="anchor" aria-label="anchor" href="#advanced-matching-techniques"></a>
 </h2>
 <div class="section level3">
+<h3 id="full-matching-variable-ratio-groups">Full Matching (Variable-Ratio Groups)<a class="anchor" aria-label="anchor" href="#full-matching-variable-ratio-groups"></a>
+</h3>
+<p>Standard one-to-one matching discards unmatched units — a significant
+loss when control pools are large. Full matching assigns <em>every</em>
+unit to a matched group with variable ratios (1:k or k:1), maximizing
+sample size while preserving balance.</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Full matching: every unit gets assigned to a group</span></span>
+<span><span class="va">result_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"optimal"</span>   <span class="co"># min-cost max-flow (default)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_full</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Full Matching Result</span></span>
+<span><span class="co">#&gt; ====================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Groups formed: 100</span></span>
+<span><span class="co">#&gt;   Left units:  100 matched, 0 unmatched (of 100)</span></span>
+<span><span class="co">#&gt;   Right units: 150 matched, 0 unmatched (of 150)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Right units per group: min=1, median=1, max=21</span></span></code></pre></div>
+<p>The <code>method</code> argument controls the algorithm:</p>
+<ul>
+<li><p><code>"optimal"</code> (default) — Solves a min-cost max-flow
+problem that minimizes total distance across all group assignments
+simultaneously. Uses Dijkstra’s algorithm with Johnson potentials.
+Guarantees the globally optimal solution.</p></li>
+<li><p><code>"greedy"</code> — A fast two-pass heuristic: (1) each left
+unit picks its nearest right unit, (2) remaining right units are
+assigned to their nearest matched left unit. Faster but not globally
+optimal.</p></li>
+</ul>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Compare optimal vs greedy</span></span>
+<span><span class="va">result_full_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"greedy"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal: "</span>, <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_groups</span>, <span class="st">"groups,"</span>,</span>
+<span>    <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_left</span>, <span class="st">"unmatched left,"</span>,</span>
+<span>    <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_right</span>, <span class="st">"unmatched right\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Optimal:  100 groups, 0 unmatched left, 0 unmatched right</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy:  "</span>, <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_groups</span>, <span class="st">"groups,"</span>,</span>
+<span>    <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_left</span>, <span class="st">"unmatched left,"</span>,</span>
+<span>    <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_right</span>, <span class="st">"unmatched right\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Greedy:   100 groups, 0 unmatched left, 0 unmatched right</span></span></code></pre></div>
+<p>Full matching supports <code>min_controls</code> and
+<code>max_controls</code> to constrain group sizes, and
+<code>caliper</code> to exclude poor matches:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Constrain: each group gets 2-5 right units, caliper of 1.5</span></span>
+<span><span class="va">result_constrained</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  min_controls <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  max_controls <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  caliper <span class="op">=</span> <span class="fl">1.5</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Groups:"</span>, <span class="va">result_constrained</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_groups</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Groups: 0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Unmatched left:"</span>, <span class="va">result_constrained</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_left</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unmatched left: 100</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Unmatched right:"</span>, <span class="va">result_constrained</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_right</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unmatched right: 150</span></span></code></pre></div>
+<p>The output is an S3 object of class <code>full_matching_result</code>
+with a <code>groups</code> tibble containing <code>group_id</code>,
+<code>id</code>, <code>side</code>, and <code>weight</code>. Within each
+group, right-unit weights sum to the number of left units, enabling
+unbiased estimation:</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_full</span><span class="op">$</span><span class="va">groups</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt;    group_id id    side  weight</span></span>
+<span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>        1 1     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>        1 140   right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>        2 2     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>        2 50    right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>        3 3     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>        3 62    right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>        4 4     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>        4 5     right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>        5 5     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        5 63    right      1</span></span></code></pre></div>
+<p><strong>When to use full matching vs one-to-one:</strong></p>
+<table class="table">
+<thead><tr class="header">
+<th>Criterion</th>
+<th>One-to-one (<code>match_couples</code>)</th>
+<th>Full (<code>full_match</code>)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Sample size</td>
+<td>Discards excess units</td>
+<td>Uses every unit</td>
+</tr>
+<tr class="even">
+<td>Estimand</td>
+<td>ATT (treatment on treated)</td>
+<td>ATT or ATE (with weights)</td>
+</tr>
+<tr class="odd">
+<td>Group structure</td>
+<td>Pairs (1:1)</td>
+<td>Variable-ratio groups</td>
+</tr>
+<tr class="even">
+<td>Balance</td>
+<td>Excellent within pairs</td>
+<td>Good overall (weighted)</td>
+</tr>
+<tr class="odd">
+<td>Precision</td>
+<td>Lower (smaller n)</td>
+<td>Higher (larger effective n)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
 <h3 id="ratio-matching-k1">Ratio Matching (k:1)<a class="anchor" aria-label="anchor" href="#ratio-matching-k1"></a>
 </h3>
 <p>Sometimes matching multiple controls per treated unit improves
 precision. Use the <code>ratio</code> parameter:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Match 2 controls per treated unit</span></span>
 <span><span class="va">result_2to1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
@@ -2227,7 +2345,7 @@ individual match quality. A common choice is 2:1 or 3:1.</p>
 <p>When controls are scarce relative to treated units, allowing
 replacement lets each control serve as a match for multiple treated
 units:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Allow controls to be reused</span></span>
 <span><span class="va">result_wr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
@@ -2252,7 +2370,7 @@ closest match) but increases variance.</p>
 <p>Instead of matching directly on covariates, you can match on the
 estimated probability of treatment — the propensity score.
 <code><a href="../reference/ps_match.html">ps_match()</a></code> automates this:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Combine data for propensity score estimation</span></span>
 <span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">left_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>,</span>
@@ -2306,7 +2424,7 @@ argument.</p>
 <p>Standard matching minimizes total distance. Cardinality matching
 instead maximizes the number of matched pairs while enforcing strict
 balance constraints:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Maximize pairs subject to balance threshold</span></span>
 <span><span class="va">card_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
@@ -2326,6 +2444,132 @@ balance constraints:</p>
 <span><span class="co">#&gt; Pairs removed: 19</span></span></code></pre></div>
 <p>This is useful when you need strict balance guarantees and are
 willing to sacrifice some sample size.</p>
+</div>
+<div class="section level3">
+<h3 id="coarsened-exact-matching-cem">Coarsened Exact Matching (CEM)<a class="anchor" aria-label="anchor" href="#coarsened-exact-matching-cem"></a>
+</h3>
+<p>CEM coarsens continuous variables into bins, then performs exact
+matching within strata. This avoids model dependence — results don’t
+rely on a distance function or propensity score model:</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cem_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cem_match.html">cem_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  n_bins <span class="op">=</span> <span class="st">"sturges"</span>   <span class="co"># automatic bin width; also "fd", "scott", or an integer</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cem_result</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Coarsened Exact Matching Result</span></span>
+<span><span class="co">#&gt; ===============================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Strata: 69 total, 32 matched</span></span>
+<span><span class="co">#&gt;   Left:   81 matched, 19 pruned</span></span>
+<span><span class="co">#&gt;   Right:  103 matched, 47 pruned</span></span>
+<span><span class="co">#&gt;   Variables: age, income</span></span>
+<span></span>
+<span><span class="co"># Strata summary: how many units in each coarsened cell</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">cem_result</span><span class="op">$</span><span class="va">strata_summary</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
+<span><span class="co">#&gt;   stratum               n_left n_right matched</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (25,30]|(3e+04,4e+04]      0       1 FALSE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> (25,30]|(4e+04,5e+04]      0       1 FALSE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> (25,30]|(5e+04,6e+04]      2       0 FALSE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> (25,30]|(6e+04,7e+04]      1       2 TRUE   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> (30,35]|(1e+05, Inf]       1       0 FALSE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> (30,35]|(2e+04,3e+04]      0       2 FALSE</span></span></code></pre></div>
+<p>You can supply custom cutpoints per variable with the
+<code>cutpoints</code> argument, or pass categorical grouping variables
+with <code>grouping</code>. Each matched unit receives a weight
+inversely proportional to the stratum size, ensuring balance across
+strata.</p>
+</div>
+<div class="section level3">
+<h3 id="subclassification">Subclassification<a class="anchor" aria-label="anchor" href="#subclassification"></a>
+</h3>
+<p>Subclassification (stratification on the propensity score) divides
+the sample into strata of similar PS, then computes within-stratum
+effects. Unlike one-to-one matching, no units are discarded:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Combine data</span></span>
+<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">left_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">right_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sub_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/subclass_match.html">subclass_match</a></span><span class="op">(</span></span>
+<span>  formula <span class="op">=</span> <span class="va">treated</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">income</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">combined</span>,</span>
+<span>  treatment <span class="op">=</span> <span class="st">"treated"</span>,</span>
+<span>  n_subclasses <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  estimand <span class="op">=</span> <span class="st">"ATT"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sub_result</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Subclassification Result</span></span>
+<span><span class="co">#&gt; ========================</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimand: ATT</span></span>
+<span><span class="co">#&gt;   Subclasses: 5</span></span>
+<span><span class="co">#&gt;   Treated (left):  100</span></span>
+<span><span class="co">#&gt;   Control (right): 150</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Subclass summary:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
+<span><span class="co">#&gt;   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap</span></span>
+<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1         6        44   0.192       0.090<span style="text-decoration: underline;">2</span>         0.251 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        2        15        35   0.296       0.257          0.348 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        3        20        30   0.391       0.350          0.435 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        4        32        18   0.491       0.438          0.537 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        5        27        23   0.630       0.542          0.843 TRUE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sub_result</span><span class="op">$</span><span class="va">subclass_summary</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
+<span><span class="co">#&gt;   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap</span></span>
+<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1         6        44   0.192       0.090<span style="text-decoration: underline;">2</span>         0.251 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        2        15        35   0.296       0.257          0.348 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        3        20        30   0.391       0.350          0.435 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        4        32        18   0.491       0.438          0.537 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        5        27        23   0.630       0.542          0.843 TRUE</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="ecosystem-integration">Ecosystem Integration<a class="anchor" aria-label="anchor" href="#ecosystem-integration"></a>
+</h3>
+<p>All couplr result types can be converted to a unified analysis-ready
+format or to MatchIt-class objects for interoperability with cobalt and
+marginaleffects.</p>
+<p><strong><code><a href="../reference/match_data.html">match_data()</a></code></strong> produces a single data
+frame with <code>treatment</code>, <code>weights</code>,
+<code>subclass</code>, and <code>distance</code> columns — ready for
+downstream modelling:</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">md</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_data.html">match_data</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">md</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
+<span><span class="co">#&gt;      id   age income education group     treatment weights subclass distance</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  39.4 <span style="text-decoration: underline;">49</span>344. MA        treatment         1       1        1 0.003<span style="text-decoration: underline;">24</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2  42.7 <span style="text-decoration: underline;">63</span>853. MA        treatment         1       1        2 0.004<span style="text-decoration: underline;">55</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3  60.6 <span style="text-decoration: underline;">56</span>300. MA        treatment         1       1        3 0.000<span style="text-decoration: underline;">900</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4  45.7 <span style="text-decoration: underline;">54</span>787. HS        treatment         1       1        4 0.006<span style="text-decoration: underline;">85</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5  46.3 <span style="text-decoration: underline;">45</span>726. HS        treatment         1       1        5 0.004<span style="text-decoration: underline;">47</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6  62.2 <span style="text-decoration: underline;">59</span>325. MA        treatment         1       1        6 0.003<span style="text-decoration: underline;">89</span></span></span></code></pre></div>
+<p><strong><code><a href="../reference/as_matchit.html">as_matchit()</a></code></strong> constructs a
+<code>matchit</code>-class object, enabling direct use with
+<code>cobalt::bal.tab()</code>, <code>cobalt::love.plot()</code>, and
+<code>marginaleffects::avg_comparisons()</code>:</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_matchit.html">as_matchit</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># cobalt balance table</span></span>
+<span><span class="fu">cobalt</span><span class="fu">::</span><span class="fu">bal.tab</span><span class="op">(</span><span class="va">mi</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># marginaleffects</span></span>
+<span><span class="fu">marginaleffects</span><span class="fu">::</span><span class="fu">avg_comparisons</span><span class="op">(</span><span class="va">model</span>, vcov <span class="op">=</span> <span class="st">"HC3"</span>, newdata <span class="op">=</span> <span class="fu">match.data</span><span class="op">(</span><span class="va">mi</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -2336,7 +2580,7 @@ willing to sacrifice some sample size.</p>
 be needed to invalidate the results?</em> Rosenbaum bounds address this
 by computing p-values under varying degrees of unobserved
 confounding.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Simulate a modest treatment effect (small enough that hidden bias matters)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
 <span><span class="va">n_sa</span> <span class="op">&lt;-</span> <span class="fl">50</span></span>
@@ -2388,13 +2632,11 @@ confounding.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Insensitive to hidden bias up to Gamma = 1.00</span></span>
 <span><span class="co">#&gt; To explain away the effect, hidden bias would need Gamma &gt;= 1.25</span></span></code></pre></div>
-<p>The <strong>critical gamma</strong>
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Γ</mi><annotation encoding="application/x-tex">\Gamma</annotation></semantics></math>)
-is the smallest value at which the upper-bound p-value crosses 0.05. A
-larger critical gamma means the finding is more robust: a critical gamma
-of 1.75, for example, means an unobserved confounder would need to
-change the odds of treatment by a factor of 1.75 to explain away the
-result.</p>
+<p>The <strong>critical gamma</strong> (<span class="math inline">\(\Gamma\)</span>) is the smallest value at which
+the upper-bound p-value crosses 0.05. A larger critical gamma means the
+finding is more robust: a critical gamma of 1.75, for example, means an
+unobserved confounder would need to change the odds of treatment by a
+factor of 1.75 to explain away the result.</p>
 <hr>
 </div>
 <div class="section level2">
@@ -2402,7 +2644,7 @@ result.</p>
 </h2>
 <p>If <code>ggplot2</code> is available, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods
 produce publication-ready plots:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
@@ -2514,7 +2756,7 @@ produce publication-ready plots:</p>
 </g>
 </g>
 </svg></div></p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Balance diagnostics love plot</span></span>
 <span>  <span class="va">bal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
@@ -2600,7 +2842,7 @@ produce publication-ready plots:</p>
 </g>
 </g>
 </svg></div></p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Sensitivity analysis curve</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
@@ -2717,9 +2959,13 @@ solutions</p></li>
 <li><p><code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> - Large-scale
 approximation strategies</p></li>
 <li><p><code><a href="../reference/match_couples.html">?match_couples</a></code>, <code><a href="../reference/greedy_couples.html">?greedy_couples</a></code>,
-<code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code>, <code><a href="../reference/matchmaker.html">?matchmaker</a></code></p></li>
+<code><a href="../reference/full_match.html">?full_match</a></code>, <code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code>,
+<code><a href="../reference/matchmaker.html">?matchmaker</a></code></p></li>
 <li><p><code><a href="../reference/ps_match.html">?ps_match</a></code>, <code><a href="../reference/cardinality_match.html">?cardinality_match</a></code>,
-<code><a href="../reference/sensitivity_analysis.html">?sensitivity_analysis</a></code></p></li>
+<code><a href="../reference/sensitivity_analysis.html">?sensitivity_analysis</a></code>, <code><a href="../reference/cem_match.html">?cem_match</a></code>,
+<code><a href="../reference/subclass_match.html">?subclass_match</a></code></p></li>
+<li><p><code><a href="../reference/match_data.html">?match_data</a></code>, <code><a href="../reference/as_matchit.html">?as_matchit</a></code> — ecosystem
+integration</p></li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

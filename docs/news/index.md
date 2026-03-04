@@ -1,6 +1,128 @@
 # Changelog
 
+## couplr 1.3.0
+
+### New Features
+
+#### Optimal Full Matching
+
+- **[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+  gains `method = "optimal"` (new default)** using a min-cost max-flow
+  solver (Dijkstra + Johnson potentials) that finds the globally optimal
+  group assignment minimizing total distance:
+  - Standard lower bound transformation enforces `min_controls` per
+    group
+  - Automatic transposition when `n_left > n_right`
+  - New C++ solver: `solve_full_matching.cpp` (self-contained MCMF)
+  - `method = "greedy"` preserved for fast approximate matching
+
+#### Vignette Updates
+
+- **Getting Started**: Added full matching section with
+  [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+  example
+- **Matching Workflows**: New “Full Matching (Variable-Ratio Groups)”
+  section covering optimal vs greedy, constraints, weights, and
+  comparison table
+- **Comparison**: Updated feature table and all sections to reflect
+  couplr’s full matching support (previously listed as “No”)
+
+------------------------------------------------------------------------
+
+## couplr 1.2.0
+
+### New Features
+
+#### Full Matching
+
+- **New
+  [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+  function** assigns every unit to a matched group with variable ratios
+  (1:k or k:1):
+  - Greedy group formation: match each left to nearest right, then
+    assign remaining right units to nearest matched left
+  - Caliper support: `caliper` (absolute) or `caliper_sd` (SD-based)
+  - Control group size constraints: `min_controls`, `max_controls`
+  - Weights inversely proportional to group size
+  - Returns `full_matching_result` S3 class
+
+#### Coarsened Exact Matching (CEM)
+
+- **New
+  [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)
+  function** implements coarsened exact matching:
+  - Coarsens continuous variables into bins (Sturges, FD, Scott, or
+    custom)
+  - Exact matching on coarsened values with stratum-based weights
+  - Support for categorical grouping variables via `grouping` parameter
+  - Custom cutpoints per variable via `cutpoints` parameter
+  - Returns `cem_result` S3 class with matched units and strata summary
+
+#### Subclassification
+
+- **New
+  [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+  function** divides units into propensity score strata:
+  - Quantile-based stratification with configurable number of subclasses
+  - Supports pre-computed PS, pre-fitted models, or formula interface
+  - Target estimands: ATT, ATE, ATC with appropriate weighting
+  - Returns `subclass_result` S3 class with subclass summary
+
+#### Output Layer & Ecosystem Integration
+
+- **New
+  [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)
+  generic** converts any couplr result to analysis-ready format with
+  `treatment`, `weights`, `subclass`, and `distance` columns. Methods
+  for all result types (matching, full, CEM, subclass).
+- **New
+  [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  converter** creates `matchit`-class objects from couplr results,
+  enabling interop with cobalt, marginaleffects, and other MatchIt
+  ecosystem packages.
+- **cobalt `bal.tab()` methods** for all couplr result types. Requires
+  cobalt package (in Suggests).
+
+#### Mahalanobis Distance Improvements
+
+- **Robust singularity check** using
+  [`rcond()`](https://rdrr.io/r/base/kappa.html) instead of fragile
+  `det() == 0`
+- **Custom `sigma` parameter** in
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md),
+  and
+  [`compute_distance_matrix()`](https://gillescolling.com/couplr/reference/compute_distance_matrix.md)
+  for user-supplied covariance matrices
+- **Vectorized computation** replacing nested R for-loops for ~10x
+  speedup
+
+#### S3 Generics
+
+- [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  and
+  [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
+  are now S3 generics with methods for all result types. Existing code
+  is 100% backward-compatible.
+
+#### New Functions
+
+- [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md) -
+  Variable-ratio full matching
+- [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md) -
+  Coarsened exact matching
+- [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md) -
+  Propensity score subclassification
+- [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md) -
+  Unified analysis-ready output
+- [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md) -
+  Convert to MatchIt format
+
+------------------------------------------------------------------------
+
 ## couplr 1.1.0
+
+CRAN release: 2026-03-03
 
 ### New Features
 

@@ -24,7 +24,8 @@ match_couples_blocked() and greedy_couples_blocked().
   strict_no_pairs = FALSE,
   parallel = FALSE,
   replace = FALSE,
-  ratio = 1L
+  ratio = 1L,
+  sigma = NULL
 )
 ```
 

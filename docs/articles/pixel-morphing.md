@@ -89,23 +89,18 @@ ecology.
 
 ### Problem Formulation
 
-Given two sets of entities $`A = \{a_1, \ldots, a_n\}`$ and
-$`B = \{b_1, \ldots, b_n\}`$, find the optimal one-to-one correspondence
-by minimizing
+Given two sets of entities \\A = \\a_1, \ldots, a_n\\\\ and \\B = \\b_1,
+\ldots, b_n\\\\, find the optimal one-to-one correspondence by
+minimizing
 
-``` math
-
-\min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
-```
+\\ \min\_{\pi} \sum\_{i=1}^{n} c\_{i,\pi(i)} \\
 
 where the cost combines feature similarity and spatial proximity:
 
-``` math
+\\ c\_{ij} = \alpha \\ d\_{\text{feature}}(a_i, b_j) + \beta \\
+d\_{\text{spatial}}(\mathbf{x}\_i, \mathbf{x}\_j). \\
 
-c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\mathbf{x}_i, \mathbf{x}_j).
-```
-
-**Feature distance** $`d_{\text{feature}}`$: domain-specific similarity
+**Feature distance** \\d\_{\text{feature}}\\: domain-specific similarity
 
 - Ecology: Bray-Curtis dissimilarity between species vectors
 
@@ -115,7 +110,7 @@ c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\m
 
 - Images: Euclidean distance in RGB color space
 
-**Spatial distance** $`d_{\text{spatial}}`$: physical proximity
+**Spatial distance** \\d\_{\text{spatial}}\\: physical proximity
 
 - Ecology: geographic distance between plot centers
 
@@ -125,30 +120,30 @@ c_{ij} = \alpha \, d_{\text{feature}}(a_i, b_j) + \beta \, d_{\text{spatial}}(\m
 
 - Images: 2D pixel position distance
 
-**Weights** $`\alpha, \beta \ge 0`$ balance feature matching vs. spatial
+**Weights** \\\alpha, \beta \ge 0\\ balance feature matching vs. spatial
 coherence.
 
 ### Computational Challenge
 
-Exact solution: solve the full $`n \times n`$ LAP.
+Exact solution: solve the full \\n \times n\\ LAP.
 
-- Complexity: $`O(n^3)`$ using Jonker-Volgenant
+- Complexity: \\O(n^3)\\ using Jonker-Volgenant
 
-- Feasible: up to $`n \approx 1000`$ (about $`30 \times 30`$ images, or
-  $`1000`$ plots/particles/atoms)
+- Feasible: up to \\n \approx 1000\\ (about \\30 \times 30\\ images, or
+  \\1000\\ plots/particles/atoms)
 
-- Prohibitive: for $`n = 10\,000`$ ($`100 \times 100`$ images), runtime
+- Prohibitive: for \\n = 10\\000\\ (\\100 \times 100\\ images), runtime
   and memory become expensive
 
 Real applications often involve
 
-- High-resolution images: $`200 \times 200 = 40\,000`$ pixels
+- High-resolution images: \\200 \times 200 = 40\\000\\ pixels
 
-- Large ecological surveys: $`5000+`$ plots
+- Large ecological surveys: \\5000+\\ plots
 
-- Particle tracking: $`10\,000+`$ particles per frame
+- Particle tracking: \\10\\000+\\ particles per frame
 
-- Molecular dynamics: $`100\,000+`$ atoms
+- Molecular dynamics: \\100\\000+\\ atoms
 
 We therefore need approximations that are much faster but still produce
 high-quality matchings.
@@ -162,9 +157,9 @@ morphing where
 
 - features = RGB color values
 
-- spatial position = $`(x, y)`$ coordinates
+- spatial position = \\(x, y)\\ coordinates
 
-We first show the static input images (all at $`80 \times 80`$ for
+We first show the static input images (all at \\80 \times 80\\ for
 display), then the animated morphs produced by different matching
 strategies.
 
@@ -174,23 +169,21 @@ icon](images/circleA_80.png)![Target image B: circle
 icon](images/circleB_80.png)
 
 The first pair are real photographs, the second pair are simple
-geometric shapes. Internally, all matching is computed on logical
-$`40 \times 40`$ grids; we then upscale to $`80 \times 80`$ purely for
+geometric shapes. Internally, all matching is computed on logical \\40
+\times 40\\ grids; we then upscale to \\80 \times 80\\ purely for
 clearer display.
 
 ### Exact Pixel Matching
 
-The exact pixel morph uses a full LAP solution on a $`1600 \times 1600`$
-cost matrix. For each pair of pixels $`(i, j)`$ we compute
+The exact pixel morph uses a full LAP solution on a \\1600 \times 1600\\
+cost matrix. For each pair of pixels \\(i, j)\\ we compute
 
-``` math
+\\ c\_{ij} = \alpha \\\lVert \text{RGB}\_i^A - \text{RGB}\_j^B
+\rVert_2 + \beta \\\lVert (x_i, y_i) - (x_j, y_j) \rVert_2, \\
 
-c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
-         \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2,
-```
-
-where color distances are normalized to $`[0, \sqrt{3}]`$ (RGB in
-$`[0,1]`$) and spatial distances to $`[0,1]`$ using the image diagonal.
+where color distances are normalized to \\\[0, \sqrt{3}\]\\ (RGB in
+\\\[0,1\]\\) and spatial distances to \\\[0,1\]\\ using the image
+diagonal.
 
 ![Animated GIF showing exact pixel morphing between two
 photographs](images/image_exact.gif)![Animated GIF showing exact pixel
@@ -240,55 +233,43 @@ features, then match groups.
 
 Map continuous feature space to a finite palette
 
-``` math
+\\ \text{quantize}: \mathbb{R}^d \to \\1, \ldots, k\\, \\
 
-\text{quantize}: \mathbb{R}^d \to \{1, \ldots, k\},
-```
-
-where $`k \ll n`$ (for example $`k \approx 64`$ for $`n = 1600`$).
+where \\k \ll n\\ (for example \\k \approx 64\\ for \\n = 1600\\).
 
 2.  **Group by palette**
 
-Form groups
-``` math
-
-G_A^{(c)} = \{ i : \text{quantize}(f_i) = c \}
-```
-and similarly for $`B`$.
+Form groups \\ G_A^{(c)} = \\ i : \text{quantize}(f_i) = c \\ \\ and
+similarly for \\B\\.
 
 3.  **Match groups**
 
-Solve a $`k \times k`$ LAP between palette entries with costs
+Solve a \\k \times k\\ LAP between palette entries with costs
 
-``` math
+\\ c'\_{ij} = \alpha \\ d(p_i, p_j) + \beta \\ d(\bar{\mathbf{x}}\_i,
+\bar{\mathbf{x}}\_j), \\
 
-c'_{ij} = \alpha \, d(p_i, p_j) + \beta \, d(\bar{\mathbf{x}}_i, \bar{\mathbf{x}}_j),
-```
-
-where $`p_i`$ is the palette color and $`\bar{\mathbf{x}}_i`$ the
-centroid position of group $`i`$.
+where \\p_i\\ is the palette color and \\\bar{\mathbf{x}}\_i\\ the
+centroid position of group \\i\\.
 
 4.  **Assign entities**
 
-Every entity in $`G_A^{(c)}`$ is assigned according to the
+Every entity in \\G_A^{(c)}\\ is assigned according to the
 group-to-group match.
 
 #### Complexity Reduction
 
-- Original: $`O(n^3)`$ for an $`n \times n`$ LAP
+- Original: \\O(n^3)\\ for an \\n \times n\\ LAP
 
-- Quantized: $`O(k^3 + n k)`$ for the $`k \times k`$ LAP plus group
+- Quantized: \\O(k^3 + n k)\\ for the \\k \times k\\ LAP plus group
   assignment
 
-- Speedup: approximately $`(n/k)^3`$
+- Speedup: approximately \\(n/k)^3\\
 
-For example, with $`n = 1600`$ (a $`40 \times 40`$ image) and $`k = 64`$
+For example, with \\n = 1600\\ (a \\40 \times 40\\ image) and \\k = 64\\
 you get
 
-``` math
-
-\left(\frac{1600}{64}\right)^3 = 25^3 \approx 15\,000
-```
+\\ \left(\frac{1600}{64}\right)^3 = 25^3 \approx 15\\000 \\
 
 times fewer LAP operations.
 
@@ -296,7 +277,7 @@ times fewer LAP operations.
 
 **Advantages**
 
-- Very large speedups for big $`n`$
+- Very large speedups for big \\n\\
 
 - Preserves global structure (similar features stay together)
 
@@ -306,7 +287,7 @@ times fewer LAP operations.
 
 - Loses detail within each palette group
 
-- Quantization artifacts when $`k`$ is too small
+- Quantization artifacts when \\k\\ is too small
 
 - May miss optimal local pairings between similar but distinct feature
   values
@@ -322,28 +303,25 @@ partitioning, solve subproblems, and combine.
 
 1.  **Spatial partitioning**
 
-Divide the domain into $`m \times m`$ patches (for example $`m = 4`$ so
-you get $`16`$ patches). Denote the subset of entities of $`A`$ in patch
-$`k`$ by
+Divide the domain into \\m \times m\\ patches (for example \\m = 4\\ so
+you get \\16\\ patches). Denote the subset of entities of \\A\\ in patch
+\\k\\ by
 
-``` math
-
-P_A^{(k)} = \{ a_i : \mathbf{x}_i \in \text{Patch}_k \}.
-```
+\\ P_A^{(k)} = \\ a_i : \mathbf{x}\_i \in \text{Patch}\_k \\. \\
 
 2.  **Patch-level matching**
 
 Form patch representatives: centroid position and mean features per
-patch. Solve an $`m^2 \times m^2`$ LAP between patches, with costs
+patch. Solve an \\m^2 \times m^2\\ LAP between patches, with costs
 defined using the same feature and spatial distances but now at patch
 level.
 
 3.  **Recursive refinement**
 
-Within each matched patch pair $`(P_A^{(k)}, P_B^{(l)})`$:
+Within each matched patch pair \\(P_A^{(k)}, P_B^{(l)})\\:
 
-- If $`\lvert P_A^{(k)} \rvert \le \tau`$ (a threshold,
-  e.g. $`\tau = 50`$) solve the subproblem exactly.
+- If \\\lvert P_A^{(k)} \rvert \le \tau\\ (a threshold, e.g. \\\tau =
+  50\\) solve the subproblem exactly.
 
 - Otherwise, partition that patch pair again and repeat.
 
@@ -354,9 +332,9 @@ matching.
 
 #### Complexity (Sketch)
 
-With $`d`$ levels of decomposition (each level splitting into four
-patches), the work can be made close to $`O(n \log n)`$ in practice,
-compared to $`O(n^3)`$ for a single full LAP. Intuitively, the LAPs near
+With \\d\\ levels of decomposition (each level splitting into four
+patches), the work can be made close to \\O(n \log n)\\ in practice,
+compared to \\O(n^3)\\ for a single full LAP. Intuitively, the LAPs near
 the leaves are very small, and the costly large LAP is replaced by a
 series of much smaller ones.
 
@@ -364,7 +342,7 @@ series of much smaller ones.
 
 **Advantages**
 
-- Scales to very large $`n`$ (tens of thousands of entities)
+- Scales to very large \\n\\ (tens of thousands of entities)
 
 - Preserves local structure: nearby entities tend to be matched within
   the same spatial patch
@@ -375,7 +353,7 @@ series of much smaller ones.
 
 - May miss globally optimal cross-patch matches
 
-- Quality depends on partitioning scheme and threshold $`\tau`$
+- Quality depends on partitioning scheme and threshold \\\tau\\
 
 - Possible boundary artifacts if important structure crosses patch
   boundaries
@@ -430,7 +408,7 @@ series of much smaller ones.
     END FUNCTION
 
 The `couplr` implementation adds pragmatic details such as normalization
-of color and spatial distances, conversion between $`(x, y)`$
+of color and spatial distances, conversion between \\(x, y)\\
 coordinates and raster indexing, and handling remainder patches when the
 grid does not divide evenly.
 
@@ -443,45 +421,37 @@ assignment to the full-resolution grid.
 
 1.  **Downscale**
 
-Reduce spatial resolution by a factor $`s`$ (for example $`s = 2`$):
+Reduce spatial resolution by a factor \\s\\ (for example \\s = 2\\):
 
-``` math
+\\ A' = \text{downsample}(A, s), \qquad B' = \text{downsample}(B, s). \\
 
-A' = \text{downsample}(A, s), \qquad B' = \text{downsample}(B, s).
-```
-
-Now $`A'`$ and $`B'`$ each have $`n' = n / s^2`$ entities.
+Now \\A'\\ and \\B'\\ each have \\n' = n / s^2\\ entities.
 
 2.  **Solve at low resolution**
 
-Compute an exact LAP solution on the $`n' \times n'`$ problem:
+Compute an exact LAP solution on the \\n' \times n'\\ problem:
 
-``` math
-
-\pi' = \arg\min_{\pi'} \sum_{i=1}^{n'} c'_{i,\pi'(i)}.
-```
+\\ \pi' = \arg\min\_{\pi'} \sum\_{i=1}^{n'} c'\_{i,\pi'(i)}. \\
 
 3.  **Upscale assignment**
 
 Map the low-resolution assignment back to full resolution:
 
-``` math
-
-\pi(i) = \text{upscale}\!\bigl(\pi'(\text{coarse\_index}(i)), s\bigr),
-```
+\\ \pi(i) = \text{upscale}\\\bigl(\pi'(\text{coarse\\index}(i)),
+s\bigr), \\
 
 where each full-resolution entity inherits the assignment of its coarse
 cell.
 
 #### Complexity
 
-- Original: $`O(n^3)`$
+- Original: \\O(n^3)\\
 
-- Downscaled: $`O\bigl((n/s^2)^3\bigr) = O(n^3 / s^6)`$
+- Downscaled: \\O\bigl((n/s^2)^3\bigr) = O(n^3 / s^6)\\
 
-- Speedup: $`s^6`$
+- Speedup: \\s^6\\
 
-For $`s = 2`$ this gives a $`64\times`$ reduction in LAP work.
+For \\s = 2\\ this gives a \\64\times\\ reduction in LAP work.
 
 #### Quality Trade-offs
 
@@ -491,7 +461,7 @@ For $`s = 2`$ this gives a $`64\times`$ reduction in LAP work.
 
 - Exact LAP at the coarse level
 
-- Large speedups for moderate $`s`$
+- Large speedups for moderate \\s\\
 
 **Disadvantages**
 
@@ -500,29 +470,29 @@ For $`s = 2`$ this gives a $`64\times`$ reduction in LAP work.
 - Assignment is no longer a true permutation at pixel level (multiple
   fine pixels can map to the same coarse target)
 
-- Quality deteriorates quickly for larger $`s`$
+- Quality deteriorates quickly for larger \\s\\
 
 In practice, resolution reduction is most useful as a crude
-initialization step for very large problems ($`n > 100\,000`$).
+initialization step for very large problems (\\n \> 100\\000\\).
 
 ### Strategy Comparison
 
 | Approach | Speedup (vs. exact) | Quality | Best for |
 |----|----|----|----|
-| Exact LAP | $`1\times`$ | Optimal | $`n \le 1000`$ |
-| Feature quantization | $`(n/k)^3`$ | Good global structure | Distinct feature groups |
-| Hierarchical | $`\approx n^{3/2}`$ | Good local structure | Large $`n`$, strong spatial structure |
-| Resolution reduction | $`s^6`$ | Moderate | Very large $`n`$, rough initialization |
+| Exact LAP | \\1\times\\ | Optimal | \\n \le 1000\\ |
+| Feature quantization | \\(n/k)^3\\ | Good global structure | Distinct feature groups |
+| Hierarchical | \\\approx n^{3/2}\\ | Good local structure | Large \\n\\, strong spatial structure |
+| Resolution reduction | \\s^6\\ | Moderate | Very large \\n\\, rough initialization |
 
 **Practical rules of thumb**
 
-- $`n < 1000`$: use the exact LAP.
+- \\n \< 1000\\: use the exact LAP.
 
-- $`1000 < n < 5000`$: feature quantization or a shallow hierarchy.
+- \\1000 \< n \< 5000\\: feature quantization or a shallow hierarchy.
 
-- $`n > 5000`$: hierarchical decomposition with 2-3 levels.
+- \\n \> 5000\\: hierarchical decomposition with 2-3 levels.
 
-- $`n > 50\,000`$: combine $`s = 2`$ resolution reduction with a
+- \\n \> 50\\000\\: combine \\s = 2\\ resolution reduction with a
   hierarchical method.
 
 ## Implementation Details of Exact Pixel Matching
@@ -531,11 +501,8 @@ We now spell out the exact LAP-based morph more concretely.
 
 We again use the cost
 
-``` math
-
-c_{ij} = \alpha \,\lVert \text{RGB}_i^A - \text{RGB}_j^B \rVert_2 +
-         \beta \,\lVert (x_i, y_i) - (x_j, y_j) \rVert_2.
-```
+\\ c\_{ij} = \alpha \\\lVert \text{RGB}\_i^A - \text{RGB}\_j^B
+\rVert_2 + \beta \\\lVert (x_i, y_i) - (x_j, y_j) \rVert_2. \\
 
 The algorithm:
 
@@ -585,7 +552,7 @@ The algorithm:
 The `couplr` implementation handles indexing, raster layout, and shows
 or saves the resulting GIFs.
 
-Approximate performance: up to about $`100 \times 100`$ (10 000 pixels)
+Approximate performance: up to about \\100 \times 100\\ (10 000 pixels)
 on typical hardware is fine with the exact LAP.
 
 ## Application to Scientific Domains
@@ -595,26 +562,22 @@ motivated them.
 
 ### Ecology: Vegetation Plot Matching
 
-**Problem**: match $`n`$ vegetation plots surveyed at time $`t`$ to
-$`n`$ plots at time $`t + \Delta t`$ to track community dynamics.
+**Problem**: match \\n\\ vegetation plots surveyed at time \\t\\ to
+\\n\\ plots at time \\t + \Delta t\\ to track community dynamics.
 
 **Feature distance**: Bray-Curtis dissimilarity between species
 abundance vectors
 
-``` math
+\\ d\_{\text{BC}}(a, b) = \frac{\sum_s \lvert a_s - b_s \rvert} {\sum_s
+(a_s + b_s)}, \\
 
-d_{\text{BC}}(a, b) =
-\frac{\sum_s \lvert a_s - b_s \rvert}
-     {\sum_s (a_s + b_s)},
-```
-
-where $`a_s, b_s`$ are abundances of species $`s`$ in plots $`a`$ and
-$`b`$.
+where \\a_s, b_s\\ are abundances of species \\s\\ in plots \\a\\ and
+\\b\\.
 
 **Spatial distance**: geographic distance (e.g. in kilometers) between
 plot centers.
 
-Exact solution for small studies ($`n < 100`$):
+Exact solution for small studies (\\n \< 100\\):
 
     // Pseudocode for ecological plot matching
     FOR i = 1 TO n_plots_t DO
@@ -637,7 +600,7 @@ Exact solution for small studies ($`n < 100`$):
 
     plot_correspondence <- lap_solve(cost)
 
-For large studies ($`n > 1000`$) a hierarchical approach by region is
+For large studies (\\n \> 1000\\) a hierarchical approach by region is
 more practical:
 
     // Hierarchical decomposition by geographic region
@@ -678,25 +641,22 @@ fronts.
 
 ### Physics: Particle Tracking
 
-**Problem**: track $`n`$ particles between frame $`t`$ and
-$`t + \Delta t`$ in experimental video.
+**Problem**: track \\n\\ particles between frame \\t\\ and \\t + \Delta
+t\\ in experimental video.
 
 **Feature distance**: differences in intensity, size, or shape.
 
 **Spatial distance**: displacement relative to predicted motion:
 
-``` math
+\\ d\_{\text{spatial}}(i, j) = \bigl\\ \mathbf{x}\_i + \mathbf{v}\_i
+\Delta t - \mathbf{x}\_j \bigr\\\_2, \\
 
-d_{\text{spatial}}(i, j) =
-\bigl\| \mathbf{x}_i + \mathbf{v}_i \Delta t - \mathbf{x}_j \bigr\|_2,
-```
+where \\\mathbf{v}\_i\\ is the estimated velocity from previous frames.
 
-where $`\mathbf{v}_i`$ is the estimated velocity from previous frames.
-
-We also impose a maximum displacement $`d_{\max}`$ beyond which matches
+We also impose a maximum displacement \\d\_{\max}\\ beyond which matches
 are physically implausible.
 
-Exact solution (moderate $`n`$):
+Exact solution (moderate \\n\\):
 
     // Pseudocode for particle tracking with velocity prediction
 
@@ -734,7 +694,7 @@ Exact solution (moderate $`n`$):
       velocity_new[i] <- (position_tplus[j] - position_t[i]) / Δt
     END FOR
 
-For dense tracking ($`n > 5000`$), we can first cluster particles:
+For dense tracking (\\n \> 5000\\), we can first cluster particles:
 
     // Two-stage: clustering then local matching
 
@@ -779,18 +739,13 @@ particle fields.
 ### Chemistry: Molecular Conformation Alignment
 
 **Problem**: align two conformations of the same molecule (e.g. a
-protein) with $`n`$ atoms to compute RMSD and analyze structural change.
+protein) with \\n\\ atoms to compute RMSD and analyze structural change.
 
 **Feature distance**: strict element matching
 
-``` math
-
-d_{\text{element}}(i, j) =
-\begin{cases}
-0, & \text{if } \text{element}_i = \text{element}_j, \\
-\infty, & \text{otherwise.}
-\end{cases}
-```
+\\ d\_{\text{element}}(i, j) = \begin{cases} 0, & \text{if }
+\text{element}\_i = \text{element}\_j, \\ \infty, & \text{otherwise.}
+\end{cases} \\
 
 **Spatial distance**: 3D Euclidean distance between atomic coordinates.
 
@@ -841,6 +796,7 @@ The morphing examples use default settings, but you can customize the
 number of frames and speed:
 
 ``` r
+
 # From inst/scripts/generate_examples.R
 generate_morph <- function(assignment, pixels_A, pixels_B,
                            n_frames    = 30,   # number of frames
@@ -862,6 +818,7 @@ The morphing implementation is provided in
 `inst/scripts/generate_examples.R`:
 
 ``` r
+
 # View the source
 example_script <- system.file("scripts", "generate_examples.R", package = "couplr")
 file.show(example_script)
@@ -879,6 +836,7 @@ my_assignment <- lap_solve(my_cost)
 To regenerate all demo GIFs and PNGs:
 
 ``` r
+
 source("inst/scripts/generate_examples.R")
 ```
 
@@ -891,47 +849,36 @@ transport.
 
 ### Monge Problem
 
-The original Monge formulation (1781) seeks a transport map
-$`T: A \to B`$ minimizing
+The original Monge formulation (1781) seeks a transport map \\T: A \to
+B\\ minimizing
 
-``` math
-
-\int_A c(\mathbf{x}, T(\mathbf{x})) \,\mathrm{d}\mu(\mathbf{x}).
-```
+\\ \int_A c(\mathbf{x}, T(\mathbf{x})) \\\mathrm{d}\mu(\mathbf{x}). \\
 
 ### Kantorovich Relaxation
 
-Kantorovich (1942) relaxed this to a transport plan $`\gamma`$ on
-$`A \times B`$:
+Kantorovich (1942) relaxed this to a transport plan \\\gamma\\ on \\A
+\times B\\:
 
-``` math
+\\ \min\_{\gamma} \int\_{A \times B} c(\mathbf{x}, \mathbf{y})
+\\\mathrm{d}\gamma(\mathbf{x}, \mathbf{y}) \\
 
-\min_{\gamma} \int_{A \times B} c(\mathbf{x}, \mathbf{y}) \,\mathrm{d}\gamma(\mathbf{x}, \mathbf{y})
-```
-
-subject to marginal constraints on $`\gamma`$.
+subject to marginal constraints on \\\gamma\\.
 
 ### Discrete Linear Assignment
 
-For discrete uniform distributions with $`n`$ points in $`A`$ and $`B`$
+For discrete uniform distributions with \\n\\ points in \\A\\ and \\B\\
 we obtain exactly the linear assignment problem:
 
-``` math
-
-\min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)},
-```
+\\ \min\_{\pi \in S_n} \sum\_{i=1}^n c\_{i,\pi(i)}, \\
 
 which is what `couplr` solves efficiently.
 
 ### Wasserstein Distance
 
-With $`c_{ij} = d(\mathbf{x}_i, \mathbf{x}_j)`$ (often Euclidean
-distance), the optimal cost defines the $`1`$‑Wasserstein distance:
+With \\c\_{ij} = d(\mathbf{x}\_i, \mathbf{x}\_j)\\ (often Euclidean
+distance), the optimal cost defines the \\1\\‑Wasserstein distance:
 
-``` math
-
-W_1(\mu, \nu) = \min_{\pi \in S_n} \sum_{i=1}^n c_{i,\pi(i)}.
-```
+\\ W_1(\mu, \nu) = \min\_{\pi \in S_n} \sum\_{i=1}^n c\_{i,\pi(i)}. \\
 
 This appears in
 
@@ -1004,6 +951,7 @@ working with couplr’s practical matching functions.
 with exact algorithms:
 
 ``` r
+
 result <- match_couples(left, right, vars = c("x", "y", "z"), auto_scale = TRUE)
 ```
 
@@ -1011,6 +959,7 @@ result <- match_couples(left, right, vars = c("x", "y", "z"), auto_scale = TRUE)
 subproblems:
 
 ``` r
+
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 10)
 result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
 ```
@@ -1018,6 +967,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 **For n \> 10,000**: Use greedy matching:
 
 ``` r
+
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 ```
 
@@ -1045,8 +995,8 @@ morphing and scientific applications.
 1.  **Assignment = matching**: LAP finds optimal correspondences between
     two sets
 
-2.  **Scalability matters**: $`O(n^3)`$ becomes prohibitive for
-    $`n > 3{,}000`$
+2.  **Scalability matters**: \\O(n^3)\\ becomes prohibitive for \\n \>
+    3{,}000\\
 
 3.  **Three approximations**: Feature quantization, hierarchical
     decomposition, resolution reduction

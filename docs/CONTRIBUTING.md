@@ -68,12 +68,14 @@ couplr is an R package that uses C++ code via Rcpp and RcppEigen.
 2.  **Install development dependencies**
 
     ``` r
+
     install.packages(c("devtools", "roxygen2", "testthat", "rmarkdown", "knitr", "pkgdown", "Rcpp", "RcppEigen"))
     ```
 
 3.  **Load the development build**
 
     ``` r
+
     devtools::load_all()
     ```
 
@@ -82,12 +84,14 @@ couplr is an R package that uses C++ code via Rcpp and RcppEigen.
 Build and install the package locally:
 
 ``` r
+
 devtools::install()
 ```
 
 If you modify C++ code, rebuild the DLL before reinstalling:
 
 ``` r
+
 devtools::clean_dll()
 devtools::install()
 ```
@@ -95,12 +99,14 @@ devtools::install()
 Regenerate documentation with:
 
 ``` r
+
 devtools::document()
 ```
 
 After modifying C++ code or adding `[[Rcpp::export]]` functions:
 
 ``` r
+
 Rcpp::compileAttributes()
 devtools::document()
 devtools::load_all()
@@ -114,18 +120,21 @@ couplr uses **testthat** for testing. All tests are located in
 Run the full test suite:
 
 ``` r
+
 devtools::test()
 ```
 
 Run a complete package check:
 
 ``` r
+
 devtools::check()
 ```
 
 Run a subset of tests during development:
 
 ``` r
+
 testthat::test_dir("tests/testthat")
 testthat::test_file("tests/testthat/test-matching.R")
 ```
@@ -140,6 +149,7 @@ large datasets.
 ### Install dependencies
 
 ``` r
+
 install.packages(c("rmarkdown", "knitr", "pkgdown"))
 ```
 
@@ -148,12 +158,14 @@ install.packages(c("rmarkdown", "knitr", "pkgdown"))
 Build vignettes:
 
 ``` r
+
 devtools::build_vignettes()
 ```
 
 Build the pkgdown site locally:
 
 ``` r
+
 pkgdown::build_site()
 ```
 
@@ -210,6 +222,7 @@ The generated site is saved in the `docs/` directory. Open
 3.  **Run tests and checks** before committing:
 
     ``` r
+
     devtools::test()
     devtools::check()
     ```

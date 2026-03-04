@@ -68,18 +68,15 @@ couplr gives you all of them, and it picks the right one automatically.
 
 Before the algorithms, the problem. It’s simple to state:
 
-> Given $`n`$ workers and $`n`$ jobs, where assigning worker $`i`$ to
-> job $`j`$ costs $`c_{ij}`$, find the assignment that minimizes total
+> Given \\n\\ workers and \\n\\ jobs, where assigning worker \\i\\ to
+> job \\j\\ costs \\c\_{ij}\\, find the assignment that minimizes total
 > cost.
 
 Mathematically:
 
-``` math
+\\ \min\_{\pi} \sum\_{i=1}^{n} c\_{i,\pi(i)} \\
 
-\min_{\pi} \sum_{i=1}^{n} c_{i,\pi(i)}
-```
-
-where $`\pi`$ is a permutation (each worker gets exactly one job, each
+where \\\pi\\ is a permutation (each worker gets exactly one job, each
 job gets exactly one worker).
 
 ![Bipartite graph showing workers on left, jobs on right, with weighted
@@ -88,48 +85,37 @@ highlighted](algorithms_files/figure-html/bipartite-graph-1.svg)
 
 Simple to state. Not simple to solve efficiently.
 
-There are $`n!`$ possible assignments. For $`n = 20`$, that’s 2.4
+There are \\n!\\ possible assignments. For \\n = 20\\, that’s 2.4
 quintillion possibilities. Brute force is impossible. We need structure.
 
 ### The LP Formulation
 
-The assignment problem is a linear program. Let $`x_{ij} \in \{0,1\}`$
-indicate whether worker $`i`$ is assigned to job $`j`$:
+The assignment problem is a linear program. Let \\x\_{ij} \in \\0,1\\\\
+indicate whether worker \\i\\ is assigned to job \\j\\:
 
-``` math
-
-\begin{aligned}
-\min \quad & \sum_{i,j} c_{ij} x_{ij} \\
-\text{s.t.} \quad & \sum_j x_{ij} = 1 \quad \forall i \quad \text{(each worker assigned once)} \\
-& \sum_i x_{ij} = 1 \quad \forall j \quad \text{(each job filled once)} \\
-& x_{ij} \geq 0
-\end{aligned}
-```
+\\ \begin{aligned} \min \quad & \sum\_{i,j} c\_{ij} x\_{ij} \\
+\text{s.t.} \quad & \sum_j x\_{ij} = 1 \quad \forall i \quad \text{(each
+worker assigned once)} \\ & \sum_i x\_{ij} = 1 \quad \forall j \quad
+\text{(each job filled once)} \\ & x\_{ij} \geq 0 \end{aligned} \\
 
 The constraint matrix is **totally unimodular**: every square submatrix
 has determinant 0, 1, or -1. This guarantees integer solutions even when
-we relax $`x_{ij} \in \{0,1\}`$ to $`x_{ij} \geq 0`$.
+we relax \\x\_{ij} \in \\0,1\\\\ to \\x\_{ij} \geq 0\\.
 
 ### Duality: The Key to Efficiency
 
-The dual LP introduces prices $`u_i`$ for workers and $`v_j`$ for jobs:
+The dual LP introduces prices \\u_i\\ for workers and \\v_j\\ for jobs:
 
-``` math
+\\ \begin{aligned} \max \quad & \sum_i u_i + \sum_j v_j \\ \text{s.t.}
+\quad & u_i + v_j \leq c\_{ij} \quad \forall i,j \end{aligned} \\
 
-\begin{aligned}
-\max \quad & \sum_i u_i + \sum_j v_j \\
-\text{s.t.} \quad & u_i + v_j \leq c_{ij} \quad \forall i,j
-\end{aligned}
-```
-
-**Complementary slackness** links primal and dual: if $`x_{ij} = 1`$ in
-an optimal assignment, then $`u_i + v_j = c_{ij}`$ (the constraint is
+**Complementary slackness** links primal and dual: if \\x\_{ij} = 1\\ in
+an optimal assignment, then \\u_i + v_j = c\_{ij}\\ (the constraint is
 tight). This means optimal assignments use only **tight edges** where
 the dual constraint holds with equality.
 
-The **reduced cost** of edge $`(i,j)`$ is
-$`\bar{c}_{ij} = c_{ij} - u_i - v_j`$. An edge is tight when
-$`\bar{c}_{ij} = 0`$.
+The **reduced cost** of edge \\(i,j)\\ is \\\bar{c}\_{ij} = c\_{ij} -
+u_i - v_j\\. An edge is tight when \\\bar{c}\_{ij} = 0\\.
 
 Different algorithms exploit this duality in different ways.
 
@@ -142,9 +128,9 @@ Different algorithms exploit this duality in different ways.
 The algorithm everyone learns. Published by Harold Kuhn, based on work
 by Hungarian mathematicians Koenig and Egervary.
 
-**The idea**: Maintain dual prices $`(u_i, v_j)`$ such that
-$`u_i + v_j \leq c_{ij}`$ for all pairs. Edges where equality holds are
-“tight”: the only edges that can appear in an optimal solution.
+**The idea**: Maintain dual prices \\(u_i, v_j)\\ such that \\u_i + v_j
+\leq c\_{ij}\\ for all pairs. Edges where equality holds are “tight”:
+the only edges that can appear in an optimal solution.
 
 ![Hungarian algorithm showing alternating path augmentation through
 tight edges](algorithms_files/figure-html/hungarian-diagram-1.svg)
@@ -159,13 +145,14 @@ tight edges](algorithms_files/figure-html/hungarian-diagram-1.svg)
 
 4.  Otherwise, update prices to create new tight edges. Repeat.
 
-**Complexity**: $`O(n^3)`$
+**Complexity**: \\O(n^3)\\
 
-**The problem**: That $`O(n^3)`$ hides a large constant. The price
+**The problem**: That \\O(n^3)\\ hides a large constant. The price
 updates and augmenting path searches are expensive. For a 1000x1000
 matrix, you might wait 10+ seconds.
 
 ``` r
+
 cost <- matrix(c(10, 19, 8, 15, 10, 11, 9, 12, 14), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost, method = "hungarian")
 print(result)
@@ -212,10 +199,11 @@ augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
 3.  **Augmentation**: For any remaining unmatched rows, use
     Dijkstra-style shortest path search.
 
-**Complexity**: Still $`O(n^3)`$, but with a much smaller constant.
+**Complexity**: Still \\O(n^3)\\, but with a much smaller constant.
 Often 10-50x faster than Hungarian in practice.
 
 ``` r
+
 set.seed(123)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -279,7 +267,7 @@ with prices](algorithms_files/figure-html/auction-diagram-1.svg)
 infinitely against each other, each raising the price by 0. The epsilon
 ensures progress.
 
-**Complexity**: $`O(n^2 \log(nC) / \epsilon)`$ where $`C`$ is the cost
+**Complexity**: \\O(n^2 \log(nC) / \epsilon)\\ where \\C\\ is the cost
 range.
 
 couplr offers three Auction variants:
@@ -291,6 +279,7 @@ couplr offers three Auction variants:
 | Gauss-Seidel | `"auction_gs"`     | Sequential sweep              |
 
 ``` r
+
 set.seed(123)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -311,8 +300,8 @@ The next algorithm makes epsilon-scaling systematic.
 Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon
 automatically?
 
-**The idea**: Start with $`\epsilon = \max(c_{ij})`$. In each phase,
-halve epsilon and refine the current solution. After $`O(\log C)`$
+**The idea**: Start with \\\epsilon = \max(c\_{ij})\\. In each phase,
+halve epsilon and refine the current solution. After \\O(\log C)\\
 phases, epsilon is essentially zero: optimality.
 
 ![CSA algorithm showing epsilon-scaling phases converging to optimal
@@ -322,9 +311,10 @@ solution](algorithms_files/figure-html/csa-diagram-1.svg)
 solution is a good starting point. The algorithm exploits its own
 progress.
 
-**Complexity**: $`O(n^3)`$ amortized, often faster in practice.
+**Complexity**: \\O(n^3)\\ amortized, often faster in practice.
 
 ``` r
+
 set.seed(456)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -367,20 +357,21 @@ bits](algorithms_files/figure-html/gabow-tarjan-diagram-1.svg)
 
 5.  Repeat until all bits are processed.
 
-**What is 1-feasibility?** Standard dual feasibility requires
-$`u_i + v_j \leq c_{ij}`$ for all edges. 1-feasibility relaxes this: we
-allow $`u_i + v_j \leq c_{ij} + 1`$. The “1” comes from the current bit
+**What is 1-feasibility?** Standard dual feasibility requires \\u_i +
+v_j \leq c\_{ij}\\ for all edges. 1-feasibility relaxes this: we allow
+\\u_i + v_j \leq c\_{ij} + 1\\. The “1” comes from the current bit
 position. At each scaling phase, we only need reduced costs to be within
 1 of optimal. When we refine to the next bit, we tighten the bound.
-After processing all $`\log C`$ bits, the slack is less than 1, which
+After processing all \\\log C\\ bits, the slack is less than 1, which
 for integers means exactly 0: true optimality.
 
-**Complexity**: $`O(n^3 \log C)`$ where $`C`$ is the maximum cost.
+**Complexity**: \\O(n^3 \log C)\\ where \\C\\ is the maximum cost.
 
 Rarely seen outside academic papers. The bookkeeping across scaling
 phases is complex enough that most implementations skip it.
 
 ``` r
+
 set.seed(42)
 n <- 50
 # Use integer costs with large range - Gabow-Tarjan's strength
@@ -401,9 +392,9 @@ algorithm, with even better theoretical complexity.
 James Orlin and Ravindra Ahuja developed a **double-scaling** algorithm
 that scales both costs AND capacities simultaneously.
 
-**The insight**: Cost-scaling alone gives $`O(n^3 \log C)`$. But if we
+**The insight**: Cost-scaling alone gives \\O(n^3 \log C)\\. But if we
 also scale *flow capacities*, we can exploit the structure of sparse
-graphs. At each scale, we only need to push $`O(\sqrt{n})`$ units of
+graphs. At each scale, we only need to push \\O(\sqrt{n})\\ units of
 flow before refining.
 
 **The algorithm**:
@@ -412,27 +403,28 @@ flow before refining.
 
 2.  At each cost scale, use **capacity scaling**:
 
-    - Start with large capacity increments $`\Delta = 2^k`$
+    - Start with large capacity increments \\\Delta = 2^k\\
 
-    - Find augmenting paths that can carry $`\Delta`$ flow
+    - Find augmenting paths that can carry \\\Delta\\ flow
 
-    - Halve $`\Delta`$ and repeat until $`\Delta = 1`$
+    - Halve \\\Delta\\ and repeat until \\\Delta = 1\\
 
-3.  The capacity scaling limits work per phase to $`O(m)`$
+3.  The capacity scaling limits work per phase to \\O(m)\\
     augmentations.
 
-**Why $`\sqrt{n}`$ appears**: The assignment problem has $`n`$ units of
-flow total. With capacity scaling, each phase handles $`O(\sqrt{n})`$
-flow units, and there are $`O(\sqrt{n})`$ phases per cost scale. This
+**Why \\\sqrt{n}\\ appears**: The assignment problem has \\n\\ units of
+flow total. With capacity scaling, each phase handles \\O(\sqrt{n})\\
+flow units, and there are \\O(\sqrt{n})\\ phases per cost scale. This
 geometric structure yields the improved bound.
 
-**Complexity**: $`O(\sqrt{n} \cdot m \cdot \log(nC))`$ where $`m`$ is
+**Complexity**: \\O(\sqrt{n} \cdot m \cdot \log(nC))\\ where \\m\\ is
 the number of edges.
 
-For sparse problems where $`m \ll n^2`$, this is dramatically better
-than $`O(n^3)`$.
+For sparse problems where \\m \ll n^2\\, this is dramatically better
+than \\O(n^3)\\.
 
 ``` r
+
 set.seed(111)
 n <- 50
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
@@ -466,7 +458,7 @@ workers (capacity 1 each)
 
 - Jobs connected to a sink node (capacity 1 each)
 
-- Find minimum-cost flow of value $`n`$
+- Find minimum-cost flow of value \\n\\
 
 This perspective gives us two more algorithms.
 
@@ -484,19 +476,19 @@ problem](algorithms_files/figure-html/network-simplex-diagram-1.svg)
 
 **The algorithm**:
 
-1.  **Initialize**: Find a spanning tree $`T`$ that supports a feasible
+1.  **Initialize**: Find a spanning tree \\T\\ that supports a feasible
     flow (e.g., all flow through a single hub).
 
-2.  **Compute potentials**: For tree edges, set
-    $`\pi_i - \pi_j = c_{ij}`$. This determines all node potentials
-    uniquely (up to a constant).
+2.  **Compute potentials**: For tree edges, set \\\pi_i - \pi_j =
+    c\_{ij}\\. This determines all node potentials uniquely (up to a
+    constant).
 
-3.  **Price non-tree edges**: For each edge $`(i,j) \notin T`$, compute
-    reduced cost $`\bar{c}_{ij} = c_{ij} - \pi_i + \pi_j`$.
+3.  **Price non-tree edges**: For each edge \\(i,j) \notin T\\, compute
+    reduced cost \\\bar{c}\_{ij} = c\_{ij} - \pi_i + \pi_j\\.
 
-4.  **Pivot**: If any non-tree edge has $`\bar{c}_{ij} < 0`$, adding it
-    to $`T`$ creates a cycle. Push flow around the cycle until some tree
-    edge saturates. Remove that edge; the non-tree edge enters the
+4.  **Pivot**: If any non-tree edge has \\\bar{c}\_{ij} \< 0\\, adding
+    it to \\T\\ creates a cycle. Push flow around the cycle until some
+    tree edge saturates. Remove that edge; the non-tree edge enters the
     basis.
 
 5.  **Repeat** until all reduced costs are non-negative (optimality).
@@ -504,12 +496,12 @@ problem](algorithms_files/figure-html/network-simplex-diagram-1.svg)
 **Why trees?**: In a tree, there’s exactly one path between any two
 nodes. This means: - Flow is uniquely determined by supplies/demands
 
-- Potentials can be computed in $`O(n)`$ by tree traversal
+- Potentials can be computed in \\O(n)\\ by tree traversal
 
-- Each pivot changes $`O(n)`$ potentials (along a tree path), not
-  $`O(n^2)`$
+- Each pivot changes \\O(n)\\ potentials (along a tree path), not
+  \\O(n^2)\\
 
-**Complexity**: $`O(n^3)`$ typical, strongly polynomial with
+**Complexity**: \\O(n^3)\\ typical, strongly polynomial with
 anti-cycling rules.
 
 **Best for**: Problems where you need dual variables for sensitivity
@@ -517,6 +509,7 @@ analysis. Problems already formulated as network flows. Cases where you
 want guaranteed finite convergence.
 
 ``` r
+
 set.seed(789)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -542,27 +535,27 @@ and work locally to eliminate violations.
 
 **Key concepts**:
 
-- **Excess**: $`e(v) = \text{flow in} - \text{flow out}`$. Preflow
-  allows $`e(v) \geq 0`$ at non-sink nodes.
+- **Excess**: \\e(v) = \text{flow in} - \text{flow out}\\. Preflow
+  allows \\e(v) \geq 0\\ at non-sink nodes.
 
-- **Height function**: $`h: V \to \mathbb{Z}_{\geq 0}`$ with
-  $`h(t) = 0`$ and $`h(u) \leq h(v) + 1`$ for residual edges $`(u,v)`$.
+- **Height function**: \\h: V \to \mathbb{Z}\_{\geq 0}\\ with \\h(t) =
+  0\\ and \\h(u) \leq h(v) + 1\\ for residual edges \\(u,v)\\.
 
-- **Admissible edge**: Residual edge $`(u,v)`$ where $`h(u) = h(v) + 1`$
+- **Admissible edge**: Residual edge \\(u,v)\\ where \\h(u) = h(v) + 1\\
   (flow goes “downhill”).
 
 **The algorithm**:
 
-1.  **Initialize**: Saturate all edges from source. Set $`h(s) = n`$,
-    $`h(v) = 0`$ for $`v \neq s`$.
+1.  **Initialize**: Saturate all edges from source. Set \\h(s) = n\\,
+    \\h(v) = 0\\ for \\v \neq s\\.
 
-2.  While any node $`v`$ has excess $`e(v) > 0`$:
+2.  While any node \\v\\ has excess \\e(v) \> 0\\:
 
-    - **Push**: If admissible edge $`(v, w)`$ exists, push
-      $`\min(e(v), \text{capacity})`$ flow along it.
+    - **Push**: If admissible edge \\(v, w)\\ exists, push \\\min(e(v),
+      \text{capacity})\\ flow along it.
 
-    - **Relabel**: If no admissible edge, set
-      $`h(v) = 1 + \min\{h(w) : (v,w) \text{ is residual}\}`$.
+    - **Relabel**: If no admissible edge, set \\h(v) = 1 + \min\\h(w) :
+      (v,w) \text{ is residual}\\\\.
 
 3.  When no excess remains at intermediate nodes, we have a valid
     maximum flow.
@@ -571,7 +564,7 @@ and work locally to eliminate violations.
 reduced cost, and relabel using potential updates. This gives the
 **cost-scaling push-relabel** variant.
 
-**Complexity**: $`O(n^2 m)`$ for max-flow, $`O(n^3 \log(nC))`$ for
+**Complexity**: \\O(n^2 m)\\ for max-flow, \\O(n^3 \log(nC))\\ for
 min-cost flow.
 
 **Strengths**: Highly parallelizable since pushes are local operations.
@@ -579,6 +572,7 @@ Excellent cache behavior. Dominates in practice for max-flow;
 competitive for min-cost flow on dense graphs.
 
 ``` r
+
 set.seed(222)
 n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
@@ -604,9 +598,10 @@ When costs are only 0 or 1, we don’t need the full machinery.
 **The algorithm**: Hopcroft-Karp for maximum cardinality matching, run
 on zero-cost edges first. Then add 1-cost edges as needed.
 
-**Complexity**: $`O(n^{2.5})`$ for binary costs.
+**Complexity**: \\O(n^{2.5})\\ for binary costs.
 
 ``` r
+
 set.seed(101)
 n <- 100
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
@@ -615,7 +610,7 @@ cat("Total cost:", get_total_cost(result), "\n")
 #> Total cost: 0
 ```
 
-When you have binary costs and large $`n`$, HK01 is dramatically faster.
+When you have binary costs and large \\n\\, HK01 is dramatically faster.
 
 ------------------------------------------------------------------------
 
@@ -626,10 +621,11 @@ When 80% of entries are forbidden (Inf or NA), why store them?
 **SAP** (Shortest Augmenting Path) and **LAPMOD** use sparse
 representations: adjacency lists instead of dense matrices.
 
-**Complexity**: $`O(n^2 + nm)`$ where $`m`$ is the number of allowed
+**Complexity**: \\O(n^2 + nm)\\ where \\m\\ is the number of allowed
 edges.
 
 ``` r
+
 set.seed(789)
 n <- 100
 cost <- matrix(Inf, n, n)
@@ -647,24 +643,24 @@ dense algorithms.
 
 ### Ramshaw-Tarjan: Rectangular Problems (2012)
 
-Most algorithms assume square matrices. When you have $`n`$ workers and
-$`m > n`$ jobs, standard approaches pad with $`m - n`$ dummy workers at
-zero cost. This works but wastes effort: the algorithm processes
-$`m \times m`$ entries when only $`n \times m`$ matter.
+Most algorithms assume square matrices. When you have \\n\\ workers and
+\\m \> n\\ jobs, standard approaches pad with \\m - n\\ dummy workers at
+zero cost. This works but wastes effort: the algorithm processes \\m
+\times m\\ entries when only \\n \times m\\ matter.
 
 Ramshaw and Tarjan (2012) developed an algorithm that handles
 rectangularity natively by exploiting the structure of **unbalanced
 bipartite graphs**.
 
-**The key insight**: In a rectangular assignment, we match all $`n`$
-rows but only $`n`$ of the $`m`$ columns. The dual problem has different
-structure: row duals $`u_i`$ are unconstrained, but column duals $`v_j`$
-must satisfy $`v_j \leq 0`$ for unmatched columns.
+**The key insight**: In a rectangular assignment, we match all \\n\\
+rows but only \\n\\ of the \\m\\ columns. The dual problem has different
+structure: row duals \\u_i\\ are unconstrained, but column duals \\v_j\\
+must satisfy \\v_j \leq 0\\ for unmatched columns.
 
 **The algorithm**:
 
-1.  Maintain dual variables $`(u, v)`$ with $`u_i + v_j \leq c_{ij}`$
-    and $`v_j \leq 0`$ for free columns.
+1.  Maintain dual variables \\(u, v)\\ with \\u_i + v_j \leq c\_{ij}\\
+    and \\v_j \leq 0\\ for free columns.
 
 2.  Use a modified Dijkstra search that respects the asymmetric dual
     constraints.
@@ -672,13 +668,14 @@ must satisfy $`v_j \leq 0`$ for unmatched columns.
 3.  When augmenting, update duals to preserve feasibility without
     padding.
 
-**Complexity**: $`O(nm \log n)`$ using Fibonacci heaps, or
-$`O(nm + n^2 \log n)`$ with simpler structures.
+**Complexity**: \\O(nm \log n)\\ using Fibonacci heaps, or \\O(nm + n^2
+\log n)\\ with simpler structures.
 
 For highly rectangular problems (e.g., matching 100 treatments to 10,000
-controls), this avoids the $`O(m^3)`$ cost of padding to square.
+controls), this avoids the \\O(m^3)\\ cost of padding to square.
 
 ``` r
+
 set.seed(333)
 n_rows <- 30
 n_cols <- 100  # Highly rectangular: 30 x 100
@@ -706,6 +703,7 @@ problem.
 What if you want the 2nd best assignment? The 3rd best? The k-th best?
 
 ``` r
+
 cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13, 16, 9, 14, 12, 19, 8, 18),
                nrow = 4, byrow = TRUE)
 kbest <- lap_solve_kbest(cost, k = 5)
@@ -728,6 +726,7 @@ is infeasible. Understanding how costs affect solutions.
 Minimize the **maximum** edge cost instead of the sum.
 
 ``` r
+
 cost <- matrix(c(5, 9, 2, 10, 3, 7, 8, 4, 6), nrow = 3, byrow = TRUE)
 result <- bottleneck_assignment(cost)
 cat("Bottleneck (max edge):", result$bottleneck, "\n")
@@ -743,6 +742,7 @@ Entropy-regularized optimal transport. Instead of hard 0/1 assignment,
 produce a doubly-stochastic transport plan.
 
 ``` r
+
 cost <- matrix(c(1, 2, 3, 4), nrow = 2)
 result <- sinkhorn(cost, lambda = 10)
 print(round(result$transport_plan, 3))
@@ -759,6 +759,7 @@ distances.
 Extract dual prices for sensitivity analysis.
 
 ``` r
+
 cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13), nrow = 3, byrow = TRUE)
 result <- assignment_duals(cost)
 cat("Row duals (u):", result$u, "\n")
@@ -795,24 +796,24 @@ algorithms. Use them.
 
 | Algorithm | Complexity | Best For | Method |
 |----|----|----|----|
-| Hungarian | $`O(n^3)`$ | Pedagogy, small $`n`$ | `"hungarian"` |
-| Jonker-Volgenant | $`O(n^3)`$ expected | General purpose | `"jv"` |
-| Auction | $`O(n^2 \log(nC)/\epsilon)`$ | Large dense | `"auction"` |
-| Auction (Gauss-Seidel) | $`O(n^2 \log(nC)/\epsilon)`$ | Spatial structure | `"auction_gs"` |
-| Auction (Scaled) | $`O(n^2 \log(nC)/\epsilon)`$ | Large dense, fastest | `"auction_scaled"` |
-| CSA | $`O(n^3)`$ amortized | Medium-large dense | `"csa"` |
-| Cost-Scaling Flow | $`O(n^3 \log(nC))`$ | General min-cost flow | `"csflow"` |
-| Gabow-Tarjan | $`O(n^3 \log C)`$ | Large integer costs | `"gabow_tarjan"` |
-| Orlin-Ahuja | $`O(\sqrt{n} m \log(nC))`$ | Large sparse | `"orlin"` |
-| Network Simplex | $`O(n^3)`$ typical | Dual info needed | `"network_simplex"` |
-| Push-Relabel | $`O(n^2 m)`$ | Max-flow style | `"push_relabel"` |
-| Cycle Canceling | $`O(n^2 m \cdot C)`$ | Theoretical interest | `"cycle_cancel"` |
-| HK01 | $`O(n^{2.5})`$ | Binary costs only | `"hk01"` |
-| SSAP (Dial) | $`O(n^2 + nm)`$ | Integer costs, buckets | `"ssap_bucket"` |
-| SAP | $`O(n^2 + nm)`$ | Sparse (\>50% forbidden) | `"sap"` |
-| LAPMOD | $`O(n^2 + nm)`$ | Sparse (\>50% forbidden) | `"lapmod"` |
-| Ramshaw-Tarjan | $`O(nm \log n)`$ | Rectangular matrices | `"ramshaw_tarjan"` |
-| Brute Force | $`O(n!)`$ | Tiny ($`n \leq 8`$) | `"bruteforce"` |
+| Hungarian | \\O(n^3)\\ | Pedagogy, small \\n\\ | `"hungarian"` |
+| Jonker-Volgenant | \\O(n^3)\\ expected | General purpose | `"jv"` |
+| Auction | \\O(n^2 \log(nC)/\epsilon)\\ | Large dense | `"auction"` |
+| Auction (Gauss-Seidel) | \\O(n^2 \log(nC)/\epsilon)\\ | Spatial structure | `"auction_gs"` |
+| Auction (Scaled) | \\O(n^2 \log(nC)/\epsilon)\\ | Large dense, fastest | `"auction_scaled"` |
+| CSA | \\O(n^3)\\ amortized | Medium-large dense | `"csa"` |
+| Cost-Scaling Flow | \\O(n^3 \log(nC))\\ | General min-cost flow | `"csflow"` |
+| Gabow-Tarjan | \\O(n^3 \log C)\\ | Large integer costs | `"gabow_tarjan"` |
+| Orlin-Ahuja | \\O(\sqrt{n} m \log(nC))\\ | Large sparse | `"orlin"` |
+| Network Simplex | \\O(n^3)\\ typical | Dual info needed | `"network_simplex"` |
+| Push-Relabel | \\O(n^2 m)\\ | Max-flow style | `"push_relabel"` |
+| Cycle Canceling | \\O(n^2 m \cdot C)\\ | Theoretical interest | `"cycle_cancel"` |
+| HK01 | \\O(n^{2.5})\\ | Binary costs only | `"hk01"` |
+| SSAP (Dial) | \\O(n^2 + nm)\\ | Integer costs, buckets | `"ssap_bucket"` |
+| SAP | \\O(n^2 + nm)\\ | Sparse (\>50% forbidden) | `"sap"` |
+| LAPMOD | \\O(n^2 + nm)\\ | Sparse (\>50% forbidden) | `"lapmod"` |
+| Ramshaw-Tarjan | \\O(nm \log n)\\ | Rectangular matrices | `"ramshaw_tarjan"` |
+| Brute Force | \\O(n!)\\ | Tiny (\\n \leq 8\\) | `"bruteforce"` |
 
 Or just use `method = "auto"` and let couplr choose.
 

@@ -37,6 +37,12 @@ High-level matching for observational studies
   : Propensity Score Matching
 - [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
   : Cardinality Matching
+- [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+  : Full Matching
+- [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)
+  : Coarsened Exact Matching
+- [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+  : Subclassification on Propensity Score
 
 ## Balance Diagnostics & Analysis
 
@@ -62,16 +68,30 @@ Distance computation and data preparation
 - [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
   : Diagnose distance matrix and suggest fixes
 
-## Joined Datasets
+## Joined Datasets & Output
 
 Create analysis-ready merged datasets
 
 - [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
   : Join Matched Pairs with Original Data
+- [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)
+  : Extract Analysis-Ready Data from Matching Results
 - [`augment(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/augment.matching_result.md)
   : Augment Matching Results with Original Data (broom-style)
 - [`augment()`](https://gillescolling.com/couplr/reference/augment.md) :
   Generic Augment Function
+
+## Ecosystem Integration
+
+Interoperability with MatchIt, cobalt, and marginaleffects
+
+- [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  : Convert couplr Result to matchit Object
+- [`bal.tab.matching_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab.full_matching_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab.cem_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab.subclass_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  : Balance Table for Matching Results (cobalt integration)
 
 ## Utility Functions
 
@@ -132,6 +152,12 @@ S3 methods for displaying and visualizing results
   : Print Method for Distance Objects
 - [`print(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/print.preprocessing_result.md)
   : Print method for preprocessing result
+- [`print(`*`<full_matching_result>`*`)`](https://gillescolling.com/couplr/reference/print.full_matching_result.md)
+  : Print Method for Full Matching Results
+- [`print(`*`<cem_result>`*`)`](https://gillescolling.com/couplr/reference/print.cem_result.md)
+  : Print Method for CEM Results
+- [`print(`*`<subclass_result>`*`)`](https://gillescolling.com/couplr/reference/print.subclass_result.md)
+  : Print Method for Subclassification Results
 - [`print(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/print.variable_health.md)
   : Print method for variable health
 - [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/summary.lap_solve_kbest_result.md)

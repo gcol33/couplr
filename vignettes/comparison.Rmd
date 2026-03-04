@@ -191,19 +191,23 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 | Feature | MatchIt | couplr |
 |---------|---------|--------|
 | **Primary approach** | Propensity score | Direct covariate distance |
-| **Distance metric** | PS logit, Mahalanobis | Euclidean (scaled) |
+| **Distance metric** | PS logit, Mahalanobis | Euclidean (scaled), Mahalanobis |
 | **Optimization** | Greedy nearest neighbor | Optimal assignment (LAP) |
 | **Data format** | Single data frame + formula | Separate left/right data frames |
 | **Diagnostics** | `summary()`, `plot()` | `balance_diagnostics()`, `balance_table()` |
 | **Caliper** | On PS or covariates | On multivariate distance |
+| **CEM** | `method = "cem"` | `cem_match()` |
+| **Subclassification** | `method = "subclass"` | `subclass_match()` |
+| **Full matching** | `method = "full"` | `full_match()` |
 | **Algorithms** | 10+ methods | 20+ LAP solvers |
+| **Interoperability** | Native ecosystem | `as_matchit()` for cobalt/marginaleffects |
 
 ### When to Use Each
 
 **MatchIt**:
 - Propensity score methods are preferred (common in epidemiology)
 
-- Need **CEM** or **genetic matching** (couplr does not support these)
+- Need **genetic matching** (couplr does not support this)
 
 - Following published protocols that specify MatchIt
 
@@ -219,6 +223,8 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 - Need fine-grained control over distance computation
 
 - Matching on continuous variables where Euclidean distance is natural
+
+- Need CEM, subclassification, or full matching with LAP-based optimization
 
 ---
 
@@ -529,19 +535,22 @@ For very large problems (n > 10,000), use couplr's blocking or greedy modes.
 | Feature | couplr | MatchIt | optmatch | designmatch | Matching |
 |---------|--------|---------|----------|-------------|----------|
 | **One-to-one matching** | Yes | Yes | Yes | Yes | Yes |
-| **Full matching** | Yes | Yes | Yes | Yes | No |
+| **Full matching** | Yes (optimal + greedy) | Yes | Yes | Yes | No |
+| **CEM** | Yes (`cem_match()`) | Yes | No | No | No |
+| **Subclassification** | Yes (`subclass_match()`) | Yes | No | No | No |
 | **Optimal assignment** | Yes (20 algorithms) | Yes (1 algorithm) | Yes | Yes | No |
 | **Greedy matching** | Yes (3 strategies) | Yes | No | No | Yes |
-| **Propensity scores** | No (external) | Yes | Yes | No | Yes |
+| **Propensity scores** | Yes (`ps_match()`) | Yes | Yes | No | Yes |
 | **Direct covariate** | Yes | Yes | Yes | Yes | Yes |
 | **Blocking/exact** | Yes | Yes | Yes | Yes | Yes |
 | **Caliper** | Yes | Yes | Yes | Yes | Yes |
-| **Balance constraints** | No | No | No | Yes | No |
+| **Balance constraints** | Yes (`cardinality_match()`) | No | No | Yes | No |
 | **Genetic optimization** | No | Yes (GenMatch) | No | No | Yes |
 | **Distance caching** | Yes | No | Yes | No | No |
 | **Parallel processing** | Yes (blocks) | No | No | No | No |
 | **Deterministic** | Yes | Yes | Yes | Yes | No |
 | **Tidy interface** | Yes | Partial | No | No | No |
+| **MatchIt interop** | Yes (`as_matchit()`) | Native | No | No | No |
 
 ---
 

@@ -88,23 +88,21 @@ balance quality, and estimate the treatment effect credibly.
 
 Given two groups of units:
 
-- **Left group** (treatment, exposed, cases): $`n_L`$ units
+- **Left group** (treatment, exposed, cases): \\n_L\\ units
 
-- **Right group** (control, unexposed, controls): $`n_R`$ units
+- **Right group** (control, unexposed, controls): \\n_R\\ units
 
-Each unit $`i`$ has a covariate vector $`\mathbf{x}_i \in \mathbb{R}^p`$
-describing characteristics we want to balance (age, income, education,
-etc.).
+Each unit \\i\\ has a covariate vector \\\mathbf{x}\_i \in
+\mathbb{R}^p\\ describing characteristics we want to balance (age,
+income, education, etc.).
 
 **Goal:** Find one-to-one matches that minimize total distance:
 
-``` math
+\\ \min\_{\pi} \sum\_{i=1}^{n} d(\mathbf{x}\_i^L,
+\mathbf{x}\_{\pi(i)}^R) \\
 
-\min_{\pi} \sum_{i=1}^{n} d(\mathbf{x}_i^L, \mathbf{x}_{\pi(i)}^R)
-```
-
-where $`d(\cdot, \cdot)`$ is a distance function (typically Euclidean or
-Mahalanobis) and $`\pi`$ is a matching assignment.
+where \\d(\cdot, \cdot)\\ is a distance function (typically Euclidean or
+Mahalanobis) and \\\pi\\ is a matching assignment.
 
 ### Why Matching Matters
 
@@ -130,25 +128,17 @@ Mahalanobis) and $`\pi`$ is a matching assignment.
 
 The quality of matching depends on the distance metric:
 
-**Euclidean distance** (after scaling):
-``` math
+**Euclidean distance** (after scaling): \\ d(\mathbf{x}\_i,
+\mathbf{x}\_j) = \sqrt{\sum\_{k=1}^{p} (x\_{ik} - x\_{jk})^2} \\
 
-d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{\sum_{k=1}^{p} (x_{ik} - x_{jk})^2}
-```
+**Mahalanobis distance** (accounts for correlations): \\
+d(\mathbf{x}\_i, \mathbf{x}\_j) = \sqrt{(\mathbf{x}\_i -
+\mathbf{x}\_j)^\top \Sigma^{-1} (\mathbf{x}\_i - \mathbf{x}\_j)} \\
 
-**Mahalanobis distance** (accounts for correlations):
-``` math
+**Propensity score distance** (single dimension): \\ d(i, j) = \|p_i -
+p_j\| \\
 
-d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i - \mathbf{x}_j)^\top \Sigma^{-1} (\mathbf{x}_i - \mathbf{x}_j)}
-```
-
-**Propensity score distance** (single dimension):
-``` math
-
-d(i, j) = |p_i - p_j|
-```
-
-where $`p_i = P(\text{treatment} \mid \mathbf{x}_i)`$ is the propensity
+where \\p_i = P(\text{treatment} \mid \mathbf{x}\_i)\\ is the propensity
 score.
 
 `couplr` defaults to Euclidean distance with automatic scaling, which
@@ -163,6 +153,7 @@ The simplest workflow uses
 with automatic preprocessing:
 
 ``` r
+
 # Simulate observational data
 set.seed(123)
 n_left <- 100
@@ -248,6 +239,7 @@ The result contains:
 ### Understanding the Output
 
 ``` r
+
 # How many matched?
 cat("Matched pairs:", result$info$n_matched, "\n")
 #> Matched pairs: 100
@@ -334,6 +326,7 @@ automatically:
     - Ordered factors -\> converted to numeric ranks
 
 ``` r
+
 # Create data with scaling challenges
 set.seed(456)
 challenging_data <- tibble(
@@ -378,11 +371,8 @@ cat("With scaling - mean distance:", mean(result_scaled$pairs$distance), "\n")
 
 Three scaling strategies available via `scale` parameter:
 
-**1. Robust scaling** (`scale = "robust"`, default):
-``` math
-
-x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
-```
+**1. Robust scaling** (`scale = "robust"`, default): \\
+x\_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)} \\
 
 - Uses median and median absolute deviation (MAD)
 
@@ -390,11 +380,8 @@ x_{\text{scaled}} = \frac{x - \text{median}(x)}{\text{MAD}(x)}
 
 - Best for: Real-world data with potential outliers
 
-**2. Standardization** (`scale = "standardize"`):
-``` math
-
-x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
-```
+**2. Standardization** (`scale = "standardize"`): \\ x\_{\text{scaled}}
+= \frac{x - \text{mean}(x)}{\text{SD}(x)} \\
 
 - Classical z-score normalization
 
@@ -402,11 +389,8 @@ x_{\text{scaled}} = \frac{x - \text{mean}(x)}{\text{SD}(x)}
 
 - Best for: Clean, normally-distributed data
 
-**3. Range scaling** (`scale = "range"`):
-``` math
-
-x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
-```
+**3. Range scaling** (`scale = "range"`): \\ x\_{\text{scaled}} =
+\frac{x - \min(x)}{\max(x) - \min(x)} \\
 
 - Scales to \[0, 1\] range
 
@@ -415,6 +399,7 @@ x_{\text{scaled}} = \frac{x - \min(x)}{\max(x) - \min(x)}
 - Best for: Bounded variables, visualization
 
 ``` r
+
 # Demonstrate scaling methods
 demo_var <- c(10, 20, 25, 30, 100)  # Contains outlier (100)
 
@@ -456,6 +441,7 @@ show_scaling(demo_var, "range")
 The preprocessing system provides informative diagnostics:
 
 ``` r
+
 # Create data with issues
 problematic_data <- tibble(
   id = 1:100,
@@ -490,7 +476,7 @@ computationally expensive. `couplr` provides fast greedy alternatives.
 
 - Minimizes total distance (globally optimal solution)
 
-- Uses linear assignment algorithms ($`O(n^3)`$ complexity)
+- Uses linear assignment algorithms (\\O(n^3)\\ complexity)
 
 - Suitable for: n \< 5,000, when optimality is critical
 
@@ -507,6 +493,7 @@ computationally expensive. `couplr` provides fast greedy alternatives.
 - Typical runtime: \<1 second for n=10,000
 
 ``` r
+
 # Create moderately large dataset
 set.seed(789)
 n <- 1000
@@ -545,18 +532,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 182.39 seconds
+#>   Time: 183.56 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.44 seconds
+#>   Time: 1.56 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 126.7 x
+#>   Speedup: 117.7 x
 ```
 
 ### Greedy Strategies
@@ -619,6 +606,7 @@ Three greedy strategies available via
 - Fastest option
 
 ``` r
+
 # Compare greedy strategies on same data
 set.seed(101)
 test_left <- tibble(id = 1:200, x = rnorm(200))
@@ -657,7 +645,7 @@ print(comparison)
 #>          strategy time_sec mean_distance total_distance
 #> elapsed    sorted     0.07        0.0912          18.24
 #> elapsed1 row_best     0.06        0.0968          19.36
-#> elapsed2       pq     0.08        0.0912          18.24
+#> elapsed2       pq     0.07        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -687,6 +675,7 @@ to maximize the number of matches. Calipers prevent this by:
   matching
 
 ``` r
+
 # Create data where some units are far apart
 set.seed(202)
 left_cal <- tibble(
@@ -765,6 +754,7 @@ Common approaches:
 **1. Standard deviation rule**: Caliper = 0.1 to 0.25 pooled SD
 
 ``` r
+
 # Calculate pooled SD
 combined <- bind_rows(
   left_data |> mutate(group = "left"),
@@ -787,6 +777,7 @@ result <- match_couples(
 tail
 
 ``` r
+
 # Fit all matches first
 all_matches <- match_couples(left_cal, right_cal, vars = "x")
 
@@ -837,6 +828,7 @@ matching on remaining covariates is a powerful strategy.
 ### Exact Blocking with `matchmaker()`
 
 ``` r
+
 # Create multi-site data
 set.seed(303)
 multi_site <- bind_rows(
@@ -906,6 +898,7 @@ result_blocked$pairs |>
 For continuous variables, use k-means clustering to create blocks:
 
 ``` r
+
 # Create blocks based on age groups (data-driven)
 cluster_blocks <- matchmaker(
   left = left_site,
@@ -958,11 +951,10 @@ After matching, assess balance quality using
 
 ### Key Balance Metrics
 
-**1. Standardized differences:**
-``` math
-
-\text{Std Diff} = \frac{\bar{x}_{\text{left}} - \bar{x}_{\text{right}}}{\sqrt{(s_{\text{left}}^2 + s_{\text{right}}^2) / 2}}
-```
+**1. Standardized differences:** \\ \text{Std Diff} =
+\frac{\bar{x}\_{\text{left}} -
+\bar{x}\_{\text{right}}}{\sqrt{(s\_{\text{left}}^2 +
+s\_{\text{right}}^2) / 2}} \\
 
 **Thresholds:**
 
@@ -974,11 +966,8 @@ After matching, assess balance quality using
 
 - > 0.5: Poor balance (reconsider matching strategy)
 
-**2. Variance ratios:**
-``` math
-
-\text{VR} = \frac{s_{\text{left}}^2}{s_{\text{right}}^2}
-```
+**2. Variance ratios:** \\ \text{VR} =
+\frac{s\_{\text{left}}^2}{s\_{\text{right}}^2} \\
 
 **Interpretation:**
 
@@ -995,6 +984,7 @@ After matching, assess balance quality using
 - P-value \> 0.05 suggests similar distributions
 
 ``` r
+
 # Perform matching
 match_result <- match_couples(
   left = left_data,
@@ -1104,6 +1094,7 @@ Here’s how to read it:
 ### Visualizing Balance
 
 ``` r
+
 # Before-after balance plot
 # (Requires creating pre-match balance for comparison)
 
@@ -1181,6 +1172,7 @@ self-selected into the program, creating potential selection bias.
 ### Step 1: Data Preparation
 
 ``` r
+
 set.seed(404)
 
 # Simulate realistic scenario with selection bias
@@ -1244,6 +1236,7 @@ cat("Prior earnings diff:",
 ### Step 2: Perform Matching
 
 ``` r
+
 # Match on baseline covariates
 job_match <- match_couples(
   left = treatment_group,
@@ -1268,6 +1261,7 @@ cat("  Match rate:",
 ### Step 3: Assess Balance
 
 ``` r
+
 # Extract matched samples
 matched_treated <- treatment_group |>
   filter(id %in% job_match$pairs$left_id)
@@ -1332,6 +1326,7 @@ cat("  % with |std diff| > 0.1:",
 ### Step 4: Estimate Treatment Effect
 
 ``` r
+
 # Naive estimate (without matching) - BIASED
 naive_effect <- mean(treatment_group$earnings) - mean(control_group$earnings)
 
@@ -1375,6 +1370,7 @@ cat("  (Closer to true effect of $5,000)\n")
 ### Step 5: Publication-Ready Output
 
 ``` r
+
 # Table 1: Balance table
 balance_publication <- balance_table(job_balance)
 print(balance_publication)
@@ -1425,7 +1421,7 @@ print(effect_table)
 
 ### Scalability
 
-**Optimal matching complexity:** $`O(n^3)`$ using Jonker-Volgenant
+**Optimal matching complexity:** \\O(n^3)\\ using Jonker-Volgenant
 
 - n = 100: \< 0.01 seconds
 
@@ -1437,7 +1433,7 @@ print(effect_table)
 
 - n = 5,000: ~ 30-60 seconds
 
-**Greedy matching complexity:** $`O(n^2 \log n)`$ for sorted, $`O(n^2)`$
+**Greedy matching complexity:** \\O(n^2 \log n)\\ for sorted, \\O(n^2)\\
 for row-best
 
 - n = 5,000: ~ 1 second
@@ -1469,6 +1465,7 @@ For very large problems:
 **1. Use blocking for large datasets**
 
 ``` r
+
 # Instead of matching 10,000 × 10,000:
 # Create 10 blocks of ~1,000 × 1,000 each
 blocks <- matchmaker(
@@ -1489,6 +1486,7 @@ result <- match_couples(
 **2. Start with greedy, refine if needed**
 
 ``` r
+
 # Quick greedy match for exploration
 quick <- greedy_couples(
   left_data, right_data,
@@ -1506,6 +1504,7 @@ balance_quick <- balance_diagnostics(quick, left_data, right_data, vars = covari
 **3. Use calipers to reduce problem size**
 
 ``` r
+
 # Caliper removes distant pairs from cost matrix
 # Can dramatically reduce effective problem size
 result <- match_couples(
@@ -1535,6 +1534,7 @@ shows \|std_diff\| \> 0.25 for some variables.
 **Solutions**:
 
 ``` r
+
 # 1. Add more matching variables
 result <- match_couples(left, right,
                         vars = c("age", "income", "education", "region"),  # Added!
@@ -1563,6 +1563,7 @@ result <- match_couples(blocks$left, blocks$right, vars = other_vars,
 **Diagnosis**:
 
 ``` r
+
 # Check covariate overlap
 library(ggplot2)
 combined <- bind_rows(
@@ -1584,12 +1585,13 @@ ggplot(combined, aes(x = age, fill = group)) +
 
 **Symptom**:
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-runs for minutes or doesn’t complete. **Cause**: $`O(n^3)`$ complexity
+runs for minutes or doesn’t complete. **Cause**: \\O(n^3)\\ complexity
 for optimal matching.
 
 **Solutions**:
 
 ``` r
+
 # For n > 3000: use greedy
 result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
 
@@ -1652,12 +1654,129 @@ loop](matching-workflows_files/figure-html/workflow-diagram-1.svg)
 
 ## Advanced Matching Techniques
 
+### Full Matching (Variable-Ratio Groups)
+
+Standard one-to-one matching discards unmatched units — a significant
+loss when control pools are large. Full matching assigns *every* unit to
+a matched group with variable ratios (1:k or k:1), maximizing sample
+size while preserving balance.
+
+``` r
+
+# Full matching: every unit gets assigned to a group
+result_full <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  method = "optimal"   # min-cost max-flow (default)
+)
+
+result_full
+#> 
+#> Full Matching Result
+#> ====================
+#> 
+#>   Groups formed: 100
+#>   Left units:  100 matched, 0 unmatched (of 100)
+#>   Right units: 150 matched, 0 unmatched (of 150)
+#> 
+#>   Right units per group: min=1, median=1, max=21
+```
+
+The `method` argument controls the algorithm:
+
+- `"optimal"` (default) — Solves a min-cost max-flow problem that
+  minimizes total distance across all group assignments simultaneously.
+  Uses Dijkstra’s algorithm with Johnson potentials. Guarantees the
+  globally optimal solution.
+
+- `"greedy"` — A fast two-pass heuristic: (1) each left unit picks its
+  nearest right unit, (2) remaining right units are assigned to their
+  nearest matched left unit. Faster but not globally optimal.
+
+``` r
+
+# Compare optimal vs greedy
+result_full_greedy <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  method = "greedy"
+)
+
+cat("Optimal: ", result_full$info$n_groups, "groups,",
+    result_full$info$n_unmatched_left, "unmatched left,",
+    result_full$info$n_unmatched_right, "unmatched right\n")
+#> Optimal:  100 groups, 0 unmatched left, 0 unmatched right
+cat("Greedy:  ", result_full_greedy$info$n_groups, "groups,",
+    result_full_greedy$info$n_unmatched_left, "unmatched left,",
+    result_full_greedy$info$n_unmatched_right, "unmatched right\n")
+#> Greedy:   100 groups, 0 unmatched left, 0 unmatched right
+```
+
+Full matching supports `min_controls` and `max_controls` to constrain
+group sizes, and `caliper` to exclude poor matches:
+
+``` r
+
+# Constrain: each group gets 2-5 right units, caliper of 1.5
+result_constrained <- full_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  min_controls = 2,
+  max_controls = 5,
+  caliper = 1.5
+)
+
+cat("Groups:", result_constrained$info$n_groups, "\n")
+#> Groups: 0
+cat("Unmatched left:", result_constrained$info$n_unmatched_left, "\n")
+#> Unmatched left: 100
+cat("Unmatched right:", result_constrained$info$n_unmatched_right, "\n")
+#> Unmatched right: 150
+```
+
+The output is an S3 object of class `full_matching_result` with a
+`groups` tibble containing `group_id`, `id`, `side`, and `weight`.
+Within each group, right-unit weights sum to the number of left units,
+enabling unbiased estimation:
+
+``` r
+
+head(result_full$groups, 10)
+#> # A tibble: 10 × 4
+#>    group_id id    side  weight
+#>       <int> <chr> <chr>  <dbl>
+#>  1        1 1     left       1
+#>  2        1 140   right      1
+#>  3        2 2     left       1
+#>  4        2 50    right      1
+#>  5        3 3     left       1
+#>  6        3 62    right      1
+#>  7        4 4     left       1
+#>  8        4 5     right      1
+#>  9        5 5     left       1
+#> 10        5 63    right      1
+```
+
+**When to use full matching vs one-to-one:**
+
+| Criterion       | One-to-one (`match_couples`) | Full (`full_match`)         |
+|-----------------|------------------------------|-----------------------------|
+| Sample size     | Discards excess units        | Uses every unit             |
+| Estimand        | ATT (treatment on treated)   | ATT or ATE (with weights)   |
+| Group structure | Pairs (1:1)                  | Variable-ratio groups       |
+| Balance         | Excellent within pairs       | Good overall (weighted)     |
+| Precision       | Lower (smaller n)            | Higher (larger effective n) |
+
 ### Ratio Matching (k:1)
 
 Sometimes matching multiple controls per treated unit improves
 precision. Use the `ratio` parameter:
 
 ``` r
+
 # Match 2 controls per treated unit
 result_2to1 <- match_couples(
   left = left_data,
@@ -1695,6 +1814,7 @@ When controls are scarce relative to treated units, allowing replacement
 lets each control serve as a match for multiple treated units:
 
 ``` r
+
 # Allow controls to be reused
 result_wr <- match_couples(
   left = left_data,
@@ -1723,6 +1843,7 @@ estimated probability of treatment — the propensity score.
 automates this:
 
 ``` r
+
 # Combine data for propensity score estimation
 combined <- rbind(
   transform(left_data[, c("id", "age", "income")], treated = 1L),
@@ -1780,6 +1901,7 @@ maximizes the number of matched pairs while enforcing strict balance
 constraints:
 
 ``` r
+
 # Maximize pairs subject to balance threshold
 card_result <- cardinality_match(
   left = left_data,
@@ -1802,6 +1924,142 @@ cat("Pairs removed:", card_result$info$pairs_removed, "\n")
 This is useful when you need strict balance guarantees and are willing
 to sacrifice some sample size.
 
+### Coarsened Exact Matching (CEM)
+
+CEM coarsens continuous variables into bins, then performs exact
+matching within strata. This avoids model dependence — results don’t
+rely on a distance function or propensity score model:
+
+``` r
+
+cem_result <- cem_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  n_bins = "sturges"   # automatic bin width; also "fd", "scott", or an integer
+)
+
+cem_result
+#> 
+#> Coarsened Exact Matching Result
+#> ===============================
+#> 
+#>   Strata: 69 total, 32 matched
+#>   Left:   81 matched, 19 pruned
+#>   Right:  103 matched, 47 pruned
+#>   Variables: age, income
+
+# Strata summary: how many units in each coarsened cell
+head(cem_result$strata_summary)
+#> # A tibble: 6 × 4
+#>   stratum               n_left n_right matched
+#>   <chr>                  <int>   <int> <lgl>  
+#> 1 (25,30]|(3e+04,4e+04]      0       1 FALSE  
+#> 2 (25,30]|(4e+04,5e+04]      0       1 FALSE  
+#> 3 (25,30]|(5e+04,6e+04]      2       0 FALSE  
+#> 4 (25,30]|(6e+04,7e+04]      1       2 TRUE   
+#> 5 (30,35]|(1e+05, Inf]       1       0 FALSE  
+#> 6 (30,35]|(2e+04,3e+04]      0       2 FALSE
+```
+
+You can supply custom cutpoints per variable with the `cutpoints`
+argument, or pass categorical grouping variables with `grouping`. Each
+matched unit receives a weight inversely proportional to the stratum
+size, ensuring balance across strata.
+
+### Subclassification
+
+Subclassification (stratification on the propensity score) divides the
+sample into strata of similar PS, then computes within-stratum effects.
+Unlike one-to-one matching, no units are discarded:
+
+``` r
+
+# Combine data
+combined <- rbind(
+  transform(left_data[, c("id", "age", "income")], treated = 1L),
+  transform(right_data[, c("id", "age", "income")], treated = 0L)
+)
+
+sub_result <- subclass_match(
+  formula = treated ~ age + income,
+  data = combined,
+  treatment = "treated",
+  n_subclasses = 5,
+  estimand = "ATT"
+)
+
+sub_result
+#> 
+#> Subclassification Result
+#> ========================
+#> 
+#>   Estimand: ATT
+#>   Subclasses: 5
+#>   Treated (left):  100
+#>   Control (right): 150
+#> 
+#>   Subclass summary:
+#> # A tibble: 5 × 7
+#>   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap
+#>      <int>     <int>     <int>   <dbl>        <dbl>         <dbl> <lgl>      
+#> 1        1         6        44   0.192       0.0902         0.251 TRUE       
+#> 2        2        15        35   0.296       0.257          0.348 TRUE       
+#> 3        3        20        30   0.391       0.350          0.435 TRUE       
+#> 4        4        32        18   0.491       0.438          0.537 TRUE       
+#> 5        5        27        23   0.630       0.542          0.843 TRUE
+head(sub_result$subclass_summary)
+#> # A tibble: 5 × 7
+#>   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap
+#>      <int>     <int>     <int>   <dbl>        <dbl>         <dbl> <lgl>      
+#> 1        1         6        44   0.192       0.0902         0.251 TRUE       
+#> 2        2        15        35   0.296       0.257          0.348 TRUE       
+#> 3        3        20        30   0.391       0.350          0.435 TRUE       
+#> 4        4        32        18   0.491       0.438          0.537 TRUE       
+#> 5        5        27        23   0.630       0.542          0.843 TRUE
+```
+
+### Ecosystem Integration
+
+All couplr result types can be converted to a unified analysis-ready
+format or to MatchIt-class objects for interoperability with cobalt and
+marginaleffects.
+
+**[`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)**
+produces a single data frame with `treatment`, `weights`, `subclass`,
+and `distance` columns — ready for downstream modelling:
+
+``` r
+
+md <- match_data(result, left_data, right_data)
+head(md)
+#> # A tibble: 6 × 9
+#>      id   age income education group     treatment weights subclass distance
+#>   <int> <dbl>  <dbl> <chr>     <chr>         <int>   <dbl>    <int>    <dbl>
+#> 1     1  39.4 49344. MA        treatment         1       1        1 0.00324 
+#> 2     2  42.7 63853. MA        treatment         1       1        2 0.00455 
+#> 3     3  60.6 56300. MA        treatment         1       1        3 0.000900
+#> 4     4  45.7 54787. HS        treatment         1       1        4 0.00685 
+#> 5     5  46.3 45726. HS        treatment         1       1        5 0.00447 
+#> 6     6  62.2 59325. MA        treatment         1       1        6 0.00389
+```
+
+**[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)**
+constructs a `matchit`-class object, enabling direct use with
+`cobalt::bal.tab()`, `cobalt::love.plot()`, and
+`marginaleffects::avg_comparisons()`:
+
+``` r
+
+mi <- as_matchit(result, left_data, right_data)
+
+# cobalt balance table
+cobalt::bal.tab(mi)
+
+# marginaleffects
+marginaleffects::avg_comparisons(model, vcov = "HC3", newdata = match.data(mi))
+```
+
 ------------------------------------------------------------------------
 
 ## Sensitivity Analysis
@@ -1811,6 +2069,7 @@ needed to invalidate the results?* Rosenbaum bounds address this by
 computing p-values under varying degrees of unobserved confounding.
 
 ``` r
+
 # Simulate a modest treatment effect (small enough that hidden bias matters)
 set.seed(99)
 n_sa <- 50
@@ -1864,7 +2123,7 @@ sa
 #> To explain away the effect, hidden bias would need Gamma >= 1.25
 ```
 
-The **critical gamma** ($`\Gamma`$) is the smallest value at which the
+The **critical gamma** (\\\Gamma\\) is the smallest value at which the
 upper-bound p-value crosses 0.05. A larger critical gamma means the
 finding is more robust: a critical gamma of 1.75, for example, means an
 unobserved confounder would need to change the odds of treatment by a
@@ -1879,6 +2138,7 @@ If `ggplot2` is available,
 methods produce publication-ready plots:
 
 ``` r
+
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   library(ggplot2)
 
@@ -1890,6 +2150,7 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 ![](matching-workflows_files/figure-html/autoplot-examples-1.svg)
 
 ``` r
+
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Balance diagnostics love plot
   bal <- balance_diagnostics(result, left_data, right_data, vars = c("age", "income"))
@@ -1900,6 +2161,7 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 ![](matching-workflows_files/figure-html/autoplot-balance-1.svg)
 
 ``` r
+
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Sensitivity analysis curve
   autoplot(sa)
@@ -1934,9 +2196,16 @@ labels as needed.
 
 - [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
   [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md),
+  [`?full_match`](https://gillescolling.com/couplr/reference/full_match.md),
   [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
   [`?matchmaker`](https://gillescolling.com/couplr/reference/matchmaker.md)
 
 - [`?ps_match`](https://gillescolling.com/couplr/reference/ps_match.md),
   [`?cardinality_match`](https://gillescolling.com/couplr/reference/cardinality_match.md),
-  [`?sensitivity_analysis`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`?sensitivity_analysis`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md),
+  [`?cem_match`](https://gillescolling.com/couplr/reference/cem_match.md),
+  [`?subclass_match`](https://gillescolling.com/couplr/reference/subclass_match.md)
+
+- [`?match_data`](https://gillescolling.com/couplr/reference/match_data.md),
+  [`?as_matchit`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  — ecosystem integration

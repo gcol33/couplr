@@ -69,7 +69,7 @@ autoplot.matching_result <- function(object,
     }
   )
 
-  p + ggplot2::theme_minimal()
+  p + .theme_couplr()
 }
 
 #' ggplot2 autoplot for balance diagnostics
@@ -146,7 +146,7 @@ autoplot.balance_diagnostics <- function(object,
       title = "Balance: Standardized Differences",
       x = "Standardized Difference", y = NULL
     ) +
-    ggplot2::theme_minimal() +
+    .theme_couplr() +
     ggplot2::theme(legend.position = "bottom")
 }
 
@@ -163,7 +163,7 @@ autoplot.balance_diagnostics <- function(object,
       title = "Distribution of |Standardized Differences|",
       x = "|Standardized Difference|", y = "Count"
     ) +
-    ggplot2::theme_minimal()
+    .theme_couplr()
 }
 
 #' Variance ratio plot via ggplot2
@@ -196,7 +196,7 @@ autoplot.balance_diagnostics <- function(object,
       title = "Balance: Variance Ratios",
       x = "Variance Ratio (left/right, log scale)", y = NULL
     ) +
-    ggplot2::theme_minimal() +
+    .theme_couplr() +
     ggplot2::theme(legend.position = "bottom")
 }
 
@@ -229,5 +229,5 @@ autoplot.sensitivity_analysis <- function(object, alpha = 0.05, ...) {
       x = expression(Gamma ~ "(sensitivity parameter)"),
       y = "Upper bound p-value"
     ) +
-    ggplot2::theme_minimal()
+    .theme_couplr()
 }

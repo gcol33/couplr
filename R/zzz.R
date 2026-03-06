@@ -2,6 +2,25 @@
 # This file contains package hooks and internal utility functions.
 
 # ==============================================================================
+# Internal ggplot2 Theme
+# ==============================================================================
+
+#' Minimal ggplot2 theme without grid lines
+#'
+#' Wraps \code{ggplot2::theme_minimal()} and removes all panel grid lines
+#' for cleaner pkgdown rendering.
+#'
+#' @param base_size Base font size (default 11)
+#' @param ... Additional arguments passed to \code{ggplot2::theme_minimal()}
+#' @return A ggplot2 theme object
+#' @keywords internal
+#' @noRd
+.theme_couplr <- function(base_size = 11, ...) {
+  ggplot2::theme_minimal(base_size = base_size, ...) +
+    ggplot2::theme(panel.grid = ggplot2::element_blank())
+}
+
+# ==============================================================================
 # Internal Cost Matrix Preparation
 # ==============================================================================
 

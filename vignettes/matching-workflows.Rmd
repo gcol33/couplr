@@ -1689,7 +1689,7 @@ All couplr result types can be converted to a unified analysis-ready format or t
 **`match_data()`** produces a single data frame with `treatment`, `weights`, `subclass`, and `distance` columns — ready for downstream modelling:
 
 ```{r match-data-example}
-md <- match_data(result, left_data, right_data)
+md <- couplr::match_data(result, left_data, right_data)
 head(md)
 ```
 

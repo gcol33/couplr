@@ -2,14 +2,13 @@
 #pragma once
 
 #include <Rcpp.h>
-#include <R_ext/Error.h>
 #include <vector>
 #include <string>
 #include <utility>
 
-// Error macro that uses Rf_error instead of Rcpp::stop to avoid linking abort
-// Rf_error uses R's longjmp mechanism, not C++ exceptions
-#define LAP_ERROR(...) Rf_error(__VA_ARGS__)
+// Error macro using Rcpp::stop for proper C++ stack unwinding
+// (Rf_error uses longjmp which skips destructors, causing memory leaks)
+#define LAP_ERROR(...) Rcpp::stop(__VA_ARGS__)
 
 // Constants
 constexpr double BIG = 1e100;  // Used for forbidden edges

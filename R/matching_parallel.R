@@ -50,8 +50,7 @@ setup_parallel <- function(parallel = FALSE, n_workers = NULL) {
   if (isTRUE(parallel)) {
     # Auto-select plan based on platform
     if (is.null(n_workers)) {
-      n_workers <- future::availableCores() - 1  # Leave one core free
-      n_workers <- max(1, n_workers)  # At least 1 worker
+      n_workers <- parallelly::availableCores(omit = 1)
     }
 
     # Use multisession (works on all platforms)

@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.3.0
+Version: 1.2.1
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
            role = c("aut", "cre", "cph"),
@@ -48,6 +48,7 @@ Suggests:
     parallel,
     future (>= 1.20.0),
     future.apply (>= 1.8.0),
+    parallelly (>= 1.30.0),
     ggplot2,
     ggraph,
     tidygraph,

@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN"
+                  "JATS-publishing1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+<journal-title>Journal of Open Source Software</journal-title>
+<abbrev-journal-title>JOSS</abbrev-journal-title>
+</journal-title-group>
+<issn publication-format="electronic">2475-9066</issn>
+<publisher>
+<publisher-name>Open Journals</publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="publisher-id">0</article-id>
+<article-id pub-id-type="doi">N/A</article-id>
+<title-group>
+<article-title>couplr: Optimal pairing and matching via linear
+assignment</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0003-3070-6066</contrib-id>
+<name>
+<surname>Colling</surname>
+<given-names>Gilles</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+<xref ref-type="corresp" rid="cor-1"><sup>*</sup></xref>
+</contrib>
+<aff id="aff-1">
+<institution-wrap>
+<institution>University of Vienna, Austria</institution>
+</institution-wrap>
+</aff>
+</contrib-group>
+<author-notes>
+<corresp id="cor-1">* E-mail: <email></email></corresp>
+</author-notes>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2026-05-08">
+<day>8</day>
+<month>5</month>
+<year>2026</year>
+</pub-date>
+<volume>¿VOL?</volume>
+<issue>¿ISSUE?</issue>
+<fpage>¿PAGE?</fpage>
+<permissions>
+<copyright-statement>Authors of papers retain copyright and release the
+work under a Creative Commons Attribution 4.0 International License (CC
+BY 4.0)</copyright-statement>
+<copyright-year>1970</copyright-year>
+<copyright-holder>The article authors</copyright-holder>
+<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">
+<license-p>Authors of papers retain copyright and release the work under
+a Creative Commons Attribution 4.0 International License (CC BY
+4.0)</license-p>
+</license>
+</permissions>
+<kwd-group kwd-group-type="author">
+<kwd>R</kwd>
+<kwd>matching</kwd>
+<kwd>assignment problem</kwd>
+<kwd>causal inference</kwd>
+<kwd>operations research</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="summary">
+  <title>Summary</title>
+  <p><monospace>couplr</monospace>
+  (<xref alt="Colling, 2026" rid="ref-couplr" ref-type="bibr">Colling,
+  2026</xref>) is an R package for optimal pairing, matching, and
+  assignment. It solves linear assignment problems: given two sets of
+  objects and a cost for each possible pair, choose the pairs with
+  minimum total cost. That simple operation appears in causal inference,
+  experimental design, task allocation, sample pairing, and image
+  alignment.</p>
+  <p>The package provides two entry points. High-level matching
+  functions such as <monospace>match_couples()</monospace>,
+  <monospace>ps_match()</monospace>,
+  <monospace>full_match()</monospace>,
+  <monospace>cem_match()</monospace>, and
+  <monospace>subclass_match()</monospace> prepare data, build distances,
+  enforce constraints, and return analysis-ready matched data. Low-level
+  functions such as <monospace>lap_solve()</monospace>,
+  <monospace>lap_solve_batch()</monospace>,
+  <monospace>lap_solve_kbest()</monospace>, and
+  <monospace>assignment_duals()</monospace> expose a collection of
+  assignment solvers directly for users who already have a cost matrix.
+  This lets the same package support both statistical matching workflows
+  and general-purpose assignment tasks.</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of need</title>
+  <p>Matching is a common way to make treated and control groups more
+  comparable before downstream analysis. In practice, researchers often
+  need more than a single nearest-neighbor match on a propensity score.
+  They may need exact blocking by site, calipers on multiple variables,
+  pairwise distances on observed covariates, variable-ratio full
+  matching, replacement matching, or direct control over the assignment
+  algorithm. Those choices are scattered across R packages and usually
+  require users to move between data preparation, distance calculation,
+  solver calls, and balance checks by hand.</p>
+  <p><monospace>couplr</monospace> packages this workflow around the
+  linear assignment problem. Users can match directly on observed
+  covariates, add blocking and distance constraints, inspect
+  standardized differences and distributional diagnostics, then join the
+  matched groups for analysis. The lower-level interface remains
+  available when the matching problem has already been reduced to a cost
+  matrix, which matters for operations research and scientific computing
+  use cases where rows and columns are not treated and control
+  units.</p>
+  <p>This split is important. A causal-inference user should not need to
+  know which solver handles rectangular matrices well, and an operations
+  researcher should not need the package to impose a statistical
+  matching vocabulary. <monospace>couplr</monospace> keeps those layers
+  separate while sharing the same tested assignment core.</p>
+</sec>
+<sec id="state-of-the-field">
+  <title>State of the field</title>
+  <p>Several R packages address parts of this problem.
+  <monospace>MatchIt</monospace> provides a widely used interface for
+  preprocessing and matching in causal inference, with strong support
+  for propensity score workflows and downstream balance assessment
+  (<xref alt="Ho et al., 2011" rid="ref-MatchIt" ref-type="bibr">Ho et
+  al., 2011</xref>). <monospace>optmatch</monospace> implements optimal
+  and full matching through network flow formulations
+  (<xref alt="Hansen &amp; Klopfer, 2006" rid="ref-optmatch" ref-type="bibr">Hansen
+  &amp; Klopfer, 2006</xref>). <monospace>cobalt</monospace> supplies
+  balance diagnostics that work across matching packages
+  (<xref alt="Greifer, 2025" rid="ref-cobalt" ref-type="bibr">Greifer,
+  2025</xref>). For the linear assignment problem itself, R users often
+  reach for packages such as <monospace>clue</monospace>,
+  <monospace>lpSolve</monospace>, or domain-specific wrappers around one
+  or two solvers
+  (<xref alt="Berkelaar &amp; others, 2024" rid="ref-lpSolve" ref-type="bibr">Berkelaar
+  &amp; others, 2024</xref>;
+  <xref alt="Hornik, 2024" rid="ref-clue" ref-type="bibr">Hornik,
+  2024</xref>).</p>
+  <p><monospace>couplr</monospace> is designed for the gap between these
+  layers. It provides a model-light interface for direct covariate
+  matching, exports compatibility methods for
+  <monospace>MatchIt</monospace> and <monospace>cobalt</monospace>, and
+  includes a broad collection of native C++ solvers under a single R
+  API. The solver set covers classical dense assignment, sparse and
+  rectangular variants, k-best assignment, bottleneck assignment,
+  min-cost flow formulations, and entropy-regularized transport. This
+  lets users start with a statistical matching task and still keep
+  access to the algorithmic machinery when the problem size or structure
+  changes.</p>
+</sec>
+<sec id="software-design">
+  <title>Software design</title>
+  <p>The package has three main layers. The first layer validates inputs
+  and converts data frames into cost matrices. It handles scaling,
+  missing data checks, blocking, calipers, maximum-distance rules, and
+  user-supplied weights. The second layer solves the assignment problem.
+  It includes implementations of the Hungarian method
+  (<xref alt="Kuhn, 1955" rid="ref-Kuhn1955" ref-type="bibr">Kuhn,
+  1955</xref>), Jonker-Volgenant shortest augmenting paths
+  (<xref alt="Jonker &amp; Volgenant, 1987" rid="ref-JonkerVolgenant1987" ref-type="bibr">Jonker
+  &amp; Volgenant, 1987</xref>), auction algorithms
+  (<xref alt="Bertsekas, 1988" rid="ref-Bertsekas1988" ref-type="bibr">Bertsekas,
+  1988</xref>), cost scaling
+  (<xref alt="Goldberg &amp; Kennedy, 1995" rid="ref-GoldbergKennedy1995" ref-type="bibr">Goldberg
+  &amp; Kennedy, 1995</xref>), Gabow-Tarjan scaling
+  (<xref alt="Gabow &amp; Tarjan, 1989" rid="ref-GabowTarjan1989" ref-type="bibr">Gabow
+  &amp; Tarjan, 1989</xref>), push-relabel min-cost flow ideas
+  (<xref alt="Goldberg &amp; Tarjan, 1988" rid="ref-GoldbergTarjan1988" ref-type="bibr">Goldberg
+  &amp; Tarjan, 1988</xref>), network simplex, Ramshaw-Tarjan
+  rectangular assignment
+  (<xref alt="Ramshaw &amp; Tarjan, 2012" rid="ref-RamshawTarjan2012" ref-type="bibr">Ramshaw
+  &amp; Tarjan, 2012</xref>), and related specialized solvers. The third
+  layer returns structured result objects with pairs, costs,
+  diagnostics, weights, subclass information, and conversion methods for
+  other R matching tools.</p>
+  <p>The automatic solver selection in
+  <monospace>lap_solve(method = &quot;auto&quot;)</monospace> uses
+  matrix shape, sparsity, cost type, and problem size to choose a
+  method. Dense square problems can use fast dense solvers such as
+  Jonker-Volgenant or cost scaling; sparse matrices can use sparse
+  augmenting-path solvers; rectangular problems can avoid padding
+  through rectangular assignment methods. Integer scaling solvers are
+  exposed where their assumptions are met. For example, the package
+  documents Gabow-Tarjan as an integer scaling method with theoretical
+  dense square complexity <inline-formula><alternatives>
+  <tex-math><![CDATA[O(n^3 \log C)]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mi>C</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>,
+  or <inline-formula><alternatives>
+  <tex-math><![CDATA[O(n^3 \log(nC))]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mi>C</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  under the common bound that includes problem size and maximum cost.
+  Figure
+  <xref alt="[fig:benchmark]" rid="figU003Abenchmark">[fig:benchmark]</xref>
+  shows observed median solve time across problem sizes for all 18
+  solvers; benchmarks are reproducible via
+  <monospace>paper/make-figure.R</monospace>.</p>
+  <fig>
+    <caption><p>Median solve time versus problem size
+    <inline-formula><alternatives>
+    <tex-math><![CDATA[n]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>n</mml:mi></mml:math></alternatives></inline-formula>
+    for all 18 assignment solvers in <monospace>couplr</monospace>.
+    Integer cost matrices with entries in <inline-formula><alternatives>
+    <tex-math><![CDATA[[1, 10{,}000]]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">[</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>10</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn><mml:mo stretchy="false" form="postfix">]</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+    were used for general-purpose solvers; HK-01
+    (<inline-formula><alternatives>
+    <tex-math><![CDATA[*]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>*</mml:mi></mml:math></alternatives></inline-formula>)
+    uses binary cost matrices and Bruteforce
+    (<inline-formula><alternatives>
+    <tex-math><![CDATA[\dagger]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>†</mml:mi></mml:math></alternatives></inline-formula>)
+    is limited to <inline-formula><alternatives>
+    <tex-math><![CDATA[n \le 8]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>≤</mml:mo><mml:mn>8</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>.
+    Log-log scale; each line is a distinct algorithm, coloured by
+    algorithm family.
+    <styled-content id="figU003Abenchmark"></styled-content></p></caption>
+    <graphic mimetype="image" mime-subtype="png" xlink:href="benchmark.png" />
+  </fig>
+  <p>The matching layer returns ordinary R objects with print, summary,
+  plot, and join methods. This keeps the output usable in base R,
+  tidyverse pipelines, and causal-inference workflows that expect
+  matched data, weights, or subclasses.</p>
+</sec>
+<sec id="research-impact-statement">
+  <title>Research impact statement</title>
+  <p><monospace>couplr</monospace> is already released on CRAN and has
+  continuous integration across Windows, macOS, and Linux. Its
+  documentation includes vignettes for getting started, matching
+  workflows, algorithm selection, troubleshooting, and pixel-level
+  morphing examples. The package is useful for experimental designs
+  where samples must be paired before measurement, observational studies
+  that need transparent covariate matching, and allocation problems
+  where each object must be assigned once under costs and
+  constraints.</p>
+  <p>The research contribution is practical:
+  <monospace>couplr</monospace> brings several assignment methods into
+  one R package and connects them to preprocessing, constraints, balance
+  diagnostics, sensitivity analysis, and joined output. The result is a
+  shorter path from a scientific matching question to a reproducible set
+  of pairs.</p>
+</sec>
+<sec id="ai-usage-disclosure">
+  <title>AI usage disclosure</title>
+  <p>Generative AI tools were used during development and paper
+  preparation. OpenAI Codex assisted with code review, refactoring, test
+  scaffolding, benchmarking scripts, and drafting this manuscript. The
+  author reviewed, edited, and validated AI-assisted outputs, ran the
+  package tests and benchmarks, and made the package design and
+  submission decisions. The author remains responsible for the
+  correctness, originality, licensing, and compliance of the submitted
+  software and paper.</p>
+</sec>
+<sec id="acknowledgements">
+  <title>Acknowledgements</title>
+  <p>No external funding supported this work.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+  <title></title>
+  <ref id="ref-couplr">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Colling</surname><given-names>Gilles</given-names></name>
+      </person-group>
+      <source>Couplr: Optimal pairing and matching via linear assignment</source>
+      <year iso-8601-date="2026">2026</year>
+      <uri>https://CRAN.R-project.org/package=couplr</uri>
+      <pub-id pub-id-type="doi">10.32614/CRAN.package.couplr</pub-id>
+    </element-citation>
+  </ref>
+  <ref id="ref-MatchIt">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Ho</surname><given-names>Daniel E.</given-names></name>
+        <name><surname>Imai</surname><given-names>Kosuke</given-names></name>
+        <name><surname>King</surname><given-names>Gary</given-names></name>
+        <name><surname>Stuart</surname><given-names>Elizabeth A.</given-names></name>
+      </person-group>
+      <article-title>MatchIt: Nonparametric preprocessing for parametric causal inference</article-title>
+      <source>Journal of Statistical Software</source>
+      <year iso-8601-date="2011">2011</year>
+      <volume>42</volume>
+      <issue>8</issue>
+      <pub-id pub-id-type="doi">10.18637/jss.v042.i08</pub-id>
+      <fpage>1</fpage>
+      <lpage>28</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-optmatch">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Hansen</surname><given-names>Ben B.</given-names></name>
+        <name><surname>Klopfer</surname><given-names>Stephanie Olsen</given-names></name>
+      </person-group>
+      <article-title>Optmatch: Flexible, optimal matching for observational studies</article-title>
+      <source>The R Journal</source>
+      <year iso-8601-date="2006">2006</year>
+      <volume>2</volume>
+      <issue>2</issue>
+      <uri>https://journal.r-project.org/archive/2006-2/RJournal_2006-2_Hansen+Klopfer.pdf</uri>
+      <fpage>29</fpage>
+      <lpage>36</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-cobalt">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Greifer</surname><given-names>Noah</given-names></name>
+      </person-group>
+      <article-title>cobalt: Covariate balance tables and plots</article-title>
+      <source>Journal of Open Source Software</source>
+      <year iso-8601-date="2025">2025</year>
+      <volume>10</volume>
+      <issue>109</issue>
+      <pub-id pub-id-type="doi">10.21105/joss.07610</pub-id>
+      <fpage>7610</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-clue">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Hornik</surname><given-names>Kurt</given-names></name>
+      </person-group>
+      <source>Clue: Cluster ensembles</source>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://CRAN.R-project.org/package=clue</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-lpSolve">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Berkelaar</surname><given-names>Michel</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <source>lpSolve: Interface to lp_solve v. 5.5 to solve linear/integer programs</source>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://CRAN.R-project.org/package=lpSolve</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Kuhn1955">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Kuhn</surname><given-names>Harold W.</given-names></name>
+      </person-group>
+      <article-title>The hungarian method for the assignment problem</article-title>
+      <source>Naval Research Logistics Quarterly</source>
+      <year iso-8601-date="1955">1955</year>
+      <volume>2</volume>
+      <issue>1-2</issue>
+      <pub-id pub-id-type="doi">10.1002/nav.3800020109</pub-id>
+      <fpage>83</fpage>
+      <lpage>97</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-JonkerVolgenant1987">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Jonker</surname><given-names>Roy</given-names></name>
+        <name><surname>Volgenant</surname><given-names>Ton</given-names></name>
+      </person-group>
+      <article-title>A shortest augmenting path algorithm for dense and sparse linear assignment problems</article-title>
+      <source>Computing</source>
+      <year iso-8601-date="1987">1987</year>
+      <volume>38</volume>
+      <issue>4</issue>
+      <pub-id pub-id-type="doi">10.1007/BF02278710</pub-id>
+      <fpage>325</fpage>
+      <lpage>340</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Bertsekas1988">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Bertsekas</surname><given-names>Dimitri P.</given-names></name>
+      </person-group>
+      <article-title>The auction algorithm: A distributed relaxation method for the assignment problem</article-title>
+      <source>Annals of Operations Research</source>
+      <year iso-8601-date="1988">1988</year>
+      <volume>14</volume>
+      <pub-id pub-id-type="doi">10.1007/BF02186476</pub-id>
+      <fpage>105</fpage>
+      <lpage>123</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-GabowTarjan1989">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Gabow</surname><given-names>Harold N.</given-names></name>
+        <name><surname>Tarjan</surname><given-names>Robert E.</given-names></name>
+      </person-group>
+      <article-title>Faster scaling algorithms for network problems</article-title>
+      <source>SIAM Journal on Computing</source>
+      <year iso-8601-date="1989">1989</year>
+      <volume>18</volume>
+      <issue>5</issue>
+      <pub-id pub-id-type="doi">10.1137/0218069</pub-id>
+      <fpage>1013</fpage>
+      <lpage>1036</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-GoldbergTarjan1988">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Goldberg</surname><given-names>Andrew V.</given-names></name>
+        <name><surname>Tarjan</surname><given-names>Robert E.</given-names></name>
+      </person-group>
+      <article-title>A new approach to the maximum-flow problem</article-title>
+      <source>Journal of the ACM</source>
+      <year iso-8601-date="1988">1988</year>
+      <volume>35</volume>
+      <issue>4</issue>
+      <pub-id pub-id-type="doi">10.1145/48014.61051</pub-id>
+      <fpage>921</fpage>
+      <lpage>940</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-GoldbergKennedy1995">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Goldberg</surname><given-names>Andrew V.</given-names></name>
+        <name><surname>Kennedy</surname><given-names>Robert</given-names></name>
+      </person-group>
+      <article-title>An efficient cost scaling algorithm for the assignment problem</article-title>
+      <source>Mathematical Programming</source>
+      <year iso-8601-date="1995">1995</year>
+      <volume>71</volume>
+      <issue>2</issue>
+      <pub-id pub-id-type="doi">10.1007/BF01585996</pub-id>
+      <fpage>153</fpage>
+      <lpage>177</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-RamshawTarjan2012">
+    <element-citation publication-type="report">
+      <person-group person-group-type="author">
+        <name><surname>Ramshaw</surname><given-names>Lyle</given-names></name>
+        <name><surname>Tarjan</surname><given-names>Robert E.</given-names></name>
+      </person-group>
+      <article-title>On minimum-cost assignments in unbalanced bipartite graphs</article-title>
+      <publisher-name>HP Laboratories</publisher-name>
+      <year iso-8601-date="2012">2012</year>
+      <uri>https://www.hpl.hp.com/techreports/2012/HPL-2012-40R1.html</uri>
+    </element-citation>
+  </ref>
+</ref-list>
+</back>
+</article>

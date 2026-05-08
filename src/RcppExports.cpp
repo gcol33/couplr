@@ -518,6 +518,146 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// gt_cost_length
+long long gt_cost_length(long long c_ij, bool in_matching);
+RcppExport SEXP _couplr_gt_cost_length(SEXP c_ijSEXP, SEXP in_matchingSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< long long >::type c_ij(c_ijSEXP);
+    Rcpp::traits::input_parameter< bool >::type in_matching(in_matchingSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_cost_length(c_ij, in_matching));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_is_eligible
+bool gt_is_eligible(long long c_ij, bool in_matching, long long y_u, long long y_v);
+RcppExport SEXP _couplr_gt_is_eligible(SEXP c_ijSEXP, SEXP in_matchingSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< long long >::type c_ij(c_ijSEXP);
+    Rcpp::traits::input_parameter< bool >::type in_matching(in_matchingSEXP);
+    Rcpp::traits::input_parameter< long long >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< long long >::type y_v(y_vSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_is_eligible(c_ij, in_matching, y_u, y_v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_check_one_feasible
+bool gt_check_one_feasible(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match, Rcpp::IntegerVector col_match, Rcpp::NumericVector y_u, Rcpp::NumericVector y_v);
+RcppExport SEXP _couplr_gt_check_one_feasible(SEXP costSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_match(col_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_v(y_vSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_check_one_feasible(cost, row_match, col_match, y_u, y_v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_build_equality_graph
+Rcpp::List gt_build_equality_graph(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match, Rcpp::NumericVector y_u, Rcpp::NumericVector y_v);
+RcppExport SEXP _couplr_gt_build_equality_graph(SEXP costSEXP, SEXP row_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_v(y_vSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_build_equality_graph(cost, row_match, y_u, y_v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_augment_along_path
+Rcpp::List gt_augment_along_path(Rcpp::IntegerMatrix edges, Rcpp::IntegerVector row_match, Rcpp::IntegerVector col_match);
+RcppExport SEXP _couplr_gt_augment_along_path(SEXP edgesSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type edges(edgesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_match(col_matchSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_augment_along_path(edges, row_match, col_match));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_find_maximal_augmenting_paths
+Rcpp::List gt_find_maximal_augmenting_paths(Rcpp::List eq_graph, Rcpp::IntegerVector row_match, Rcpp::IntegerVector col_match);
+RcppExport SEXP _couplr_gt_find_maximal_augmenting_paths(SEXP eq_graphSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type eq_graph(eq_graphSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_match(col_matchSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_find_maximal_augmenting_paths(eq_graph, row_match, col_match));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_build_cl_matrix
+Rcpp::NumericMatrix gt_build_cl_matrix(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match);
+RcppExport SEXP _couplr_gt_build_cl_matrix(SEXP costSEXP, SEXP row_matchSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_build_cl_matrix(cost, row_match));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_hungarian_step_one_feasible
+Rcpp::List gt_hungarian_step_one_feasible(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match, Rcpp::IntegerVector col_match, Rcpp::NumericVector y_u, Rcpp::NumericVector y_v);
+RcppExport SEXP _couplr_gt_hungarian_step_one_feasible(SEXP costSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_match(col_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_v(y_vSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_hungarian_step_one_feasible(cost, row_match, col_match, y_u, y_v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_match_gt
+Rcpp::List gt_match_gt(Rcpp::NumericMatrix cost, Rcpp::Nullable<Rcpp::IntegerVector> row_match, Rcpp::Nullable<Rcpp::IntegerVector> col_match, Rcpp::Nullable<Rcpp::NumericVector> y_u, Rcpp::Nullable<Rcpp::NumericVector> y_v, int max_iters, bool check_feasible);
+RcppExport SEXP _couplr_gt_match_gt(SEXP costSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP, SEXP max_itersSEXP, SEXP check_feasibleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::IntegerVector> >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::IntegerVector> >::type col_match(col_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type y_v(y_vSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iters(max_itersSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_feasible(check_feasibleSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_match_gt(cost, row_match, col_match, y_u, y_v, max_iters, check_feasible));
+    return rcpp_result_gen;
+END_RCPP
+}
+// scale_match_cpp
+Rcpp::List scale_match_cpp(Rcpp::NumericMatrix cost, Rcpp::Nullable<Rcpp::IntegerVector> row_match, Rcpp::Nullable<Rcpp::IntegerVector> col_match, Rcpp::Nullable<Rcpp::NumericVector> y_u, Rcpp::Nullable<Rcpp::NumericVector> y_v);
+RcppExport SEXP _couplr_scale_match_cpp(SEXP costSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::IntegerVector> >::type row_match(row_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::IntegerVector> >::type col_match(col_matchSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type y_u(y_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type y_v(y_vSEXP);
+    rcpp_result_gen = Rcpp::wrap(scale_match_cpp(cost, row_match, col_match, y_u, y_v));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_prepare_cost_matrix", (DL_FUNC) &_couplr_lap_prepare_cost_matrix, 2},
@@ -559,6 +699,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_spatial_cost_matrix_cpp", (DL_FUNC) &_couplr_spatial_cost_matrix_cpp, 4},
     {"_couplr_lap_solve_cycle_cancel", (DL_FUNC) &_couplr_lap_solve_cycle_cancel, 2},
     {"_couplr_oa_solve", (DL_FUNC) &_couplr_oa_solve, 3},
+    {"_couplr_gt_cost_length", (DL_FUNC) &_couplr_gt_cost_length, 2},
+    {"_couplr_gt_is_eligible", (DL_FUNC) &_couplr_gt_is_eligible, 4},
+    {"_couplr_gt_check_one_feasible", (DL_FUNC) &_couplr_gt_check_one_feasible, 5},
+    {"_couplr_gt_build_equality_graph", (DL_FUNC) &_couplr_gt_build_equality_graph, 4},
+    {"_couplr_gt_augment_along_path", (DL_FUNC) &_couplr_gt_augment_along_path, 3},
+    {"_couplr_gt_find_maximal_augmenting_paths", (DL_FUNC) &_couplr_gt_find_maximal_augmenting_paths, 3},
+    {"_couplr_gt_build_cl_matrix", (DL_FUNC) &_couplr_gt_build_cl_matrix, 2},
+    {"_couplr_gt_hungarian_step_one_feasible", (DL_FUNC) &_couplr_gt_hungarian_step_one_feasible, 5},
+    {"_couplr_gt_match_gt", (DL_FUNC) &_couplr_gt_match_gt, 7},
+    {"_couplr_scale_match_cpp", (DL_FUNC) &_couplr_scale_match_cpp, 5},
     {NULL, NULL, 0}
 };
 

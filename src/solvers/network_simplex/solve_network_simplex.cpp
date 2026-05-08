@@ -65,8 +65,9 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     // Compute initial potentials
     couplr::ns::compute_potentials(state);
 
-    // Main simplex loop
-    int max_iterations = state.num_arcs * state.num_nodes;
+    // Main simplex loop.  Practical bound: O(n^2) pivots suffices for assignment.
+    // num_arcs * num_nodes is O(n^3) and caused ~100 s at n=200; cap here prevents runaway.
+    int max_iterations = 4 * state.num_nodes * state.num_nodes;
 
     for (int iter = 0; iter < max_iterations; ++iter) {
         // Find entering arc

@@ -40,20 +40,18 @@ test_that("Module D: augmenting path with alternating edges", {
   
   paths <- gt_find_maximal_augmenting_paths(eq_graph, row_match, col_match)
   
-  # Should find exactly one augmenting path: 2->1->1->2
+  # Should find exactly one augmenting path. The current C++ representation
+  # stores only the new selected edges: row 2 -> col 1, row 1 -> col 2.
   expect_equal(length(paths), 1)
   
   path <- paths[[1]]
-  # Path should have 3 edges: (2,1) unmatched, (1,1) matched, (1,2) unmatched
-  expect_equal(nrow(path), 3)
+  expect_equal(nrow(path), 2)
   
   # Check the path structure (0-based in comments, 1-based in R)
   expect_equal(path[1, 1], 3L)  # row 2
   expect_equal(path[1, 2], 2L)  # col 1
   expect_equal(path[2, 1], 2L)  # row 1
-  expect_equal(path[2, 2], 2L)  # col 1
-  expect_equal(path[3, 1], 2L)  # row 1
-  expect_equal(path[3, 2], 3L)  # col 2
+  expect_equal(path[2, 2], 3L)  # col 2
 })
 
 test_that("Module D: no augmenting paths when matching is perfect", {

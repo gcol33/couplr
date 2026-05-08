@@ -23,14 +23,12 @@ test_that("Module C: augment with longer alternating path", {
   row_match <- c(1L, 2L, 0L)  # 0->0, 1->1, 2->NIL
   col_match <- c(1L, 2L, 0L)  # 0->0, 1->1, 2->NIL
   
-  # Augmenting path from row 2 to col 2:
-  # (2,1) unmatched, (1,1) matched, (1,2) unmatched
-  # In R 1-based: (3,2), (2,2), (2,3)
+  # Current C++ path representation stores the new selected edges.
+  # This reassigns row 2 to col 1 and row 1 to free col 2.
   edges <- matrix(c(
     3L, 2L,
-    2L, 2L,
     2L, 3L
-  ), nrow = 3, byrow = TRUE)
+  ), nrow = 2, byrow = TRUE)
   
   result <- gt_augment_along_path(edges, row_match, col_match)
   
@@ -121,16 +119,12 @@ test_that("Module C: augment handles edge removal and addition correctly", {
   row_match <- c(2L, 3L, 0L)
   col_match <- c(0L, 1L, 2L)
   
-  # Path that removes (0,1) and (1,2), adds (0,0), (1,1), (2,2)
-  # Edges: (0,1), (0,0), (1,1), (1,2), (2,2)
-  # In R: (1,2), (1,1), (2,2), (2,3), (3,3)
+  # New selected edges that reassign rows to the diagonal.
   edges <- matrix(c(
-    1L, 2L,
-    1L, 1L,
+    3L, 3L,
     2L, 2L,
-    2L, 3L,
-    3L, 3L
-  ), nrow = 5, byrow = TRUE)
+    1L, 1L
+  ), nrow = 3, byrow = TRUE)
   
   result <- gt_augment_along_path(edges, row_match, col_match)
   

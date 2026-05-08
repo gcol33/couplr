@@ -163,34 +163,36 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
     const int n = static_cast<int>(cost.size());
     const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
 
-    // For each affected column, check all rows for new eligible edges
+    if (affected_cols.empty()) return;
+
+    std::vector<bool> affected(m, false);
     for (int j : affected_cols) {
-        if (j < 0 || j >= m) continue;
-
-        for (int i = 0; i < n; ++i) {
-            long long c_ij = cost[i][j];
-
-            // Skip forbidden edges
-            if (c_ij >= BIG_INT) {
-                continue;
-            }
-
-            bool in_matching = (row_match[i] == j);
-            bool is_elig = is_eligible(c_ij, in_matching, y_u[i], y_v[j]);
-
-            // Check if (i,j) is already in eq_graph[i]
-            auto& adj_list = eq_graph[i];
-            auto it = std::find(adj_list.begin(), adj_list.end(), j);
-            bool already_present = (it != adj_list.end());
-
-            if (is_elig && !already_present) {
-                // Edge became eligible: add it
-                adj_list.push_back(j);
-            } else if (!is_elig && already_present) {
-                // Edge no longer eligible: remove it
-                adj_list.erase(it);
-            }
+        if (j >= 0 && j < m) {
+            affected[j] = true;
         }
+    }
+
+    // Step 1 only decreases y_v on affected columns. Existing eligible edges
+    // in those columns can become ineligible; newly matched path edges were
+    // already eligible before the update and remain represented in eq_graph.
+    // Scanning adjacency lists avoids the old O(|affected| * n * degree)
+    // membership search on dense equality graphs.
+    for (int i = 0; i < n; ++i) {
+        auto& adj_list = eq_graph[i];
+        adj_list.erase(
+            std::remove_if(adj_list.begin(), adj_list.end(),
+                           [&](int j) {
+                               if (j < 0 || j >= m || !affected[j]) {
+                                   return false;
+                               }
+                               long long c_ij = cost[i][j];
+                               if (c_ij >= BIG_INT) {
+                                   return true;
+                               }
+                               bool in_matching = (row_match[i] == j);
+                               return !is_eligible(c_ij, in_matching, y_u[i], y_v[j]);
+                           }),
+            adj_list.end());
     }
 }
 
@@ -257,14 +259,7 @@ find_one_augmenting_path_eq(const std::vector<std::vector<int>>& eq_graph,
                             const std::vector<bool>& banned_col)
 {
     const int n = static_cast<int>(eq_graph.size());
-    
-    // Determine number of columns
-    int m = 0;
-    for (const auto& nbrs : eq_graph) {
-        for (int j : nbrs) {
-            if (j + 1 > m) m = j + 1;
-        }
-    }
+    const int m = static_cast<int>(col_match.size());
     
     std::vector<bool> visited_row(n, false);
     std::vector<bool> visited_col(m, false);
@@ -353,14 +348,7 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
     // Paper approach: Find ALL maximal paths in ONE traversal (like Hopcroft-Karp)
 
     const int n = static_cast<int>(eq_graph.size());
-
-    // Determine number of columns
-    int m = 0;
-    for (const auto& nbrs : eq_graph) {
-        for (int j : nbrs) {
-            if (j + 1 > m) m = j + 1;
-        }
-    }
+    const int m = static_cast<int>(col_match.size());
 
     std::vector<bool> visited_row(n, false);
     std::vector<bool> visited_col(m, false);

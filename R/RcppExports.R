@@ -157,3 +157,43 @@ oa_solve <- function(cost_r, alpha = 5.0, auction_rounds = 10L) {
     .Call(`_couplr_oa_solve`, cost_r, alpha, auction_rounds)
 }
 
+gt_cost_length <- function(c_ij, in_matching) {
+    .Call(`_couplr_gt_cost_length`, c_ij, in_matching)
+}
+
+gt_is_eligible <- function(c_ij, in_matching, y_u, y_v) {
+    .Call(`_couplr_gt_is_eligible`, c_ij, in_matching, y_u, y_v)
+}
+
+gt_check_one_feasible <- function(cost, row_match, col_match, y_u, y_v) {
+    .Call(`_couplr_gt_check_one_feasible`, cost, row_match, col_match, y_u, y_v)
+}
+
+gt_build_equality_graph <- function(cost, row_match, y_u, y_v) {
+    .Call(`_couplr_gt_build_equality_graph`, cost, row_match, y_u, y_v)
+}
+
+gt_augment_along_path <- function(edges, row_match, col_match) {
+    .Call(`_couplr_gt_augment_along_path`, edges, row_match, col_match)
+}
+
+gt_find_maximal_augmenting_paths <- function(eq_graph, row_match, col_match) {
+    .Call(`_couplr_gt_find_maximal_augmenting_paths`, eq_graph, row_match, col_match)
+}
+
+gt_build_cl_matrix <- function(cost, row_match) {
+    .Call(`_couplr_gt_build_cl_matrix`, cost, row_match)
+}
+
+gt_hungarian_step_one_feasible <- function(cost, row_match, col_match, y_u, y_v) {
+    .Call(`_couplr_gt_hungarian_step_one_feasible`, cost, row_match, col_match, y_u, y_v)
+}
+
+gt_match_gt <- function(cost, row_match = NULL, col_match = NULL, y_u = NULL, y_v = NULL, max_iters = 1000L, check_feasible = FALSE) {
+    .Call(`_couplr_gt_match_gt`, cost, row_match, col_match, y_u, y_v, max_iters, check_feasible)
+}
+
+scale_match_cpp <- function(cost, row_match = NULL, col_match = NULL, y_u = NULL, y_v = NULL) {
+    .Call(`_couplr_scale_match_cpp`, cost, row_match, col_match, y_u, y_v)
+}
+

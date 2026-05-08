@@ -13,7 +13,7 @@ call_module_h <- function(cost, maximize = FALSE) {
   n <- nrow(cost)
   m <- ncol(cost)
 
-  row_match <- result$assignment
+  row_match <- if (!is.null(result$row_match)) result$row_match else result$match
 
   # Build col_match from row_match (1-based)
   col_match <- rep(NA_integer_, m)
@@ -29,7 +29,7 @@ call_module_h <- function(cost, maximize = FALSE) {
     col_match = col_match,
     y_u       = result$row_duals,
     y_v       = result$col_duals,
-    cost      = result$cost,
+    cost      = result$total_cost,
     n_matched = result$n_matched
   )
 }
@@ -257,7 +257,7 @@ test_that("Module H produces same result as Hungarian on small matrices", {
   cost <- matrix(sample(1:20, 9, replace = TRUE), nrow = 3)
 
   result_gt <- call_module_h(cost)
-  result_h  <- lapr:::lap_solve_hungarian(cost, maximize = FALSE)
+  result_h  <- lap_solve_hungarian(cost, maximize = FALSE)
 
   # Robustly extract Hungarian cost
   cost_h <- if (!is.null(result_h$cost)) {
@@ -284,7 +284,7 @@ test_that("Module H matches JV on larger matrices", {
   cost <- matrix(sample(1:100, n * n, replace = TRUE), nrow = n)
 
   result_gt <- call_module_h(cost)
-  result_jv <- lapr:::lap_solve_jv(cost, maximize = FALSE)
+  result_jv <- lap_solve_jv(cost, maximize = FALSE)
 
   cost_jv <- if (!is.null(result_jv$cost)) {
     result_jv$cost

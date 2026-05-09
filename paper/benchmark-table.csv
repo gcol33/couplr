@@ -20,6 +20,18 @@
 "auction_scaled","Auction-scaled","Auction",200,5.069
 "auction_scaled","Auction-scaled","Auction",500,33.3974
 "auction_scaled","Auction-scaled","Auction",1000,152.4531
+"auto","auto","Auto",10,0.058402
+"auto","auto","Auto",25,0.287101
+"auto","auto","Auto",50,1.685601
+"auto","auto","Auto",100,2.013301
+"auto","auto","Auto",200,6.589901
+"auto","auto","Auto",500,40.880902
+"auto","auto","Auto",1000,172.5883
+"auto","auto","Auto",2000,856.3681
+"auto","auto","Auto",5000,5769.035602
+"bruteforce","Bruteforce†","Special-purpose",4,0.021701
+"bruteforce","Bruteforce†","Special-purpose",6,0.0892
+"bruteforce","Bruteforce†","Special-purpose",8,4.736
 "csa","CSA","Cost scaling",10,0.0298
 "csa","CSA","Cost scaling",25,0.0921
 "csa","CSA","Cost scaling",50,0.2987
@@ -28,16 +40,21 @@
 "csa","CSA","Cost scaling",500,31.3877
 "csa","CSA","Cost scaling",1000,139.9286
 "csa","CSA","Cost scaling",2000,600.313
+"csa","CSA","Cost scaling",5000,4502.664702
 "csflow","CS-flow","Flow-based",10,0.143
 "csflow","CS-flow","Flow-based",25,0.9964
 "csflow","CS-flow","Flow-based",50,5.4164
 "csflow","CS-flow","Flow-based",100,28.9203
 "csflow","CS-flow","Flow-based",200,169.4849
 "csflow","CS-flow","Flow-based",500,2009.8499
+"csflow","CS-flow","Flow-based",1000,13459.5567
 "cycle_cancel","Cycle-cancel","Flow-based",10,0.1987
 "cycle_cancel","Cycle-cancel","Flow-based",25,1.8253
 "cycle_cancel","Cycle-cancel","Flow-based",50,8.4721
 "cycle_cancel","Cycle-cancel","Flow-based",100,49.1481
+"cycle_cancel","Cycle-cancel","Flow-based",200,317.207
+"cycle_cancel","Cycle-cancel","Flow-based",500,4086.5605
+"cycle_cancel","Cycle-cancel","Flow-based",1000,30634.8087
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",10,0.9782
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",25,7.0832
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",50,44.1256
@@ -45,6 +62,15 @@
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",200,2423.723
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",500,40576.9136
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",1000,351183.653
+"hk01","HK-01*","Special-purpose",10,0.033201
+"hk01","HK-01*","Special-purpose",25,0.074702
+"hk01","HK-01*","Special-purpose",50,0.186701
+"hk01","HK-01*","Special-purpose",100,0.576201
+"hk01","HK-01*","Special-purpose",200,2.093301
+"hk01","HK-01*","Special-purpose",500,12.326201
+"hk01","HK-01*","Special-purpose",1000,52.695201
+"hk01","HK-01*","Special-purpose",2000,218.462101
+"hk01","HK-01*","Special-purpose",5000,1454.5377
 "hungarian","Hungarian","Classical",10,0.0295
 "hungarian","Hungarian","Classical",25,0.2707
 "hungarian","Hungarian","Classical",50,1.4084
@@ -61,6 +87,7 @@
 "jv","JV","JV / Augmenting path",500,38.7249
 "jv","JV","JV / Augmenting path",1000,214.5456
 "jv","JV","JV / Augmenting path",2000,1253.4782
+"jv","JV","JV / Augmenting path",5000,10131.209001
 "lapmod","LAPMOD","JV / Augmenting path",10,0.0334
 "lapmod","LAPMOD","JV / Augmenting path",25,0.1243
 "lapmod","LAPMOD","JV / Augmenting path",50,0.5734
@@ -69,22 +96,28 @@
 "lapmod","LAPMOD","JV / Augmenting path",500,94.5719
 "lapmod","LAPMOD","JV / Augmenting path",1000,537.9149
 "lapmod","LAPMOD","JV / Augmenting path",2000,3096.407802
+"lapmod","LAPMOD","JV / Augmenting path",5000,23613.522801
 "network_simplex","Net-simplex","Flow-based",10,0.0697
 "network_simplex","Net-simplex","Flow-based",25,0.205
 "network_simplex","Net-simplex","Flow-based",50,1.4724
 "network_simplex","Net-simplex","Flow-based",100,8.332
 "network_simplex","Net-simplex","Flow-based",200,52.3497
 "network_simplex","Net-simplex","Flow-based",500,633.0217
+"network_simplex","Net-simplex","Flow-based",1000,6849.0321
 "orlin","Orlin","Flow-based",10,0.0366
 "orlin","Orlin","Flow-based",25,0.1273
 "orlin","Orlin","Flow-based",50,0.5431
 "orlin","Orlin","Flow-based",100,2.4339
+"orlin","Orlin","Flow-based",200,13.4711
+"orlin","Orlin","Flow-based",500,85.9609
+"orlin","Orlin","Flow-based",1000,441.1556
 "push_relabel","Push-relabel","Flow-based",10,0.1703
 "push_relabel","Push-relabel","Flow-based",25,1.0243
 "push_relabel","Push-relabel","Flow-based",50,6.7502
 "push_relabel","Push-relabel","Flow-based",100,29.3829
 "push_relabel","Push-relabel","Flow-based",200,174.3991
 "push_relabel","Push-relabel","Flow-based",500,2097.3288
+"push_relabel","Push-relabel","Flow-based",1000,13770.7635
 "ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",10,0.0564
 "ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",25,0.2443
 "ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",50,0.9454

@@ -3,10 +3,82 @@
 
 #include <Rcpp.h>
 #include <cmath>                // for std::abs, std::round, std::llround, std::fabs
+#include <algorithm>
+#include <limits>
 #include "utils_gabow_tarjan.h"
 #include "../core/lap_utils_rcpp.h"
 
 using namespace Rcpp;
+
+namespace {
+
+void compute_duals_from_matching(const CostMatrix& cost,
+                                 const MatchVec& row_match,
+                                 DualVec& y_u,
+                                 DualVec& y_v) {
+    const int n = static_cast<int>(cost.size());
+    const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
+    constexpr long long INF = std::numeric_limits<long long>::max() / 4;
+
+    y_u.assign(n, 0);
+    y_v.assign(m, 0);
+
+    if (n == 0 || m == 0) return;
+
+    std::vector<int> matched_col_for_row(n, NIL);
+    std::vector<int> row_for_col(m, NIL);
+    for (int i = 0; i < n; ++i) {
+        int j = row_match[i];
+        if (j >= 0 && j < m && cost[i][j] < BIG_INT) {
+            matched_col_for_row[i] = j;
+            row_for_col[j] = i;
+        }
+    }
+
+    // Difference constraints for matched columns under 1-feasibility:
+    // u[i] - u[k] <= c(i, match[k]) + 1 - c(k, match[k]).
+    // Bellman-Ford from a zero super-source gives feasible row potentials.
+    std::vector<long long> u(n, 0);
+    for (int iter = 0; iter < n - 1; ++iter) {
+        bool changed = false;
+        for (int k = 0; k < n; ++k) {
+            int jk = matched_col_for_row[k];
+            if (jk == NIL || cost[k][jk] >= BIG_INT) {
+                continue;
+            }
+            for (int i = 0; i < n; ++i) {
+                if (cost[i][jk] >= BIG_INT) {
+                    continue;
+                }
+                long long w = cost[i][jk] + 1 - cost[k][jk];
+                if (u[i] > u[k] + w) {
+                    u[i] = u[k] + w;
+                    changed = true;
+                }
+            }
+        }
+        if (!changed) break;
+    }
+
+    y_u = u;
+
+    for (int j = 0; j < m; ++j) {
+        int i = row_for_col[j];
+        if (i != NIL) {
+            y_v[j] = cost[i][j] - y_u[i];
+        } else {
+            long long best = INF;
+            for (int r = 0; r < n; ++r) {
+                if (cost[r][j] < BIG_INT) {
+                    best = std::min(best, cost[r][j] + 1 - y_u[r]);
+                }
+            }
+            y_v[j] = (best < INF) ? best : 0;
+        }
+    }
+}
+
+} // namespace
 
 /**
  * Gabow-Tarjan LAP solver implementation
@@ -93,6 +165,14 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
     
     // Solve using Gabow–Tarjan bit-scaling algorithm
     solve_gabow_tarjan_inner(cost_matrix, row_match, col_match, y_u, y_v);
+
+    // Warm-started scaling preserves the matching across phases. Recompute the
+    // final dual certificate for small/certificate-oriented calls. Large
+    // assignment() calls discard duals, so avoid adding an extra cubic pass to
+    // the performance path.
+    if (n <= 100) {
+        compute_duals_from_matching(cost_matrix, row_match, y_u, y_v);
+    }
     
     // Convert matching to 1-based R vectors
     Rcpp::IntegerVector row_match_R(n);

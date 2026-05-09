@@ -84,11 +84,15 @@ method_max_n <- c(
   auction         = 1000L,
   auction_gs      = 1000L,
   auction_scaled  = 1000L,
-  csflow          = 500L,
-  cycle_cancel    = 100L,
-  network_simplex = 500L,
-  orlin           = 100L,
-  push_relabel    = 500L,
+  gabow_tarjan    = 1000L,
+  hungarian       = 2000L,
+  sap             = 2000L,
+  ssap_bucket     = 2000L,
+  csflow          = 1000L,
+  cycle_cancel    = 1000L,
+  network_simplex = 1000L,
+  orlin           = 1000L,
+  push_relabel    = 1000L,
   ramshaw_tarjan  = 1000L
 )
 
@@ -130,6 +134,18 @@ bench_one <- function(method, n, times, cost_mat) {
 }
 
 results <- list()
+if (file.exists(BENCHMARK_TABLE)) {
+  old <- read.csv(BENCHMARK_TABLE, stringsAsFactors = FALSE)
+  old <- old[, c("method", "n", "median_ms")]
+  results <- unname(split(old, seq_len(nrow(old))))
+  cat("Loaded ", length(results), " existing benchmark rows from ",
+      BENCHMARK_TABLE, "\n", sep = "")
+  flush.console()
+}
+
+has_result <- function(method, n) {
+  any(vapply(results, function(x) x$method == method && x$n == n, logical(1)))
+}
 
 cat("--- General methods ---\n"); flush.console()
 for (n in general_sizes) {
@@ -138,6 +154,7 @@ for (n in general_sizes) {
   for (m in general_methods) {
     max_n <- method_max_n[m]
     if (!is.na(max_n) && n > max_n) next
+    if (has_result(m, n)) next
     cat(sprintf("  n=%3d  %s\n", n, m)); flush.console()
     r <- bench_one(m, n, TIMES, cost)
     record_result(r)
@@ -148,6 +165,7 @@ cat("--- Auto method ---\n"); flush.console()
 for (n in general_sizes) {
   set.seed(SEED)
   cost <- matrix(sample.int(MAX_COST, n * n, replace = TRUE), n, n)
+  if (has_result("auto", n)) next
   cat(sprintf("  n=%3d  auto\n", n)); flush.console()
   r <- bench_one("auto", n, TIMES, cost)
   record_result(r)
@@ -157,6 +175,7 @@ cat("--- Bruteforce (n <= 8) ---\n"); flush.console()
 for (n in small_sizes) {
   set.seed(SEED)
   cost <- matrix(sample.int(MAX_COST, n * n, replace = TRUE), n, n)
+  if (has_result("bruteforce", n)) next
   cat(sprintf("  n=%d  bruteforce\n", n)); flush.console()
   r <- bench_one("bruteforce", n, TIMES, cost)
   record_result(r)
@@ -166,6 +185,7 @@ cat("--- HK-01 (binary costs) ---\n"); flush.console()
 for (n in binary_sizes) {
   set.seed(SEED)
   cost <- matrix(sample(0L:1L, n * n, replace = TRUE), n, n)
+  if (has_result("hk01", n)) next
   cat(sprintf("  n=%3d  hk01\n", n)); flush.console()
   r <- bench_one("hk01", n, TIMES, cost)
   record_result(r)

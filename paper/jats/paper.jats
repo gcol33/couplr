@@ -250,14 +250,14 @@ a Creative Commons Attribution 4.0 International License (CC BY
 </sec>
 <sec id="ai-usage-disclosure">
   <title>AI usage disclosure</title>
-  <p>Generative AI tools were used during development and paper
-  preparation. OpenAI Codex assisted with code review, refactoring, test
-  scaffolding, benchmarking scripts, and drafting this manuscript. The
-  author reviewed, edited, and validated AI-assisted outputs, ran the
-  package tests and benchmarks, and made the package design and
-  submission decisions. The author remains responsible for the
-  correctness, originality, licensing, and compliance of the submitted
-  software and paper.</p>
+  <p>The author designed the package architecture and made the
+  algorithm-selection choices. The assisted-workflow coding stack
+  pairs a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (a
+  48-billion-parameter mixture-of-experts coder, Router-weighted
+  Expert Activation Pruning, 4-bit MLX quantization, running on-device
+  on a single Apple M4 Pro with no cloud inference) with Anthropic's
+  Claude Code on Claude Sonnet 4.6. Generated code was reviewed before
+  merge.</p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>

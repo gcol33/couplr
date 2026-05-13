@@ -62,9 +62,9 @@ method_labels <- c(
   network_simplex = "Net-simplex",
   push_relabel    = "Push-relabel",
   orlin           = "Orlin",
-  ramshaw_tarjan  = "Ramshaw-Tarjan",
-  hk01            = "HK-01*",
-  bruteforce      = "Bruteforce†",
+  ramshaw_tarjan  = "Ramshaw-T",
+  hk01            = "HK-01",
+  bruteforce      = "Bruteforce",
   auto            = "auto"
 )
 
@@ -198,137 +198,185 @@ cat("Saved ", BENCHMARK_TABLE, "\n", sep = ""); flush.console()
 # the persisted table.
 df <- read.csv(BENCHMARK_TABLE, stringsAsFactors = FALSE)
 
-# ---------- Panel A: all general solvers, direct labels ---------------------
+# ---------- shared scales / theme ------------------------------------------
 
-df_a <- df[df$method %in% general_methods, ]
+x_breaks <- c(10, 100, 1000)
+x_lbls   <- c("10", "100", "1000")
+y_breaks <- c(0.01, 1, 100, 10000)
+y_lbls   <- c("10 µs", "1 ms", "100 ms", "10 s")
+x_dom    <- c(4, 5000)
+y_dom    <- c(0.005, 1e8)   # extra headroom for in-panel legends
 
-family_order <- c("Classical", "JV / Augmenting path", "Auction",
-                  "Cost scaling", "Flow-based", "Rectangular / general")
-df_a$family <- factor(df_a$family, levels = family_order)
+# Font sizes are scaled up because JOSS scales the figure down to column width
+# (~5 in). With base = 12 at a 7.2 in canvas, displayed text lands near 8 pt.
+theme_fig <- function(base = 12) {
+  theme_minimal(base_size = base) +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major = element_line(colour = "#ececec", linewidth = 0.35),
+      axis.line        = element_line(colour = "#1a1a1a", linewidth = 0.5),
+      axis.ticks       = element_line(colour = "#444", linewidth = 0.4),
+      axis.text        = element_text(colour = "#333", size = 9),
+      axis.title       = element_text(face = "italic", colour = "#1a1a1a",
+                                      size = 11),
+      plot.tag         = element_text(face = "bold", size = 14, colour = "#1a1a1a"),
+      plot.tag.position = c(0, 1)
+    )
+}
 
-# Label position = last (highest n) observation per solver
-df_label_a <- do.call(rbind, lapply(split(df_a, df_a$method), function(d) {
-  d[which.max(d$n), ]
-}))
+# ---------- Panel A: five family small multiples ---------------------------
 
-p_a <- ggplot(df_a, aes(x = n, y = median_ms, color = family, group = method)) +
-  geom_line(linewidth = 0.7, na.rm = TRUE) +
-  geom_point(size = 1.5, na.rm = TRUE) +
-  geom_text_repel(
-    data    = df_label_a,
-    aes(label = label),
-    size    = 2.4,
-    hjust   = 0,
-    xlim    = c(5200, NA),
-    direction      = "y",
-    segment.size   = 0.3,
-    segment.color  = "grey55",
-    min.segment.length = 0.1,
-    box.padding    = 0.2,
-    force          = 1.2,
-    max.overlaps   = Inf,
-    seed           = 7L
-  ) +
-  scale_x_log10(
-    breaks = general_sizes,
-    labels = c("10", "25", "50", "100", "200", "500", "1k", "2k", "5k"),
-    expand = expansion(mult = c(0.02, 0.55))
-  ) +
-  scale_y_log10(
-    labels = function(x) {
-      ifelse(x < 1,
-             paste0(round(x * 1000, 0), "μs"),
-             ifelse(x < 1000,
-                    paste0(round(x, 1), " ms"),
-                    paste0(round(x / 1000, 1), " s")))
-    }
-  ) +
-  scale_color_manual(values = family_colors, name = "Family") +
-  labs(
-    x   = "Problem size n (n × n matrix)",
-    y   = "Median solve time",
-    tag = "A"
-  ) +
-  guides(color = guide_legend(
-    override.aes = list(linewidth = 1.5),
-    ncol = 2
-  )) +
-  theme_minimal(base_size = 9) +
-  theme(
-    panel.grid.minor  = element_blank(),
-    legend.position   = "bottom",
-    legend.title      = element_text(face = "bold", size = 8),
-    legend.text       = element_text(size = 7.5),
-    legend.key.width  = unit(1.5, "lines"),
-    axis.title        = element_text(size = 9),
-    plot.tag          = element_text(face = "bold", size = 10)
-  )
+panel_spec <- list(
+  list(title = "JV",
+       methods = c("jv", "sap", "lapmod"),
+       colour  = "#0072b2"),
+  list(title = "Auction",
+       methods = c("auction", "auction_gs", "auction_scaled"),
+       colour  = "#e69f00"),
+  list(title = "Cost-scaling",
+       methods = c("csa", "gabow_tarjan", "ssap_bucket"),
+       colour  = "#009e73"),
+  list(title = "Flow-based",
+       methods = c("csflow", "cycle_cancel", "network_simplex",
+                   "push_relabel", "orlin"),
+       colour  = "#cc79a7"),
+  list(title = "Other",
+       methods = c("hungarian", "ramshaw_tarjan", "hk01", "bruteforce"),
+       colour  = "#5a4634")
+)
 
-# ---------- Panel B: auto vs Hungarian, speedup annotated ------------------
+linetype_pool <- c("solid", "dashed", "dotted", "dotdash", "twodash")
 
-df_b <- df[df$method %in% c("auto", "hungarian"), ]
+build_panel_a <- function(spec, show_y, is_leftmost) {
+  d <- df[df$method %in% spec$methods, ]
+  # Order so the legend matches the spec order
+  lbls <- unname(method_labels[spec$methods])
+  d$label <- factor(method_labels[d$method], levels = lbls)
+  lt_vals <- setNames(linetype_pool[seq_along(spec$methods)], lbls)
 
-# Merge to compute speedup at each shared n
-t_auto <- df_b[df_b$method == "auto",     c("n", "median_ms")]
+  g <- ggplot(d, aes(x = n, y = median_ms,
+                     linetype = label, group = label)) +
+    geom_line(colour = spec$colour, linewidth = 0.7, na.rm = TRUE) +
+    geom_point(colour = spec$colour, fill = "white", shape = 21,
+               size = 1.7, stroke = 0.55, na.rm = TRUE) +
+    scale_x_log10(breaks = x_breaks, labels = x_lbls,
+                  limits = x_dom, expand = expansion(mult = c(0.04, 0.04))) +
+    scale_y_log10(breaks = y_breaks, labels = y_lbls,
+                  limits = y_dom, expand = c(0, 0)) +
+    scale_linetype_manual(values = lt_vals) +
+    labs(title = spec$title,
+         x = if (is_leftmost) "problem size, n" else NULL,
+         y = if (show_y)     "median solve time" else NULL,
+         tag = if (is_leftmost) "(a)" else NULL) +
+    guides(linetype = guide_legend(
+      title = NULL,
+      override.aes = list(colour = spec$colour, linewidth = 0.7),
+      keyheight = unit(0.55, "lines"),
+      keywidth  = unit(1.3, "lines")
+    )) +
+    theme_fig() +
+    theme(
+      plot.title = element_text(size = 11.5, face = "bold",
+                                colour = "#1a1a1a",
+                                margin = margin(b = 5)),
+      legend.position      = c(0.02, 0.98),
+      legend.justification = c(0, 1),
+      legend.background    = element_rect(fill = NA, colour = NA),
+      legend.key           = element_rect(fill = NA, colour = NA),
+      legend.text          = element_text(size = 9, colour = "#333"),
+      legend.spacing.y     = unit(0.05, "lines"),
+      legend.margin        = margin(0, 0, 0, 0),
+      plot.margin          = margin(3, 6, 3, 6)
+    )
+
+  if (!show_y) {
+    g <- g + theme(axis.text.y = element_blank(),
+                   axis.ticks.y = element_blank())
+  }
+  g
+}
+
+panels_a <- lapply(seq_along(panel_spec), function(i) {
+  build_panel_a(panel_spec[[i]], show_y = (i == 1), is_leftmost = (i == 1))
+})
+
+row_a <- wrap_plots(panels_a, nrow = 1)
+
+# ---------- Panel B: auto vs Hungarian (full width) ------------------------
+
+df_b   <- df[df$method %in% c("auto", "hungarian"), ]
+t_auto <- df_b[df_b$method == "auto",      c("n", "median_ms")]
 t_hung <- df_b[df_b$method == "hungarian", c("n", "median_ms")]
-speedup_df <- merge(t_auto, t_hung, by = "n", suffixes = c("_auto", "_hung"))
-speedup_df$speedup <- speedup_df$median_ms_hung / speedup_df$median_ms_auto
-speedup_df$y_ann   <- sqrt(speedup_df$median_ms_auto * speedup_df$median_ms_hung)
+sp     <- merge(t_auto, t_hung, by = "n", suffixes = c("_auto", "_hung"))
+sp$speedup <- sp$median_ms_hung / sp$median_ms_auto
+sp <- sp[order(sp$n), ]
 
-panel_b_colors <- c("auto"      = "#2196F3",
-                    "hungarian" = "#E53935")
-panel_b_labels <- c("auto"      = "auto  (smart dispatch)",
-                    "hungarian" = "Hungarian  (classical baseline)")
+# Single annotation at the peak speed-up, to keep panel (b) uncluttered.
+sig <- sp[sp$speedup >= 1.5, ]
+if (nrow(sig)) {
+  sig <- sig[which.max(sig$speedup), , drop = FALSE]
+  sig$label <- ifelse(sig$speedup >= 100,
+                      paste0(round(sig$speedup), "×"),
+                      paste0(format(round(sig$speedup, 1), nsmall = 1),
+                             "×"))
+  sig$y_mid <- sqrt(sig$median_ms_auto * sig$median_ms_hung)
+}
 
-p_b <- ggplot(df_b, aes(x = n, y = median_ms, color = method, group = method)) +
-  geom_line(linewidth = 1.1, na.rm = TRUE) +
-  geom_point(size = 2.2, na.rm = TRUE) +
-  geom_text(
-    data = speedup_df[speedup_df$speedup >= 1.5, ],
-    aes(x = n, y = y_ann,
-        label = paste0(round(speedup, 1), "× faster")),
-    inherit.aes = FALSE,
-    size = 2.5, color = "grey30",
-    hjust = -0.15, vjust = 0.4
-  ) +
-  scale_x_log10(
-    breaks = general_sizes,
-    labels = c("10", "25", "50", "100", "200", "500", "1k", "2k", "5k"),
-    expand = expansion(mult = c(0.02, 0.12))
-  ) +
-  scale_y_log10(
-    labels = function(x) {
-      ifelse(x < 1,
-             paste0(round(x * 1000, 0), "μs"),
-             ifelse(x < 1000,
-                    paste0(round(x, 1), " ms"),
-                    paste0(round(x / 1000, 1), " s")))
-    }
-  ) +
-  scale_color_manual(values = panel_b_colors,
-                     labels = panel_b_labels,
-                     name   = NULL) +
-  labs(
-    x        = "Problem size n (n × n matrix)",
-    y        = NULL,
-    tag      = "B",
-    subtitle = "Auto-selection vs. classical baseline"
-  ) +
-  theme_minimal(base_size = 9) +
-  theme(
-    panel.grid.minor  = element_blank(),
-    legend.position   = "bottom",
-    legend.text       = element_text(size = 7.5),
-    axis.title        = element_text(size = 9),
-    plot.tag          = element_text(face = "bold", size = 10),
-    plot.subtitle     = element_text(size = 8, color = "grey40")
+b_colors <- c(hungarian = "#d55e00", auto = "#000000")
+b_shapes <- c(hungarian = 21,        auto = 22)   # circle / square
+
+last_h <- t_hung[which.max(t_hung$n), ]
+last_a <- t_auto[which.max(t_auto$n), ]
+
+p_b <- ggplot(df_b, aes(x = n, y = median_ms, group = method)) +
+  geom_line(aes(colour = method), linewidth = 1.0, na.rm = TRUE) +
+  geom_point(aes(colour = method, shape = method),
+             fill = "white", size = 2.4, stroke = 0.9, na.rm = TRUE) +
+  scale_colour_manual(values = b_colors, guide = "none") +
+  scale_shape_manual(values = b_shapes, guide = "none") +
+  scale_x_log10(breaks = x_breaks, labels = x_lbls,
+                limits = x_dom, expand = expansion(mult = c(0.02, 0.12))) +
+  scale_y_log10(breaks = y_breaks, labels = y_lbls,
+                limits = y_dom, expand = c(0, 0)) +
+  labs(x = "problem size, n",
+       y = "median solve time",
+       tag = "(b)") +
+  theme_fig()
+
+if (nrow(sig)) {
+  conn <- data.frame(
+    n   = rep(sig$n, each = 2),
+    y   = c(rbind(sig$median_ms_hung, sig$median_ms_auto)),
+    grp = rep(seq_len(nrow(sig)), each = 2)
   )
+  p_b <- p_b +
+    geom_line(data = conn,
+              aes(x = n, y = y, group = grp),
+              colour = "#666", linetype = "22", linewidth = 0.45,
+              inherit.aes = FALSE) +
+    geom_text(data = sig,
+              aes(x = n, y = y_mid, label = label),
+              hjust = -0.25, vjust = 0.5, size = 4.0,
+              fontface = "bold", colour = "#1a1a1a",
+              inherit.aes = FALSE)
+}
+
+p_b <- p_b +
+  annotate("text", x = last_h$n, y = last_h$median_ms,
+           label = "Hungarian", hjust = -0.15, vjust = 0.5,
+           size = 4.0, fontface = "bold", colour = "#d55e00") +
+  annotate("text", x = last_a$n, y = last_a$median_ms,
+           label = "auto", hjust = -0.25, vjust = 0.5,
+           size = 4.0, fontface = "bold", colour = "#000000")
 
 # ---------- combine & save -------------------------------------------------
 
-p_combined <- p_a + p_b + plot_layout(widths = c(3, 2))
+p_combined <- row_a / p_b +
+  plot_layout(heights = c(1, 0.95))
 
 dir.create(dirname(BENCHMARK_FIGURE), recursive = TRUE, showWarnings = FALSE)
+# Saved a touch wider than column so it scales only slightly; large in-figure
+# text (set in theme_fig) survives the scale-to-\linewidth in the JOSS template.
 ggsave(BENCHMARK_FIGURE, p_combined,
-       width = 10, height = 5.2, dpi = 200, bg = "white")
+       width = 7.2, height = 4.6, dpi = 300, bg = "white")
 cat("Saved ", BENCHMARK_FIGURE, "\n", sep = ""); flush.console()

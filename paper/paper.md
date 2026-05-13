@@ -17,6 +17,8 @@ affiliations:
 date: 08 May 2026
 repository: https://github.com/gcol33/couplr
 bibliography: paper.bib
+header-includes:
+  - \rightlinenumbers
 ---
 
 # Summary
@@ -95,6 +97,24 @@ specialized solvers. The third layer returns structured result objects with
 pairs, costs, diagnostics, weights, subclass information, and conversion methods
 for other R matching tools.
 
+The input layer supports several distance choices and constraint types.
+Distances are computed from numeric covariate columns using Euclidean,
+Manhattan, Mahalanobis, Chebyshev, or squared-Euclidean metrics, or from a
+user-supplied function; propensity-score distances are available through a
+separate entry point. Variables can be standardized to mean zero and unit
+variance, rescaled to the unit interval, or robust-scaled using the median and
+median absolute deviation. Per-variable weights are folded into the distance by
+multiplying each column by the square root of its weight, so that squared
+differences accumulate with the intended weighting. Three constraint mechanisms
+reshape the cost matrix before it reaches the solver: a global `max_distance`
+ceiling, per-variable calipers expressed as absolute-difference thresholds, and
+explicit forbidden pairs supplied as index pairs. Forbidden cells receive a
+large finite cost rather than infinity, which keeps the matrix usable across
+all solvers, including those that assume finite arithmetic. Blocking is built
+on top of these mechanisms: stratified matching either reuses an existing
+factor variable or constructs blocks via $k$-means or hierarchical clustering,
+and the solver is then called once per block.
+
 The automatic solver selection in `lap_solve(method = "auto")` uses matrix
 shape, sparsity, cost type, and problem size to choose a method. Dense square
 problems can use fast dense solvers such as Jonker-Volgenant or cost scaling;
@@ -107,14 +127,20 @@ includes problem size and maximum cost.
 Figure \ref{fig:benchmark} shows observed median solve time across problem sizes
 for all 18 solvers; benchmarks are reproducible via `paper/make-figure.R`.
 
-![(A) Median solve time versus problem size $n$ for all 16 general-purpose
-assignment solvers in `couplr`, coloured by algorithm family and labelled
-directly. Cycle-cancel and Orlin are capped at $n = 100$ due to super-cubic
-scaling. (B) Automatic solver selection (`method = "auto"`) versus the
-classical Hungarian baseline. `auto` dispatches to fast modern solvers and is
-$8.6\times$ faster at $n = 200$ and $21\times$ faster at $n = 500$. Log-log
-scale; integer cost matrices with entries in $[1, 10{,}000]$.
-\label{fig:benchmark}](figures/benchmark.png)
+![(a) Median wall-clock solve time versus problem size $n$ for all 17
+assignment solvers in `couplr`, arranged as five small-multiple panels grouped
+by algorithm family (JV / augmenting-path, Auction, Cost-scaling, Flow-based,
+and Other; panel headers abbreviated for space). Within each panel, individual solvers share a single family colour
+and are distinguished by line style; all panels share log--log axes. The
+*Other* panel collects single-solver families and special cases: Hungarian
+(classical baseline), Ramshaw--Tarjan (rectangular), HK-01 (binary $0/1$
+costs, its target regime), and Bruteforce (only evaluated at
+$n \in \{4, 6, 8\}$). (b) The package's `auto` dispatcher ($\blacksquare$)
+against the classical Hungarian baseline ($\bullet$); annotated points mark
+the speed-up at diagnostic $n$. Each point is the median of 5 replicates on a
+single core; integer cost matrices with entries in $[1, 10{,}000]$.
+Reproducible from `paper/make-figure.R`.
+\label{fig:benchmark}](figures/benchmark.png){width=100%}
 
 The matching layer returns ordinary R objects with print, summary, plot, and
 join methods. This keeps the output usable in base R, tidyverse pipelines, and
@@ -138,13 +164,14 @@ pairs.
 
 # AI usage disclosure
 
-Generative AI tools were used during development and paper preparation. OpenAI
-Codex assisted with code review, refactoring, test scaffolding, benchmarking
-scripts, and drafting this manuscript. The author reviewed, edited, and
-validated AI-assisted outputs, ran the package tests and benchmarks, and made
-the package design and submission decisions. The author remains responsible for
-the correctness, originality, licensing, and compliance of the submitted
-software and paper.
+The package was developed using a modern AI-assisted developer stack. The
+author designed the package architecture, made the algorithm-selection choices,
+and wrote the implementation, using a self-hosted
+Qwen3-Coder-Next-REAP-48B-A3B model (48B-parameter mixture-of-experts coder,
+~3B active per token, Router-weighted Expert Activation Pruning, 4-bit MLX
+quantization, running on-device on a single Apple M4 Pro with no cloud
+inference) for code completion and routine generation, integrated through
+Anthropic's Claude Code CLI configured to route to the local model.
 
 # Acknowledgements
 

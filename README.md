@@ -277,6 +277,10 @@ pixel_morph_animate(morph, "output.gif")
 - [Matching Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html)
 - [Pixel Morphing](https://gillescolling.com/couplr/articles/pixel-morphing.html)
 
+## Development
+
+The package was developed using a modern AI-assisted developer stack. The author designed the package architecture, made the algorithm-selection choices, and wrote the implementation, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (48B-parameter mixture-of-experts coder, ~3B active per token, Router-weighted Expert Activation Pruning, 4-bit MLX quantization, running on-device on a single Apple M4 Pro with no cloud inference) for code completion and routine generation, integrated through Anthropic's Claude Code CLI configured to route to the local model.
+
 ## Support
 
 > "Software is like sex: it's better when it's free." — Linus Torvalds

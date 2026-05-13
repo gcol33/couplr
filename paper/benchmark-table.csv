@@ -29,9 +29,9 @@
 "auto","auto","Auto",1000,172.5883
 "auto","auto","Auto",2000,856.3681
 "auto","auto","Auto",5000,5769.035602
-"bruteforce","Bruteforce†","Special-purpose",4,0.021701
-"bruteforce","Bruteforce†","Special-purpose",6,0.0892
-"bruteforce","Bruteforce†","Special-purpose",8,4.736
+"bruteforce","Bruteforce","Special-purpose",4,0.021701
+"bruteforce","Bruteforce","Special-purpose",6,0.0892
+"bruteforce","Bruteforce","Special-purpose",8,4.736
 "csa","CSA","Cost scaling",10,0.0298
 "csa","CSA","Cost scaling",25,0.0921
 "csa","CSA","Cost scaling",50,0.2987
@@ -62,15 +62,15 @@
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",200,2423.723
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",500,40576.9136
 "gabow_tarjan","Gabow-Tarjan","Cost scaling",1000,351183.653
-"hk01","HK-01*","Special-purpose",10,0.033201
-"hk01","HK-01*","Special-purpose",25,0.074702
-"hk01","HK-01*","Special-purpose",50,0.186701
-"hk01","HK-01*","Special-purpose",100,0.576201
-"hk01","HK-01*","Special-purpose",200,2.093301
-"hk01","HK-01*","Special-purpose",500,12.326201
-"hk01","HK-01*","Special-purpose",1000,52.695201
-"hk01","HK-01*","Special-purpose",2000,218.462101
-"hk01","HK-01*","Special-purpose",5000,1454.5377
+"hk01","HK-01","Special-purpose",10,0.033201
+"hk01","HK-01","Special-purpose",25,0.074702
+"hk01","HK-01","Special-purpose",50,0.186701
+"hk01","HK-01","Special-purpose",100,0.576201
+"hk01","HK-01","Special-purpose",200,2.093301
+"hk01","HK-01","Special-purpose",500,12.326201
+"hk01","HK-01","Special-purpose",1000,52.695201
+"hk01","HK-01","Special-purpose",2000,218.462101
+"hk01","HK-01","Special-purpose",5000,1454.5377
 "hungarian","Hungarian","Classical",10,0.0295
 "hungarian","Hungarian","Classical",25,0.2707
 "hungarian","Hungarian","Classical",50,1.4084
@@ -118,13 +118,13 @@
 "push_relabel","Push-relabel","Flow-based",200,174.3991
 "push_relabel","Push-relabel","Flow-based",500,2097.3288
 "push_relabel","Push-relabel","Flow-based",1000,13770.7635
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",10,0.0564
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",25,0.2443
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",50,0.9454
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",100,4.0193
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",200,19.2945
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",500,125.5667
-"ramshaw_tarjan","Ramshaw-Tarjan","Rectangular / general",1000,558.5208
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",10,0.0564
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",25,0.2443
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",50,0.9454
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",100,4.0193
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",200,19.2945
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",500,125.5667
+"ramshaw_tarjan","Ramshaw-T","Rectangular / general",1000,558.5208
 "sap","SAP","JV / Augmenting path",10,0.1397
 "sap","SAP","JV / Augmenting path",25,0.9887
 "sap","SAP","JV / Augmenting path",50,5.1122

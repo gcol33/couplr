@@ -18,8 +18,13 @@ compute_distance_matrix(
 
 \item{distance}{Character string specifying distance metric, or a function.}
 
-\item{sigma}{Optional covariance matrix for Mahalanobis distance. If NULL
-(default), the pooled covariance is estimated from data.}
+\item{sigma}{Optional covariance matrix for Mahalanobis distance. If \code{NULL}
+(default), the pooled within-group covariance is estimated from \code{left_mat}
+and \code{right_mat}: \eqn{\Sigma = ((n_L-1)\,S_L + (n_R-1)\,S_R) / (n_L+n_R-2)}.
+This matches the convention used by \code{optmatch::match_on()} for
+treated/control Mahalanobis matching. If either group has fewer than two
+rows, falls back to the overall-sample covariance of the two groups
+stacked together.}
 }
 \value{
 Numeric matrix of pairwise distances (n_left x n_right).

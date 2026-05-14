@@ -29,14 +29,23 @@ each possible pair, choose the pairs with minimum total cost. That simple
 operation appears in causal inference, experimental design, task allocation,
 sample pairing, and image alignment.
 
-The package provides two entry points. High-level matching functions such as
-`match_couples()`, `ps_match()`, `full_match()`, `cem_match()`, and
-`subclass_match()` prepare data, build distances, enforce constraints, and
-return analysis-ready matched data. Low-level functions such as `lap_solve()`,
-`lap_solve_batch()`, `lap_solve_kbest()`, and `assignment_duals()` expose a
-collection of assignment solvers directly for users who already have a cost
-matrix. This lets the same package support both statistical matching workflows
-and general-purpose assignment tasks.
+The package provides two entry points. High-level matching functions prepare
+data, build distances, enforce constraints, and return analysis-ready matched
+data: `match_couples()` for optimal one-to-one matching, `greedy_couples()` for
+fast approximate matching at scale (with `sorted`, `row_best`, and
+priority-queue strategies), `ps_match()` for propensity-score matching,
+`full_match()` for variable-ratio full matching, `cem_match()` for coarsened
+exact matching, `subclass_match()` for propensity-score subclassification, and
+`cardinality_match()` for balance-constrained matching that maximizes sample
+size subject to standardized-difference thresholds. Match quality and
+robustness are assessed through `balance_diagnostics()`, `balance_table()`, and
+`sensitivity_analysis()` (Rosenbaum bounds), with `as_matchit()` and
+`bal.tab()` methods for interoperability with `MatchIt` and `cobalt`. Low-level
+functions such as `lap_solve()`, `lap_solve_batch()`, `lap_solve_kbest()`, and
+`assignment_duals()` expose the assignment solvers directly for users who
+already have a cost matrix; `pixel_morph()` and `pixel_morph_animate()` apply
+the same solvers to image alignment. This lets the same package support both
+statistical matching workflows and general-purpose assignment tasks.
 
 # Statement of need
 
@@ -64,31 +73,44 @@ keeps those layers separate while sharing the same tested assignment core.
 
 # State of the field
 
-Several R packages address parts of this problem. `MatchIt` provides a widely
-used interface for preprocessing and matching in causal inference, with strong
-support for propensity score workflows and downstream balance assessment
-[@MatchIt]. `optmatch` implements optimal and full matching through network flow
-formulations [@optmatch]. `cobalt` supplies balance diagnostics that work across
-matching packages [@cobalt]. For the linear assignment problem itself, R users
-often reach for packages such as `clue`, `lpSolve`, or domain-specific wrappers
-around one or two solvers [@clue; @lpSolve].
+Several R packages cover parts of the matching and assignment landscape.
+`MatchIt` provides a widely used interface for preprocessing and matching in
+causal inference, supporting multiple distance metrics and matching methods
+with strong downstream balance support [@MatchIt]. `optmatch` implements
+optimal and full matching through network flow formulations and is often
+called as a back-end for distance-based matching [@optmatch]. `cobalt`
+supplies balance diagnostics that work across matching packages [@cobalt].
+For the linear assignment problem itself, R users reach for `clue` (Hungarian
+via `solve_LSAP`), `lpSolve` (general LP), or domain-specific wrappers around
+individual solvers [@clue; @lpSolve].
 
-`couplr` is designed for the gap between these layers. It provides a
-model-light interface for direct covariate matching, exports compatibility
-methods for `MatchIt` and `cobalt`, and includes a broad collection of native
-C++ solvers under a single R API. The solver set covers classical dense
-assignment, sparse and rectangular variants, k-best assignment, bottleneck
-assignment, min-cost flow formulations, and entropy-regularized transport. This
-lets users start with a statistical matching task and still keep access to the
-algorithmic machinery when the problem size or structure changes.
+These tools split into two camps. The causal-inference packages assume a
+treated/control framing and route through a single fixed assignment back-end,
+while the solver-focused packages expose one algorithm each without the
+preprocessing, constraint, or diagnostic machinery a matching workflow needs.
+A user who wants optimal matching on a user-chosen covariate distance, with
+calipers, blocking, forbidden pairs, balance diagnostics, and a choice of
+solver, today combines three packages and writes the glue by hand. That
+combination is `couplr`'s first-class workflow. The package treats covariate
+distance as the primary entry point rather than a side option behind a
+propensity score, and ships 18 assignment solvers (classical dense assignment,
+sparse and rectangular variants, k-best, bottleneck, min-cost flow,
+entropy-regularized transport) implemented from scratch in C++ via Rcpp and
+RcppEigen, with no dependency on external R assignment libraries.
+Compatibility methods route matched output back into `MatchIt` and `cobalt`
+so existing tooling still applies. The same tested solver core serves a
+causal-inference user starting from a data frame and an operations-research
+user starting from a cost matrix.
 
 # Software design
 
 The package has three main layers. The first layer validates inputs and converts
 data frames into cost matrices. It handles scaling, missing data checks,
 blocking, calipers, maximum-distance rules, and user-supplied weights. The
-second layer solves the assignment problem. It includes implementations of the
-Hungarian method [@Kuhn1955], Jonker-Volgenant shortest augmenting paths
+second layer solves the assignment problem. All 18 solvers are implemented
+from scratch in C++ via Rcpp and RcppEigen, so the package adds no external
+solver dependency. It includes the Hungarian method [@Kuhn1955],
+Jonker-Volgenant shortest augmenting paths
 [@JonkerVolgenant1987], auction algorithms [@Bertsekas1988], cost scaling
 [@GoldbergKennedy1995], Gabow-Tarjan scaling [@GabowTarjan1989],
 push-relabel min-cost flow ideas [@GoldbergTarjan1988], network simplex,
@@ -127,7 +149,7 @@ includes problem size and maximum cost.
 Figure \ref{fig:benchmark} shows observed median solve time across problem sizes
 for all 18 solvers; benchmarks are reproducible via `paper/make-figure.R`.
 
-![(a) Median wall-clock solve time versus problem size $n$ for all 17
+![(a) Median wall-clock solve time versus problem size $n$ for all 18
 assignment solvers in `couplr`, arranged as five small-multiple panels grouped
 by algorithm family (JV / augmenting-path, Auction, Cost-scaling, Flow-based,
 and Other; panel headers abbreviated for space). Within each panel, individual solvers share a single family colour
@@ -142,9 +164,64 @@ single core; integer cost matrices with entries in $[1, 10{,}000]$.
 Reproducible from `paper/make-figure.R`.
 \label{fig:benchmark}](figures/benchmark.png){width=100%}
 
+`greedy_couples()` provides three approximate strategies (global cost sort,
+row-wise nearest available control, and a priority-queue variant) that share
+the same preprocessing and constraint machinery as `match_couples()`. The
+approximate path is useful when the problem size pushes optimal solvers past
+the user's runtime budget, and it accepts the same blocking, calipers, and
+per-variable weights so the two entry points are interchangeable at the call
+site.
+
 The matching layer returns ordinary R objects with print, summary, plot, and
-join methods. This keeps the output usable in base R, tidyverse pipelines, and
-causal-inference workflows that expect matched data, weights, or subclasses.
+join methods. Balance is assessed with `balance_diagnostics()` (standardized
+mean differences, variance ratios, and Kolmogorov-Smirnov statistics) and
+summarized through `balance_table()`; `sensitivity_analysis()` reports the
+critical Rosenbaum $\Gamma$ at which a matched inference would no longer be
+significant. Blocked designs surface per-block diagnostics so imbalance is not
+hidden by averaging across strata. This keeps the output usable in base R,
+tidyverse pipelines, and causal-inference workflows that expect matched data,
+weights, or subclasses.
+
+# Quickstart
+
+The package ships with `hospital_staff`, a small example dataset used here to
+illustrate the core workflow on a treated/control comparison. The example
+runs end to end without any external data.
+
+```r
+library(couplr)
+
+data(hospital_staff)
+treated <- transform(hospital_staff$nurses_extended,   id = nurse_id)
+control <- transform(hospital_staff$controls_extended, id = nurse_id)
+
+# Optimal one-to-one matching on three covariates, with automatic
+# scaling and solver selection.
+m <- match_couples(
+  left  = treated,
+  right = control,
+  vars  = c("age", "experience_years", "hourly_rate"),
+  auto_scale = TRUE
+)
+
+# Balance after matching: standardized differences, variance ratios,
+# and Kolmogorov-Smirnov statistics.
+bal <- balance_diagnostics(
+  m, treated, control,
+  vars = c("age", "experience_years", "hourly_rate")
+)
+balance_table(bal)
+
+# Analysis-ready output: one row per matched pair, paired covariates
+# as `_left` / `_right` columns.
+matched <- join_matched(m, treated, control)
+```
+
+On this dataset the matched pairs achieve absolute standardized differences
+below $0.15$ on all three covariates. The same call accepts `calipers`,
+`max_distance`, `block_id`, `method`, `replace`, and `ratio` to adapt the
+match to harder problems; the `as_matchit()` and `bal.tab()` methods pass the
+result into `MatchIt` and `cobalt` for downstream analysis.
 
 # Research impact statement
 
@@ -156,22 +233,15 @@ where samples must be paired before measurement, observational studies that
 need transparent covariate matching, and allocation problems where each object
 must be assigned once under costs and constraints.
 
-The research contribution is practical: `couplr` brings several assignment
-methods into one R package and connects them to preprocessing, constraints,
-balance diagnostics, sensitivity analysis, and joined output. The result is a
-shorter path from a scientific matching question to a reproducible set of
-pairs.
-
 # AI usage disclosure
 
 The package was developed using a modern AI-assisted developer stack. The
 author designed the package architecture, made the algorithm-selection choices,
-and wrote the implementation, using a self-hosted
-Qwen3-Coder-Next-REAP-48B-A3B model (48B-parameter mixture-of-experts coder,
-~3B active per token, Router-weighted Expert Activation Pruning, 4-bit MLX
-quantization, running on-device on a single Apple M4 Pro with no cloud
-inference) for code completion and routine generation, integrated through
-Anthropic's Claude Code CLI configured to route to the local model.
+and wrote the implementation in a TUI-first command-line workflow, using a self-hosted
+Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B active per
+token, 4-bit MLX quantization, running on a single Apple M4 Pro) for code
+completion, refactoring, and boilerplate generation through Anthropic's Claude Code CLI,
+with requests routed to the local model and no cloud inference.
 
 # Acknowledgements
 

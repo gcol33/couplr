@@ -53,18 +53,18 @@ method_labels <- c(
   lapmod          = "LAPMOD",
   auction         = "Auction",
   auction_gs      = "Auction-GS",
-  auction_scaled  = "Auction-scaled",
+  auction_scaled  = "Auction-S",
   csa             = "CSA",
-  gabow_tarjan    = "Gabow-Tarjan",
-  ssap_bucket     = "SSAP-bucket",
+  gabow_tarjan    = "Gabow-T",
+  ssap_bucket     = "SSAP-B",
   csflow          = "CS-flow",
-  cycle_cancel    = "Cycle-cancel",
-  network_simplex = "Net-simplex",
-  push_relabel    = "Push-relabel",
+  cycle_cancel    = "Cycle-C",
+  network_simplex = "Net-S",
+  push_relabel    = "Push-R",
   orlin           = "Orlin",
-  ramshaw_tarjan  = "Ramshaw-T",
+  ramshaw_tarjan  = "Ramshaw",
   hk01            = "HK-01",
-  bruteforce      = "Bruteforce",
+  bruteforce      = "Brute-F",
   auto            = "auto"
 )
 
@@ -247,33 +247,45 @@ panel_spec <- list(
 
 linetype_pool <- c("solid", "dashed", "dotted", "dotdash", "twodash")
 
-build_panel_a <- function(spec, show_y, is_leftmost) {
+build_panel_a <- function(spec, show_y, show_x_lab, show_tag) {
   d <- df[df$method %in% spec$methods, ]
   # Order so the legend matches the spec order
   lbls <- unname(method_labels[spec$methods])
   d$label <- factor(method_labels[d$method], levels = lbls)
   lt_vals <- setNames(linetype_pool[seq_along(spec$methods)], lbls)
+  # Default per-method linewidth; bruteforce in "Other" runs into Hungarian's
+  # low-n segment, so thicken it to keep the two lines visually separable.
+  lw_vals <- setNames(rep(0.85, length(spec$methods)), lbls)
+  if ("Bruteforce" %in% lbls) lw_vals["Bruteforce"] <- 1.4
 
   g <- ggplot(d, aes(x = n, y = median_ms,
-                     linetype = label, group = label)) +
-    geom_line(colour = spec$colour, linewidth = 0.7, na.rm = TRUE) +
-    geom_point(colour = spec$colour, fill = "white", shape = 21,
-               size = 1.7, stroke = 0.55, na.rm = TRUE) +
+                     linetype = label, linewidth = label, group = label)) +
+    geom_line(colour = spec$colour, na.rm = TRUE) +
     scale_x_log10(breaks = x_breaks, labels = x_lbls,
                   limits = x_dom, expand = expansion(mult = c(0.04, 0.04))) +
     scale_y_log10(breaks = y_breaks, labels = y_lbls,
                   limits = y_dom, expand = c(0, 0)) +
     scale_linetype_manual(values = lt_vals) +
+    scale_linewidth_manual(values = lw_vals) +
     labs(title = spec$title,
-         x = if (is_leftmost) "problem size, n" else NULL,
+         x = if (show_x_lab) "problem size, n" else NULL,
          y = if (show_y)     "median solve time" else NULL,
-         tag = if (is_leftmost) "(a)" else NULL) +
-    guides(linetype = guide_legend(
-      title = NULL,
-      override.aes = list(colour = spec$colour, linewidth = 0.7),
-      keyheight = unit(0.55, "lines"),
-      keywidth  = unit(1.3, "lines")
-    )) +
+         tag = if (show_tag) "(a)" else NULL) +
+    guides(
+      linetype = guide_legend(
+        title = NULL,
+        ncol = 1,
+        override.aes = list(colour = spec$colour),
+        keyheight = unit(0.6, "lines"),
+        keywidth  = unit(1.8, "lines")
+      ),
+      linewidth = guide_legend(
+        title = NULL,
+        ncol = 1,
+        keyheight = unit(0.6, "lines"),
+        keywidth  = unit(1.8, "lines")
+      )
+    ) +
     theme_fig() +
     theme(
       plot.title = element_text(size = 11.5, face = "bold",
@@ -281,9 +293,9 @@ build_panel_a <- function(spec, show_y, is_leftmost) {
                                 margin = margin(b = 5)),
       legend.position      = c(0.02, 0.98),
       legend.justification = c(0, 1),
-      legend.background    = element_rect(fill = NA, colour = NA),
-      legend.key           = element_rect(fill = NA, colour = NA),
-      legend.text          = element_text(size = 9, colour = "#333"),
+      legend.background    = element_rect(fill = "white", colour = NA),
+      legend.key           = element_rect(fill = "white", colour = NA),
+      legend.text          = element_text(size = 7.5, colour = "#333"),
       legend.spacing.y     = unit(0.05, "lines"),
       legend.margin        = margin(0, 0, 0, 0),
       plot.margin          = margin(3, 6, 3, 6)
@@ -297,7 +309,12 @@ build_panel_a <- function(spec, show_y, is_leftmost) {
 }
 
 panels_a <- lapply(seq_along(panel_spec), function(i) {
-  build_panel_a(panel_spec[[i]], show_y = (i == 1), is_leftmost = (i == 1))
+  build_panel_a(
+    panel_spec[[i]],
+    show_y     = (i == 1),
+    show_x_lab = FALSE,
+    show_tag   = (i == 1)
+  )
 })
 
 row_a <- wrap_plots(panels_a, nrow = 1)
@@ -328,13 +345,16 @@ b_shapes <- c(hungarian = 21,        auto = 22)   # circle / square
 last_h <- t_hung[which.max(t_hung$n), ]
 last_a <- t_auto[which.max(t_auto$n), ]
 
+x_breaks_b <- if (nrow(sig)) sort(unique(c(x_breaks, sig$n))) else x_breaks
+x_lbls_b   <- format(x_breaks_b, big.mark = ",", trim = TRUE, scientific = FALSE)
+
 p_b <- ggplot(df_b, aes(x = n, y = median_ms, group = method)) +
   geom_line(aes(colour = method), linewidth = 1.0, na.rm = TRUE) +
   geom_point(aes(colour = method, shape = method),
              fill = "white", size = 2.4, stroke = 0.9, na.rm = TRUE) +
   scale_colour_manual(values = b_colors, guide = "none") +
   scale_shape_manual(values = b_shapes, guide = "none") +
-  scale_x_log10(breaks = x_breaks, labels = x_lbls,
+  scale_x_log10(breaks = x_breaks_b, labels = x_lbls_b,
                 limits = x_dom, expand = expansion(mult = c(0.02, 0.12))) +
   scale_y_log10(breaks = y_breaks, labels = y_lbls,
                 limits = y_dom, expand = c(0, 0)) +

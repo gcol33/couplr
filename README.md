@@ -279,7 +279,7 @@ pixel_morph_animate(morph, "output.gif")
 
 ## Development
 
-The package was developed using a modern AI-assisted developer stack. The author designed the package architecture, made the algorithm-selection choices, and wrote the implementation, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (48B-parameter mixture-of-experts coder, ~3B active per token, Router-weighted Expert Activation Pruning, 4-bit MLX quantization, running on-device on a single Apple M4 Pro with no cloud inference) for code completion and routine generation, integrated through Anthropic's Claude Code CLI configured to route to the local model.
+The package was developed using a modern AI-assisted developer stack. The author designed the package architecture, made the algorithm-selection choices, and wrote the implementation in a TUI-first command-line workflow, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B active per token, 4-bit MLX quantization, running on a single Apple M4 Pro) for code completion, refactoring, and boilerplate through Anthropic's Claude Code CLI, with requests routed to the local model and no cloud inference.
 
 ## Support
 

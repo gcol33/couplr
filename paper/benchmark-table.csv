@@ -13,13 +13,13 @@
 "auction_gs","Auction-GS","Auction",200,10.1509
 "auction_gs","Auction-GS","Auction",500,84.0743
 "auction_gs","Auction-GS","Auction",1000,372.6673
-"auction_scaled","Auction-scaled","Auction",10,0.0357
-"auction_scaled","Auction-scaled","Auction",25,0.1225
-"auction_scaled","Auction-scaled","Auction",50,0.3207
-"auction_scaled","Auction-scaled","Auction",100,1.3545
-"auction_scaled","Auction-scaled","Auction",200,5.069
-"auction_scaled","Auction-scaled","Auction",500,33.3974
-"auction_scaled","Auction-scaled","Auction",1000,152.4531
+"auction_scaled","Auction-S","Auction",10,0.0357
+"auction_scaled","Auction-S","Auction",25,0.1225
+"auction_scaled","Auction-S","Auction",50,0.3207
+"auction_scaled","Auction-S","Auction",100,1.3545
+"auction_scaled","Auction-S","Auction",200,5.069
+"auction_scaled","Auction-S","Auction",500,33.3974
+"auction_scaled","Auction-S","Auction",1000,152.4531
 "auto","auto","Auto",10,0.058402
 "auto","auto","Auto",25,0.287101
 "auto","auto","Auto",50,1.685601
@@ -29,9 +29,9 @@
 "auto","auto","Auto",1000,172.5883
 "auto","auto","Auto",2000,856.3681
 "auto","auto","Auto",5000,5769.035602
-"bruteforce","Bruteforce","Special-purpose",4,0.021701
-"bruteforce","Bruteforce","Special-purpose",6,0.0892
-"bruteforce","Bruteforce","Special-purpose",8,4.736
+"bruteforce","Brute-F","Special-purpose",4,0.021701
+"bruteforce","Brute-F","Special-purpose",6,0.0892
+"bruteforce","Brute-F","Special-purpose",8,4.736
 "csa","CSA","Cost scaling",10,0.0298
 "csa","CSA","Cost scaling",25,0.0921
 "csa","CSA","Cost scaling",50,0.2987
@@ -48,20 +48,20 @@
 "csflow","CS-flow","Flow-based",200,169.4849
 "csflow","CS-flow","Flow-based",500,2009.8499
 "csflow","CS-flow","Flow-based",1000,13459.5567
-"cycle_cancel","Cycle-cancel","Flow-based",10,0.1987
-"cycle_cancel","Cycle-cancel","Flow-based",25,1.8253
-"cycle_cancel","Cycle-cancel","Flow-based",50,8.4721
-"cycle_cancel","Cycle-cancel","Flow-based",100,49.1481
-"cycle_cancel","Cycle-cancel","Flow-based",200,317.207
-"cycle_cancel","Cycle-cancel","Flow-based",500,4086.5605
-"cycle_cancel","Cycle-cancel","Flow-based",1000,30634.8087
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",10,0.9782
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",25,7.0832
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",50,44.1256
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",100,335.1138
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",200,2423.723
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",500,40576.9136
-"gabow_tarjan","Gabow-Tarjan","Cost scaling",1000,351183.653
+"cycle_cancel","Cycle-C","Flow-based",10,0.1987
+"cycle_cancel","Cycle-C","Flow-based",25,1.8253
+"cycle_cancel","Cycle-C","Flow-based",50,8.4721
+"cycle_cancel","Cycle-C","Flow-based",100,49.1481
+"cycle_cancel","Cycle-C","Flow-based",200,317.207
+"cycle_cancel","Cycle-C","Flow-based",500,4086.5605
+"cycle_cancel","Cycle-C","Flow-based",1000,30634.8087
+"gabow_tarjan","Gabow-T","Cost scaling",10,0.9782
+"gabow_tarjan","Gabow-T","Cost scaling",25,7.0832
+"gabow_tarjan","Gabow-T","Cost scaling",50,44.1256
+"gabow_tarjan","Gabow-T","Cost scaling",100,335.1138
+"gabow_tarjan","Gabow-T","Cost scaling",200,2423.723
+"gabow_tarjan","Gabow-T","Cost scaling",500,40576.9136
+"gabow_tarjan","Gabow-T","Cost scaling",1000,351183.653
 "hk01","HK-01","Special-purpose",10,0.033201
 "hk01","HK-01","Special-purpose",25,0.074702
 "hk01","HK-01","Special-purpose",50,0.186701
@@ -97,13 +97,13 @@
 "lapmod","LAPMOD","JV / Augmenting path",1000,537.9149
 "lapmod","LAPMOD","JV / Augmenting path",2000,3096.407802
 "lapmod","LAPMOD","JV / Augmenting path",5000,23613.522801
-"network_simplex","Net-simplex","Flow-based",10,0.0697
-"network_simplex","Net-simplex","Flow-based",25,0.205
-"network_simplex","Net-simplex","Flow-based",50,1.4724
-"network_simplex","Net-simplex","Flow-based",100,8.332
-"network_simplex","Net-simplex","Flow-based",200,52.3497
-"network_simplex","Net-simplex","Flow-based",500,633.0217
-"network_simplex","Net-simplex","Flow-based",1000,6849.0321
+"network_simplex","Net-S","Flow-based",10,0.0697
+"network_simplex","Net-S","Flow-based",25,0.205
+"network_simplex","Net-S","Flow-based",50,1.4724
+"network_simplex","Net-S","Flow-based",100,8.332
+"network_simplex","Net-S","Flow-based",200,52.3497
+"network_simplex","Net-S","Flow-based",500,633.0217
+"network_simplex","Net-S","Flow-based",1000,6849.0321
 "orlin","Orlin","Flow-based",10,0.0366
 "orlin","Orlin","Flow-based",25,0.1273
 "orlin","Orlin","Flow-based",50,0.5431
@@ -111,20 +111,20 @@
 "orlin","Orlin","Flow-based",200,13.4711
 "orlin","Orlin","Flow-based",500,85.9609
 "orlin","Orlin","Flow-based",1000,441.1556
-"push_relabel","Push-relabel","Flow-based",10,0.1703
-"push_relabel","Push-relabel","Flow-based",25,1.0243
-"push_relabel","Push-relabel","Flow-based",50,6.7502
-"push_relabel","Push-relabel","Flow-based",100,29.3829
-"push_relabel","Push-relabel","Flow-based",200,174.3991
-"push_relabel","Push-relabel","Flow-based",500,2097.3288
-"push_relabel","Push-relabel","Flow-based",1000,13770.7635
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",10,0.0564
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",25,0.2443
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",50,0.9454
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",100,4.0193
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",200,19.2945
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",500,125.5667
-"ramshaw_tarjan","Ramshaw-T","Rectangular / general",1000,558.5208
+"push_relabel","Push-R","Flow-based",10,0.1703
+"push_relabel","Push-R","Flow-based",25,1.0243
+"push_relabel","Push-R","Flow-based",50,6.7502
+"push_relabel","Push-R","Flow-based",100,29.3829
+"push_relabel","Push-R","Flow-based",200,174.3991
+"push_relabel","Push-R","Flow-based",500,2097.3288
+"push_relabel","Push-R","Flow-based",1000,13770.7635
+"ramshaw_tarjan","Ramshaw","Rectangular / general",10,0.0564
+"ramshaw_tarjan","Ramshaw","Rectangular / general",25,0.2443
+"ramshaw_tarjan","Ramshaw","Rectangular / general",50,0.9454
+"ramshaw_tarjan","Ramshaw","Rectangular / general",100,4.0193
+"ramshaw_tarjan","Ramshaw","Rectangular / general",200,19.2945
+"ramshaw_tarjan","Ramshaw","Rectangular / general",500,125.5667
+"ramshaw_tarjan","Ramshaw","Rectangular / general",1000,558.5208
 "sap","SAP","JV / Augmenting path",10,0.1397
 "sap","SAP","JV / Augmenting path",25,0.9887
 "sap","SAP","JV / Augmenting path",50,5.1122
@@ -133,11 +133,11 @@
 "sap","SAP","JV / Augmenting path",500,1881.2076
 "sap","SAP","JV / Augmenting path",1000,13610.1769
 "sap","SAP","JV / Augmenting path",2000,93327.775601
-"ssap_bucket","SSAP-bucket","Cost scaling",10,4.1562
-"ssap_bucket","SSAP-bucket","Cost scaling",25,11.0646
-"ssap_bucket","SSAP-bucket","Cost scaling",50,25.7466
-"ssap_bucket","SSAP-bucket","Cost scaling",100,61.5593
-"ssap_bucket","SSAP-bucket","Cost scaling",200,192.553
-"ssap_bucket","SSAP-bucket","Cost scaling",500,1582.0618
-"ssap_bucket","SSAP-bucket","Cost scaling",1000,10780.486
-"ssap_bucket","SSAP-bucket","Cost scaling",2000,81631.465502
+"ssap_bucket","SSAP-B","Cost scaling",10,4.1562
+"ssap_bucket","SSAP-B","Cost scaling",25,11.0646
+"ssap_bucket","SSAP-B","Cost scaling",50,25.7466
+"ssap_bucket","SSAP-B","Cost scaling",100,61.5593
+"ssap_bucket","SSAP-B","Cost scaling",200,192.553
+"ssap_bucket","SSAP-B","Cost scaling",500,1582.0618
+"ssap_bucket","SSAP-B","Cost scaling",1000,10780.486
+"ssap_bucket","SSAP-B","Cost scaling",2000,81631.465502

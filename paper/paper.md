@@ -195,22 +195,29 @@ data(hospital_staff)
 treated <- transform(hospital_staff$nurses_extended,   id = nurse_id)
 control <- transform(hospital_staff$controls_extended, id = nurse_id)
 
-# Optimal one-to-one matching on three covariates, with automatic
-# scaling and solver selection.
+# Optimal one-to-one matching on three pre-treatment covariates, with
+# automatic scaling and solver selection.
 m <- match_couples(
   left  = treated,
   right = control,
-  vars  = c("age", "experience_years", "hourly_rate"),
+  vars  = c("age", "experience_years", "certification_level"),
   auto_scale = TRUE
 )
 
-# Balance after matching: standardized differences, variance ratios,
-# and Kolmogorov-Smirnov statistics.
+# Balance on the matching variables: standardized differences, variance
+# ratios, and Kolmogorov-Smirnov statistics.
 bal <- balance_diagnostics(
   m, treated, control,
-  vars = c("age", "experience_years", "hourly_rate")
+  vars = c("age", "experience_years", "certification_level")
 )
 balance_table(bal)
+
+# Held-out balance check: department is a pre-treatment covariate that
+# was not used in the match, so its post-match imbalance is an
+# independent check on match quality.
+treated$dept_icu <- as.integer(treated$department == "ICU")
+control$dept_icu <- as.integer(control$department == "ICU")
+balance_diagnostics(m, treated, control, vars = "dept_icu")
 
 # Analysis-ready output: one row per matched pair, paired covariates
 # as `_left` / `_right` columns.
@@ -218,10 +225,13 @@ matched <- join_matched(m, treated, control)
 ```
 
 On this dataset the matched pairs achieve absolute standardized differences
-below $0.15$ on all three covariates. The same call accepts `calipers`,
-`max_distance`, `block_id`, `method`, `replace`, and `ratio` to adapt the
-match to harder problems; the `as_matchit()` and `bal.tab()` methods pass the
-result into `MatchIt` and `cobalt` for downstream analysis.
+below $0.15$ on all three matching covariates, and the held-out department
+indicator is balanced to a similar tolerance, so the gain is not an artefact
+of matching on the same variables that are then reported. The same
+`match_couples()` call accepts `calipers`, `max_distance`, `block_id`,
+`method`, `replace`, and `ratio` to adapt the match to harder problems; the
+`as_matchit()` and `bal.tab()` methods pass the result into `MatchIt` and
+`cobalt` for downstream analysis.
 
 # Research impact statement
 

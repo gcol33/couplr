@@ -12,7 +12,7 @@ authors:
     corresponding: true
     affiliation: 1
 affiliations:
-  - name: University of Vienna, Austria
+  - name: Department of Botany and Biodiversity Research, University of Vienna, Austria
     index: 1
 date: 08 May 2026
 repository: https://github.com/gcol33/couplr
@@ -39,24 +39,27 @@ exact matching, `subclass_match()` for propensity-score subclassification, and
 `cardinality_match()` for balance-constrained matching that maximizes sample
 size subject to standardized-difference thresholds. Match quality and
 robustness are assessed through `balance_diagnostics()`, `balance_table()`, and
-`sensitivity_analysis()` (Rosenbaum bounds), with `as_matchit()` and
+`sensitivity_analysis()` (Rosenbaum bounds [@Rosenbaum2002]), with `as_matchit()` and
 `bal.tab()` methods for interoperability with `MatchIt` and `cobalt`. Low-level
 functions such as `lap_solve()`, `lap_solve_batch()`, `lap_solve_kbest()`, and
 `assignment_duals()` expose the assignment solvers directly for users who
-already have a cost matrix; `pixel_morph()` and `pixel_morph_animate()` apply
-the same solvers to image alignment. This lets the same package support both
-statistical matching workflows and general-purpose assignment tasks.
+already have a cost matrix. An automatic dispatcher routes each problem to
+one of 18 internal solvers based on shape, sparsity, cost type, and size,
+so users do not have to know which algorithm handles rectangular matrices
+well or when cost scaling beats Jonker-Volgenant. This lets the same
+package support both statistical matching workflows and general-purpose
+assignment tasks; image alignment is one such application, supported
+through dedicated vignettes.
 
 # Statement of need
 
-Matching is a common way to make treated and control groups more comparable
-before downstream analysis. In practice, researchers often need more than a
-single nearest-neighbor match on a propensity score. They may need exact
-blocking by site, calipers on multiple variables, pairwise distances on observed
-covariates, variable-ratio full matching, replacement matching, or direct
-control over the assignment algorithm. Those choices are scattered across R
-packages and usually require users to move between data preparation, distance
-calculation, solver calls, and balance checks by hand.
+A serious matching workflow in R today threads three packages by hand:
+one for the assignment solver, one for preprocessing and constraint
+construction, one for balance diagnostics. Each non-default choice — exact
+blocking by site, calipers on multiple variables, pairwise distances on
+observed covariates, variable-ratio full matching, replacement matching,
+or direct control over the assignment algorithm — pulls the user into a
+different corner of that toolchain.
 
 `couplr` packages this workflow around the linear assignment problem. Users can
 match directly on observed covariates, add blocking and distance constraints,
@@ -66,10 +69,11 @@ the matching problem has already been reduced to a cost matrix, which matters
 for operations research and scientific computing use cases where rows and
 columns are not treated and control units.
 
-This split is important. A causal-inference user should not need to know which
-solver handles rectangular matrices well, and an operations researcher should
-not need the package to impose a statistical matching vocabulary. `couplr`
-keeps those layers separate while sharing the same tested assignment core.
+This split matters. A causal-inference user starts with a data frame,
+observed covariates, and a treatment indicator; an operations-research
+user starts with a cost matrix already in hand. `couplr` serves both
+without forcing either to learn the other's vocabulary, while sharing the
+same tested assignment core.
 
 # State of the field
 
@@ -80,9 +84,11 @@ with strong downstream balance support [@MatchIt]. `optmatch` implements
 optimal and full matching through network flow formulations and is often
 called as a back-end for distance-based matching [@optmatch]. `cobalt`
 supplies balance diagnostics that work across matching packages [@cobalt].
-For the linear assignment problem itself, R users reach for `clue` (Hungarian
-via `solve_LSAP`), `lpSolve` (general LP), or domain-specific wrappers around
-individual solvers [@clue; @lpSolve].
+Sensitivity analysis to unmeasured confounding via Rosenbaum bounds
+[@Rosenbaum2002] is traditionally implemented in separate packages. For
+the linear assignment problem itself, R users reach for `clue` (Hungarian
+via `solve_LSAP`), `lpSolve` (general LP), or domain-specific wrappers
+around individual solvers [@clue; @lpSolve].
 
 These tools split into two camps. The causal-inference packages assume a
 treated/control framing and route through a single fixed assignment back-end,
@@ -91,14 +97,14 @@ preprocessing, constraint, or diagnostic machinery a matching workflow needs.
 A user who wants optimal matching on a user-chosen covariate distance, with
 calipers, blocking, forbidden pairs, balance diagnostics, and a choice of
 solver, today combines three packages and writes the glue by hand. That
-combination is `couplr`'s first-class workflow. The package treats covariate
-distance as the primary entry point rather than a side option behind a
-propensity score, and ships 18 assignment solvers (classical dense assignment,
-sparse and rectangular variants, k-best, bottleneck, min-cost flow,
-entropy-regularized transport) implemented from scratch in C++ via Rcpp and
-RcppEigen, with no dependency on external R assignment libraries.
-Compatibility methods route matched output back into `MatchIt` and `cobalt`
-so existing tooling still applies. The same tested solver core serves a
+combination is `couplr`'s first-class workflow. The package treats
+covariate distance as the primary entry point rather than a side option
+behind a propensity score, and ships 18 assignment solvers spanning
+classical dense assignment, sparse and rectangular variants, k-best,
+bottleneck, min-cost flow, and entropy-regularized transport, with an
+automatic dispatcher that chooses the right solver per problem.
+Compatibility methods route matched output back into `MatchIt` and
+`cobalt` so existing tooling still applies. The same tested solver core serves a
 causal-inference user starting from a data frame and an operations-research
 user starting from a cost matrix.
 
@@ -177,7 +183,7 @@ join methods. Balance is assessed with `balance_diagnostics()` (standardized
 mean differences, variance ratios, and Kolmogorov-Smirnov statistics) and
 summarized through `balance_table()`; `sensitivity_analysis()` reports the
 critical Rosenbaum $\Gamma$ at which a matched inference would no longer be
-significant. Blocked designs surface per-block diagnostics so imbalance is not
+significant [@Rosenbaum2002]. Blocked designs surface per-block diagnostics so imbalance is not
 hidden by averaging across strata. This keeps the output usable in base R,
 tidyverse pipelines, and causal-inference workflows that expect matched data,
 weights, or subclasses.
@@ -233,15 +239,74 @@ of matching on the same variables that are then reported. The same
 `as_matchit()` and `bal.tab()` methods pass the result into `MatchIt` and
 `cobalt` for downstream analysis.
 
+The example illustrates the package interface rather than a complete
+causal-inference workflow. Matching on observed covariates supports
+inference about a treatment effect only under three assumptions: conditional
+ignorability (no unmeasured confounders given the matched variables),
+positivity (overlap between treated and control units in covariate space),
+and the stable unit treatment value assumption. None are testable from the
+matched data alone. Held-out balance checks of the kind shown above probe
+conditional ignorability with respect to *measured* covariates that were
+not used in the match; they cannot speak to unmeasured ones. For that,
+`sensitivity_analysis()` reports the critical Rosenbaum $\Gamma$ at which
+a matched inference would no longer be significant under hidden bias
+[@Rosenbaum2002], and the matched output is designed to feed into an
+outcome regression on the matched data for a doubly robust estimate
+[@Stuart2010]. Identification of a causal effect requires substantive
+argument about the unmeasured confounders, not algorithmic balance alone.
+
+# Head-to-head on Lalonde
+
+To position `couplr` against the established alternatives we replicate the
+canonical Lalonde National Supported Work observational-matching benchmark
+[@LaLonde1986; @DehejiaWahba1999], using the version that ships with
+`MatchIt`. The dataset has 185 treated and 429 control units. We match
+1-to-1 on six pre-treatment covariates (`age`, `educ`, `married`,
+`nodegree`, `re74`, `re75`) plus two one-hot race indicators, using
+Mahalanobis distance with the pooled within-group covariance — the
+standard convention for two-group matching, which `optmatch::match_on()`
+uses by default and `couplr` adopts as of 1.3.1 — and optimal assignment
+in `couplr`, `MatchIt::matchit(method = "optimal", distance =
+"mahalanobis")`, and `optmatch::pairmatch()`. All three packages produce
+identical absolute standardized mean differences on every covariate
+(Table \ref{tab:lalonde}), including the residual $|\text{SMD}| \approx
+1.05$ on `race_black` that no 1-to-1 matcher can resolve on these data
+because the treated group contains far more black units than the control
+pool. The three packages also agree on the seven other covariates, all
+reduced to $|\text{SMD}| \le 0.124$ from unmatched baselines as high as
+$0.82$ (per-covariate values in `paper/lalonde-results.csv`). The
+differentiator is wallclock time: `couplr` is $3.0\times$ faster than
+`MatchIt` and $1.8\times$ faster than direct `optmatch`. The full
+benchmark is reproducible from `paper/bench_lalonde.R`.
+
+Table: Lalonde NSW head-to-head, 1-to-1 optimal matching, Mahalanobis
+distance with pooled within-group covariance. Median wall-clock solve
+time over five replicates on a single core; balance metrics computed
+identically across packages, with the treated-group standard deviation as
+denominator [@Stuart2010]. \label{tab:lalonde}
+
+| Package    | Median solve time | max $|\text{SMD}|$ | mean $|\text{SMD}|$ |
+| :--------- | ----------------: | -----------------: | ------------------: |
+| `couplr`   |     $91$~ms       |            $1.053$ |             $0.184$ |
+| `optmatch` |    $165$~ms       |            $1.053$ |             $0.184$ |
+| `MatchIt`  |    $269$~ms       |            $1.053$ |             $0.184$ |
+
 # Research impact statement
 
-`couplr` is already released on CRAN and has continuous integration across
-Windows, macOS, and Linux. Its documentation includes vignettes for getting
-started, matching workflows, algorithm selection, troubleshooting, and
-pixel-level morphing examples. The package is useful for experimental designs
-where samples must be paired before measurement, observational studies that
-need transparent covariate matching, and allocation problems where each object
-must be assigned once under costs and constraints.
+`couplr` is released on CRAN with continuous integration across Windows,
+macOS, and Linux via R CMD check and the rhub workflow; test coverage is
+reported separately for R code and C++ kernels through Codecov. Its
+documentation includes vignettes for getting started, matching workflows,
+algorithm selection, troubleshooting, and pixel-level morphing. The
+package is useful for experimental designs where samples must be paired
+before measurement, observational studies that need transparent covariate
+matching, and allocation problems where each object must be assigned once
+under costs and constraints. The Lalonde benchmark above shows that on a
+canonical matching dataset `couplr` matches the balance of `MatchIt` and
+`optmatch` to three decimal places on every covariate while running
+$3.0\times$ and $1.8\times$ faster respectively, which is the combination
+that matters when matching is part of a larger simulation, bootstrap, or
+sensitivity sweep.
 
 # AI usage disclosure
 

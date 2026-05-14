@@ -7,8 +7,13 @@
 #' @param left_mat Numeric matrix of left units (rows = units, cols = variables).
 #' @param right_mat Numeric matrix of right units (rows = units, cols = variables).
 #' @param distance Character string specifying distance metric, or a function.
-#' @param sigma Optional covariance matrix for Mahalanobis distance. If NULL
-#'   (default), the pooled covariance is estimated from data.
+#' @param sigma Optional covariance matrix for Mahalanobis distance. If `NULL`
+#'   (default), the pooled within-group covariance is estimated from `left_mat`
+#'   and `right_mat`: \eqn{\Sigma = ((n_L-1)\,S_L + (n_R-1)\,S_R) / (n_L+n_R-2)}.
+#'   This matches the convention used by `optmatch::match_on()` for
+#'   treated/control Mahalanobis matching. If either group has fewer than two
+#'   rows, falls back to the overall-sample covariance of the two groups
+#'   stacked together.
 #'
 #' @return Numeric matrix of pairwise distances (n_left x n_right).
 #' @keywords internal
@@ -77,9 +82,19 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
       }
       cov_mat <- sigma
     } else {
-      # Estimate pooled covariance from data
-      combined <- rbind(left_mat, right_mat)
-      cov_mat <- stats::cov(combined)
+      # Pooled within-group covariance — standard convention for Mahalanobis
+      # matching with two groups (e.g., treated/control). Inflating Sigma by
+      # between-group differences (i.e. using cov(rbind(L, R))) would
+      # under-weight matching on variables where the two groups differ most.
+      # Falls back to overall covariance when a group is too small for cov().
+      if (n_left >= 2L && n_right >= 2L) {
+        S_L <- stats::cov(left_mat)
+        S_R <- stats::cov(right_mat)
+        cov_mat <- ((n_left - 1L) * S_L + (n_right - 1L) * S_R) /
+                   (n_left + n_right - 2L)
+      } else {
+        cov_mat <- stats::cov(rbind(left_mat, right_mat))
+      }
     }
 
     # Robust singularity check using rcond (not det == 0)

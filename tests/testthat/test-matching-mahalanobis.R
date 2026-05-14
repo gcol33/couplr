@@ -63,19 +63,20 @@ test_that("Mahalanobis sigma validation catches wrong dimensions", {
 })
 
 
-test_that("Mahalanobis vectorized matches original loop result", {
+test_that("Mahalanobis vectorized matches pooled within-group reference", {
   set.seed(123)
   n <- 5
   left_mat <- matrix(rnorm(n * 3), ncol = 3)
   right_mat <- matrix(rnorm(n * 3), ncol = 3)
 
-  # Compute with our function
   result <- compute_distance_matrix(left_mat, right_mat,
                                     distance = "mahalanobis")
 
-  # Compute reference manually
-  combined <- rbind(left_mat, right_mat)
-  inv_cov <- solve(cov(combined))
+  # Reference: pooled within-group covariance.
+  S_L <- cov(left_mat)
+  S_R <- cov(right_mat)
+  pooled <- ((n - 1) * S_L + (n - 1) * S_R) / (2 * n - 2)
+  inv_cov <- solve(pooled)
   expected <- matrix(0, n, n)
   for (i in 1:n) {
     for (j in 1:n) {
@@ -85,6 +86,38 @@ test_that("Mahalanobis vectorized matches original loop result", {
   }
 
   expect_equal(result, expected, tolerance = 1e-10)
+})
+
+test_that("Overall-sample covariance is recoverable by passing sigma", {
+  set.seed(7)
+  n <- 6
+  left_mat  <- matrix(rnorm(n * 2), ncol = 2)
+  right_mat <- matrix(rnorm(n * 2, mean = 1), ncol = 2)
+
+  overall_cov <- cov(rbind(left_mat, right_mat))
+  result <- compute_distance_matrix(left_mat, right_mat,
+                                    distance = "mahalanobis",
+                                    sigma = overall_cov)
+
+  inv_cov <- solve(overall_cov)
+  expected <- matrix(0, n, n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      diff <- left_mat[i, ] - right_mat[j, ]
+      expected[i, j] <- sqrt(as.numeric(t(diff) %*% inv_cov %*% diff))
+    }
+  }
+  expect_equal(result, expected, tolerance = 1e-10)
+})
+
+test_that("Mahalanobis falls back to overall covariance with n=1 in a group", {
+  left_mat  <- matrix(rnorm(2), ncol = 2)
+  right_mat <- matrix(rnorm(20), ncol = 2)
+
+  res <- compute_distance_matrix(left_mat, right_mat,
+                                 distance = "mahalanobis")
+  expect_true(all(is.finite(res)))
+  expect_equal(dim(res), c(1L, 10L))
 })
 
 

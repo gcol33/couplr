@@ -1,3 +1,20 @@
+# couplr 1.3.1
+
+## Behaviour changes
+
+* **Mahalanobis distance now uses the pooled within-group covariance by
+  default.** Previously the default was the overall-sample covariance of
+  `rbind(left, right)`. The pooled within-group estimator
+  `((n_L-1)*S_L + (n_R-1)*S_R) / (n_L+n_R-2)` is the convention used by
+  `optmatch::match_on()` and aligns Mahalanobis behaviour across the matching
+  packages a user is likely to compare against. Users who relied on the old
+  default can recover it explicitly with
+  `match_couples(..., sigma = cov(rbind(left[, vars], right[, vars])))`.
+  The previous docstring already documented the default as "pooled
+  covariance"; this release makes the code match the documentation.
+
+---
+
 # couplr 1.3.0
 
 ## New Features

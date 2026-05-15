@@ -1,6 +1,8 @@
-## Push couplr alone to n = 20k and n = 50k.
-## Records into paper/scaling-results.csv (appends).
-## optmatch / MatchIt cannot run at these scales (crashes verified).
+## Push couplr alone beyond the scale that optmatch / MatchIt can attempt.
+## Used after bench_scaling.R for the n >= 20000 rows where the alternatives
+## refuse to run. Writes additional rows to paper/scaling-results.csv.
+##
+## Reproducible via:  Rscript paper/bench_scaling_couplr_only.R
 
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
@@ -34,7 +36,6 @@ make_data <- function(n_total, seed) {
 }
 
 covars <- c("v1","v2","v3","v4","v5","v6","b1","b2")
-
 results <- read.csv(out_csv, stringsAsFactors = FALSE)
 
 for (n_total in c(20000, 50000)) {

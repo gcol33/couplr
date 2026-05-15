@@ -49,3 +49,6 @@
 ^codecov\.yml$
 ^LICENSE\.md$
 ^cpp_tests$
+^paper$
+^paper;C$
+^ns_check_out\.txt$

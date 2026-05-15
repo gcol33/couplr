@@ -77,7 +77,7 @@ same tested assignment core.
 
 # State of the field
 
-Several R packages cover parts of the matching and assignment landscape.
+Several R packages cover parts of the matching and assignment problem.
 `MatchIt` provides a widely used interface for preprocessing and matching in
 causal inference, supporting multiple distance metrics and matching methods
 with strong downstream balance support [@MatchIt]. `optmatch` implements
@@ -160,7 +160,7 @@ assignment solvers in `couplr`, arranged as five small-multiple panels grouped
 by algorithm family (JV / augmenting-path, Auction, Cost-scaling, Flow-based,
 and Other; panel headers abbreviated for space). Within each panel, individual solvers share a single family colour
 and are distinguished by line style; all panels share log--log axes. The
-*Other* panel collects single-solver families and special cases: Hungarian
+Other panel collects single-solver families and special cases: Hungarian
 (classical baseline), Ramshaw--Tarjan (rectangular), HK-01 (binary $0/1$
 costs, its target regime), and Bruteforce (only evaluated at
 $n \in \{4, 6, 8\}$). (b) The package's `auto` dispatcher ($\blacksquare$)
@@ -255,41 +255,89 @@ outcome regression on the matched data for a doubly robust estimate
 [@Stuart2010]. Identification of a causal effect requires substantive
 argument about the unmeasured confounders, not algorithmic balance alone.
 
-# Head-to-head on Lalonde
+# Comparison against established alternatives
 
-To position `couplr` against the established alternatives we replicate the
-canonical Lalonde National Supported Work observational-matching benchmark
-[@LaLonde1986; @DehejiaWahba1999], using the version that ships with
-`MatchIt`. The dataset has 185 treated and 429 control units. We match
-1-to-1 on six pre-treatment covariates (`age`, `educ`, `married`,
-`nodegree`, `re74`, `re75`) plus two one-hot race indicators, using
-Mahalanobis distance with the pooled within-group covariance — the
-standard convention for two-group matching, which `optmatch::match_on()`
-uses by default and `couplr` adopts as of 1.3.1 — and optimal assignment
-in `couplr`, `MatchIt::matchit(method = "optimal", distance =
-"mahalanobis")`, and `optmatch::pairmatch()`. All three packages produce
-identical absolute standardized mean differences on every covariate
-(Table \ref{tab:lalonde}), including the residual $|\text{SMD}| \approx
-1.05$ on `race_black` that no 1-to-1 matcher can resolve on these data
-because the treated group contains far more black units than the control
-pool. The three packages also agree on the seven other covariates, all
-reduced to $|\text{SMD}| \le 0.124$ from unmatched baselines as high as
-$0.82$ (per-covariate values in `paper/lalonde-results.csv`). The
-differentiator is wallclock time: `couplr` is $3.0\times$ faster than
-`MatchIt` and $1.8\times$ faster than direct `optmatch`. The full
-benchmark is reproducible from `paper/bench_lalonde.R`.
+We compare `couplr` against `MatchIt` and `optmatch` on runtime
+scaling and feature coverage. The matching task is fixed throughout:
+1-to-1 optimal matching on a Mahalanobis distance with pooled
+within-group covariance, the standard convention for two-group
+matching that `optmatch::match_on()` uses by default and `couplr`
+adopts as of 1.3.1. On the canonical Lalonde NSW dataset
+[@LaLonde1986; @DehejiaWahba1999] (185 treated, 429 control, eight
+covariates) all three packages produce identical absolute
+standardized mean differences to three decimal places on every
+covariate, reducing the maximum $|\text{SMD}|$ from $1.757$ to
+$1.053$ on `race_black` (a residual no 1-to-1 matcher can resolve on
+these data) and the remaining seven covariates to $\le 0.124$ from
+unmatched baselines as high as $0.82$ [@Stuart2010]; per-covariate
+values are in `paper/lalonde-per-covariate.csv` and the script
+`paper/bench_lalonde.R` reproduces them. Balance is therefore
+identical across packages.
 
-Table: Lalonde NSW head-to-head, 1-to-1 optimal matching, Mahalanobis
-distance with pooled within-group covariance. Median wall-clock solve
-time over five replicates on a single core; balance metrics computed
-identically across packages, with the treated-group standard deviation as
-denominator [@Stuart2010]. \label{tab:lalonde}
+Table \ref{tab:scaling} reports median wall-clock time on synthetic
+problems with the same eight-covariate structure (six continuous, two
+binary), at five sizes from $n = 500$ to $n = 20{,}000$ with
+treated:control = 1:2. `couplr` is $1.5\times$ to $1.6\times$ faster
+than `optmatch` and $2.0\times$ to $2.5\times$ faster than `MatchIt`
+across the range where all three complete, and the gap widens at
+$n = 20{,}000$: `couplr` finishes in $3.5$ minutes, `optmatch` (via
+its two-step `match_on()` plus `pairmatch()` API) in $11$ minutes
+($3.1\times$ slower), and `MatchIt::matchit(method = "optimal")`
+aborts inside the `optmatch` backend with an integer-size overflow
+(\texttt{result would exceed 2\textasciicircum 31-1 bytes}).
+`optmatch` refuses problems above
+`optmatch_max_problem_size = 1e7` by default at and beyond
+$n = 10{,}000$ (raised via `options()` for the table rows); the
+formula-direct `pairmatch(form, data)` path crashes the R session at
+those sizes regardless. `couplr` reaches large dense problems through
+its solver dispatcher, which routes to Jonker--Volgenant
+[@JonkerVolgenant1987], auction with scaling [@Bertsekas1988], and
+cost-scaling [@GoldbergKennedy1995] algorithms.
 
-| Package    | Median solve time | max $|\text{SMD}|$ | mean $|\text{SMD}|$ |
-| :--------- | ----------------: | -----------------: | ------------------: |
-| `couplr`   |     $91$~ms       |            $1.053$ |             $0.184$ |
-| `optmatch` |    $165$~ms       |            $1.053$ |             $0.184$ |
-| `MatchIt`  |    $269$~ms       |            $1.053$ |             $0.184$ |
+Table: 1-to-1 optimal Mahalanobis matching, median wall-clock by
+problem size. Treated:control = 1:2; eight covariates; pooled
+within-group covariance; single core, single-threaded BLAS. Median of
+5 / 5 / 3 / 3 / 1 replicates respectively for the rows;
+`optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$. \emph{---}
+marks an integer-size overflow inside the `optmatch` backend reached
+through `MatchIt`. Reproducible from `paper/bench_scaling.R` and
+`paper/bench_scaling_alternatives.R`. \label{tab:scaling}
+
+| Problem size ($n_t + n_c$) | `couplr` | `optmatch` | `MatchIt` |
+| :------------------------- | -------: | ---------: | --------: |
+| $167 + 333$                |  $80$~ms |   $120$~ms |  $190$~ms |
+| $667 + 1{,}333$            | $1.37$ s |   $2.09$ s |  $3.40$ s |
+| $1{,}667 + 3{,}333$        | $10.1$ s |   $16.4$ s |  $23.8$ s |
+| $3{,}333 + 6{,}667$        | $53.7$ s |   $79.3$ s |   $110$ s |
+| $6{,}667 + 13{,}333$       |  $210$ s |    $657$ s |       --- |
+
+Table \ref{tab:capability} summarises feature coverage. `couplr` exposes
+18 assignment solvers through a single dispatcher, supports k-best
+assignments via Murty's procedure, bottleneck (minimax) assignment,
+and Rosenbaum sensitivity bounds [@Rosenbaum2002] in the core
+package, and accepts both a data frame and a user-supplied cost
+matrix as primary entry points. `MatchIt` and `optmatch` are tightly
+coupled to the treated/control framing and route through a single
+fixed back-end; users needing any of these features today combine
+separate packages [@clue; @lpSolve].
+
+Table: Feature coverage. \emph{partial} indicates the feature is
+achievable but not via a first-class user-facing API (e.g. encoding
+forbidden pairs via $\infty$ entries in a cost matrix).
+\label{tab:capability}
+
+| Feature                                     | `couplr`   | `MatchIt`       | `optmatch`     |
+| :------------------------------------------ | :--------: | :-------------: | :------------: |
+| Covariate distance (Mahalanobis, Euclidean) | yes        | yes             | yes            |
+| Propensity-score matching                   | yes        | yes             | yes            |
+| Exact blocking / stratification             | yes        | yes             | yes            |
+| Per-variable calipers (named vector)        | yes        | yes             | partial        |
+| Rectangular $n_t \neq n_c$, no padding      | yes        | partial         | partial        |
+| User cost-matrix entry point                | yes        | yes             | yes            |
+| Sparse-cost support                         | yes        | no              | yes            |
+| k-best assignments (Murty)                  | yes        | no              | no             |
+| Bottleneck (minimax) assignment             | yes        | no              | no             |
+| Rosenbaum sensitivity bounds                | yes        | no              | no             |
 
 # Research impact statement
 
@@ -301,12 +349,7 @@ algorithm selection, troubleshooting, and pixel-level morphing. The
 package is useful for experimental designs where samples must be paired
 before measurement, observational studies that need transparent covariate
 matching, and allocation problems where each object must be assigned once
-under costs and constraints. The Lalonde benchmark above shows that on a
-canonical matching dataset `couplr` matches the balance of `MatchIt` and
-`optmatch` to three decimal places on every covariate while running
-$3.0\times$ and $1.8\times$ faster respectively, which is the combination
-that matters when matching is part of a larger simulation, bootstrap, or
-sensitivity sweep.
+under costs and constraints.
 
 # AI usage disclosure
 

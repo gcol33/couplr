@@ -1,3 +1,4 @@
 # Scratch preview renders (figure iteration artifacts)
 _*.png
 _*.pdf
+bench_runs/

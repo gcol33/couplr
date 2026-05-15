@@ -4,6 +4,14 @@
 ## after each (n, package) cell.
 ##
 ## Reproducible via:  Rscript paper/bench_scaling.R
+##
+## NOTE: From n_total = 10000, `optmatch::pairmatch()` exceeds the default
+## `optmatch_max_problem_size` (1e7 entries). Setting the option to Inf
+## (done below) lets the call start, but the solve crashes the R process
+## without surfacing a recoverable error. The CSV has the refusal recorded
+## from a prior run; re-running this script in a fresh session will hit
+## the same crash. Use `bench_scaling_couplr_only.R` to push couplr alone
+## to n_total in {20000, 50000}.
 
 suppressPackageStartupMessages({
   needed <- c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")

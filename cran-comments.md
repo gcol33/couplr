@@ -15,16 +15,18 @@
 
 None.
 
-## Changes in this version (1.1.0)
+## Changes in this version (1.3.1)
 
-Feature release adding matching extensions and analysis tools:
+This release bundles the 1.3.0 feature additions and a 1.3.1 default change:
 
-* Ratio matching (k:1) and with-replacement matching
-* Propensity score matching (`ps_match()`) with logit caliper
-* Cardinality matching (`cardinality_match()`) for balance-constrained matching
-* Sensitivity analysis (`sensitivity_analysis()`) via Rosenbaum bounds
-* `autoplot()` methods for matching results, balance diagnostics, and
-  sensitivity analysis (requires 'ggplot2')
-* Enhanced `summary()` with match rate and distance percentiles
+* `full_match()` gains `method = "optimal"` (new default) using a min-cost
+  max-flow solver (Dijkstra + Johnson potentials) that finds the globally
+  optimal group assignment minimizing total distance. `method = "greedy"`
+  is preserved for fast approximate matching.
+* Mahalanobis distance now uses the pooled within-group covariance by
+  default, matching the convention used by `optmatch::match_on()` and
+  aligning behaviour across matching packages.
+* Vignette updates: getting-started and matching-workflows now cover
+  full matching; comparison table reflects couplr's full-matching support.
 
-All 4916 tests passing across platforms.
+All tests passing across platforms.

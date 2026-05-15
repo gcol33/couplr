@@ -1,0 +1,13 @@
+feature,couplr,MatchIt,optmatch,notes
+Covariate distance matching,yes,yes,yes,"All three: Mahalanobis/Euclidean directly on raw covariates"
+Propensity-score matching,yes,yes,yes,"couplr: ps_match(); MatchIt: distance='glm'; optmatch: match_on(glm)"
+Per-variable calipers (named vector),yes,yes,partial,"optmatch caliper() thresholds one distance object; per-variable requires combining objects"
+Exact blocking / stratification,yes,yes,yes,"couplr: block_id; MatchIt: exact; optmatch: exactMatch()"
+Forbidden pairs (arbitrary i j list),partial,partial,partial,"No first-class API anywhere: couplr/optmatch via Inf entries; MatchIt antiexact is value-based"
+k-best assignments (Murty),yes,no,no,"couplr: lap_solve_kbest()"
+Bottleneck assignment (minimax),yes,no,no,"couplr: bottleneck_assignment()"
+Rectangular n_treated != n_control native,yes,partial,partial,"couplr handles natively; MatchIt discards unmatched; optmatch uses full/variable-ratio"
+Rosenbaum sensitivity bounds,yes,no,no,"couplr: sensitivity_analysis(); others require external rbounds/sensitivitymw"
+User cost-matrix entry point,yes,yes,yes,"couplr: lap_solve(); MatchIt: distance=<matrix>; optmatch: match_on(<matrix>)"
+Sparse cost support,yes,no,yes,"couplr: sentinel-Inf exploited by SAP/LAPMOD solvers; optmatch: InfinitySparseMatrix class"
+User-selectable assignment algorithm,yes (18 solvers via dispatcher),no (fixed; uses optmatch),no (fixed; RELAX-IV),"couplr lap_solve(method=...) exposes 18 algorithms"

@@ -1,41 +1,11 @@
 # tests/testthat/test_gabow_tarjan_moduleE.R
 
-test_that("Module E: build_cl_matrix handles matched and unmatched edges", {
-  # 2x2 cost matrix with one matched edge
-  # R matrices are column-major, so we specify each column
-  cost <- matrix(c(5L, 10L, 15L, 20L), nrow = 2, ncol = 2)
-  # This creates: row 0: [5, 15]
-  #               row 1: [10, 20]
-  row_match <- c(1L, 0L)  # row 0 matched to col 0 (1 in R), row 1 unmatched
-  
-  C_cl <- gt_build_cl_matrix(cost, row_match)
-  
-  # Matched edge (0,0): cl = cost = 5
-  expect_equal(C_cl[1, 1], 5)
-  
-  # Unmatched edges: cl = cost + 1
-  expect_equal(C_cl[1, 2], 16)  # cost[1,2] = 15, cl = 16
-  expect_equal(C_cl[2, 1], 11)  # cost[2,1] = 10, cl = 11
-  expect_equal(C_cl[2, 2], 21)  # cost[2,2] = 20, cl = 21
-})
-
-test_that("Module E: build_cl_matrix preserves forbidden edges", {
-  BIG_INT <- 1000000000000000  # 1e15
-  
-  # Column-major: first column [5, 10], second column [BIG_INT, 15]
-  cost <- matrix(c(5L, 10L, BIG_INT, 15L), nrow = 2, ncol = 2)
-  row_match <- c(0L, 0L)  # No matches (NIL = 0 in R indexing)
-  
-  C_cl <- gt_build_cl_matrix(cost, row_match)
-  
-  # Forbidden edge should remain BIG_INT (row 0, col 1 -> R indices [1,2])
-  expect_equal(C_cl[1, 2], BIG_INT)
-  
-  # Other edges: cl = cost + 1 (all unmatched)
-  expect_equal(C_cl[1, 1], 6)   # cost[1,1] = 5
-  expect_equal(C_cl[2, 1], 11)  # cost[2,1] = 10
-  expect_equal(C_cl[2, 2], 16)  # cost[2,2] = 15
-})
+# build_cl_matrix was removed: cost-length is now computed inline inside
+# hungarian_search_cl. cost_length() / is_eligible() in Module A still exist
+# and are exercised in test_gabow_tarjan_moduleA.R; the cl identity for
+# matched/unmatched/forbidden edges is implicit in the Hungarian-step tests
+# below (forbidden edges never appear in a final matching; matched edges
+# carry the bare cost; unmatched edges contribute cost + 1).
 
 test_that("Module E: hungarian_step finds augmenting path for 2x2", {
   # Simple 2x2 with zero costs, empty matching, zero duals

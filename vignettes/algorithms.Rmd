@@ -663,7 +663,7 @@ ggplot(bits) +
   annotate("text", x = 4.5, y = 1.18, label = "Process most significant -> least significant",
            size = 3.8, color = col_text) +
   labs(title = "Gabow-Tarjan: Bit-Scaling",
-       subtitle = "Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^3 log C)") +
+       subtitle = "Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^(3/4) m log(nC))") +
   theme_diagram() +
   theme(legend.position = "bottom",
         legend.text = element_text(size = 10, color = col_text)) +
@@ -684,7 +684,7 @@ ggplot(bits) +
 
 **What is 1-feasibility?** Standard dual feasibility requires $u_i + v_j \leq c_{ij}$ for all edges. 1-feasibility relaxes this: we allow $u_i + v_j \leq c_{ij} + 1$. The "1" comes from the current bit position. At each scaling phase, we only need reduced costs to be within 1 of optimal. When we refine to the next bit, we tighten the bound. After processing all $\log C$ bits, the slack is less than 1, which for integers means exactly 0: true optimality.
 
-**Complexity**: $O(n^3 \log C)$ where $C$ is the maximum cost.
+**Complexity**: $O(n^{3/4} m \log(nC))$ where $C$ is the maximum cost and $m$ is the number of finite edges. For dense graphs with $m = n^2$, this is $O(n^{11/4} \log(nC))$ — sub-cubic in $n$, which is why Gabow and Tarjan's result was a breakthrough. The improvement over the $O(n^3 \log C)$ bound for plain cost-scaling comes from finding a *maximal vertex-disjoint set* of augmenting paths at each bit, rather than one path at a time.
 
 Rarely seen outside academic papers. The bookkeeping across scaling phases is complex enough that most implementations skip it.
 
@@ -1149,7 +1149,7 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
 | Auction (Scaled) | $O(n^2 \log(nC)/\epsilon)$ | Large dense, fastest | `"auction_scaled"` |
 | CSA | $O(n^3)$ amortized | Medium-large dense | `"csa"` |
 | Cost-Scaling Flow | $O(n^3 \log(nC))$ | General min-cost flow | `"csflow"` |
-| Gabow-Tarjan | $O(n^3 \log C)$ | Large integer costs | `"gabow_tarjan"` |
+| Gabow-Tarjan | $O(n^{3/4} m \log(nC))$ | Large integer costs | `"gabow_tarjan"` |
 | Orlin-Ahuja | $O(\sqrt{n} m \log(nC))$ | Large sparse | `"orlin"` |
 | Network Simplex | $O(n^3)$ typical | Dual info needed | `"network_simplex"` |
 | Push-Relabel | $O(n^2 m)$ | Max-flow style | `"push_relabel"` |

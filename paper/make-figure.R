@@ -217,8 +217,7 @@ theme_fig <- function(base = 12) {
       axis.line        = element_line(colour = "#1a1a1a", linewidth = 0.5),
       axis.ticks       = element_line(colour = "#444", linewidth = 0.4),
       axis.text        = element_text(colour = "#333", size = 9),
-      axis.title       = element_text(face = "italic", colour = "#1a1a1a",
-                                      size = 11),
+      axis.title       = element_text(colour = "#1a1a1a", size = 11),
       plot.tag         = element_text(face = "bold", size = 14, colour = "#1a1a1a"),
       plot.tag.position = c(0, 1)
     )
@@ -237,8 +236,8 @@ panel_spec <- list(
        methods = c("csa", "gabow_tarjan", "ssap_bucket"),
        colour  = "#009e73"),
   list(title = "Flow-based",
-       methods = c("csflow", "cycle_cancel", "network_simplex",
-                   "push_relabel", "orlin"),
+       methods = c("csflow", "cycle_cancel", "push_relabel",
+                   "network_simplex", "orlin"),
        colour  = "#cc79a7"),
   list(title = "Other",
        methods = c("hungarian", "ramshaw_tarjan", "hk01", "bruteforce"),
@@ -255,7 +254,10 @@ build_panel_a <- function(spec, show_y, show_x_lab, show_tag) {
   lt_vals <- setNames(linetype_pool[seq_along(spec$methods)], lbls)
   # Default per-method linewidth; bruteforce in "Other" runs into Hungarian's
   # low-n segment, so thicken it to keep the two lines visually separable.
+  # The first method in each panel gets the solid linetype; render it at half
+  # width so overlaid dash patterns stay visible when traces coincide.
   lw_vals <- setNames(rep(0.85, length(spec$methods)), lbls)
+  lw_vals[lbls[1]] <- 0.425
   if ("Bruteforce" %in% lbls) lw_vals["Bruteforce"] <- 1.4
 
   g <- ggplot(d, aes(x = n, y = median_ms,

@@ -84,8 +84,9 @@ void compute_duals_from_matching(const CostMatrix& cost,
  * Gabow-Tarjan LAP solver implementation
  * 
  * Solves the linear assignment problem using the Gabow-Tarjan bit-scaling
- * algorithm, which achieves O(n^3 * log(C)) complexity where C is the
- * maximum cost.
+ * algorithm. Worst-case complexity is O(n^{3/4} * m * log(n*C)) per the
+ * 1989 paper, where C is the maximum cost and m is the number of finite
+ * edges. For dense graphs this is sub-cubic in n.
  * 
  * @param cost Cost matrix (NumericMatrix from R)
  * @param maximize If true, solve maximum weight matching instead

@@ -1,3 +1,22 @@
+# couplr 1.3.2
+
+## Test infrastructure
+
+* Resubmission of 1.3.1 to address a win-builder r-devel pretest failure
+  (exit code -1073741819 / access violation) in
+  `test-lap-solve-batch-coverage.R`. Debian r-devel, local r-release, and
+  local `R CMD check --as-cran` all pass; the crash did not reproduce off
+  win-builder.
+* Disabled testthat parallel execution (`Config/testthat/parallel: true`
+  removed from DESCRIPTION) to eliminate cross-file worker-state leakage as
+  a possible cause of the win-builder crash.
+* Added a defensive `skip_on_cran()` at the top of
+  `test-lap-solve-batch-coverage.R`. Equivalent coverage is exercised
+  off-CRAN by `test-lap-solve-batch-coverage-2.R`,
+  `test-lap-solve-batch-coverage-3.R`, `test-lap-solve-batch-extended.R`,
+  `test-batch-coverage-final.R`, `test-batch-processing.R`, and
+  `test-batch-kbest-extended.R`.
+
 # couplr 1.3.1
 
 ## Behaviour changes

@@ -181,10 +181,6 @@ gt_find_maximal_augmenting_paths <- function(eq_graph, row_match, col_match) {
     .Call(`_couplr_gt_find_maximal_augmenting_paths`, eq_graph, row_match, col_match)
 }
 
-gt_build_cl_matrix <- function(cost, row_match) {
-    .Call(`_couplr_gt_build_cl_matrix`, cost, row_match)
-}
-
 gt_hungarian_step_one_feasible <- function(cost, row_match, col_match, y_u, y_v) {
     .Call(`_couplr_gt_hungarian_step_one_feasible`, cost, row_match, col_match, y_u, y_v)
 }

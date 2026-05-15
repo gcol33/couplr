@@ -1,0 +1,14 @@
+Installing package into 'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6'
+(as 'lib' is unspecified)
+also installing the dependencies 'R.oo', 'R.methodsS3'
+
+trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.6/R.oo_1.27.1.zip'
+trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.6/R.methodsS3_1.8.2.zip'
+trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.6/R.utils_2.13.0.zip'
+Installing package into 'C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6'
+(as 'lib' is unspecified)
+trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.6/RhpcBLASctl_0.23-42.zip'
+Content type 'application/zip' length 141059 bytes (137 KB)
+==================================================
+downloaded 137 KB
+

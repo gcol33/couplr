@@ -1,0 +1,29 @@
+package 'R.oo' successfully unpacked and MD5 sums checked
+package 'R.methodsS3' successfully unpacked and MD5 sums checked
+package 'R.utils' successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\Gilles Colling\AppData\Local\Temp\RtmpcbHOHm\downloaded_packages
+package 'RhpcBLASctl' successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\Gilles Colling\AppData\Local\Temp\RtmpcbHOHm\downloaded_packages
+
+=== n_total = 500, reps = 5 ===
+  couplr   : median = 0.080 s, status = ok
+  optmatch : median = 0.120 s, status = ok
+  MatchIt  : median = 0.190 s, status = ok
+
+=== n_total = 2000, reps = 5 ===
+  couplr   : median = 1.370 s, status = ok
+  optmatch : median = 2.090 s, status = ok
+  MatchIt  : median = 3.400 s, status = ok
+
+=== n_total = 5000, reps = 3 ===
+  couplr   : median = 10.110 s, status = ok
+  optmatch : median = 16.420 s, status = ok
+  MatchIt  : median = 23.800 s, status = ok
+
+=== n_total = 10000, reps = 3 ===
+  couplr   : median = 53.720 s, status = ok
+  optmatch : median = NA s, status = error: Maximum matching problem may have only 1e+07 - (nrows + 2*ncols) finite entries; 12237779 too many. Set 'options("optmatch_max_problem_size" = Inf)' to disable this check.

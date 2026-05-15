@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.3.1
+Version: 1.3.2
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
            role = c("aut", "cre", "cph"),
@@ -73,4 +73,3 @@ VignetteBuilder: knitr
 URL: https://gillescolling.com/couplr/, https://github.com/gcol33/couplr
 BugReports: https://github.com/gcol33/couplr/issues
 Config/testthat/edition: 3
-Config/testthat/parallel: true

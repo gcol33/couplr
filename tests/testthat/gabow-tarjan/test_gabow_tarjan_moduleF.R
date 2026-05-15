@@ -84,25 +84,27 @@ test_that("Module F: match_gt solves 3x3", {
 })
 
 test_that("Module F: match_gt with initial partial matching", {
+  # Column-major cost: col 0 = (1, 3, 5), col 1 = (2, 4, 1), col 2 = (3, 2, 4)
   cost <- matrix(c(1, 3, 5, 2, 4, 1, 3, 2, 4), nrow = 3, ncol = 3)
-  
-  # Start with partial matching: row 0 -> col 0 (CONSISTENT!)
-  row_match <- c(1L, 0L, 0L)  # row 0 matched to col 1 (1-based)
-  col_match <- c(0L, 1L, 0L)  # col 1 matched to row 0 (1-based) - NOW CONSISTENT!
-  y_u <- c(0, 0, 0)
+
+  # Start with row 1 matched to col 1 (1-based; C++ row_match[0] = 0).
+  row_match <- c(1L, 0L, 0L)
+  col_match <- c(1L, 0L, 0L)
+  # 1-feasible duals for this partial matching (matched edge (0,0) has c = 1,
+  # needs y_u + y_v in [1, 2]; choose y_u[0] = 1, all other duals 0; verified
+  # against the c + 1 upper bound for every finite edge). Phase 1 removed the
+  # old defensive dual-repair loop, so the test now supplies feasible inputs.
+  y_u <- c(1, 0, 0)
   y_v <- c(0, 0, 0)
-  
+
   result <- gt_match_gt(cost, row_match, col_match, y_u, y_v)
-  
-  # Check perfect matching
+
   expect_equal(sum(result$row_match != 0), 3)
-  
-  # Check 1-feasibility
+
   feasible <- gt_check_one_feasible(cost, result$row_match, result$col_match,
                                     result$y_u, result$y_v)
   expect_true(feasible)
-  
-  # Check matching validity
+
   expect_true(is_valid_matching(result$row_match, result$col_match))
 })
 

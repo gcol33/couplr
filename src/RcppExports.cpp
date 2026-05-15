@@ -599,18 +599,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// gt_build_cl_matrix
-Rcpp::NumericMatrix gt_build_cl_matrix(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match);
-RcppExport SEXP _couplr_gt_build_cl_matrix(SEXP costSEXP, SEXP row_matchSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type row_match(row_matchSEXP);
-    rcpp_result_gen = Rcpp::wrap(gt_build_cl_matrix(cost, row_match));
-    return rcpp_result_gen;
-END_RCPP
-}
 // gt_hungarian_step_one_feasible
 Rcpp::List gt_hungarian_step_one_feasible(Rcpp::NumericMatrix cost, Rcpp::IntegerVector row_match, Rcpp::IntegerVector col_match, Rcpp::NumericVector y_u, Rcpp::NumericVector y_v);
 RcppExport SEXP _couplr_gt_hungarian_step_one_feasible(SEXP costSEXP, SEXP row_matchSEXP, SEXP col_matchSEXP, SEXP y_uSEXP, SEXP y_vSEXP) {
@@ -705,7 +693,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_gt_build_equality_graph", (DL_FUNC) &_couplr_gt_build_equality_graph, 4},
     {"_couplr_gt_augment_along_path", (DL_FUNC) &_couplr_gt_augment_along_path, 3},
     {"_couplr_gt_find_maximal_augmenting_paths", (DL_FUNC) &_couplr_gt_find_maximal_augmenting_paths, 3},
-    {"_couplr_gt_build_cl_matrix", (DL_FUNC) &_couplr_gt_build_cl_matrix, 2},
     {"_couplr_gt_hungarian_step_one_feasible", (DL_FUNC) &_couplr_gt_hungarian_step_one_feasible, 5},
     {"_couplr_gt_match_gt", (DL_FUNC) &_couplr_gt_match_gt, 7},
     {"_couplr_scale_match_cpp", (DL_FUNC) &_couplr_scale_match_cpp, 5},

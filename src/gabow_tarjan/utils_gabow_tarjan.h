@@ -47,6 +47,7 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
                                         const MatchVec& row_match,
                                         const DualVec& y_u,
                                         const DualVec& y_v,
+                                        const std::vector<int>& affected_rows,
                                         const std::vector<int>& affected_cols);
 
 // ============================================================================
@@ -77,20 +78,21 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
 // Module E: Hungarian-style search on cost-length (Step 2 core)
 // ============================================================================
 
-CostMatrix build_cl_matrix(const CostMatrix& cost,
-                           const MatchVec& row_match);
-
-bool hungarian_search_cl(const CostMatrix& C_cl,
+bool hungarian_search_cl(const CostMatrix& cost,
                         MatchVec& row_match,
                         MatchVec& col_match,
                         DualVec& y_u,
-                        DualVec& y_v);
+                        DualVec& y_v,
+                        std::vector<int>* affected_rows_out = nullptr,
+                        std::vector<int>* affected_cols_out = nullptr);
 
 bool hungarian_step_one_feasible(const CostMatrix& cost,
                                  MatchVec& row_match,
                                  MatchVec& col_match,
                                  DualVec& y_u,
-                                 DualVec& y_v);
+                                 DualVec& y_v,
+                                 std::vector<int>* affected_rows_out = nullptr,
+                                 std::vector<int>* affected_cols_out = nullptr);
 
 // ============================================================================
 // Module F: match_gt - Inner Gabow-Tarjan matching algorithm

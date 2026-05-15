@@ -539,21 +539,6 @@ Rcpp::List gt_find_maximal_augmenting_paths(Rcpp::List eq_graph,
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericMatrix gt_build_cl_matrix(Rcpp::NumericMatrix cost,
-                                       Rcpp::IntegerVector row_match) {
-  auto cl = build_cl_matrix(gt_cost_from_r(cost), gt_match_from_r(row_match));
-  const int n = static_cast<int>(cl.size());
-  const int m = n > 0 ? static_cast<int>(cl[0].size()) : 0;
-  Rcpp::NumericMatrix out(n, m);
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      out(i, j) = static_cast<double>(cl[i][j]);
-    }
-  }
-  return out;
-}
-
-// [[Rcpp::export]]
 Rcpp::List gt_hungarian_step_one_feasible(Rcpp::NumericMatrix cost,
                                           Rcpp::IntegerVector row_match,
                                           Rcpp::IntegerVector col_match,

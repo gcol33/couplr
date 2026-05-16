@@ -1,0 +1,373 @@
+
+===== PAGE 6 =====
+
+1018
+HAROLD N. GABOW AND ROBERT E. TARJAN
+Lemma 2.1(b) shows that the routine halts with a minimum perfect matching.
+Each iteration of the loop is called a scale. We give a scale_match routine that runs
+in O(vrn) time.
+Since there are O(log(nN)) scales, this achieves the desired time
+bound.
+It is most natural to work with small costs. The scale_match routine transforms
+costs to achieve this.
+Specifically, scale_match changes the cost of each edge vw to
+c(vw)- y(v)- y(w); then it calls the match routine on these costs to find a l-optimal
+matching M with duals y’(v); then it adds y’(v) to each dual y(v) (y(v) is the dual
+value before the call to match).
+Clearly, M with the new duals is a l-optimal matching for cost function c. Fur-
+ther, since Step 1 of the main routine changes costs and duals so that the empty
+matching is l-feasible, the costs input to match are integers -1 or larger.
+If vw is
+an edge in the l-optimal matching found in the previous scale, then after Step 1,
+y(v) + y(w) >_ c(vw)
+3. Hence vw costs at most three in the costs for match. Thus
+there is a perfect matching of cost at most 3n. (This is true even in the first scale).
+We will show that if every edge costs at least -1 and a minimum perfect matching
+costs O(n), match finds a l-optimal matching in O(v/--rn) time. This gives the desired
+time bound.
+Note that the transformation done by scale_match is for conceptual convenience
+only. An actual implementation would not transform costs; rather match would work
+directly on the untransformed costs.
+The cost-length of an edge e with respect to a matching M is
+cl(e)
+c(e) + (if e
+M then 1 else 0).
+The net cost-length of a set of edges S with respect to M is
+cl(S)
+E{cl(e)le E s- M}
+E{cl(e)le
+S
+M}.
+This quantity equals the net cost of S (with respect to M) plus the number of un-
+matched edges in S. Hence an augmenting path with smallest net cost-length approx-
+imates both the smallest net cost augmenting path and the shortest augmenting path;
+this is in keeping with our plan for the algorithm.
+An edge vw is eligible if y(v) + y(w)
+cl(vw), i.e., the 1-feasibility constraint for
+vw holds with equality. (Note that a matched edge is always eligible.) It follows from
+the analysis below that an augmenting path of eligible edges has the smallest possible
+net cost-length. Hence the algorithm augments along paths of eligible edges.
+If no
+such path exists, it adjusts the duals to create one. The details are as follows.
+Assume the costs given to match are integers that are at least -1, and there is a
+perfect matching costing at most an. (In the scaling algorithm a
+3.)
+procedure match.
+Initialize all duals y(v) to 0 and matching M to 0. Then repeat the following steps
+until Step 1 halts with the desired matching:
+Step 1.
+Find a maximal set A of vertex-disjoint augmenting paths of eligible edges.
+For each path P
+A, augment the matching along P, and for each vertex w
+V1
+P,
+decrease y(w) by 1. (This makes the new matching 1-feasible.) If the new matching
+M is perfect, halt.
+Step 2.
+Do a Hungarian search to adjust the duals (maintaining 1-feasibility) and
+find an augmenting path of eligible edges.
+V1
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 7 =====
+
+FASTER SCALING ALGORITHMS FOR NETWORK PROBLEMS
+1019
+We now give the details of Steps 1 and 2 that are needed to analyze match. (A full
+description of these steps is given below, in the paragraphs preceding the statement
+of Theorem 2.1. The reader may prefer to examine these details now, although this is
+not necessary.) Both steps can be implemented in O(m) time. Step 2 is a Hungarian
+search (essentially Dijkstra’s shortest path algorithm, see e.g., ILl, [PSI). The search
+does a number of dual adjustments. Each dual adjustment calculates a positive integer
+5 and increases or decreases various dual values by 5, so as to preserve 1-feasibility
+and eventually create an augmenting path of eligible edges. (The dual adjustment is
+defined more precisely below.) At any point in the algorithm define
+F
+the set of free vertices in V0;
+A
+the sum of all dual adjustment quantities 5 in all Hungarian searches so far.
+The Hungarian search maintains the duals so that any free vertex v E F has y(v)
+A
+and any free vertex v E V1 has y(v)
+O.
+To analyze the match routine, first observe that it is correct: The changes to the
+matching (in Step 1) and to the duals (in Steps 1-2) keep M a l-feasible matching.
+If M is not perfect but G has a perfect matching, the Hungarian search creates an
+augmenting path of eligible edges. Hence the algorithm eventually halts with M a
+l-optimal matching, as desired.
+(Note that if G does not have a perfect matching,
+this is eventually detected in Step 2.)
+To analyze the run time, consider any point in the execution of match. Let M be
+the current matching, and define F and A as above. Let M* be a minimum perfect
+matching. For any set of edges S let cl(S) denote net cost-length with respect to M.
+M* (R)M consists of an augmenting path Pv for each v
+F, plus alternating cycles
+Cw. Thus
+(1)
+n + c(M*)
+c(M) >_ el(M* @ M) E c/(Pv) +E cl(Cw).
+vEF
+w
+To estimate the right-hand side, consider an alternating path P from u G V0 to rn
+V0,
+where u is on an unmatched edge of P and rn is on a matched edge of P (m stands
+for "matched"; no confusion should result from the double usage of m). Then
+(2)
+< v( n) +
+This follows since for edges uv
+M and vm e M, y(u) + y(v) <_ cl(uv) and y(v) +
+y(m)
+cl(vm), so y(u) <_ y(m) + cl(uv)- cl(vm).
+Inequality (2)implies that any
+alternating cycle C has el(C)
+>_
+O.
+It also implies that any augmenting path P
+from some v E F to some free vertex t
+V1 has y(v) + y(t) <_ cl(P). Recall that the
+Hungarian search keeps y(v)
+A and y(t)
+0. Hence A _< cl(P), and the right-hand
+side of (1) is at least ]FLA.
+By assumption on the input to match, c(M*) <_ an and c(M) >_ -n. Hence the
+left-hand side of (1) is at most bn for b
+a + 2. Thus we have shown
+(3)
+IFI/X <_ bn.
+This implies there are O(x/) iterations of the loop of match. To see this, note
+that each execution of Step 1 (except possibly the first) augments along at least one
+path because of the preceding Hungarian search. Hence at most
++ 1 iterations
+start with IFI _< v/. From (3), IFI _> v/ implies A _< xfb-. The next paragraph
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 8 =====
+
+1020
+HAROLD N. GABOW AND ROBERT E. TARJAN
+shows that each Hungarian search increases A by at least one. This implies that at
+most v/ + 1 iterations start with A <_ v/, giving the desired bound.
+Now we show that a Hungarian search $ increases A by at least one. It suffices
+to show that , does a dual adjustment (since any dual adjustment quantity 5 is a
+positive integer). Search $ does a dual adjustment unless there is an augmenting path
+P of eligible edges when it starts. Clearly, P intersects some augmenting path found
+in Step 1. It is easy to see that P contains an unmatched edge vw, with w but not v
+in an augmenting path of Step 1, and w
+V. But vw is ineligible after the Step 1
+decreases y(w). So P does not exist, and $ does a dual adjustment.
+In summary, match does O(v/-) iterations.
+Each iteration takes time O(m),
+giving the desired time bound O(v/-dm).
+It remains to give the details of Steps 1 and 2. Step 1 finds the augmenting paths
+P by depth-first search. To do this, it marks every vertex reached in the search.
+It
+initializes a path P to a free unmarked vertex of V0. To grow P, it scans an eligible
+edge xy from the last vertex x of P (x will always be in V0). If y is marked, the next
+eligible edge from x is scanned; if none exists, the last two edges of P (one matched
+and one unmatched) are deleted from P; if P has no edges, another path is initialized.
+If y is free, another augmenting path has been found; in this case y is marked, the
+path is added to ,4, and the next path is initialized. The remaining possibility is that
+y is matched to a vertex z. In this case y and z are marked; edges xy, yz are added
+to P; and the search is continued from z.
+It is clear that this search uses O(m) time. To show that it halts with A maximal,
+first observe that for any marked vertex x
+V0- V(A), every eligible edge xy has y
+marked and matched, or y in V(A). (Note that V(A) is the set of vertices in paths of
+A.) Hence an easy induction shows that an alternating path of eligible edges, starting
+at a free vertex of V0 and vertex-disjoint from A, has all its V0 vertices marked and is
+not augmenting.
+Step 2 is the Hungarian search. It grows a forest $" of eligible edges, from roots F.
+An eligible edge vw with v
+V0 C? 9r and w
+$" is added to
+whenever possible. If w
+is free, 9r contains an augmenting path of eligible edges. Otherwise, the matched edge
+ww
+is added to 9r. Eventually either
+contains an augmenting path or 9r cannot be
+enlarged.
+In the latter case a dual adjustment is done.
+It changes duals in a way that
+preserves 1-feasibility and allows $" to be enlarged, as follows.
+It computes the dual
+adjustment quantity
+min{cl(vw)- y(v)- y(w)lv e Vo
+J:, w
+Each v E
+gets y(v) increased by 5 (if v E V0 then 1 else -1). It is easy to see
+that this achieves the goal of the dual adjustment (an edge vw achieving the above
+minimum becomes eligible and so can be added to .T’).
+After the dual adjustment, the search continues by enlarging 9.
+Eventually 9v
+contains the desired augmenting path of eligible edges and the Hungarian search halts.
+Note that, as claimed above, at any point in the algorithm a free vertex v has
+y(v)
+A if v
+F (since every dual adjustment increases y(v)) and y(v)
+0 if v
+V1
+(no dual adjustment changes y(v)).
+A Hungarian search can be implemented in O(m) time.
+This depends on two
+observations. First, the proper data structure allows a dual adjustment to change all
+duals y(v) in O(1) time total.
+Specifically the algorithm keeps track of A (defined
+above). When a vertex v is added to $’, its current dual value and the current value
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 9 =====
+
+FASTER SCALING ALGORITHMS FOR NETWORK PROBLEMS
+1021
+of A are saved as y(v) and A(v), respectively. Then at any time the current value of
+y(v) can be calculated as
+y(v) + (A- A(v))
+(if v e V0 then 1 else
+1).
+Hence the dual adjustment is accomplished by simply increasing the value of A.
+The second observation is how to compute 5 in a dual adjustment.
+The usual
+implementation of a Hungarian search does this with a priority queue that introduces
+a logarithmic factor into the time bound (e.g., [FT]). This can be avoided when, as in
+our case, costs are small integers (this was observed in [D], [W] for Dijkstra’s shortest
+path algorithm). The details are as follows. The next value of 5 is the amount that
+the next value of A increases from its current value. Hence it suffces to calculate the
+next value of A. The next value of A is the smallest possible value such that some
+edge vw with v E V0 n 9 and w
+$" becomes eligible (when duals are adjusted by 5).
+Thus the next value of A equals
+min{cl(vw)
+y(v)
+y(w) + A(v)lv e V0 n ’, w
+9}.
+Since any Hungarian search has IFI _> 1, inequality (3) implies A _< bE. The algorithm
+maintains an array Q[1..bn].
+Each entry Q[r] points to a list of edges vw that can
+make A
+r, i.e., v
+V0 N $’, w
+9v, and r
+cl(vw)- y(v)- y(w)+ A(v). The
+algorithm scans down Q and chooses the next value of A as the smallest value r
+with Q[r] nonempty. This gives the next value of 5, and the newly eligible edges, as
+desired. The total overhead for scanning is O(n), since Q has bn entries. (Note that
+an edge vw with v
+V0 , w
+$" does not get entered in this data structure if
+ 0(v)
++
+>
+Only one detail of the derivation remains: We have assumed that the dual values
+y(v) do not grow too large, so that arithmetic operations use O(1) time. To justify this,
+we show that each y(v) has magnitude O(n2N). It suffices to do this for v
+V0. Define
+Y8 as max{ly(v)llv
+V0} after the sth scale. Then Y0
+0 and Ys+I <_ 2Y + bn
+1
+(since A _< bE). Thus Yk_
+(2k- 1)(bE-1)
+O(n2N), as desired. Note that the input
+uses a word size of at least max{log N, log n} bits. Hence at worst the algorithm uses
+triple-word integers for the dual variables.
+THEOREM 2.1. A minimum perfect matching in a bipartite graph can be found
+in O(x/-dm log(nN)) time and O(m) space.
+Yl
+A heuristic that may speed up the algorithm in practice is to prune the graph at
+the start of each scale.
+Specifically, scale_match can delete any edge whose new cost
+is 6n or more. In proof, recall that in the costs computed by scale_match there is a
+perfect matching M costing at most 3n; taking into account the low-order bits of cost
+that are not included in the current scale, the true cost of M is less than 4n. In the
+costs computed by scale_match every edge costs at least -1; again taking into account
+low order bits, the true cost is more than -2. Hence a matching containing an edge
+of new cost 6n or more has true cost more than 4n and so is not minimum.
+2.2. Extensions of the assignment algorithm. The bounds of Theorem 2.1
+also apply to finding a minimum-cost matching. To see this, let G be the given graph.
+Form G by taking two copies of G; for each v
+V(G) join the two copies of v by a
+cost zero edge. Then G is bipartite, and a minimum perfect matching in G gives a
+minimum-cost matching in G.
+A similar result holds for minimum-cost maximum cardinality matching.
+The
+construction is the same except that the edges joining two copies of v cost nN. The
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 10 =====
+
+1022
+HAROLD N. GABOW AND ROBERT E. TARJAN
+problem of finding a minimum-cost matching of given cardinality can also be solved
+in the same bounds; it is most convenient to use Theorem 3.2 below.
+Returning to perfect matching, several properties of match are needed for
+3.
+Define
+A
+the total length of all augmenting paths found by match.
+We first derive a bound on A. Let Pi denote the ith augmenting path found by match.
+Let i be its length, measured as its number of unmatched edges; let Ai denote the
+value of A when P is found; let M be the matching after augmenting along Pi. Recall
+that in the Hopcroft-Karp algorithm, for some constant c,
+<_ cn/(n- + 1). Thus
+the total augmenting path length is En__l
+O(n log n) [ET]. In match,
+does not
+have a similar bound. However, it is bounded in an amortized sense, as follows.
+LEMMA 2.2. For any k 6 [1..n], c(Mk)-F Ei--1 i
+Ei--1/i.
+Proof. A calculation similar to (2) shows that for any i, A
+cl(P). It is easy to
+see that cl(P)
++ c(Mi)
+c(M-l) (assume c(Mo)
+0). Summing these relations
+gives the lemma.
+COROLLARY 2.1. A
+O(n log n).
+Proof. Since IMkl
+k, the entry conditions for match imply c(Mk) > -k. Hence
+A < n + -]n__l A. By (3), A < bn/(n- + 1). Summing these inequalities gives the
+lemma.
+The second property shows that the depth-first search of Step 1 never encounters
+a cycle. A similar property for network flows is used in [GoT87a].
+LEMMA 2.3. In match there is never an alternating cycle of eligible edges.
+Proof. Initially there are no matched edges, so there are no alternating cycles of
+eligible edges. In a Hungarian search, whenever the duals of a matched edge vw are
+changed, w E V1 gets y(w) decreased. Hence any edge joining w to a vertex not in the
+search forest $- is ineligible. This implies that the Hungarian search does not create an
+alternating cycle of eligible edges. Similar reasoning applies when an augment creates
+a new matched edge and changes duals.
+Some applications of matching require the optimal linear programming dual vari-
+ables. The dual variables y(v) are optimal if there is a perfect matching M such that
+every edge vw has y(v) + y(w) < c(vw), with equality for every vw
+M.
+(This
+implies that M is a minimum perfect matching.) Such duals exist for any bipartite
+graph having a perfect matching [L], [PSI. The scaling algorithm halts with duals that
+are 1-optimal but not necessarily optimal. Optimal duals can be found as follows.
+Let G+ be G with an additional vertex s
+V0 and an edge sv for each v
+V1.
+Extend the given cost function c to G+ by defining c(sv) as an arbitrary integer;
+the cost function used by the matching algorithm extends to G+ by its definition,
+(n + 1)c. To specify a cost function on G+, we write G+; c or G+;. Let M be
+a minimum perfect matching in G; for vertex v, let v denote its mate, i.e., vv
+M.
+For v
+V0, let My be a minimum perfect matching in G+
+v; c. (Such a matching
+exists, for instance, M- vv + sv.) Set
+y(v)
+if v e V0 then -c(Mv) else c(vv’)- y(v’).
+These duals are optimal on G. (This can be proved by an argument similar to the
+algorithm given below. Alternatively, see [G87] for a proof from first principles.)
+Suppose a Hungarian search (as in match) is done on G+;. It halts with a tree T
+of eligible edges, rooted at s. Clearly T is a spanning tree. For any v
+V0, augmenting
+along the sv-path in T gives a l-optimal matching N in G+ -v;. N is a minimum
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+

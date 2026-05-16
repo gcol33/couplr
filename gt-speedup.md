@@ -280,6 +280,9 @@ Filled in as we go.
 | 6 HK leveling | 2.09 | 2.42 | 9.88 | 44.05 | 23× (JV=1.91) | passing |
 | 7 flat bucket array | 2.26 | 9.23 | 39.80 | 186.1 | 24.6× (JV=7.57) | passing |
 | 8 Dijkstra-Hungarian Step 2 | 2.29 | 7.60 | 33.84 | 194.8 | 25.6× (JV=7.60) | passing (silent drop gone) |
+| 4b cost_prime buffer reuse | 2.28 | 8.26 | 37.26 | 210.9 | 31× (JV=6.74) | passing |
+| 9 drop bit-scaling outer loop | 2.64 | 1.99 | 13.16 | 73.3 | 6.9× (JV=10.68) | passing (not paper) |
+| 10 read the paper, revert to 7 | 2.26 | 9.23 | 39.80 | 186.1 | 24.6× (JV=7.57) | passing (paper-faithful) |
 
 ### Phase 1 notes
 
@@ -663,3 +666,210 @@ failures.
 
 Bench artefacts: `dev_notes/phase8_ab.sh`, `dev_notes/phase8_ab_run.R`,
 `dev_notes/phase8_bench.txt`, plus per-variant logs.
+
+### Phase 4b notes
+
+Filed at the bottom of Phase 4's revert notes: own the `cost_prime` buffer
+in `solve_gabow_tarjan_inner` and pass it to `scale_match` so the
+`n_work × m_work` allocation happens once at the start of bit-scaling
+instead of once per phase. No algorithm change.
+
+Change: `scale_match` gains a `CostMatrix* cost_prime_buf = nullptr`
+parameter (default-nullptr keeps the test wrapper / Module G test fixture
+working). `solve_gabow_tarjan_inner` declares `CostMatrix cost_prime_buf`
+once, sized `n × max(n, m)`, and passes its address into the bit-scaling
+loop's `scale_match` calls. The cells are unconditionally overwritten on
+every call so stale contents don't matter.
+
+**Same-session A/B vs Phase 8 (2-run mean, JV ≈ 0.43-8 ms depending on n
+and thermal):**
+
+| n | Phase 8 GT | Phase 4b GT | Δ |
+|---|---|---|---|
+| 64 | 8.12 | 8.26 | +1.7% |
+| 128 | 37.42 | 37.26 | -0.4% |
+| 256 | 215.05 | 210.93 | -1.9% |
+| 384 | 602.41 | 589.55 | -2.1% |
+| 512 | 809.51 | 797.07 | -1.5% |
+
+Mild but real at n ≥ 256, wash below. Below the 3-5% estimate because
+malloc/free of a contiguous ~500 KB block on Windows is cheap (no page
+fault, comes out of the heap free-list), so the dominant Phase 4b saving
+is the per-cell BIG_INT init (now skipped since the buffer is overwritten
+in place). The win shape is consistent across two runs in each direction
+(forward A/B, reverse A/B).
+
+Tests: 5093 full-suite expectations pass; 184 GT module tests pass; 897
+fuzz instances 0 mismatches / 0 drops / 0 errors.
+
+Bench artefacts: `dev_notes/phase4b_ab_run.R`,
+`dev_notes/phase4b_ab_phase8_baseline.log`,
+`dev_notes/phase4b_ab_phase4b.log` (plus `_r2` variants).
+
+### Phase 9 notes
+
+**Premise.** The "matching warm-start across phases" idea (the original Phase 9
+target in the recommendation) doesn't survive a careful derivation. After the
+outer-loop `c <- 2c + bit; y <- 2y - 1`, matched edges have
+`y_u + y_v = 2c_k - 2` vs new cost `c_{k+1} = 2c_k + bit`, off by `bit + 2`.
+Any per-side dual repair that closes this gap (e.g., bump `y_u[i] += bit + 2`
+on each matched row) breaks the upper bound `y_u + y_v <= c + 1` on adjacent
+non-matched edges (specifically when `bit(i, j*) > bit(i, j')`, the gap
+exceeds the +1 slack the upper bound allows). The matched-edge-tightness
+assertion in `hungarian_search_cl` is hard, not optional -- it underwrites the
+JV-style dual update math. So a clean matching warm-start within the
+bit-scaling framework was not on offer.
+
+**What worked instead.** A different observation pointed the way. Phase 8's
+Dijkstra Step 2 is *range-independent*: its work depends on n and m, not on
+the magnitude of reduced costs. The bucket-array Step 2 it replaced *was*
+range-sensitive (`bucket_bound = 6n + 2`), and that range-sensitivity was the
+*entire reason* GT used a bit-scaling outer loop -- splitting one big solve
+into `k = log2((n+1)*max_cost)` small solves kept the per-phase cost range
+bounded so the buckets fit. With buckets gone, the outer loop wraps `k`
+calls to `scale_match`, each running a full match_gt from an empty matching
+on a different scaled cost, but reaping no compensating per-phase win.
+
+So: delete the outer loop. One `scale_match` call on the full `(n+1)`-scaled
+cost. The `(n+1)` factor still ensures the 1-optimal matching match_gt
+produces is exact-optimal on the original cost (standard GT integrality
+argument). No bit-by-bit reconstruction, no per-phase `cost_prime` build,
+no per-phase dual doubling.
+
+The Phase 4 revert came back to mind here: it dropped `cost_prime` but kept
+the outer loop, and Step 1 starved because the per-phase canonical dual init
+went away. Phase 9 keeps `cost_prime` (one copy, since global duals are zero
+on the single entry, scale_match's `cost_prime = cost - y_global` is just a
+copy) and kills the loop. Step 1 sees the full-cost eq-graph after
+`gt_init_empty_duals`, and it works exactly as it did inside one phase
+before.
+
+**A/B bench, same machine session (`dev_notes/phase4b_ab_run.R`,
+microbenchmark times=20, warmup=2, seed=1000+n):**
+
+| n   | Phase 4b GT | Phase 9 GT | Δ        |
+|----:|------------:|-----------:|---------:|
+|  64 |    8.29 ms  |    1.99 ms |    -76%  |
+| 128 |   48.85 ms  |   13.16 ms |    -73%  |
+| 256 |  285.10 ms  |   73.33 ms |    -74%  |
+| 384 |  913.53 ms  |  243.21 ms |    -73%  |
+| 512 | 1209.39 ms  |  485.65 ms |    -60%  |
+
+GT/JV ratio at n=256 collapses from ~25x (Phase 8) to ~7x (Phase 9). The
+slope worsens from 2.28 to 2.64 -- a single large match_gt scales worse
+than k smaller ones -- but the constant-factor win is so large that
+Phase 9 dominates Phase 4b across the entire tested range (and the
+breakeven n where the slope difference would catch up is well past 512).
+
+**Status of GT as a method.** This is the right place to flag a structural
+question. With Phase 9, GT is no longer the Gabow-Tarjan algorithm. It is a
+single match_gt call running JV-style Dijkstra Step 2 (with Hopcroft-Karp
+Step 1 as a cheap prefilter on the eligibility graph) on an `(n+1)`-scaled
+cost. The bit-scaling that gave the paper its `O(n^{3/4} m log nC)` bound is
+gone; what remains is closer to `O(n^3)` in spirit, similar to a Hungarian /
+JV solver. JV in the same package is ~7x faster on dense random; GT carries
+no algorithmic advantage at this point. Whether to keep GT as a method in
+the package (educational value, alternative dual quality) is a separate
+discussion -- this phase is about doing right by the C++ that's already
+there.
+
+**Code removed:** the bit-scaling loop (`for s = k-1 downto 0`), `c_current`
+buffer, per-phase cost doubling, per-phase dual doubling
+(`y_u[i] = 2*y_u[i] - 1`), per-phase `scale_match` invocation, the unused `k`
+variable computed from `C_max`'s log2. Phase 4b's `cost_prime_buf` is
+removed (only one call now, no need to reuse the buffer across calls).
+`scale_match`'s `cost_prime_buf` parameter stays (default-nullptr) so the
+test wrapper at `rcpp_interface.cpp:612` and the Module G tests work
+unchanged.
+
+**Code kept:** `(n+1)` scaling, min_cost shift to non-negative, `C_max == 0`
+fast path, all of match_gt / hungarian_search_cl / Step 1 / Step 2 logic,
+the final dual back-adjustment (`y_u /= (n+1); y_u += min_cost`).
+
+Tests: 5093 full-suite expectations pass; 184 GT module tests pass; 897
+fuzz instances 0 mismatches / 0 drops / 0 errors.
+
+Bench artefacts: `dev_notes/phase9_ab_phase4b.log`,
+`dev_notes/phase9_ab_phase9.log`, `dev_notes/phase9_nobitscale.log`,
+`dev_notes/phase9_nobitscale_final.log`.
+
+### Phase 10 notes
+
+**The trigger.** User flagged Phase 9's 2.64 slope and asked "isn't that worse
+than theory?" Direct answer: paper bound is `O(n^{3/4} m log(nC))` =
+`O(n^{2.75} log(nC))` dense, so 2.64 is under paper worst case, not over.
+But the deeper question is whether the algorithm in the file is *the paper's
+algorithm*. After Phase 8 (Dijkstra) and Phase 9 (no bit-scaling), it wasn't.
+
+**Pulled the paper.** Gabow & Tarjan 1989, SIAM J. Comput. 18(5), 1013-1036.
+PDF retrieved via the paper-retrieval skill, lives at
+`dev_notes/paper/GabowTarjan_1989_FasterScalingAlgorithms.pdf`. Read sections
+1-2 carefully.
+
+**The crucial finding (page 9).** The paper *explicitly says* the bucket-array
+silent drop is part of the algorithm:
+
+> "An edge vw with v in V0 cap F, w not in F does not get entered in this
+> data structure if cl(vw) - y(v) - y(w) + A(v) > bn."
+
+Inequality (3) on p.7 (`|F| Delta <= bn`) proves Delta within one Hungarian
+search cannot exceed `bn` (= 5n in paper notation, our code uses 6n+2 as a
+slightly looser safety bound). Edges with `r > bn` are unreachable in this
+search by construction, so not entering them is the paper's algorithm, not a
+wart.
+
+**What this means for the project history.** Phase 5's interpretation of the
+86% drop rate as "load-bearing wart" was a misreading. The drops are unreachable
+edges that the paper's Q array deliberately excludes. Phase 8's switch to
+Dijkstra was solving a non-problem. Phase 9's removal of bit-scaling
+walked further away from the paper.
+
+**Phase 10 action.** Reverted to Phase 7 source (commit 13da05f). Updated the
+file-top comment block to cite the paper's p.9 statement and stop calling the
+drop a wart. No code logic changes.
+
+**Verification on Phase 7 release build:**
+- 184 GT module tests pass
+- 1000-instance phase5_fuzz: 0 silent drops surfaced (release strips the
+  assertion), 0 cost mismatches vs JV, 0 GT-only errors
+- Slope 2.26, time at n=256 ~186 ms, GT/JV ratio ~25x. Numbers stable from
+  Phase 7's original measurement.
+
+**What was dropped:** Phase 4b (cost_prime buffer reuse) and Phase 9 (no
+bit-scaling) work is in git stash (`phase4b+9-archive`). The Phase 9 speed
+win was real (4-7x absolute) but produced JV-with-prefix-HK on (n+1)*c, not
+GT. With paper fidelity as the spec, the speedup isn't worth the algorithmic
+departure.
+
+**What was kept from this phase:** the paper PDF itself
+(`dev_notes/paper/`), the file-top comment correction, and the
+dev_notes/phase5_fuzz.R regression check (now correctly framed as "drops
+must never cause cost mismatch" rather than "drops must be zero").
+
+**Open: slope improvement is still on the table.** Paper bound is 2.75;
+Phase 7 measures 2.26 (under paper). The Phase 6 HK-leveling work (slope
+2.09) showed the slope can go lower without leaving the paper's framework.
+That's a real follow-on, but distinct from the "paper fidelity" thread that
+prompted Phase 10.
+
+### Postmortem
+
+Phase 8 (Dijkstra-Hungarian Step 2) was solving a non-problem -- the silent
+drop it set out to remove is built into Gabow & Tarjan 1989 (p.9), proven
+safe by inequality (3) on p.7. The drop is not a wart; the Q array of size
+`bn` is *supposed* to exclude `r > bn` edges because they cannot become
+eligible within one Hungarian search. Phase 5 misread the bound; Phase 8
+implemented a fix for the misreading.
+
+Phase 9 (drop the bit-scaling outer loop) walked away from the paper
+entirely. Once Step 2 was Dijkstra and didn't need a bounded bucket range,
+the bit-scaling loop's only structural rationale was gone -- but the
+*paper's algorithm* is bit-scaling + bucket-array Step 2, and abandoning
+the bit-scaling produced something closer to JV-with-prefix-HK on
+`(n+1)*c` than to GT. Real 4-7x speedup, but not GT.
+
+Both reverted in Phase 10 after the paper was actually read. **Multiple
+days of work because nobody read p.9 first.** New global CLAUDE.md rule
+("Read the Paper Before Patching the Algorithm") added to make the
+workflow explicit for the next time an implemented-from-paper routine
+"looks weird."

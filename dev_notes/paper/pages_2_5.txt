@@ -1,0 +1,282 @@
+
+===== PAGE 2 =====
+
+1014
+HAROLD N. GABOW AND ROBERT E. TARJAN
+just a factor of log(nN) more than this. The algorithm is similar to the Hopcroff-Karp
+cardinality algorithm and appears simple enough to be useful in practice.
+TABLE 1
+Bounds for network problems.
+Strongly Polynomial Bound
+New Scaling Bound
+Assignment problem
+O(n(m / Iogn))
+[FT]
+Shortest paths (single-source, directed graph,
+possibly negative lengths)
+O(nrn)
+[Bel
+Minimum cost degree-constrained subgraph
+of a bipartite multigraph
+O(U(m + n log n))
+[FT], [GS3]
+Transportation problem
+(uncapacitated or capacitated)
+O(min{U, n log U}(m + n log n))
+[FT], [EK], ILl
+Minimum cost flow
++
+[GAIT]
+O(v/ra log(nN)
+O(v/-m log(nN))
+O(min{v/, n2/3M1/3}-log(nN))
+O((min{x/,n}m + U log U)log(nN))
+O(nrn log n log(nN)log M)
+convex cost functions allowed
+O(n(m + n log n) log M)
+lower bounds only
+Parameters: n
+number of vertices; rn
+number of edges;-
+number of edges
+counting multiplicities; U
+total degree constraints; N
+maximum cost magnitude;
+and M
+maximum flow capacity or lower bound, or edge multiplicity.
+The new algorithm improves the scaling algorithm of [G85], which runs in time
+O(n3/4rn log N). The improvement comes from a different scaling method. The algo-
+rithms of [G85] compute an optimum solution at each of log N scales. The new method
+computes an approximate optimum at each of log(nN) scales; using log n extra scales
+ensures that the last approximate optimum is exact. The appropriate definition of ap-
+proximate optimum is due to Tardos [Tard] and independently to Bertsekas [BerT9],
+Ber86]. The new approach to scaling was recently discovered by Goldberg and Tarjan
+for the minimum-cost flow problem [Go], [GoT87a], [GoT87b]. Their minimum-cost
+flow algorithm solves the assignment problem in time O(nrn log(nN)), which this pa-
+per improves. Bertsekas [Ber87] gives an algorithm for the assignment problem that
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 3 =====
+
+FASTER SCALING ALGORITHMS FOR NETWORK PROBLEMS
+1015
+also runs in sequential time O(nrn log(aN)) and has a distributed asynchronous ira-
+plementation.
+The assignment algorithm extends to other network problems. This paper presents
+extensions to problems on bipartite graphs and directed graphs. For algorithms on
+general graphs (and bidirected graphs) and other extensions, see
+4. Throughout this
+paper all undirected graphs are bipartite (we usually mention this explicitly).
+Variants of minimum-cost perfect bipartite matching (such as minimum-cost bi-
+partite matching) can be done in the same time bound. The linear programming dual
+variables for perfect bipartite matching can be found from the algorithm. This gives
+a solution to the shortest path problem when negative edge lengths are allowed. The
+table entry for the degree-constrained subgraph problem is just a factor of log(aN)
+more than the bound of [ET] for the corresponding problem without costs, namely,
+the problem of maximum flow in a 0-1 network.
+These bounds improve [G85] in a
+manner analogous to the assignment problem.
+The table entry for the transportation problem is a good bound when total supply
+and demand (U) is small. The key fact for this bound is the low total augmenting path
+length for the assignment algorithm; this fact generalizes the bounds of [ET] for car-
+dinality matching and 0-1 network flow. The entry for minimum-cost flow is a double
+scaling algorithm
+it scales edge capacities, and at each scale solves a small trans-
+portation problem by the above cost-scaling algorithm. This algorithm is not as good
+asymptotically as the recent bound of Goldberg and Tarjan, O(nrn log(n2/rn) log(aN))
+[GoT87b]. The latter is just a factor of log(aN) more than the best bound for maxi-
+mum value flow [GoT86]. The double scaling algorithm may be more useful in practice,
+however, since it requires fewer data structures. The double scaling algorithm gener-
+alizes to find a minimum-cost integral flow when the cost of each edge is an arbitrary
+convex function of its flow.
+The time bound is unchanged, as long as the cost for
+a given flow value can be computed in O(1) time. The last bound of the table im-
+proves the previous one for problems where edges have a lower bound on the flow and
+infinite capacity (more generally, O(n) finite capacities are allowed). Such problems
+arise as covering problems. We illustrate how this bound leads to an efficient strongly
+polynomial bound for the directed Chinese postman problem.
+Section 2 presents the matching algorithm and its analysis, including facts used
+in the generalizations.
+Section 3 presents the extensions to more general network
+flow problems.
+Section 4 gives some concluding remarks.
+This section closes with
+definitions from graph theory; more thorough treatments are in ILl, [PSI, [Tarj].
+We use interval notation for sets of integers:
+for integers
+and j, define [i..j]
+{klkisaninteger,
+_< j
+_< k},
+[i..j)
+{klk is an integer,
+_< j < k}, etc.
+The
+symmetric difference of sets S and T is denoted by S
+T. The function log n denotes
+logarithm to the base two.
+For a graph G, V(G) and E(G) denote the vertex set and edge set, respectively.
+The given graph G is bipartite and has bipartition V0, V1 (so V(G) is the disjoint
+union of V0 and V1, and any edge joins V0 to V1). The given graph G has m edges;
+in
+2, n
+IV01
+IV11 (we assume without loss of generality that the two sets of
+the bipartition have equal cardinality); in
+3, n
+IV(G)I.
+If H is a subgraph of
+G, an H-edge is an edge in H and a non-H-edge is not in H.
+When an auxiliary
+graph G
+is constructed from the given graph G, G-edge refers to an edge of G
+that
+represents an edge of G. We use this term without explicit comment only when the
+representation is obvious (i.e., vw E E(G) is represented by vw, where v and w
+are
+obvious representatives of v and w). We say path P ends with edge vw if vw is at an
+end of P and further, v is an endpoint of P.
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 4 =====
+
+1016
+HAROLD N. GABOW AND ROBERT E. TARJAN
+A matching in a graph is a set of vertex-disjoint edges.
+Thus a vertex v is in
+at most one matched edge vvr; v
+is the mate of v. A free vertex has no mate. A
+maximum cardinality matching has the greatest number of edges possible; a perfect
+matching has no free vertices (and is clearly maximum cardinality).
+An alternat-
+ing path (cycle) for a matching is a simple path (cycle) whose edges are alternately
+matched and unmatched. An augmenting path P is an alternating path joining two
+distinct free vertices. Augmenting the matching along P means enlarging the matching
+M to M G P, thus giving a matching with one more edge. Suppose each edge e has a
+numeric cost c(e); in this paper costs are integers in [-N..N], unless stated otherwise.
+The cost c(S) of a set of edges S is the sum of the individual edge costs. A minimum
+(maximum) perfect matching is a perfect matching of smallest (largest) possible cost.
+The assignment problem is to find a minimum perfect matching in a bipartite graph.
+More generally, a minimum-cost maximum cardinality matching is a matching that
+has the greatest number of edges possible, and subject to that restriction has min-
+imum cost possible.
+(The phrase "minimum-cost maximum cardinality set" can be
+interpreted ambiguously. In this paper it refers to a set that has maximum cardinality
+subject to any other restrictions that have been mentioned, and among such sets has
+minimum cost possible.) A minimum-cost matching is a matching of minimum cost
+(its cardinality can be any value, including zero).
+A multigraph has a set of edges E(G), where each.edge e has an integral mul-
+tiplicity u(e) (i.e., there are u(e) parallel copies of e). The size parameter m is the
+number of edges, m
+IE(G)I;
+counts multiplicities, i.e.,
+{u(e)le e E(G)};
+M is the maximum edge multiplicity. (In a graph M
+1.) When each vertex v has
+associated nonnegative integers t(v) and u(v), a degree-constrained subgraph (DCS) is
+a subgraph such that each vertex has degree in [g(v)..u(v)].
+It is convenient to use
+both set notation and functional notation for a DCS. Thus we use a capital letter
+D to denote a DCS, and the corresponding lowercase letter d to denote two func-
+tions defined by D"
+for an edge e, d(e) denotes the multiplicity of e in D, and for
+a vertex v, d(v) denotes the degree of v in D, i.e., d(v)
+,{d(vw)lvw e E(G)}.
+Hence d(e) <_ u(e) and t(v) _< d(v) <_ u(v). The deficiency of DCS D at vertex v is
+(v, D)
+u(v)
+d(v). In a perfect DCS each deficiency is zero. The size of the DCS
+is measured by V
+’{u(v)lv e V} (so U is twice the number of edges in a perfect
+DCS). When edges e have costs, the usual assumption is that each copy of e has the
+same cost, denoted c(e). When this assumption fails, we use cost functions, defined
+in the text. Other definitions for DCS
+e.g., minimum perfect DCS, minimum-cost
+maximum cardinality DCS, etc., follow by analogy with matching.
+The transportation problem is to find a minimum-cost perfect DCS in a bipar-
+tite multigraph in which all edges have infinite multiplicity; alternatively, if M is the
+maximum degree constraint, all multiplicities are M.
+If some multiplicities are less
+than M, the problem is a capacitated transportation problem.
+The usual definition
+of the transportation problem allows nonnegative real-valued degree constraints and
+edge multiplicities (both given multiplicities and those in the solution).
+This paper
+deals with the integral case of this problem. Note that if the given degree constraints
+and multiplicities are rational, they can be scaled up to integers.
+Also note that
+no loss of generality results from the constraint in this paper that the solution to
+the transportation problem has integral multiplicities
+such an optimum solution
+always exists when the given degree constraints and multiplicities are integral ILl. Fi-
+nally note that in our terminology the minimum perfect DCS problem is the same as
+the capacitated transportation problem.
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+
+
+===== PAGE 5 =====
+
+FASTER SCALING ALGORITHMS FOR NETWORK PROBLEMS
+1017
+2. Matching and extensions. Section 2.1 presents our algorithm to find a
+minimum perfect matching in a bipartite graph. Section 2.2 gives extensions to other
+versions of matching, some facts about the algorithm needed in
+3, and our shortest
+path algorithm. In this section n denotes the number of vertices in each vertex set V0,
+V1 of the given bipartite graph.
+2.1. The assignment algorithm. For convenience assume that the given graph
+G has a perfect matching (the algorithm can detect graphs not having a perfect match-
+ing, as indicated below).
+The plan for the algorithm is to combine the Hungarian algorithm for weighted
+matching with the Hopcroft-Karp algorithm for cardinality matching.
+Recall that
+the Hungarian algorithm always chooses an augmenting path of smallest net cost.
+The Hopcroft-Karp algorithm always chooses an augmenting path of shortest length.
+Both of these rules can be approximated simultaneously if the costs are small integers.
+Arbitrary costs can be replaced by small integers by scaling.
+Thus our algorithm
+scales the costs. At each scale it computes a perfect matching. The computation is
+efficient because it is similar to the Hopcroft-Karp algorithm; the matching is close
+to optimum because the computation is similar to the Hungarian algorithm. Now we
+give the details.
+Each scale of the algorithm finds a close-to-minimum matching, defined as follows.
+Every vertex v has a dual variable y(v). A 1-feasible matching consists of a matching
+M and dual variables y(v) such that for any edge vw,
+y(v) + y(w) <_ c(vw) + 1,
+y(v) + y(w)
+c(vw),
+forvweM.
+A 1-optimal matching is a perfect natching that is 1-feasible. If the +1 term is omitted
+from the first inequality, these are the usual complementary slackness conditions for a
+minimum perfect matching ILl, [PSI. The following result is due to Bertsekas [Ber79],
+[Ber86].
+LEMMA 2.1. Let M be a 1-optimal matching.
+(a) Any perfect matching P has c(P) >_ c(M)
+n.
+(b) If some integer k, k > n, divides each cost c(e), then M is a minimum perfect
+matching.
+Proof. Part (a) follows because
+c(M)
+E{c(e)le e M}
+E{y(v)]v e V(G)} _< c(P) + n.
+Part (b) follows from (a) and the fact that any matching has cost a multiple of k.
+[:]
+This lemma is the basis for the main routine of the algorithm, which does the
+scaling. The routine starts by computing a new cost (e) for each edge e, equal to n+ 1
+times the given cost.
+Consider each (e) to be a signed binary number +bib2...b
+having k
+[log(n + 1)N] + 1 bits. The routine maintains a variable c(e) for each edge
+e, equal to its cost in the current scale. The routine initializes each c(e) to 0 and each
+dual y(v) to 0. Then it executes the following loop for index s going from 1 to k:
+Step 1.
+For each edge e, c(e)
+2c(e)+ (signed bit be of (e)). For each vertex v,
+y(v)-
+2y(v)- 1.
+Step 2.
+Call the scale_match routine to find a 1-optimal matching.
+Downloaded 11/26/14 to 141.217.58.222. Redistribution subject to SIAM license or copyright; see http://www.siam.org/journals/ojsa.php
+

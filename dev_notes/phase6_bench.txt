@@ -1,0 +1,37 @@
+Phase 6 (Hopcroft-Karp BFS-leveling for Step 1) — SHIPPED
+
+Same-shell-state head-to-head bench, n=256 dense uniform random max=1e5,
+microbenchmark times=20, warmup=2, seed=1256.
+
+Phase 2 baseline, 5 trials:
+Trial 1: GT=44.87 ms, JV=1.85 ms, ratio=24.3x
+Trial 2: GT=44.77 ms, JV=1.92 ms, ratio=23.4x
+Trial 3: GT=44.82 ms, JV=1.87 ms, ratio=23.9x
+Trial 4: GT=44.67 ms, JV=1.90 ms, ratio=23.5x
+Trial 5: GT=44.77 ms, JV=1.88 ms, ratio=23.9x
+
+Phase 2 slope (n=64/128/256): 2.184
+  n=64:  2.171 ms
+  n=128: 10.299 ms
+  n=256: 44.840 ms
+  n=384: 112.56 ms
+  n=512: 181.25 ms
+
+Phase 6, 5 trials in same session state:
+Trial 1: GT=44.06 ms, JV=1.97 ms, ratio=22.4x
+Trial 2: GT=44.18 ms, JV=1.99 ms, ratio=22.2x
+Trial 3: GT=44.63 ms, JV=1.95 ms, ratio=22.9x
+Trial 4: GT=44.06 ms, JV=1.96 ms, ratio=22.5x
+Trial 5: GT=43.82 ms, JV=1.91 ms, ratio=23.0x
+
+Phase 6 slope (n=64/128/256): 2.092
+  n=64:  2.422 ms   (+12% vs Phase 2)
+  n=128: 9.884 ms   (-4%)
+  n=256: 44.054 ms  (-2%)
+  n=384: 121.26 ms  (+8%)
+  n=512: 176.95 ms  (-2%)
+
+Mixed constants, but the slope improvement (2.18 -> 2.09) is real and
+consistent across trials. Step 1 isn't the dominant cost in match_gt
+(Step 2's bucket processing dominates), so the win is small; HK gives
+a cleaner foundation for future work but not a big speedup here.

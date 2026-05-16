@@ -10,6 +10,7 @@
 #include <queue>
 #include <map>
 #include <algorithm>
+#include <limits>
 // stdexcept removed - use LAP_ERROR() instead
 // #include <iostream>  // Removed for CRAN compliance (no std::cerr allowed)
 
@@ -415,11 +416,24 @@ find_one_augmenting_path_eq(const std::vector<std::vector<int>>& eq_graph,
 }
 
 /**
- * Find maximal set of vertex-disjoint augmenting paths
- * 
- * Repeatedly finds augmenting paths and marks vertices as banned
- * to ensure paths are vertex-disjoint.
- * 
+ * Find a maximal set of vertex-disjoint shortest augmenting paths in the
+ * equality graph (Hopcroft-Karp style).
+ *
+ * Two-phase Hopcroft-Karp structure:
+ *   1. BFS from all free rows assigns levels. Rows at even levels, cols at
+ *      odd levels. Cols reach via eligible edges; rows reach via matched
+ *      edges (col_match[j] -> next_row at col_level + 1). BFS stops one
+ *      layer past the first free col discovered, so every leveled vertex
+ *      lies on a shortest augmenting path.
+ *   2. DFS from free rows along level-increasing edges only, using
+ *      visited_col + next_edge[i] to keep total DFS work O(E) per call.
+ *      Each row that fails to find a path has its level demoted (`row_level
+ *      = INF`) so later DFS roots don't redescend it.
+ *
+ * Restricting Step 1 to shortest paths bounds the number of times match_gt
+ * loops Step 1 / Step 2 per scaling phase — the paper's O(sqrt(n)) HK round
+ * count, modulo dual changes from Step 2 reshaping the eligibility graph.
+ *
  * @param eq_graph Equality graph (adjacency lists of eligible edges)
  * @param row_match Current matching from rows
  * @param col_match Current matching from columns
@@ -433,17 +447,62 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
     const int n = static_cast<int>(eq_graph.size());
     const int m = static_cast<int>(col_match.size());
 
-    std::vector<bool> marked_row(n, false);
-    std::vector<bool> marked_col(m, false);
-    std::vector<size_t> next_edge(n, 0);
+    constexpr int INF_LEVEL = std::numeric_limits<int>::max();
+    std::vector<int> row_level(n, INF_LEVEL);
+    std::vector<int> col_level(m, INF_LEVEL);
+
+    // ---- Phase 1: BFS to assign levels. ------------------------------------
+    std::queue<int> bfs_q;
+    for (int i = 0; i < n; ++i) {
+        if (row_match[i] == NIL) {
+            row_level[i] = 0;
+            bfs_q.push(i);
+        }
+    }
+
+    int free_col_level = INF_LEVEL;  // Shortest augmenting-path length (cols).
+    while (!bfs_q.empty()) {
+        int i = bfs_q.front();
+        bfs_q.pop();
+
+        // Don't expand beyond the shortest free-col layer.
+        if (row_level[i] >= free_col_level) continue;
+
+        for (int j : eq_graph[i]) {
+            if (j < 0 || j >= m) continue;
+            if (col_level[j] != INF_LEVEL) continue;
+
+            col_level[j] = row_level[i] + 1;
+            if (col_match[j] == NIL) {
+                // Free col reached. Record the layer and keep draining the
+                // queue at this level so all shortest paths are discoverable.
+                if (free_col_level == INF_LEVEL) {
+                    free_col_level = col_level[j];
+                }
+            } else {
+                int next_row = col_match[j];
+                if (next_row >= 0 && next_row < n &&
+                    row_level[next_row] == INF_LEVEL) {
+                    row_level[next_row] = col_level[j] + 1;
+                    bfs_q.push(next_row);
+                }
+            }
+        }
+    }
+
     std::vector<std::vector<std::pair<int,int>>> all_paths;
+    if (free_col_level == INF_LEVEL) {
+        // No augmenting path exists at this point in the eligibility graph.
+        return all_paths;
+    }
+
+    // ---- Phase 2: DFS along level-increasing edges. -----------------------
+    std::vector<bool> visited_col(m, false);
+    std::vector<size_t> next_edge(n, 0);
 
     for (int root = 0; root < n; ++root) {
-        if (row_match[root] != NIL || marked_row[root]) {
-            continue;
-        }
+        if (row_match[root] != NIL || row_level[root] != 0) continue;
 
-        marked_row[root] = true;
         std::vector<int> path_rows;
         std::vector<std::pair<int,int>> path_edges;
         path_rows.push_back(root);
@@ -454,11 +513,12 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
 
             while (next_edge[i] < eq_graph[i].size()) {
                 int j = eq_graph[i][next_edge[i]++];
-                if (j < 0 || j >= m || marked_col[j]) {
-                    continue;
-                }
+                if (j < 0 || j >= m) continue;
+                // Level filter: only follow edges into the next layer.
+                if (col_level[j] != row_level[i] + 1) continue;
+                if (visited_col[j]) continue;
 
-                marked_col[j] = true;
+                visited_col[j] = true;
                 path_edges.emplace_back(i, j);
 
                 if (col_match[j] == NIL) {
@@ -470,24 +530,25 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
                 }
 
                 int next_row = col_match[j];
-                if (next_row >= 0 && next_row < n && !marked_row[next_row]) {
-                    marked_row[next_row] = true;
+                if (next_row >= 0 && next_row < n &&
+                    row_level[next_row] == col_level[j] + 1) {
                     path_rows.push_back(next_row);
                     advanced = true;
                     break;
                 }
 
+                // Matched edge doesn't ascend to the right level (target row
+                // either past the path-length cap or already exhausted by a
+                // prior failed DFS). Back out and try the next edge.
                 path_edges.pop_back();
             }
 
-            if (advanced) {
-                continue;
-            }
+            if (advanced) continue;
 
-            if (path_edges.empty()) {
-                break;
-            }
-
+            // No further progress from row i. Demote it so later DFS roots
+            // don't redescend through here.
+            row_level[i] = INF_LEVEL;
+            if (path_edges.empty()) break;
             path_edges.pop_back();
             path_rows.pop_back();
         }

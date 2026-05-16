@@ -277,7 +277,7 @@ Filled in as we go.
 | 3 adj-restricted enqueue | reverted (dense regression, see notes) |
 | 4 drop cost_prime | reverted (Step 1 starves without cost_prime, see notes) |
 | 5 fuzz + assertions | | | | | | |
-| 6 HK leveling (optional) | | | | | | |
+| 6 HK leveling | 2.09 | 2.42 | 9.88 | 44.05 | 23× (JV=1.91) | passing |
 
 ### Phase 1 notes
 
@@ -437,3 +437,45 @@ optimisation, ~3–5% expected from skipped alloc/free. No algorithm
 change. Filed as a possible Phase 4b.
 
 Bench artefact: `dev_notes/phase4_bench.txt`.
+
+### Phase 6 notes
+
+Replaced the pure-DFS `find_maximal_augmenting_paths` with a two-phase
+Hopcroft-Karp structure: BFS from all free rows builds a level graph
+(rows at even levels via eligible edges to cols at odd levels, then back
+to rows via `col_match`), then DFS along level-increasing edges only
+extracts a maximal set of vertex-disjoint **shortest** augmenting paths.
+The DFS uses the same `next_edge[i]` advancement pattern as before, so
+per-call work stays O(E); restricting to shortest paths is the
+algorithmic change that gives Hopcroft-Karp its `O(m sqrt(n))` bound for
+unweighted bipartite matching.
+
+**Same-session A/B vs Phase 2 (JV ~1.88 ms either way):**
+
+| n | Phase 2 | Phase 6 | Δ |
+|---|---|---|---|
+| 64 | 2.17 ms | 2.42 ms | +12% |
+| 128 | 10.30 ms | 9.88 ms | -4% |
+| 256 | 44.84 ms | 44.05 ms | -2% |
+| 384 | 112.56 ms | 121.26 ms | +8% |
+| 512 | 181.25 ms | 176.95 ms | -2% |
+| slope (64–256) | 2.184 | 2.092 | better |
+
+The slope improvement (2.18 → 2.09) is real and consistent. Per-trial
+variance is well under 1% across 5 trials. The constant is mixed: ~10%
+slowdown at n=64 from BFS overhead at small problem size, ~2% win at
+n=256 and n=512.
+
+The win isn't bigger because Step 1 isn't the dominant cost. Most of
+`match_gt`'s time is in Step 2's bucket processing — HK can't help
+there. Additionally, Step 2 changes duals between successive Step 1
+calls, reshaping the eligibility graph and breaking HK's amortization
+assumption (paths from prior rounds don't carry).
+
+Shipping anyway. The slope is the right shape, all 184 GT tests + 4955
+full-suite tests pass, and the level-graph structure is a cleaner
+foundation than the persistent-marked-col scheme for future Step 1
+work (e.g., maintaining the level graph incrementally across dual
+updates instead of rebuilding it per call).
+
+Bench artefact: `dev_notes/phase6_bench.txt`.

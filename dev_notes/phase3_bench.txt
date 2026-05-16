@@ -1,0 +1,40 @@
+Phase 3 (adj-restricted enqueue) — REVERTED
+
+Same-shell-state head-to-head bench at n=256 dense, uniform random, max=1e5,
+microbenchmark times=20, warmup=2-3, seed=1256.
+
+Phase 2 (parent of Phase 3) head-to-head:
+  expr    min      lq    mean  median     uq    max neval
+1   gt 224.915 228.805 230.084 230.576 231.042 233.81    20
+2   jv   7.723   7.782   7.921   7.936   8.028   8.17    20
+GT/JV at n=256: 29.1x (GT=230.58 ms, JV=7.94 ms)
+Phase 2 slope (64/128/256): 2.220
+   n median_ms
+  64     10.50
+ 128     49.21
+ 256    228.08
+
+Phase 3 head-to-head, single trial:
+  expr    min      lq    mean  median     uq    max neval
+1   gt 250.15 251.152 251.940 251.739 252.42 253.95    20
+2   jv   7.55   7.718   7.813   7.814   7.91   8.24    20
+GT/JV at n=256: 32.2x (GT=251.74 ms, JV=7.81 ms)
+Phase 3 slope (64/128/256): 2.240
+   n median_ms
+  64     11.29
+ 128     53.79
+ 256    251.86
+
+Phase 3 multi-trial (5 trials, 20 reps each, same shell state):
+Trial 1: GT=254.36 ms, JV=7.79 ms, ratio=32.6x
+Trial 2: GT=254.27 ms, JV=7.82 ms, ratio=32.5x
+Trial 3: GT=251.67 ms, JV=7.67 ms, ratio=32.8x
+Trial 4: GT=252.70 ms, JV=7.75 ms, ratio=32.6x
+Trial 5: GT=254.07 ms, JV=7.79 ms, ratio=32.6x
+
+Phase 2 -> Phase 3 at n=256: 230 ms -> 253 ms (~10% regression, stable across 5 trials).
+
+Conclusion: Phase 3 as designed regresses on dense matrices. The "BIG_INT
+compare" was not a bottleneck (well-predicted on dense, cost[i][j] is loaded
+anyway), and the extra adj[i] cache traffic costs more than the saved branch.
+Reverted. See gt-speedup.md "Phase 3 notes (reverted)" for full analysis.

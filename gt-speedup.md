@@ -274,7 +274,7 @@ Filled in as we go.
 | 0 baseline | 2.31 | 17.6 | 77.1 | 434 | 55× | passing |
 | 1 inline cl + kill repair | 2.19 | 13.4 | 62.5 | 290 | 35× (JV=8.3) | passing |
 | 2 incremental eq-graph | 2.22 | 10.4 | 48.8 | 225 | 27× (JV=8.3) | passing |
-| 3 adj-restricted enqueue | | | | | | |
+| 3 adj-restricted enqueue | reverted (dense regression, see notes) |
 | 4 drop cost_prime | | | | | | |
 | 5 fuzz + assertions | | | | | | |
 | 6 HK leveling (optional) | | | | | | |
@@ -343,3 +343,44 @@ Filled in as we go.
 - Net change to call chain: post-Step-2 work goes from one O(nm) full
   rebuild to O(|S|·m + (n - |S|)·|T|). For dense random costs at n=256
   this is what saved ~65 ms per `match_gt` outer iteration on average.
+
+### Phase 3 notes (reverted)
+
+Implemented `build_adj_finite(cost) -> std::vector<std::vector<int>>` once
+at `match_gt` entry, passed through `hungarian_step_one_feasible` to
+`hungarian_search_cl`, and replaced the `for (j = 0; j < m; ++j)` loop in
+`enqueue_edges_from_row` with `for (int j : adj[i])`. Skipped the BIG_INT
+check in the inner loop since `adj[i]` filters it at build time.
+
+**Five-trial bench at n=256 dense uniform random max=1e5:** Phase 2
+median 230 ms, Phase 3 median 253 ms — a stable ~10% regression. JV
+~7.8 ms either way. Reverted the change.
+
+The plan estimated 1.5–2× on dense and "order-of-magnitude reduction in
+Hungarian inner-loop work" overall. That estimate was based on
+"removes the in_T[j] branch and the BIG_INT compare on a fast inner
+loop", but:
+
+- The `cost[i][j] >= BIG_INT` compare is on a value already loaded for
+  the `cl` computation. It's one well-predicted branch on dense (always
+  not taken). The saving per iteration is essentially zero cycles.
+- The `in_T[j]` branch is **still** required after Phase 3 (`in_T`
+  changes during the search). Phase 3 doesn't remove it.
+- Walking `adj[i]` adds an extra cache line per iteration (adj[i] lives
+  in a separate allocation from cost[i]). On dense, |adj[i]| == m, so
+  the iteration count is unchanged but inner-loop memory traffic goes
+  from one cache line per iteration (cost[i] only) to two (adj[i] +
+  cost[i]). That's the regression.
+
+Phase 3 is a **sparse-problem** optimization. On instances where many
+edges are forbidden (cost == BIG_INT), `|adj[i]| << m` and the iteration
+count drops proportionally — there the win is real. Re-evaluate when we
+add sparse benchmarks.
+
+The plan's bigger structural idea — "prefer enqueuing only near-eligible
+edges (small r), the rest get re-enqueued lazily" — is a different
+intervention from "skip forbidden edges" and would attack actual Step 2
+work, not per-edge overhead. Filed as a future direction; Phase 4 is the
+next concrete win.
+
+Bench artefact: `dev_notes/phase3_bench.txt`.

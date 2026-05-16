@@ -1,0 +1,53 @@
+Phase 5 fuzz: 1000 instances over kinds = dense, forbidden_some, negative, edge_1row, edge_1col
+   900/1000  drops=689  mismatches=0  gt_only_err=689
+
+Done in 27.2s.
+  ran:       897
+  skipped:   103  (non-square instances)
+  bucket-bound drops (Phase 5):  770
+  cost mismatches GT vs JV:      0
+  GT errored where JV solved:    770
+
+[Bucket-bound assertion fires]
+  seed=1 kind=forbidden_some n=70 max_cost=1e+09 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=2 kind=negative n=87 max_cost=1e+09 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=3 kind=forbidden_some n=7 max_cost=10 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=4 kind=negative n=77 max_cost=100 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=5 kind=forbidden_some n=68 max_cost=100 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=6 kind=forbidden_some n=55 max_cost=10 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=7 kind=dense n=44 max_cost=100 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=8 kind=forbidden_some n=98 max_cost=1000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=9 kind=dense n=189 max_cost=100000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=12 kind=forbidden_some n=196 max_cost=10 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=13 kind=dense n=5 max_cost=100000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=15 kind=dense n=39 max_cost=1e+09 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=16 kind=negative n=129 max_cost=100 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=19 kind=forbidden_some n=184 max_cost=100 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=20 kind=dense n=168 max_cost=1e+09 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=22 kind=forbidden_some n=139 max_cost=10 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=23 kind=negative n=159 max_cost=1000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=24 kind=dense n=149 max_cost=1e+09 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=25 kind=forbidden_some n=137 max_cost=100000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=26 kind=dense n=66 max_cost=1000 | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+
+[GT errored where JV solved]
+  seed=1 kind=forbidden_some n=70 max_cost=1e+09  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=2 kind=negative n=87 max_cost=1e+09  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=3 kind=forbidden_some n=7 max_cost=10  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=4 kind=negative n=77 max_cost=100  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=5 kind=forbidden_some n=68 max_cost=100  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=6 kind=forbidden_some n=55 max_cost=10  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=7 kind=dense n=44 max_cost=100  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=8 kind=forbidden_some n=98 max_cost=1000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=9 kind=dense n=189 max_cost=100000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=12 kind=forbidden_some n=196 max_cost=10  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=13 kind=dense n=5 max_cost=100000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=15 kind=dense n=39 max_cost=1e+09  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=16 kind=negative n=129 max_cost=100  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=19 kind=forbidden_some n=184 max_cost=100  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=20 kind=dense n=168 max_cost=1e+09  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=22 kind=forbidden_some n=139 max_cost=10  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=23 kind=negative n=159 max_cost=1000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=24 kind=dense n=149 max_cost=1e+09  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=25 kind=forbidden_some n=137 max_cost=100000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)
+  seed=26 kind=dense n=66 max_cost=1000  | Phase 5: finite edge dropped at initial enqueue (r > bucket_bound)

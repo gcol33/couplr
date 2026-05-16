@@ -276,7 +276,7 @@ Filled in as we go.
 | 2 incremental eq-graph | 2.22 | 10.4 | 48.8 | 225 | 27× (JV=8.3) | passing |
 | 3 adj-restricted enqueue | reverted (dense regression, see notes) |
 | 4 drop cost_prime | reverted (Step 1 starves without cost_prime, see notes) |
-| 5 fuzz + assertions | | | | | | |
+| 5 fuzz + assertions | unchanged | unchanged | unchanged | unchanged | unchanged | passing (drop is structural, not a bug) |
 | 6 HK leveling | 2.09 | 2.42 | 9.88 | 44.05 | 23× (JV=1.91) | passing |
 
 ### Phase 1 notes
@@ -437,6 +437,53 @@ optimisation, ~3–5% expected from skipped alloc/free. No algorithm
 change. Filed as a possible Phase 4b.
 
 Bench artefact: `dev_notes/phase4_bench.txt`.
+
+### Phase 5 notes
+
+Added a `#ifdef COUPLR_GT_DEBUG`-guarded check in
+`hungarian_search_cl::enqueue_edges_from_row` (and the symmetric re-enqueue
+branch in the bucket-processing loop) that flags any finite, not-in-T edge
+whose `r` exceeds `bucket_bound = 6n + 2`. Built the package with
+`-DCOUPLR_GT_DEBUG`, then ran `dev_notes/phase5_fuzz.R`: 1000 random
+instances, `n in [3, 200]`, `max_cost in {1, 10, 100, 1e3, 1e5, 1e7, 1e9}`,
+mix of dense / 0-10% forbidden / shifted-negative / 1-row / 1-col.
+
+**Fuzz result.** 897 square instances ran; the 1-row/1-col 103 were skipped
+(GT solves balanced LAP). The assertion fired on **770/897 (86%)** of
+instances. JV vs GT optimal cost: **0 mismatches.** Every drop happened at
+the initial-enqueue site; the re-enqueue site never fired in this run.
+
+**What this means.** The paper's `r = O(n)` bound assumes `match_gt` exits
+each phase with all reduced costs `cost - y_u - y_v` inside `[-1, n+1]`.
+This implementation only tightens duals on rows entering S and cols
+entering T during a Step 2; cold rows/cols keep `y_loc = 0`, so their
+phase-exit reduced cost can be arbitrarily large (proportional to
+`cost_prime` magnitude, which grows with `(n+1) * max_cost` over the bit
+phases). The silent `continue` is what keeps the bucket array from
+needing to be 2e11 entries wide at `n = 200, max_cost = 1e9`.
+
+The drops do not corrupt the final cost because the bit-scaling outer
+loop re-presents the dropped edges in later phases (after `c <- 2c + bit`,
+`y <- 2y - 1`, the reduced cost shrinks toward 0 on edges that should be
+matched). So the bound is theoretically optimistic for this
+implementation, but empirically safe.
+
+**Disposition.** Phase 5's plan offered two ways to remove silent drops:
+(a) tight dual maintenance so the paper bound holds, or (b) heap-based
+Step 2 so no bound is needed. Both are substantial reworks of Module E /
+Module F, comparable in size to Phases 3/4 combined. Not done here.
+
+Shipped: a comment block at the top of `utils_gabow_tarjan.cpp` plus
+inline comments at both drop sites that name this as a Phase 5 finding
+and explain why the drop is load-bearing. `dev_notes/phase5_fuzz.R` is
+kept as the regression check: a future refactor of dual maintenance must
+either drop counts to 0 (paper bound holds) or maintain 0 cost mismatches
+(drops stay safe). `Makevars.win` is reverted to release config; the
+COUPLR_GT_DEBUG block is reachable by adding `-DCOUPLR_GT_DEBUG` to
+`PKG_CPPFLAGS` and rebuilding.
+
+Bench: no perf change (release codepath unchanged); row in the results
+table marked "unchanged".
 
 ### Phase 6 notes
 

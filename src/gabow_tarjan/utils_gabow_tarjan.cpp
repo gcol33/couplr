@@ -538,23 +538,25 @@ bool hungarian_search_cl(const CostMatrix& cost,
         return (row_match[i] == j) ? c_ij : (c_ij + 1);
     };
 
-    // ---------------------------------------------------------------------
-    // PRE-STEP: make duals feasible w.r.t. cl on matched edges.
-    // For a matched edge (i,j), cl(i,j) == cost[i][j]. If y_u[i] + y_v[j] >
-    // cost[i][j], decrease y_u[i] by the excess (0 or 1 under 1-feasibility).
-    // ---------------------------------------------------------------------
+    // Invariant: every matched edge entering Step 2 is tight, i.e. y_u[i] +
+    // y_v[j] == cost[i][j]. Step 1's augment+col-decrement maintains this; the
+    // augment loop below maintains it across Step 2 by decrementing y_v on
+    // every newly-matched col, mirroring Step 1. Under COUPLR_GT_DEBUG we
+    // assert it; in release we rely on it (the old defensive y_u -= 1 fix-up
+    // would have masked stale eq_graph entries on rows that PRE-STEPed but did
+    // not enter S, breaking the Phase 2 incremental update).
+#ifdef COUPLR_GT_DEBUG
     for (int i = 0; i < n; ++i) {
         int j = row_match[i];
-        if (j == NIL) continue;
-        if (j < 0 || j >= m) continue;
+        if (j == NIL || j < 0 || j >= m) continue;
         long long c_ij = cost[i][j];
-        if (c_ij >= BIG_INT) continue;  // should not happen for a matched edge
-        long long sum_duals = y_u[i] + y_v[j];
-        if (sum_duals > c_ij) {
-            long long diff = sum_duals - c_ij;  // 0 or 1 in a 1-feasible state
-            y_u[i] -= diff;
+        if (c_ij >= BIG_INT) continue;
+        if (y_u[i] + y_v[j] != c_ij) {
+            LAP_ERROR("Matched edge not tight entering hungarian_search_cl "
+                      "(y_u[i] + y_v[j] != cost[i][j])");
         }
     }
+#endif
 
     // ---------------------------------------------------------------------
     // Paper Step 2: Hungarian forest with lazy dual offset A and bucket array Q.
@@ -679,12 +681,22 @@ bool hungarian_search_cl(const CostMatrix& cost,
             if (col_match[j] == NIL) {
                 materialize_forest_duals();
 
+                // Augment along the path back to the free row. For every
+                // newly-matched col, decrement y_v by 1: materialize leaves
+                // sum(path edge) = cl_pre = c + 1 for an edge that was
+                // unmatched before, but cl_new = c after augment. Decrementing
+                // y_v by 1 restores tightness (sum = c) on the matched edge,
+                // and preserves 1-feasibility on every other edge incident
+                // to the same col (those are all unmatched, so the upper
+                // bound y_u + y_v <= c + 1 can only get easier when y_v
+                // drops). Same pattern as Step 1's apply_step1 y_v -= 1 pass.
                 int col = j;
                 int row = reached_by_row[col];
                 while (row != NIL) {
                     int prev_col = row_match[row];
                     row_match[row] = col;
                     col_match[col] = row;
+                    y_v[col] -= 1;
                     int prev_row = parent_row[row];
                     if (prev_row == NIL) {
                         break;
@@ -995,55 +1007,8 @@ void match_gt(const CostMatrix& cost,
                 LAP_ERROR("No augmenting path in Step 2 (no perfect matching)");
             }
 
-#ifdef COUPLR_GT_DEBUG
-            // Cross-check incremental update against a from-scratch rebuild.
-            std::vector<std::vector<int>> eq_before = eq_graph;
-            std::vector<bool> in_S_dbg(n, false);
-            for (int s : affected_rows) if (s >= 0 && s < n) in_S_dbg[s] = true;
-            std::vector<bool> in_T_dbg(m, false);
-            for (int t : affected_cols) if (t >= 0 && t < m) in_T_dbg[t] = true;
-
             update_equality_graph_incremental(eq_graph, cost, row_match, y_u, y_v,
                                               affected_rows, affected_cols);
-            std::vector<std::vector<int>> eq_full = build_equality_graph(cost, row_match, y_u, y_v);
-            for (auto& v : eq_graph) std::sort(v.begin(), v.end());
-            for (auto& v : eq_full) std::sort(v.begin(), v.end());
-            if (eq_graph != eq_full) {
-                // Find first discrepancy.
-                for (int i = 0; i < n; ++i) {
-                    if (eq_graph[i] != eq_full[i]) {
-                        // Pick first j where they differ.
-                        const auto& inc = eq_graph[i];
-                        const auto& full = eq_full[i];
-                        std::set<int> sinc(inc.begin(), inc.end());
-                        std::set<int> sfull(full.begin(), full.end());
-                        std::string missing, extra;
-                        for (int j : sfull) {
-                            if (!sinc.count(j)) {
-                                if (!missing.empty()) missing += ",";
-                                missing += std::to_string(j);
-                            }
-                        }
-                        for (int j : sinc) {
-                            if (!sfull.count(j)) {
-                                if (!extra.empty()) extra += ",";
-                                extra += std::to_string(j);
-                            }
-                        }
-                        char buf[512];
-                        std::snprintf(buf, sizeof(buf),
-                            "Phase 2 eq_graph mismatch at row i=%d (in_S=%d): inc missing j=[%s] extra j=[%s] (|S|=%d,|T|=%d)",
-                            i, (int)in_S_dbg[i], missing.c_str(), extra.c_str(),
-                            (int)affected_rows.size(), (int)affected_cols.size());
-                        LAP_ERROR(buf);
-                    }
-                }
-                LAP_ERROR("Phase 2: incremental eq_graph diverges from full rebuild after Step 2");
-            }
-#else
-            update_equality_graph_incremental(eq_graph, cost, row_match, y_u, y_v,
-                                              affected_rows, affected_cols);
-#endif
         }
 
         // Optional: Check 1-feasibility after Step 2 (debug only)

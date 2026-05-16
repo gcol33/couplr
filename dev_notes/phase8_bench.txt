@@ -1,0 +1,78 @@
+Phase 8 (heap/Dijkstra-Hungarian Step 2) — SHIPPED
+
+Motivation: Phase 5 documented that the bucket-array Step 2 silently dropped
+~86% of edges when r exceeded the paper's 6n+2 bound. Empirically safe (0
+cost mismatches across 1000 random instances) but algorithmically a load-
+bearing wart. Removing it cleanly required either (a) tight dual maintenance
+so the paper bound actually holds or (b) a non-bucket Step 2 with no bound.
+This phase takes route (b): replace the bucket array entirely with a JV-style
+scan-min Dijkstra-Hungarian on cost-length cl.
+
+Algorithm sketch:
+  - dist[j] = current shortest reduced-cost path from any free row to j.
+  - Each iter: scan-min over unsettled cols, find j1; apply delta to duals;
+    settle j1; if free, augment; else add col_match[j1] to S and relax its
+    edges.
+  - Augment by walking pred_row[col] back to a free root; y_v[col] -= 1 on
+    every newly-matched col (Phase 2 invariant: matched-edge tightness after
+    the cl_matched = cl_unmatched - 1 shift).
+
+Optimizations layered:
+  (a) S_list / T_list as explicit vectors. Dual updates iterate these
+      directly instead of scanning all n / m with an in_S / in_T branch.
+  (b) Lazy delta on dist[]. JV's per-iter "for j not in T: dist[j] -= delta"
+      O(m) loop is replaced by a delta_pending offset. dist[j] is stored in
+      (current_form + delta_pending) form; scan-min compares stored values
+      directly (order-preserving since all share the same offset); relax
+      shifts new candidates by + delta_pending before storing. Functionally
+      equivalent to JV but eliminates the O(m) subtract loop per iter.
+
+Note on a wrong path: an "absolute-form dist[]" variant skipping the
++delta_pending shift looked simpler but BROKE matched-edge tightness on
+>1-step augmenting paths (e.g., 3x3 cost = [[6,3,5],[7,8,7],[4,0,4]] gave
+matched edge (3,2) sum y_u + y_v = -3 < 0 = c). The JV-style shortest path
+in CURRENT-form (where dist[j] = path cost via current duals) is required
+for the dual updates to preserve matched-edge tightness, not the absolute
+shortest path. The lazy-delta version keeps JV's comparison invariant.
+
+A/B bench, same machine session, sequential builds (dev_notes/phase8_ab.sh,
+microbenchmark times=20, warmup=2, seed=1000+n):
+
+  | n   | Phase 7 bucket | Phase 8 lazy-delta | Delta  |
+  |-----|----------------|--------------------|--------|
+  |  64 |        9.06 ms |            7.60 ms |  -16%  |
+  | 128 |       39.82 ms |           33.84 ms |  -15%  |
+  | 256 |      186.23 ms |          194.85 ms |   +5%  |
+  | 384 |      549.67 ms |          550.77 ms |    0%  |
+  | 512 |      813.59 ms |          742.72 ms |   -9%  |
+
+Slope (n=64..512): 2.22 -> 2.29 (slightly worse).
+JV reference stable at ~7.5 ms (n=256) across variants.
+
+The n=256 mild regression: scan-min is O(m) per pop, vs bucket's O(1) per
+pop; for ~50 pops/Step 2 at m=256, that's ~13K extra reads per Step 2 in
+Phase 8. At small n (64, 128) the bucket array's allocation overhead
+dominates; at large n (512) the bucket_bound (6n+2 = 3074) makes the
+empty-bucket scan dominant. n=256 is the unlucky middle.
+
+Correctness verification (Phase 8 build):
+  - 5093 full-suite expectations pass.
+  - 726 GT-specific expectations pass.
+  - Phase 5 fuzz harness: 897 square instances ran; 0 cost mismatches,
+    0 GT-only errors, 0 silent drops (drops no longer exist).
+
+What's removed:
+  - Bucket array structure (Q[r], bucket_bound, bucket_head, entries).
+  - The Phase 5 "drop if r > bucket_bound" silent-drop branch.
+  - The lazy A-offset bookkeeping (saved_y_u, enter_A_u, materialize_forest_duals).
+  - The Phase 5 file-top comment block updated to historical-note form.
+
+What's kept:
+  - The Phase 5 fuzz harness (dev_notes/phase5_fuzz.R) as a 1000-instance
+    regression check.
+  - The COUPLR_GT_PROFILE instrumentation (no longer counts bucket pops,
+    but tracks step2_calls, step2_enqueue_edges, step1_calls, eq updates).
+
+Bench artefacts: dev_notes/phase8_ab.sh, dev_notes/phase8_ab_run.R,
+dev_notes/phase8_ab_phase7_bucket.log, dev_notes/phase8_ab_phase8_dijkstra.log,
+dev_notes/phase8_bench.txt.

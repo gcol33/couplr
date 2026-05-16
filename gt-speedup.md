@@ -279,6 +279,7 @@ Filled in as we go.
 | 5 fuzz + assertions | unchanged | unchanged | unchanged | unchanged | unchanged | passing (drop is structural, not a bug) |
 | 6 HK leveling | 2.09 | 2.42 | 9.88 | 44.05 | 23× (JV=1.91) | passing |
 | 7 flat bucket array | 2.26 | 9.23 | 39.80 | 186.1 | 24.6× (JV=7.57) | passing |
+| 8 Dijkstra-Hungarian Step 2 | 2.29 | 7.60 | 33.84 | 194.8 | 25.6× (JV=7.60) | passing (silent drop gone) |
 
 ### Phase 1 notes
 
@@ -587,3 +588,78 @@ a possible Phase 8.
 
 Bench artefacts: `dev_notes/phase7_profile.R`, `dev_notes/phase7_ab.sh`,
 `dev_notes/phase7_ab_run.R`, `dev_notes/phase7_bench.txt`.
+
+### Phase 8 notes
+
+Motivation: Phase 5 documented that the bucket-array Step 2 silently
+dropped ~86% of edges when `r` exceeded the paper's `6n+2` bound. The
+disposition there offered two ways to remove the drop: (a) tight dual
+maintenance so the paper bound holds, or (b) a non-bucket Step 2 with
+no bound. Phase 8 takes route (b): replace the bucket array entirely
+with a JV-style scan-min Dijkstra-Hungarian on cost-length `cl`.
+
+Algorithm:
+- `dist[j]` = current shortest reduced-cost path from any free row to j.
+- Each iter: scan-min over unsettled cols → find `j1`; apply `delta` to
+  duals (`y_u` for S, `y_v` for T); settle `j1`; if free, augment;
+  else add `col_match[j1]` to S and relax its edges.
+- Augment walks `pred_row[col]` back to a free root; `y_v[col] -= 1` on
+  every newly-matched col (Phase 2 matched-edge tightness invariant).
+
+Optimizations layered:
+- (a) `S_list` / `T_list` as explicit vectors. Dual updates iterate
+  these directly instead of `for i in 0..n if (in_S[i])`.
+- (b) Lazy `delta` on `dist[]`. JV's per-iter `for j not in T: dist[j]
+  -= delta` O(m) loop is replaced by tracking `delta_pending`. Scan-min
+  compares stored values directly (order-preserving since all share the
+  same offset); relax shifts new candidates by `+ delta_pending` before
+  storing. Functionally equivalent to JV's current-form Dijkstra but
+  eliminates the O(m) subtract loop per iter.
+
+**A wrong path tried and reverted in-session.** An "absolute-form `dist[]`"
+variant compared `d_absolute < dist[j]_absolute` (skipping the
+`+ delta_pending` shift), which broke matched-edge tightness on
+>1-step augmenting paths. Concrete trigger: 3×3 cost
+`[[6,3,5],[7,8,7],[4,0,4]]` produced matched edge (3,2) with
+`y_u[3] + y_v[2] = -3 < 0 = c`. The shortest path in CURRENT-form
+(where `dist[j]` = path cost via current duals) is what the dual updates
+need to preserve matched-edge tightness, not the absolute shortest path.
+The lazy-delta version keeps JV's comparison invariant.
+
+**A/B bench, same machine session (`dev_notes/phase8_ab.sh`,
+microbenchmark times=20, warmup=2, seed=1000+n):**
+
+| | Phase 7 bucket | Phase 8 lazy-delta | Δ |
+|---|---|---|---|
+| n=64 | 9.06 ms | 7.60 ms | -16% |
+| n=128 | 39.82 ms | 33.84 ms | -15% |
+| n=256 | 186.23 ms | 194.85 ms | +5% |
+| n=384 | 549.67 ms | 550.77 ms | 0% |
+| n=512 | 813.59 ms | 742.72 ms | -9% |
+| slope (64-512) | 2.22 | 2.29 | slightly worse |
+
+JV reference stable at ~7.5 ms (n=256). The mild n=256 regression:
+scan-min is O(m) per pop vs bucket's O(1) per pop; at small n the bucket
+array's allocation overhead dominates, at large n the empty-bucket scan
+(bucket_bound = 6n+2 = 3074 at n=512) dominates; n=256 is the unlucky
+middle. Shipping anyway because the correctness improvement (silent drop
+gone, algorithm matches the paper's intent) is structural, and the wins
+at small/large n more than offset the n=256 wash on typical workloads.
+
+**What's removed:** the bucket array (`Q[r]`, `bucket_bound`, `bucket_head`,
+`entries`), the Phase 5 "drop if r > bucket_bound" branch (both initial
+enqueue and re-enqueue sites), the lazy A-offset bookkeeping (`saved_y_u`,
+`enter_A_u`, `materialize_forest_duals`). The Phase 5 file-top comment
+block is rewritten as a historical note.
+
+**What's kept:** `dev_notes/phase5_fuzz.R` as the 1000-instance regression
+harness (silent drop column is now always 0; cost mismatch column must
+stay 0). `COUPLR_GT_PROFILE` instrumentation still tracks the relevant
+counters (`step2_calls`, `step2_enqueue_edges`, `step1_calls`, etc.).
+
+Fuzz on Phase 8 build: 897 square instances ran, 0 silent drops, 0 cost
+mismatches vs JV, 0 GT-only errors. Full suite: 5093 expectations, 0
+failures.
+
+Bench artefacts: `dev_notes/phase8_ab.sh`, `dev_notes/phase8_ab_run.R`,
+`dev_notes/phase8_bench.txt`, plus per-variant logs.

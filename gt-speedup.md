@@ -275,7 +275,7 @@ Filled in as we go.
 | 1 inline cl + kill repair | 2.19 | 13.4 | 62.5 | 290 | 35× (JV=8.3) | passing |
 | 2 incremental eq-graph | 2.22 | 10.4 | 48.8 | 225 | 27× (JV=8.3) | passing |
 | 3 adj-restricted enqueue | reverted (dense regression, see notes) |
-| 4 drop cost_prime | | | | | | |
+| 4 drop cost_prime | reverted (Step 1 starves without cost_prime, see notes) |
 | 5 fuzz + assertions | | | | | | |
 | 6 HK leveling (optional) | | | | | | |
 
@@ -384,3 +384,56 @@ work, not per-edge overhead. Filed as a future direction; Phase 4 is the
 next concrete win.
 
 Bench artefact: `dev_notes/phase3_bench.txt`.
+
+### Phase 4 notes (reverted)
+
+Implemented the full plan: dropped `cost_prime` materialization in
+`scale_match`, threaded warm-start duals through `match_gt` /
+`hungarian_step_one_feasible` via a new `init_empty_duals` flag (default
+true for the R test wrappers; false for the bit-scaling caller), and
+moved `gt_init_empty_duals` out of `match_gt`'s empty-matching path when
+the flag is false. The bit-scaling outer loop's `y <- 2y - 1` now feeds
+directly into `match_gt` as the active duals — no per-phase O(nm) build,
+no `y_global += y_loc` add-back.
+
+**Five-trial bench, same-session state (JV ≈ 1.88 ms):**
+
+| | Phase 2 | Phase 4 | Δ |
+|---|---|---|---|
+| n=64 | 2.18 ms | 4.11 ms | +88% |
+| n=128 | 10.49 ms | 14.37 ms | +37% |
+| n=256 | 47.30 ms | 64.49 ms | +36% |
+| slope | 2.22 | 1.99 | better |
+
+Stable across trials. Phase 4 has a better slope but a worse constant.
+Crossover with Phase 2 is around n ≈ 1000; below that, regression. Our
+target use case is n ≤ 256, so net loss. Reverted.
+
+**Root cause: Step 1 starves without `cost_prime`.** The OLD design used
+`cost_prime = cost - y_global` (small range), and `gt_init_empty_duals`
+at each phase entry set `y_v[j] = min_i(cost_prime[i][j] + 1)`, making
+the column-min row in every column eligible. The eq_graph at match_gt
+entry contained ~m edges; Step 1's `find_maximal_augmenting_paths`
+extracted cheap partial matchings before falling through to Step 2.
+
+In the NEW design with warm-start duals and no `gt_init_empty_duals`,
+the duals after the outer loop's `y <- 2y - 1` give `y_u + y_v = -2`
+(first phase, where prev-phase y = 0). For an edge to be eligible,
+`y_u + y_v == c + 1`, which means `c == -3`. No such edge exists. The
+eq_graph is empty. Step 1 finds nothing. Every augmenting path routes
+through the more expensive Step 2.
+
+The trade-off is fundamental: either you keep `cost_prime` (small
+range → canonical init populates eq_graph → Step 1 useful) **or** you
+drop it (warm-start preserved across phases → eq_graph starts empty →
+Step 1 starves). The plan's intuition that Phase 4 would "restore real
+warm start" missed that the canonical init *was* the load-bearing thing
+making Step 1 useful, not just a setup step we could skip.
+
+What might still be worth trying for Phase 4: keep `cost_prime` but
+**reuse the allocation across phases** (own the buffer in
+`solve_gabow_tarjan_inner`, refill in-place each phase). Pure memory
+optimisation, ~3–5% expected from skipped alloc/free. No algorithm
+change. Filed as a possible Phase 4b.
+
+Bench artefact: `dev_notes/phase4_bench.txt`.

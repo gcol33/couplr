@@ -1,0 +1,46 @@
+Phase 4 (drop cost_prime + warm-start duals) — REVERTED
+
+Same-shell-state head-to-head bench at n=256 dense, uniform random, max=1e5,
+microbenchmark times=20, warmup=2, seed=1256.
+
+Phase 2 baseline, 5 trials:
+Trial 1: GT=44.78 ms, JV=1.90 ms, ratio=23.5x
+Trial 2: GT=44.60 ms, JV=1.89 ms, ratio=23.6x
+Trial 3: GT=44.71 ms, JV=1.84 ms, ratio=24.3x
+Trial 4: GT=44.55 ms, JV=1.90 ms, ratio=23.5x
+Trial 5: GT=44.49 ms, JV=1.87 ms, ratio=23.8x
+
+Phase 2 slope (n=64/128/256): 2.219
+  n=64:  2.181 ms
+  n=128: 10.485 ms
+  n=256: 47.297 ms
+
+Phase 4, 5 trials in same session state:
+Trial 1: GT=64.27 ms, JV=1.89 ms, ratio=34.0x
+Trial 2: GT=63.94 ms, JV=1.88 ms, ratio=34.0x
+Trial 3: GT=63.67 ms, JV=1.87 ms, ratio=34.1x
+Trial 4: GT=63.67 ms, JV=1.92 ms, ratio=33.2x
+Trial 5: GT=63.82 ms, JV=1.81 ms, ratio=35.2x
+
+Phase 4 slope (n=64/128/256): 1.986
+  n=64:  4.109 ms
+  n=128: 14.370 ms
+  n=256: 64.492 ms
+
+Phase 4 log C sweep at n=256:
+  max_cost=1000:     GT median=53.59 ms
+  max_cost=100000:   GT median=63.26 ms
+  max_cost=10000000: GT median=64.29 ms
+
+Phase 2 -> Phase 4 at n=256: 44.7 ms -> 64.5 ms (+44% regression).
+Phase 4 slope is better (2.22 -> 1.99), but the constant is worse.
+Crossover with Phase 2 is around n ~ 1000; below that, Phase 4 loses.
+
+Conclusion: with cost_prime dropped, gt_init_empty_duals can't run with
+small-range cost any more, and the canonical init that populated the
+eq_graph at phase entry is gone. Step 1 starts with an empty eq_graph
+every phase and all augmenting paths route through Step 2, which is more
+expensive per augmentation. The +44% at n=256 is that shift.
+
+Reverted. See gt-speedup.md "Phase 4 notes (reverted)" for the analysis
+and the fundamental trade-off (cost_prime trick vs warm-start).

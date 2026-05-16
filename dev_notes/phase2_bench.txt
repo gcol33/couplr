@@ -1,0 +1,16 @@
+   n times max_cost min_ms median_ms mean_ms max_ms log_n log_median
+  64    20   100000  10.20     10.42   11.35  28.34 4.159      2.344
+ 128    20   100000  48.13     48.83   48.82  49.72 4.852      3.888
+ 256    20   100000 221.80    224.93  224.94 229.81 5.545      5.416
+ fit_exponent
+        2.216
+        2.216
+        2.216
+Estimated median-time exponent over these sizes: 2.216
+   n times max_cost min_ms median_ms mean_ms max_ms log_n log_median
+ 384    10   100000  569.4     574.4   575.6  589.1 5.951      6.353
+ 512    10   100000  923.4     928.3   929.4  936.8 6.238      6.833
+ fit_exponent
+        1.669
+        1.669
+Estimated median-time exponent over these sizes: 1.669

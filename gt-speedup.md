@@ -273,7 +273,7 @@ Filled in as we go.
 |---|---|---|---|---|---|---|
 | 0 baseline | 2.31 | 17.6 | 77.1 | 434 | 55× | passing |
 | 1 inline cl + kill repair | 2.19 | 13.4 | 62.5 | 290 | 35× (JV=8.3) | passing |
-| 2 incremental eq-graph | | | | | | |
+| 2 incremental eq-graph | 2.22 | 10.4 | 48.8 | 225 | 27× (JV=8.3) | passing |
 | 3 adj-restricted enqueue | | | | | | |
 | 4 drop cost_prime | | | | | | |
 | 5 fuzz + assertions | | | | | | |
@@ -308,3 +308,38 @@ Filled in as we go.
   exercise the removed repair loop; updated to 1-feasible duals
   (`tests/testthat/gabow-tarjan/test_gabow_tarjan_moduleF.R`). Two
   `gt_build_cl_matrix` tests in Module E deleted (function is gone).
+
+### Phase 2 notes
+
+- 1.3–1.4× wall-clock on top of Phase 1; slope unchanged at ~2.22. The full
+  `eq_graph = build_equality_graph(...)` rebuild after each Step 2 is gone.
+  Below the plan's 1.5–3× estimate because Step 2 invocations are not the
+  hot path on dense uniform-random instances — most augmentations happen in
+  Step 1, where the rebuild was already incremental.
+- **Root-cause fix that fell out of this phase.** The post-Step-2 dual
+  state had matched path edges with `sum = c + 1` (1-feasible but not
+  tight), because `materialize_forest_duals` is computed against the
+  pre-Step-2 `row_match` (where the edge was still unmatched and
+  `cl_pre = c + 1`). The old code papered over this with a "PRE-STEP" at
+  the top of `hungarian_search_cl` that decremented `y_u[i]` by 1 on every
+  non-tight matched row at the start of the next Step 2. That worked under
+  the full-rebuild flow, but it broke the incremental update because
+  `y_u[i]` was mutated for rows that did not enter S, so their
+  `eq_graph[i]` adjacency went stale. The fix decrements `y_v[j]` by 1 on
+  every newly-matched col inside the Step 2 augment loop — mirroring what
+  Step 1 already does — so matched path edges leave Step 2 tight. With
+  that invariant restored, PRE-STEP becomes dead code; replaced with a
+  `COUPLR_GT_DEBUG`-only assertion that matched edges are tight on entry.
+- `update_equality_graph_incremental` now takes both `affected_rows` and
+  `affected_cols`. Step 1 calls it with empty `affected_rows`. Step 2
+  calls it with `affected_rows = S`, `affected_cols = T`, where rows in
+  S get their adjacency rebuilt over all m cols (their y_u and possibly
+  row_match changed) and rows outside S get only edges to cols in T
+  pruned (y_v dropped, eligibility can only be lost for those, never
+  gained, since cl is unchanged on those edges). When the matching was
+  empty entering `hungarian_step_one_feasible`, `gt_init_empty_duals`
+  rewrites every `y_v`, so the wrapper signals a full rebuild by setting
+  `affected_rows` to all rows.
+- Net change to call chain: post-Step-2 work goes from one O(nm) full
+  rebuild to O(|S|·m + (n - |S|)·|T|). For dense random costs at n=256
+  this is what saved ~65 ms per `match_gt` outer iteration on average.

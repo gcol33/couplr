@@ -1,0 +1,49 @@
+Phase 7 (flat bucket array in hungarian_search_cl) — SHIPPED
+
+Profile (dev_notes/phase7_profile.R, built with -DCOUPLR_GT_PROFILE):
+
+  n=256 dense uniform random max_cost=1e5:
+  total=220 ms  step1=9.65 (516 calls, 6182 paths)  step2=135.5 (218 calls)
+     enqueue=126.3 (2,953,217 edges)   bucket~9 (17,095 pops)
+  eq_build=12.2 (25)  eq_update=38.1 (516)
+
+  Key finding: 57% of total in enqueue_edges_from_row's push_back; 174x
+  more edges enqueued than ever popped. Each push lands in 1 of 1539
+  separate cache-cold std::vector<BucketEdge> buckets keyed by random r.
+
+Phase 7 change: replace `std::vector<std::vector<BucketEdge>> Q(bucket_bound+1)`
+with one contiguous arena `entries` plus intrusive linked-list bucket heads.
+Push = append to entries + relink bucket_head[r]. Pop = follow bucket_head[r]
+into entries. Eliminates per-bucket heap allocations.
+
+A/B bench, same machine session, sequential builds (dev_notes/phase7_ab.sh,
+microbenchmark times=20, warmup=2, seed=1000+n):
+
+  | n   | Old buckets | Flat buckets | Delta  |
+  |-----|-------------|--------------|--------|
+  |  64 |    11.39 ms |      9.23 ms |  -19%  |
+  | 128 |    47.44 ms |     39.80 ms |  -16%  |
+  | 256 |   214.86 ms |    186.12 ms |  -13%  |
+  | 384 |   615.61 ms |    547.42 ms |  -11%  |
+
+  GT/JV ratio @ n=256: 28.6x -> 24.6x.
+  GT slope (n=64..384): 2.211 -> 2.261 (within measurement noise).
+  JV reference stable at ~7.5 ms @ n=256 across variants.
+
+Why this works: the old per-bucket vectors were small allocations cold by the
+time push_back hit a random r, and 1539 such buckets compete for L2 cache.
+The flat arena's tail is always cache-warm for sequential push_back; the
+random work shifts to a small 6KB bucket_head[] which fits comfortably in L1.
+
+Why it isn't bigger: per-edge work is fundamentally O(1) compute; the cache
+miss reduction only helps so much when the hot path is already small. The
+174x waste ratio (most enqueued edges never popped) is unchanged; reducing
+that count is a separate (algorithmic) lever.
+
+Side effect: the COUPLR_GT_PROFILE chrono instrumentation added during
+profiling lives in the source behind #ifdef COUPLR_GT_PROFILE. Release build
+is unchanged (macros expand to no-ops). Re-enable by adding -DCOUPLR_GT_PROFILE
+to PKG_CPPFLAGS to print a per-solve breakdown to stdout.
+
+Tests: 726 GT expectations + 4955 full-suite expectations all pass under
+release build.

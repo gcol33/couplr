@@ -25,6 +25,83 @@
 #define DEBUG_ASSERT_FEASIBLE(cost, rm, cm, yu, yv, msg) ((void)0)
 #endif
 
+// ---------------------------------------------------------------------------
+// Optional profiling instrumentation. Enable by building with
+//   PKG_CPPFLAGS += -DCOUPLR_GT_PROFILE
+// and the package will print a per-solve breakdown to stdout. Release builds
+// compile every PROF_* call to a no-op. Counters are process-scoped (not
+// thread-local); the R single-threaded execution model makes that fine.
+// ---------------------------------------------------------------------------
+#ifdef COUPLR_GT_PROFILE
+#include <chrono>
+namespace {
+struct GtProfile {
+    long long total_ns           = 0;
+    long long step1_ns           = 0;
+    long long step2_ns           = 0;
+    long long enqueue_ns         = 0;
+    long long bucket_loop_ns     = 0;
+    long long eq_build_ns        = 0;
+    long long eq_update_ns       = 0;
+    long long step1_calls        = 0;
+    long long step1_paths        = 0;
+    long long step2_calls        = 0;
+    long long step2_enqueue_edges= 0;
+    long long step2_bucket_pops  = 0;
+    long long eq_builds          = 0;
+    long long eq_updates         = 0;
+    long long match_gt_calls     = 0;
+    long long scale_match_calls  = 0;
+
+    void reset() { *this = GtProfile{}; }
+    void print() const {
+        auto ms = [](long long ns) { return ns / 1e6; };
+        Rcpp::Rcout << "[GT_PROFILE]"
+                    << "  total=" << ms(total_ns) << " ms"
+                    << "  step1=" << ms(step1_ns) << " (" << step1_calls
+                    << " calls, " << step1_paths << " paths)"
+                    << "  step2=" << ms(step2_ns) << " (" << step2_calls
+                    << " calls)"
+                    << "    enqueue=" << ms(enqueue_ns) << " ("
+                    << step2_enqueue_edges << " edges)"
+                    << "    bucket=" << ms(bucket_loop_ns) << " ("
+                    << step2_bucket_pops << " pops)"
+                    << "  eq_build=" << ms(eq_build_ns) << " ("
+                    << eq_builds << ")"
+                    << "  eq_update=" << ms(eq_update_ns) << " ("
+                    << eq_updates << ")"
+                    << "  match_gt=" << match_gt_calls
+                    << "  scale_match=" << scale_match_calls
+                    << "\n";
+    }
+};
+inline GtProfile& gt_prof() {
+    static GtProfile p;
+    return p;
+}
+struct PrTimer {
+    long long& target;
+    std::chrono::steady_clock::time_point t0;
+    explicit PrTimer(long long& tgt)
+        : target(tgt), t0(std::chrono::steady_clock::now()) {}
+    ~PrTimer() {
+        auto t1 = std::chrono::steady_clock::now();
+        target += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0)
+                      .count();
+    }
+};
+}  // namespace
+#define PROF_TIMER(field) PrTimer pr_timer_##field(gt_prof().field)
+#define PROF_INC(field, by) (gt_prof().field += (by))
+#define PROF_RESET() (gt_prof().reset())
+#define PROF_PRINT() (gt_prof().print())
+#else
+#define PROF_TIMER(field) ((void)0)
+#define PROF_INC(field, by) ((void)0)
+#define PROF_RESET() ((void)0)
+#define PROF_PRINT() ((void)0)
+#endif
+
 // Phase 5 finding (see gt-speedup.md). The bucket-array Step 2 search
 // drops finite, not-in-T edges whose initial-enqueue or re-enqueue r
 // exceeds bucket_bound = 6n+2. The 1989 paper proves r is O(n) when
@@ -184,6 +261,8 @@ build_equality_graph(const CostMatrix& cost,
                      const DualVec& y_u,
                      const DualVec& y_v)
 {
+    PROF_TIMER(eq_build_ns);
+    PROF_INC(eq_builds, 1);
     const int n = static_cast<int>(cost.size());
     const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
 
@@ -246,6 +325,8 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
                                         const std::vector<int>& affected_rows,
                                         const std::vector<int>& affected_cols)
 {
+    PROF_TIMER(eq_update_ns);
+    PROF_INC(eq_updates, 1);
     const int n = static_cast<int>(cost.size());
     const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
 
@@ -603,6 +684,8 @@ bool hungarian_search_cl(const CostMatrix& cost,
                          std::vector<int>* affected_rows_out,
                          std::vector<int>* affected_cols_out)
 {
+    PROF_TIMER(step2_ns);
+    PROF_INC(step2_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
     if (n == 0 || m == 0) return false;
@@ -643,13 +726,31 @@ bool hungarian_search_cl(const CostMatrix& cost,
     // Buckets Q[r] store exactly those edge candidates.
     // ---------------------------------------------------------------------
 
+    // Phase 7 (flat bucket): the bucket structure used to be
+    //   std::vector<std::vector<BucketEdge>> Q[bucket_bound+1]
+    // i.e. ~1500 separate inner vectors, each with its own heap allocation,
+    // pushed to in random-by-r order. Profile (dev_notes/phase7_profile.R)
+    // showed ~57% of total time was in enqueue_edges_from_row's push_back.
+    // Flat-bucket: one contiguous arena `entries` plus an intrusive linked
+    // list keyed by r. bucket_head[r] is the index in `entries` of the most
+    // recently pushed edge for r; each entry's `next` is the index of the
+    // prior push (or -1). Push = append to entries + relink bucket_head[r].
+    // Pop = follow bucket_head[r] into entries. Eliminates per-bucket heap
+    // allocations; A/B over n in {64..384} measured 11-19% speedup on dense.
     struct BucketEdge {
         int row;
         int col;
+        int next;  // index in `entries` of prior push for same r, or -1
     };
 
     const long long bucket_bound = std::max(1, 6 * n + 2);
-    std::vector<std::vector<BucketEdge>> Q(static_cast<size_t>(bucket_bound) + 1);
+    std::vector<int> bucket_head(static_cast<size_t>(bucket_bound) + 1, -1);
+    std::vector<BucketEdge> entries;
+    // Reserve a starting capacity that holds a moderate Step 2 without
+    // realloc. Anything larger grows by std::vector's normal doubling, which
+    // is amortized O(1) and trivial in absolute cost (memcpy of an entire
+    // 13.5K-entry arena is ~30 microseconds).
+    entries.reserve(static_cast<size_t>(std::max(64, n + m)));
 
     long long A = 0;
     long long next_bucket = 0;
@@ -666,6 +767,7 @@ bool hungarian_search_cl(const CostMatrix& cost,
     std::vector<long long> enter_A_v(m, 0);
 
     auto enqueue_edges_from_row = [&](int i) {
+        PROF_TIMER(enqueue_ns);
         for (int j = 0; j < m; ++j) {
             if (in_T[j]) {
                 continue;
@@ -686,7 +788,12 @@ bool hungarian_search_cl(const CostMatrix& cost,
                 // block at the top of this file.
                 continue;
             }
-            Q[static_cast<size_t>(r)].push_back({i, j});
+            // Phase 7: flat bucket array. Append to the arena; link the new
+            // entry as the new head of bucket r.
+            int idx = static_cast<int>(entries.size());
+            entries.push_back({i, j, bucket_head[static_cast<size_t>(r)]});
+            bucket_head[static_cast<size_t>(r)] = idx;
+            PROF_INC(step2_enqueue_edges, 1);
         }
     };
 
@@ -718,22 +825,25 @@ bool hungarian_search_cl(const CostMatrix& cost,
         return false;
     }
 
+    const long long bucket_count = static_cast<long long>(bucket_head.size());
     while (true) {
         while (true) {
-            while (next_bucket < static_cast<long long>(Q.size()) &&
-                   Q[static_cast<size_t>(next_bucket)].empty()) {
+            while (next_bucket < bucket_count &&
+                   bucket_head[static_cast<size_t>(next_bucket)] == -1) {
                 ++next_bucket;
             }
-            if (next_bucket >= static_cast<long long>(Q.size())) {
+            if (next_bucket >= bucket_count) {
                 return false;
             }
 
             A = next_bucket;
-            BucketEdge edge = Q[static_cast<size_t>(next_bucket)].back();
-            Q[static_cast<size_t>(next_bucket)].pop_back();
+            int head_idx = bucket_head[static_cast<size_t>(next_bucket)];
+            BucketEdge popped = entries[static_cast<size_t>(head_idx)];
+            bucket_head[static_cast<size_t>(next_bucket)] = popped.next;
+            int i = popped.row;
+            int j = popped.col;
+            PROF_INC(step2_bucket_pops, 1);
 
-            int i = edge.row;
-            int j = edge.col;
             if (i < 0 || i >= n || j < 0 || j >= m || !in_S[i] || in_T[j]) {
                 continue;
             }
@@ -748,7 +858,10 @@ bool hungarian_search_cl(const CostMatrix& cost,
             if (reduced > 0) {
                 long long r = A + reduced;
                 if (r <= bucket_bound) {
-                    Q[static_cast<size_t>(r)].push_back({i, j});
+                    int idx = static_cast<int>(entries.size());
+                    entries.push_back({i, j,
+                                       bucket_head[static_cast<size_t>(r)]});
+                    bucket_head[static_cast<size_t>(r)] = idx;
                 }
                 // else: Phase 5 re-enqueue drop (see file-top comment).
                 continue;
@@ -904,6 +1017,8 @@ bool apply_step1(const CostMatrix& cost,
                 std::vector<std::vector<int>>* eq_graph,
                 std::vector<int>* affected_cols_out)
 {
+    PROF_TIMER(step1_ns);
+    PROF_INC(step1_calls, 1);
     // 1. Build equality graph of eligible edges (or use provided one)
     std::vector<std::vector<int>> local_eq_graph;
     std::vector<std::vector<int>>& graph_ref = eq_graph ? *eq_graph : local_eq_graph;
@@ -919,6 +1034,7 @@ bool apply_step1(const CostMatrix& cost,
     if (paths.empty()) {
         return false;
     }
+    PROF_INC(step1_paths, static_cast<long long>(paths.size()));
 
     // 3. Augment paths individually and track columns used
     // OPTIMIZED: Augment each path individually for efficiency
@@ -985,6 +1101,7 @@ void match_gt(const CostMatrix& cost,
              int max_iters,
              bool check_feasible)
 {
+    PROF_INC(match_gt_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = n > 0 ? static_cast<int>(cost[0].size()) : 0;
     
@@ -1134,6 +1251,7 @@ void scale_match(const CostMatrix& cost,
                 MatchVec& col_match,
                 DualVec& y_u,
                 DualVec& y_v) {
+    PROF_INC(scale_match_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
     
@@ -1276,9 +1394,11 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
                               MatchVec& col_match,
                               DualVec& y_u,
                               DualVec& y_v) {
+    PROF_RESET();
+    PROF_TIMER(total_ns);
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
-    
+
     if (n == 0 || m == 0) {
         row_match.clear();
         col_match.clear();
@@ -1400,4 +1520,21 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
     for (int j = 0; j < m; ++j) {
         y_v[j] = y_v[j] / static_cast<long long>(n + 1);
     }
+
+#ifdef COUPLR_GT_PROFILE
+    // PROF_TIMER(total_ns) destructor hasn't run yet; sample the elapsed time
+    // for the print, then let the destructor finalize total_ns.
+    {
+        auto& p = gt_prof();
+        // Approximate: print the running totals (total_ns finalized just after).
+        // We use a print here so the line appears once per solve in benchmarks.
+        long long saved_total = p.total_ns;
+        p.total_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                         std::chrono::steady_clock::now() -
+                         pr_timer_total_ns.t0)
+                         .count();
+        p.print();
+        p.total_ns = saved_total;
+    }
+#endif
 }

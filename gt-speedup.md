@@ -278,6 +278,7 @@ Filled in as we go.
 | 4 drop cost_prime | reverted (Step 1 starves without cost_prime, see notes) |
 | 5 fuzz + assertions | unchanged | unchanged | unchanged | unchanged | unchanged | passing (drop is structural, not a bug) |
 | 6 HK leveling | 2.09 | 2.42 | 9.88 | 44.05 | 23× (JV=1.91) | passing |
+| 7 flat bucket array | 2.26 | 9.23 | 39.80 | 186.1 | 24.6× (JV=7.57) | passing |
 
 ### Phase 1 notes
 
@@ -526,3 +527,63 @@ work (e.g., maintaining the level graph incrementally across dual
 updates instead of rebuilding it per call).
 
 Bench artefact: `dev_notes/phase6_bench.txt`.
+
+### Phase 7 notes
+
+Profile-led. Added `#ifdef COUPLR_GT_PROFILE` chrono instrumentation in
+`match_gt` / `hungarian_search_cl` / equality-graph maintenance, ran one
+solve at n in {64, 128, 256}, attributed the 220 ms (n=256, instrumentation
+build) total to specific call sites:
+
+```
+total=220 ms  step1=9.65 (516 calls, 6182 paths)  step2=135.5 (218 calls)
+   enqueue=126.3 (2,953,217 edges)   bucket~9 (17,095 pops)
+eq_build=12.2 (25)  eq_update=38.1 (516)
+```
+
+**Two findings.** (1) ~57% of total time is in `enqueue_edges_from_row`'s
+`Q[r].push_back`. (2) 174× more edges are enqueued than popped — most are
+re-enqueued or silently dropped at phase exit. The push hot-path lands in
+one of 1539 separate `std::vector<BucketEdge>` buckets keyed by random
+`r`, all cache-cold by the time the push hits.
+
+Phase 7 change: replace
+`std::vector<std::vector<BucketEdge>> Q(bucket_bound+1)` with a contiguous
+arena `entries` plus an intrusive linked list of head indices,
+`bucket_head[r]`. Push appends to the arena tail and relinks `bucket_head[r]`;
+pop follows `bucket_head[r]` into the arena and rewires to `entry.next`. The
+random work shifts to a 6 KB `bucket_head[]` that fits in L1; arena pushes
+are sequential and stay cache-warm at the tail.
+
+**A/B bench, same machine session, sequential builds (`dev_notes/phase7_ab.sh`,
+microbenchmark times=20, warmup=2, seed=1000+n):**
+
+| | Old buckets | Flat buckets | Δ |
+|---|---|---|---|
+| n=64 | 11.39 ms | 9.23 ms | -19% |
+| n=128 | 47.44 ms | 39.80 ms | -16% |
+| n=256 | 214.86 ms | 186.12 ms | -13% |
+| n=384 | 615.61 ms | 547.42 ms | -11% |
+| slope (64-384) | 2.211 | 2.261 | within noise |
+
+JV reference stable at ~7.5 ms (n=256) across variants. Note that absolute
+numbers in this row are not directly comparable to Phase 6's row — the JV
+reference between sessions shifted from 1.91 ms to 7.57 ms (machine load,
+thermal state, etc). The Phase 6→7 win is the A/B Δ above, not the
+column-to-column delta in the running table.
+
+The instrumentation lives behind `#ifdef COUPLR_GT_PROFILE` in
+`utils_gabow_tarjan.cpp`; release builds compile every `PROF_*` to a no-op.
+Re-enable by adding `-DCOUPLR_GT_PROFILE` to `PKG_CPPFLAGS` and rebuilding
+to print a per-solve breakdown to stdout.
+
+**What this leaves on the table.** The 174× enqueue/pop waste ratio is
+unchanged — per-edge work got cheaper but the edge count did not drop.
+Lazy per-row enqueue (only push the row's argmin-r edge, find next on
+demand) would attack the count, but the implementation choices that
+matter — sort vs heap vs scan-on-demand — all have constant factors
+that may or may not beat the current dense O(|S|·m) push loop. Filed as
+a possible Phase 8.
+
+Bench artefacts: `dev_notes/phase7_profile.R`, `dev_notes/phase7_ab.sh`,
+`dev_notes/phase7_ab_run.R`, `dev_notes/phase7_bench.txt`.

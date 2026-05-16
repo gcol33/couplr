@@ -102,21 +102,18 @@ struct PrTimer {
 #define PROF_PRINT() ((void)0)
 #endif
 
-// Phase 5 finding (see gt-speedup.md). The bucket-array Step 2 search
-// drops finite, not-in-T edges whose initial-enqueue or re-enqueue r
-// exceeds bucket_bound = 6n+2. The 1989 paper proves r is O(n) when
-// match_gt leaves every reduced cost in [-1, n+1] at phase end; this
-// implementation only tightens duals on visited rows/cols, so phase-exit
-// reduced costs are not held that tightly and the drop is the mechanism
-// that keeps the bucket array O(n) in memory. A Phase 5 fuzz over 1000
-// instances (n in [3,200], max_cost up to 1e9, dense/forbidden/negative/
-// 1-row/1-col mix) saw the drop fire on ~86% of instances with 0 cost
-// mismatches vs JV -- the dropped edges become eligible in later
-// bit-scaling phases. The dev_notes/phase5_fuzz.R harness is the
-// regression check for the property "drops never cause cost mismatch".
-// Switching to tight dual maintenance (so the paper bound holds and the
-// drop is dead code) or a heap-based Step 2 (so no bound is needed) is
-// a separate workstream; not done in Phase 5.
+// Phase 5 / Phase 8 historical note. Earlier Step 2 implementations used a
+// paper-style bucket array Q[r] indexed by r = O(n) (theoretical) and
+// silently dropped finite, not-in-T edges whose r exceeded the paper's
+// 6n+2 bound. The drop was load-bearing under that implementation because
+// this code only tightened duals on visited rows/cols, so phase-exit
+// reduced costs were not held within the paper's [-1, n+1] range. Phase 5
+// fuzzed it (~86% drop fire rate, 0 cost mismatches vs JV) and decided the
+// drop was structurally safe. Phase 8 replaced the bucket array with a
+// JV-style scan-min Dijkstra-Hungarian over cost-length, which has no
+// bucket and no drop -- correctness is now structural. dev_notes/phase5_fuzz.R
+// stays as a regression check: any future change must produce 0 cost
+// mismatches across the 897 square instances it generates.
 
 namespace {
 
@@ -719,215 +716,155 @@ bool hungarian_search_cl(const CostMatrix& cost,
 #endif
 
     // ---------------------------------------------------------------------
-    // Paper Step 2: Hungarian forest with lazy dual offset A and bucket array Q.
-    // When a row v enters the forest, save y(v) and A(v). An edge vw with
-    // w outside the forest becomes eligible when
-    //   A = cl(vw) - y(v) - y(w) + A(v).
-    // Buckets Q[r] store exactly those edge candidates.
+    // Phase 8: Dijkstra-Hungarian on cost-length cl, JV-style scan-min.
+    //
+    // Per iteration: scan all unsettled cols, pick the one with the smallest
+    // stored dist[j]; settle it; if it's free, augment, otherwise add its
+    // match's row to S and relax that row's edges. Augment by walking
+    // pred_row[col] back to the free root, with y_v[col] -= 1 on every
+    // newly-matched col (Phase 2 invariant restoring matched-edge tightness
+    // after the cl_matched = cl_unmatched - 1 shift).
+    //
+    // Eliminates the bucket array, bucket_bound, and the Phase 5 silent
+    // drop. No edge is ever dropped.
+    //
+    // Optimizations layered:
+    //   (a) S_list and T_list as explicit vectors; dual updates iterate
+    //       these directly instead of scanning all n / m with an in_S /
+    //       in_T branch.
+    //   (b) Lazy delta on dist[]. JV's per-iter "for j not in T: dist[j] -=
+    //       delta" loop is O(m); we replace it by tracking delta_pending
+    //       and storing dist[j] in (current_form + delta_pending) form,
+    //       i.e. the absolute reduced cost at the moment of update. Scan-min
+    //       compares stored values directly (order-preserving since they
+    //       all share the same delta_pending offset). Relax shifts new
+    //       candidates by + delta_pending before storing. Functionally
+    //       equivalent to v1 but eliminates the O(m) subtract loop per iter.
+    //
+    // We tried an "absolute-form dist[]" variant that compared d_absolute to
+    // dist[j]_absolute (skipping the +delta_pending shift), but it broke
+    // matched-edge tightness on >1-step augmenting paths -- the JV-style
+    // shortest path in CURRENT form (where dist[j] = path cost via current
+    // duals) is required for the dual updates to preserve matched-edge
+    // tightness, not the absolute shortest path. The lazy-delta version
+    // below keeps JV's comparison invariant.
     // ---------------------------------------------------------------------
-
-    // Phase 7 (flat bucket): the bucket structure used to be
-    //   std::vector<std::vector<BucketEdge>> Q[bucket_bound+1]
-    // i.e. ~1500 separate inner vectors, each with its own heap allocation,
-    // pushed to in random-by-r order. Profile (dev_notes/phase7_profile.R)
-    // showed ~57% of total time was in enqueue_edges_from_row's push_back.
-    // Flat-bucket: one contiguous arena `entries` plus an intrusive linked
-    // list keyed by r. bucket_head[r] is the index in `entries` of the most
-    // recently pushed edge for r; each entry's `next` is the index of the
-    // prior push (or -1). Push = append to entries + relink bucket_head[r].
-    // Pop = follow bucket_head[r] into entries. Eliminates per-bucket heap
-    // allocations; A/B over n in {64..384} measured 11-19% speedup on dense.
-    struct BucketEdge {
-        int row;
-        int col;
-        int next;  // index in `entries` of prior push for same r, or -1
-    };
-
-    const long long bucket_bound = std::max(1, 6 * n + 2);
-    std::vector<int> bucket_head(static_cast<size_t>(bucket_bound) + 1, -1);
-    std::vector<BucketEdge> entries;
-    // Reserve a starting capacity that holds a moderate Step 2 without
-    // realloc. Anything larger grows by std::vector's normal doubling, which
-    // is amortized O(1) and trivial in absolute cost (memcpy of an entire
-    // 13.5K-entry arena is ~30 microseconds).
-    entries.reserve(static_cast<size_t>(std::max(64, n + m)));
-
-    long long A = 0;
-    long long next_bucket = 0;
-    bool has_free_root = false;
-
-    std::vector<bool> in_S(n, false);
+    constexpr long long INF = std::numeric_limits<long long>::max() / 4;
+    std::vector<long long> dist(m, INF);
+    std::vector<int> pred_row(m, NIL);
     std::vector<bool> in_T(m, false);
-    std::vector<int> parent_row(n, NIL);
-    std::vector<int> reached_by_row(m, NIL);
+    std::vector<bool> in_S(n, false);
+    std::vector<int> S_list;
+    std::vector<int> T_list;
+    S_list.reserve(static_cast<size_t>(n));
+    T_list.reserve(static_cast<size_t>(m));
 
-    std::vector<long long> saved_y_u(n, 0);
-    std::vector<long long> saved_y_v(m, 0);
-    std::vector<long long> enter_A_u(n, 0);
-    std::vector<long long> enter_A_v(m, 0);
-
-    auto enqueue_edges_from_row = [&](int i) {
-        PROF_TIMER(enqueue_ns);
+    // Initial relax from every free row. delta_pending = 0 here, so
+    // "stored" dist == "absolute reduced cost" == "current form".
+    bool has_free = false;
+    for (int i = 0; i < n; ++i) {
+        if (row_match[i] != NIL) continue;
+        has_free = true;
+        in_S[i] = true;
+        S_list.push_back(i);
         for (int j = 0; j < m; ++j) {
-            if (in_T[j]) {
-                continue;
-            }
             long long c_ij = cost[i][j];
-            if (c_ij >= BIG_INT) {
-                continue;
-            }
+            if (c_ij >= BIG_INT) continue;
             long long ccl = cl_of(i, j, c_ij);
-
-            long long r = ccl - saved_y_u[i] - y_v[j] + enter_A_u[i];
-            if (r < A) {
-                r = A;
+            long long d = ccl - y_u[i] - y_v[j];
+            if (d < dist[j]) {
+                dist[j] = d;
+                pred_row[j] = i;
             }
-            if (r > bucket_bound) {
-                // Phase 5: drop a finite, not-in-T edge whose r exceeds the
-                // paper's 6n+2 bound. Safe under bit-scaling; see the comment
-                // block at the top of this file.
-                continue;
-            }
-            // Phase 7: flat bucket array. Append to the arena; link the new
-            // entry as the new head of bucket r.
-            int idx = static_cast<int>(entries.size());
-            entries.push_back({i, j, bucket_head[static_cast<size_t>(r)]});
-            bucket_head[static_cast<size_t>(r)] = idx;
             PROF_INC(step2_enqueue_edges, 1);
         }
-    };
+    }
+    if (!has_free) return false;
 
-    auto materialize_forest_duals = [&]() {
-        for (int i = 0; i < n; ++i) {
-            if (in_S[i]) {
-                y_u[i] = saved_y_u[i] + (A - enter_A_u[i]);
-            }
-        }
+    long long delta_pending = 0;
+    int sink_col = NIL;
+    while (sink_col == NIL) {
+        // Scan-min over unsettled cols. Stored values share the same
+        // delta_pending offset; order is preserved.
+        long long best_stored = INF;
+        int j1 = NIL;
         for (int j = 0; j < m; ++j) {
-            if (in_T[j]) {
-                y_v[j] = saved_y_v[j] - (A - enter_A_v[j]);
-            }
+            if (in_T[j]) continue;
+            if (dist[j] < best_stored) { best_stored = dist[j]; j1 = j; }
         }
-    };
+        if (j1 == NIL || best_stored >= INF) return false;
+        PROF_INC(step2_bucket_pops, 1);
 
-    for (int i = 0; i < n; ++i) {
-        if (row_match[i] == NIL) {
-            has_free_root = true;
-            in_S[i] = true;
-            parent_row[i] = NIL;
-            saved_y_u[i] = y_u[i];
-            enter_A_u[i] = A;
-            enqueue_edges_from_row(i);
+        // Effective delta (= JV's "delta" in current form) is best minus
+        // the accumulated offset; in absolute terms, advance the pending
+        // offset to match.
+        long long delta = best_stored - delta_pending;
+        if (delta != 0) {
+            for (int i : S_list) y_u[i] += delta;
+            for (int j : T_list) y_v[j] -= delta;
         }
-    }
+        delta_pending = best_stored;
 
-    if (!has_free_root) {
-        return false;
-    }
+        in_T[j1] = true;
+        T_list.push_back(j1);
 
-    const long long bucket_count = static_cast<long long>(bucket_head.size());
-    while (true) {
-        while (true) {
-            while (next_bucket < bucket_count &&
-                   bucket_head[static_cast<size_t>(next_bucket)] == -1) {
-                ++next_bucket;
-            }
-            if (next_bucket >= bucket_count) {
-                return false;
-            }
-
-            A = next_bucket;
-            int head_idx = bucket_head[static_cast<size_t>(next_bucket)];
-            BucketEdge popped = entries[static_cast<size_t>(head_idx)];
-            bucket_head[static_cast<size_t>(next_bucket)] = popped.next;
-            int i = popped.row;
-            int j = popped.col;
-            PROF_INC(step2_bucket_pops, 1);
-
-            if (i < 0 || i >= n || j < 0 || j >= m || !in_S[i] || in_T[j]) {
-                continue;
-            }
-            long long c_ij = cost[i][j];
-            if (c_ij >= BIG_INT) {
-                continue;
-            }
-            long long ccl = cl_of(i, j, c_ij);
-
-            long long current_y_i = saved_y_u[i] + (A - enter_A_u[i]);
-            long long reduced = ccl - current_y_i - y_v[j];
-            if (reduced > 0) {
-                long long r = A + reduced;
-                if (r <= bucket_bound) {
-                    int idx = static_cast<int>(entries.size());
-                    entries.push_back({i, j,
-                                       bucket_head[static_cast<size_t>(r)]});
-                    bucket_head[static_cast<size_t>(r)] = idx;
-                }
-                // else: Phase 5 re-enqueue drop (see file-top comment).
-                continue;
-            }
-
-            in_T[j] = true;
-            reached_by_row[j] = i;
-            saved_y_v[j] = y_v[j];
-            enter_A_v[j] = A;
-
-            if (col_match[j] == NIL) {
-                materialize_forest_duals();
-
-                // Augment along the path back to the free row. For every
-                // newly-matched col, decrement y_v by 1: materialize leaves
-                // sum(path edge) = cl_pre = c + 1 for an edge that was
-                // unmatched before, but cl_new = c after augment. Decrementing
-                // y_v by 1 restores tightness (sum = c) on the matched edge,
-                // and preserves 1-feasibility on every other edge incident
-                // to the same col (those are all unmatched, so the upper
-                // bound y_u + y_v <= c + 1 can only get easier when y_v
-                // drops). Same pattern as Step 1's apply_step1 y_v -= 1 pass.
-                int col = j;
-                int row = reached_by_row[col];
-                while (row != NIL) {
-                    int prev_col = row_match[row];
-                    row_match[row] = col;
-                    col_match[col] = row;
-                    y_v[col] -= 1;
-                    int prev_row = parent_row[row];
-                    if (prev_row == NIL) {
-                        break;
-                    }
-                    col = prev_col;
-                    row = prev_row;
-                }
-
-                // Emit S and T for the caller's incremental equality-graph
-                // update. Every row in S had y_u changed; every col in T had
-                // y_v changed. Path rows/cols are subsets of S/T. The free
-                // col we just augmented to was marked in_T just above.
-                if (affected_rows_out) {
-                    for (int ii = 0; ii < n; ++ii) {
-                        if (in_S[ii]) affected_rows_out->push_back(ii);
-                    }
-                }
-                if (affected_cols_out) {
-                    for (int jj = 0; jj < m; ++jj) {
-                        if (in_T[jj]) affected_cols_out->push_back(jj);
-                    }
-                }
-                return true;
-            }
-
-            int next_row = col_match[j];
-            if (next_row != NIL && !in_S[next_row]) {
-                in_S[next_row] = true;
-                parent_row[next_row] = i;
-                saved_y_u[next_row] = y_u[next_row];
-                enter_A_u[next_row] = A;
-                enqueue_edges_from_row(next_row);
-            }
-
+        if (col_match[j1] == NIL) {
+            sink_col = j1;
             break;
         }
+
+        int next_row = col_match[j1];
+        if (next_row < 0 || next_row >= n) return false;
+        if (in_S[next_row]) {
+            // Alternating cycle: shouldn't happen under 1-feasibility on a
+            // simple bipartite graph.
+            return false;
+        }
+        in_S[next_row] = true;
+        S_list.push_back(next_row);
+
+        // Relax next_row's edges. next_row was just added; y_u[next_row] is
+        // unchanged from entry. y_v[j] for j not in T is also unchanged.
+        // So d_abs is computed against entry-time duals (i.e. JV's "current
+        // form" for this candidate, since next_row's u contribution is u_init).
+        // Convert to stored form by adding delta_pending; compare to dist[j]
+        // (also stored form). Both share the same offset; comparison preserved.
+        for (int j = 0; j < m; ++j) {
+            if (in_T[j]) continue;
+            long long c_ij = cost[next_row][j];
+            if (c_ij >= BIG_INT) continue;
+            long long ccl = cl_of(next_row, j, c_ij);
+            long long d_stored = (ccl - y_u[next_row] - y_v[j]) + delta_pending;
+            if (d_stored < dist[j]) {
+                dist[j] = d_stored;
+                pred_row[j] = next_row;
+            }
+            PROF_INC(step2_enqueue_edges, 1);
+        }
     }
+
+    // Augment along the path. Walk pred_row[col] back to a free root.
+    // Read row_match[row] BEFORE the reassignment to recover the col `row`
+    // entered S through (NIL for roots). y_v[col] -= 1 on every newly-
+    // matched col keeps the matched edge tight after augment flips cl by 1.
+    int col = sink_col;
+    while (col != NIL) {
+        int row = pred_row[col];
+        if (row < 0 || row >= n) return false;
+        int prev_col = row_match[row];
+        row_match[row] = col;
+        col_match[col] = row;
+        y_v[col] -= 1;
+        col = prev_col;
+    }
+
+    if (affected_rows_out) {
+        affected_rows_out->assign(S_list.begin(), S_list.end());
+    }
+    if (affected_cols_out) {
+        affected_cols_out->assign(T_list.begin(), T_list.end());
+    }
+    return true;
 }
 bool hungarian_step_one_feasible(const CostMatrix& cost,
                                  MatchVec& row_match,

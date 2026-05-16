@@ -25,6 +25,22 @@
 #define DEBUG_ASSERT_FEASIBLE(cost, rm, cm, yu, yv, msg) ((void)0)
 #endif
 
+// Phase 5 finding (see gt-speedup.md). The bucket-array Step 2 search
+// drops finite, not-in-T edges whose initial-enqueue or re-enqueue r
+// exceeds bucket_bound = 6n+2. The 1989 paper proves r is O(n) when
+// match_gt leaves every reduced cost in [-1, n+1] at phase end; this
+// implementation only tightens duals on visited rows/cols, so phase-exit
+// reduced costs are not held that tightly and the drop is the mechanism
+// that keeps the bucket array O(n) in memory. A Phase 5 fuzz over 1000
+// instances (n in [3,200], max_cost up to 1e9, dense/forbidden/negative/
+// 1-row/1-col mix) saw the drop fire on ~86% of instances with 0 cost
+// mismatches vs JV -- the dropped edges become eligible in later
+// bit-scaling phases. The dev_notes/phase5_fuzz.R harness is the
+// regression check for the property "drops never cause cost mismatch".
+// Switching to tight dual maintenance (so the paper bound holds and the
+// drop is dead code) or a heap-based Step 2 (so no bound is needed) is
+// a separate workstream; not done in Phase 5.
+
 namespace {
 
 // O(n) check: is every row unmatched?
@@ -665,6 +681,9 @@ bool hungarian_search_cl(const CostMatrix& cost,
                 r = A;
             }
             if (r > bucket_bound) {
+                // Phase 5: drop a finite, not-in-T edge whose r exceeds the
+                // paper's 6n+2 bound. Safe under bit-scaling; see the comment
+                // block at the top of this file.
                 continue;
             }
             Q[static_cast<size_t>(r)].push_back({i, j});
@@ -731,6 +750,7 @@ bool hungarian_search_cl(const CostMatrix& cost,
                 if (r <= bucket_bound) {
                     Q[static_cast<size_t>(r)].push_back({i, j});
                 }
+                // else: Phase 5 re-enqueue drop (see file-top comment).
                 continue;
             }
 

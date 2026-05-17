@@ -26,6 +26,7 @@ BENCHMARK_FIGURE <- file.path(repo_root, "paper", "figures", "benchmark.png")
 
 method_family <- c(
   hungarian       = "Classical",
+  munkres         = "Classical",
   jv              = "JV / Augmenting path",
   sap             = "JV / Augmenting path",
   lapmod          = "JV / Augmenting path",
@@ -48,6 +49,7 @@ method_family <- c(
 
 method_labels <- c(
   hungarian       = "Hungarian",
+  munkres         = "Munkres",
   jv              = "JV",
   sap             = "SAP",
   lapmod          = "LAPMOD",
@@ -86,6 +88,7 @@ method_max_n <- c(
   auction_scaled  = 1000L,
   gabow_tarjan    = 1000L,
   hungarian       = 2000L,
+  munkres         = 500L,
   sap             = 2000L,
   ssap_bucket     = 2000L,
   csflow          = 1000L,
@@ -240,7 +243,7 @@ panel_spec <- list(
                    "network_simplex", "orlin"),
        colour  = "#cc79a7"),
   list(title = "Other",
-       methods = c("hungarian", "ramshaw_tarjan", "hk01", "bruteforce"),
+       methods = c("hungarian", "munkres", "ramshaw_tarjan", "hk01", "bruteforce"),
        colour  = "#5a4634")
 )
 
@@ -321,75 +324,95 @@ panels_a <- lapply(seq_along(panel_spec), function(i) {
 
 row_a <- wrap_plots(panels_a, nrow = 1)
 
-# ---------- Panel B: auto vs Hungarian (full width) ------------------------
+# ---------- Panel B: couplr vs R competitors on causal-matching scaling -----
 
-df_b   <- df[df$method %in% c("auto", "hungarian"), ]
-t_auto <- df_b[df_b$method == "auto",      c("n", "median_ms")]
-t_hung <- df_b[df_b$method == "hungarian", c("n", "median_ms")]
-sp     <- merge(t_auto, t_hung, by = "n", suffixes = c("_auto", "_hung"))
-sp$speedup <- sp$median_ms_hung / sp$median_ms_auto
-sp <- sp[order(sp$n), ]
+SCALING_RESULTS <- file.path(repo_root, "paper", "scaling-results.csv")
+scaling <- read.csv(SCALING_RESULTS, stringsAsFactors = FALSE)
+scaling$median_ms <- scaling$median_s * 1000
+scaling$package <- factor(scaling$package,
+                          levels = c("MatchIt", "optmatch", "couplr"))
 
-# Single annotation at the peak speed-up, to keep panel (b) uncluttered.
-sig <- sp[sp$speedup >= 1.5, ]
-if (nrow(sig)) {
-  sig <- sig[which.max(sig$speedup), , drop = FALSE]
-  sig$label <- ifelse(sig$speedup >= 100,
-                      paste0(round(sig$speedup), "×"),
-                      paste0(format(round(sig$speedup, 1), nsmall = 1),
-                             "×"))
-  sig$y_mid <- sqrt(sig$median_ms_auto * sig$median_ms_hung)
-}
+# Mark rows where the package failed (NA median_s) so we can flag them on the
+# plot — the integer-overflow crash inside MatchIt's optmatch backend at the
+# largest size is part of the story.
+scaling_ok   <- scaling[!is.na(scaling$median_s) & scaling$status == "ok", ]
+scaling_fail <- scaling[is.na(scaling$median_s), ]
 
-b_colors <- c(hungarian = "#d55e00", auto = "#000000")
-b_shapes <- c(hungarian = 21,        auto = 22)   # circle / square
+b_palette <- c(couplr   = "#0072b2",
+               optmatch = "#009e73",
+               MatchIt  = "#d55e00")
+b_shapes  <- c(couplr   = 22,
+               optmatch = 21,
+               MatchIt  = 24)
 
-last_h <- t_hung[which.max(t_hung$n), ]
-last_a <- t_auto[which.max(t_auto$n), ]
+x_breaks_b <- c(500, 2000, 5000, 10000, 20000)
+x_lbls_b   <- c("500", "2,000", "5,000", "10,000", "20,000")
+# Log-y ticks: 50 ms, 1 s, 1 min, 10 min, with headroom for the "int overflow"
+# annotation that sits above the curves at the right edge.
+y_breaks_b <- c(0.05, 1, 60, 600) * 1000
+y_lbls_b   <- c("50 ms", "1 s", "1 min", "10 min")
+y_dom_b    <- c(40, 3.6e6)   # 40 ms to 1 h
 
-x_breaks_b <- if (nrow(sig)) sort(unique(c(x_breaks, sig$n))) else x_breaks
-x_lbls_b   <- format(x_breaks_b, big.mark = ",", trim = TRUE, scientific = FALSE)
+last_each <- do.call(rbind, lapply(split(scaling_ok, scaling_ok$package),
+  function(d) d[which.max(d$n_total), ]))
 
-p_b <- ggplot(df_b, aes(x = n, y = median_ms, group = method)) +
-  geom_line(aes(colour = method), linewidth = 1.0, na.rm = TRUE) +
-  geom_point(aes(colour = method, shape = method),
-             fill = "white", size = 2.4, stroke = 0.9, na.rm = TRUE) +
-  scale_colour_manual(values = b_colors, guide = "none") +
+# MatchIt failed at n=20,000 with an integer-overflow inside the optmatch
+# backend. Show this as a vertical dashed segment from its last data point up
+# to a dedicated "int overflow" annotation in MatchIt's colour, so the failure
+# stays attached to the right package without colliding with optmatch's point.
+fail_anno <- if (nrow(scaling_fail)) {
+  matchit_last <- scaling_ok[as.character(scaling_ok$package) == "MatchIt", ]
+  matchit_last <- matchit_last[which.max(matchit_last$n_total), ]
+  data.frame(n_total   = scaling_fail$n_total[1],
+             y_bottom  = matchit_last$median_ms,
+             y_top     = 1.2e6,        # ~20 min, above all curves
+             stringsAsFactors = FALSE)
+} else NULL
+
+p_b <- ggplot(scaling_ok,
+              aes(x = n_total, y = median_ms, colour = package,
+                  shape = package, group = package)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(fill = "white", size = 2.6, stroke = 1.0) +
+  scale_colour_manual(values = b_palette, guide = "none") +
   scale_shape_manual(values = b_shapes, guide = "none") +
   scale_x_log10(breaks = x_breaks_b, labels = x_lbls_b,
-                limits = x_dom, expand = expansion(mult = c(0.02, 0.12))) +
-  scale_y_log10(breaks = y_breaks, labels = y_lbls,
-                limits = y_dom, expand = c(0, 0)) +
-  labs(x = "problem size, n",
-       y = "median solve time",
+                expand = expansion(mult = c(0.05, 0.16))) +
+  scale_y_log10(breaks = y_breaks_b, labels = y_lbls_b,
+                limits = y_dom_b, expand = c(0, 0)) +
+  labs(x = expression("problem size, " * n[t] + n[c]),
+       y = "median wall-clock time",
        tag = "(b)") +
   theme_fig()
 
-if (nrow(sig)) {
-  conn <- data.frame(
-    n   = rep(sig$n, each = 2),
-    y   = c(rbind(sig$median_ms_hung, sig$median_ms_auto)),
-    grp = rep(seq_len(nrow(sig)), each = 2)
-  )
+if (!is.null(fail_anno)) {
   p_b <- p_b +
-    geom_line(data = conn,
-              aes(x = n, y = y, group = grp),
-              colour = "#666", linetype = "22", linewidth = 0.45,
-              inherit.aes = FALSE) +
-    geom_text(data = sig,
-              aes(x = n, y = y_mid, label = label),
-              hjust = -0.25, vjust = 0.5, size = 4.0,
-              fontface = "bold", colour = "#1a1a1a",
-              inherit.aes = FALSE)
+    annotate("segment",
+             x = fail_anno$n_total, xend = fail_anno$n_total,
+             y = fail_anno$y_bottom, yend = fail_anno$y_top,
+             colour = b_palette["MatchIt"], linetype = "22",
+             linewidth = 0.55) +
+    annotate("point",
+             x = fail_anno$n_total, y = fail_anno$y_top,
+             shape = 4, size = 3.4, stroke = 1.3,
+             colour = b_palette["MatchIt"]) +
+    annotate("text",
+             x = fail_anno$n_total, y = fail_anno$y_top,
+             label = "int overflow", hjust = -0.18, vjust = 0.5,
+             size = 3.5, fontface = "italic",
+             colour = b_palette["MatchIt"])
 }
 
+# Right-edge labels. couplr and optmatch both terminate at n=20,000 with
+# couplr ~3x below optmatch; MatchIt ends at n=10,000. Place each label
+# just to the right of its terminal point at the same y.
 p_b <- p_b +
-  annotate("text", x = last_h$n, y = last_h$median_ms,
-           label = "Hungarian", hjust = -0.15, vjust = 0.5,
-           size = 4.0, fontface = "bold", colour = "#d55e00") +
-  annotate("text", x = last_a$n, y = last_a$median_ms,
-           label = "auto", hjust = -0.25, vjust = 0.5,
-           size = 4.0, fontface = "bold", colour = "#000000")
+  geom_text(data = last_each,
+            aes(x = n_total, y = median_ms,
+                colour = package, label = package),
+            hjust = -0.20, vjust = 0.5, size = 4.0,
+            fontface = "bold",
+            inherit.aes = FALSE)
 
 # ---------- combine & save -------------------------------------------------
 

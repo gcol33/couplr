@@ -124,51 +124,39 @@ assignment <- function(cost, maximize = FALSE,
   if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
 
   if (method == "auto") {
-    # Check for special cost structures first
+    # Check for special cost structures. Use range() to bail out early on the
+    # typical case (non-binary, non-constant) without a full unique/sort scan;
+    # this matters at n>=1000 where the matrix has >=1M entries.
     hk01_candidate <- function(M) {
-      x <- as.numeric(M[is.finite(M)]); if (!length(x)) return(FALSE)
-      ux <- sort(unique(round(x, 12)))
-      if (length(ux) == 1L) return(TRUE)
-      if (length(ux) == 2L && all(ux %in% c(0,1))) return(TRUE)
-      FALSE
+      r <- suppressWarnings(range(M, na.rm = TRUE, finite = TRUE))
+      if (!all(is.finite(r))) return(FALSE)
+      if (r[1] == r[2]) return(TRUE)           # constant
+      if (r[1] != 0 || r[2] != 1) return(FALSE) # outside {0,1} envelope
+      # range is exactly [0,1]; confirm there are no intermediate values
+      x <- M[is.finite(M)]
+      length(unique(x)) == 2L
     }
 
-    # Strategy based on comprehensive benchmarks:
-    # - n≤8: bruteforce (exact enumeration for very small problems)
-    # - 8<n≤50: hungarian (exact dual solutions for small-medium)
-    # - 50<n≤75: jv (fast general-purpose solver)
-    # - n>75: auction_scaled (fastest for large problems)
+    # Strategy based on comprehensive benchmarks (post LAPJV warm-start):
+    # - n<=8: bruteforce (exact enumeration for very small problems)
+    # - dense square / near-square: jv (fastest at every size since warm-start)
     # Special cases override size-based selection:
     # - Binary/constant costs: hk01 (specialized algorithm)
-    # - Sparse/rectangular: sap (handles sparsity well)
+    # - Sparse (>50% NA/Inf): lapmod for large, sap for small
+    # - Very rectangular (m >= 3n): sap (handles rectangular well)
 
     if (n <= 8 && m <= 8) {
       method <- "bruteforce"
     } else if (hk01_candidate(cost)) {
       method <- "hk01"
     } else {
-      # Count NA and Inf as sparse entries
       na_rate <- mean(is.na(cost) | is.infinite(cost))
-      # Sparse or very rectangular problems
       if (na_rate > 0.5) {
-        # Large sparse: use LAPMOD (sparse JV variant)
-        if (n > 100) {
-          method <- "lapmod"
-        } else {
-          method <- "sap"
-        }
+        method <- if (n > 100) "lapmod" else "sap"
       } else if (m >= 3 * n) {
-        # Very rectangular: SAP handles this well
         method <- "sap"
-      } else if (n <= 50) {
-        # Small-medium: Hungarian provides exact dual solutions
-        method <- "hungarian"
-      } else if (n <= 75) {
-        # Medium: JV is fast and reliable
-        method <- "jv"
       } else {
-        # Large: auction_scaled is fastest (benchmarks show it beats JV)
-        method <- "auction_scaled"
+        method <- "jv"
       }
     }
   }

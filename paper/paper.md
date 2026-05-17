@@ -141,11 +141,16 @@ assignment solvers in `couplr`, arranged as five small-multiple panels
 grouped by algorithm family (JV / augmenting-path, Auction, Cost-scaling,
 Flow-based, and Other). Within each panel, individual solvers share a
 single family colour and are distinguished by line style; all panels share
-log--log axes. (b) The package's `auto` dispatcher ($\blacksquare$) against
-the classical Hungarian baseline ($\bullet$); annotated points mark the
-speed-up at diagnostic $n$. Each point is the median of 5 replicates on a
-single core; integer cost matrices with entries in $[1, 10{,}000]$.
-Reproducible from `paper/make-figure.R`.
+log--log axes. (b) End-to-end 1-to-1 optimal Mahalanobis matching on
+synthetic LaLonde-style data ($n_t : n_c = 1 : 2$, eight covariates),
+comparing `couplr` ($\blacksquare$) against `optmatch` ($\bullet$) and
+`MatchIt` ($\blacktriangle$). At $n_t + n_c = 20{,}000$, `couplr` is
+$3.1\times$ faster than `optmatch`; `MatchIt::matchit(method = "optimal")`
+aborts inside its `optmatch` backend with an integer-overflow at this size.
+(a) is the median of 5 replicates on a single core, integer cost matrices
+with entries in $[1, 10{,}000]$; (b) follows the protocol of Table
+\ref{tab:scaling}. Reproducible from `paper/make-figure.R`,
+`paper/bench_scaling.R`, and `paper/bench_scaling_alternatives.R`.
 \label{fig:benchmark}](figures/benchmark.png){width=100%}
 
 `balance_diagnostics()` reports standardized mean differences, variance

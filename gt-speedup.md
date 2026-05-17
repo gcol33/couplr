@@ -283,6 +283,7 @@ Filled in as we go.
 | 4b cost_prime buffer reuse | 2.28 | 8.26 | 37.26 | 210.9 | 31× (JV=6.74) | passing |
 | 9 drop bit-scaling outer loop | 2.64 | 1.99 | 13.16 | 73.3 | 6.9× (JV=10.68) | passing (not paper) |
 | 10 read the paper, revert to 7 | 2.26 | 9.23 | 39.80 | 186.1 | 24.6× (JV=7.57) | passing (paper-faithful) |
+| 11 6n pruning (paper p.9) | 2.19 | 8.94 | 38.32 | 177.9 | 23.2× (JV=7.67) | passing (paper-faithful) |
 
 ### Phase 1 notes
 
@@ -873,3 +874,73 @@ days of work because nobody read p.9 first.** New global CLAUDE.md rule
 ("Read the Paper Before Patching the Algorithm") added to make the
 workflow explicit for the next time an implemented-from-paper routine
 "looks weird."
+
+### Phase 11 notes
+
+**The trigger.** Phase 10 closed with "slope improvement is still on the
+table within the paper -- Phase 6 HK-leveling measured 2.09." Re-reading
+the paper for a paper-cited optimization turned up the p.9 pruning
+heuristic, which Phase 7 did not implement:
+
+> "A heuristic that may speed up the algorithm in practice is to prune the
+> graph at the start of each scale. Specifically, scale_match can delete
+> any edge whose new cost is 6n or more... a matching containing an edge
+> of new cost 6n or more has true cost more than 4n and so is not
+> minimum."
+
+Implementation: a new `enable_6n_prune` parameter on `scale_match`
+(default `false`). When true, the `cost_prime[i][j] = c - y_u - y_v`
+build clamps cells with `cost_prime >= 6n_work` to `BIG_INT`.
+Downstream consumers (`build_equality_graph`,
+`update_equality_graph_incremental`, `enqueue_edges_from_row`,
+`gt_init_empty_duals`) already skip `BIG_INT`, so pruning cascades
+naturally. The bit-scaling caller in `solve_gabow_tarjan_inner` passes
+`true`; the standalone test wrapper `scale_match_cpp` keeps the default
+`false`.
+
+**Why the default-off matters.** First attempt enabled pruning
+unconditionally inside `scale_match`. The Module G test
+"scale_match produces consistent duals across multiple calls" failed
+immediately: it calls `scale_match_cpp` directly with a 3x3 cost in
+[10, 40], where n=3 and `6n=18`. With y=0 on the first call,
+`cost_prime` equals the raw cost, so the pruning removes every cell
+>= 18 and leaves no perfect matching. The paper's pruning argument
+relies on `scale_match`'s entry conditions (every edge cost >= -1, a
+perfect matching of cost <= 3n exists), which the bit-scaling loop
+guarantees but arbitrary direct calls do not. The parameterized version
+makes the precondition explicit and keeps pruning off when it cannot be
+verified.
+
+**A/B bench, same machine session, sequential builds
+(`dev_notes/phase11_ab.sh`, microbenchmark times=20, warmup=2,
+seed=1000+n):**
+
+| n   | no prune   | with prune | Delta |
+|----:|-----------:|-----------:|------:|
+|  64 |    9.16 ms |    8.94 ms |  -2.4%|
+| 128 |   40.02 ms |   38.32 ms |  -4.3%|
+| 256 |  187.33 ms |  177.90 ms |  -5.0%|
+| 384 |  553.03 ms |  505.34 ms |  -8.6%|
+| 512 |  830.75 ms |  776.34 ms |  -6.5%|
+| slope (64-512) | 2.219 | 2.193 | within noise |
+
+JV reference stable at ~0.43 ms (n=64) through ~51.7 ms (n=512). The
+win grows with n, as predicted: pruning skips per-row enqueue work on
+edges with `cost_prime >= 6n`, and that share grows with the cost
+range relative to `6n`.
+
+**Honest scale of the result.** The Phase 10 closing note implied slope
+~2.09 was "still on the table." That came from Phase 6's separate-session
+measurement of HK-leveling; the same-session Phase 7 baseline was ~2.22
+(matching Phase 7's own A/B). Phase 11's 2.19 is a real but modest
+improvement on Phase 7, not the rumored 2.09. The slope picture is now:
+paper bound (assignment routine, dense) ~2.5, Phase 7 ~2.22, Phase 11
+~2.19. The 6n pruning closes some constant-factor gap; it does not
+unlock a slope jump.
+
+Tests: 538 GT module expectations + 4496 full-suite expectations pass.
+Fuzz on Phase 11 build: 897 square instances, 0 silent drops, 0 cost
+mismatches vs JV, 0 GT-only errors.
+
+Bench artefacts: `dev_notes/phase11_ab.sh`, `dev_notes/phase11_ab_run.R`,
+`dev_notes/phase11_ab_no_prune.log`, `dev_notes/phase11_ab_with_prune.log`.

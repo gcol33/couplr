@@ -125,7 +125,8 @@ void scale_match(const CostMatrix& cost,
                 MatchVec& row_match,
                 MatchVec& col_match,
                 DualVec& y_u,
-                DualVec& y_v);
+                DualVec& y_v,
+                bool enable_6n_prune = false);
 
 // ============================================================================
 // Module H: Gabow-Tarjan bit-scaling outer loop

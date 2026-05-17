@@ -28,7 +28,9 @@ DualResult solve_jv_duals(const CostMatrix& cost, bool maximize) {
     CostMatrix work = prepare_for_solve(cost, maximize);
     ensure_each_row_has_option(work.mask, n, m);
 
-    auto core = detail::jv_core(work);
+    detail::JvCoreOpts opts;
+    opts.use_warm_start = true;  // LAPJV pre-stages: column reduction + ARR
+    auto core = detail::jv_core(work, opts);
 
     double total = 0.0;
     for (int i = 0; i < n; ++i) {

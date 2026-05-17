@@ -41,6 +41,10 @@ lap_solve_hungarian <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_hungarian`, cost, maximize)
 }
 
+lap_solve_munkres <- function(cost, maximize) {
+    .Call(`_couplr_lap_solve_munkres`, cost, maximize)
+}
+
 lap_solve_csflow <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_csflow`, cost, maximize)
 }

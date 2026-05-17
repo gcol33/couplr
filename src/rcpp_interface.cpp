@@ -49,6 +49,7 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
 Rcpp::List solve_auction_gauss_seidel_impl(Rcpp::NumericMatrix cost, bool maximize, double eps_in);
 Rcpp::List solve_ssp_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_hungarian_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_munkres_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_csflow_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_kbest_lawler_impl(Rcpp::NumericMatrix cost, int k, std::string method_base, bool maximize);
 Rcpp::List solve_hk01_impl(Rcpp::NumericMatrix cost, bool maximize);
@@ -169,6 +170,11 @@ Rcpp::List lap_solve_ssp(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_hungarian(Rcpp::NumericMatrix cost, bool maximize) {
   return solve_hungarian_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_solve_munkres(Rcpp::NumericMatrix cost, bool maximize) {
+  return solve_munkres_impl(cost, maximize);
 }
 
 // [[Rcpp::export]]

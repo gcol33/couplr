@@ -28,6 +28,9 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_hk01_rcpp.cpp \
           solvers/solve_hungarian.cpp \
           solvers/solve_hungarian_rcpp.cpp \
+          solvers/solve_munkres.cpp \
+          solvers/solve_munkres_rcpp.cpp \
+          solvers/jv_core.cpp \
           solvers/solve_jv.cpp \
           solvers/solve_jv_rcpp.cpp \
           solvers/solve_kbest_lawler.cpp \
@@ -81,6 +84,9 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_hk01_rcpp.o \
           solvers/solve_hungarian.o \
           solvers/solve_hungarian_rcpp.o \
+          solvers/solve_munkres.o \
+          solvers/solve_munkres_rcpp.o \
+          solvers/jv_core.o \
           solvers/solve_jv.o \
           solvers/solve_jv_rcpp.o \
           solvers/solve_kbest_lawler.o \

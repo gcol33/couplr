@@ -139,6 +139,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_solve_munkres
+Rcpp::List lap_solve_munkres(Rcpp::NumericMatrix cost, bool maximize);
+RcppExport SEXP _couplr_lap_solve_munkres(SEXP costSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_solve_munkres(cost, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_solve_csflow
 Rcpp::List lap_solve_csflow(Rcpp::NumericMatrix cost, bool maximize);
 RcppExport SEXP _couplr_lap_solve_csflow(SEXP costSEXP, SEXP maximizeSEXP) {
@@ -658,6 +670,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_auction_gs", (DL_FUNC) &_couplr_lap_solve_auction_gs, 3},
     {"_couplr_lap_solve_ssp", (DL_FUNC) &_couplr_lap_solve_ssp, 2},
     {"_couplr_lap_solve_hungarian", (DL_FUNC) &_couplr_lap_solve_hungarian, 2},
+    {"_couplr_lap_solve_munkres", (DL_FUNC) &_couplr_lap_solve_munkres, 2},
     {"_couplr_lap_solve_csflow", (DL_FUNC) &_couplr_lap_solve_csflow, 2},
     {"_couplr_lap_kbest_lawler", (DL_FUNC) &_couplr_lap_kbest_lawler, 4},
     {"_couplr_lap_solve_hk01", (DL_FUNC) &_couplr_lap_solve_hk01, 2},

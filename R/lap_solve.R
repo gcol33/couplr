@@ -17,8 +17,9 @@
 #'   **General-purpose solvers:**
 #'   \itemize{
 #'     \item `"auto"` — Automatic selection based on problem characteristics (default)
-#'     \item `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n³)
-#'     \item `"hungarian"` — Classic 'Hungarian' algorithm O(n³)
+#'     \item `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n³) with warm-start
+#'     \item `"hungarian"` — Classic 'Hungarian' (shortest augmenting path) O(n³)
+#'     \item `"munkres"` — Matrix-form 'Kuhn-Munkres' O(n⁴), reference implementation
 #'   }
 #'
 #'   **Auction-based solvers:**
@@ -93,7 +94,7 @@
 #'
 #' @export
 assignment <- function(cost, maximize = FALSE,
-                       method = c("auto","jv","hungarian","auction","auction_gs","auction_scaled",
+                       method = c("auto","jv","hungarian","munkres","auction","auction_gs","auction_scaled",
                                   "sap","ssp","csflow","hk01","bruteforce",
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
                                   "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
@@ -185,6 +186,7 @@ assignment <- function(cost, maximize = FALSE,
     "bruteforce"    = lap_solve_bruteforce(work, maximize),
     "jv"            = lap_solve_jv(work, maximize),
     "hungarian"     = lap_solve_hungarian(work, maximize),
+    "munkres"       = lap_solve_munkres(work, maximize),
     "auction"       = lap_solve_auction(work, maximize, auction_eps),
     "auction_gs"    = lap_solve_auction_gs(work, maximize, auction_eps),
     "auction_scaled"= lap_solve_auction_scaled(work, maximize),

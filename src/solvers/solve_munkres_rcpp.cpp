@@ -1,8 +1,8 @@
-// src/solvers/solve_hungarian_rcpp.cpp
-// Rcpp wrapper for the classic Hungarian (O(n^3) SAP variant) solver.
+// src/solvers/solve_munkres_rcpp.cpp
+// Rcpp wrapper for the Munkres (O(n^4)) solver.
 
 #include <Rcpp.h>
-#include "solve_hungarian.h"
+#include "solve_munkres.h"
 #include "../core/lap_error.h"
 #include "../core/lap_utils_rcpp.h"
 
@@ -23,10 +23,10 @@ static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
     return cm;
 }
 
-Rcpp::List solve_hungarian_impl(Rcpp::NumericMatrix cost, bool maximize) {
+Rcpp::List solve_munkres_impl(Rcpp::NumericMatrix cost, bool maximize) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
-        lap::LapResult result = lap::solve_hungarian(cm, maximize);
+        lap::LapResult result = lap::solve_munkres(cm, maximize);
 
         const int n = static_cast<int>(result.assignment.size());
         Rcpp::IntegerVector match(n);

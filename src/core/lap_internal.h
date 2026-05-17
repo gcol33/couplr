@@ -11,6 +11,7 @@ Rcpp::List prepare_cost_matrix_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_hungarian_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_munkres_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_ssp_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_csflow_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_auction_impl(Rcpp::NumericMatrix cost, bool maximize, double eps_in);

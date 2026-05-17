@@ -7,9 +7,10 @@
 assignment(
   cost,
   maximize = FALSE,
-  method = c("auto", "jv", "hungarian", "auction", "auction_gs", "auction_scaled", "sap",
-    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan",
-    "lapmod", "csa", "ramshaw_tarjan", "push_relabel", "orlin", "network_simplex"),
+  method = c("auto", "jv", "hungarian", "munkres", "auction", "auction_gs",
+    "auction_scaled", "sap", "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket",
+    "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan", "push_relabel",
+    "orlin", "network_simplex"),
   auction_eps = NULL,
   eps = NULL
 )
@@ -25,8 +26,9 @@ entries are treated as forbidden assignments.}
 \strong{General-purpose solvers:}
 \itemize{
 \item \code{"auto"} — Automatic selection based on problem characteristics (default)
-\item \code{"jv"} — 'Jonker-Volgenant', fast general-purpose O(n³)
-\item \code{"hungarian"} — Classic 'Hungarian' algorithm O(n³)
+\item \code{"jv"} — 'Jonker-Volgenant', fast general-purpose O(n³) with warm-start
+\item \code{"hungarian"} — Classic 'Hungarian' (shortest augmenting path) O(n³)
+\item \code{"munkres"} — Matrix-form 'Kuhn-Munkres' O(n⁴), reference implementation
 }
 
 \strong{Auction-based solvers:}

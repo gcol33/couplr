@@ -46,8 +46,10 @@ set(CPP_IMPL_SOURCES
     ${SRC_DIR}/core/lap_utils.cpp
 
     # Solvers
+    ${SRC_DIR}/solvers/jv_core.cpp
     ${SRC_DIR}/solvers/solve_jv.cpp
     ${SRC_DIR}/solvers/solve_hungarian.cpp
+    ${SRC_DIR}/solvers/solve_munkres.cpp
     ${SRC_DIR}/solvers/solve_auction.cpp
     ${SRC_DIR}/solvers/solve_ssp.cpp
     ${SRC_DIR}/solvers/solve_bruteforce.cpp

@@ -1,3 +1,31 @@
+# couplr 1.3.3
+
+## Solver internals
+
+* **Hungarian split into O(n^3) SAP + O(n^4) Munkres.** `method = "hungarian"`
+  now uses the shortest-augmenting-path solver shared with JV; the original
+  O(n^4) Munkres implementation remains available as `method = "munkres"`.
+  At n = 2000 the new Hungarian runs orders of magnitude faster than 1.3.2.
+* **LAPJV warm-start (column reduction + augmenting reduction) added to the
+  JV core for square inputs.** Reduces JV / duals solve time at n >= 500.
+* **CSA shares dual potentials across epsilon-scaling phases.** Removes the
+  cold restart between phases that previously dominated CSA runtime at
+  n >= 500.
+* **Auction tie-breaker tweak cached in `auction` and `auction_gs`.**
+  Cleaner inner loop; no behaviour change.
+* **`solve_auction_scaled` collapsed into a thin wrapper over
+  `scaled_params`** (~200 lines removed); behaviour identical.
+* **Gabow-Tarjan**: bucket-array Step 2 reinstated per the 1989 paper
+  (G&T's `r > bn` pruning is the algorithm, not a wart); added the 6n
+  pruning heuristic from p.9.
+
+## Documentation
+
+* `paper/benchmark-table.csv` and `paper/scaling-results.csv` re-measured
+  on the current development machine for n <= 2000 (per-method table) and
+  n_total <= 2000 (cross-package table). Larger-n rows in both files are
+  carried over from the previous machine and not directly comparable.
+
 # couplr 1.3.2
 
 ## Test infrastructure

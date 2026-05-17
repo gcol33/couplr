@@ -1252,7 +1252,8 @@ void scale_match(const CostMatrix& cost,
                 MatchVec& row_match,
                 MatchVec& col_match,
                 DualVec& y_u,
-                DualVec& y_v) {
+                DualVec& y_v,
+                bool enable_6n_prune) {
     PROF_INC(scale_match_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
@@ -1282,6 +1283,21 @@ void scale_match(const CostMatrix& cost,
     // 1. Build c'(i,j) = c(i,j) - y_u[i] - y_v[j]
     //    Forbidden edges (cost >= BIG_INT) remain BIG_INT
     //    Padding columns (j >= m) are zero-cost dummy assignments
+    //
+    //    Paper p.9 pruning heuristic: any edge with c'(i,j) >= 6n cannot be in
+    //    the optimum matching for this scale, provided scale_match's input
+    //    obeys the paper's entry conditions (every edge cost >= -1; a perfect
+    //    matching exists with cost <= 3n). The bit-scaling outer loop in
+    //    solve_gabow_tarjan_inner guarantees this -- between scales, Step 1's
+    //    dual update yields y(v) + y(w) >= c(vw) - 3 on matched edges and the
+    //    (n+1) scaling keeps cost values aligned. Standalone callers
+    //    (e.g. tests passing raw costs) cannot guarantee the precondition, so
+    //    enable_6n_prune defaults to false. Setting cost_prime cells to
+    //    BIG_INT excludes them from build_equality_graph,
+    //    update_equality_graph_incremental, and enqueue_edges_from_row
+    //    (all already have BIG_INT skips). Padding columns (j >= m, value 0)
+    //    sit well below the threshold.
+    const long long prune_threshold = 6LL * static_cast<long long>(n_work);
     CostMatrix cost_prime(n_work, std::vector<long long>(m_work, BIG_INT));
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
@@ -1290,8 +1306,9 @@ void scale_match(const CostMatrix& cost,
                 // Forbidden edge stays forbidden
                 cost_prime[i][j] = BIG_INT;
             } else {
-                // Subtract global duals
-                cost_prime[i][j] = c_ij - y_u[i] - y_v[j];
+                long long cp = c_ij - y_u[i] - y_v[j];
+                cost_prime[i][j] =
+                    (enable_6n_prune && cp >= prune_threshold) ? BIG_INT : cp;
             }
         }
         for (int j = m; j < m_work; ++j) {
@@ -1510,7 +1527,13 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         
         // Step 2: Find 1-optimal matching with scale_match.
         // Carrying the previous phase's matching is the scaling warm start.
-        scale_match(c_current, row_match, col_match, y_u, y_v);
+        // enable_6n_prune=true: paper p.9 heuristic. The bit-scaling loop
+        // guarantees the paper's entry conditions (perfect matching of cost
+        // <= 3n in scale_match's transformed costs), so the >= 6n pruning is
+        // safe and strips edges that cannot belong to any optimum for this
+        // scale.
+        scale_match(c_current, row_match, col_match, y_u, y_v,
+                    /*enable_6n_prune=*/true);
     }
     
     // Step 7: Adjust duals back for original costs

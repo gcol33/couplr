@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,69 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.0" id="couplr-140">couplr 1.4.0<a class="anchor" aria-label="anchor" href="#couplr-140"></a></h2>
+<div class="section level3">
+<h3 id="animation-coverage-1-4-0">Animation coverage<a class="anchor" aria-label="anchor" href="#animation-coverage-1-4-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/lap_animate.html">lap_animate()</a></code> now covers every method that <code><a href="../reference/assignment.html">assignment()</a></code> accepts.</strong> Ten new step-by-step traces ship: <code>auction_gs</code>, <code>ramshaw_tarjan</code>, <code>ssap_bucket</code>, <code>hk01</code>, <code>csflow</code>, <code>cycle_cancel</code>, <code>push_relabel</code>, <code>csa</code>, <code>orlin</code>, <code>network_simplex</code>. <code><a href="../reference/animated_methods.html">animated_methods()</a></code> returns all 20 method strings.</li>
+<li>
+<strong>Per-frame parity testing.</strong> Every registered trace is exercised by a parametric <code>testthat</code> suite (<code>tests/testthat/test-trace-parity.R</code>) on a battery of small cost matrices including forbidden cells. Each frame’s matching is validated for in-range entries, no double-bookings, and no use of forbidden edges; the final-frame total is compared to the C++ oracle within tolerance.</li>
+<li>
+<strong>Shared trace infrastructure.</strong> New internal helpers <code>R/trace_helpers_frame.R</code> (<code>make_frame()</code>, <code>make_meta()</code>, <code>prepare_cost_work()</code>, <code>matching_total_cost()</code>, <code>validate_cost_input()</code>) and <code>R/trace_helpers_mcf.R</code> (min-cost-flow graph, residual edges, Dijkstra with Johnson potentials, Bellman-Ford, negative-cycle finder, push/extract). Used by all min-cost-flow traces.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-correctness-1-4-0">Bug fixes (correctness)<a class="anchor" aria-label="anchor" href="#bug-fixes-correctness-1-4-0"></a></h3>
+<ul><li>
+<strong><code>prepare_cost_matrix.cpp</code>:</strong> entries equal to <code>+Inf</code> were treated as regular very-large costs rather than forbidden, which made <code>cmax</code> become <code>Inf</code> and silently skipped the <code>maximize</code> flip. Result: <code>assignment(method = X, maximize = TRUE)</code> on matrices containing <code>Inf</code> returned the <em>minimizing</em> answer for any solver routing through <code>prepare_cost_matrix_impl</code> (<code>auction</code>, <code>auction_scaled</code>, <code>sap</code>, <code>csflow</code>, <code>hk01</code>, <code>bruteforce</code>). Now <code>NA</code> and any non-finite value are marked forbidden consistently.</li>
+<li>
+<strong><code>lap_solve_orlin</code> and <code>lap_solve_network_simplex_wrapper</code>:</strong> the R-side wrapper used <code>work[is.na(work)] &lt;- Inf</code> which missed the <code>-Inf</code> produced by negating <code>+Inf</code> in maximize mode, letting forbidden cells slip through as extreme-cost real edges. Fixed to <code>work[!is.finite(work)] &lt;- Inf</code>.</li>
+<li>
+<strong><code>network_simplex</code> initial spanning tree:</strong> the greedy initialiser in <code>ns_init.h</code> built a <em>partial</em> matching (any row that couldn’t claim a fresh column was left unmatched) and connected unmatched columns to row
+<ol start="0" style="list-style-type: decimal"><li>The resulting starting basis violated flow conservation, and pivots could not recover a perfect matching even when one existed - e.g. on a 5x5 cost matrix with two forbidden cells under <code>maximize</code>, <code>assignment(method = "network_simplex")</code> returned an infeasible result with one row unmatched. Fixed by adding an augmenting-path repair after the greedy pass: every still-unmatched row runs BFS for an augmenting path on the allowed-edge bipartite graph, extending the initial matching to a perfect matching whenever one exists.</li>
+</ol></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.3" id="couplr-133">couplr 1.3.3<a class="anchor" aria-label="anchor" href="#couplr-133"></a></h2>
+<div class="section level3">
+<h3 id="solver-internals-1-3-3">Solver internals<a class="anchor" aria-label="anchor" href="#solver-internals-1-3-3"></a></h3>
+<ul><li>
+<strong>Hungarian split into O(n^3) SAP + O(n^4) Munkres.</strong> <code>method = "hungarian"</code> now uses the shortest-augmenting-path solver shared with JV; the original O(n^4) Munkres implementation remains available as <code>method = "munkres"</code>. At n = 2000 the new Hungarian runs orders of magnitude faster than 1.3.2.</li>
+<li>
+<strong>LAPJV warm-start (column reduction + augmenting reduction) added to the JV core for square inputs.</strong> Reduces JV / duals solve time at n &gt;= 500.</li>
+<li>
+<strong>CSA shares dual potentials across epsilon-scaling phases.</strong> Removes the cold restart between phases that previously dominated CSA runtime at n &gt;= 500.</li>
+<li>
+<strong>Auction tie-breaker tweak cached in <code>auction</code> and <code>auction_gs</code>.</strong> Cleaner inner loop; no behaviour change.</li>
+<li>
+<strong><code>solve_auction_scaled</code> collapsed into a thin wrapper over <code>scaled_params</code></strong> (~200 lines removed); behaviour identical.</li>
+<li>
+<strong>Gabow-Tarjan</strong>: bucket-array Step 2 reinstated per the 1989 paper (G&amp;T’s <code>r &gt; bn</code> pruning is the algorithm, not a wart); added the 6n pruning heuristic from p.9.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-3-3">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-3-3"></a></h3>
+<ul><li>
+<code>paper/benchmark-table.csv</code> and <code>paper/scaling-results.csv</code> re-measured on the current development machine for n &lt;= 2000 (per-method table) and n_total &lt;= 2000 (cross-package table). Larger-n rows in both files are carried over from the previous machine and not directly comparable.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.2" id="couplr-132">couplr 1.3.2<a class="anchor" aria-label="anchor" href="#couplr-132"></a></h2>
+<div class="section level3">
+<h3 id="test-infrastructure-1-3-2">Test infrastructure<a class="anchor" aria-label="anchor" href="#test-infrastructure-1-3-2"></a></h3>
+<ul><li>Resubmission of 1.3.1 to address a win-builder r-devel pretest failure (exit code -1073741819 / access violation) in <code>test-lap-solve-batch-coverage.R</code>. Debian r-devel, local r-release, and local <code>R CMD check --as-cran</code> all pass; the crash did not reproduce off win-builder.</li>
+<li>Disabled testthat parallel execution (<code>Config/testthat/parallel: true</code> removed from DESCRIPTION) to eliminate cross-file worker-state leakage as a possible cause of the win-builder crash.</li>
+<li>Added a defensive <code>skip_on_cran()</code> at the top of <code>test-lap-solve-batch-coverage.R</code>. Equivalent coverage is exercised off-CRAN by <code>test-lap-solve-batch-coverage-2.R</code>, <code>test-lap-solve-batch-coverage-3.R</code>, <code>test-lap-solve-batch-extended.R</code>, <code>test-batch-coverage-final.R</code>, <code>test-batch-processing.R</code>, and <code>test-batch-kbest-extended.R</code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.1" id="couplr-131">couplr 1.3.1<a class="anchor" aria-label="anchor" href="#couplr-131"></a></h2>
+<div class="section level3">
+<h3 id="behaviour-changes-1-3-1">Behaviour changes<a class="anchor" aria-label="anchor" href="#behaviour-changes-1-3-1"></a></h3>
+<ul><li>
+<strong>Mahalanobis distance now uses the pooled within-group covariance by default.</strong> Previously the default was the overall-sample covariance of <code>rbind(left, right)</code>. The pooled within-group estimator <code>((n_L-1)*S_L + (n_R-1)*S_R) / (n_L+n_R-2)</code> is the convention used by <code><a href="https://rdrr.io/pkg/optmatch/man/match_on-methods.html" class="external-link">optmatch::match_on()</a></code> and aligns Mahalanobis behaviour across the matching packages a user is likely to compare against. Users who relied on the old default can recover it explicitly with <code>match_couples(..., sigma = cov(rbind(left[, vars], right[, vars])))</code>. The previous docstring already documented the default as “pooled covariance”; this release makes the code match the documentation.</li>
+</ul><hr></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="couplr-130">couplr 1.3.0<a class="anchor" aria-label="anchor" href="#couplr-130"></a></h2>
 <div class="section level3">
 <h3 id="new-features-1-3-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-3-0"></a></h3>
@@ -110,7 +173,7 @@
 </div>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.2.0" id="couplr-120">couplr 1.2.0<a class="anchor" aria-label="anchor" href="#couplr-120"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.2.0" id="couplr-120">couplr 1.2.0<a class="anchor" aria-label="anchor" href="#couplr-120"></a></h2><p class="text-muted">CRAN release: 2026-03-20</p>
 <div class="section level3">
 <h3 id="new-features-1-2-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-2-0"></a></h3>
 <div class="section level4">

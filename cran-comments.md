@@ -33,8 +33,8 @@ the C++ oracle.
 ## Test environments
 
 * local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
-* win-builder: R-devel, R-release (pre-submission check pending at time of
-  writing)
+* win-builder: R-devel (Status: OK,
+  https://win-builder.r-project.org/EO1CC0CS8iE5, 18 May 2026)
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)
 

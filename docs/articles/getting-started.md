@@ -293,11 +293,19 @@ result_strict <- match_couples(
   max_distance = 0.5  # reject pairs more different than this
 )
 #> Auto-selected scaling method: standardize
+#> Warning: 94.9% of pairs are forbidden!
+#>   Only 0 valid pairs for 50 left units - the matching pool is shallow!
+#>   Your constraints might be critically strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 
 cat("Without caliper:", result_loose$info$n_matched, "pairs\n")
 #> Without caliper: 50 pairs
 cat("With caliper:", result_strict$info$n_matched, "pairs\n")
-#> With caliper: 40 pairs
+#> With caliper: 37 pairs
 ```
 
 Stricter calipers mean fewer but better matches.

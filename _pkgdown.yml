@@ -127,6 +127,11 @@ reference:
   - pixel_morph
   - pixel_morph_animate
   - starts_with("morph")
+- title: Algorithm Animation
+  desc: Step-by-step visualization of LAP algorithms
+  contents:
+  - lap_animate
+  - animated_methods
 - title: Print, Summary and Plot Methods
   desc: S3 methods for displaying and visualizing results
   contents:

@@ -45,7 +45,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -289,7 +289,7 @@
 <span></span>
 <span><span class="co"># Or install development version from GitHub</span></span>
 <span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="usage-examples">Usage Examples<a class="anchor" aria-label="anchor" href="#usage-examples"></a>
@@ -467,6 +467,11 @@
 <li><a href="https://gillescolling.com/couplr/articles/matching-workflows.html">Matching Workflows</a></li>
 <li><a href="https://gillescolling.com/couplr/articles/pixel-morphing.html">Pixel Morphing</a></li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
+</h2>
+<p>The package was developed using a modern AI-assisted developer stack. The author designed the package architecture, made the algorithm-selection choices, and wrote the implementation in a TUI-first command-line workflow, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B active per token, 4-bit MLX quantization, running on a single Apple M4 Pro) for code completion, refactoring, and boilerplate through Anthropic’s Claude Code CLI, with requests routed to the local model and no cloud inference.</p>
 </div>
 <div class="section level2">
 <h2 id="support">Support<a class="anchor" aria-label="anchor" href="#support"></a>

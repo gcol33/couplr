@@ -1,5 +1,128 @@
 # Changelog
 
+## couplr 1.4.0
+
+### Animation coverage
+
+- **[`lap_animate()`](https://gillescolling.com/couplr/reference/lap_animate.md)
+  now covers every method that
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
+  accepts.** Ten new step-by-step traces ship: `auction_gs`,
+  `ramshaw_tarjan`, `ssap_bucket`, `hk01`, `csflow`, `cycle_cancel`,
+  `push_relabel`, `csa`, `orlin`, `network_simplex`.
+  [`animated_methods()`](https://gillescolling.com/couplr/reference/animated_methods.md)
+  returns all 20 method strings.
+- **Per-frame parity testing.** Every registered trace is exercised by a
+  parametric `testthat` suite (`tests/testthat/test-trace-parity.R`) on
+  a battery of small cost matrices including forbidden cells. Each
+  frame’s matching is validated for in-range entries, no
+  double-bookings, and no use of forbidden edges; the final-frame total
+  is compared to the C++ oracle within tolerance.
+- **Shared trace infrastructure.** New internal helpers
+  `R/trace_helpers_frame.R` (`make_frame()`, `make_meta()`,
+  `prepare_cost_work()`, `matching_total_cost()`,
+  `validate_cost_input()`) and `R/trace_helpers_mcf.R` (min-cost-flow
+  graph, residual edges, Dijkstra with Johnson potentials, Bellman-Ford,
+  negative-cycle finder, push/extract). Used by all min-cost-flow
+  traces.
+
+### Bug fixes (correctness)
+
+- **`prepare_cost_matrix.cpp`:** entries equal to `+Inf` were treated as
+  regular very-large costs rather than forbidden, which made `cmax`
+  become `Inf` and silently skipped the `maximize` flip. Result:
+  `assignment(method = X, maximize = TRUE)` on matrices containing `Inf`
+  returned the *minimizing* answer for any solver routing through
+  `prepare_cost_matrix_impl` (`auction`, `auction_scaled`, `sap`,
+  `csflow`, `hk01`, `bruteforce`). Now `NA` and any non-finite value are
+  marked forbidden consistently.
+- **`lap_solve_orlin` and `lap_solve_network_simplex_wrapper`:** the
+  R-side wrapper used `work[is.na(work)] <- Inf` which missed the `-Inf`
+  produced by negating `+Inf` in maximize mode, letting forbidden cells
+  slip through as extreme-cost real edges. Fixed to
+  `work[!is.finite(work)] <- Inf`.
+- **`network_simplex` initial spanning tree:** the greedy initialiser in
+  `ns_init.h` built a *partial* matching (any row that couldn’t claim a
+  fresh column was left unmatched) and connected unmatched columns to
+  row
+  0.  The resulting starting basis violated flow conservation, and
+      pivots could not recover a perfect matching even when one
+      existed - e.g. on a 5x5 cost matrix with two forbidden cells under
+      `maximize`, `assignment(method = "network_simplex")` returned an
+      infeasible result with one row unmatched. Fixed by adding an
+      augmenting-path repair after the greedy pass: every
+      still-unmatched row runs BFS for an augmenting path on the
+      allowed-edge bipartite graph, extending the initial matching to a
+      perfect matching whenever one exists.
+
+## couplr 1.3.3
+
+### Solver internals
+
+- **Hungarian split into O(n^3) SAP + O(n^4) Munkres.**
+  `method = "hungarian"` now uses the shortest-augmenting-path solver
+  shared with JV; the original O(n^4) Munkres implementation remains
+  available as `method = "munkres"`. At n = 2000 the new Hungarian runs
+  orders of magnitude faster than 1.3.2.
+- **LAPJV warm-start (column reduction + augmenting reduction) added to
+  the JV core for square inputs.** Reduces JV / duals solve time at n
+  \>= 500.
+- **CSA shares dual potentials across epsilon-scaling phases.** Removes
+  the cold restart between phases that previously dominated CSA runtime
+  at n \>= 500.
+- **Auction tie-breaker tweak cached in `auction` and `auction_gs`.**
+  Cleaner inner loop; no behaviour change.
+- **`solve_auction_scaled` collapsed into a thin wrapper over
+  `scaled_params`** (~200 lines removed); behaviour identical.
+- **Gabow-Tarjan**: bucket-array Step 2 reinstated per the 1989 paper
+  (G&T’s `r > bn` pruning is the algorithm, not a wart); added the 6n
+  pruning heuristic from p.9.
+
+### Documentation
+
+- `paper/benchmark-table.csv` and `paper/scaling-results.csv`
+  re-measured on the current development machine for n \<= 2000
+  (per-method table) and n_total \<= 2000 (cross-package table).
+  Larger-n rows in both files are carried over from the previous machine
+  and not directly comparable.
+
+## couplr 1.3.2
+
+### Test infrastructure
+
+- Resubmission of 1.3.1 to address a win-builder r-devel pretest failure
+  (exit code -1073741819 / access violation) in
+  `test-lap-solve-batch-coverage.R`. Debian r-devel, local r-release,
+  and local `R CMD check --as-cran` all pass; the crash did not
+  reproduce off win-builder.
+- Disabled testthat parallel execution (`Config/testthat/parallel: true`
+  removed from DESCRIPTION) to eliminate cross-file worker-state leakage
+  as a possible cause of the win-builder crash.
+- Added a defensive `skip_on_cran()` at the top of
+  `test-lap-solve-batch-coverage.R`. Equivalent coverage is exercised
+  off-CRAN by `test-lap-solve-batch-coverage-2.R`,
+  `test-lap-solve-batch-coverage-3.R`,
+  `test-lap-solve-batch-extended.R`, `test-batch-coverage-final.R`,
+  `test-batch-processing.R`, and `test-batch-kbest-extended.R`.
+
+## couplr 1.3.1
+
+### Behaviour changes
+
+- **Mahalanobis distance now uses the pooled within-group covariance by
+  default.** Previously the default was the overall-sample covariance of
+  `rbind(left, right)`. The pooled within-group estimator
+  `((n_L-1)*S_L + (n_R-1)*S_R) / (n_L+n_R-2)` is the convention used by
+  [`optmatch::match_on()`](https://rdrr.io/pkg/optmatch/man/match_on-methods.html)
+  and aligns Mahalanobis behaviour across the matching packages a user
+  is likely to compare against. Users who relied on the old default can
+  recover it explicitly with
+  `match_couples(..., sigma = cov(rbind(left[, vars], right[, vars])))`.
+  The previous docstring already documented the default as “pooled
+  covariance”; this release makes the code match the documentation.
+
+------------------------------------------------------------------------
+
 ## couplr 1.3.0
 
 ### New Features
@@ -30,6 +153,8 @@
 ------------------------------------------------------------------------
 
 ## couplr 1.2.0
+
+CRAN release: 2026-03-20
 
 ### New Features
 
@@ -506,7 +631,7 @@ Brute-force, Auto-select
 
 #### High-Level
 
-✅ Tidy tibble interface ✅ Matrix & data frame inputs  
+✅ Tidy tibble interface ✅ Matrix & data frame inputs\
 ✅ Grouped data frames ✅ Batch solving + parallelization ✅ K-best
 solutions (Murty, Lawler) ✅ Rectangular matrices ✅ Forbidden
 assignments (NA/Inf) ✅ Maximize/minimize ✅ Pixel morphing

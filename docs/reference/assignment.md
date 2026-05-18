@@ -10,9 +10,10 @@ using several algorithms. Forbidden edges can be marked as `NA` or
 assignment(
   cost,
   maximize = FALSE,
-  method = c("auto", "jv", "hungarian", "auction", "auction_gs", "auction_scaled", "sap",
-    "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket", "cycle_cancel", "gabow_tarjan",
-    "lapmod", "csa", "ramshaw_tarjan", "push_relabel", "orlin", "network_simplex"),
+  method = c("auto", "jv", "hungarian", "munkres", "auction", "auction_gs",
+    "auction_scaled", "sap", "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket",
+    "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan", "push_relabel",
+    "orlin", "network_simplex"),
   auction_eps = NULL,
   eps = NULL
 )
@@ -38,9 +39,14 @@ assignment(
   - `"auto"` — Automatic selection based on problem characteristics
     (default)
 
-  - `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n³)
+  - `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n^3) with
+    warm-start
 
-  - `"hungarian"` — Classic 'Hungarian' algorithm O(n³)
+  - `"hungarian"` — Classic 'Hungarian' (shortest augmenting path)
+    O(n^3)
+
+  - `"munkres"` — Matrix-form 'Kuhn-Munkres' O(n^4), reference
+    implementation
 
   **Auction-based solvers:**
 
@@ -71,7 +77,7 @@ assignment(
     medium-large
 
   - `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
-    slackness O(n³ log C)
+    slackness O(n^3 log C)
 
   - `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 

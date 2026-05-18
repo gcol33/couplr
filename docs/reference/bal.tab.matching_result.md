@@ -1,7 +1,8 @@
 # Balance Table for Matching Results (cobalt integration)
 
-S3 method enabling `cobalt::bal.tab()` on couplr result objects.
-Requires the cobalt package to be installed.
+S3 method enabling
+[`cobalt::bal.tab()`](https://ngreifer.github.io/cobalt/reference/bal.tab.html)
+on couplr result objects. Requires the cobalt package to be installed.
 
 ## Usage
 
@@ -31,7 +32,8 @@ bal.tab.subclass_result(x, data = NULL, ...)
 
 - ...:
 
-  Additional arguments passed to `cobalt::bal.tab()`
+  Additional arguments passed to
+  [`cobalt::bal.tab()`](https://ngreifer.github.io/cobalt/reference/bal.tab.html)
 
 - data:
 

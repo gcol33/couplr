@@ -202,7 +202,7 @@ head(result$pairs)
 # Summary statistics
 result$info
 #> $solver
-#> [1] "auction_scaled"
+#> [1] "jv"
 #> 
 #> $n_matched
 #> [1] 100
@@ -532,18 +532,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 183.56 seconds
+#>   Time: 1.5 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.56 seconds
+#>   Time: 0.96 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 117.7 x
+#>   Speedup: 1.6 x
 ```
 
 ### Greedy Strategies
@@ -643,9 +643,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.07        0.0912          18.24
-#> elapsed1 row_best     0.06        0.0968          19.36
-#> elapsed2       pq     0.07        0.0912          18.24
+#> elapsed    sorted     0.03        0.0912          18.24
+#> elapsed1 row_best     0.05        0.0968          19.36
+#> elapsed2       pq     0.05        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -709,7 +709,7 @@ cat("  Matched:", result_no_cal$info$n_matched, "\n")
 cat("  Mean distance:", round(mean(result_no_cal$pairs$distance), 3), "\n")
 #>   Mean distance: 1.129
 cat("  Max distance:", round(max(result_no_cal$pairs$distance), 3), "\n\n")
-#>   Max distance: 5.453
+#>   Max distance: 5.788
 
 cat("With caliper (1.5):\n")
 #> With caliper (1.5):
@@ -718,7 +718,7 @@ cat("  Matched:", result_with_cal$info$n_matched, "\n")
 cat("  Mean distance:", round(mean(result_with_cal$pairs$distance), 3), "\n")
 #>   Mean distance: 0.143
 cat("  Max distance:", round(max(result_with_cal$pairs$distance), 3), "\n")
-#>   Max distance: 0.763
+#>   Max distance: 0.755
 
 # Visualize caliper effect
 ggplot(result_no_cal$pairs, aes(x = distance)) +
@@ -792,7 +792,7 @@ refined_matches <- match_couples(
 )
 
 cat("90th percentile caliper:", round(caliper_90, 3), "\n")
-#> 90th percentile caliper: 4.532
+#> 90th percentile caliper: 4.551
 cat("Matches retained:",
     round(100 * refined_matches$info$n_matched / all_matches$info$n_matched, 1), "%\n")
 #> Matches retained: 100 %
@@ -1858,6 +1858,14 @@ ps_result <- ps_match(
   caliper_sd = 0.5,
   method = "hungarian"
 )
+#> Warning: 74.8% of pairs are forbidden!
+#>   Only 3600 valid pairs for 100 left units - the matching pool is shallow!
+#>   Your constraints might be moderately strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 
 ps_result
 #> Matching Result
@@ -1873,14 +1881,14 @@ ps_result
 #> # A tibble: 99 × 4
 #>    left_id right_id distance .logit_ps_diff
 #>    <chr>   <chr>       <dbl>          <dbl>
-#>  1 1       139       0.285          0.285  
-#>  2 2       117       0.123          0.123  
-#>  3 3       100       0.0141         0.0141 
-#>  4 4       103       0.246          0.246  
-#>  5 5       133       0.221          0.221  
-#>  6 6       148       0.00931        0.00931
+#>  1 1       23        0.164          0.164  
+#>  2 2       36        0.0533         0.0533 
+#>  3 3       148       0.0121         0.0121 
+#>  4 4       49        0.321          0.321  
+#>  5 5       68        0.0874         0.0874 
+#>  6 6       48        0.00425        0.00425
 #>  7 7       111       0.102          0.102  
-#>  8 8       124       0.351          0.351  
+#>  8 8       81        0.196          0.196  
 #>  9 9       128       0.0692         0.0692 
 #> 10 10      110       0.0131         0.0131 
 #> # ℹ 89 more rows
@@ -2031,7 +2039,7 @@ and `distance` columns — ready for downstream modelling:
 
 ``` r
 
-md <- match_data(result, left_data, right_data)
+md <- couplr::match_data(result, left_data, right_data)
 head(md)
 #> # A tibble: 6 × 9
 #>      id   age income education group     treatment weights subclass distance
@@ -2046,8 +2054,10 @@ head(md)
 
 **[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)**
 constructs a `matchit`-class object, enabling direct use with
-`cobalt::bal.tab()`, `cobalt::love.plot()`, and
-`marginaleffects::avg_comparisons()`:
+[`cobalt::bal.tab()`](https://ngreifer.github.io/cobalt/reference/bal.tab.html),
+[`cobalt::love.plot()`](https://ngreifer.github.io/cobalt/reference/love.plot.html),
+and
+[`marginaleffects::avg_comparisons()`](https://rdrr.io/pkg/marginaleffects/man/comparisons.html):
 
 ``` r
 

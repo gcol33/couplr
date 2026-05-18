@@ -24,9 +24,9 @@ paper_dir <- "C:/GillesC/Documents/dev/couplr/paper"
 ## ---- data: Lalonde NSW, with the standard MatchIt formula ----
 data("lalonde", package = "MatchIt")
 ## one-hot race so all three packages match on the same numeric design
-lalonde$race_black  <- as.integer(lalonde$race == "black")
-lalonde$race_hispan <- as.integer(lalonde$race == "hispan")
-covars <- c("age", "educ", "race_black", "race_hispan",
+lalonde$race_Black    <- as.integer(lalonde$race == "black")
+lalonde$race_Hispanic <- as.integer(lalonde$race == "hispan")
+covars <- c("age", "educ", "race_Black", "race_Hispanic",
             "married", "nodegree", "re74", "re75")
 form   <- as.formula(paste("treat ~", paste(covars, collapse = " + ")))
 

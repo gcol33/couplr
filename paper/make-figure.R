@@ -324,95 +324,87 @@ panels_a <- lapply(seq_along(panel_spec), function(i) {
 
 row_a <- wrap_plots(panels_a, nrow = 1)
 
-# ---------- Panel B: couplr vs R competitors on causal-matching scaling -----
+# ---------- Panel B: balance (Love plot) on Lalonde NSW -------------------
+# All three packages reduce |SMD| to identical values to 3 decimal places, so
+# one matched point per covariate suffices; the panel's value is showing how
+# far each covariate moves toward the 0.1 balance threshold.
 
-SCALING_RESULTS <- file.path(repo_root, "paper", "scaling-results.csv")
-scaling <- read.csv(SCALING_RESULTS, stringsAsFactors = FALSE)
-scaling$median_ms <- scaling$median_s * 1000
-scaling$package <- factor(scaling$package,
-                          levels = c("MatchIt", "optmatch", "couplr"))
+LALONDE_PER_COV <- file.path(repo_root, "paper", "lalonde-per-covariate.csv")
+lp <- read.csv(LALONDE_PER_COV, stringsAsFactors = FALSE)
 
-# Mark rows where the package failed (NA median_s) so we can flag them on the
-# plot — the integer-overflow crash inside MatchIt's optmatch backend at the
-# largest size is part of the story.
-scaling_ok   <- scaling[!is.na(scaling$median_s) & scaling$status == "ok", ]
-scaling_fail <- scaling[is.na(scaling$median_s), ]
+covar_pretty <- c(
+  age          = "age",
+  educ         = "education (yrs)",
+  race_Black    = "race: Black",
+  race_Hispanic = "race: Hispanic",
+  married      = "married",
+  nodegree     = "no HS degree",
+  re74         = "earnings, 1974",
+  re75         = "earnings, 1975"
+)
+lp$covar_label <- covar_pretty[lp$covar]
 
-b_palette <- c(couplr   = "#0072b2",
-               optmatch = "#009e73",
-               MatchIt  = "#d55e00")
-b_shapes  <- c(couplr   = 22,
-               optmatch = 21,
-               MatchIt  = 24)
+# Largest unmatched imbalance at top.
+lp <- lp[order(lp$unmatched), ]
+lp$covar_label <- factor(lp$covar_label, levels = lp$covar_label)
 
-x_breaks_b <- c(500, 2000, 5000, 10000, 20000)
-x_lbls_b   <- c("500", "2,000", "5,000", "10,000", "20,000")
-# Log-y ticks: 50 ms, 1 s, 1 min, 10 min, with headroom for the "int overflow"
-# annotation that sits above the curves at the right edge.
-y_breaks_b <- c(0.05, 1, 60, 600) * 1000
-y_lbls_b   <- c("50 ms", "1 s", "1 min", "10 min")
-y_dom_b    <- c(40, 3.6e6)   # 40 ms to 1 h
+# All three packages produce the same matched |SMD| to 3 dp.
+lp$matched <- lp$couplr
 
-last_each <- do.call(rbind, lapply(split(scaling_ok, scaling_ok$package),
-  function(d) d[which.max(d$n_total), ]))
-
-# MatchIt failed at n=20,000 with an integer-overflow inside the optmatch
-# backend. Show this as a vertical dashed segment from its last data point up
-# to a dedicated "int overflow" annotation in MatchIt's colour, so the failure
-# stays attached to the right package without colliding with optmatch's point.
-fail_anno <- if (nrow(scaling_fail)) {
-  matchit_last <- scaling_ok[as.character(scaling_ok$package) == "MatchIt", ]
-  matchit_last <- matchit_last[which.max(matchit_last$n_total), ]
-  data.frame(n_total   = scaling_fail$n_total[1],
-             y_bottom  = matchit_last$median_ms,
-             y_top     = 1.2e6,        # ~20 min, above all curves
+lp_long <- rbind(
+  data.frame(covar_label = lp$covar_label,
+             state = "before matching", abs_smd = lp$unmatched,
+             stringsAsFactors = FALSE),
+  data.frame(covar_label = lp$covar_label,
+             state = "after matching",  abs_smd = lp$matched,
              stringsAsFactors = FALSE)
-} else NULL
+)
+lp_long$state <- factor(lp_long$state,
+                        levels = c("before matching", "after matching"))
 
-p_b <- ggplot(scaling_ok,
-              aes(x = n_total, y = median_ms, colour = package,
-                  shape = package, group = package)) +
-  geom_line(linewidth = 1.0) +
-  geom_point(fill = "white", size = 2.6, stroke = 1.0) +
-  scale_colour_manual(values = b_palette, guide = "none") +
-  scale_shape_manual(values = b_shapes, guide = "none") +
-  scale_x_log10(breaks = x_breaks_b, labels = x_lbls_b,
-                expand = expansion(mult = c(0.05, 0.16))) +
-  scale_y_log10(breaks = y_breaks_b, labels = y_lbls_b,
-                limits = y_dom_b, expand = c(0, 0)) +
-  labs(x = expression("problem size, " * n[t] + n[c]),
-       y = "median wall-clock time",
-       tag = "(b)") +
-  theme_fig()
+b_palette_lp <- c("before matching" = "#d55e00",
+                  "after matching"  = "#0072b2")
+b_shapes_lp  <- c("before matching" = 1,
+                  "after matching"  = 15)
 
-if (!is.null(fail_anno)) {
-  p_b <- p_b +
-    annotate("segment",
-             x = fail_anno$n_total, xend = fail_anno$n_total,
-             y = fail_anno$y_bottom, yend = fail_anno$y_top,
-             colour = b_palette["MatchIt"], linetype = "22",
-             linewidth = 0.55) +
-    annotate("point",
-             x = fail_anno$n_total, y = fail_anno$y_top,
-             shape = 4, size = 3.4, stroke = 1.3,
-             colour = b_palette["MatchIt"]) +
-    annotate("text",
-             x = fail_anno$n_total, y = fail_anno$y_top,
-             label = "int overflow", hjust = -0.18, vjust = 0.5,
-             size = 3.5, fontface = "italic",
-             colour = b_palette["MatchIt"])
-}
+x_max_b <- ceiling(max(lp$unmatched) * 10) / 10 + 0.1
 
-# Right-edge labels. couplr and optmatch both terminate at n=20,000 with
-# couplr ~3x below optmatch; MatchIt ends at n=10,000. Place each label
-# just to the right of its terminal point at the same y.
-p_b <- p_b +
-  geom_text(data = last_each,
-            aes(x = n_total, y = median_ms,
-                colour = package, label = package),
-            hjust = -0.20, vjust = 0.5, size = 4.0,
-            fontface = "bold",
-            inherit.aes = FALSE)
+p_b <- ggplot(lp_long,
+              aes(x = abs_smd, y = covar_label,
+                  colour = state, shape = state)) +
+  geom_segment(data = lp,
+               aes(x = unmatched, xend = matched,
+                   y = covar_label, yend = covar_label),
+               inherit.aes = FALSE,
+               colour = "#999999", linewidth = 0.45) +
+  geom_vline(xintercept = 0.1, linetype = "22",
+             colour = "#444", linewidth = 0.4) +
+  geom_point(size = 2.6, stroke = 1.0) +
+  scale_colour_manual(values = b_palette_lp, name = NULL) +
+  scale_shape_manual(values = b_shapes_lp, name = NULL) +
+  scale_x_continuous(limits = c(-0.02, x_max_b),
+                     breaks = c(0, 0.1, 0.5, 1.0, 1.5),
+                     labels = c("0", "0.1", "0.5", "1.0", "1.5"),
+                     expand = c(0, 0)) +
+  labs(x = "|standardized mean difference|", y = NULL, tag = "(b)") +
+  theme_fig() +
+  theme(
+    legend.position      = c(0.98, 0.04),
+    legend.justification = c(1, 0),
+    legend.background    = element_rect(fill = "white", colour = "#cccccc",
+                                        linewidth = 0.3),
+    legend.key           = element_rect(fill = "white", colour = NA),
+    legend.text          = element_text(size = 9, colour = "#333"),
+    legend.spacing.y     = unit(0.1, "lines"),
+    legend.margin        = margin(2, 4, 2, 4),
+    panel.grid.major.y   = element_line(colour = "#f2f2f2",
+                                        linewidth = 0.3),
+    axis.text.y          = element_text(size = 9.5, colour = "#1a1a1a")
+  ) +
+  annotate("text", x = 0.1, y = nrow(lp) + 0.35,
+           label = "balance threshold",
+           hjust = -0.05, vjust = 0.5, size = 3.0, fontface = "italic",
+           colour = "#444")
 
 # ---------- combine & save -------------------------------------------------
 

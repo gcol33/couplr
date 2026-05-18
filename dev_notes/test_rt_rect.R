@@ -1,0 +1,22 @@
+devtools::load_all(quiet = TRUE)
+set.seed(99)
+# 4x7 rectangular (no transpose)
+m1 <- matrix(sample.int(50, 28), 4, 7)
+tr1 <- get_trace_fn("ramshaw_tarjan")(m1, maximize = FALSE)
+oracle1 <- assignment(m1, maximize = FALSE, method = "ramshaw_tarjan")
+cat("4x7 min: trace=", tr1$meta$total_cost, " oracle=", oracle1$total_cost, "\n", sep = "")
+cat("4x7 final matching: ", paste(tr1$frames[[length(tr1$frames)]]$matching, collapse=","), "\n", sep = "")
+
+# 7x4 rectangular (forces transpose)
+m2 <- matrix(sample.int(50, 28), 7, 4)
+tr2 <- get_trace_fn("ramshaw_tarjan")(m2, maximize = FALSE)
+oracle2 <- assignment(m2, maximize = FALSE, method = "ramshaw_tarjan")
+cat("7x4 min: trace=", tr2$meta$total_cost, " oracle=", oracle2$total_cost, "\n", sep = "")
+cat("7x4 trace matching: ", paste(tr2$frames[[length(tr2$frames)]]$matching, collapse=","), "\n", sep = "")
+cat("7x4 oracle matching:", paste(oracle2$match, collapse=","), "\n", sep = "")
+
+# Square baseline
+m3 <- matrix(sample.int(50, 25), 5, 5)
+tr3 <- get_trace_fn("ramshaw_tarjan")(m3, maximize = FALSE)
+oracle3 <- assignment(m3, maximize = FALSE, method = "ramshaw_tarjan")
+cat("5x5 min: trace=", tr3$meta$total_cost, " oracle=", oracle3$total_cost, "\n", sep = "")

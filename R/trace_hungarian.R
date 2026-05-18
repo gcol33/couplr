@@ -31,14 +31,8 @@
 #' @keywords internal
 #' @noRd
 trace_hungarian <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
+  v_in <- validate_cost_input(cost, "trace_hungarian")
+  cost <- v_in$cost; n <- v_in$n; m <- v_in$m
 
   if (n != m) {
     stop(
@@ -52,16 +46,8 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
     )
   }
 
-  # Work copy: maximize via sign flip; forbidden entries replaced with a big M
-  # that still keeps arithmetic safe (no Inf/NaN inside the inner loops).
-  cost_work <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_work)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
-  scale <- max(abs(cost_work[finite_mask]))
-  big <- (scale + 1) * (n + m + 1)
-  cost_work[!finite_mask] <- big
+  prep <- prepare_cost_work(cost, maximize)
+  cost_work <- prep$cost_work
 
   u <- numeric(n)
   v <- numeric(m)
@@ -84,7 +70,7 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
   emit <- function(phase, description,
                    active_edges = list(), path = list()) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
+    frames[[length(frames) + 1L]] <<- make_frame(
       step         = step,
       phase        = phase,
       description  = description,
@@ -236,8 +222,7 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
     )
   }
 
-  matched_costs <- cost[cbind(seq_len(n), matching_row)]
-  total <- sum(matched_costs, na.rm = TRUE)
+  total <- matching_total_cost(cost, matching_row)
 
   emit(
     "final",
@@ -245,7 +230,7 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
   )
 
   list(
-    meta = list(
+    meta = make_meta(
       algorithm   = "hungarian",
       n_rows      = n,
       n_cols      = m,

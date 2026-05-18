@@ -28,15 +28,11 @@
 
 #' @keywords internal
 #' @noRd
-trace_auction <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
+trace_auction <- function(cost, maximize = FALSE,
+                          sweep = c("lifo", "gauss_seidel"), ...) {
+  sweep <- match.arg(sweep)
+  v_in <- validate_cost_input(cost, sprintf("trace_auction (sweep=%s)", sweep))
+  cost <- v_in$cost; n <- v_in$n; m <- v_in$m
   if (n != m) {
     stop(
       "trace_auction currently requires a square cost matrix (nrow == ncol). ",
@@ -49,6 +45,9 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
   # --- Internal max-problem view ---------------------------------------------
   # vmat[i,j] is the "value" person i gets from object j. We are maximising
   # the total value, equivalently minimising the total cost when maximize=FALSE.
+  # We can't reuse prepare_cost_work() here because we need values flipped to
+  # a *maximization* internal view (auction maximizes profit), and forbidden
+  # entries must become very *negative* (not very positive) so no one bids.
   vmat <- if (maximize) cost else -cost
   finite_mask <- is.finite(vmat)
   if (!any(finite_mask)) {
@@ -75,7 +74,7 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
   emit <- function(phase, description,
                    active_edges = list(), path = list()) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
+    frames[[length(frames) + 1L]] <<- make_frame(
       step         = step,
       phase        = phase,
       description  = description,
@@ -87,15 +86,21 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
     )
   }
 
+  sweep_label <- switch(sweep,
+    lifo          = "LIFO queue of unassigned/displaced persons (Bertsekas's original).",
+    gauss_seidel  = "Gauss-Seidel sweep through person indices 1..n in order, restarting after a full pass."
+  )
+
   emit(
     "init",
     sprintf(
       paste0(
         "Initialise: every object has price 0 and no person is assigned. ",
-        "Bidding increment eps = %.4g. Persons (rows) will repeatedly bid on objects (cols); ",
+        "Bidding increment eps = %.4g. Selection rule: %s ",
+        "Persons (rows) will repeatedly bid on objects (cols); ",
         "winning bids raise the object's price, displacing the previous holder if any."
       ),
-      eps
+      eps, sweep_label
     )
   )
 
@@ -103,10 +108,37 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
   iter <- 0L
   max_iter <- 200L * n * n            # safety cap
 
+  # Selection state. lifo: an explicit stack of unassigned persons, with
+  # newly-displaced persons pushed on top. gauss_seidel: a cursor that walks
+  # 1..n cyclically, skipping persons that are already assigned.
+  if (sweep == "lifo") {
+    queue <- rev(seq_len(n))           # stack: pop from end gives 1, 2, 3, ...
+    pick_next <- function() {
+      while (length(queue) > 0L) {
+        i <- queue[length(queue)]
+        queue <<- queue[-length(queue)]
+        if (assign_object[i] == 0L) return(i)
+      }
+      NA_integer_
+    }
+    push_back <- function(i) { queue <<- c(queue, i) }
+  } else {
+    cursor <- 0L
+    pick_next <- function() {
+      for (k in seq_len(n)) {
+        cursor <<- (cursor %% n) + 1L
+        if (assign_object[cursor] == 0L) return(cursor)
+      }
+      NA_integer_
+    }
+    push_back <- function(i) invisible(NULL)   # displaced persons are caught on the next sweep
+  }
+
   while (any(assign_object == 0L) && iter < max_iter) {
     iter <- iter + 1L
 
-    i <- which(assign_object == 0L)[1]
+    i <- pick_next()
+    if (is.na(i)) break
 
     # Net profit of each object for person i
     a <- vmat[i, ] - p
@@ -149,6 +181,7 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
     if (old_holder > 0L && old_holder != i) {
       assign_object[old_holder] <- 0L
       assign_person[j_star] <- 0L
+      push_back(old_holder)
       emit(
         "displace",
         sprintf(
@@ -179,8 +212,7 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
     )
   }
 
-  matched_costs <- cost[cbind(seq_len(n), assign_object)]
-  total <- sum(matched_costs, na.rm = TRUE)
+  total <- matching_total_cost(cost, assign_object)
 
   emit(
     "final",
@@ -190,23 +222,45 @@ trace_auction <- function(cost, maximize = FALSE, ...) {
     )
   )
 
+  algorithm_name <- if (sweep == "gauss_seidel") "auction_gs" else "auction"
+  description <- if (sweep == "gauss_seidel") {
+    paste0(
+      "Bertsekas forward auction (1988), Gauss-Seidel sweep variant. ",
+      "Same bid / displace / assign mechanics as the standard auction, but ",
+      "unassigned persons are visited in a fixed cyclic order (1, 2, ..., n, 1, 2, ...) ",
+      "rather than from a LIFO queue. Each bid immediately updates the object's price, ",
+      "so the next person in the sweep sees the newly-raised price. ",
+      "Often converges in fewer bids on spatially-structured problems where ",
+      "neighbouring persons compete for overlapping objects."
+    )
+  } else {
+    paste0(
+      "Bertsekas forward auction (1988). Persons (rows) bid on objects (cols); ",
+      "each object carries a price, and a winning bid raises the price by the gap to the ",
+      "second-best alternative plus eps. The previous holder of the contested object is displaced ",
+      "and re-bids later. Iteration ends when every person is assigned."
+    )
+  }
+
   list(
-    meta = list(
-      algorithm   = "auction",
+    meta = make_meta(
+      algorithm   = algorithm_name,
       n_rows      = n,
       n_cols      = m,
       cost_matrix = cost,
       maximize    = maximize,
       total_cost  = total,
-      description = paste0(
-        "Bertsekas forward auction (1988). Persons (rows) bid on objects (cols); ",
-        "each object carries a price, and a winning bid raises the price by the gap to the ",
-        "second-best alternative plus eps. The previous holder of the contested object is displaced ",
-        "and re-bids later. Iteration ends when every person is assigned."
-      )
+      description = description
     ),
     frames = frames
   )
 }
 
-register_trace("auction", trace_auction)
+#' @keywords internal
+#' @noRd
+trace_auction_gs <- function(cost, maximize = FALSE, ...) {
+  trace_auction(cost, maximize = maximize, sweep = "gauss_seidel", ...)
+}
+
+register_trace("auction",    trace_auction)
+register_trace("auction_gs", trace_auction_gs)

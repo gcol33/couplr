@@ -1,2 +1,0 @@
-Correctness OK for n=4..100
- 

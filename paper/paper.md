@@ -108,7 +108,7 @@ $O(n^3 \log(n\,C_{\max}))$ for cost scaling, and
 $O(n^{3/4} m \log(n\,C_{\max}))$ for Gabow–Tarjan bit scaling, where
 $C_{\max} = \max_{i,j} |C_{ij}|$ is the largest cost magnitude; the
 dispatcher selects among solvers using $n$, $m$, sparsity, and
-rectangularity. All 18 solvers
+rectangularity. All 19 solvers
 are implemented from scratch in C++ via Rcpp and RcppEigen, so the package
 adds no external solver dependency: the Hungarian method [@Kuhn1955],
 Jonker–Volgenant shortest augmenting paths [@JonkerVolgenant1987], auction
@@ -134,9 +134,9 @@ sparsity, cost type, and size: dense square problems use Jonker–Volgenant
 or cost scaling; sparse matrices use sparse augmenting-path solvers;
 rectangular problems avoid padding through rectangular assignment methods.
 Figure \ref{fig:benchmark} shows median solve time across problem sizes for
-all 18 solvers; benchmarks are reproducible via `paper/make-figure.R`.
+all 19 solvers; benchmarks are reproducible via `paper/make-figure.R`.
 
-![(a) Median wall-clock solve time versus problem size $n$ for all 18
+![(a) Median wall-clock solve time versus problem size $n$ for all 19
 assignment solvers in `couplr`, arranged as five small-multiple panels
 grouped by algorithm family (JV / augmenting-path, Auction, Cost-scaling,
 Flow-based, and Other). Within each panel, individual solvers share a

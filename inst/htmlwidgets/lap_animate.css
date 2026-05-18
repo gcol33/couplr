@@ -30,6 +30,13 @@
   font-size: 13px;
 }
 
+/* Lock the two header rows to a single line so a long phase name or
+   a growing "k / n matched" string never wraps and shifts header
+   height between frames. */
+.couplr-header > div {
+  white-space: nowrap;
+}
+
 .couplr-header .algo-name {
   font-weight: 600;
   font-size: 14px;
@@ -47,9 +54,27 @@
   letter-spacing: 0.5px;
 }
 
+/* Empty phase pill would still occupy padded space and shift the
+   baseline of surrounding text; collapse it when there's no phase. */
+.couplr-header .phase-badge:empty {
+  display: none;
+}
+
 .couplr-header .step-counter {
   font-variant-numeric: tabular-nums;
   color: #777;
+}
+
+.couplr-header .match-counter {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(93, 214, 93, 0.18);
+  color: #2E7D32;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* Main SVG canvas ---------------------------------------------------------- */
@@ -66,14 +91,21 @@
   height: 100%;
 }
 
-/* Nodes ------------------------------------------------------------------- */
+/* Nodes -------------------------------------------------------------------
+   Nodes sit at fixed slots; opacity is what changes per frame. Once a
+   row/col is in the current matching it gets .matched and fades to a
+   low opacity, so finished pairs recede while the algorithm's active
+   work stays prominent. */
 .couplr-node {
   stroke: #FFFFFF;
   stroke-width: 1.5;
+  transition: opacity 280ms ease;
 }
 
 .couplr-node.row { fill: #E07B39; }
 .couplr-node.col { fill: #3D8EAF; }
+
+.couplr-node.matched { opacity: 0.25; }
 
 .couplr-node-label {
   fill: #FFFFFF;
@@ -82,7 +114,10 @@
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
+  transition: opacity 280ms ease;
 }
+
+.couplr-node-label.matched { opacity: 0.25; }
 
 .couplr-dual-label {
   fill: #3E3F3A;
@@ -91,19 +126,26 @@
   pointer-events: none;
 }
 
-/* Edges ------------------------------------------------------------------- */
+/* Edges -------------------------------------------------------------------
+   The JS never creates a bare .couplr-edge — every edge is added with one
+   of the modifier classes below. The base rule exists only so partial
+   draw-in animations still show the right colour mid-transition. The
+   x1/y1/x2/y2 transitions let edges follow their nodes when the slot
+   permutation reshuffles after a new match. */
 .couplr-edge {
   fill: none;
-  stroke: #C8C8C8;
-  stroke-width: 0.8;
-  opacity: 0.35;
-  transition: stroke 200ms ease, stroke-width 200ms ease, opacity 200ms ease;
+  stroke-linecap: round;
+  transition: stroke 180ms ease, stroke-width 180ms ease, opacity 180ms ease;
 }
 
+/* Matched edges fade to a low-opacity green: they record the result but
+   recede so the algorithm's active work (orange / red dashed) reads
+   loud against them. Newly-matched edges get a brief inline opacity:1
+   pulse from JS, then settle here. */
 .couplr-edge.matched {
   stroke: #5DD65D;
   stroke-width: 2.4;
-  opacity: 1;
+  opacity: 0.4;
 }
 
 .couplr-edge.active {
@@ -112,11 +154,14 @@
   opacity: 1;
 }
 
+/* Path edges (red dashed) override the JS-set inline stroke-dasharray so
+   the augmenting-path frames read as dashed rather than solid. !important
+   beats the inline attribute that drives the draw-in animation. */
 .couplr-edge.path {
   stroke: #E74C3C;
   stroke-width: 2.4;
   opacity: 1;
-  stroke-dasharray: 4 2;
+  stroke-dasharray: 4 2 !important;
 }
 
 .couplr-edge-cost {
@@ -134,11 +179,18 @@
   background: #FFFFFF;
 }
 
+/* Fixed height so per-frame description length never reflows the footer.
+   Without this, a 1-line -> 2-line -> 3-line transition between frames
+   shrinks the canvas, the SVG (CSS 100% with fixed viewBox) rescales,
+   and every node appears to jitter. Keep the content scrollable rather
+   than letting the box grow. */
 .couplr-description {
-  min-height: 32px;
+  height: 56px;
   margin-bottom: 8px;
   color: #3E3F3A;
   line-height: 1.4;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .couplr-controls {

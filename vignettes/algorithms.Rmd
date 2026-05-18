@@ -176,48 +176,47 @@ animated_methods()
 
 The six animated methods cover one representative from each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the economic / bidding view (Auction and its epsilon-scaling extension), and the bit-scaling discrete-cost approach (Gabow-Tarjan).
 
-### Hungarian on a 3x3
+All four demos below run on a 30x30 cost matrix so you can see the algorithm's shape, not just a handful of edges. The header tracks `k / 30 matched`; matched pairs fade into the background as the algorithm commits them; orange edges are the current search; red dashed edges mark the augmenting path being built.
+
+### Hungarian on a 30x30
 
 ```{r animate-hungarian, eval = TRUE}
-cost <- matrix(c(4, 2, 5,
-                 3, 3, 6,
-                 7, 5, 4), 3, 3, byrow = TRUE)
-lap_animate(cost, method = "hungarian")
+set.seed(1)
+cost_hg <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
+lap_animate(cost_hg, method = "hungarian")
 ```
 
-Step forward and watch `u` and `v` update at each dual_update frame: the algorithm finds the largest shift that keeps `u_i + v_j <= c_ij` while making at least one new edge tight.
+Each row's processing grows a Dijkstra shortest-path tree on reduced costs from the free row. Orange edges are the scan frontier; a free column popping off the queue terminates the search and the red dashed augmenting path commits one new matched edge before the next free row is selected.
 
-### Auction on a 4x4
+### Auction on a 30x30
 
 ```{r animate-auction, eval = TRUE}
-cost_a <- matrix(c( 1,  9,  9,  9,
-                    1,  9,  9,  9,
-                    9,  1,  9,  9,
-                    9,  9,  1,  9), 4, 4, byrow = TRUE)
+set.seed(2)
+cost_a <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
 lap_animate(cost_a, method = "auction")
 ```
 
-The "contention" case: two persons both want column 1. Watch the price of column 1 climb as each bid raises it by (best - second) + eps, until one bidder gives up and steers to a different column.
+Bidders compete: each unassigned row picks its most-valued column and bids `(best - second) + eps`. When a column already held by another row is grabbed, that row is freed and rejoins the bidding. Watch the matched count climb in fits as displacements ripple through.
 
-### Gabow-Tarjan bit-scaling
+### Gabow-Tarjan bit-scaling on a 30x30
 
 ```{r animate-gt, eval = TRUE}
-set.seed(1)
-cost_gt <- matrix(sample(1:50, 16, replace = TRUE), 4, 4)
+set.seed(3)
+cost_gt <- matrix(sample(1:50, 900, replace = TRUE), 30, 30)
 lap_animate(cost_gt, method = "gabow_tarjan")
 ```
 
-The phase_start frames mark each bit being processed (MSB first). Within a bit, Hopcroft-Karp finds maximal augmenting paths in the equality graph, then a single 1-feasibility Hungarian step closes any gap before the next bit is added.
+The header here tracks `Bit k / n_bits resolved` rather than matched edges, because GT's progress metric is bit-precision: each phase solves the assignment problem fully at the current bit-precision, then the next phase incorporates one more bit and rebuilds the matching from scratch (with the duals warm-starting from the previous phase). `phase_start` frames mark each bit being processed (MSB first). Within a bit, Hopcroft-Karp finds maximal augmenting paths in the equality graph; a single 1-feasibility Hungarian step closes any gap before the next bit is added.
 
-### Jonker-Volgenant pre-stages
+### Jonker-Volgenant pre-stages on a 30x30
 
 ```{r animate-jv, eval = TRUE}
-set.seed(7)
-cost_jv <- matrix(sample(1:25, 16, replace = TRUE), 4, 4)
+set.seed(4)
+cost_jv <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
 lap_animate(cost_jv, method = "jv")
 ```
 
-Column reduction (greedy back-to-front), reduction transfer (tighten v on singletons), and augmenting row reduction usually do most of the work; the Dijkstra main loop only runs for the rows still unmatched after the pre-stages.
+Column reduction (greedy back-to-front), reduction transfer (tighten v on singletons), and augmenting row reduction usually do most of the work; you can watch the matched counter race upward before the Dijkstra main loop runs for any rows still unmatched after the pre-stages.
 
 The same call works for `method = "munkres"` (the matrix-form 1957 algorithm with star/prime zeros and cover lines) and `method = "auction_scaled"` (the epsilon-scaling variant that runs an entire auction at progressively tighter eps).
 

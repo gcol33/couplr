@@ -13,12 +13,14 @@ Rcpp::List prepare_cost_matrix_impl(Rcpp::NumericMatrix cost, bool maximize) {
 
   double cmax = R_NegInf;
 
-  // Convert column-major (R) to row-major buffer; NA -> +Inf and mask=1
+  // Convert column-major (R) to row-major buffer; NA or non-finite (+/-Inf)
+  // -> +Inf and mask=1. Inf inputs must mark forbidden edges too, otherwise
+  // cmax becomes Inf and the maximize flip below is silently skipped.
   for (int j = 0; j < m; ++j) {
     for (int i = 0; i < n; ++i) {
       const int idx = i * m + j;  // row-major index
       double x = cost(i, j);
-      if (Rcpp::NumericVector::is_na(x)) {
+      if (Rcpp::NumericVector::is_na(x) || !R_finite(x)) {
         rowmaj[idx] = R_PosInf;
         mask[idx]   = 1;
       } else {

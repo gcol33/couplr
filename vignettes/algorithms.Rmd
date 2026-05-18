@@ -164,6 +164,65 @@ couplr gives you all of them, and it picks the right one automatically.
 
 ---
 
+## Watch It Run
+
+A bar chart of timings tells you which algorithm finished first; it does not tell you why. The same Hungarian primal-dual that takes 22x as long as CSA on a 400x400 problem is also the one with the cleanest pedagogical story --- and you only see that story when you watch the matching evolve step by step.
+
+`lap_animate(cost, method = "...")` does exactly that. Each animated method has a reference R implementation that emits a state trace at every algorithmic event (a bid, a dual update, an augmenting path, a price drop). The trace plays back as an interactive bipartite graph: green edges are matched, orange edges are currently being explored, red dashed edges lie on the alternating path being built. Dual potentials, where the algorithm has them, are printed next to the nodes.
+
+```{r animate-available, eval = TRUE}
+animated_methods()
+```
+
+The six animated methods cover one representative from each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the economic / bidding view (Auction and its epsilon-scaling extension), and the bit-scaling discrete-cost approach (Gabow-Tarjan).
+
+### Hungarian on a 3x3
+
+```{r animate-hungarian, eval = TRUE}
+cost <- matrix(c(4, 2, 5,
+                 3, 3, 6,
+                 7, 5, 4), 3, 3, byrow = TRUE)
+lap_animate(cost, method = "hungarian")
+```
+
+Step forward and watch `u` and `v` update at each dual_update frame: the algorithm finds the largest shift that keeps `u_i + v_j <= c_ij` while making at least one new edge tight.
+
+### Auction on a 4x4
+
+```{r animate-auction, eval = TRUE}
+cost_a <- matrix(c( 1,  9,  9,  9,
+                    1,  9,  9,  9,
+                    9,  1,  9,  9,
+                    9,  9,  1,  9), 4, 4, byrow = TRUE)
+lap_animate(cost_a, method = "auction")
+```
+
+The "contention" case: two persons both want column 1. Watch the price of column 1 climb as each bid raises it by (best - second) + eps, until one bidder gives up and steers to a different column.
+
+### Gabow-Tarjan bit-scaling
+
+```{r animate-gt, eval = TRUE}
+set.seed(1)
+cost_gt <- matrix(sample(1:50, 16, replace = TRUE), 4, 4)
+lap_animate(cost_gt, method = "gabow_tarjan")
+```
+
+The phase_start frames mark each bit being processed (MSB first). Within a bit, Hopcroft-Karp finds maximal augmenting paths in the equality graph, then a single 1-feasibility Hungarian step closes any gap before the next bit is added.
+
+### Jonker-Volgenant pre-stages
+
+```{r animate-jv, eval = TRUE}
+set.seed(7)
+cost_jv <- matrix(sample(1:25, 16, replace = TRUE), 4, 4)
+lap_animate(cost_jv, method = "jv")
+```
+
+Column reduction (greedy back-to-front), reduction transfer (tighten v on singletons), and augmenting row reduction usually do most of the work; the Dijkstra main loop only runs for the rows still unmatched after the pre-stages.
+
+The same call works for `method = "munkres"` (the matrix-form 1957 algorithm with star/prime zeros and cover lines) and `method = "auction_scaled"` (the epsilon-scaling variant that runs an entire auction at progressively tighter eps).
+
+---
+
 ## The Problem
 
 Before the algorithms, the problem. It's simple to state:

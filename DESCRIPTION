@@ -34,7 +34,9 @@ Imports:
     dplyr (>= 1.0.0),
     rlang (>= 0.4.0),
     purrr (>= 0.3.0),
-    methods
+    methods,
+    htmlwidgets,
+    jsonlite
 Suggests:
     testthat (>= 3.0.0),
     xml2,

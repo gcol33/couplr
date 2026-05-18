@@ -112,6 +112,13 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
   # Extract matched data
   matched_ps <- match.data(m_ps)
 }
+#> 
+#> Attaching package: 'MatchIt'
+#> The following object is masked from 'package:couplr':
+#> 
+#>     match_data
+#> MatchIt (propensity score, nearest neighbor):
+#>   Matched pairs: 200
 ```
 
 ### couplr Approach
@@ -186,7 +193,14 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
       legend.position = "bottom"
     )
 }
+#> Warning in ks.test.default(left_clean, right_clean): p-value will be
+#> approximate in the presence of ties
 ```
+
+![Side-by-side comparison of covariate balance achieved by MatchIt and
+couplr, showing standardized mean differences for age, education,
+prior_earnings, and
+employed](comparison_files/figure-html/unnamed-chunk-4-1.svg)
 
 ### Key Differences
 
@@ -265,6 +279,8 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
   cat("optmatch (optimal pair matching):\n")
   cat("  Matched pairs:", n_matched, "\n")
 }
+#> optmatch (optimal pair matching):
+#>   Matched pairs: 200
 ```
 
 ### couplr Approach
@@ -300,7 +316,9 @@ similar total distances. The key differences are in:
 
 3.  **Full matching**: Both packages support variable-ratio matching
     ([`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
-    in couplr, `fullmatch()` in optmatch)
+    in couplr,
+    [`fullmatch()`](https://rdrr.io/pkg/optmatch/man/fullmatch.html) in
+    optmatch)
 
 ``` r
 
@@ -310,6 +328,9 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
   cat("\nBoth packages find globally optimal one-to-one assignments.\n")
   cat("Total distance differences arise from distance metric choices.\n")
 }
+#> 
+#> Both packages find globally optimal one-to-one assignments.
+#> Total distance differences arise from distance metric choices.
 ```
 
 ### Key Differences
@@ -318,7 +339,7 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
 |----|----|----|
 | **Matching types** | Full, pair, variable ratio | One-to-one and full matching |
 | **Algorithm** | RELAX-IV network flow | 20+ solvers (JV, Hungarian, Auction, etc.) |
-| **Distance** | `match_on()` function | [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) + caching |
+| **Distance** | [`match_on()`](https://rdrr.io/pkg/optmatch/man/match_on-methods.html) function | [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) + caching |
 | **Constraints** | Caliper, exact matching | Caliper, blocking via [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md) |
 | **Optimization** | Always optimal | Optimal or greedy (user choice) |
 | **Large problems** | Sparse matrix support | Blocking, greedy, parallel |

@@ -132,6 +132,15 @@ Visual demonstrations and image processing
 - [`pixel_morph_animate()`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
   : Pixel-level image morphing (animation)
 
+## Algorithm Animation
+
+Step-by-step visualization of LAP algorithms
+
+- [`lap_animate()`](https://gillescolling.com/couplr/reference/lap_animate.md)
+  : Animate an assignment algorithm step-by-step
+- [`animated_methods()`](https://gillescolling.com/couplr/reference/animated_methods.md)
+  : List methods that currently support animation
+
 ## Print, Summary and Plot Methods
 
 S3 methods for displaying and visualizing results

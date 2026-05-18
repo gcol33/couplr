@@ -19,6 +19,7 @@
 <url><loc>https://gillescolling.com/couplr/LICENSE.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/NETWORK_SIMPLEX_PLAN.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/news/index.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/animated_methods.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/apply_all_constraints.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/apply_calipers.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/apply_max_distance.html</loc></url>
@@ -103,6 +104,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/is_lap_solve_kbest_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/is_lap_solve_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/join_matched.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/lap_animate.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve_batch.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve_kbest.html</loc></url>

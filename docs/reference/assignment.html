@@ -28,7 +28,7 @@ using several algorithms. Forbidden edges can be marked as NA or Inf."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,9 +95,10 @@ using several algorithms. Forbidden edges can be marked as <code>NA</code> or <c
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">assignment</span><span class="op">(</span></span>
 <span>  <span class="va">cost</span>,</span>
 <span>  maximize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"jv"</span>, <span class="st">"hungarian"</span>, <span class="st">"auction"</span>, <span class="st">"auction_gs"</span>, <span class="st">"auction_scaled"</span>, <span class="st">"sap"</span>,</span>
-<span>    <span class="st">"ssp"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>, <span class="st">"ssap_bucket"</span>, <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>,</span>
-<span>    <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>, <span class="st">"push_relabel"</span>, <span class="st">"orlin"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"jv"</span>, <span class="st">"hungarian"</span>, <span class="st">"munkres"</span>, <span class="st">"auction"</span>, <span class="st">"auction_gs"</span>,</span>
+<span>    <span class="st">"auction_scaled"</span>, <span class="st">"sap"</span>, <span class="st">"ssp"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>, <span class="st">"ssap_bucket"</span>,</span>
+<span>    <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>, <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>, <span class="st">"push_relabel"</span>,</span>
+<span>    <span class="st">"orlin"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
 <span>  auction_eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  eps <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -119,8 +120,9 @@ entries are treated as forbidden assignments.</p></dd>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>Character string indicating the algorithm to use. Options:</p>
 <p><strong>General-purpose solvers:</strong></p><ul><li><p><code>"auto"</code> — Automatic selection based on problem characteristics (default)</p></li>
-<li><p><code>"jv"</code> — 'Jonker-Volgenant', fast general-purpose O(n³)</p></li>
-<li><p><code>"hungarian"</code> — Classic 'Hungarian' algorithm O(n³)</p></li>
+<li><p><code>"jv"</code> — 'Jonker-Volgenant', fast general-purpose O(n^3) with warm-start</p></li>
+<li><p><code>"hungarian"</code> — Classic 'Hungarian' (shortest augmenting path) O(n^3)</p></li>
+<li><p><code>"munkres"</code> — Matrix-form 'Kuhn-Munkres' O(n^4), reference implementation</p></li>
 </ul><p><strong>Auction-based solvers:</strong></p><ul><li><p><code>"auction"</code> — 'Bertsekas' auction with adaptive epsilon</p></li>
 <li><p><code>"auction_gs"</code> — 'Gauss-Seidel' variant, good for spatial structure</p></li>
 <li><p><code>"auction_scaled"</code> — 'Epsilon-scaling', fastest for large dense problems</p></li>
@@ -131,7 +133,7 @@ entries are treated as forbidden assignments.</p></dd>
 <li><p><code>"line_metric"</code> — O(n log n) for 1D assignment problems</p></li>
 <li><p><code>"bruteforce"</code> — Exact enumeration for tiny problems (n &lt;= 8)</p></li>
 </ul><p><strong>Advanced solvers:</strong></p><ul><li><p><code>"csa"</code> — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large</p></li>
-<li><p><code>"gabow_tarjan"</code> — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n³ log C)</p></li>
+<li><p><code>"gabow_tarjan"</code> — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)</p></li>
 <li><p><code>"cycle_cancel"</code> — Cycle-canceling with 'Karp' algorithm</p></li>
 <li><p><code>"csflow"</code> — Cost-scaling network flow</p></li>
 <li><p><code>"network_simplex"</code> — 'Network simplex' with spanning tree representation</p></li>

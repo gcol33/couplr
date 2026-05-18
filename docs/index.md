@@ -320,6 +320,17 @@ pixel_morph_animate(morph, "output.gif")
 - [Pixel
   Morphing](https://gillescolling.com/couplr/articles/pixel-morphing.html)
 
+## Development
+
+The package was developed using a modern AI-assisted developer stack.
+The author designed the package architecture, made the
+algorithm-selection choices, and wrote the implementation in a TUI-first
+command-line workflow, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B
+model (mixture-of-experts coder, ~3B active per token, 4-bit MLX
+quantization, running on a single Apple M4 Pro) for code completion,
+refactoring, and boilerplate through Anthropic’s Claude Code CLI, with
+requests routed to the local model and no cloud inference.
+
 ## Support
 
 > “Software is like sex: it’s better when it’s free.” — Linus Torvalds

@@ -29,7 +29,7 @@ provides step-by-step solutions.
 # This fails: all assignments have Inf cost
 cost <- matrix(c(1, Inf, Inf, Inf, Inf, Inf, Inf, 2, 3), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost)
-#> Error in `lap_solve_bruteforce()`:
+#> Error:
 #> ! Infeasible given forbidden edges
 ```
 
@@ -241,11 +241,19 @@ result_strict <- match_couples(
   method = "hungarian"
 )
 #> Auto-selected scaling method: standardize
+#> Warning: 99.2% of pairs are forbidden!
+#>   Only 0 valid pairs for 100 left units - the matching pool is shallow!
+#>   Your constraints might be critically strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 
 cat("Original matches:", result$info$n_matched, "\n")
 #> Original matches: 100
 cat("With caliper:", result_strict$info$n_matched, "\n")
-#> With caliper: 23
+#> With caliper: 20
 
 balance_strict <- balance_diagnostics(result_strict, left, right, vars = c("age", "income"))
 print(balance_strict)
@@ -255,21 +263,21 @@ print(balance_strict)
 #> 
 #> Matching Summary:
 #>   Method: lap
-#>   Matched pairs: 23
+#>   Matched pairs: 20
 #>   Unmatched left: 0 (of 100)
-#>   Unmatched right: 77 (of 100)
+#>   Unmatched right: 80 (of 100)
 #> 
 #> Variable-level Balance:
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             31.5         31.6      -0.084     -0.018        1.03     0.13 
-#> 2 income       53974.       51903.     2071.         0.283        1.11     0.217
+#> 1 age             31.2         31.2        0.04      0.009       1.03        0.1
+#> 2 income       53160.       51959.      1201.        0.16        0.998       0.2
 #> 
 #> Overall Balance:
-#>   Mean |Std Diff|: 0.151 (Good)
-#>   Max |Std Diff|: 0.283
-#>   Vars with |Std Diff| > 0.25: 50.0%
+#>   Mean |Std Diff|: 0.085 (Excellent)
+#>   Max |Std Diff|: 0.160
+#>   Vars with |Std Diff| > 0.25: 0.0%
 #> 
 #> Balance Interpretation:
 #>   |Std Diff| < 0.10: Excellent balance
@@ -380,7 +388,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.33 seconds
+#> Greedy matching (n=500): 0.24 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -438,8 +446,32 @@ dist_cache <- compute_distances(
 
 # Fast: reuse cached distances
 result1 <- match_couples(dist_cache, max_distance = 0.3, method = "hungarian")
+#> Warning: 97.9% of pairs are forbidden!
+#>   Only 9000 valid pairs for 500 left units - the matching pool is shallow!
+#>   Your constraints might be critically strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 result2 <- match_couples(dist_cache, max_distance = 0.5, method = "hungarian")
+#> Warning: 94.1% of pairs are forbidden!
+#>   Only 22500 valid pairs for 500 left units - the matching pool is shallow!
+#>   Your constraints might be critically strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 result3 <- match_couples(dist_cache, max_distance = 1.0, method = "hungarian")
+#> Warning: 78.5% of pairs are forbidden!
+#>   Only 84000 valid pairs for 500 left units - the matching pool is shallow!
+#>   Your constraints might be concerningly strict.
+#>   Consider:
+#>     - Relaxing max_distance threshold
+#>     - Widening calipers
+#>     - Using fewer/broader blocks
+#>     - Checking if your data actually overlaps
 ```
 
 ------------------------------------------------------------------------
@@ -736,10 +768,10 @@ devtools::load_all()
 # Check if Rtools is properly configured
 Sys.which("make")
 #>                               make 
-#> "C:\\rtools45\\usr\\bin\\make.exe"
+#> "c:\\rtools45\\usr\\bin\\make.exe"
 Sys.which("g++")
 #>                                          g++ 
-#> "C:\\rtools45\\X86_64~1.POS\\bin\\G__~1.EXE"
+#> "c:\\rtools45\\X86_64~1.POS\\bin\\G__~1.EXE"
 ```
 
 Make sure Rtools is installed and PATH is configured correctly.

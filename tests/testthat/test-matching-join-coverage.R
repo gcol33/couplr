@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("join_matched with custom suffix", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, y = 10:12)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1), y = c(10.1, 11.1, 12.1))
 
@@ -21,6 +22,7 @@ test_that("join_matched with custom suffix", {
 })
 
 test_that("join_matched with specific left_vars and right_vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, extra_left = letters[1:3])
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1), extra_right = letters[4:6])
 
@@ -40,6 +42,7 @@ test_that("join_matched with specific left_vars and right_vars", {
 })
 
 test_that("join_matched with include_distance = FALSE", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -51,6 +54,7 @@ test_that("join_matched with include_distance = FALSE", {
 })
 
 test_that("join_matched with include_pair_id = FALSE", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -62,6 +66,7 @@ test_that("join_matched with include_pair_id = FALSE", {
 })
 
 test_that("join_matched with include_block_id = FALSE for blocked matching", {
+  skip_on_cran()
   left <- data.frame(id = 1:6, x = 1:6, block = rep(c("A", "B"), each = 3))
   right <- data.frame(id = 7:12, x = c(1.1, 2.1, 3.1, 4.1, 5.1, 6.1),
                       block = rep(c("A", "B"), each = 3))
@@ -74,6 +79,7 @@ test_that("join_matched with include_block_id = FALSE for blocked matching", {
 })
 
 test_that("join_matched with custom ID columns", {
+  skip_on_cran()
   left <- data.frame(my_id = 1:3, x = 1:3)
   right <- data.frame(other_id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -87,6 +93,7 @@ test_that("join_matched with custom ID columns", {
 })
 
 test_that("join_matched errors on non-matching_result", {
+  skip_on_cran()
   expect_error(
     join_matched(list(), data.frame(), data.frame()),
     "must be a matching_result"
@@ -94,6 +101,7 @@ test_that("join_matched errors on non-matching_result", {
 })
 
 test_that("join_matched errors on missing left_vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -106,6 +114,7 @@ test_that("join_matched errors on missing left_vars", {
 })
 
 test_that("join_matched errors on missing right_vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -118,6 +127,7 @@ test_that("join_matched errors on missing right_vars", {
 })
 
 test_that("join_matched errors on invalid suffix length", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -130,6 +140,7 @@ test_that("join_matched errors on invalid suffix length", {
 })
 
 test_that("join_matched errors on missing left_id column", {
+  skip_on_cran()
   left <- data.frame(wrong_id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -146,6 +157,7 @@ test_that("join_matched errors on missing left_id column", {
 })
 
 test_that("join_matched errors on missing right_id column", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(wrong_id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -162,6 +174,7 @@ test_that("join_matched errors on missing right_id column", {
 })
 
 test_that("join_matched warns on empty result", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.5, 2.5, 3.5))
 
@@ -181,6 +194,7 @@ test_that("join_matched warns on empty result", {
 })
 
 test_that("join_matched handles non-overlapping variables", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, only_in_left = 1:3)
   right <- data.frame(id = 4:6, only_in_right = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -198,6 +212,7 @@ test_that("join_matched handles non-overlapping variables", {
 # ------------------------------------------------------------------------------
 
 test_that("augment.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -211,6 +226,7 @@ test_that("augment.matching_result works", {
 })
 
 test_that("augment passes additional arguments to join_matched", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -222,6 +238,7 @@ test_that("augment passes additional arguments to join_matched", {
 })
 
 test_that("augment generic dispatches correctly", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -238,6 +255,7 @@ test_that("augment generic dispatches correctly", {
 # ------------------------------------------------------------------------------
 
 test_that("join_matched handles character IDs", {
+  skip_on_cran()
   left <- data.frame(id = letters[1:3], x = 1:3, stringsAsFactors = FALSE)
   right <- data.frame(id = letters[4:6], x = c(1.1, 2.1, 3.1), stringsAsFactors = FALSE)
 
@@ -251,6 +269,7 @@ test_that("join_matched handles character IDs", {
 })
 
 test_that("join_matched handles numeric IDs", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -262,6 +281,7 @@ test_that("join_matched handles numeric IDs", {
 })
 
 test_that("join_matched handles factor IDs by converting to character", {
+  skip_on_cran()
   # Factor IDs are converted to character during matching
   # so we test that the join still works
   left <- data.frame(id = letters[1:3], x = 1:3, stringsAsFactors = FALSE)
@@ -279,6 +299,7 @@ test_that("join_matched handles factor IDs by converting to character", {
 # ------------------------------------------------------------------------------
 
 test_that("join_matched orders columns correctly", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, a = 1:3, b = 4:6, c = 7:9)
   right <- data.frame(id = 4:6, a = c(1.1, 2.1, 3.1), d = 10:12, e = 13:15)
 

@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("standardized_difference calculates correctly with pooled SD", {
+  skip_on_cran()
   x1 <- c(10, 12, 14, 16, 18)
   x2 <- c(20, 22, 24, 26, 28)
 
@@ -20,6 +21,7 @@ test_that("standardized_difference calculates correctly with pooled SD", {
 })
 
 test_that("standardized_difference with pooled = FALSE uses x1 SD", {
+  skip_on_cran()
   x1 <- c(10, 12, 14, 16, 18)
   x2 <- c(20, 22, 24, 26, 28)
 
@@ -31,11 +33,13 @@ test_that("standardized_difference with pooled = FALSE uses x1 SD", {
 })
 
 test_that("standardized_difference handles empty vectors", {
+  skip_on_cran()
   expect_equal(couplr:::standardized_difference(numeric(0), c(1, 2, 3)), NA_real_)
   expect_equal(couplr:::standardized_difference(c(1, 2, 3), numeric(0)), NA_real_)
 })
 
 test_that("standardized_difference handles NA values", {
+  skip_on_cran()
   x1 <- c(1, 2, NA, 4, 5)
   x2 <- c(2, 3, 4, 5, 6)
 
@@ -45,6 +49,7 @@ test_that("standardized_difference handles NA values", {
 })
 
 test_that("standardized_difference handles zero SD", {
+  skip_on_cran()
   x1 <- c(5, 5, 5, 5)
   x2 <- c(5, 5, 5, 5)
 
@@ -58,6 +63,7 @@ test_that("standardized_difference handles zero SD", {
 # ------------------------------------------------------------------------------
 
 test_that("calculate_var_balance returns correct structure", {
+  skip_on_cran()
   left_vals <- c(1, 2, 3, 4, 5)
   right_vals <- c(1.1, 2.1, 3.1, 4.1, 5.1)
 
@@ -72,6 +78,7 @@ test_that("calculate_var_balance returns correct structure", {
 })
 
 test_that("calculate_var_balance handles identical distributions", {
+  skip_on_cran()
   vals <- c(1, 2, 3, 4, 5)
 
   result <- couplr:::calculate_var_balance(vals, vals, "x")
@@ -85,6 +92,7 @@ test_that("calculate_var_balance handles identical distributions", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_diagnostics requires matching_result object", {
+  skip_on_cran()
   expect_error(
     balance_diagnostics(list(), data.frame(x = 1), data.frame(x = 1)),
     "must be a matching_result object"
@@ -92,6 +100,7 @@ test_that("balance_diagnostics requires matching_result object", {
 })
 
 test_that("balance_diagnostics checks left_id exists", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
   result <- match_couples(left, right, vars = "x")
@@ -103,6 +112,7 @@ test_that("balance_diagnostics checks left_id exists", {
 })
 
 test_that("balance_diagnostics checks right_id exists", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
   result <- match_couples(left, right, vars = "x")
@@ -114,6 +124,7 @@ test_that("balance_diagnostics checks right_id exists", {
 })
 
 test_that("balance_diagnostics errors when vars missing and not inferable", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
   result <- match_couples(left, right, vars = "x")
@@ -126,6 +137,7 @@ test_that("balance_diagnostics errors when vars missing and not inferable", {
 })
 
 test_that("balance_diagnostics checks vars exist in left", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6, y = 7:9)
   result <- match_couples(left, right, vars = "x")
@@ -137,6 +149,7 @@ test_that("balance_diagnostics checks vars exist in left", {
 })
 
 test_that("balance_diagnostics checks vars exist in right", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, y = 4:6)
   right <- data.frame(id = 4:6, x = 4:6)
   result <- match_couples(left, right, vars = "x")
@@ -148,6 +161,7 @@ test_that("balance_diagnostics checks vars exist in right", {
 })
 
 test_that("balance_diagnostics calculates statistics correctly", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10, 50, 10), y = rnorm(10, 100, 20))
   right <- data.frame(id = 11:20, x = rnorm(10, 50, 10), y = rnorm(10, 100, 20))
@@ -161,6 +175,7 @@ test_that("balance_diagnostics calculates statistics correctly", {
 })
 
 test_that("balance_diagnostics handles blocked results", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:6,
     x = c(1, 2, 3, 10, 11, 12),
@@ -184,6 +199,7 @@ test_that("balance_diagnostics handles blocked results", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_table requires balance_diagnostics object", {
+  skip_on_cran()
   expect_error(
     balance_table(list()),
     "must be a balance_diagnostics object"
@@ -191,6 +207,7 @@ test_that("balance_table requires balance_diagnostics object", {
 })
 
 test_that("balance_table returns formatted tibble", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -204,6 +221,7 @@ test_that("balance_table returns formatted tibble", {
 })
 
 test_that("balance_table respects digits parameter", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -223,6 +241,7 @@ test_that("balance_table respects digits parameter", {
 # ------------------------------------------------------------------------------
 
 test_that("print.balance_diagnostics produces output", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5, y = 2:6)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1), y = c(2.1, 3.1, 4.1, 5.1, 6.1))
 
@@ -237,6 +256,7 @@ test_that("print.balance_diagnostics produces output", {
 })
 
 test_that("print.balance_diagnostics handles blocked results", {
+  skip_on_cran()
   # The balance_diagnostics function currently has limitations with blocked matching
 
   # Just test that it creates the object without erroring
@@ -261,6 +281,7 @@ test_that("print.balance_diagnostics handles blocked results", {
 })
 
 test_that("print.balance_diagnostics shows quality interpretation", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -278,6 +299,7 @@ test_that("print.balance_diagnostics shows quality interpretation", {
 # ------------------------------------------------------------------------------
 
 test_that("summary.balance_diagnostics works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5, y = 2:6)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1), y = c(2.1, 3.1, 4.1, 5.1, 6.1))
 
@@ -291,6 +313,7 @@ test_that("summary.balance_diagnostics works", {
 })
 
 test_that("print.summary.balance_diagnostics works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -309,6 +332,7 @@ test_that("print.summary.balance_diagnostics works", {
 # ------------------------------------------------------------------------------
 
 test_that("plot.balance_diagnostics love plot works", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
@@ -321,6 +345,7 @@ test_that("plot.balance_diagnostics love plot works", {
 })
 
 test_that("plot.balance_diagnostics histogram works", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
@@ -333,6 +358,7 @@ test_that("plot.balance_diagnostics histogram works", {
 })
 
 test_that("plot.balance_diagnostics variance plot works", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
@@ -345,6 +371,7 @@ test_that("plot.balance_diagnostics variance plot works", {
 })
 
 test_that("plot.balance_diagnostics respects threshold parameter", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))

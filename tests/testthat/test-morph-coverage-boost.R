@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".gif_delay_from_fps handles invalid inputs", {
+  skip_on_cran()
   # Non-finite fps should default to 10 fps = 10 centiseconds
   expect_equal(couplr:::.gif_delay_from_fps(NA), 10L)
   expect_equal(couplr:::.gif_delay_from_fps(NaN), 10L)
@@ -25,6 +26,7 @@ test_that(".gif_delay_from_fps handles invalid inputs", {
 # ------------------------------------------------------------------------------
 
 test_that(".call_or uses fallback when primary doesn't exist", {
+  skip_on_cran()
   # Create test function in global env temporarily
   test_fallback_fn <- function(x) x * 2
   assign("test_fallback_fn", test_fallback_fn, envir = .GlobalEnv)
@@ -40,6 +42,7 @@ test_that(".call_or uses fallback when primary doesn't exist", {
 })
 
 test_that(".call_or errors when neither function exists", {
+  skip_on_cran()
   expect_error(
     couplr:::.call_or("nonexistent_a_xyz123", "nonexistent_b_xyz123", 1),
     "Neither.*nor.*is available"
@@ -51,6 +54,7 @@ test_that(".call_or errors when neither function exists", {
 # ------------------------------------------------------------------------------
 
 test_that(".from_planar_rgb errors on wrong length", {
+  skip_on_cran()
   H <- 4
   W <- 4
   # Wrong length - should be H*W*3 = 48, but provide 40
@@ -67,6 +71,7 @@ test_that(".from_planar_rgb errors on wrong length", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign handles data.frame with source/target", {
+  skip_on_cran()
   # Temporarily override lap_solve to return data.frame
   original_fn <- couplr::lap_solve
 
@@ -92,6 +97,7 @@ test_that(".lap_assign handles data.frame with source/target", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_identity handles no matching colors", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0), nrow = 1, ncol = 3),
     colorsB_rgb = matrix(c(0, 255, 0), nrow = 1, ncol = 3),  # Different color
@@ -105,6 +111,7 @@ test_that(".palette_pairs_identity handles no matching colors", {
 })
 
 test_that(".palette_pairs_identity handles exact color matches", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0, 0, 255, 0), nrow = 2, ncol = 3, byrow = TRUE),
     colorsB_rgb = matrix(c(255, 0, 0, 0, 0, 255), nrow = 2, ncol = 3, byrow = TRUE),  # First matches
@@ -125,6 +132,7 @@ test_that(".palette_pairs_identity handles exact color matches", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_lap handles empty matrix", {
+  skip_on_cran()
   info <- list(
     countsA = integer(0),
     countsB = integer(0),
@@ -141,6 +149,7 @@ test_that(".palette_pairs_lap handles empty matrix", {
 # ------------------------------------------------------------------------------
 
 test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
+  skip_on_cran()
   info <- list(groupsA = list(), groupsB = list())
   pairs <- data.frame(ia = integer(0), ib = integer(0), k = integer(0))
 
@@ -155,11 +164,13 @@ test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
 # ------------------------------------------------------------------------------
 
 test_that(".assemble_assignment handles empty inputs", {
+  skip_on_cran()
   result <- couplr:::.assemble_assignment(N = 5, i_idx = integer(0), j_idx = integer(0))
   expect_equal(result, rep(-1L, 5))
 })
 
 test_that(".assemble_assignment handles mismatched lengths", {
+  skip_on_cran()
   # When i_idx and j_idx have different lengths
   result <- couplr:::.assemble_assignment(N = 5, i_idx = c(1, 2, 3), j_idx = c(5, 4))
   expect_equal(length(result), 5)
@@ -173,6 +184,7 @@ test_that(".assemble_assignment handles mismatched lengths", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate validates upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -191,6 +203,7 @@ test_that("pixel_morph_animate validates upscale", {
 })
 
 test_that("pixel_morph_animate validates n_frames", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -204,6 +217,7 @@ test_that("pixel_morph_animate validates n_frames", {
 })
 
 test_that("pixel_morph_animate validates alpha/beta", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -227,6 +241,7 @@ test_that("pixel_morph_animate validates alpha/beta", {
 })
 
 test_that("pixel_morph_animate validates patch_size", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -240,6 +255,7 @@ test_that("pixel_morph_animate validates patch_size", {
 })
 
 test_that("pixel_morph_animate validates downscale_steps", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -253,6 +269,7 @@ test_that("pixel_morph_animate validates downscale_steps", {
 })
 
 test_that("pixel_morph validates inputs same as animate", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -275,6 +292,7 @@ test_that("pixel_morph validates inputs same as animate", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate warns on non-positive upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -288,6 +306,7 @@ test_that("pixel_morph_animate warns on non-positive upscale", {
 })
 
 test_that("pixel_morph warns on non-positive upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -305,6 +324,7 @@ test_that("pixel_morph warns on non-positive upscale", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate warns on n_frames < 2", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -322,6 +342,7 @@ test_that("pixel_morph_animate warns on n_frames < 2", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate works with recursive mode", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -341,6 +362,7 @@ test_that("pixel_morph_animate works with recursive mode", {
 })
 
 test_that("pixel_morph works with recursive mode", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -363,6 +385,7 @@ test_that("pixel_morph works with recursive mode", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate works with exact mode and patch_size > 1", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -385,6 +408,7 @@ test_that("pixel_morph_animate works with exact mode and patch_size > 1", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate with downscale_steps > 0", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -409,6 +433,7 @@ test_that("pixel_morph_animate with downscale_steps > 0", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate applies integer upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -427,6 +452,7 @@ test_that("pixel_morph_animate applies integer upscale", {
 })
 
 test_that("pixel_morph_animate applies fractional upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -445,6 +471,7 @@ test_that("pixel_morph_animate applies fractional upscale", {
 })
 
 test_that("pixel_morph applies upscale", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -466,6 +493,7 @@ test_that("pixel_morph applies upscale", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate resizes mismatched images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Create images with different sizes
@@ -488,6 +516,7 @@ test_that("pixel_morph_animate resizes mismatched images", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate saves webp format", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -513,6 +542,7 @@ test_that("pixel_morph_animate saves webp format", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate handles n_frames = 1 after warning", {
+  skip_on_cran()
 
   skip_if_not_installed("magick")
 
@@ -533,6 +563,7 @@ test_that("pixel_morph_animate handles n_frames = 1 after warning", {
 # ------------------------------------------------------------------------------
 
 test_that("%||% operator works", {
+  skip_on_cran()
   `%||%` <- couplr:::`%||%`
 
   expect_equal(NULL %||% 5, 5)
@@ -545,6 +576,7 @@ test_that("%||% operator works", {
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles handles non-divisible dimensions", {
+  skip_on_cran()
   # 7x5 with P=3: core is 6x3, with remainders
   tiles <- couplr:::.generate_square_tiles(W = 7, H = 5, P = 3)
 
@@ -561,6 +593,7 @@ test_that(".generate_square_tiles handles non-divisible dimensions", {
 })
 
 test_that(".generate_square_tiles handles P larger than image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 2, H = 2, P = 5)
 
   # Should still cover all pixels with size-1 tiles
@@ -572,6 +605,7 @@ test_that(".generate_square_tiles handles P larger than image", {
 # ------------------------------------------------------------------------------
 
 test_that(".recursive_tiling_solver handles small images", {
+  skip_on_cran()
   H <- 3
   W <- 3
   N <- H * W
@@ -590,6 +624,7 @@ test_that(".recursive_tiling_solver handles small images", {
 })
 
 test_that(".recursive_tiling_solver handles odd dimensions", {
+  skip_on_cran()
   H <- 5
   W <- 7
   N <- H * W
@@ -611,6 +646,7 @@ test_that(".recursive_tiling_solver handles odd dimensions", {
 # ------------------------------------------------------------------------------
 
 test_that(".square_tiling_solver handles uniform color images", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W
@@ -629,6 +665,7 @@ test_that(".square_tiling_solver handles uniform color images", {
 })
 
 test_that(".square_tiling_solver handles maximize = TRUE", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -652,6 +689,7 @@ test_that(".square_tiling_solver handles maximize = TRUE", {
 # ------------------------------------------------------------------------------
 
 test_that("morph_utils .solve_color_walk_pipeline handles varied colors", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W

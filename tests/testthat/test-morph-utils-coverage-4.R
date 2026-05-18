@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".to_array_rgb handles numeric arrays scaled 0-1", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Create image and get data - then test with scaled numeric
@@ -18,6 +19,7 @@ test_that(".to_array_rgb handles numeric arrays scaled 0-1", {
 })
 
 test_that(".to_array_rgb handles larger images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   img <- magick::image_blank(10, 8, color = "#4080C0")
@@ -32,6 +34,7 @@ test_that(".to_array_rgb handles larger images", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_walk_pipeline works with simple images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   H <- 4
@@ -57,6 +60,7 @@ test_that(".solve_color_walk_pipeline works with simple images", {
 })
 
 test_that(".solve_color_walk_pipeline handles identical images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   H <- 3
@@ -80,6 +84,7 @@ test_that(".solve_color_walk_pipeline handles identical images", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_match_pipeline works with matching colors", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   H <- 4
@@ -100,6 +105,7 @@ test_that(".solve_color_match_pipeline works with matching colors", {
 })
 
 test_that(".solve_color_match_pipeline with fill_identity FALSE", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   H <- 4
@@ -123,6 +129,7 @@ test_that(".solve_color_match_pipeline with fill_identity FALSE", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_lap handles 1x1 matrix", {
+  skip_on_cran()
   info <- list(
     countsA = c(5),
     countsB = c(10),
@@ -137,6 +144,7 @@ test_that(".palette_pairs_lap handles 1x1 matrix", {
 })
 
 test_that(".palette_pairs_lap handles larger matrices", {
+  skip_on_cran()
   info <- list(
     countsA = c(10, 20, 15),
     countsB = c(12, 18, 25),
@@ -158,6 +166,7 @@ test_that(".palette_pairs_lap handles larger matrices", {
 # ------------------------------------------------------------------------------
 
 test_that(".build_spatial_assignments_for_pairs handles k=0 pairs", {
+  skip_on_cran()
   info <- list(
     groupsA = list(c(1L, 2L), c(3L, 4L)),
     groupsB = list(c(5L, 6L), c(7L, 8L))
@@ -175,6 +184,7 @@ test_that(".build_spatial_assignments_for_pairs handles k=0 pairs", {
 })
 
 test_that(".build_spatial_assignments_for_pairs handles empty groups", {
+  skip_on_cran()
   info <- list(
     groupsA = list(integer(0), c(3L, 4L)),
     groupsB = list(c(5L, 6L), integer(0))
@@ -195,6 +205,7 @@ test_that(".build_spatial_assignments_for_pairs handles empty groups", {
 # ------------------------------------------------------------------------------
 
 test_that(".patch_cost_matrix handles single patch", {
+  skip_on_cran()
   patches_a <- list(
     colors = matrix(c(255, 128, 64), nrow = 1, ncol = 3),
     centers = matrix(c(5, 5), nrow = 1, ncol = 2)
@@ -211,6 +222,7 @@ test_that(".patch_cost_matrix handles single patch", {
 })
 
 test_that(".patch_cost_matrix handles zero diagonal_norm", {
+  skip_on_cran()
   # When all centers are at the same point, diag_norm would be 0
   patches_a <- list(
     colors = matrix(c(255, 128, 64), nrow = 1, ncol = 3),
@@ -233,6 +245,7 @@ test_that(".patch_cost_matrix handles zero diagonal_norm", {
 # ------------------------------------------------------------------------------
 
 test_that(".expand_patch_assignment handles unequal patch sizes", {
+  skip_on_cran()
   patch_assign <- list(1L)  # One patch maps to B patch 1
   patches_a <- list(
     indices = list(c(1L, 2L, 3L, 4L))  # 4 pixels in A patch
@@ -253,6 +266,7 @@ test_that(".expand_patch_assignment handles unequal patch sizes", {
 })
 
 test_that(".expand_patch_assignment handles 0 assignment", {
+  skip_on_cran()
   patch_assign <- list(0L, 1L)  # First patch has 0 (invalid)
   patches_a <- list(
     indices = list(c(1L, 2L), c(3L, 4L))
@@ -275,6 +289,7 @@ test_that(".expand_patch_assignment handles 0 assignment", {
 # ------------------------------------------------------------------------------
 
 test_that(".exact_cost_and_solve handles non-square images", {
+  skip_on_cran()
   H <- 2
   W <- 3
   N <- H * W
@@ -289,6 +304,7 @@ test_that(".exact_cost_and_solve handles non-square images", {
 })
 
 test_that(".exact_cost_and_solve with spatial component", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -307,6 +323,7 @@ test_that(".exact_cost_and_solve with spatial component", {
 # ------------------------------------------------------------------------------
 
 test_that(".upscale_assignment works", {
+  skip_on_cran()
   # Small scaled assignment
   assign_s <- c(0L, 1L, 2L, 3L)  # 2x2 scaled
   H <- 4
@@ -324,6 +341,7 @@ test_that(".upscale_assignment works", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign handles maximize=TRUE", {
+  skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
 
   result <- couplr:::.lap_assign(cost, method = "jv", maximize = TRUE)
@@ -337,6 +355,7 @@ test_that(".lap_assign handles maximize=TRUE", {
 # ------------------------------------------------------------------------------
 
 test_that(".downscale_both performs actual downscaling", {
+  skip_on_cran()
   H <- 16
   W <- 16
   N <- H * W
@@ -353,6 +372,7 @@ test_that(".downscale_both performs actual downscaling", {
 })
 
 test_that(".downscale_both with negative steps returns original", {
+  skip_on_cran()
   H <- 8
   W <- 8
   N <- H * W

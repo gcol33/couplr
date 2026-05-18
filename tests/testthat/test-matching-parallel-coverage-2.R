@@ -24,6 +24,7 @@ right_df <- data.frame(
 # ------------------------------------------------------------------------------
 
 test_that("can_parallelize returns logical", {
+  skip_on_cran()
   result <- couplr:::can_parallelize()
   expect_type(result, "logical")
 })
@@ -33,6 +34,7 @@ test_that("can_parallelize returns logical", {
 # ------------------------------------------------------------------------------
 
 test_that("setup_parallel returns FALSE when parallel=FALSE", {
+  skip_on_cran()
   result <- couplr:::setup_parallel(parallel = FALSE)
 
   expect_false(result$setup)
@@ -40,6 +42,7 @@ test_that("setup_parallel returns FALSE when parallel=FALSE", {
 })
 
 test_that("setup_parallel handles missing future package gracefully", {
+  skip_on_cran()
   # If future is not installed, should fall back gracefully
   result <- suppressWarnings(couplr:::setup_parallel(parallel = TRUE))
 
@@ -49,6 +52,7 @@ test_that("setup_parallel handles missing future package gracefully", {
 })
 
 test_that("setup_parallel with parallel=TRUE when future available", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -65,6 +69,7 @@ test_that("setup_parallel with parallel=TRUE when future available", {
 })
 
 test_that("setup_parallel with character plan name", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -80,6 +85,7 @@ test_that("setup_parallel with character plan name", {
 })
 
 test_that("setup_parallel with invalid plan name warns", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -99,6 +105,7 @@ test_that("setup_parallel with invalid plan name warns", {
 # ------------------------------------------------------------------------------
 
 test_that("restore_parallel does nothing when not set up", {
+  skip_on_cran()
   state <- list(setup = FALSE, original_plan = NULL)
 
   # Should not error
@@ -106,6 +113,7 @@ test_that("restore_parallel does nothing when not set up", {
 })
 
 test_that("restore_parallel restores plan when set up", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -121,12 +129,14 @@ test_that("restore_parallel restores plan when set up", {
 # ------------------------------------------------------------------------------
 
 test_that("parallel_lapply works sequentially when parallel=FALSE", {
+  skip_on_cran()
   result <- couplr:::parallel_lapply(1:5, function(x) x^2, parallel = FALSE)
 
   expect_equal(result, list(1, 4, 9, 16, 25))
 })
 
 test_that("parallel_lapply works with parallel=TRUE when future available", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -146,6 +156,7 @@ test_that("parallel_lapply works with parallel=TRUE when future available", {
 # ------------------------------------------------------------------------------
 
 test_that("match_blocks_parallel works without parallel", {
+  skip_on_cran()
   left_ids <- left_df$id
   right_ids <- right_df$id
   blocks <- unique(left_df$block)
@@ -173,6 +184,7 @@ test_that("match_blocks_parallel works without parallel", {
 })
 
 test_that("match_blocks_parallel handles empty blocks", {
+  skip_on_cran()
   # Create data where one block has no right units
   left_empty <- data.frame(
     id = paste0("L", 1:15),
@@ -208,6 +220,7 @@ test_that("match_blocks_parallel handles empty blocks", {
 })
 
 test_that("match_blocks_parallel returns empty pairs for all-empty result", {
+  skip_on_cran()
   left_empty <- data.frame(
     id = character(0),
     age = numeric(0),
@@ -244,6 +257,7 @@ test_that("match_blocks_parallel returns empty pairs for all-empty result", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_blocks_parallel works without parallel", {
+  skip_on_cran()
   left_ids <- left_df$id
   right_ids <- right_df$id
   blocks <- unique(left_df$block)
@@ -271,6 +285,7 @@ test_that("greedy_blocks_parallel works without parallel", {
 })
 
 test_that("greedy_blocks_parallel handles empty blocks", {
+  skip_on_cran()
   left_empty <- data.frame(
     id = paste0("L", 1:15),
     age = rnorm(15),
@@ -303,6 +318,7 @@ test_that("greedy_blocks_parallel handles empty blocks", {
 })
 
 test_that("greedy_blocks_parallel with sorted strategy", {
+  skip_on_cran()
   left_ids <- left_df$id
   right_ids <- right_df$id
   blocks <- unique(left_df$block)
@@ -328,6 +344,7 @@ test_that("greedy_blocks_parallel with sorted strategy", {
 })
 
 test_that("greedy_blocks_parallel with pq strategy", {
+  skip_on_cran()
   left_ids <- left_df$id
   right_ids <- right_df$id
   blocks <- unique(left_df$block)
@@ -357,6 +374,7 @@ test_that("greedy_blocks_parallel with pq strategy", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with parallel=TRUE works", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -379,6 +397,7 @@ test_that("match_couples with parallel=TRUE works", {
 })
 
 test_that("greedy_couples with parallel=TRUE and blocking works", {
+  skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 

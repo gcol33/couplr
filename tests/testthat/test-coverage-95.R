@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("couplr_emoji returns emojis when enabled", {
+  skip_on_cran()
   # Temporarily enable emojis
   withr::local_options(couplr.use_emoji = TRUE)
 
@@ -30,6 +31,7 @@ test_that("couplr_emoji returns emojis when enabled", {
 # ------------------------------------------------------------------------------
 
 test_that("diagnose_distance_matrix handles constant variable in right", {
+  skip_on_cran()
   set.seed(123)
   n <- 10
   left <- data.frame(
@@ -63,6 +65,7 @@ test_that("diagnose_distance_matrix handles constant variable in right", {
 # ------------------------------------------------------------------------------
 
 test_that("diagnose_distance_matrix suggests scaling for extreme ratios", {
+  skip_on_cran()
   # Create distance matrix with extreme outliers
   set.seed(456)
   n <- 20
@@ -88,6 +91,7 @@ test_that("diagnose_distance_matrix suggests scaling for extreme ratios", {
 # ------------------------------------------------------------------------------
 
 test_that(".to_array_rgb handles numeric arrays correctly", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Create a small test image
@@ -105,6 +109,7 @@ test_that(".to_array_rgb handles numeric arrays correctly", {
 # ------------------------------------------------------------------------------
 
 test_that(".to_array_rgb handles standard magick output", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Create RGB gradient image
@@ -123,6 +128,7 @@ test_that(".to_array_rgb handles standard magick output", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_walk_pipeline handles all pixels correctly", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -146,6 +152,7 @@ test_that(".solve_color_walk_pipeline handles all pixels correctly", {
 })
 
 test_that(".solve_color_walk_pipeline with mismatched color groups", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W
@@ -177,6 +184,7 @@ test_that(".solve_color_walk_pipeline with mismatched color groups", {
 # ------------------------------------------------------------------------------
 
 test_that(".recursive_tiling_solver handles minimal patches", {
+  skip_on_cran()
   H <- 3
   W <- 3
   N <- H * W
@@ -195,6 +203,7 @@ test_that(".recursive_tiling_solver handles minimal patches", {
 })
 
 test_that(".recursive_tiling_solver handles 1x1 patches", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -227,6 +236,7 @@ test_that(".recursive_tiling_solver handles 1x1 patches", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign returns correct format for small matrices", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4), nrow = 2)
 
   # Test with jv method
@@ -239,6 +249,7 @@ test_that(".lap_assign returns correct format for small matrices", {
 })
 
 test_that(".lap_assign handles maximization", {
+  skip_on_cran()
   cost <- matrix(c(10, 20, 30, 40, 50, 60, 70, 80, 90), nrow = 3)
 
   result_min <- couplr:::.lap_assign(cost, method = "jv", maximize = FALSE)
@@ -253,6 +264,7 @@ test_that(".lap_assign handles maximization", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_walk_pipeline covers palette pair paths", {
+  skip_on_cran()
   H <- 5
   W <- 5
   N <- H * W
@@ -282,6 +294,7 @@ test_that(".solve_color_walk_pipeline covers palette pair paths", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_diagnostics infers vars from result", {
+  skip_on_cran()
   set.seed(123)
   n <- 20
   left <- data.frame(id = 1:n, x = rnorm(n), y = rnorm(n))
@@ -308,6 +321,7 @@ test_that("balance_diagnostics infers vars from result", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_diagnostics print shows different quality levels", {
+  skip_on_cran()
   set.seed(456)
   n <- 30
 
@@ -334,6 +348,7 @@ test_that("balance_diagnostics print shows different quality levels", {
 })
 
 test_that("balance_diagnostics summary shows different quality levels", {
+  skip_on_cran()
   set.seed(789)
   n <- 30
 
@@ -359,6 +374,7 @@ test_that("balance_diagnostics summary shows different quality levels", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_diagnostics prints block stats", {
+  skip_on_cran()
   set.seed(321)
   n <- 60  # Larger for better balance stats
 
@@ -396,6 +412,7 @@ test_that("balance_diagnostics prints block stats", {
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles handles overlap situations", {
+  skip_on_cran()
   # Create a case where early tiles cover space making later ones invalid
   # 5x5 with P=3 will have overlap at boundaries
   tiles <- couplr:::.generate_square_tiles(W = 5, H = 5, P = 3)
@@ -417,6 +434,7 @@ test_that(".generate_square_tiles handles overlap situations", {
 })
 
 test_that(".generate_square_tiles with small remainder regions", {
+  skip_on_cran()
   # 7x7 with P=4 leaves 3x3 remainder regions
   tiles <- couplr:::.generate_square_tiles(W = 7, H = 7, P = 4)
 
@@ -443,6 +461,7 @@ test_that(".generate_square_tiles with small remainder regions", {
 # ------------------------------------------------------------------------------
 
 test_that(".recursive_tiling_solver with alpha=0", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -462,6 +481,7 @@ test_that(".recursive_tiling_solver with alpha=0", {
 })
 
 test_that(".recursive_tiling_solver with beta=0", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -485,6 +505,7 @@ test_that(".recursive_tiling_solver with beta=0", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch handles single matrix", {
+  skip_on_cran()
   mat <- matrix(c(1, 2, 3, 4), nrow = 2)
   result <- lap_solve_batch(list(mat))
 
@@ -494,6 +515,7 @@ test_that("lap_solve_batch handles single matrix", {
 })
 
 test_that("lap_solve_batch with maximize", {
+  skip_on_cran()
   mat1 <- matrix(c(1, 2, 3, 4), nrow = 2)
   mat2 <- matrix(c(5, 6, 7, 8), nrow = 2)
 
@@ -509,6 +531,7 @@ test_that("lap_solve_batch with maximize", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples handles single pair", {
+  skip_on_cran()
   left <- data.frame(id = 1, x = 0)
   right <- data.frame(id = 2, x = 1)
 
@@ -521,6 +544,7 @@ test_that("match_couples handles single pair", {
 })
 
 test_that("greedy_couples row_best handles different values", {
+  skip_on_cran()
   set.seed(777)
   n <- 10
   left <- data.frame(id = 1:n, x = rnorm(n))
@@ -537,6 +561,7 @@ test_that("greedy_couples row_best handles different values", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_diagnostics computes block-level quality", {
+  skip_on_cran()
   set.seed(999)
   n <- 90  # 30 per block
 
@@ -586,6 +611,7 @@ test_that("balance_diagnostics computes block-level quality", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with auto_scale handles edge cases", {
+  skip_on_cran()
   set.seed(444)
   n <- 20
 
@@ -598,6 +624,7 @@ test_that("match_couples with auto_scale handles edge cases", {
 })
 
 test_that("match_couples with caliper constraint", {
+  skip_on_cran()
   set.seed(555)
   n <- 20
 

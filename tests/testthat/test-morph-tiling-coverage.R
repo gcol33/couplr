@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles creates tiles for simple case", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 6, H = 6, P = 3)
 
   expect_true(length(tiles) > 0)
@@ -20,6 +21,7 @@ test_that(".generate_square_tiles creates tiles for simple case", {
 })
 
 test_that(".generate_square_tiles covers all pixels", {
+  skip_on_cran()
   W <- 7
   H <- 5
   P <- 3
@@ -42,6 +44,7 @@ test_that(".generate_square_tiles covers all pixels", {
 })
 
 test_that(".generate_square_tiles handles P larger than image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 2, H = 2, P = 5)
 
   # Should create 1x1 tiles for each pixel
@@ -52,6 +55,7 @@ test_that(".generate_square_tiles handles P larger than image", {
 })
 
 test_that(".generate_square_tiles handles 1x1 image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 1, H = 1, P = 3)
 
   expect_equal(length(tiles), 1)
@@ -59,6 +63,7 @@ test_that(".generate_square_tiles handles 1x1 image", {
 })
 
 test_that(".generate_square_tiles handles non-divisible dimensions", {
+  skip_on_cran()
   W <- 10
   H <- 7
   P <- 3
@@ -83,6 +88,7 @@ test_that(".generate_square_tiles handles non-divisible dimensions", {
 })
 
 test_that(".generate_square_tiles handles wide image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 20, H = 3, P = 3)
 
   expect_true(length(tiles) > 0)
@@ -100,6 +106,7 @@ test_that(".generate_square_tiles handles wide image", {
 })
 
 test_that(".generate_square_tiles handles tall image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 3, H = 20, P = 3)
 
   expect_true(length(tiles) > 0)
@@ -117,6 +124,7 @@ test_that(".generate_square_tiles handles tall image", {
 })
 
 test_that(".generate_square_tiles handles P = 1", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 4, H = 4, P = 1)
 
   # Should create 16 1x1 tiles
@@ -127,6 +135,7 @@ test_that(".generate_square_tiles handles P = 1", {
 })
 
 test_that(".generate_square_tiles handles P = 2", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 6, H = 4, P = 2)
 
   expect_true(length(tiles) > 0)
@@ -142,6 +151,7 @@ test_that(".generate_square_tiles handles P = 2", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_tile_lap handles 1x1 tile", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -157,6 +167,7 @@ test_that(".solve_tile_lap handles 1x1 tile", {
 })
 
 test_that(".solve_tile_lap handles 2x2 tile", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -171,6 +182,7 @@ test_that(".solve_tile_lap handles 2x2 tile", {
 })
 
 test_that(".solve_tile_lap handles 3x3 tile", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W
@@ -186,6 +198,7 @@ test_that(".solve_tile_lap handles 3x3 tile", {
 })
 
 test_that(".solve_tile_lap handles beta = 0", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -201,6 +214,7 @@ test_that(".solve_tile_lap handles beta = 0", {
 })
 
 test_that(".solve_tile_lap handles different alpha values", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -220,6 +234,7 @@ test_that(".solve_tile_lap handles different alpha values", {
 # ------------------------------------------------------------------------------
 
 test_that(".square_tiling_solver returns valid assignment", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -235,6 +250,7 @@ test_that(".square_tiling_solver returns valid assignment", {
 })
 
 test_that(".square_tiling_solver handles tile size 1", {
+  skip_on_cran()
   H <- 3
   W <- 3
   N <- H * W
@@ -249,6 +265,7 @@ test_that(".square_tiling_solver handles tile size 1", {
 })
 
 test_that(".square_tiling_solver handles non-square image", {
+  skip_on_cran()
   H <- 3
   W <- 5
   N <- H * W
@@ -268,6 +285,7 @@ test_that(".square_tiling_solver handles non-square image", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_hierarchical_patch_pipeline_v2 works as wrapper", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -287,6 +305,7 @@ test_that(".solve_hierarchical_patch_pipeline_v2 works as wrapper", {
 # ------------------------------------------------------------------------------
 
 test_that(".analyze_tiling returns proper structure", {
+  skip_on_cran()
   result <- couplr:::.analyze_tiling(W = 10, H = 10, P = 3)
 
   expect_true("n_tiles" %in% names(result))
@@ -296,12 +315,14 @@ test_that(".analyze_tiling returns proper structure", {
 })
 
 test_that(".analyze_tiling reports full coverage", {
+  skip_on_cran()
   result <- couplr:::.analyze_tiling(W = 9, H = 9, P = 3)
 
   expect_equal(result$coverage, 1.0)
 })
 
 test_that(".analyze_tiling handles edge cases", {
+  skip_on_cran()
   # Prime dimensions
   result <- couplr:::.analyze_tiling(W = 7, H = 11, P = 3)
 
@@ -314,6 +335,7 @@ test_that(".analyze_tiling handles edge cases", {
 # ------------------------------------------------------------------------------
 
 test_that(".visualize_tiling returns matrix of correct size", {
+  skip_on_cran()
   result <- couplr:::.visualize_tiling(W = 10, H = 8, P = 3)
 
   expect_equal(dim(result), c(8, 10))
@@ -321,6 +343,7 @@ test_that(".visualize_tiling returns matrix of correct size", {
 })
 
 test_that(".visualize_tiling assigns colors to tiles", {
+  skip_on_cran()
   result <- couplr:::.visualize_tiling(W = 6, H = 6, P = 3)
 
   # Should not be all white
@@ -328,6 +351,7 @@ test_that(".visualize_tiling assigns colors to tiles", {
 })
 
 test_that(".visualize_tiling handles small images", {
+  skip_on_cran()
   result <- couplr:::.visualize_tiling(W = 2, H = 2, P = 3)
 
   expect_equal(dim(result), c(2, 2))
@@ -338,6 +362,7 @@ test_that(".visualize_tiling handles small images", {
 # ------------------------------------------------------------------------------
 
 test_that(".benchmark_square_tiling runs without error", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -358,6 +383,7 @@ test_that(".benchmark_square_tiling runs without error", {
 # ------------------------------------------------------------------------------
 
 test_that("square tiling handles varying color patterns", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W
@@ -384,6 +410,7 @@ test_that("square tiling handles varying color patterns", {
 })
 
 test_that("tiling covers boundary pixels correctly", {
+  skip_on_cran()
   # Test image where core region doesn't divide evenly
   W <- 11
   H <- 13
@@ -412,6 +439,7 @@ test_that("tiling covers boundary pixels correctly", {
 })
 
 test_that("tile sizes respect maximum", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 20, H = 20, P = 4)
 
   for (tile in tiles) {

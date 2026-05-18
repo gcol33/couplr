@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch works with list of matrices", {
+  skip_on_cran()
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),
     matrix(c(5, 6, 7, 8), 2, 2)
@@ -20,6 +21,7 @@ test_that("lap_solve_batch works with list of matrices", {
 })
 
 test_that("lap_solve_batch works with 3D array", {
+  skip_on_cran()
   arr <- array(runif(2 * 2 * 5), dim = c(2, 2, 5))
 
   result <- lap_solve_batch(arr)
@@ -29,6 +31,7 @@ test_that("lap_solve_batch works with 3D array", {
 })
 
 test_that("lap_solve_batch with maximize = TRUE", {
+  skip_on_cran()
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),
     matrix(c(5, 6, 7, 8), 2, 2)
@@ -45,6 +48,7 @@ test_that("lap_solve_batch with maximize = TRUE", {
 })
 
 test_that("lap_solve_batch with specific method", {
+  skip_on_cran()
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),
     matrix(c(5, 6, 7, 8), 2, 2)
@@ -60,6 +64,7 @@ test_that("lap_solve_batch with specific method", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch errors on empty list", {
+  skip_on_cran()
   expect_error(
     lap_solve_batch(list()),
     "at least one problem"
@@ -67,6 +72,7 @@ test_that("lap_solve_batch errors on empty list", {
 })
 
 test_that("lap_solve_batch errors on invalid input type", {
+  skip_on_cran()
   expect_error(
     lap_solve_batch("invalid"),
     "must be a list of matrices, 3D array, or grouped data frame"
@@ -74,6 +80,7 @@ test_that("lap_solve_batch errors on invalid input type", {
 })
 
 test_that("lap_solve_batch errors on data frame without grouping", {
+  skip_on_cran()
   df <- data.frame(source = 1:4, target = 1:4, cost = runif(4))
 
   expect_error(
@@ -87,6 +94,7 @@ test_that("lap_solve_batch errors on data frame without grouping", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch works with grouped data frame", {
+  skip_on_cran()
   skip_if_not_installed("dplyr")
 
   df <- tibble::tibble(
@@ -105,6 +113,7 @@ test_that("lap_solve_batch works with grouped data frame", {
 })
 
 test_that("lap_solve_batch_grouped errors without column specs", {
+  skip_on_cran()
   skip_if_not_installed("dplyr")
 
   df <- tibble::tibble(
@@ -121,6 +130,7 @@ test_that("lap_solve_batch_grouped errors without column specs", {
 })
 
 test_that("lap_solve_batch with n_threads = NULL uses all cores", {
+  skip_on_cran()
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),
     matrix(c(5, 6, 7, 8), 2, 2)
@@ -137,6 +147,7 @@ test_that("lap_solve_batch with n_threads = NULL uses all cores", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch handles single matrix", {
+  skip_on_cran()
   costs <- list(matrix(c(1, 2, 3, 4), 2, 2))
 
   result <- lap_solve_batch(costs)
@@ -145,6 +156,7 @@ test_that("lap_solve_batch handles single matrix", {
 })
 
 test_that("lap_solve_batch handles rectangular matrices", {
+  skip_on_cran()
   costs <- list(
     matrix(1:6, 2, 3),
     matrix(1:6, 2, 3)
@@ -156,6 +168,7 @@ test_that("lap_solve_batch handles rectangular matrices", {
 })
 
 test_that("lap_solve_batch handles 1x1 matrices", {
+  skip_on_cran()
   costs <- list(
     matrix(5, 1, 1),
     matrix(10, 1, 1)
@@ -172,6 +185,7 @@ test_that("lap_solve_batch handles 1x1 matrices", {
 # ------------------------------------------------------------------------------
 
 test_that("print.lap_solve_batch_result works", {
+  skip_on_cran()
   costs <- list(
     matrix(c(1, 2, 3, 4), 2, 2),
     matrix(c(5, 6, 7, 8), 2, 2)
@@ -186,6 +200,7 @@ test_that("print.lap_solve_batch_result works", {
 })
 
 test_that("print.lap_solve_batch_result handles missing columns gracefully", {
+  skip_on_cran()
   # Create a tibble that looks like lap_solve_batch result but missing columns
   result <- tibble::tibble(
     source = 1:2,
@@ -205,6 +220,7 @@ test_that("print.lap_solve_batch_result handles missing columns gracefully", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve_batch matches individual lap_solve results", {
+  skip_on_cran()
   set.seed(123)
   cost1 <- matrix(runif(16), 4, 4)
   cost2 <- matrix(runif(16), 4, 4)

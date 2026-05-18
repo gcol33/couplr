@@ -22,6 +22,7 @@ right_df <- data.frame(
 # ------------------------------------------------------------------------------
 
 test_that("match_couples errors when right is NULL (non-distance object)", {
+  skip_on_cran()
   expect_error(
     match_couples(left_df, right = NULL, vars = c("age")),
     "right must be provided"
@@ -29,6 +30,7 @@ test_that("match_couples errors when right is NULL (non-distance object)", {
 })
 
 test_that("match_couples errors when vars is NULL (non-distance object)", {
+  skip_on_cran()
   expect_error(
     match_couples(left_df, right_df, vars = NULL),
     "vars must be specified"
@@ -40,6 +42,7 @@ test_that("match_couples errors when vars is NULL (non-distance object)", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with auto_scale=TRUE works", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -51,6 +54,7 @@ test_that("match_couples with auto_scale=TRUE works", {
 })
 
 test_that("match_couples with auto_scale and explicit scale", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -66,6 +70,7 @@ test_that("match_couples with auto_scale and explicit scale", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with require_full_matching=TRUE succeeds with balanced data", {
+  skip_on_cran()
   left_small <- left_df[1:5, ]
   right_small <- right_df[1:5, ]
 
@@ -80,6 +85,7 @@ test_that("match_couples with require_full_matching=TRUE succeeds with balanced 
 })
 
 test_that("match_couples with require_full_matching=TRUE errors on unmatched", {
+  skip_on_cran()
   left_small <- left_df[1:5, ]
   right_small <- right_df[1:3, ]
 
@@ -98,6 +104,7 @@ test_that("match_couples with require_full_matching=TRUE errors on unmatched", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with return_unmatched=FALSE removes unmatched", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:5, ], right_df[1:3, ],
     vars = c("age"),
@@ -108,6 +115,7 @@ test_that("match_couples with return_unmatched=FALSE removes unmatched", {
 })
 
 test_that("match_couples with return_diagnostics=FALSE limits info", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age"),
@@ -120,6 +128,7 @@ test_that("match_couples with return_diagnostics=FALSE limits info", {
 })
 
 test_that("match_couples with return_diagnostics=TRUE has full info", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age"),
@@ -134,6 +143,7 @@ test_that("match_couples with return_diagnostics=TRUE has full info", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with explicit block_id works", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
@@ -150,6 +160,7 @@ test_that("match_couples with explicit block_id works", {
 })
 
 test_that("match_couples errors when block_id not in left", {
+  skip_on_cran()
   left_blocked <- left_df
   right_blocked <- right_df
   right_blocked$block <- rep(c("A", "B"), each = 10)
@@ -165,6 +176,7 @@ test_that("match_couples errors when block_id not in left", {
 })
 
 test_that("match_couples errors when block_id not in right", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
@@ -180,6 +192,7 @@ test_that("match_couples errors when block_id not in right", {
 })
 
 test_that("match_couples with ignore_blocks=TRUE ignores blocks", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block_id <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
@@ -201,6 +214,7 @@ test_that("match_couples with ignore_blocks=TRUE ignores blocks", {
 # ------------------------------------------------------------------------------
 
 test_that("blocked matching handles empty blocks", {
+  skip_on_cran()
   left_blocked <- left_df[1:10, ]
   left_blocked$block <- c(rep("A", 5), rep("B", 5))
   right_blocked <- right_df[1:8, ]
@@ -222,6 +236,7 @@ test_that("blocked matching handles empty blocks", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with check_costs=FALSE skips cost check", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age"),
@@ -236,6 +251,7 @@ test_that("match_couples with check_costs=FALSE skips cost check", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_couples works with default strategy", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age", "income")
@@ -246,6 +262,7 @@ test_that("greedy_couples works with default strategy", {
 })
 
 test_that("greedy_couples with strategy='sorted' works", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age"),
@@ -256,6 +273,7 @@ test_that("greedy_couples with strategy='sorted' works", {
 })
 
 test_that("greedy_couples with strategy='pq' works", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age"),
@@ -266,6 +284,7 @@ test_that("greedy_couples with strategy='pq' works", {
 })
 
 test_that("greedy_couples with auto_scale works", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -276,6 +295,7 @@ test_that("greedy_couples with auto_scale works", {
 })
 
 test_that("greedy_couples with max_distance constraint", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age"),
@@ -287,6 +307,7 @@ test_that("greedy_couples with max_distance constraint", {
 })
 
 test_that("greedy_couples with calipers", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -297,6 +318,7 @@ test_that("greedy_couples with calipers", {
 })
 
 test_that("greedy_couples with blocking", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
@@ -317,6 +339,7 @@ test_that("greedy_couples with blocking", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with distance_object works", {
+  skip_on_cran()
   dist_obj <- compute_distances(
     left_df, right_df,
     vars = c("age", "income"),
@@ -331,6 +354,7 @@ test_that("match_couples with distance_object works", {
 })
 
 test_that("match_couples with distance_object and max_distance", {
+  skip_on_cran()
   dist_obj <- compute_distances(
     left_df, right_df,
     vars = c("age"),
@@ -343,6 +367,7 @@ test_that("match_couples with distance_object and max_distance", {
 })
 
 test_that("match_couples with distance_object and calipers", {
+  skip_on_cran()
   dist_obj <- compute_distances(
     left_df, right_df,
     vars = c("age", "income"),
@@ -355,6 +380,7 @@ test_that("match_couples with distance_object and calipers", {
 })
 
 test_that("match_couples with distance_object and require_full_matching", {
+  skip_on_cran()
   dist_obj <- compute_distances(
     left_df[1:5, ], right_df[1:5, ],
     vars = c("age"),
@@ -372,6 +398,7 @@ test_that("match_couples with distance_object and require_full_matching", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples errors when no valid pairs exist", {
+  skip_on_cran()
   # Create datasets with very different values that will all be forbidden
   left_small <- data.frame(id = "L1", age = 0)
   right_small <- data.frame(id = "R1", age = 1000)
@@ -391,6 +418,7 @@ test_that("match_couples errors when no valid pairs exist", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with method='hungarian' works", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:10, ], right_df[1:10, ],
     vars = c("age"),
@@ -401,6 +429,7 @@ test_that("match_couples with method='hungarian' works", {
 })
 
 test_that("match_couples with method='jv' works", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:10, ], right_df[1:10, ],
     vars = c("age"),
@@ -415,6 +444,7 @@ test_that("match_couples with method='jv' works", {
 # ------------------------------------------------------------------------------
 
 test_that("detect_blocking returns FALSE when ignore_blocks is TRUE", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block_id <- rep("A", 20)
   right_blocked <- right_df
@@ -427,6 +457,7 @@ test_that("detect_blocking returns FALSE when ignore_blocks is TRUE", {
 })
 
 test_that("detect_blocking auto-detects block_id column", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block_id <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
@@ -439,6 +470,7 @@ test_that("detect_blocking auto-detects block_id column", {
 })
 
 test_that("detect_blocking returns FALSE when no block column", {
+  skip_on_cran()
   result <- couplr:::detect_blocking(left_df, right_df, NULL, ignore_blocks = FALSE)
 
   expect_false(result$use_blocking)
@@ -450,6 +482,7 @@ test_that("detect_blocking returns FALSE when no block column", {
 # ------------------------------------------------------------------------------
 
 test_that("check_full_matching passes when all matched", {
+  skip_on_cran()
   result <- list(
     unmatched = list(left = character(0), right = character(0))
   )
@@ -458,6 +491,7 @@ test_that("check_full_matching passes when all matched", {
 })
 
 test_that("check_full_matching errors when unmatched exist", {
+  skip_on_cran()
   result <- list(
     unmatched = list(left = c("L1", "L2"), right = c("R1"))
   )

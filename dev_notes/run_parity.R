@@ -28,12 +28,28 @@ bin_cases <- list(
 methods <- animated_methods()
 cat("Methods:", paste(methods, collapse = ", "), "\n\n")
 
+# Match the testthat skip-list for the run_parity dev driver.
+.known_bugs <- list()
+is_known_bug <- function(method, name, mx) {
+  for (b in .known_bugs) {
+    if (b$method == method && b$case_name == name && b$maximize == mx) return(TRUE)
+  }
+  FALSE
+}
+
 fails <- 0L
 passes <- 0L
+skipped <- 0L
 for (method in methods) {
   use_cases <- if (method == "hk01") bin_cases else if (method == "bruteforce") cases[1:3] else cases
   for (case in use_cases) {
     for (mx in c(FALSE, TRUE)) {
+      if (is_known_bug(method, case$name, mx)) {
+        skipped <- skipped + 1L
+        cat("SKIP ", sprintf("%s | %s | max=%s", method, case$name, mx),
+            "(known C++ oracle bug)\n")
+        next
+      }
       label <- sprintf("%s | %s | max=%s", method, case$name, mx)
       tryCatch({
         trace_fn <- get_trace_fn(method)
@@ -49,4 +65,5 @@ for (method in methods) {
   }
 }
 
-cat(sprintf("\n%d pass / %d fail / %d total\n", passes, fails, passes + fails))
+cat(sprintf("\n%d pass / %d fail / %d skipped / %d total\n",
+            passes, fails, skipped, passes + fails + skipped))

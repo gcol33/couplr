@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate saves mp4 when av available", {
+  skip_on_cran()
   skip_if_not_installed("magick")
   skip_if_not_installed("av")
 
@@ -41,6 +42,7 @@ test_that("pixel_morph_animate saves mp4 when av available", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate warns for large tiles", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -80,6 +82,7 @@ test_that("pixel_morph_animate warns for large tiles", {
 # ------------------------------------------------------------------------------
 
 test_that("morph_utils color walk handles remaining pixels", {
+  skip_on_cran()
   H <- 6
   W <- 6
   N <- H * W
@@ -106,6 +109,7 @@ test_that("morph_utils color walk handles remaining pixels", {
 # ------------------------------------------------------------------------------
 
 test_that("morph_pixel color walk handles sparse groups", {
+  skip_on_cran()
   H <- 8
   W <- 8
   N <- H * W
@@ -138,6 +142,7 @@ test_that("morph_pixel color walk handles sparse groups", {
 # ------------------------------------------------------------------------------
 
 test_that(".recursive_tiling_solver handles images with odd dimensions", {
+  skip_on_cran()
   # 7x5 has rest_w=1 and rest_h=1 when divided by 2
   H <- 5
   W <- 7
@@ -159,6 +164,7 @@ test_that(".recursive_tiling_solver handles images with odd dimensions", {
 })
 
 test_that(".recursive_tiling_solver handles both rest_w and rest_h > 0", {
+  skip_on_cran()
   # 9x9 has rest_w=1 and rest_h=1 for 2x2 tiling
   H <- 9
   W <- 9
@@ -182,6 +188,7 @@ test_that(".recursive_tiling_solver handles both rest_w and rest_h > 0", {
 # ------------------------------------------------------------------------------
 
 test_that(".patch_cost_matrix handles multiple patches", {
+  skip_on_cran()
   patches_a <- list(
     colors = matrix(c(
       100, 100, 100,
@@ -218,6 +225,7 @@ test_that(".patch_cost_matrix handles multiple patches", {
 # ------------------------------------------------------------------------------
 
 test_that(".expand_patch_assignment handles multiple patches", {
+  skip_on_cran()
   patch_assign <- list(2L, 1L, 3L)  # Patch 1->B2, Patch 2->B1, Patch 3->B3
   patches_a <- list(
     indices = list(c(1L, 2L), c(3L, 4L), c(5L, 6L))
@@ -242,6 +250,7 @@ test_that(".expand_patch_assignment handles multiple patches", {
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles handles exact division", {
+  skip_on_cran()
   # 6x6 with P=2 divides exactly
   tiles <- couplr:::.generate_square_tiles(W = 6, H = 6, P = 2)
 
@@ -251,6 +260,7 @@ test_that(".generate_square_tiles handles exact division", {
 })
 
 test_that(".generate_square_tiles handles P > both dimensions", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 2, H = 3, P = 5)
 
   # Should fill with smaller tiles
@@ -270,6 +280,7 @@ test_that(".generate_square_tiles handles P > both dimensions", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph works with downscale_steps", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -294,6 +305,7 @@ test_that("pixel_morph works with downscale_steps", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph applies fractional upscale correctly", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
@@ -318,6 +330,7 @@ test_that("pixel_morph applies fractional upscale correctly", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate saves GIF correctly", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")

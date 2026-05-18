@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".has_namespace works", {
+  skip_on_cran()
   # Test for packages that exist
   expect_true(couplr:::.has_namespace("base"))
   # Test for package that doesn't exist
@@ -14,6 +15,7 @@ test_that(".has_namespace works", {
 })
 
 test_that(".gif_delay_from_fps converts correctly", {
+  skip_on_cran()
   # 10 fps = 0.1 seconds = 10 hundredths
   expect_equal(couplr:::.gif_delay_from_fps(10), 10)
   # 20 fps = 0.05 seconds = 5 hundredths
@@ -23,6 +25,7 @@ test_that(".gif_delay_from_fps converts correctly", {
 })
 
 test_that(".clamp_rgb handles various inputs", {
+  skip_on_cran()
   # Test with array
   arr <- array(c(-10, 0, 127, 255, 300, 128), dim = c(2, 3))
   result <- couplr:::.clamp_rgb(arr)
@@ -31,6 +34,7 @@ test_that(".clamp_rgb handles various inputs", {
 })
 
 test_that(".to_planar_rgb and .from_planar_rgb are inverse", {
+  skip_on_cran()
   H <- 4
   W <- 6
   original <- array(runif(H * W * 3) * 255, dim = c(H, W, 3))
@@ -46,6 +50,7 @@ test_that(".to_planar_rgb and .from_planar_rgb are inverse", {
 # ------------------------------------------------------------------------------
 
 test_that(".cpp_downscale works", {
+  skip_on_cran()
   H <- 16
   W <- 16
   planar <- runif(H * W * 3) * 255
@@ -54,6 +59,7 @@ test_that(".cpp_downscale works", {
 })
 
 test_that(".cpp_upscale_assignment works", {
+  skip_on_cran()
   H <- 8
   W <- 8
   Hs <- 4
@@ -69,6 +75,7 @@ test_that(".cpp_upscale_assignment works", {
 # ------------------------------------------------------------------------------
 
 test_that(".downscale_both handles multiple steps", {
+  skip_on_cran()
   H <- 32
   W <- 32
   A_planar <- runif(H * W * 3) * 255
@@ -86,6 +93,7 @@ test_that(".downscale_both handles multiple steps", {
 # ------------------------------------------------------------------------------
 
 test_that(".assemble_assignment handles mixed assignments", {
+  skip_on_cran()
   i_idx <- c(1, 2, 4)
   j_idx <- c(3, 1, 2)
   result <- couplr:::.assemble_assignment(N = 5, i_idx, j_idx)
@@ -97,6 +105,7 @@ test_that(".assemble_assignment handles mixed assignments", {
 })
 
 test_that(".fill_unassigned_identity fills correctly", {
+  skip_on_cran()
   assign <- c(3L, -1L, 1L, -1L, 2L)
   result <- couplr:::.fill_unassigned_identity(assign)
   expect_equal(result[2], 2L)  # Filled with identity
@@ -112,6 +121,7 @@ test_that(".fill_unassigned_identity fills correctly", {
 # ------------------------------------------------------------------------------
 
 test_that("balance_table returns tibble", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
   result <- match_couples(left, right, vars = "x")
@@ -121,6 +131,7 @@ test_that("balance_table returns tibble", {
 })
 
 test_that("summary.balance_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
   result <- match_couples(left, right, vars = "x")
@@ -134,6 +145,7 @@ test_that("summary.balance_result works", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with return_diagnostics=TRUE", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
@@ -142,6 +154,7 @@ test_that("match_couples with return_diagnostics=TRUE", {
 })
 
 test_that("greedy_couples with pq strategy", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:20, x = rnorm(20))
   right <- data.frame(id = 21:50, x = rnorm(30))
@@ -150,6 +163,7 @@ test_that("greedy_couples with pq strategy", {
 })
 
 test_that("compute_distances with different distance metrics", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
 
@@ -164,48 +178,56 @@ test_that("compute_distances with different distance metrics", {
 # ------------------------------------------------------------------------------
 
 test_that("assignment with orlin method", {
+  skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
   result <- assignment(cost, method = "orlin")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with network_simplex method", {
+  skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
   result <- assignment(cost, method = "network_simplex")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with push_relabel method", {
+  skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
   result <- assignment(cost, method = "push_relabel")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with ramshaw_tarjan method", {
+  skip_on_cran()
   cost <- matrix(runif(6 * 8), 6, 8)  # Rectangular
   result <- assignment(cost, method = "ramshaw_tarjan")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with cycle_cancel method", {
+  skip_on_cran()
   cost <- matrix(runif(16), 4, 4)
   result <- assignment(cost, method = "cycle_cancel")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with gabow_tarjan method", {
+  skip_on_cran()
   cost <- matrix(runif(16), 4, 4)
   result <- assignment(cost, method = "gabow_tarjan")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with csflow method", {
+  skip_on_cran()
   cost <- matrix(runif(16), 4, 4)
   result <- assignment(cost, method = "csflow")
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with csa method", {
+  skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
   result <- assignment(cost, method = "csa")
   expect_equal(result$status, "optimal")

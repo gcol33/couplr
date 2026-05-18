@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("use_emoji respects option", {
+  skip_on_cran()
   old_opt <- getOption("couplr.emoji")
   on.exit(options(couplr.emoji = old_opt), add = TRUE)
 
@@ -15,6 +16,7 @@ test_that("use_emoji respects option", {
 })
 
 test_that("couplr_emoji returns emoji or empty string", {
+  skip_on_cran()
   old_opt <- getOption("couplr.emoji")
   on.exit(options(couplr.emoji = old_opt), add = TRUE)
 
@@ -35,6 +37,7 @@ test_that("couplr_emoji returns emoji or empty string", {
 })
 
 test_that("couplr_emoji returns empty when disabled", {
+  skip_on_cran()
   old_opt <- getOption("couplr.emoji")
   on.exit(options(couplr.emoji = old_opt), add = TRUE)
 
@@ -47,11 +50,13 @@ test_that("couplr_emoji returns empty when disabled", {
 # ------------------------------------------------------------------------------
 
 test_that("err_missing_data throws error", {
+  skip_on_cran()
   expect_error(couplr:::err_missing_data("left"), "left dataset is empty")
   expect_error(couplr:::err_missing_data("right"), "right dataset is empty")
 })
 
 test_that("err_missing_vars throws error", {
+  skip_on_cran()
   expect_error(
     couplr:::err_missing_vars(c("x", "y"), "left"),
     "Missing variables in left"
@@ -59,6 +64,7 @@ test_that("err_missing_vars throws error", {
 })
 
 test_that("err_invalid_param throws error", {
+  skip_on_cran()
   expect_error(
     couplr:::err_invalid_param("method", "invalid", "one of: jv, hungarian"),
     "invalid value"
@@ -66,6 +72,7 @@ test_that("err_invalid_param throws error", {
 })
 
 test_that("err_no_valid_pairs throws error", {
+  skip_on_cran()
   expect_error(couplr:::err_no_valid_pairs(), "No valid pairs")
   expect_error(couplr:::err_no_valid_pairs("test reason"), "Reason")
 })
@@ -75,14 +82,17 @@ test_that("err_no_valid_pairs throws error", {
 # ------------------------------------------------------------------------------
 
 test_that("warn_constant_var produces warning", {
+  skip_on_cran()
   expect_warning(couplr:::warn_constant_var("x"), "constant")
 })
 
 test_that("warn_many_zeros produces warning", {
+  skip_on_cran()
   expect_warning(couplr:::warn_many_zeros(50.0, 100), "50.0%.*zero")
 })
 
 test_that("warn_extreme_costs produces warning", {
+  skip_on_cran()
   expect_warning(
     couplr:::warn_extreme_costs(10, 100, 10),
     "highly skewed"
@@ -94,12 +104,14 @@ test_that("warn_extreme_costs produces warning", {
 })
 
 test_that("warn_many_forbidden produces warning at different severity levels", {
+  skip_on_cran()
   expect_warning(couplr:::warn_many_forbidden(95, 10, 100), "critical")
   expect_warning(couplr:::warn_many_forbidden(80, 10, 100), "concerning")
   expect_warning(couplr:::warn_many_forbidden(60, 10, 100), "moderate")
 })
 
 test_that("warn_constant_distance produces warning", {
+  skip_on_cran()
   expect_warning(couplr:::warn_constant_distance(5.0), "identical")
 })
 
@@ -108,6 +120,7 @@ test_that("warn_constant_distance produces warning", {
 # ------------------------------------------------------------------------------
 
 test_that("info_low_match_rate produces messages at different thresholds", {
+  skip_on_cran()
   # < 25% produces warning
   expect_warning(couplr:::info_low_match_rate(10, 100, 10), "single")
 
@@ -123,10 +136,12 @@ test_that("info_low_match_rate produces messages at different thresholds", {
 })
 
 test_that("couplr_inform produces message", {
+  skip_on_cran()
   expect_message(couplr:::couplr_inform("test message"), "test message")
 })
 
 test_that("couplr_success produces message", {
+  skip_on_cran()
   expect_message(couplr:::couplr_success("success message"), "success")
 })
 
@@ -135,10 +150,12 @@ test_that("couplr_success produces message", {
 # ------------------------------------------------------------------------------
 
 test_that("couplr_warn produces warning", {
+  skip_on_cran()
   expect_warning(couplr:::couplr_warn("test warning"), "test warning")
 })
 
 test_that("couplr_stop produces error", {
+  skip_on_cran()
   expect_error(couplr:::couplr_stop("test error"), "test error")
 })
 

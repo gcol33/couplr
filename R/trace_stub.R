@@ -53,7 +53,7 @@ make_stub_trace <- function(algo_name, description) {
           step         = 1L,
           phase        = "final",
           description  = sprintf(
-            "Optimal assignment (total cost %.6g). Stub trace — real step-by-step animation pending for this algorithm.",
+            "Optimal assignment (total cost %.6g). Stub trace - real step-by-step animation pending for this algorithm.",
             res$total_cost
           ),
           matching     = matching_final,

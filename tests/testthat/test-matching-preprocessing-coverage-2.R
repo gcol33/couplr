@@ -22,6 +22,7 @@ right_df <- data.frame(
 # ------------------------------------------------------------------------------
 
 test_that("check_variable_health works with normal variables", {
+  skip_on_cran()
   health <- couplr:::check_variable_health(
     left_df, right_df,
     vars = c("normal_var", "income")
@@ -33,6 +34,7 @@ test_that("check_variable_health works with normal variables", {
 })
 
 test_that("check_variable_health detects constant variables", {
+  skip_on_cran()
   left_const <- left_df
   left_const$const_var <- 1  # Constant
   right_const <- right_df
@@ -48,6 +50,7 @@ test_that("check_variable_health detects constant variables", {
 })
 
 test_that("check_variable_health detects all-NA variables", {
+  skip_on_cran()
   left_na <- left_df
   left_na$na_var <- NA_real_
   right_na <- right_df
@@ -63,6 +66,7 @@ test_that("check_variable_health detects all-NA variables", {
 })
 
 test_that("check_variable_health detects high missingness", {
+  skip_on_cran()
   left_miss <- left_df
   left_miss$miss_var <- c(1:10, rep(NA, 40))  # 80% missing
   right_miss <- right_df
@@ -78,6 +82,7 @@ test_that("check_variable_health detects high missingness", {
 })
 
 test_that("check_variable_health detects low variance", {
+  skip_on_cran()
   left_lowvar <- left_df
   left_lowvar$lowvar <- rep(c(1, 1.0000001), 25)  # Very low variance
   right_lowvar <- right_df
@@ -93,6 +98,7 @@ test_that("check_variable_health detects low variance", {
 })
 
 test_that("check_variable_health detects skewness", {
+  skip_on_cran()
   left_skew <- left_df
   left_skew$skew_var <- exp(rnorm(50))  # Highly skewed
   right_skew <- right_df
@@ -108,6 +114,7 @@ test_that("check_variable_health detects skewness", {
 })
 
 test_that("check_variable_health errors with no variables", {
+  skip_on_cran()
   expect_error(
     couplr:::check_variable_health(left_df, right_df, vars = character(0)),
     "No variables provided"
@@ -119,11 +126,13 @@ test_that("check_variable_health errors with no variables", {
 # ------------------------------------------------------------------------------
 
 test_that("suggest_scaling returns 'none' for empty vars", {
+  skip_on_cran()
   result <- couplr:::suggest_scaling(left_df, right_df, vars = character(0))
   expect_equal(result, "none")
 })
 
 test_that("suggest_scaling suggests 'robust' for outliers", {
+  skip_on_cran()
   left_outlier <- left_df
   left_outlier$outlier_var <- c(rnorm(45, 10, 1), 100, 200, 300, 400, 500)
   right_outlier <- right_df
@@ -139,6 +148,7 @@ test_that("suggest_scaling suggests 'robust' for outliers", {
 })
 
 test_that("suggest_scaling suggests 'standardize' for different scales", {
+  skip_on_cran()
   left_scale <- data.frame(
     small = rnorm(50, 0, 1),
     large = rnorm(50, 0, 100)
@@ -157,6 +167,7 @@ test_that("suggest_scaling suggests 'standardize' for different scales", {
 })
 
 test_that("suggest_scaling handles NA values", {
+  skip_on_cran()
   left_with_na <- left_df
   left_with_na$with_na <- c(rnorm(40), rep(NA, 10))
   right_with_na <- right_df
@@ -175,6 +186,7 @@ test_that("suggest_scaling handles NA values", {
 # ------------------------------------------------------------------------------
 
 test_that("auto_encode_categorical handles numeric variables", {
+  skip_on_cran()
   left_num <- data.frame(x = 1:10)
   right_num <- data.frame(x = 11:20)
 
@@ -186,6 +198,7 @@ test_that("auto_encode_categorical handles numeric variables", {
 })
 
 test_that("auto_encode_categorical encodes binary variables", {
+  skip_on_cran()
   left_bin <- data.frame(gender = c("M", "F", "M", "F", "M"))
   right_bin <- data.frame(gender = c("F", "M", "F", "M", "F"))
 
@@ -197,6 +210,7 @@ test_that("auto_encode_categorical encodes binary variables", {
 })
 
 test_that("auto_encode_categorical encodes ordered factors", {
+  skip_on_cran()
   left_ord <- data.frame(
     edu = factor(c("low", "med", "high", "low", "med"),
                  levels = c("low", "med", "high"), ordered = TRUE)
@@ -213,6 +227,7 @@ test_that("auto_encode_categorical encodes ordered factors", {
 })
 
 test_that("auto_encode_categorical errors on unordered multi-level factor", {
+  skip_on_cran()
   left_cat <- data.frame(color = c("red", "blue", "green", "red"))
   right_cat <- data.frame(color = c("blue", "green", "red", "blue"))
 
@@ -227,6 +242,7 @@ test_that("auto_encode_categorical errors on unordered multi-level factor", {
 # ------------------------------------------------------------------------------
 
 test_that("preprocess_matching_vars works with auto_scale", {
+  skip_on_cran()
   result <- preprocess_matching_vars(
     left_df, right_df,
     vars = c("normal_var", "income"),
@@ -239,6 +255,7 @@ test_that("preprocess_matching_vars works with auto_scale", {
 })
 
 test_that("preprocess_matching_vars removes problematic variables", {
+  skip_on_cran()
   left_prob <- left_df
   left_prob$const <- 1
   right_prob <- right_df
@@ -258,6 +275,7 @@ test_that("preprocess_matching_vars removes problematic variables", {
 })
 
 test_that("preprocess_matching_vars errors when all vars excluded", {
+  skip_on_cran()
   left_bad <- data.frame(const = rep(1, 10))
   right_bad <- data.frame(const = rep(1, 10))
 
@@ -274,6 +292,7 @@ test_that("preprocess_matching_vars errors when all vars excluded", {
 })
 
 test_that("preprocess_matching_vars errors with no variables", {
+  skip_on_cran()
   expect_error(
     preprocess_matching_vars(left_df, right_df, vars = character(0)),
     "No variables provided"
@@ -281,6 +300,7 @@ test_that("preprocess_matching_vars errors with no variables", {
 })
 
 test_that("preprocess_matching_vars errors on missing variables", {
+  skip_on_cran()
   expect_error(
     preprocess_matching_vars(left_df, right_df, vars = c("nonexistent")),
     "Variables not found"
@@ -288,6 +308,7 @@ test_that("preprocess_matching_vars errors on missing variables", {
 })
 
 test_that("preprocess_matching_vars with scale_method=FALSE", {
+  skip_on_cran()
   result <- preprocess_matching_vars(
     left_df, right_df,
     vars = c("normal_var"),
@@ -299,6 +320,7 @@ test_that("preprocess_matching_vars with scale_method=FALSE", {
 })
 
 test_that("preprocess_matching_vars with verbose=TRUE issues messages", {
+  skip_on_cran()
   left_outlier <- left_df
   left_outlier$outlier <- c(rnorm(45), rep(1000, 5))
   right_outlier <- right_df
@@ -317,6 +339,7 @@ test_that("preprocess_matching_vars with verbose=TRUE issues messages", {
 })
 
 test_that("preprocess_matching_vars with check_health=FALSE skips health check", {
+  skip_on_cran()
   left_const <- left_df
   left_const$const <- 1
   right_const <- right_df
@@ -338,6 +361,7 @@ test_that("preprocess_matching_vars with check_health=FALSE skips health check",
 # ------------------------------------------------------------------------------
 
 test_that("print.variable_health works", {
+  skip_on_cran()
   health <- couplr:::check_variable_health(
     left_df, right_df,
     vars = c("normal_var")
@@ -347,6 +371,7 @@ test_that("print.variable_health works", {
 })
 
 test_that("print.variable_health shows excluded vars", {
+  skip_on_cran()
   left_const <- left_df
   left_const$const <- 1
   right_const <- right_df
@@ -361,6 +386,7 @@ test_that("print.variable_health shows excluded vars", {
 })
 
 test_that("print.preprocessing_result works", {
+  skip_on_cran()
   result <- preprocess_matching_vars(
     left_df, right_df,
     vars = c("normal_var"),
@@ -371,6 +397,7 @@ test_that("print.preprocessing_result works", {
 })
 
 test_that("print.preprocessing_result shows excluded vars", {
+  skip_on_cran()
   left_const <- left_df
   left_const$const <- 1
   right_const <- right_df

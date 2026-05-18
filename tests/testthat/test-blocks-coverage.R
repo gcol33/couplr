@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("matchmaker with block_type=none works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
 
@@ -18,6 +19,7 @@ test_that("matchmaker with block_type=none works", {
 })
 
 test_that("matchmaker errors on missing block_by for group type", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
 
@@ -28,6 +30,7 @@ test_that("matchmaker errors on missing block_by for group type", {
 })
 
 test_that("matchmaker errors on missing block_vars for cluster type", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
 
@@ -38,6 +41,7 @@ test_that("matchmaker errors on missing block_vars for cluster type", {
 })
 
 test_that("matchmaker with multiple block_by variables", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:8,
     region = rep(c("A", "B"), each = 4),
@@ -57,6 +61,7 @@ test_that("matchmaker with multiple block_by variables", {
 })
 
 test_that("matchmaker with hclust clustering", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
@@ -73,6 +78,7 @@ test_that("matchmaker with hclust clustering", {
 })
 
 test_that("matchmaker errors on unknown clustering method", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
 
@@ -84,6 +90,7 @@ test_that("matchmaker errors on unknown clustering method", {
 })
 
 test_that("matchmaker with auto n_blocks selection", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:20, x = rnorm(20))
   right <- data.frame(id = 21:40, x = rnorm(20))
@@ -99,6 +106,7 @@ test_that("matchmaker with auto n_blocks selection", {
 })
 
 test_that("matchmaker filters small blocks", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:6,
     group = c("A", "A", "A", "A", "B", "C"),  # B and C have only 1 left
@@ -121,6 +129,7 @@ test_that("matchmaker filters small blocks", {
 })
 
 test_that("matchmaker filters imbalanced blocks", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:10,
     group = c(rep("A", 8), "B", "B"),  # A: 8 left, B: 2 left
@@ -146,6 +155,7 @@ test_that("matchmaker filters imbalanced blocks", {
 })
 
 test_that("matchmaker with return_dropped=FALSE", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, group = c("A", "A", "A", "B", "C"), x = 1:5)
   right <- data.frame(id = 6:10, group = c("A", "A", "A", "A", "A"), x = 6:10)
 
@@ -160,6 +170,7 @@ test_that("matchmaker with return_dropped=FALSE", {
 # ------------------------------------------------------------------------------
 
 test_that("assign_blocks_group errors on missing left variables", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6, group = c("A", "B", "C"))
 
@@ -170,6 +181,7 @@ test_that("assign_blocks_group errors on missing left variables", {
 })
 
 test_that("assign_blocks_group errors on missing right variables", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, group = c("A", "B", "C"))
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -184,6 +196,7 @@ test_that("assign_blocks_group errors on missing right variables", {
 # ------------------------------------------------------------------------------
 
 test_that("filter_blocks handles empty blocks in one side", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, block_id = c("A", "A", "A"))
   right <- data.frame(id = 4:6, block_id = c("A", "B", "B"))
 
@@ -199,6 +212,7 @@ test_that("filter_blocks handles empty blocks in one side", {
 # ------------------------------------------------------------------------------
 
 test_that("summarize_blocks computes variable means", {
+  skip_on_cran()
   left <- data.frame(
     block_id = c("A", "A", "B", "B"),
     x = c(1, 3, 10, 20)
@@ -217,6 +231,7 @@ test_that("summarize_blocks computes variable means", {
 # ------------------------------------------------------------------------------
 
 test_that("print.matchmaker_result works with dropped blocks", {
+  skip_on_cran()
   left <- data.frame(id = 1:6, group = c("A", "A", "A", "B", "C", "D"), x = 1:6)
   right <- data.frame(id = 7:10, group = c("A", "A", "A", "A"), x = 7:10)
 
@@ -229,6 +244,7 @@ test_that("print.matchmaker_result works with dropped blocks", {
 })
 
 test_that("print.matchmaker_result works without dropped blocks", {
+  skip_on_cran()
   left <- data.frame(id = 1:4, group = c("A", "A", "B", "B"), x = 1:4)
   right <- data.frame(id = 5:8, group = c("A", "A", "B", "B"), x = 5:8)
 

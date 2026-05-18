@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".to_array_rgb handles raw array directly", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Test with actual magick image - covers raw data path
@@ -20,6 +21,7 @@ test_that(".to_array_rgb handles raw array directly", {
 })
 
 test_that(".to_array_rgb handles different channel orderings", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Create images of different sizes to exercise dimension branches
@@ -37,6 +39,7 @@ test_that(".to_array_rgb handles different channel orderings", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign handles list with 'assignment' field", {
+  skip_on_cran()
   # Override lap_solve temporarily
   original_fn <- couplr::lap_solve
 
@@ -57,6 +60,7 @@ test_that(".lap_assign handles list with 'assignment' field", {
 })
 
 test_that(".lap_assign handles list with 'perm' field", {
+  skip_on_cran()
   original_fn <- couplr::lap_solve
 
   mock_lap_solve <- function(C, ...) {
@@ -75,6 +79,7 @@ test_that(".lap_assign handles list with 'perm' field", {
 })
 
 test_that(".lap_assign handles list with 'match' field", {
+  skip_on_cran()
   original_fn <- couplr::lap_solve
 
   mock_lap_solve <- function(C, ...) {
@@ -93,6 +98,7 @@ test_that(".lap_assign handles list with 'match' field", {
 })
 
 test_that(".lap_assign handles numeric vector return", {
+  skip_on_cran()
   original_fn <- couplr::lap_solve
 
   mock_lap_solve <- function(C, ...) {
@@ -111,6 +117,7 @@ test_that(".lap_assign handles numeric vector return", {
 })
 
 test_that(".lap_assign errors on unsupported return", {
+  skip_on_cran()
   original_fn <- couplr::lap_solve
 
   mock_lap_solve <- function(C, ...) {
@@ -134,6 +141,7 @@ test_that(".lap_assign errors on unsupported return", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign uses lap_solve_batch when lap_solve missing", {
+  skip_on_cran()
   original_lap_solve <- couplr::lap_solve
 
   # Temporarily hide lap_solve
@@ -150,6 +158,7 @@ test_that(".lap_assign uses lap_solve_batch when lap_solve missing", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign fills gaps in data.frame source/target", {
+  skip_on_cran()
   original_fn <- couplr::lap_solve
 
   mock_lap_solve <- function(C, ...) {
@@ -175,6 +184,7 @@ test_that(".lap_assign fills gaps in data.frame source/target", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_match_pipeline without fill has unassigned", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -199,6 +209,7 @@ test_that(".solve_color_match_pipeline without fill has unassigned", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_identity handles multiple matches", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(
       255, 0, 0,     # Red
@@ -224,6 +235,7 @@ test_that(".palette_pairs_identity handles multiple matches", {
 # ------------------------------------------------------------------------------
 
 test_that(".build_spatial_assignments_for_pairs limits by k", {
+  skip_on_cran()
   info <- list(
     groupsA = list(1:10, 11:15),   # 10 pixels, 5 pixels
     groupsB = list(21:30, 31:35)   # 10 pixels, 5 pixels
@@ -245,6 +257,7 @@ test_that(".build_spatial_assignments_for_pairs limits by k", {
 # ------------------------------------------------------------------------------
 
 test_that(".patch_cost_matrix handles infinite diag_norm from dist", {
+  skip_on_cran()
   # Single patch at same location - dist returns 0
   patches_a <- list(
     colors = matrix(c(100, 100, 100), nrow = 1, ncol = 3),
@@ -266,6 +279,7 @@ test_that(".patch_cost_matrix handles infinite diag_norm from dist", {
 # ------------------------------------------------------------------------------
 
 test_that(".expand_patch_assignment handles NA assignment", {
+  skip_on_cran()
   patch_assign <- list(NA_integer_, 1L)
   patches_a <- list(
     indices = list(c(1L, 2L), c(3L, 4L))
@@ -285,6 +299,7 @@ test_that(".expand_patch_assignment handles NA assignment", {
 # ------------------------------------------------------------------------------
 
 test_that(".cpp_palette_info works", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -298,6 +313,7 @@ test_that(".cpp_palette_info works", {
 })
 
 test_that(".cpp_spatial_cost works", {
+  skip_on_cran()
   idxA <- c(1L, 2L, 3L)
   idxB <- c(4L, 5L, 6L)
 
@@ -308,6 +324,7 @@ test_that(".cpp_spatial_cost works", {
 })
 
 test_that(".cpp_compute_pixel_cost works", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -321,6 +338,7 @@ test_that(".cpp_compute_pixel_cost works", {
 })
 
 test_that(".cpp_render_morph works", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -335,6 +353,7 @@ test_that(".cpp_render_morph works", {
 })
 
 test_that(".cpp_overlap works", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -354,6 +373,7 @@ test_that(".cpp_overlap works", {
 # ------------------------------------------------------------------------------
 
 test_that("morph_utils .solve_color_walk_pipeline handles empty groups", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -377,6 +397,7 @@ test_that("morph_utils .solve_color_walk_pipeline handles empty groups", {
 # ------------------------------------------------------------------------------
 
 test_that(".exact_cost_and_solve in morph_pixel works", {
+  skip_on_cran()
   H <- 3
   W <- 3
   N <- H * W
@@ -402,6 +423,7 @@ test_that(".exact_cost_and_solve in morph_pixel works", {
 # ------------------------------------------------------------------------------
 
 test_that("morph_pixel .solve_color_walk_pipeline processes all pixels", {
+  skip_on_cran()
   H <- 5
   W <- 5
   N <- H * W
@@ -428,6 +450,7 @@ test_that("morph_pixel .solve_color_walk_pipeline processes all pixels", {
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles handles W > H", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 8, H = 3, P = 3)
 
   # Count covered pixels
@@ -443,6 +466,7 @@ test_that(".generate_square_tiles handles W > H", {
 })
 
 test_that(".generate_square_tiles handles H > W", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 3, H = 8, P = 3)
 
   covered <- matrix(FALSE, 8, 3)
@@ -457,6 +481,7 @@ test_that(".generate_square_tiles handles H > W", {
 })
 
 test_that(".generate_square_tiles handles P = 1", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(W = 3, H = 3, P = 1)
 
   # All tiles should be size 1
@@ -469,6 +494,7 @@ test_that(".generate_square_tiles handles P = 1", {
 # ------------------------------------------------------------------------------
 
 test_that(".recursive_tiling_solver handles patch_size > image", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -486,6 +512,7 @@ test_that(".recursive_tiling_solver handles patch_size > image", {
 })
 
 test_that(".recursive_tiling_solver handles single pixel", {
+  skip_on_cran()
   H <- 1
   W <- 1
   N <- 1
@@ -507,6 +534,7 @@ test_that(".recursive_tiling_solver handles single pixel", {
 # ------------------------------------------------------------------------------
 
 test_that(".square_tiling_solver handles zero color distance", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -525,6 +553,7 @@ test_that(".square_tiling_solver handles zero color distance", {
 })
 
 test_that(".square_tiling_solver handles different tile sizes", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W

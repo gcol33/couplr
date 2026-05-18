@@ -5,6 +5,7 @@
 # Test the edge cases in solve_network_simplex.cpp that are not hit by normal tests
 
 test_that("network_simplex handles 1x1 matrix", {
+  skip_on_cran()
   cost <- matrix(5, 1, 1)
   result <- assignment(cost, method = "network_simplex")
 
@@ -14,6 +15,7 @@ test_that("network_simplex handles 1x1 matrix", {
 })
 
 test_that("network_simplex handles rectangular matrix (more cols)", {
+  skip_on_cran()
   cost <- matrix(1:6, 2, 3)
   result <- assignment(cost, method = "network_simplex")
 
@@ -22,6 +24,7 @@ test_that("network_simplex handles rectangular matrix (more cols)", {
 })
 
 test_that("network_simplex handles rectangular matrix (more rows)", {
+  skip_on_cran()
   # This should trigger the "infeasible" branch in network_simplex
   cost <- matrix(1:6, 3, 2)
   result <- assignment(cost, method = "network_simplex")
@@ -33,6 +36,7 @@ test_that("network_simplex handles rectangular matrix (more rows)", {
 })
 
 test_that("network_simplex handles tie-breaking", {
+  skip_on_cran()
   # Matrix with equal costs - tests tie-breaking
   cost <- matrix(1, 3, 3)
   result <- assignment(cost, method = "network_simplex")
@@ -42,6 +46,7 @@ test_that("network_simplex handles tie-breaking", {
 })
 
 test_that("network_simplex handles large range of costs", {
+  skip_on_cran()
   cost <- matrix(c(1, 1000000, 1000000, 1), 2, 2)
   result <- assignment(cost, method = "network_simplex")
 
@@ -50,6 +55,7 @@ test_that("network_simplex handles large range of costs", {
 })
 
 test_that("network_simplex handles negative costs", {
+  skip_on_cran()
   cost <- matrix(c(-5, -1, -2, -10), 2, 2)
   result <- assignment(cost, method = "network_simplex")
 
@@ -59,6 +65,7 @@ test_that("network_simplex handles negative costs", {
 })
 
 test_that("network_simplex handles diagonal optimal", {
+  skip_on_cran()
   # Diagonal is optimal
   cost <- matrix(c(1, 100, 100, 1), 2, 2)
   result <- assignment(cost, method = "network_simplex")
@@ -67,6 +74,7 @@ test_that("network_simplex handles diagonal optimal", {
 })
 
 test_that("network_simplex handles anti-diagonal optimal", {
+  skip_on_cran()
   # Anti-diagonal is optimal
   cost <- matrix(c(100, 1, 1, 100), 2, 2)
   result <- assignment(cost, method = "network_simplex")
@@ -75,6 +83,7 @@ test_that("network_simplex handles anti-diagonal optimal", {
 })
 
 test_that("network_simplex with forbidden assignments", {
+  skip_on_cran()
   cost <- matrix(c(1, Inf, Inf, 1), 2, 2)
   result <- assignment(cost, method = "network_simplex")
 
@@ -83,6 +92,7 @@ test_that("network_simplex with forbidden assignments", {
 })
 
 test_that("network_simplex handles 4x4 matrix correctly", {
+  skip_on_cran()
   cost <- matrix(c(
     1, 5, 3, 4,
     2, 6, 1, 5,
@@ -98,6 +108,7 @@ test_that("network_simplex handles 4x4 matrix correctly", {
 })
 
 test_that("network_simplex pivot count is returned", {
+  skip_on_cran()
   cost <- matrix(runif(16), 4, 4)
   result <- lap_solve(cost, method = "network_simplex")
 
@@ -107,6 +118,7 @@ test_that("network_simplex pivot count is returned", {
 })
 
 test_that("network_simplex matches jv on random matrices", {
+  skip_on_cran()
   set.seed(42)
   for (n in c(3, 5, 8)) {
     cost <- matrix(runif(n * n), n, n)

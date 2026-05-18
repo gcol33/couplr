@@ -52,3 +52,8 @@
 ^paper$
 ^paper;C$
 ^ns_check_out\.txt$
+^dev_notes$
+^gt-speedup\.md$
+^couplr_.*\.tar\.gz$
+^couplr\.Rcheck$
+^couplr\.Rcheck\.streamlog$

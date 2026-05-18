@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("validate_matching_inputs errors on non-data frame left", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(list(x = 1:3), data.frame(x = 1:3)),
     "left must be a data frame"
@@ -14,6 +15,7 @@ test_that("validate_matching_inputs errors on non-data frame left", {
 })
 
 test_that("validate_matching_inputs errors on non-data frame right", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(data.frame(x = 1:3), matrix(1:3)),
     "right must be a data frame"
@@ -21,6 +23,7 @@ test_that("validate_matching_inputs errors on non-data frame right", {
 })
 
 test_that("validate_matching_inputs errors on empty left", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(data.frame(x = numeric(0)), data.frame(x = 1:3)),
     "left must have at least one row"
@@ -28,6 +31,7 @@ test_that("validate_matching_inputs errors on empty left", {
 })
 
 test_that("validate_matching_inputs errors on empty right", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(data.frame(x = 1:3), data.frame(x = numeric(0))),
     "right must have at least one row"
@@ -35,6 +39,7 @@ test_that("validate_matching_inputs errors on empty right", {
 })
 
 test_that("validate_matching_inputs errors on missing left vars", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(
       data.frame(x = 1:3),
@@ -46,6 +51,7 @@ test_that("validate_matching_inputs errors on missing left vars", {
 })
 
 test_that("validate_matching_inputs errors on missing right vars", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(
       data.frame(x = 1:3, y = 1:3),
@@ -57,6 +63,7 @@ test_that("validate_matching_inputs errors on missing right vars", {
 })
 
 test_that("validate_matching_inputs errors on non-numeric left var", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(
       data.frame(x = letters[1:3]),
@@ -68,6 +75,7 @@ test_that("validate_matching_inputs errors on non-numeric left var", {
 })
 
 test_that("validate_matching_inputs errors on non-numeric right var", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_matching_inputs(
       data.frame(x = 1:3),
@@ -79,6 +87,7 @@ test_that("validate_matching_inputs errors on non-numeric right var", {
 })
 
 test_that("validate_matching_inputs passes for valid inputs", {
+  skip_on_cran()
   expect_true(
     couplr:::validate_matching_inputs(
       data.frame(x = 1:3, y = 4:6),
@@ -89,6 +98,7 @@ test_that("validate_matching_inputs passes for valid inputs", {
 })
 
 test_that("validate_matching_inputs passes without vars", {
+  skip_on_cran()
   expect_true(
     couplr:::validate_matching_inputs(
       data.frame(x = 1:3),
@@ -102,12 +112,14 @@ test_that("validate_matching_inputs passes without vars", {
 # ------------------------------------------------------------------------------
 
 test_that("extract_ids uses id column when present", {
+  skip_on_cran()
   df <- data.frame(id = c("a", "b", "c"), x = 1:3)
   ids <- couplr:::extract_ids(df, prefix = "test")
   expect_equal(ids, c("a", "b", "c"))
 })
 
 test_that("extract_ids uses row names when meaningful", {
+  skip_on_cran()
   df <- data.frame(x = 1:3)
   rownames(df) <- c("row_a", "row_b", "row_c")
   ids <- couplr:::extract_ids(df, prefix = "test")
@@ -115,6 +127,7 @@ test_that("extract_ids uses row names when meaningful", {
 })
 
 test_that("extract_ids creates sequential IDs when needed", {
+  skip_on_cran()
   df <- data.frame(x = 1:3)
   ids <- couplr:::extract_ids(df, prefix = "unit")
   expect_equal(ids, c("unit_1", "unit_2", "unit_3"))
@@ -125,6 +138,7 @@ test_that("extract_ids creates sequential IDs when needed", {
 # ------------------------------------------------------------------------------
 
 test_that("extract_matching_vars returns matrix", {
+  skip_on_cran()
   df <- data.frame(x = 1:3, y = 4:6)
   mat <- couplr:::extract_matching_vars(df, c("x", "y"))
   expect_true(is.matrix(mat))
@@ -132,6 +146,7 @@ test_that("extract_matching_vars returns matrix", {
 })
 
 test_that("extract_matching_vars errors on NA", {
+  skip_on_cran()
   df <- data.frame(x = c(1, NA, 3))
   expect_error(
     couplr:::extract_matching_vars(df, "x"),
@@ -140,6 +155,7 @@ test_that("extract_matching_vars errors on NA", {
 })
 
 test_that("extract_matching_vars errors on NaN", {
+  skip_on_cran()
   # NaN triggers "Missing values" first because is.na(NaN) is TRUE
   df <- data.frame(x = c(1, NaN, 3))
   expect_error(
@@ -149,6 +165,7 @@ test_that("extract_matching_vars errors on NaN", {
 })
 
 test_that("extract_matching_vars errors on Inf", {
+  skip_on_cran()
   df <- data.frame(x = c(1, Inf, 3))
   expect_error(
     couplr:::extract_matching_vars(df, "x"),
@@ -161,31 +178,37 @@ test_that("extract_matching_vars errors on Inf", {
 # ------------------------------------------------------------------------------
 
 test_that("get_block_id_column finds block_id", {
+  skip_on_cran()
   df <- data.frame(block_id = 1:3, x = 4:6)
   expect_equal(couplr:::get_block_id_column(df), "block_id")
 })
 
 test_that("get_block_id_column finds blockid", {
+  skip_on_cran()
   df <- data.frame(blockid = 1:3, x = 4:6)
   expect_equal(couplr:::get_block_id_column(df), "blockid")
 })
 
 test_that("get_block_id_column finds block", {
+  skip_on_cran()
   df <- data.frame(block = 1:3, x = 4:6)
   expect_equal(couplr:::get_block_id_column(df), "block")
 })
 
 test_that("get_block_id_column finds stratum", {
+  skip_on_cran()
   df <- data.frame(stratum = 1:3, x = 4:6)
   expect_equal(couplr:::get_block_id_column(df), "stratum")
 })
 
 test_that("get_block_id_column finds stratum_id", {
+  skip_on_cran()
   df <- data.frame(stratum_id = 1:3, x = 4:6)
   expect_equal(couplr:::get_block_id_column(df), "stratum_id")
 })
 
 test_that("get_block_id_column returns NULL when no block column", {
+  skip_on_cran()
   df <- data.frame(x = 1:3, y = 4:6)
   expect_null(couplr:::get_block_id_column(df))
 })
@@ -195,11 +218,13 @@ test_that("get_block_id_column returns NULL when no block column", {
 # ------------------------------------------------------------------------------
 
 test_that("has_blocks returns TRUE when block column exists", {
+  skip_on_cran()
   df <- data.frame(block_id = 1:3, x = 4:6)
   expect_true(couplr:::has_blocks(df))
 })
 
 test_that("has_blocks returns FALSE when no block column", {
+  skip_on_cran()
   df <- data.frame(x = 1:3, y = 4:6)
   expect_false(couplr:::has_blocks(df))
 })
@@ -209,16 +234,19 @@ test_that("has_blocks returns FALSE when no block column", {
 # ------------------------------------------------------------------------------
 
 test_that("validate_weights returns ones for NULL", {
+  skip_on_cran()
   result <- couplr:::validate_weights(NULL, c("x", "y", "z"))
   expect_equal(result, c(1, 1, 1))
 })
 
 test_that("validate_weights accepts numeric vector", {
+  skip_on_cran()
   result <- couplr:::validate_weights(c(2, 3), c("x", "y"))
   expect_equal(result, c(2, 3))
 })
 
 test_that("validate_weights errors on wrong length", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_weights(c(1, 2, 3), c("x", "y")),
     "weights must have length"
@@ -226,6 +254,7 @@ test_that("validate_weights errors on wrong length", {
 })
 
 test_that("validate_weights errors on negative weights", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_weights(c(1, -1), c("x", "y")),
     "weights must be non-negative"
@@ -233,11 +262,13 @@ test_that("validate_weights errors on negative weights", {
 })
 
 test_that("validate_weights accepts named weights", {
+  skip_on_cran()
   result <- couplr:::validate_weights(c(x = 2, y = 3), c("x", "y"))
   expect_equal(as.numeric(result), c(2, 3))
 })
 
 test_that("validate_weights errors on unknown variable in list weights", {
+  skip_on_cran()
   # Named list weights validate unknown variables
   expect_error(
     couplr:::validate_weights(list(x = 1, z = 2), c("x", "y")),
@@ -246,11 +277,13 @@ test_that("validate_weights errors on unknown variable in list weights", {
 })
 
 test_that("validate_weights accepts list weights", {
+  skip_on_cran()
   result <- couplr:::validate_weights(list(x = 2, y = 3), c("x", "y"))
   expect_equal(as.numeric(result), c(2, 3))
 })
 
 test_that("validate_weights errors on invalid type", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_weights("invalid", c("x", "y")),
     "must be a numeric vector or named list"
@@ -262,20 +295,24 @@ test_that("validate_weights errors on invalid type", {
 # ------------------------------------------------------------------------------
 
 test_that("validate_calipers returns NULL for NULL", {
+  skip_on_cran()
   expect_null(couplr:::validate_calipers(NULL, c("x", "y")))
 })
 
 test_that("validate_calipers accepts named vector", {
+  skip_on_cran()
   result <- couplr:::validate_calipers(c(x = 0.1), c("x", "y"))
   expect_equal(result, c(x = 0.1))
 })
 
 test_that("validate_calipers accepts list", {
+  skip_on_cran()
   result <- couplr:::validate_calipers(list(x = 0.1), c("x", "y"))
   expect_equal(result, list(x = 0.1))
 })
 
 test_that("validate_calipers errors on non-list non-numeric", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_calipers("invalid", c("x", "y")),
     "must be a named numeric vector or list"
@@ -283,6 +320,7 @@ test_that("validate_calipers errors on non-list non-numeric", {
 })
 
 test_that("validate_calipers errors on unnamed", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_calipers(c(0.1, 0.2), c("x", "y")),
     "must be named"
@@ -290,6 +328,7 @@ test_that("validate_calipers errors on unnamed", {
 })
 
 test_that("validate_calipers errors on unknown variable", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_calipers(c(z = 0.1), c("x", "y")),
     "unknown variables"
@@ -297,6 +336,7 @@ test_that("validate_calipers errors on unknown variable", {
 })
 
 test_that("validate_calipers errors on non-positive values", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_calipers(c(x = 0), c("x", "y")),
     "must be positive"
@@ -304,6 +344,7 @@ test_that("validate_calipers errors on non-positive values", {
 })
 
 test_that("validate_calipers errors on negative values", {
+  skip_on_cran()
   expect_error(
     couplr:::validate_calipers(c(x = -0.1), c("x", "y")),
     "must be positive"

@@ -174,7 +174,7 @@ A bar chart of timings tells you which algorithm finished first; it does not tel
 animated_methods()
 ```
 
-The six animated methods cover one representative from each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the economic / bidding view (Auction and its epsilon-scaling extension), and the bit-scaling discrete-cost approach (Gabow-Tarjan).
+Every assignment method in couplr now has an animation. The list covers each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the rectangular-input variant (Ramshaw-Tarjan), the bucket-priority alternative (SSAP-bucket), the economic / bidding view (Auction with LIFO and Gauss-Seidel sweeps, plus epsilon-scaling), the bit-scaling discrete-cost approach (Gabow-Tarjan), the min-cost-flow family (CSflow, cycle-canceling, push-relabel, CSA, Orlin, network-simplex), the special-case Hopcroft-Karp on 0/1 matrices, and the brute-force enumeration for tiny inputs.
 
 All four demos below run on a 30x30 cost matrix so you can see the algorithm's shape, not just a handful of edges. The header tracks `k / 30 matched`; matched pairs fade into the background as the algorithm commits them; orange edges are the current search; red dashed edges mark the augmenting path being built.
 

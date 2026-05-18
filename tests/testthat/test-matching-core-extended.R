@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("match_couples errors when right is NULL and left is not distance object", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
 
   expect_error(
@@ -16,6 +17,7 @@ test_that("match_couples errors when right is NULL and left is not distance obje
 })
 
 test_that("match_couples errors when vars is NULL with datasets", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -30,6 +32,7 @@ test_that("match_couples errors when vars is NULL with datasets", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples works with distance object", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3), y = c(2, 4, 6))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1), y = c(2.1, 4.1, 6.1))
 
@@ -44,6 +47,7 @@ test_that("match_couples works with distance object", {
 })
 
 test_that("match_couples from distance object with max_distance constraint errors", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3), y = c(2, 4, 6))
   right <- data.frame(id = 4:6, x = c(10, 20, 30), y = c(20, 40, 60))
 
@@ -57,6 +61,7 @@ test_that("match_couples from distance object with max_distance constraint error
 })
 
 test_that("match_couples handles check_costs = FALSE", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -71,6 +76,7 @@ test_that("match_couples handles check_costs = FALSE", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples auto_scale works", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10, 100, 10), y = rnorm(10, 1000, 100))
   right <- data.frame(id = 11:20, x = rnorm(10, 100, 10), y = rnorm(10, 1000, 100))
@@ -86,6 +92,7 @@ test_that("match_couples auto_scale works", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples return_diagnostics FALSE strips info", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -99,6 +106,7 @@ test_that("match_couples return_diagnostics FALSE strips info", {
 })
 
 test_that("match_couples return_unmatched FALSE removes unmatched", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:8, x = c(1.1, 2.1, 3.1))
 
@@ -112,6 +120,7 @@ test_that("match_couples return_unmatched FALSE removes unmatched", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples require_full_matching errors when not achieved", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 100, 200))
   right <- data.frame(id = 6:8, x = c(1.1, 2.1, 3.1))
 
@@ -129,6 +138,7 @@ test_that("match_couples require_full_matching errors when not achieved", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with explicit block_id", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:6,
     x = c(1, 2, 3, 10, 11, 12),
@@ -150,6 +160,7 @@ test_that("match_couples with explicit block_id", {
 })
 
 test_that("detect_blocking errors when block_id not in both datasets", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, my_block = c("A", "A", "B"))
   right <- data.frame(id = 4:6, x = 4:6)  # No block column
 
@@ -160,6 +171,7 @@ test_that("detect_blocking errors when block_id not in both datasets", {
 })
 
 test_that("match_couples with ignore_blocks = TRUE", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:4,
     x = c(1, 2, 10, 11),
@@ -183,6 +195,7 @@ test_that("match_couples with ignore_blocks = TRUE", {
 # ------------------------------------------------------------------------------
 
 test_that("blocked matching handles one-sided blocks", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:4,
     x = c(1, 2, 10, 11),
@@ -206,6 +219,7 @@ test_that("blocked matching handles one-sided blocks", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_couples basic functionality", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -217,6 +231,7 @@ test_that("greedy_couples basic functionality", {
 })
 
 test_that("greedy_couples with sorted strategy", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -226,6 +241,7 @@ test_that("greedy_couples with sorted strategy", {
 })
 
 test_that("greedy_couples with pq strategy", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -235,6 +251,7 @@ test_that("greedy_couples with pq strategy", {
 })
 
 test_that("greedy_couples errors when right is NULL", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
 
   expect_error(
@@ -244,6 +261,7 @@ test_that("greedy_couples errors when right is NULL", {
 })
 
 test_that("greedy_couples errors when vars is NULL", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -254,6 +272,7 @@ test_that("greedy_couples errors when vars is NULL", {
 })
 
 test_that("greedy_couples with auto_scale", {
+  skip_on_cran()
   set.seed(456)
   left <- data.frame(id = 1:10, x = rnorm(10, 100, 10))
   right <- data.frame(id = 11:20, x = rnorm(10, 100, 10))
@@ -264,6 +283,7 @@ test_that("greedy_couples with auto_scale", {
 })
 
 test_that("greedy_couples with blocking", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:6,
     x = c(1, 2, 3, 10, 11, 12),
@@ -282,6 +302,7 @@ test_that("greedy_couples with blocking", {
 })
 
 test_that("greedy_couples with require_full_matching", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 100, 200))
   right <- data.frame(id = 6:8, x = c(1.1, 2.1, 3.1))
 
@@ -294,6 +315,7 @@ test_that("greedy_couples with require_full_matching", {
 })
 
 test_that("greedy_couples return_diagnostics FALSE", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -306,6 +328,7 @@ test_that("greedy_couples return_diagnostics FALSE", {
 })
 
 test_that("greedy_couples from distance object", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -318,6 +341,7 @@ test_that("greedy_couples from distance object", {
 })
 
 test_that("greedy_couples from distance object with no valid pairs", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(100, 200, 300))
 
@@ -337,6 +361,7 @@ test_that("greedy_couples from distance object with no valid pairs", {
 # ------------------------------------------------------------------------------
 
 test_that("print.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -349,6 +374,7 @@ test_that("print.matching_result works", {
 })
 
 test_that("print.matching_result with strategy", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -360,6 +386,7 @@ test_that("print.matching_result with strategy", {
 })
 
 test_that("print.matching_result with blocks", {
+  skip_on_cran()
   left <- data.frame(
     id = 1:4,
     x = c(1, 2, 10, 11),
@@ -381,6 +408,7 @@ test_that("print.matching_result with blocks", {
 })
 
 test_that("summary.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -393,6 +421,7 @@ test_that("summary.matching_result works", {
 })
 
 test_that("print.summary.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -405,6 +434,7 @@ test_that("print.summary.matching_result works", {
 })
 
 test_that("print.summary.matching_result with strategy", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
@@ -417,6 +447,7 @@ test_that("print.summary.matching_result with strategy", {
 })
 
 test_that("plot.matching_result histogram", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:5, x = 1:5)
@@ -429,6 +460,7 @@ test_that("plot.matching_result histogram", {
 })
 
 test_that("plot.matching_result density", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   # Need more data points for density estimation
@@ -442,6 +474,7 @@ test_that("plot.matching_result density", {
 })
 
 test_that("plot.matching_result ecdf", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   left <- data.frame(id = 1:5, x = 1:5)
@@ -453,6 +486,7 @@ test_that("plot.matching_result ecdf", {
 })
 
 test_that("plot.matching_result handles empty result", {
+  skip_on_cran()
   # Create a synthetic result with no matches
   result <- structure(
     list(

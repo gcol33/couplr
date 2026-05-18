@@ -25,6 +25,7 @@ right_df <- tibble::tibble(
 # ------------------------------------------------------------------------------
 
 test_that("match_couples works with all LAP methods", {
+  skip_on_cran()
   methods <- c("jv", "hungarian", "auction", "ssp", "csflow")
 
   for (m in methods) {
@@ -39,6 +40,7 @@ test_that("match_couples works with all LAP methods", {
 })
 
 test_that("match_couples handles single variable", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = "age"
@@ -49,6 +51,7 @@ test_that("match_couples handles single variable", {
 })
 
 test_that("match_couples handles many variables", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age", "income", "education", "score")
@@ -58,6 +61,7 @@ test_that("match_couples handles many variables", {
 })
 
 test_that("match_couples handles unequal group sizes (more left)", {
+  skip_on_cran()
   result <- match_couples(
     left_df,
     right_df[1:10, ],
@@ -70,6 +74,7 @@ test_that("match_couples handles unequal group sizes (more left)", {
 })
 
 test_that("match_couples handles unequal group sizes (more right)", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:8, ],
     right_df,
@@ -81,6 +86,7 @@ test_that("match_couples handles unequal group sizes (more right)", {
 })
 
 test_that("match_couples with distance metric euclidean", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -91,6 +97,7 @@ test_that("match_couples with distance metric euclidean", {
 })
 
 test_that("match_couples with distance metric manhattan", {
+  skip_on_cran()
   result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -105,6 +112,7 @@ test_that("match_couples with distance metric manhattan", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_couples with all strategies", {
+  skip_on_cran()
   strategies <- c("sorted", "row_best", "pq")
 
   for (s in strategies) {
@@ -119,6 +127,7 @@ test_that("greedy_couples with all strategies", {
 })
 
 test_that("greedy_couples with scaling", {
+  skip_on_cran()
   result <- greedy_couples(
     left_df, right_df,
     vars = c("age", "income"),
@@ -133,6 +142,7 @@ test_that("greedy_couples with scaling", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with very different scales", {
+  skip_on_cran()
   # Create data with wildly different scales
   left_scale <- tibble::tibble(
     id = 1:10,
@@ -155,6 +165,7 @@ test_that("match_couples with very different scales", {
 })
 
 test_that("match_couples with integer columns", {
+  skip_on_cran()
   left_int <- tibble::tibble(
     id = 1:10,
     count1 = sample(1:100, 10),
@@ -175,6 +186,7 @@ test_that("match_couples with integer columns", {
 })
 
 test_that("match_couples with identical data returns zero distances", {
+  skip_on_cran()
   identical_left <- tibble::tibble(id = 1:5, val = c(1, 2, 3, 4, 5))
   identical_right <- tibble::tibble(id = 1:5, val = c(1, 2, 3, 4, 5))
 
@@ -193,6 +205,7 @@ test_that("match_couples with identical data returns zero distances", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples with block_id", {
+  skip_on_cran()
   left_blocked <- left_df
   left_blocked$block <- rep(1:4, each = 5)
 
@@ -213,6 +226,7 @@ test_that("match_couples with block_id", {
 # ------------------------------------------------------------------------------
 
 test_that("summary method for matching_result works", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:10, ], right_df[1:10, ],
     vars = c("age", "income")
@@ -223,6 +237,7 @@ test_that("summary method for matching_result works", {
 })
 
 test_that("print method for matching_result works", {
+  skip_on_cran()
   result <- match_couples(
     left_df[1:5, ], right_df[1:5, ],
     vars = c("age", "income")

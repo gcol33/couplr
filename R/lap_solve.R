@@ -725,7 +725,10 @@ lap_solve_orlin <- function(cost, maximize = FALSE) {
   # Orlin-Ahuja epsilon-scaling algorithm with hybrid auction/SSP
   # O(sqrt(n) * m * log(nC)) complexity
   work <- if (maximize) -cost else cost
-  work[is.na(work)] <- Inf
+  # Treat NA *and* non-finite (e.g. -Inf produced by negating +Inf in maximize
+  # mode) as forbidden. The plain `is.na(work)` check missed -Inf and let
+  # forbidden cells slip into the solver as extreme-cost real edges.
+  work[!is.finite(work)] <- Inf
 
   result <- oa_solve(work, alpha = 5.0, auction_rounds = 10)
 
@@ -746,7 +749,10 @@ lap_solve_orlin <- function(cost, maximize = FALSE) {
 lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
   # Network simplex for minimum-cost flow on assignment network
   work <- if (maximize) -cost else cost
-  work[is.na(work)] <- Inf
+  # Treat NA *and* non-finite (e.g. -Inf produced by negating +Inf in maximize
+  # mode) as forbidden. The plain `is.na(work)` check missed -Inf and let
+  # forbidden cells slip into the solver as extreme-cost real edges.
+  work[!is.finite(work)] <- Inf
 
   result <- lap_solve_network_simplex(work)
 

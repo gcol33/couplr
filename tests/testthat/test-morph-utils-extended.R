@@ -7,12 +7,14 @@
 # ------------------------------------------------------------------------------
 
 test_that(".to_planar_rgb converts array to planar format", {
+  skip_on_cran()
   arr <- array(1:24, dim = c(2, 4, 3))
   planar <- couplr:::.to_planar_rgb(arr)
   expect_length(planar, 2 * 4 * 3)
 })
 
 test_that(".from_planar_rgb converts back to array", {
+  skip_on_cran()
   H <- 2
   W <- 4
   planar <- 1:(H * W * 3)
@@ -21,15 +23,18 @@ test_that(".from_planar_rgb converts back to array", {
 })
 
 test_that(".from_planar_rgb errors on wrong length", {
+  skip_on_cran()
   expect_error(couplr:::.from_planar_rgb(1:10, 2, 4), "wrong length")
 })
 
 test_that(".clamp_rgb clamps correctly", {
+  skip_on_cran()
   result <- couplr:::.clamp_rgb(c(-10, 0, 127, 255, 300))
   expect_equal(result, c(0L, 0L, 127L, 255L, 255L))
 })
 
 test_that(".clamp_rgb preserves dimensions", {
+  skip_on_cran()
   arr <- array(c(-10, 300, 100, 200), dim = c(2, 2))
   result <- couplr:::.clamp_rgb(arr)
   expect_equal(dim(result), c(2, 2))
@@ -40,6 +45,7 @@ test_that(".clamp_rgb preserves dimensions", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign returns 0-based assignment", {
+  skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
   result <- couplr:::.lap_assign(cost, method = "jv")
   expect_length(result, 2)
@@ -52,6 +58,7 @@ test_that(".lap_assign returns 0-based assignment", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_identity finds matching colors", {
+  skip_on_cran()
   # Create mock info structure
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0, 0, 255, 0), ncol = 3, byrow = TRUE),
@@ -69,6 +76,7 @@ test_that(".palette_pairs_identity finds matching colors", {
 })
 
 test_that(".palette_pairs_identity handles no matches", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0), ncol = 3),
     colorsB_rgb = matrix(c(0, 255, 0), ncol = 3),
@@ -80,6 +88,7 @@ test_that(".palette_pairs_identity handles no matches", {
 })
 
 test_that(".palette_pairs_lap solves color assignment", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0, 0, 255, 0), ncol = 3, byrow = TRUE),
     colorsB_rgb = matrix(c(254, 0, 0, 0, 254, 0), ncol = 3, byrow = TRUE),
@@ -94,6 +103,7 @@ test_that(".palette_pairs_lap solves color assignment", {
 })
 
 test_that(".palette_pairs_lap handles empty matrix", {
+  skip_on_cran()
   info <- list(
     countsA = integer(0),
     countsB = integer(0),
@@ -108,6 +118,7 @@ test_that(".palette_pairs_lap handles empty matrix", {
 # ------------------------------------------------------------------------------
 
 test_that(".assemble_assignment creates assignment vector", {
+  skip_on_cran()
   i_idx <- c(1, 3, 5)
   j_idx <- c(2, 4, 6)
   result <- couplr:::.assemble_assignment(N = 6, i_idx, j_idx)
@@ -118,12 +129,14 @@ test_that(".assemble_assignment creates assignment vector", {
 })
 
 test_that(".assemble_assignment handles empty inputs", {
+  skip_on_cran()
   result <- couplr:::.assemble_assignment(N = 5, integer(0), integer(0))
   expect_length(result, 5)
   expect_true(all(result == -1L))
 })
 
 test_that(".fill_unassigned_identity fills gaps", {
+  skip_on_cran()
   assign <- c(2L, -1L, 4L, -1L, 6L)
   result <- couplr:::.fill_unassigned_identity(assign)
   expect_equal(result[2], 2L)  # Filled with identity
@@ -135,6 +148,7 @@ test_that(".fill_unassigned_identity fills gaps", {
 # ------------------------------------------------------------------------------
 
 test_that(".downscale_both returns correct structure", {
+  skip_on_cran()
   # Create simple planar data
   H <- 16
   W <- 16
@@ -149,6 +163,7 @@ test_that(".downscale_both returns correct structure", {
 })
 
 test_that(".downscale_both handles steps = 0", {
+  skip_on_cran()
   H <- 10
   W <- 10
   A_planar <- runif(H * W * 3)
@@ -160,6 +175,7 @@ test_that(".downscale_both handles steps = 0", {
 })
 
 test_that(".downscale_both handles NULL steps", {
+  skip_on_cran()
   H <- 10
   W <- 10
   A_planar <- runif(H * W * 3)
@@ -175,6 +191,7 @@ test_that(".downscale_both handles NULL steps", {
 # ------------------------------------------------------------------------------
 
 test_that(".expand_patch_assignment expands patches to pixels", {
+  skip_on_cran()
   patch_assign <- c(2, 1)
   patches_a <- list(
     indices = list(1:4, 5:8)
@@ -189,6 +206,7 @@ test_that(".expand_patch_assignment expands patches to pixels", {
 })
 
 test_that(".expand_patch_assignment handles invalid assignments", {
+  skip_on_cran()
   patch_assign <- c(NA, -1, 0)
   patches_a <- list(
     indices = list(1:2, 3:4, 5:6)
@@ -207,6 +225,7 @@ test_that(".expand_patch_assignment handles invalid assignments", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_color_match_pipeline runs", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   H <- 4

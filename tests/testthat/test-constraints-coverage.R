@@ -3,18 +3,21 @@
 # ==============================================================================
 
 test_that("apply_max_distance returns unchanged for NULL", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   result <- couplr:::apply_max_distance(cost, max_distance = NULL)
   expect_equal(result, cost)
 })
 
 test_that("apply_max_distance returns unchanged for Inf", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   result <- couplr:::apply_max_distance(cost, max_distance = Inf)
   expect_equal(result, cost)
 })
 
 test_that("apply_max_distance errors on non-numeric", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   expect_error(
     couplr:::apply_max_distance(cost, max_distance = "not_numeric"),
@@ -23,6 +26,7 @@ test_that("apply_max_distance errors on non-numeric", {
 })
 
 test_that("apply_max_distance errors on vector", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   expect_error(
     couplr:::apply_max_distance(cost, max_distance = c(1, 2)),
@@ -31,6 +35,7 @@ test_that("apply_max_distance errors on vector", {
 })
 
 test_that("apply_max_distance errors on non-positive", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   expect_error(
     couplr:::apply_max_distance(cost, max_distance = 0),
@@ -43,6 +48,7 @@ test_that("apply_max_distance errors on non-positive", {
 })
 
 test_that("apply_max_distance marks forbidden pairs", {
+  skip_on_cran()
   # matrix(c(1, 5, 3, 2), 2, 2) fills by column:
   #      [,1] [,2]
   # [1,]    1    3
@@ -57,6 +63,7 @@ test_that("apply_max_distance marks forbidden pairs", {
 })
 
 test_that("apply_calipers returns unchanged for NULL", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   left <- data.frame(x = c(1, 2))
   right <- data.frame(x = c(3, 4))
@@ -65,6 +72,7 @@ test_that("apply_calipers returns unchanged for NULL", {
 })
 
 test_that("apply_calipers skips variables not in vars", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   left <- data.frame(x = c(1, 2), y = c(10, 20))
   right <- data.frame(x = c(3, 4), y = c(100, 200))
@@ -74,6 +82,7 @@ test_that("apply_calipers skips variables not in vars", {
 })
 
 test_that("apply_calipers marks forbidden pairs", {
+  skip_on_cran()
   cost <- matrix(1, 2, 2)
   left <- data.frame(x = c(1, 10))
   right <- data.frame(x = c(2, 5))
@@ -88,18 +97,21 @@ test_that("apply_calipers marks forbidden pairs", {
 })
 
 test_that("mark_forbidden_pairs returns unchanged for NULL", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   result <- couplr:::mark_forbidden_pairs(cost, forbidden_indices = NULL)
   expect_equal(result, cost)
 })
 
 test_that("mark_forbidden_pairs returns unchanged for empty matrix", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   result <- couplr:::mark_forbidden_pairs(cost, forbidden_indices = matrix(nrow = 0, ncol = 2))
   expect_equal(result, cost)
 })
 
 test_that("mark_forbidden_pairs marks specific pairs", {
+  skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   # Forbid pair (1, 2) and (2, 1)
   forbidden <- matrix(c(1, 2, 2, 1), ncol = 2, byrow = TRUE)
@@ -111,6 +123,7 @@ test_that("mark_forbidden_pairs marks specific pairs", {
 })
 
 test_that("apply_all_constraints combines all constraints", {
+  skip_on_cran()
   # matrix(c(1, 5, 3, 2), 2, 2) fills by column:
   #      [,1] [,2]
   # [1,]    1    3
@@ -132,6 +145,7 @@ test_that("apply_all_constraints combines all constraints", {
 })
 
 test_that("apply_all_constraints with forbidden pairs", {
+  skip_on_cran()
   cost <- matrix(1, 2, 2)
   left <- data.frame(x = c(1, 2))
   right <- data.frame(x = c(1, 2))
@@ -149,31 +163,37 @@ test_that("apply_all_constraints with forbidden pairs", {
 })
 
 test_that("has_valid_pairs returns TRUE when valid pairs exist", {
+  skip_on_cran()
   cost <- matrix(c(1, couplr:::BIG_COST, 3, 4), 2, 2)
   expect_true(couplr:::has_valid_pairs(cost))
 })
 
 test_that("has_valid_pairs returns FALSE when no valid pairs", {
+  skip_on_cran()
   cost <- matrix(couplr:::BIG_COST, 2, 2)
   expect_false(couplr:::has_valid_pairs(cost))
 })
 
 test_that("has_valid_pairs handles Inf", {
+  skip_on_cran()
   cost <- matrix(Inf, 2, 2)
   expect_false(couplr:::has_valid_pairs(cost))
 })
 
 test_that("count_valid_pairs counts correctly", {
+  skip_on_cran()
   cost <- matrix(c(1, couplr:::BIG_COST, Inf, 4), 2, 2)
   expect_equal(couplr:::count_valid_pairs(cost), 2)  # Only 1 and 4 are valid
 })
 
 test_that("count_valid_pairs returns 0 for all forbidden", {
+  skip_on_cran()
   cost <- matrix(couplr:::BIG_COST, 3, 3)
   expect_equal(couplr:::count_valid_pairs(cost), 0)
 })
 
 test_that("BIG_COST is accessible", {
+  skip_on_cran()
   expect_true(couplr:::BIG_COST > 1e10)
   expect_true(is.finite(couplr:::BIG_COST))
 })

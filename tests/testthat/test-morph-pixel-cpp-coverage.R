@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph works with exact mode on tiny images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
   skip_if_not_installed("png")
 
@@ -21,6 +22,7 @@ test_that("pixel_morph works with exact mode on tiny images", {
 })
 
 test_that("pixel_morph works with color_walk mode", {
+  skip_on_cran()
   skip_if_not_installed("magick")
   skip_if_not_installed("png")
 
@@ -34,6 +36,7 @@ test_that("pixel_morph works with color_walk mode", {
 })
 
 test_that("pixel_morph works with recursive mode", {
+  skip_on_cran()
   skip_if_not_installed("magick")
   skip_if_not_installed("png")
 
@@ -50,6 +53,7 @@ test_that("pixel_morph works with recursive mode", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph handles grayscale images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "gray50")
@@ -61,6 +65,7 @@ test_that("pixel_morph handles grayscale images", {
 })
 
 test_that("pixel_morph handles single frame with warning", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -75,6 +80,7 @@ test_that("pixel_morph handles single frame with warning", {
 })
 
 test_that("pixel_morph handles many frames", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -90,6 +96,7 @@ test_that("pixel_morph handles many frames", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph handles wide images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(6, 2, color = "red")
@@ -101,6 +108,7 @@ test_that("pixel_morph handles wide images", {
 })
 
 test_that("pixel_morph handles tall images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(2, 6, color = "red")
@@ -112,6 +120,7 @@ test_that("pixel_morph handles tall images", {
 })
 
 test_that("pixel_morph handles odd dimensions", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 5, color = "red")
@@ -127,6 +136,7 @@ test_that("pixel_morph handles odd dimensions", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph alpha and beta parameters work", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -149,6 +159,7 @@ test_that("pixel_morph alpha and beta parameters work", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph works with different lap_method", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -161,6 +172,7 @@ test_that("pixel_morph works with different lap_method", {
 })
 
 test_that("pixel_morph works with auction method", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -177,6 +189,7 @@ test_that("pixel_morph works with auction method", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph works with maximize = TRUE", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(3, 3, color = "red")
@@ -193,6 +206,7 @@ test_that("pixel_morph works with maximize = TRUE", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph with downscale_steps", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(8, 8, color = "red")
@@ -209,6 +223,7 @@ test_that("pixel_morph with downscale_steps", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph with patch_size", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(6, 6, color = "red")
@@ -225,6 +240,7 @@ test_that("pixel_morph with patch_size", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph with different quantize_bits", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(4, 4, color = "red")
@@ -245,6 +261,7 @@ test_that("pixel_morph with different quantize_bits", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph with RGB array input", {
+  skip_on_cran()
   skip_if_not_installed("magick")
   skip_if_not_installed("png")
 
@@ -265,6 +282,7 @@ test_that("pixel_morph with RGB array input", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph color_walk with various settings", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(4, 4, color = "#FF0000")
@@ -281,6 +299,7 @@ test_that("pixel_morph color_walk with various settings", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph recursive with larger images", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   imgA <- magick::image_blank(8, 8, color = "red")
@@ -296,6 +315,7 @@ test_that("pixel_morph recursive with larger images", {
 # ------------------------------------------------------------------------------
 
 test_that("spatial_cost_matrix_cpp works", {
+  skip_on_cran()
   H <- 3
   W <- 3
   idxA <- as.integer(c(0, 1, 2))  # 0-indexed
@@ -308,6 +328,7 @@ test_that("spatial_cost_matrix_cpp works", {
 })
 
 test_that("spatial_cost_matrix_cpp handles identical indices", {
+  skip_on_cran()
   H <- 2
   W <- 2
   idx <- as.integer(c(0, 1))
@@ -324,6 +345,7 @@ test_that("spatial_cost_matrix_cpp handles identical indices", {
 # ------------------------------------------------------------------------------
 
 test_that("compute_pixel_cost_cpp works", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -341,6 +363,7 @@ test_that("compute_pixel_cost_cpp works", {
 # ------------------------------------------------------------------------------
 
 test_that("downscale_image_cpp works", {
+  skip_on_cran()
   H <- 4
   W <- 4
   N <- H * W
@@ -356,6 +379,7 @@ test_that("downscale_image_cpp works", {
 # ------------------------------------------------------------------------------
 
 test_that("upscale_assignment_cpp works", {
+  skip_on_cran()
   # 2x2 assignment (0-indexed)
   assignment <- as.integer(c(0, 1, 2, 3))
 

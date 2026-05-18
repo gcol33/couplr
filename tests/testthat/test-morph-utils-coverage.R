@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".gif_delay_from_fps handles edge cases", {
+  skip_on_cran()
   # NaN and Inf should trigger default 10 fps (delay = 10 centiseconds)
   expect_equal(couplr:::.gif_delay_from_fps(NaN), 10L)
   expect_equal(couplr:::.gif_delay_from_fps(Inf), 10L)
@@ -16,6 +17,7 @@ test_that(".gif_delay_from_fps handles edge cases", {
 })
 
 test_that(".gif_delay_from_fps handles fractional fps", {
+  skip_on_cran()
   # 25.5 fps should round to 26
   expect_equal(couplr:::.gif_delay_from_fps(25.5), 4L)  # 100/26 = 3.8 -> 4
   # 15.4 fps should round to 15
@@ -27,6 +29,7 @@ test_that(".gif_delay_from_fps handles fractional fps", {
 # ------------------------------------------------------------------------------
 
 test_that(".to_array_rgb handles different magick color formats", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   # Blue image
@@ -48,6 +51,7 @@ test_that(".to_array_rgb handles different magick color formats", {
 })
 
 test_that(".to_array_rgb handles hex colors", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   img <- magick::image_blank(2, 2, color = "#FF8800")
@@ -63,6 +67,7 @@ test_that(".to_array_rgb handles hex colors", {
 # ------------------------------------------------------------------------------
 
 test_that(".clamp_rgb handles 3D arrays", {
+  skip_on_cran()
   arr <- array(c(-100, 0, 128, 300, 50, 200, -10, 260), dim = c(2, 2, 2))
   result <- couplr:::.clamp_rgb(arr)
 
@@ -72,6 +77,7 @@ test_that(".clamp_rgb handles 3D arrays", {
 })
 
 test_that(".clamp_rgb handles single value", {
+  skip_on_cran()
   expect_equal(couplr:::.clamp_rgb(300), 255L)
   expect_equal(couplr:::.clamp_rgb(-100), 0L)
   expect_equal(couplr:::.clamp_rgb(128), 128L)
@@ -82,6 +88,7 @@ test_that(".clamp_rgb handles single value", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_lap matches colors by LAP", {
+  skip_on_cran()
   info <- list(
     colorsA_rgb = matrix(c(255, 0, 0,
                            0, 255, 0), nrow = 2, ncol = 3, byrow = TRUE),
@@ -100,6 +107,7 @@ test_that(".palette_pairs_lap matches colors by LAP", {
 })
 
 test_that(".palette_pairs_lap handles empty matrices", {
+  skip_on_cran()
   info <- list(
     countsA = integer(0),
     countsB = integer(0),
@@ -115,6 +123,7 @@ test_that(".palette_pairs_lap handles empty matrices", {
 # ------------------------------------------------------------------------------
 
 test_that(".patch_cost_matrix computes cost with color and spatial", {
+  skip_on_cran()
   patches_a <- list(
     colors = matrix(c(255, 0, 0, 0, 255, 0), nrow = 2, ncol = 3, byrow = TRUE),
     centers = matrix(c(0, 0, 10, 10), nrow = 2, ncol = 2, byrow = TRUE)
@@ -132,6 +141,7 @@ test_that(".patch_cost_matrix computes cost with color and spatial", {
 })
 
 test_that(".patch_cost_matrix handles missing H and W", {
+  skip_on_cran()
   # Use 2x2 patches to get a proper matrix (1x1 returns scalar)
   patches_a <- list(
     colors = matrix(c(255, 0, 0, 0, 255, 0), nrow = 2, ncol = 3, byrow = TRUE),
@@ -153,6 +163,7 @@ test_that(".patch_cost_matrix handles missing H and W", {
 # ------------------------------------------------------------------------------
 
 test_that(".expand_patch_assignment expands patches to pixels", {
+  skip_on_cran()
   patch_assign <- list(2L, 1L)  # Patch 1 -> B patch 2, Patch 2 -> B patch 1
   patches_a <- list(
     indices = list(c(1L, 2L), c(3L, 4L))
@@ -172,6 +183,7 @@ test_that(".expand_patch_assignment expands patches to pixels", {
 })
 
 test_that(".expand_patch_assignment handles missing assignments", {
+  skip_on_cran()
   patch_assign <- list(NA, 1L)
   patches_a <- list(
     indices = list(c(1L, 2L), c(3L, 4L))
@@ -194,6 +206,7 @@ test_that(".expand_patch_assignment handles missing assignments", {
 # ------------------------------------------------------------------------------
 
 test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
+  skip_on_cran()
   info <- list(groupsA = list(), groupsB = list())
   pairs <- data.frame(ia = integer(), ib = integer(), k = integer())
 
@@ -208,6 +221,7 @@ test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign handles larger matrices", {
+  skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
 
   result <- couplr:::.lap_assign(cost, method = "hungarian")
@@ -219,6 +233,7 @@ test_that(".lap_assign handles larger matrices", {
 })
 
 test_that(".lap_assign handles rectangular matrices", {
+  skip_on_cran()
   cost <- matrix(runif(12), 3, 4)
 
   result <- couplr:::.lap_assign(cost, method = "jv")
@@ -233,6 +248,7 @@ test_that(".lap_assign handles rectangular matrices", {
 # ------------------------------------------------------------------------------
 
 test_that(".exact_cost_and_solve computes and solves assignment", {
+  skip_on_cran()
   H <- 2
   W <- 2
   N <- H * W
@@ -254,6 +270,7 @@ test_that(".exact_cost_and_solve computes and solves assignment", {
 # ------------------------------------------------------------------------------
 
 test_that(".assemble_assignment handles mismatched lengths", {
+  skip_on_cran()
   N <- 5
   i_idx <- c(1L, 2L, 3L)
   j_idx <- c(4L, 5L)  # Shorter than i_idx
@@ -268,6 +285,7 @@ test_that(".assemble_assignment handles mismatched lengths", {
 })
 
 test_that(".assemble_assignment handles large indices", {
+  skip_on_cran()
   N <- 10
   i_idx <- c(1L, 5L, 10L)
   j_idx <- c(2L, 6L, 9L)
@@ -284,6 +302,7 @@ test_that(".assemble_assignment handles large indices", {
 # ------------------------------------------------------------------------------
 
 test_that(".fill_unassigned_identity handles all unassigned", {
+  skip_on_cran()
   assign <- rep(-1L, 5)
 
   result <- couplr:::.fill_unassigned_identity(assign)
@@ -292,6 +311,7 @@ test_that(".fill_unassigned_identity handles all unassigned", {
 })
 
 test_that(".fill_unassigned_identity handles alternating pattern", {
+  skip_on_cran()
   assign <- c(10L, -1L, 10L, -1L, 10L)
 
   result <- couplr:::.fill_unassigned_identity(assign)

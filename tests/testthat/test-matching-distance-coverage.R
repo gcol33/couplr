@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("compute_distance_matrix validates column count", {
+  skip_on_cran()
   left <- matrix(1:6, nrow = 2, ncol = 3)
   right <- matrix(1:4, nrow = 2, ncol = 2)  # Different column count
 
@@ -17,6 +18,7 @@ test_that("compute_distance_matrix validates column count", {
 })
 
 test_that("compute_distance_matrix computes euclidean distance", {
+  skip_on_cran()
   left <- matrix(c(0, 0, 3, 0), nrow = 2, ncol = 2, byrow = TRUE)
   right <- matrix(c(0, 4, 0, 0), nrow = 2, ncol = 2, byrow = TRUE)
 
@@ -28,6 +30,7 @@ test_that("compute_distance_matrix computes euclidean distance", {
 })
 
 test_that("compute_distance_matrix computes L2 distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -37,6 +40,7 @@ test_that("compute_distance_matrix computes L2 distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes manhattan distance", {
+  skip_on_cran()
   left <- matrix(c(0, 0, 1, 1), nrow = 2, ncol = 2, byrow = TRUE)
   right <- matrix(c(2, 3, 0, 0), nrow = 2, ncol = 2, byrow = TRUE)
 
@@ -48,6 +52,7 @@ test_that("compute_distance_matrix computes manhattan distance", {
 })
 
 test_that("compute_distance_matrix computes L1 distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -57,6 +62,7 @@ test_that("compute_distance_matrix computes L1 distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes cityblock distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -66,6 +72,7 @@ test_that("compute_distance_matrix computes cityblock distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes squared euclidean distance", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -75,6 +82,7 @@ test_that("compute_distance_matrix computes squared euclidean distance", {
 })
 
 test_that("compute_distance_matrix computes sqeuclidean distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -84,6 +92,7 @@ test_that("compute_distance_matrix computes sqeuclidean distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes sq distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 4), nrow = 1)
 
@@ -93,6 +102,7 @@ test_that("compute_distance_matrix computes sq distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes chebyshev distance", {
+  skip_on_cran()
   left <- matrix(c(0, 0, 5, 5), nrow = 2, ncol = 2, byrow = TRUE)
   right <- matrix(c(3, 10, 2, 2), nrow = 2, ncol = 2, byrow = TRUE)
 
@@ -103,6 +113,7 @@ test_that("compute_distance_matrix computes chebyshev distance", {
 })
 
 test_that("compute_distance_matrix computes chebychev distance (alternate spelling)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 10), nrow = 1)
 
@@ -112,6 +123,7 @@ test_that("compute_distance_matrix computes chebychev distance (alternate spelli
 })
 
 test_that("compute_distance_matrix computes maximum distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 10), nrow = 1)
 
@@ -121,6 +133,7 @@ test_that("compute_distance_matrix computes maximum distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes max distance (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 0), nrow = 1)
   right <- matrix(c(3, 10), nrow = 1)
 
@@ -130,6 +143,7 @@ test_that("compute_distance_matrix computes max distance (alias)", {
 })
 
 test_that("compute_distance_matrix computes mahalanobis distance", {
+  skip_on_cran()
   set.seed(123)
   left <- matrix(rnorm(20), nrow = 5, ncol = 4)
   right <- matrix(rnorm(20), nrow = 5, ncol = 4)
@@ -142,6 +156,7 @@ test_that("compute_distance_matrix computes mahalanobis distance", {
 })
 
 test_that("compute_distance_matrix computes maha distance (alias)", {
+  skip_on_cran()
   set.seed(123)
   left <- matrix(rnorm(20), nrow = 5, ncol = 4)
   right <- matrix(rnorm(20), nrow = 5, ncol = 4)
@@ -152,6 +167,7 @@ test_that("compute_distance_matrix computes maha distance (alias)", {
 })
 
 test_that("compute_distance_matrix errors on singular covariance", {
+  skip_on_cran()
   # Create data with linearly dependent columns
   left <- matrix(c(1, 2, 3, 4, 2, 4, 6, 8), nrow = 2, ncol = 4, byrow = TRUE)
   right <- matrix(c(1, 2, 3, 4, 2, 4, 6, 8), nrow = 2, ncol = 4, byrow = TRUE)
@@ -163,6 +179,7 @@ test_that("compute_distance_matrix errors on singular covariance", {
 })
 
 test_that("compute_distance_matrix rejects unknown metric", {
+  skip_on_cran()
   left <- matrix(1:4, nrow = 2)
   right <- matrix(5:8, nrow = 2)
 
@@ -173,6 +190,7 @@ test_that("compute_distance_matrix rejects unknown metric", {
 })
 
 test_that("compute_distance_matrix accepts custom function", {
+  skip_on_cran()
   custom_dist <- function(left, right) {
     n <- nrow(left)
     m <- nrow(right)
@@ -194,6 +212,7 @@ test_that("compute_distance_matrix accepts custom function", {
 # ------------------------------------------------------------------------------
 
 test_that("apply_scaling returns originals when method is FALSE", {
+  skip_on_cran()
   left <- matrix(1:6, nrow = 2)
   right <- matrix(7:12, nrow = 2)
 
@@ -205,6 +224,7 @@ test_that("apply_scaling returns originals when method is FALSE", {
 })
 
 test_that("apply_scaling returns originals when method is 'none'", {
+  skip_on_cran()
   left <- matrix(1:6, nrow = 2)
   right <- matrix(7:12, nrow = 2)
 
@@ -215,6 +235,7 @@ test_that("apply_scaling returns originals when method is 'none'", {
 })
 
 test_that("apply_scaling returns originals when method is NULL", {
+  skip_on_cran()
   left <- matrix(1:6, nrow = 2)
   right <- matrix(7:12, nrow = 2)
 
@@ -225,6 +246,7 @@ test_that("apply_scaling returns originals when method is NULL", {
 })
 
 test_that("apply_scaling standardizes with method = TRUE", {
+  skip_on_cran()
   left <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 3, ncol = 2)
   right <- matrix(c(7, 8, 9, 10, 11, 12), nrow = 3, ncol = 2)
 
@@ -237,6 +259,7 @@ test_that("apply_scaling standardizes with method = TRUE", {
 })
 
 test_that("apply_scaling standardizes with method = 'standardize'", {
+  skip_on_cran()
   left <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 3, ncol = 2)
   right <- matrix(c(7, 8, 9, 10, 11, 12), nrow = 3, ncol = 2)
 
@@ -248,6 +271,7 @@ test_that("apply_scaling standardizes with method = 'standardize'", {
 })
 
 test_that("apply_scaling standardizes with method = 'scale'", {
+  skip_on_cran()
   left <- matrix(c(1, 2), nrow = 2, ncol = 1)
   right <- matrix(c(3, 4), nrow = 2, ncol = 1)
 
@@ -257,6 +281,7 @@ test_that("apply_scaling standardizes with method = 'scale'", {
 })
 
 test_that("apply_scaling handles constant columns in standardize", {
+  skip_on_cran()
   left <- matrix(c(5, 5, 1, 2), nrow = 2, ncol = 2)  # First col constant
   right <- matrix(c(5, 5, 3, 4), nrow = 2, ncol = 2)
 
@@ -268,6 +293,7 @@ test_that("apply_scaling handles constant columns in standardize", {
 })
 
 test_that("apply_scaling applies range scaling", {
+  skip_on_cran()
   left <- matrix(c(0, 10, 0, 20), nrow = 2, ncol = 2)
   right <- matrix(c(5, 5, 10, 10), nrow = 2, ncol = 2)
 
@@ -284,6 +310,7 @@ test_that("apply_scaling applies range scaling", {
 })
 
 test_that("apply_scaling applies minmax scaling (alias)", {
+  skip_on_cran()
   left <- matrix(c(0, 100), nrow = 2, ncol = 1)
   right <- matrix(c(50, 50), nrow = 2, ncol = 1)
 
@@ -293,6 +320,7 @@ test_that("apply_scaling applies minmax scaling (alias)", {
 })
 
 test_that("apply_scaling handles constant columns in range", {
+  skip_on_cran()
   left <- matrix(c(5, 5, 0, 10), nrow = 2, ncol = 2)  # First col constant
   right <- matrix(c(5, 5, 5, 5), nrow = 2, ncol = 2)
 
@@ -302,6 +330,7 @@ test_that("apply_scaling handles constant columns in range", {
 })
 
 test_that("apply_scaling applies robust scaling", {
+  skip_on_cran()
   left <- matrix(c(1, 2, 3, 4, 100, 5, 6, 7, 8, 9), nrow = 5, ncol = 2)  # With outlier
   right <- matrix(c(10, 11, 12, 13, 14, 15, 16, 17, 18, 19), nrow = 5, ncol = 2)
 
@@ -313,6 +342,7 @@ test_that("apply_scaling applies robust scaling", {
 })
 
 test_that("apply_scaling handles constant columns in robust", {
+  skip_on_cran()
   left <- matrix(c(5, 5, 5, 1, 2, 3), nrow = 3, ncol = 2)  # First col constant
   right <- matrix(c(5, 5, 5, 4, 5, 6), nrow = 3, ncol = 2)
 
@@ -322,6 +352,7 @@ test_that("apply_scaling handles constant columns in robust", {
 })
 
 test_that("apply_scaling rejects unknown method", {
+  skip_on_cran()
   left <- matrix(1:4, nrow = 2)
   right <- matrix(5:8, nrow = 2)
 
@@ -332,6 +363,7 @@ test_that("apply_scaling rejects unknown method", {
 })
 
 test_that("apply_scaling removes scale attributes", {
+  skip_on_cran()
   left <- matrix(c(1, 2, 3, 4), nrow = 2)
   right <- matrix(c(5, 6, 7, 8), nrow = 2)
 
@@ -348,6 +380,7 @@ test_that("apply_scaling removes scale attributes", {
 # ------------------------------------------------------------------------------
 
 test_that("apply_weights returns original when weights is NULL", {
+  skip_on_cran()
   mat <- matrix(1:6, nrow = 2)
 
   result <- couplr:::apply_weights(mat, NULL)
@@ -356,6 +389,7 @@ test_that("apply_weights returns original when weights is NULL", {
 })
 
 test_that("apply_weights returns original when all weights are 1", {
+  skip_on_cran()
   mat <- matrix(1:6, nrow = 2)
 
   result <- couplr:::apply_weights(mat, c(1, 1, 1))
@@ -364,6 +398,7 @@ test_that("apply_weights returns original when all weights are 1", {
 })
 
 test_that("apply_weights applies sqrt of weights", {
+  skip_on_cran()
   mat <- matrix(c(1, 1, 1, 1), nrow = 2, ncol = 2)
   weights <- c(4, 9)  # sqrt(4) = 2, sqrt(9) = 3
 
@@ -374,6 +409,7 @@ test_that("apply_weights applies sqrt of weights", {
 })
 
 test_that("apply_weights validates weight length", {
+  skip_on_cran()
   mat <- matrix(1:6, nrow = 2, ncol = 3)
   weights <- c(1, 2)  # Wrong length
 
@@ -388,6 +424,7 @@ test_that("apply_weights validates weight length", {
 # ------------------------------------------------------------------------------
 
 test_that("build_cost_matrix integrates all components", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3), y = c(10, 20, 30))
   right <- data.frame(id = 4:6, x = c(1.5, 2.5, 3.5), y = c(15, 25, 35))
 
@@ -400,6 +437,7 @@ test_that("build_cost_matrix integrates all components", {
 })
 
 test_that("build_cost_matrix works without scaling", {
+  skip_on_cran()
   left <- data.frame(x = c(0, 3), y = c(0, 0))
   right <- data.frame(x = c(0, 0), y = c(4, 0))
 
@@ -411,6 +449,7 @@ test_that("build_cost_matrix works without scaling", {
 })
 
 test_that("build_cost_matrix applies weights", {
+  skip_on_cran()
   left <- data.frame(x = c(0, 1), y = c(0, 1))
   right <- data.frame(x = c(1, 0), y = c(1, 0))
 

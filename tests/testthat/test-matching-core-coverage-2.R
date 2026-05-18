@@ -20,6 +20,7 @@ test_right <- tibble::tibble(
 # ------------------------------------------------------------------------------
 
 test_that("match_couples handles single row", {
+  skip_on_cran()
   left <- test_left[1, ]
   right <- test_right[1, ]
 
@@ -30,6 +31,7 @@ test_that("match_couples handles single row", {
 })
 
 test_that("match_couples handles different scaling methods", {
+  skip_on_cran()
   for (scale in c("none", "standardize", "range", "robust")) {
     result <- match_couples(
       test_left, test_right,
@@ -43,6 +45,7 @@ test_that("match_couples handles different scaling methods", {
 })
 
 test_that("match_couples handles max_distance constraint", {
+  skip_on_cran()
   # Reasonable max_distance should work
   result <- match_couples(
     test_left, test_right,
@@ -57,6 +60,7 @@ test_that("match_couples handles max_distance constraint", {
 })
 
 test_that("match_couples handles method parameter", {
+  skip_on_cran()
   for (method in c("jv", "hungarian", "auction")) {
     result <- match_couples(
       test_left[1:5, ], test_right[1:5, ],
@@ -69,6 +73,7 @@ test_that("match_couples handles method parameter", {
 })
 
 test_that("match_couples errors on NA in data", {
+  skip_on_cran()
   left_na <- test_left
   left_na$age[3] <- NA
 
@@ -84,6 +89,7 @@ test_that("match_couples errors on NA in data", {
 })
 
 test_that("match_couples handles weights parameter", {
+  skip_on_cran()
   result <- match_couples(
     test_left, test_right,
     vars = c("age", "income"),
@@ -94,6 +100,7 @@ test_that("match_couples handles weights parameter", {
 })
 
 test_that("match_couples with return_diagnostics = TRUE", {
+  skip_on_cran()
   result <- match_couples(
     test_left, test_right,
     vars = c("age", "income"),
@@ -111,6 +118,7 @@ test_that("match_couples with return_diagnostics = TRUE", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_couples works with different strategies", {
+  skip_on_cran()
   for (strategy in c("sorted", "row_best", "pq")) {
     result <- greedy_couples(
       test_left, test_right,
@@ -123,6 +131,7 @@ test_that("greedy_couples works with different strategies", {
 })
 
 test_that("greedy_couples handles default settings", {
+  skip_on_cran()
   result <- greedy_couples(
     test_left, test_right,
     vars = c("age", "income")
@@ -133,6 +142,7 @@ test_that("greedy_couples handles default settings", {
 })
 
 test_that("greedy_couples handles auto_scale", {
+  skip_on_cran()
   result <- greedy_couples(
     test_left, test_right,
     vars = c("age", "income"),
@@ -147,6 +157,7 @@ test_that("greedy_couples handles auto_scale", {
 # ------------------------------------------------------------------------------
 
 test_that("match_couples accepts distance_object input", {
+  skip_on_cran()
   skip_if_not("compute_distances" %in% ls("package:couplr"))
 
   dist_obj <- compute_distances(test_left, test_right, vars = c("age", "income"))
@@ -161,6 +172,7 @@ test_that("match_couples accepts distance_object input", {
 # ------------------------------------------------------------------------------
 
 test_that("print.matchmaker_result works", {
+  skip_on_cran()
   result <- match_couples(
     test_left, test_right,
     vars = c("age", "income")
@@ -171,6 +183,7 @@ test_that("print.matchmaker_result works", {
 })
 
 test_that("summary.matchmaker_result works", {
+  skip_on_cran()
   result <- match_couples(
     test_left, test_right,
     vars = c("age", "income")

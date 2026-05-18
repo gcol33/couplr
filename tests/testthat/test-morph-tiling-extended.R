@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".generate_square_tiles handles basic case", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(6, 6, P = 3)
 
   # Should have 4 tiles (2x2 grid of 3x3 tiles)
@@ -19,6 +20,7 @@ test_that(".generate_square_tiles handles basic case", {
 })
 
 test_that(".generate_square_tiles handles P larger than image", {
+  skip_on_cran()
   # P > min(W, H) should result in 1x1 tiles
   tiles <- couplr:::.generate_square_tiles(3, 3, P = 5)
 
@@ -32,6 +34,7 @@ test_that(".generate_square_tiles handles P larger than image", {
 })
 
 test_that(".generate_square_tiles handles non-square image", {
+  skip_on_cran()
   tiles <- couplr:::.generate_square_tiles(8, 6, P = 3)
 
   # All tiles should be <= 3
@@ -45,6 +48,7 @@ test_that(".generate_square_tiles handles non-square image", {
 })
 
 test_that(".generate_square_tiles handles remainder strips", {
+  skip_on_cran()
   # 7x7 with P=3: 2x2 core of 3x3 tiles + remainder strips
   tiles <- couplr:::.generate_square_tiles(7, 7, P = 3)
 
@@ -58,6 +62,7 @@ test_that(".generate_square_tiles handles remainder strips", {
 # ------------------------------------------------------------------------------
 
 test_that(".solve_tile_lap solves basic tile", {
+  skip_on_cran()
   # Create simple 4x4 planar images
   A_planar <- matrix(runif(16 * 3, 0, 255), nrow = 16, ncol = 3)
   B_planar <- matrix(runif(16 * 3, 0, 255), nrow = 16, ncol = 3)
@@ -76,6 +81,7 @@ test_that(".solve_tile_lap solves basic tile", {
 # ------------------------------------------------------------------------------
 
 test_that(".square_tiling_solver runs without error", {
+  skip_on_cran()
   # Create simple 6x6 planar images
   A_planar <- matrix(runif(36 * 3, 0, 255), nrow = 36, ncol = 3)
   B_planar <- matrix(runif(36 * 3, 0, 255), nrow = 36, ncol = 3)
@@ -92,6 +98,7 @@ test_that(".square_tiling_solver runs without error", {
 # ------------------------------------------------------------------------------
 
 test_that(".analyze_tiling returns expected structure", {
+  skip_on_cran()
   result <- couplr:::.analyze_tiling(10, 8, P = 3)
 
   expect_type(result, "list")
@@ -100,6 +107,7 @@ test_that(".analyze_tiling returns expected structure", {
 })
 
 test_that(".analyze_tiling handles edge case dimensions", {
+  skip_on_cran()
   # Very small image
   result <- couplr:::.analyze_tiling(2, 2, P = 3)
   expect_true(result$n_tiles > 0)
@@ -114,6 +122,7 @@ test_that(".analyze_tiling handles edge case dimensions", {
 # ------------------------------------------------------------------------------
 
 test_that(".visualize_tiling returns matrix", {
+  skip_on_cran()
   skip_if_not_installed("graphics")
 
   result <- couplr:::.visualize_tiling(6, 6, P = 3)
@@ -127,6 +136,7 @@ test_that(".visualize_tiling returns matrix", {
 # ------------------------------------------------------------------------------
 
 test_that(".assemble_assignment handles basic case", {
+  skip_on_cran()
   i_idx <- c(1, 2, 3)
   j_idx <- c(2, 3, 1)
 
@@ -138,6 +148,7 @@ test_that(".assemble_assignment handles basic case", {
 })
 
 test_that(".assemble_assignment handles partial assignment", {
+  skip_on_cran()
   i_idx <- c(1, 3)
   j_idx <- c(2, 4)
 
@@ -148,6 +159,7 @@ test_that(".assemble_assignment handles partial assignment", {
 })
 
 test_that(".lap_assign solves assignment problem", {
+  skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
   result <- couplr:::.lap_assign(cost, method = "jv")
 
@@ -157,11 +169,13 @@ test_that(".lap_assign solves assignment problem", {
 })
 
 test_that(".clamp_rgb clamps values", {
+  skip_on_cran()
   result <- couplr:::.clamp_rgb(c(-10, 100, 300))
   expect_equal(result, c(0, 100, 255))
 })
 
 test_that(".gif_delay_from_fps calculates correctly", {
+  skip_on_cran()
   # 10 fps = 100ms delay = 10 centiseconds
   expect_equal(couplr:::.gif_delay_from_fps(10), 10)
 

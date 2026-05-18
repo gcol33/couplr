@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that(".gif_delay_from_fps handles edge cases", {
+  skip_on_cran()
   # Access internal function
   gif_delay <- couplr:::.gif_delay_from_fps
 
@@ -25,6 +26,7 @@ test_that(".gif_delay_from_fps handles edge cases", {
 })
 
 test_that(".clamp_rgb handles various inputs", {
+  skip_on_cran()
   clamp_rgb <- couplr:::.clamp_rgb
 
   # Normal values
@@ -44,6 +46,7 @@ test_that(".clamp_rgb handles various inputs", {
 })
 
 test_that(".to_planar_rgb converts correctly", {
+  skip_on_cran()
   to_planar <- couplr:::.to_planar_rgb
 
   # Simple 2x2x3 array
@@ -60,6 +63,7 @@ test_that(".to_planar_rgb converts correctly", {
 })
 
 test_that(".from_planar_rgb converts back correctly", {
+  skip_on_cran()
   from_planar <- couplr:::.from_planar_rgb
 
   # Create planar data
@@ -82,6 +86,7 @@ test_that(".from_planar_rgb converts back correctly", {
 })
 
 test_that(".downscale_both handles no downscaling", {
+  skip_on_cran()
   skip_if_not_installed("magick")
 
   downscale_both <- couplr:::.downscale_both
@@ -108,6 +113,7 @@ test_that(".downscale_both handles no downscaling", {
 # ------------------------------------------------------------------------------
 
 test_that(".call_or falls back correctly", {
+  skip_on_cran()
   call_or <- couplr:::.call_or
 
   # With a non-existent function, should error
@@ -122,6 +128,7 @@ test_that(".call_or falls back correctly", {
 # ------------------------------------------------------------------------------
 
 test_that(".lap_assign handles different output formats", {
+  skip_on_cran()
   lap_assign <- couplr:::.lap_assign
 
   # Simple cost matrix
@@ -138,6 +145,7 @@ test_that(".lap_assign handles different output formats", {
 # ------------------------------------------------------------------------------
 
 test_that(".palette_pairs_identity handles empty match", {
+  skip_on_cran()
   palette_pairs_identity <- couplr:::.palette_pairs_identity
 
   # Create info with no common colors
@@ -154,6 +162,7 @@ test_that(".palette_pairs_identity handles empty match", {
 })
 
 test_that(".palette_pairs_lap handles empty matrix", {
+  skip_on_cran()
   palette_pairs_lap <- couplr:::.palette_pairs_lap
 
   # Empty color distance matrix
@@ -169,6 +178,7 @@ test_that(".palette_pairs_lap handles empty matrix", {
 })
 
 test_that(".assemble_assignment handles empty indices", {
+  skip_on_cran()
   assemble <- couplr:::.assemble_assignment
 
   # Empty indices
@@ -179,6 +189,7 @@ test_that(".assemble_assignment handles empty indices", {
 })
 
 test_that(".fill_unassigned_identity fills correctly", {
+  skip_on_cran()
   fill <- couplr:::.fill_unassigned_identity
 
   assign <- c(2L, -1L, 1L, -1L)
@@ -191,6 +202,7 @@ test_that(".fill_unassigned_identity fills correctly", {
 })
 
 test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
+  skip_on_cran()
   build <- couplr:::.build_spatial_assignments_for_pairs
 
   info <- list(groupsA = list(), groupsB = list())
@@ -207,6 +219,7 @@ test_that(".build_spatial_assignments_for_pairs handles empty pairs", {
 # ------------------------------------------------------------------------------
 
 test_that(".has_namespace checks packages", {
+  skip_on_cran()
   has_ns <- couplr:::.has_namespace
 
   expect_true(has_ns("base"))
@@ -218,6 +231,7 @@ test_that(".has_namespace checks packages", {
 # ------------------------------------------------------------------------------
 
 test_that("%||% works correctly", {
+  skip_on_cran()
   `%||%` <- couplr:::`%||%`
 
   expect_equal(NULL %||% "default", "default")

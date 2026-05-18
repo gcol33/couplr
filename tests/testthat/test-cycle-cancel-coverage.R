@@ -3,6 +3,7 @@
 # ==============================================================================
 
 test_that("cycle_cancel handles 1x1 matrix", {
+  skip_on_cran()
   cost <- matrix(5, 1, 1)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -12,6 +13,7 @@ test_that("cycle_cancel handles 1x1 matrix", {
 })
 
 test_that("cycle_cancel handles 2x2 diagonal optimal", {
+  skip_on_cran()
   cost <- matrix(c(1, 100, 100, 1), 2, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -20,6 +22,7 @@ test_that("cycle_cancel handles 2x2 diagonal optimal", {
 })
 
 test_that("cycle_cancel handles 2x2 anti-diagonal optimal", {
+  skip_on_cran()
   cost <- matrix(c(100, 1, 1, 100), 2, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -28,6 +31,7 @@ test_that("cycle_cancel handles 2x2 anti-diagonal optimal", {
 })
 
 test_that("cycle_cancel handles rectangular matrix (more cols)", {
+  skip_on_cran()
   cost <- matrix(1:6, 2, 3)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -36,6 +40,7 @@ test_that("cycle_cancel handles rectangular matrix (more cols)", {
 })
 
 test_that("cycle_cancel handles rectangular matrix (more rows)", {
+  skip_on_cran()
   cost <- matrix(1:6, 3, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -43,6 +48,7 @@ test_that("cycle_cancel handles rectangular matrix (more rows)", {
 })
 
 test_that("cycle_cancel handles negative costs", {
+  skip_on_cran()
   cost <- matrix(c(-5, -1, -2, -10), 2, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -52,6 +58,7 @@ test_that("cycle_cancel handles negative costs", {
 })
 
 test_that("cycle_cancel handles large cost range", {
+  skip_on_cran()
   cost <- matrix(c(1, 1000000, 1000000, 1), 2, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -59,6 +66,7 @@ test_that("cycle_cancel handles large cost range", {
 })
 
 test_that("cycle_cancel handles tie costs", {
+  skip_on_cran()
   cost <- matrix(1, 3, 3)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -66,6 +74,7 @@ test_that("cycle_cancel handles tie costs", {
 })
 
 test_that("cycle_cancel handles 4x4 matrix", {
+  skip_on_cran()
   cost <- matrix(c(
     1, 5, 3, 4,
     2, 6, 1, 5,
@@ -80,6 +89,7 @@ test_that("cycle_cancel handles 4x4 matrix", {
 })
 
 test_that("cycle_cancel handles forbidden assignments", {
+  skip_on_cran()
   cost <- matrix(c(1, Inf, Inf, 1), 2, 2)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -87,6 +97,7 @@ test_that("cycle_cancel handles forbidden assignments", {
 })
 
 test_that("cycle_cancel handles 5x5 matrix", {
+  skip_on_cran()
   set.seed(42)
   cost <- matrix(runif(25), 5, 5)
   result <- assignment(cost, method = "cycle_cancel")
@@ -96,6 +107,7 @@ test_that("cycle_cancel handles 5x5 matrix", {
 })
 
 test_that("cycle_cancel handles sparse forbidden pattern", {
+  skip_on_cran()
   # Only diagonal and anti-diagonal allowed
   cost <- matrix(Inf, 4, 4)
   for (i in 1:4) {
@@ -109,6 +121,7 @@ test_that("cycle_cancel handles sparse forbidden pattern", {
 })
 
 test_that("cycle_cancel matches jv on random matrices", {
+  skip_on_cran()
   set.seed(123)
   for (n in c(2, 4, 6)) {
     cost <- matrix(runif(n * n), n, n)

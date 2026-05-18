@@ -1,3 +1,52 @@
+# couplr 1.4.0
+
+## Animation coverage
+
+* **`lap_animate()` now covers every method that `assignment()` accepts.**
+  Ten new step-by-step traces ship: `auction_gs`, `ramshaw_tarjan`,
+  `ssap_bucket`, `hk01`, `csflow`, `cycle_cancel`, `push_relabel`, `csa`,
+  `orlin`, `network_simplex`. `animated_methods()` returns all 20 method
+  strings.
+* **Per-frame parity testing.** Every registered trace is exercised by a
+  parametric `testthat` suite (`tests/testthat/test-trace-parity.R`) on a
+  battery of small cost matrices including forbidden cells. Each frame's
+  matching is validated for in-range entries, no double-bookings, and no
+  use of forbidden edges; the final-frame total is compared to the C++
+  oracle within tolerance.
+* **Shared trace infrastructure.** New internal helpers
+  `R/trace_helpers_frame.R` (`make_frame()`, `make_meta()`,
+  `prepare_cost_work()`, `matching_total_cost()`, `validate_cost_input()`)
+  and `R/trace_helpers_mcf.R` (min-cost-flow graph, residual edges,
+  Dijkstra with Johnson potentials, Bellman-Ford, negative-cycle finder,
+  push/extract). Used by all min-cost-flow traces.
+
+## Bug fixes (correctness)
+
+* **`prepare_cost_matrix.cpp`:** entries equal to `+Inf` were treated as
+  regular very-large costs rather than forbidden, which made `cmax`
+  become `Inf` and silently skipped the `maximize` flip. Result:
+  `assignment(method = X, maximize = TRUE)` on matrices containing
+  `Inf` returned the *minimizing* answer for any solver routing through
+  `prepare_cost_matrix_impl` (`auction`, `auction_scaled`, `sap`,
+  `csflow`, `hk01`, `bruteforce`). Now `NA` and any non-finite value are
+  marked forbidden consistently.
+* **`lap_solve_orlin` and `lap_solve_network_simplex_wrapper`:** the
+  R-side wrapper used `work[is.na(work)] <- Inf` which missed the `-Inf`
+  produced by negating `+Inf` in maximize mode, letting forbidden cells
+  slip through as extreme-cost real edges. Fixed to
+  `work[!is.finite(work)] <- Inf`.
+* **`network_simplex` initial spanning tree:** the greedy initialiser in
+  `ns_init.h` built a *partial* matching (any row that couldn't claim a
+  fresh column was left unmatched) and connected unmatched columns to row
+  0. The resulting starting basis violated flow conservation, and pivots
+  could not recover a perfect matching even when one existed - e.g. on a
+  5x5 cost matrix with two forbidden cells under `maximize`,
+  `assignment(method = "network_simplex")` returned an infeasible result
+  with one row unmatched. Fixed by adding an augmenting-path repair after
+  the greedy pass: every still-unmatched row runs BFS for an augmenting
+  path on the allowed-edge bipartite graph, extending the initial matching
+  to a perfect matching whenever one exists.
+
 # couplr 1.3.3
 
 ## Solver internals

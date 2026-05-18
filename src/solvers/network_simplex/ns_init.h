@@ -4,25 +4,93 @@
 #include "ns_types.h"
 #include "ns_graph.h"
 #include <algorithm>
+#include <queue>
 
 namespace couplr {
 namespace ns {
 
-// Initialize with a feasible spanning tree using Big-M artificial arcs
+// An arc cost is "allowed" if it is finite and below the BIG forbidden sentinel.
+// The R wrapper substitutes Inf for forbidden cells; the C++ entry point that
+// goes through prepare_for_solve substitutes BIG = 1e100. Both must be rejected.
+inline bool ns_cost_allowed(double c) {
+    // Reject NaN, +/-Inf, and the forbidden sentinel (BIG = 1e100). BIG_M = 1e15
+    // is a safe threshold: real assignment costs in the test suite are O(1)-O(1e3),
+    // well below 1e15, while forbidden cells are >= 1e100 or non-finite.
+    return std::isfinite(c) && c < BIG_M;
+}
+
+// Initialize with a feasible spanning tree.
 // For assignment: the network is source -> rows -> cols -> sink
 // Each node has supply/demand: source = +n, rows = 0 (transshipment),
-// cols = 0 (transshipment), sink = -n
+// cols = 0 (transshipment), sink = -n.
 //
-// Key insight: In Network Simplex, flows MUST satisfy conservation at every node.
-// The spanning tree represents the basis; non-tree arcs are at bounds (0 or capacity).
+// Flow conservation requires every row to be matched to exactly one col in the
+// initial basis (otherwise the source->row arc has flow 1 with no outgoing flow,
+// violating conservation and giving an infeasible starting tree that pivots
+// cannot necessarily repair).
 //
-// For a feasible start, we use artificial arcs:
-//   - Add artificial arc from source directly to sink with huge cost (BIG_M)
-//   - Initial tree: all original source->row, row->col, col->sink arcs at lower bound (flow=0)
-//   - Artificial arc carries all n units of flow
-//   - Pivots will naturally drive out the artificial arc
-//
-// Simpler approach for assignment: Start with a valid matching and proper tree structure.
+// We build the matching in two phases:
+//   1. Greedy: for each row, pick the cheapest unmatched allowed col.
+//   2. Augmenting paths: for any row left unmatched by greedy, find an
+//      augmenting alternating path in the bipartite graph of allowed edges
+//      and flip it. This guarantees a perfect matching whenever one exists.
+
+// Run a BFS-based augmenting path search starting from unmatched row `start_row`
+// in the bipartite graph restricted to allowed (finite, non-forbidden) edges.
+// On success, flip the augmenting path so `start_row` becomes matched and
+// returns true. Returns false if no augmenting path exists (infeasible).
+inline bool augment_match(NSState& state,
+                          int start_row,
+                          std::vector<int>& row_match,
+                          std::vector<int>& col_match) {
+    int n = state.n_rows;
+    int m = state.n_cols;
+
+    // BFS layers, starting from start_row on the row side.
+    // prev_row[col] = the row from which `col` was reached.
+    // row_visited[row] = already explored.
+    std::vector<int> prev_row(m, -1);
+    std::vector<bool> row_visited(n, false);
+
+    std::queue<int> q;
+    q.push(start_row);
+    row_visited[start_row] = true;
+
+    int found_col = -1;
+    while (!q.empty() && found_col < 0) {
+        int r = q.front();
+        q.pop();
+        for (int j = 0; j < m; ++j) {
+            if (prev_row[j] >= 0) continue;  // col already discovered
+            int arc = state.row_to_col_arc(r, j);
+            if (!ns_cost_allowed(state.arc_cost[arc])) continue;
+            prev_row[j] = r;
+            int paired = col_match[j];
+            if (paired < 0) {
+                // Found unmatched col -> augmenting path complete.
+                found_col = j;
+                break;
+            }
+            if (!row_visited[paired]) {
+                row_visited[paired] = true;
+                q.push(paired);
+            }
+        }
+    }
+
+    if (found_col < 0) return false;
+
+    // Flip the alternating path: walk backwards via prev_row, reassigning.
+    int j = found_col;
+    while (j >= 0) {
+        int r = prev_row[j];
+        int prev_j = row_match[r];  // the col r was previously matched to (or -1)
+        row_match[r] = j;
+        col_match[j] = r;
+        j = prev_j;
+    }
+    return true;
+}
 
 inline void initialize_spanning_tree_greedy(NSState& state) {
     int n = state.n_rows;
@@ -34,15 +102,16 @@ inline void initialize_spanning_tree_greedy(NSState& state) {
     std::vector<int> row_match(n, -1);  // row i matched to col row_match[i]
     std::vector<int> col_match(m, -1);  // col j matched to row col_match[j]
 
-    // Greedy: for each row, find cheapest unmatched col
+    // Phase 1 — Greedy: for each row, find cheapest unmatched allowed col.
     for (int i = 0; i < n; ++i) {
         int best_j = -1;
         double best_cost = BIG_M;
         for (int j = 0; j < m; ++j) {
             if (col_match[j] < 0) {
                 int arc = state.row_to_col_arc(i, j);
-                if (state.arc_cost[arc] < best_cost) {
-                    best_cost = state.arc_cost[arc];
+                double c = state.arc_cost[arc];
+                if (ns_cost_allowed(c) && c < best_cost) {
+                    best_cost = c;
                     best_j = j;
                 }
             }
@@ -50,6 +119,23 @@ inline void initialize_spanning_tree_greedy(NSState& state) {
         if (best_j >= 0) {
             row_match[i] = best_j;
             col_match[best_j] = i;
+        }
+    }
+
+    // Phase 2 — Augmenting paths: extend the partial matching to a perfect
+    // matching whenever one exists. Without this, unmatched rows leave the
+    // initial tree in an infeasible flow state (source supplies 1 unit to the
+    // row with no outgoing tree arc), which the pivot loop cannot reliably
+    // repair on adversarial instances. Pivots then terminate at a sub-optimal
+    // basis that still has an unmatched row.
+    for (int i = 0; i < n; ++i) {
+        if (row_match[i] < 0) {
+            // Failure here means no perfect matching exists in the allowed
+            // subgraph. The C++ entry points already preflight feasibility for
+            // each row, but not Hall's condition globally; if we still fail
+            // here, leave the row unmatched and let downstream extraction
+            // surface the infeasibility with the existing error path.
+            (void)augment_match(state, i, row_match, col_match);
         }
     }
 

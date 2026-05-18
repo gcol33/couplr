@@ -1,25 +1,30 @@
-## Resubmission (1.3.2)
+## Release notes (1.4.0)
 
-This is a resubmission of 1.3.1. The previous submission was rejected because
-`R CMD check` on win-builder r-devel-windows-x86_64 crashed with exit code
--1073741819 (access violation) in `test-lap-solve-batch-coverage.R`.
+This is a minor release adding animation coverage for the remaining ten
+`assignment()` methods (`auction_gs`, `ramshaw_tarjan`, `ssap_bucket`, `hk01`,
+`csflow`, `cycle_cancel`, `push_relabel`, `csa`, `orlin`, `network_simplex`)
+and fixing three correctness bugs:
 
-Debian r-devel-linux-x86_64-gcc passed cleanly on the same submission, and
-neither local `R CMD check --as-cran` (Windows 11, R 4.6.0 ucrt, Rtools45 g++
-14.3.0 — the same toolchain win-builder uses) nor the parallel test file
-alone reproduced the crash, so the precise cause was not isolated.
+* `prepare_cost_matrix.cpp` previously treated `+Inf` as a finite cost rather
+  than a forbidden marker, which caused `assignment(method = X, maximize = TRUE)`
+  to silently skip the maximize-flip and return the minimizing answer on any
+  matrix containing `Inf`. Fixed: `NA` and any non-finite value are now marked
+  forbidden consistently.
 
-Mitigations applied:
+* `lap_solve_orlin()` and `lap_solve_network_simplex_wrapper()` used
+  `work[is.na(work)] <- Inf`, which missed the `-Inf` produced by negating
+  `+Inf` in maximize mode. Fixed: `work[!is.finite(work)] <- Inf`.
 
-* Removed `Config/testthat/parallel: true` from DESCRIPTION. The win-builder
-  log shows the crash inside testthat's parallel worker
-  (`testthat:::test_files_parallel`), so disabling parallel test execution
-  eliminates cross-file worker-state leakage as a contributor.
-* Added `testthat::skip_on_cran()` at the top of
-  `test-lap-solve-batch-coverage.R`. Equivalent code paths are exercised
-  by `test-lap-solve-batch-coverage-2.R`, `-coverage-3.R`,
-  `-extended.R`, `test-batch-coverage-final.R`, `test-batch-processing.R`,
-  and `test-batch-kbest-extended.R`, which all pass on CRAN.
+* The network-simplex initial spanning tree (`src/solvers/network_simplex/`
+  `ns_init.h`) was built from a greedy matching that could leave rows
+  unmatched, producing an infeasible starting basis that the pivot loop
+  could not recover from. Fixed by adding an augmenting-path repair after
+  the greedy pass.
+
+A new parametric test (`tests/testthat/test-trace-parity.R`) exercises every
+registered animation trace on a battery of cost matrices including forbidden
+cells, verifying per-frame matching validity and final-frame agreement with
+the C++ oracle.
 
 ## R CMD check results
 
@@ -28,10 +33,10 @@ Mitigations applied:
 ## Test environments
 
 * local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
-* win-builder: R-devel, R-release (re-checked before resubmission)
-* mac-builder: macOS ARM64, R-devel
-* GitHub Actions: macOS-latest, windows-latest, ubuntu-latest (devel,
-  release, oldrel-1)
+* win-builder: R-devel, R-release (pre-submission check pending at time of
+  writing)
+* GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
+  (devel, release, oldrel-1)
 
 ## Downstream dependencies
 

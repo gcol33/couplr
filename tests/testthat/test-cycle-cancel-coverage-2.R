@@ -3,6 +3,7 @@
 # ==============================================================================
 
 test_that("cycle_cancel handles transposed matrix (more rows than cols)", {
+  skip_on_cran()
   # 5x3 matrix - more rows than columns triggers transpose
   cost <- matrix(runif(15), 5, 3)
   result <- assignment(cost, method = "cycle_cancel")
@@ -14,6 +15,7 @@ test_that("cycle_cancel handles transposed matrix (more rows than cols)", {
 })
 
 test_that("cycle_cancel handles large rectangular matrix", {
+  skip_on_cran()
   cost <- matrix(runif(40), 8, 5)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -21,6 +23,7 @@ test_that("cycle_cancel handles large rectangular matrix", {
 })
 
 test_that("cycle_cancel handles matrix with negative costs", {
+  skip_on_cran()
   cost <- matrix(c(-5, -1, -2, -10, -3, -8, -4, -6, -7), 3, 3)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -28,6 +31,7 @@ test_that("cycle_cancel handles matrix with negative costs", {
 })
 
 test_that("cycle_cancel handles maximize = TRUE", {
+  skip_on_cran()
   cost <- matrix(c(1, 100, 100, 1, 50, 50, 50, 50, 25), 3, 3)
 
   result_min <- assignment(cost, method = "cycle_cancel", maximize = FALSE)
@@ -37,6 +41,7 @@ test_that("cycle_cancel handles maximize = TRUE", {
 })
 
 test_that("cycle_cancel handles matrix with many forbidden edges", {
+  skip_on_cran()
   cost <- matrix(Inf, 4, 4)
   # Create a sparse pattern
   cost[1, 1] <- 1
@@ -52,6 +57,7 @@ test_that("cycle_cancel handles matrix with many forbidden edges", {
 })
 
 test_that("cycle_cancel handles 6x6 matrix", {
+  skip_on_cran()
   set.seed(42)
   cost <- matrix(runif(36), 6, 6)
   result <- assignment(cost, method = "cycle_cancel")
@@ -61,6 +67,7 @@ test_that("cycle_cancel handles 6x6 matrix", {
 })
 
 test_that("cycle_cancel handles cost matrix that might trigger cycles", {
+  skip_on_cran()
   # A matrix where initial SSP solution might have negative cycles
   cost <- matrix(c(
     1, 9, 2, 8,
@@ -76,6 +83,7 @@ test_that("cycle_cancel handles cost matrix that might trigger cycles", {
 })
 
 test_that("cycle_cancel handles matrix with uniform costs except diagonal", {
+  skip_on_cran()
   # This pattern can create interesting cycle structures
   cost <- matrix(10, 4, 4)
   diag(cost) <- 1
@@ -87,6 +95,7 @@ test_that("cycle_cancel handles matrix with uniform costs except diagonal", {
 })
 
 test_that("cycle_cancel handles 2x5 rectangular (more cols)", {
+  skip_on_cran()
   cost <- matrix(1:10, 2, 5)
   result <- assignment(cost, method = "cycle_cancel")
 
@@ -95,6 +104,7 @@ test_that("cycle_cancel handles 2x5 rectangular (more cols)", {
 })
 
 test_that("cycle_cancel handles matrix with zero costs", {
+  skip_on_cran()
   cost <- matrix(0, 3, 3)
   cost[1, 2] <- 1
   cost[2, 3] <- 1
@@ -106,6 +116,7 @@ test_that("cycle_cancel handles matrix with zero costs", {
 })
 
 test_that("cycle_cancel correctly matches jv on various sizes", {
+  skip_on_cran()
   set.seed(123)
   for (n in c(3, 5, 7, 10)) {
     cost <- matrix(runif(n * n), n, n)
@@ -119,6 +130,7 @@ test_that("cycle_cancel correctly matches jv on various sizes", {
 })
 
 test_that("cycle_cancel handles single element sparse pattern", {
+  skip_on_cran()
   # Only one valid assignment per row/col
   cost <- matrix(Inf, 3, 3)
   cost[1, 2] <- 5

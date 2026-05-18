@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("check_variable_health errors with no variables", {
+  skip_on_cran()
   left <- data.frame(x = 1:5)
   right <- data.frame(x = 1:5)
 
@@ -17,6 +18,7 @@ test_that("check_variable_health errors with no variables", {
 })
 
 test_that("check_variable_health detects all-NA variable", {
+  skip_on_cran()
   left <- data.frame(x = c(NA, NA, NA), y = 1:3)
   right <- data.frame(x = c(NA, NA, NA), y = 4:6)
 
@@ -28,6 +30,7 @@ test_that("check_variable_health detects all-NA variable", {
 })
 
 test_that("check_variable_health detects constant variable", {
+  skip_on_cran()
   left <- data.frame(x = rep(5, 5), y = 1:5)
   right <- data.frame(x = rep(5, 5), y = 6:10)
 
@@ -38,6 +41,7 @@ test_that("check_variable_health detects constant variable", {
 })
 
 test_that("check_variable_health detects low variance", {
+  skip_on_cran()
   left <- data.frame(x = c(1, 1, 1, 1.00000001), y = 1:4)
   right <- data.frame(x = c(1, 1, 1, 1), y = 5:8)
 
@@ -51,6 +55,7 @@ test_that("check_variable_health detects low variance", {
 })
 
 test_that("check_variable_health detects high missingness", {
+  skip_on_cran()
   left <- data.frame(x = c(NA, NA, NA, NA, 5), y = 1:5)
   right <- data.frame(x = c(NA, NA, NA, NA, 5), y = 6:10)
 
@@ -63,6 +68,7 @@ test_that("check_variable_health detects high missingness", {
 })
 
 test_that("check_variable_health detects extreme skewness", {
+  skip_on_cran()
   # Create highly skewed data
   left <- data.frame(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 100), y = 1:10)
   right <- data.frame(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 100), y = 11:20)
@@ -75,6 +81,7 @@ test_that("check_variable_health detects extreme skewness", {
 })
 
 test_that("check_variable_health returns proper structure", {
+  skip_on_cran()
   left <- data.frame(x = 1:5, y = 6:10)
   right <- data.frame(x = 11:15, y = 16:20)
 
@@ -92,6 +99,7 @@ test_that("check_variable_health returns proper structure", {
 })
 
 test_that("check_variable_health handles multiple issues on same variable", {
+  skip_on_cran()
   # Variable with both high missingness and skewness
   set.seed(123)
   vals <- c(rep(NA, 6), rep(1, 3), 1000)
@@ -110,6 +118,7 @@ test_that("check_variable_health handles multiple issues on same variable", {
 # ------------------------------------------------------------------------------
 
 test_that("suggest_scaling returns 'none' for empty vars", {
+  skip_on_cran()
   left <- data.frame(x = 1:5)
   right <- data.frame(x = 1:5)
 
@@ -119,6 +128,7 @@ test_that("suggest_scaling returns 'none' for empty vars", {
 })
 
 test_that("suggest_scaling suggests robust for skewed data", {
+  skip_on_cran()
   # Create highly skewed data
   left <- data.frame(x = c(1, 1, 1, 1, 1, 100))
   right <- data.frame(x = c(1, 1, 1, 1, 1, 100))
@@ -129,6 +139,7 @@ test_that("suggest_scaling suggests robust for skewed data", {
 })
 
 test_that("suggest_scaling suggests standardize for normal data", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(x = rnorm(100), y = rnorm(100))
   right <- data.frame(x = rnorm(100), y = rnorm(100))
@@ -143,6 +154,7 @@ test_that("suggest_scaling suggests standardize for normal data", {
 # ------------------------------------------------------------------------------
 
 test_that("preprocess_matching_vars works with default settings", {
+  skip_on_cran()
   left <- data.frame(x = 1:5, y = 6:10)
   right <- data.frame(x = 11:15, y = 16:20)
 
@@ -153,6 +165,7 @@ test_that("preprocess_matching_vars works with default settings", {
 })
 
 test_that("preprocess_matching_vars removes problematic vars", {
+  skip_on_cran()
   left <- data.frame(const = rep(5, 5), good = 1:5)
   right <- data.frame(const = rep(5, 5), good = 6:10)
 
@@ -166,6 +179,7 @@ test_that("preprocess_matching_vars removes problematic vars", {
 })
 
 test_that("preprocess_matching_vars keeps problematic vars when requested", {
+  skip_on_cran()
   left <- data.frame(const = rep(5, 5), good = 1:5)
   right <- data.frame(const = rep(5, 5), good = 6:10)
 
@@ -179,6 +193,7 @@ test_that("preprocess_matching_vars keeps problematic vars when requested", {
 })
 
 test_that("preprocess_matching_vars auto-selects scaling", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(x = rnorm(50), y = rnorm(50) + 100)
   right <- data.frame(x = rnorm(50), y = rnorm(50) + 100)
@@ -192,6 +207,7 @@ test_that("preprocess_matching_vars auto-selects scaling", {
 })
 
 test_that("preprocess_matching_vars respects explicit scale_method", {
+  skip_on_cran()
   left <- data.frame(x = 1:5)
   right <- data.frame(x = 6:10)
 
@@ -204,6 +220,7 @@ test_that("preprocess_matching_vars respects explicit scale_method", {
 })
 
 test_that("preprocess_matching_vars returns health info", {
+  skip_on_cran()
   left <- data.frame(x = 1:5, y = 6:10)
   right <- data.frame(x = 11:15, y = 16:20)
 
@@ -215,6 +232,7 @@ test_that("preprocess_matching_vars returns health info", {
 })
 
 test_that("preprocess_matching_vars handles verbose output", {
+  skip_on_cran()
   left <- data.frame(x = 1:5)
   right <- data.frame(x = 6:10)
 
@@ -233,6 +251,7 @@ test_that("preprocess_matching_vars handles verbose output", {
 # ------------------------------------------------------------------------------
 
 test_that("print.variable_health works", {
+  skip_on_cran()
   left <- data.frame(x = 1:5, y = c(NA, NA, 3, 4, 5))
   right <- data.frame(x = 6:10, y = c(6, NA, 8, 9, 10))
 
@@ -248,6 +267,7 @@ test_that("print.variable_health works", {
 # ------------------------------------------------------------------------------
 
 test_that("print.preprocessing_result works", {
+  skip_on_cran()
   left <- data.frame(x = 1:5)
   right <- data.frame(x = 6:10)
 
@@ -264,6 +284,7 @@ test_that("print.preprocessing_result works", {
 # ------------------------------------------------------------------------------
 
 test_that("check_variable_health handles single row data", {
+  skip_on_cran()
   left <- data.frame(x = 1)
   right <- data.frame(x = 2)
 
@@ -273,6 +294,7 @@ test_that("check_variable_health handles single row data", {
 })
 
 test_that("check_variable_health handles many variables", {
+  skip_on_cran()
   n <- 20
   left <- as.data.frame(matrix(rnorm(n * 10), nrow = 10))
   right <- as.data.frame(matrix(rnorm(n * 10), nrow = 10))
@@ -283,6 +305,7 @@ test_that("check_variable_health handles many variables", {
 })
 
 test_that("preprocess_matching_vars errors when all vars are problematic", {
+  skip_on_cran()
   left <- data.frame(x = rep(1, 5), y = rep(2, 5))
   right <- data.frame(x = rep(1, 5), y = rep(2, 5))
 

@@ -5,28 +5,33 @@
 # ==============================================================================
 
 test_that("match_couples validates NULL right", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   expect_error(match_couples(left, right = NULL, vars = "x"))
 })
 
 test_that("match_couples validates NULL vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   right <- data.frame(id = 4:6, x = rnorm(3))
   expect_error(match_couples(left, right, vars = NULL))
 })
 
 test_that("greedy_couples validates NULL right", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   expect_error(greedy_couples(left, right = NULL, vars = "x"))
 })
 
 test_that("greedy_couples validates NULL vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   right <- data.frame(id = 4:6, x = rnorm(3))
   expect_error(greedy_couples(left, right, vars = NULL))
 })
 
 test_that("greedy_couples handles sparse matching", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(100, 200, 300))
   expect_warning(
@@ -39,18 +44,21 @@ test_that("greedy_couples handles sparse matching", {
 # ==============================================================================
 
 test_that("preprocess_matching_vars handles empty vars", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   right <- data.frame(id = 4:6, x = rnorm(3))
   expect_error(preprocess_matching_vars(left, right, vars = character(0)))
 })
 
 test_that("preprocess_matching_vars detects constant variable", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = rep(5, 5), y = 1:5)
   right <- data.frame(id = 6:10, x = rep(5, 5), y = 6:10)
   expect_warning(preprocess_matching_vars(left, right, vars = c("x", "y")))
 })
 
 test_that("preprocess_matching_vars with different scale options", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10), y = rnorm(10))
   for (scale in c("robust", "standardize", "range", "none")) {
@@ -64,6 +72,7 @@ test_that("preprocess_matching_vars with different scale options", {
 # ==============================================================================
 
 test_that("balance_diagnostics handles single observation", {
+  skip_on_cran()
   left <- data.frame(id = 1, x = 5)
   right <- data.frame(id = 2, x = 5.1)
   suppressWarnings(result <- match_couples(left, right, vars = "x"))
@@ -72,6 +81,7 @@ test_that("balance_diagnostics handles single observation", {
 })
 
 test_that("balance_diagnostics print works", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10), y = rnorm(10))
   result <- match_couples(left, right, vars = c("x", "y"))
@@ -84,26 +94,31 @@ test_that("balance_diagnostics print works", {
 # ==============================================================================
 
 test_that("lap_solve handles 1x1 matrix", {
+  skip_on_cran()
   cost <- matrix(42, nrow = 1, ncol = 1)
   result <- lap_solve(cost)
   expect_equal(sum(result$cost), 42)
 })
 
 test_that("lap_solve auto-selects for binary costs", {
+  skip_on_cran()
   cost <- matrix(c(0, 1, 1, 0), nrow = 2)
   result <- lap_solve(cost, method = "auto")
   expect_equal(nrow(result), 2)
 })
 
 test_that("lap_solve_line_metric validates empty input", {
+  skip_on_cran()
   expect_error(lap_solve_line_metric(numeric(0), numeric(0)))
 })
 
 test_that("lap_solve_line_metric validates infinite values", {
+  skip_on_cran()
   expect_error(lap_solve_line_metric(c(1, Inf), c(2, 3)))
 })
 
 test_that("bottleneck_assignment handles square matrix", {
+  skip_on_cran()
   cost <- matrix(1:9, nrow = 3, ncol = 3)
 
   result <- bottleneck_assignment(cost)
@@ -112,6 +127,7 @@ test_that("bottleneck_assignment handles square matrix", {
 })
 
 test_that("sinkhorn validates lambda", {
+  skip_on_cran()
   cost <- matrix(1:4, nrow = 2)
   expect_error(sinkhorn(cost, lambda = -1))
   expect_error(sinkhorn(cost, lambda = 0))
@@ -122,6 +138,7 @@ test_that("sinkhorn validates lambda", {
 # ==============================================================================
 
 test_that("pixel_morph warns on invalid upscale", {
+  skip_on_cran()
   skip_if_not_installed("png")
   skip_if_not_installed("magick")
   img <- magick::image_blank(8, 8, "white")
@@ -130,6 +147,7 @@ test_that("pixel_morph warns on invalid upscale", {
 })
 
 test_that("pixel_morph warns on invalid n_frames", {
+  skip_on_cran()
   skip_if_not_installed("png")
   skip_if_not_installed("magick")
   img <- magick::image_blank(8, 8, "white")
@@ -142,12 +160,14 @@ test_that("pixel_morph warns on invalid n_frames", {
 # ==============================================================================
 
 test_that("compute_distances validates ID columns", {
+  skip_on_cran()
   left <- data.frame(x = 1:3)
   right <- data.frame(x = 4:6)
   expect_error(compute_distances(left, right, vars = "x"))
 })
 
 test_that("compute_distances detects duplicate IDs", {
+  skip_on_cran()
   left <- data.frame(id = c(1, 1, 2), x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
   expect_error(compute_distances(left, right, vars = "x"))
@@ -158,6 +178,7 @@ test_that("compute_distances detects duplicate IDs", {
 # ==============================================================================
 
 test_that("matchmaker handles 'none' block_type", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, group = c("A", "A", "B", "B", "B"))
   right <- data.frame(id = 6:10, group = c("A", "B", "B", "A", "B"))
   blocks <- matchmaker(left, right, block_type = "none")
@@ -165,6 +186,7 @@ test_that("matchmaker handles 'none' block_type", {
 })
 
 test_that("matchmaker validates block_type", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
   expect_error(matchmaker(left, right, block_type = "invalid"))
@@ -175,6 +197,7 @@ test_that("matchmaker validates block_type", {
 # ==============================================================================
 
 test_that("update_constraints with max_distance = 0", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1, 2, 3))
   dist_obj <- compute_distances(left, right, vars = "x")
@@ -187,11 +210,13 @@ test_that("update_constraints with max_distance = 0", {
 # ==============================================================================
 
 test_that("assignment handles all-Inf matrix", {
+  skip_on_cran()
   cost <- matrix(Inf, nrow = 3, ncol = 3)
   expect_error(assignment(cost))
 })
 
 test_that("assignment handles mixed Inf matrix", {
+  skip_on_cran()
   cost <- matrix(c(1, Inf, Inf, Inf, 2, Inf, Inf, Inf, 3), nrow = 3)
   result <- assignment(cost)
   expect_equal(result$status, "optimal")
@@ -199,12 +224,14 @@ test_that("assignment handles mixed Inf matrix", {
 })
 
 test_that("assignment with maximize = TRUE", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4), nrow = 2)
   result <- assignment(cost, maximize = TRUE)
   expect_equal(result$status, "optimal")
 })
 
 test_that("assignment with different methods", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), nrow = 3)
   for (method in c("hungarian", "jv", "auction")) {
     result <- assignment(cost, method = method)
@@ -213,6 +240,7 @@ test_that("assignment with different methods", {
 })
 
 test_that("assignment_duals returns dual variables", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), nrow = 3)
   result <- assignment_duals(cost)
   expect_true("u" %in% names(result))
@@ -224,6 +252,7 @@ test_that("assignment_duals returns dual variables", {
 # ==============================================================================
 
 test_that("augment.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
   result <- match_couples(left, right, vars = "x")
@@ -232,6 +261,7 @@ test_that("augment.matching_result works", {
 })
 
 test_that("join_matched works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
   result <- match_couples(left, right, vars = "x")
@@ -244,6 +274,7 @@ test_that("join_matched works", {
 # ==============================================================================
 
 test_that("match_couples with caliper", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = 1:10, y = rnorm(10))
   right <- data.frame(id = 11:20, x = 1:10 + 0.5, y = rnorm(10))
   result <- match_couples(left, right, vars = c("x", "y"), caliper = c(x = 1))
@@ -251,6 +282,7 @@ test_that("match_couples with caliper", {
 })
 
 test_that("match_couples with weight parameter", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10), y = rnorm(10))
   result <- match_couples(left, right, vars = c("x", "y"), weights = c(x = 2, y = 1))
@@ -258,6 +290,7 @@ test_that("match_couples with weight parameter", {
 })
 
 test_that("match_couples with blocking", {
+  skip_on_cran()
   left <- data.frame(id = 1:20, block = rep(1:4, 5), x = rnorm(20))
   right <- data.frame(id = 21:40, block = rep(1:4, 5), x = rnorm(20))
   result <- match_couples(left, right, vars = "x", block_id = "block")
@@ -265,6 +298,7 @@ test_that("match_couples with blocking", {
 })
 
 test_that("match_couples return_diagnostics", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
   result <- match_couples(left, right, vars = "x", return_diagnostics = TRUE)
@@ -277,6 +311,7 @@ test_that("match_couples return_diagnostics", {
 # ==============================================================================
 
 test_that("greedy_couples with different strategies", {
+  skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
   for (strategy in c("sorted", "row_best", "pq")) {
@@ -290,12 +325,14 @@ test_that("greedy_couples with different strategies", {
 # ==============================================================================
 
 test_that("lap_solve_kbest works", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), nrow = 3)
   result <- lap_solve_kbest(cost, k = 2)
   expect_true(nrow(result) >= 1)
 })
 
 test_that("lap_solve_batch works", {
+  skip_on_cran()
   costs <- list(
     matrix(1:4, nrow = 2),
     matrix(1:9, nrow = 3)
@@ -313,6 +350,7 @@ test_that("lap_solve_batch works", {
 # ==============================================================================
 
 test_that("print.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
   result <- match_couples(left, right, vars = "x")
@@ -320,6 +358,7 @@ test_that("print.matching_result works", {
 })
 
 test_that("summary.matching_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
   result <- match_couples(left, right, vars = "x")

@@ -32,3 +32,12 @@ Rplots.pdf
 # C++ test build directory
 cpp_tests/build/
 build_site.R
+
+# Throwaway animation smoke-test renders
+dev_notes/animation_preview/
+
+# Rendered vignette outputs (built artifacts)
+vignettes/*.html
+
+# Local R CMD check workdirs
+_check*/

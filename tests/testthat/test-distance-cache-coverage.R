@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("compute_distances works with blocking", {
+  skip_on_cran()
   left <- data.frame(id = 1:6, x = 1:6, block = rep(c("A", "B"), each = 3))
   right <- data.frame(id = 7:12, x = 7:12, block = rep(c("A", "B"), each = 3))
 
@@ -20,6 +21,7 @@ test_that("compute_distances works with blocking", {
 })
 
 test_that("compute_distances with auto_scale applies preprocessing", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5), y = c(100, 200, 300, 400, 500))
   right <- data.frame(id = 6:10, x = c(1.5, 2.5, 3.5, 4.5, 5.5), y = c(150, 250, 350, 450, 550))
 
@@ -30,6 +32,7 @@ test_that("compute_distances with auto_scale applies preprocessing", {
 })
 
 test_that("compute_distances with weights", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, y = 1:3)
   right <- data.frame(id = 4:6, x = 4:6, y = 4:6)
 
@@ -40,6 +43,7 @@ test_that("compute_distances with weights", {
 })
 
 test_that("compute_distances errors on missing block_id column", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -50,6 +54,7 @@ test_that("compute_distances errors on missing block_id column", {
 })
 
 test_that("compute_distances errors on missing left_id column", {
+  skip_on_cran()
   left <- data.frame(other_id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -60,6 +65,7 @@ test_that("compute_distances errors on missing left_id column", {
 })
 
 test_that("compute_distances errors on missing right_id column", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(other_id = 4:6, x = 4:6)
 
@@ -70,6 +76,7 @@ test_that("compute_distances errors on missing right_id column", {
 })
 
 test_that("compute_distances errors on duplicate left IDs", {
+  skip_on_cran()
   left <- data.frame(id = c(1, 1, 2), x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -80,6 +87,7 @@ test_that("compute_distances errors on duplicate left IDs", {
 })
 
 test_that("compute_distances errors on duplicate right IDs", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = c(4, 4, 5), x = 4:6)
 
@@ -90,6 +98,7 @@ test_that("compute_distances errors on duplicate right IDs", {
 })
 
 test_that("compute_distances errors on missing variables", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, y = 4:6)
 
@@ -100,6 +109,7 @@ test_that("compute_distances errors on missing variables", {
 })
 
 test_that("compute_distances errors on non-dataframe inputs", {
+  skip_on_cran()
   expect_error(
     compute_distances(1:3, data.frame(id = 1:3, x = 1:3), vars = "x"),
     "must be data frames"
@@ -116,6 +126,7 @@ test_that("compute_distances errors on non-dataframe inputs", {
 # ------------------------------------------------------------------------------
 
 test_that("is_distance_object returns correct values", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -133,6 +144,7 @@ test_that("is_distance_object returns correct values", {
 # ------------------------------------------------------------------------------
 
 test_that("update_constraints with calipers", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(2, 3, 4, 5, 6))
 
@@ -147,6 +159,7 @@ test_that("update_constraints with calipers", {
 })
 
 test_that("update_constraints with both max_distance and calipers", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.5, 2.5, 3.5, 4.5, 5.5))
 
@@ -161,6 +174,7 @@ test_that("update_constraints with both max_distance and calipers", {
 })
 
 test_that("update_constraints stores updated_at timestamp", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -176,6 +190,7 @@ test_that("update_constraints stores updated_at timestamp", {
 # ------------------------------------------------------------------------------
 
 test_that("print.distance_object handles weights", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, y = 1:3)
   right <- data.frame(id = 4:6, x = 4:6, y = 4:6)
 
@@ -185,6 +200,7 @@ test_that("print.distance_object handles weights", {
 })
 
 test_that("print.distance_object handles blocking", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3, block = "A")
   right <- data.frame(id = 4:6, x = 4:6, block = "A")
 
@@ -196,6 +212,7 @@ test_that("print.distance_object handles blocking", {
 })
 
 test_that("print.distance_object handles all Inf distances", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 100:102)
 
@@ -208,6 +225,7 @@ test_that("print.distance_object handles all Inf distances", {
 })
 
 test_that("print.distance_object shows constraints when applied", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -224,6 +242,7 @@ test_that("print.distance_object shows constraints when applied", {
 # ------------------------------------------------------------------------------
 
 test_that("summary.distance_object handles all Inf distances", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 100:102)
 
@@ -237,6 +256,7 @@ test_that("summary.distance_object handles all Inf distances", {
 })
 
 test_that("summary.distance_object shows sparsity warning for >50% forbidden", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -249,6 +269,7 @@ test_that("summary.distance_object shows sparsity warning for >50% forbidden", {
 })
 
 test_that("summary.distance_object handles highly skewed distribution", {
+  skip_on_cran()
   skip_if_not_installed("e1071")
 
   left <- data.frame(id = 1:10, x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 100))
@@ -261,6 +282,7 @@ test_that("summary.distance_object handles highly skewed distribution", {
 })
 
 test_that("summary.distance_object works without e1071", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
@@ -276,6 +298,7 @@ test_that("summary.distance_object works without e1071", {
 # ------------------------------------------------------------------------------
 
 test_that("distance object workflow with match_couples", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -289,6 +312,7 @@ test_that("distance object workflow with match_couples", {
 })
 
 test_that("distance object workflow with greedy_couples", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
@@ -303,6 +327,7 @@ test_that("distance object workflow with greedy_couples", {
 })
 
 test_that("update_constraints then match workflow", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.5, 2.5, 3.5, 4.5, 5.5))
 
@@ -318,6 +343,7 @@ test_that("update_constraints then match workflow", {
 })
 
 test_that("distance object preserves original data for join_matched", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5, extra = letters[1:5])
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1), extra = letters[6:10])
 

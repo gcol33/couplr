@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("assignment handles transposed matrix (rows > cols)", {
+  skip_on_cran()
   # Force transpose by having more rows than cols
   cost <- matrix(c(1, 5, 3, 2, 5, 1, 4, 2, 3, 6, 2, 1), nrow = 4, ncol = 3)
   result <- assignment(cost, method = "jv")
@@ -16,6 +17,7 @@ test_that("assignment handles transposed matrix (rows > cols)", {
 })
 
 test_that("assignment with maximization", {
+  skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1, 3, 2, 4, 3, 2), 3, 3)
   result <- assignment(cost, maximize = TRUE)
   expect_equal(result$status, "optimal")
@@ -25,12 +27,14 @@ test_that("assignment with maximization", {
 })
 
 test_that("assignment auto-selection picks bruteforce for small", {
+  skip_on_cran()
   cost <- matrix(runif(4), 2, 2)
   result <- assignment(cost, method = "auto")
   expect_equal(result$method_used, "bruteforce")
 })
 
 test_that("assignment auto-selection picks sap for very rectangular", {
+  skip_on_cran()
   # m >= 3*n triggers SAP
   set.seed(42)
   cost <- matrix(runif(4 * 12), 4, 12)  # 4 rows, 12 cols (12 >= 3*4)
@@ -43,6 +47,7 @@ test_that("assignment auto-selection picks sap for very rectangular", {
 # ------------------------------------------------------------------------------
 
 test_that("lap_solve handles rectangular matrices", {
+  skip_on_cran()
   cost <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 2, ncol = 3)
   result <- lap_solve(cost)
   expect_s3_class(result, "lap_solve_result")
@@ -50,6 +55,7 @@ test_that("lap_solve handles rectangular matrices", {
 })
 
 test_that("lap_solve with data frame input", {
+  skip_on_cran()
   df <- tibble::tibble(
     source = c(1, 1, 2, 2, 3, 3),
     target = c(1, 2, 1, 2, 1, 2),
@@ -64,6 +70,7 @@ test_that("lap_solve with data frame input", {
 # ------------------------------------------------------------------------------
 
 test_that("preprocess_matching_vars handles all constant variables", {
+  skip_on_cran()
   left <- data.frame(x = c(1, 1, 1), y = c(2, 2, 2))
   right <- data.frame(x = c(3, 3, 3), y = c(4, 4, 4))
 
@@ -75,6 +82,7 @@ test_that("preprocess_matching_vars handles all constant variables", {
 })
 
 test_that("preprocess_matching_vars handles high missing", {
+  skip_on_cran()
   left <- data.frame(x = c(1, NA, NA, NA, 5))
   right <- data.frame(x = c(2, NA, NA, NA, 6))
 
@@ -90,6 +98,7 @@ test_that("preprocess_matching_vars handles high missing", {
 # ------------------------------------------------------------------------------
 
 test_that("compute_distance_matrix handles matrices directly", {
+  skip_on_cran()
   left_mat <- matrix(1:3, ncol = 1)
   right_mat <- matrix(4:6, ncol = 1)
   result <- couplr:::compute_distance_matrix(left_mat, right_mat)
@@ -98,6 +107,7 @@ test_that("compute_distance_matrix handles matrices directly", {
 })
 
 test_that("compute_distance_matrix with mahalanobis", {
+  skip_on_cran()
   set.seed(123)
   left_mat <- cbind(rnorm(10), rnorm(10))
   right_mat <- cbind(rnorm(10), rnorm(10))
@@ -112,6 +122,7 @@ test_that("compute_distance_matrix with mahalanobis", {
 # ------------------------------------------------------------------------------
 
 test_that("matchmaker returns block info structure", {
+  skip_on_cran()
   left <- data.frame(id = 1:6, group = rep(c("A", "B"), each = 3))
   right <- data.frame(id = 7:12, group = rep(c("A", "B"), each = 3))
 
@@ -125,6 +136,7 @@ test_that("matchmaker returns block info structure", {
 # ------------------------------------------------------------------------------
 
 test_that("greedy_couples with different strategies", {
+  skip_on_cran()
   set.seed(123)
   left <- data.frame(x = rnorm(10))
   right <- data.frame(x = rnorm(15))
@@ -141,6 +153,7 @@ test_that("greedy_couples with different strategies", {
 # ------------------------------------------------------------------------------
 
 test_that("join_matched creates merged dataset", {
+  skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(4, 5, 6))
 
@@ -157,6 +170,7 @@ test_that("join_matched creates merged dataset", {
 # ------------------------------------------------------------------------------
 
 test_that("bottleneck_assignment returns bottleneck value", {
+  skip_on_cran()
   cost <- matrix(c(1, 5, 3, 2, 8, 4, 6, 7, 2), 3, 3)
   result <- bottleneck_assignment(cost)
   expect_true(!is.null(result$bottleneck))
@@ -164,6 +178,7 @@ test_that("bottleneck_assignment returns bottleneck value", {
 })
 
 test_that("sinkhorn with high lambda converges to assignment", {
+  skip_on_cran()
   cost <- matrix(c(1, 10, 10, 1), 2, 2)
   result <- sinkhorn(cost, lambda = 100)
   expect_true(result$converged)
@@ -178,6 +193,7 @@ test_that("sinkhorn with high lambda converges to assignment", {
 # ------------------------------------------------------------------------------
 
 test_that("print.matching_result works", {
+  skip_on_cran()
   left <- data.frame(x = 1:3)
   right <- data.frame(x = 4:6)
   result <- match_couples(left, right, vars = "x")
@@ -185,6 +201,7 @@ test_that("print.matching_result works", {
 })
 
 test_that("print.balance_result works", {
+  skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 6:10)
   match_result <- match_couples(left, right, vars = "x")

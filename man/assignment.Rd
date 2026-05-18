@@ -26,9 +26,9 @@ entries are treated as forbidden assignments.}
 \strong{General-purpose solvers:}
 \itemize{
 \item \code{"auto"} — Automatic selection based on problem characteristics (default)
-\item \code{"jv"} — 'Jonker-Volgenant', fast general-purpose O(n³) with warm-start
-\item \code{"hungarian"} — Classic 'Hungarian' (shortest augmenting path) O(n³)
-\item \code{"munkres"} — Matrix-form 'Kuhn-Munkres' O(n⁴), reference implementation
+\item \code{"jv"} — 'Jonker-Volgenant', fast general-purpose O(n^3) with warm-start
+\item \code{"hungarian"} — Classic 'Hungarian' (shortest augmenting path) O(n^3)
+\item \code{"munkres"} — Matrix-form 'Kuhn-Munkres' O(n^4), reference implementation
 }
 
 \strong{Auction-based solvers:}
@@ -51,7 +51,7 @@ entries are treated as forbidden assignments.}
 \strong{Advanced solvers:}
 \itemize{
 \item \code{"csa"} — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
-\item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n³ log C)
+\item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)
 \item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
 \item \code{"csflow"} — Cost-scaling network flow
 \item \code{"network_simplex"} — 'Network simplex' with spanning tree representation

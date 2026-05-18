@@ -6,6 +6,67 @@
 # Shared Internal Implementations
 # ==============================================================================
 
+# Solve a LAP that may have rows or columns where every edge is forbidden
+# (Inf / NA / >= BIG_COST). Such rows/cols can't be matched, and most C++
+# solvers would raise "Infeasible: row N has no allowed edges". We drop them
+# before calling the solver and re-map the result back to original indices so
+# the caller can report them as unmatched.
+#
+# Returns a list with:
+#   result       — raw solver output for the submatrix (or NULL if degenerate)
+#   matched_rows — 1-based indices into the *original* cost_matrix rows
+#   matched_cols — 1-based indices into the *original* cost_matrix cols
+.solve_with_partial_feasibility <- function(cost_matrix, solver_fn,
+                                            solver_params = list()) {
+  feasible <- is.finite(cost_matrix) & cost_matrix < BIG_COST
+  row_ok <- rowSums(feasible) > 0L
+  col_ok <- colSums(feasible) > 0L
+
+  if (!any(row_ok) || !any(col_ok)) {
+    return(list(result = NULL,
+                matched_rows = integer(0),
+                matched_cols = integer(0)))
+  }
+
+  if (all(row_ok) && all(col_ok)) {
+    sub <- cost_matrix
+  } else {
+    sub <- cost_matrix[row_ok, col_ok, drop = FALSE]
+  }
+
+  orig_rows <- which(row_ok)
+  orig_cols <- which(col_ok)
+
+  # Try the requested optimal solver. If even the feasibility-pruned submatrix
+  # has no perfect matching (Hall's-condition violation), every LAP method will
+  # raise. Fall back to greedy_matching so callers with strict constraints get
+  # the partial matching the C++ greedy can produce instead of a hard error.
+  res <- tryCatch(
+    do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params)),
+    error = function(e) NULL
+  )
+
+  if (is.null(res)) {
+    res <- tryCatch(
+      greedy_matching(sub, strategy = "sorted"),
+      error = function(e) NULL
+    )
+    if (is.null(res)) {
+      return(list(result = NULL,
+                  matched_rows = integer(0),
+                  matched_cols = integer(0)))
+    }
+  }
+
+  match_vec <- as.integer(res$match)
+  matched_sub_rows <- which(match_vec > 0L)
+  matched_sub_cols <- match_vec[matched_sub_rows]
+  matched_rows <- orig_rows[matched_sub_rows]
+  matched_cols <- orig_cols[matched_sub_cols]
+
+  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
+}
+
 #' Shared single matching implementation
 #'
 #' Core logic for both optimal (LAP) and greedy matching without blocking.
@@ -81,53 +142,41 @@
   }
 
   # --- Standard 1:1 matching ---
-  # Solve
-  solver_result <- do.call(solver_fn, c(list(cost_matrix, maximize = FALSE),
-                                        solver_params))
+  # Drop rows/cols with no allowed edges so the LAP solver sees a feasible
+  # submatrix; the dropped indices return as unmatched. Without this filter
+  # the C++ solvers raise "Infeasible: row N has no allowed edges" instead
+  # of producing the partial matching the caller expects with max_distance
+  # / calipers constraints.
+  solved <- .solve_with_partial_feasibility(cost_matrix, solver_fn, solver_params)
+  solver_result <- solved$result
+  matched_rows <- solved$matched_rows  # 1-based indices into original cost_matrix rows
+  matched_cols <- solved$matched_cols  # 1-based indices into original cost_matrix cols
 
-  # Extract matches
-  matched_rows <- which(solver_result$match > 0)
-
-  if (length(matched_rows) == 0) {
+  if (length(matched_rows) == 0L) {
     pairs <- tibble::tibble(
       left_id = character(0),
       right_id = character(0),
       distance = numeric(0)
     )
   } else {
-    # Get actual distances (not BIG_COST)
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- solver_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
+    distances <- cost_matrix[cbind(matched_rows, matched_cols)]
 
     pairs <- tibble::tibble(
       left_id = left_ids[matched_rows],
-      right_id = right_ids[solver_result$match[matched_rows]],
+      right_id = right_ids[matched_cols],
       distance = distances
     )
 
     # Add variable differences
     for (v in vars) {
       left_vals <- left[[v]][matched_rows]
-      right_vals <- right[[v]][solver_result$match[matched_rows]]
+      right_vals <- right[[v]][matched_cols]
       pairs[[paste0(".", v, "_diff")]] <- left_vals - right_vals
     }
   }
 
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- solver_result$match[matched_rows]
-
-  unmatched_left <- setdiff(seq_len(nrow(left)), matched_left)
-  unmatched_right <- setdiff(seq_len(nrow(right)), matched_right)
+  unmatched_left <- setdiff(seq_len(nrow(left)), matched_rows)
+  unmatched_right <- setdiff(seq_len(nrow(right)), matched_cols)
 
   list(
     pairs = pairs,
@@ -136,7 +185,7 @@
       right = right_ids[unmatched_right]
     ),
     info = list(
-      solver = solver_result$method_used,
+      solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
       n_matched = nrow(pairs),
       total_distance = sum(pairs$distance, na.rm = TRUE)
     )
@@ -372,50 +421,35 @@
     ))
   }
 
-  # Solve
-  solver_result <- do.call(solver_fn, c(list(cost_matrix, maximize = FALSE),
-                                        solver_params))
+  # Solve with row/col filtering (see .solve_with_partial_feasibility)
+  solved <- .solve_with_partial_feasibility(cost_matrix, solver_fn, solver_params)
+  solver_result <- solved$result
+  matched_rows <- solved$matched_rows
+  matched_cols <- solved$matched_cols
 
-  # Extract matches
-  matched_rows <- which(solver_result$match > 0)
-
-  if (length(matched_rows) == 0) {
+  if (length(matched_rows) == 0L) {
     pairs <- tibble::tibble(
       left_id = character(0),
       right_id = character(0),
       distance = numeric(0)
     )
   } else {
-    # Get actual distances
-    distances <- numeric(length(matched_rows))
-    for (i in seq_along(matched_rows)) {
-      row <- matched_rows[i]
-      col <- solver_result$match[row]
-      distances[i] <- cost_matrix[row, col]
-    }
-
-    # Filter out BIG_COST matches
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    distances <- distances[valid]
+    distances <- cost_matrix[cbind(matched_rows, matched_cols)]
 
     pairs <- tibble::tibble(
       left_id = left_ids[matched_rows],
-      right_id = right_ids[solver_result$match[matched_rows]],
+      right_id = right_ids[matched_cols],
       distance = distances
     )
   }
 
-  # Unmatched units
-  matched_left <- matched_rows
-  matched_right <- solver_result$match[matched_rows]
-  unmatched_left <- setdiff(seq_along(left_ids), matched_left)
-  unmatched_right <- setdiff(seq_along(right_ids), matched_right)
+  unmatched_left <- setdiff(seq_along(left_ids), matched_rows)
+  unmatched_right <- setdiff(seq_along(right_ids), matched_cols)
 
   info <- c(
     list(
       method = method_label,
-      solver = solver_result$method_used,
+      solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
       n_matched = nrow(pairs),
       total_distance = sum(pairs$distance),
       distance_metric = dist_obj$metadata$distance,

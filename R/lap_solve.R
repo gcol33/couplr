@@ -17,9 +17,9 @@
 #'   **General-purpose solvers:**
 #'   \itemize{
 #'     \item `"auto"` — Automatic selection based on problem characteristics (default)
-#'     \item `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n³) with warm-start
-#'     \item `"hungarian"` — Classic 'Hungarian' (shortest augmenting path) O(n³)
-#'     \item `"munkres"` — Matrix-form 'Kuhn-Munkres' O(n⁴), reference implementation
+#'     \item `"jv"` — 'Jonker-Volgenant', fast general-purpose O(n^3) with warm-start
+#'     \item `"hungarian"` — Classic 'Hungarian' (shortest augmenting path) O(n^3)
+#'     \item `"munkres"` — Matrix-form 'Kuhn-Munkres' O(n^4), reference implementation
 #'   }
 #'
 #'   **Auction-based solvers:**
@@ -42,7 +42,7 @@
 #'   **Advanced solvers:**
 #'   \itemize{
 #'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
-#'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n³ log C)
+#'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Cost-scaling network flow
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
@@ -152,7 +152,11 @@ assignment <- function(cost, maximize = FALSE,
     } else {
       na_rate <- mean(is.na(cost) | is.infinite(cost))
       if (na_rate > 0.5) {
-        method <- if (n > 100) "lapmod" else "sap"
+        # Sparse: lapmod handles forbidden edges natively at every size.
+        # The previous fallback to "sap" for n <= 100 has a worst-case stall on
+        # near-square highly-sparse matrices (e.g. propensity-score matching
+        # with tight calipers), so always use lapmod when sparse.
+        method <- "lapmod"
       } else if (m >= 3 * n) {
         method <- "sap"
       } else {

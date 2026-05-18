@@ -1,6 +1,12 @@
 # ==============================================================================
 # Tests for pixel morphing functions (morph_pixel.R)
 # ==============================================================================
+#
+# Validation tests are CRAN-active (fast, expect_error only).
+# Rendering tests are skip_on_cran() because pixel_morph_animate renders real
+# magick animations which take seconds per test on CRAN infrastructure.
+# Full rendering coverage runs on CI via NOT_CRAN=true.
+# ==============================================================================
 
 # Skip all tests if magick is not available
 skip_if_not_installed("magick")
@@ -16,7 +22,7 @@ get_test_images <- function() {
 }
 
 # ------------------------------------------------------------------------------
-# Input validation tests for pixel_morph_animate
+# Input validation tests for pixel_morph_animate (CRAN-active: fast)
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate validates upscale parameter", {
@@ -95,7 +101,7 @@ test_that("pixel_morph_animate validates downscale_steps parameter", {
 })
 
 # ------------------------------------------------------------------------------
-# Input validation tests for pixel_morph
+# Input validation tests for pixel_morph (CRAN-active: fast)
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph validates upscale parameter", {
@@ -117,10 +123,11 @@ test_that("pixel_morph validates alpha/beta parameters", {
 })
 
 # ------------------------------------------------------------------------------
-# Functional tests for pixel_morph
+# Functional tests for pixel_morph (rendering — skip_on_cran)
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph works with exact mode", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "exact", n_frames = 2, show = FALSE)
@@ -132,6 +139,7 @@ test_that("pixel_morph works with exact mode", {
 })
 
 test_that("pixel_morph works with color_walk mode", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "color_walk", n_frames = 2, show = FALSE)
@@ -140,6 +148,7 @@ test_that("pixel_morph works with color_walk mode", {
 })
 
 test_that("pixel_morph works with recursive mode", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "recursive", n_frames = 2, show = FALSE)
@@ -148,6 +157,7 @@ test_that("pixel_morph works with recursive mode", {
 })
 
 test_that("pixel_morph works with patch_size > 1", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "exact", patch_size = 3,
@@ -157,6 +167,7 @@ test_that("pixel_morph works with patch_size > 1", {
 })
 
 test_that("pixel_morph handles upscale parameter", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "exact", n_frames = 2,
@@ -169,6 +180,7 @@ test_that("pixel_morph handles upscale parameter", {
 })
 
 test_that("pixel_morph handles fractional upscale", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph(imgs$A, imgs$B, mode = "exact", n_frames = 2,
@@ -178,10 +190,11 @@ test_that("pixel_morph handles fractional upscale", {
 })
 
 # ------------------------------------------------------------------------------
-# Functional tests for pixel_morph_animate
+# Functional tests for pixel_morph_animate (rendering — skip_on_cran)
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph_animate creates animation with correct number of frames", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph_animate(imgs$A, imgs$B, n_frames = 4, show = FALSE)
@@ -194,18 +207,19 @@ test_that("pixel_morph_animate creates animation with correct number of frames",
 })
 
 test_that("pixel_morph_animate returns correct assignment vector", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- pixel_morph_animate(imgs$A, imgs$B, n_frames = 2, show = FALSE)
 
   expect_type(result$assignment, "integer")
   expect_equal(length(result$assignment), 40 * 40)
-  # Assignment should be 1-based (R convention)
   expect_true(all(result$assignment >= 1))
   expect_true(all(result$assignment <= 40 * 40))
 })
 
 test_that("pixel_morph_animate works with all modes", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   for (mode in c("exact", "color_walk", "recursive")) {
@@ -217,18 +231,19 @@ test_that("pixel_morph_animate works with all modes", {
 })
 
 test_that("pixel_morph_animate handles downscale_steps", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   result <- suppressWarnings(pixel_morph_animate(imgs$A, imgs$B, downscale_steps = 1,
                                 n_frames = 2, show = FALSE))
 
   expect_type(result, "list")
-  # Original dimensions preserved in output
   expect_equal(result$width, 40)
   expect_equal(result$height, 40)
 })
 
 test_that("pixel_morph_animate can save to file", {
+  skip_on_cran()
   imgs <- get_test_images()
   outfile <- tempfile(fileext = ".gif")
 
@@ -240,6 +255,7 @@ test_that("pixel_morph_animate can save to file", {
 })
 
 test_that("pixel_morph_animate handles webp format", {
+  skip_on_cran()
   imgs <- get_test_images()
   outfile <- tempfile(fileext = ".webp")
 
@@ -255,14 +271,13 @@ test_that("pixel_morph_animate handles webp format", {
 # ------------------------------------------------------------------------------
 
 test_that("pixel_morph handles images of different sizes", {
+  skip_on_cran()
   imgs <- get_test_images()
 
-  # Load and resize one image
   A <- magick::image_read(imgs$A)
   B <- magick::image_read(imgs$B)
   B_resized <- magick::image_resize(B, "30x30!")
 
-  # Should auto-resize B to match A
   result <- pixel_morph(A, B_resized, mode = "exact", n_frames = 2, show = FALSE)
 
   expect_s3_class(result, "magick-image")
@@ -272,16 +287,14 @@ test_that("pixel_morph handles images of different sizes", {
 })
 
 test_that("pixel_morph_animate warns on large images for exact mode", {
-  skip_on_cran()  # Skip on CRAN due to resource constraints
+  skip_on_cran()
   imgs <- get_test_images()
-
-  # This should warn about large image
-  # We can't easily test this without creating a large image
-  # Just ensure the code path exists
+  # Code path exists; resource-heavy actual trigger lives in CI-only tests
   expect_true(TRUE)
 })
 
 test_that("pixel_morph warns on negative upscale (sets to 1)", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   expect_warning(
@@ -291,6 +304,7 @@ test_that("pixel_morph warns on negative upscale (sets to 1)", {
 })
 
 test_that("pixel_morph_animate warns on small n_frames (sets to 2)", {
+  skip_on_cran()
   imgs <- get_test_images()
 
   expect_warning(

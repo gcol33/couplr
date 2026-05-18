@@ -57,3 +57,10 @@
 ^couplr_.*\.tar\.gz$
 ^couplr\.Rcheck$
 ^couplr\.Rcheck\.streamlog$
+^\.run_.*\.R$
+^\.time_.*\.R$
+^\.Rd2pdf.*$
+^_check.*$
+^check_full$
+^check_final$
+^check_notcran$

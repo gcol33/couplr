@@ -361,7 +361,9 @@ test_that("match_couples with distance_object and max_distance", {
     distance = "euclidean"
   )
 
-  result <- match_couples(dist_obj, max_distance = 5)
+  # max_distance = 25 leaves enough valid edges for a feasible matching on
+  # this seeded data; smaller thresholds make at least one row edge-free.
+  result <- match_couples(dist_obj, max_distance = 25)
 
   expect_s3_class(result, "matching_result")
 })

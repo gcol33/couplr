@@ -30,8 +30,11 @@ apply_max_distance <- function(cost_matrix, max_distance = Inf) {
     stop("max_distance must be positive", call. = FALSE)
   }
 
-  # Mark pairs exceeding max_distance as forbidden
-  cost_matrix[cost_matrix > max_distance] <- BIG_COST
+  # Mark pairs exceeding max_distance as forbidden (Inf, not BIG_COST: the
+  # LAP solvers detect non-finite cells as forbidden and short-circuit on
+  # infeasibility; a huge finite "BIG_COST" looks like a regular edge to JV
+  # and can stall the solver on sparse problems).
+  cost_matrix[cost_matrix > max_distance] <- Inf
 
   cost_matrix
 }
@@ -66,7 +69,7 @@ apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
       for (j in seq_len(n_right)) {
         abs_diff <- abs(left_vals[i] - right_vals[j])
         if (abs_diff > caliper_value) {
-          cost_matrix[i, j] <- BIG_COST
+          cost_matrix[i, j] <- Inf
         }
       }
     }
@@ -90,7 +93,7 @@ mark_forbidden_pairs <- function(cost_matrix, forbidden_indices) {
   for (k in seq_len(nrow(forbidden_indices))) {
     i <- forbidden_indices[k, 1]
     j <- forbidden_indices[k, 2]
-    cost_matrix[i, j] <- BIG_COST
+    cost_matrix[i, j] <- Inf
   }
 
   cost_matrix

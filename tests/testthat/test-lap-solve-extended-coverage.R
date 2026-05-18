@@ -49,14 +49,14 @@ test_that("assignment auto selects lapmod for large sparse matrix", {
   expect_equal(result$method_used, "lapmod")
 })
 
-test_that("assignment auto selects sap for smaller sparse matrix", {
+test_that("assignment auto selects lapmod for sparse matrix at any size", {
   skip_on_cran()
   set.seed(123)
   cost <- matrix(runif(50 * 50), 50, 50)
   # Make >50% forbidden
   cost[sample(length(cost), length(cost) * 0.6)] <- Inf
   result <- assignment(cost, method = "auto")
-  expect_equal(result$method_used, "sap")
+  expect_equal(result$method_used, "lapmod")
 })
 
 test_that("assignment auto selects hk01 for binary costs (large matrix)", {

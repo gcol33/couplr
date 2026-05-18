@@ -9,4 +9,12 @@
 library(testthat)
 library(couplr)
 
-test_check("couplr")
+# Diagnostic: stream test-by-test progress to testthat.Rout (alongside the
+# normal CheckReporter R CMD check expects), so a hanging test on macOS CI
+# can be located from the partial log when the step times out.
+test_check("couplr", reporter = testthat::MultiReporter$new(
+  reporters = list(
+    testthat::CheckReporter$new(),
+    testthat::LocationReporter$new()
+  )
+))

@@ -46,5 +46,7 @@ jobs:
           cache-version: 1
 
       - uses: r-lib/actions/check-r-package@v2
+        timeout-minutes: 25
         with:
           upload-snapshots: true
+          upload-results: true

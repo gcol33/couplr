@@ -35,7 +35,7 @@ analysis-ready matched output for optimal, greedy, propensity-score, full,
 coarsened-exact, subclassification, and cardinality matching, with balance
 diagnostics and Rosenbaum sensitivity bounds [@Rosenbaum2002]. A low-level
 interface exposes the solvers directly when the user already has a cost
-matrix. An automatic dispatcher routes each problem to one of 18 internal
+matrix. An automatic dispatcher routes each problem to one of 19 internal
 solvers based on shape, sparsity, cost type, and size, so the same package
 supports statistical matching workflows and general-purpose assignment
 tasks.
@@ -69,7 +69,7 @@ one algorithm each without the preprocessing, constraint, or diagnostic
 machinery a matching workflow needs.
 
 `couplr` combines both. It treats covariate distance as the primary entry
-point rather than a side option behind a propensity score, and ships 18
+point rather than a side option behind a propensity score, and ships 19
 assignment solvers spanning classical dense assignment, sparse and
 rectangular variants, k-best [@Murty1968], bottleneck, min-cost flow, and
 entropy-regularized transport, with an automatic dispatcher.
@@ -239,7 +239,7 @@ replicates respectively for the rows; `optmatch_max_problem_size` set to
 | $3{,}333 + 6{,}667$        |  53.7 s  |       79.3 s |        110 s |
 | $6{,}667 + 13{,}333$       |   210 s  |        657 s | int overflow |
 
-Table \ref{tab:capability} summarises feature coverage. `couplr` exposes 18
+Table \ref{tab:capability} summarises feature coverage. `couplr` exposes 19
 solvers through a single dispatcher, supports k-best, bottleneck, and
 Rosenbaum sensitivity bounds in the core package, and accepts both data
 frames and user-supplied cost matrices.

@@ -141,16 +141,16 @@ assignment solvers in `couplr`, arranged as five small-multiple panels
 grouped by algorithm family (JV / augmenting-path, Auction, Cost-scaling,
 Flow-based, and Other). Within each panel, individual solvers share a
 single family colour and are distinguished by line style; all panels share
-log--log axes. (b) End-to-end 1-to-1 optimal Mahalanobis matching on
-synthetic LaLonde-style data ($n_t : n_c = 1 : 2$, eight covariates),
-comparing `couplr` ($\blacksquare$) against `optmatch` ($\bullet$) and
-`MatchIt` ($\blacktriangle$). At $n_t + n_c = 20{,}000$, `couplr` is
-$3.1\times$ faster than `optmatch`; `MatchIt::matchit(method = "optimal")`
-aborts inside its `optmatch` backend with an integer-overflow at this size.
-(a) is the median of 5 replicates on a single core, integer cost matrices
-with entries in $[1, 10{,}000]$; (b) follows the protocol of Table
-\ref{tab:scaling}. Reproducible from `paper/make-figure.R`,
-`paper/bench_scaling.R`, and `paper/bench_scaling_alternatives.R`.
+log--log axes. Median of 5 replicates on a single core; integer cost
+matrices with entries in $[1, 10{,}000]$. (b) Absolute standardized mean
+differences on the LaLonde NSW data (185 treated, 429 control, eight
+covariates) before and after 1-to-1 optimal Mahalanobis matching. After
+matching, `couplr`, `MatchIt`, and `optmatch` produce identical $|SMD|$ to
+three decimal places, so a single matched point per covariate is shown.
+Seven of the eight covariates fall below the 0.1 balance threshold (dashed
+line); the `race_Black` indicator is reduced from $1.757$ to $1.053$, a residual no
+1-to-1 matcher can resolve here. Reproducible from `paper/make-figure.R`
+and `paper/bench_lalonde.R`.
 \label{fig:benchmark}](figures/benchmark.png){width=100%}
 
 `balance_diagnostics()` reports standardized mean differences, variance
@@ -204,7 +204,7 @@ Mahalanobis distance with pooled within-group covariance, the convention
 the canonical Lalonde NSW dataset [@LaLonde1986; @DehejiaWahba1999] (185
 treated, 429 control, eight covariates) all three packages produce identical
 absolute standardized mean differences to three decimal places, reducing
-the maximum $|\text{SMD}|$ from $1.757$ to $1.053$ on `race_black` (a
+the maximum $|\text{SMD}|$ from $1.757$ to $1.053$ on `race_Black` (a
 residual no 1-to-1 matcher can resolve here) and the remaining seven
 covariates to $\le 0.124$ [@Stuart2010]; per-covariate values are in
 `paper/lalonde-per-covariate.csv`.

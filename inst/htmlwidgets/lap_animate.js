@@ -1,24 +1,43 @@
 // =============================================================================
 // lap_animate htmlwidget
 // =============================================================================
-// Renders an interactive bipartite-graph animation of an assignment algorithm.
-// Consumes a trace produced by R/animate.R with the following shape:
+// Two-column ladder visualisation of an assignment-algorithm trace.
 //
+// LAYOUT
+//   Left column = rows (R1..Rn), right column = columns (C1..Cm), both in
+//   natural index order. A single shared spacing is used so R_i and C_i sit
+//   at the same y for square inputs. Nodes never move.
+//
+// EMPHASIS
+//   Matched pairs are visually "settled": the row node and column node both
+//   get a .matched modifier that fades them to low opacity, while the
+//   matched edge stays bright green. The result is that the algorithm's
+//   active work (un-faded nodes, orange active edges, red dashed path
+//   edges) stays prominent against a backdrop of dimmed finished pairs.
+//
+// EDGE STATES (CSS priority: path > active > matched)
+//   matched  green       -- in the current matching
+//   active   orange      -- being explored this frame
+//   path     red dashed  -- on the current augmenting path
+//
+// Edges are drawn lazily -- the scene starts with only dots and grows
+// edges in via the stroke-dashoffset trick. There is no pre-drawn n*m
+// backdrop. This keeps the picture readable up to n = 100.
+//
+// Trace shape (from R/animate.R):
 //   x = {
 //     meta: { algorithm, n_rows, n_cols, cost_matrix[][], maximize,
 //             total_cost, description },
 //     frames: [
-//       { step, phase, description, matching: int[n_rows] (1-indexed col,
-//         0 = unmatched), dual_u: number[] | null, dual_v: number[] | null,
-//         active_edges: [[r,c], ...], path: [[r,c], ...] },
+//       { step, phase, description,
+//         matching: int[n_rows]   // 1-indexed col; 0 = unmatched
+//         dual_u : number[] | null,
+//         dual_v : number[] | null,
+//         active_edges: [[r,c], ...],
+//         path        : [[r,c], ...] },
 //       ...
 //     ]
 //   }
-//
-// Edge highlighting classes:
-//   - matched : final/current matching (green)
-//   - active  : currently being explored (orange)
-//   - path    : on current augmenting path / shortest-path tree (red dashed)
 // =============================================================================
 
 HTMLWidgets.widget({
@@ -28,7 +47,7 @@ HTMLWidgets.widget({
   factory: function (el, width, height) {
 
     // -----------------------------------------------------------------------
-    // DOM scaffolding (built once per widget instance)
+    // DOM scaffolding
     // -----------------------------------------------------------------------
     el.classList.add('couplr-lap-animate');
     el.innerHTML = '';
@@ -37,7 +56,7 @@ HTMLWidgets.widget({
     header.className = 'couplr-header';
     header.innerHTML =
       '<div><span class="algo-name"></span><span class="phase-badge"></span></div>' +
-      '<div class="step-counter"></div>';
+      '<div><span class="match-counter"></span><span class="step-counter"></span></div>';
     el.appendChild(header);
 
     const canvas = document.createElement('div');
@@ -65,12 +84,12 @@ HTMLWidgets.widget({
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     canvas.appendChild(svg);
 
-    // Layers (back-to-front: edges, edge labels, nodes, node labels, duals)
-    const gEdges     = document.createElementNS(svgNS, 'g');
-    const gEdgeCosts = document.createElementNS(svgNS, 'g');
-    const gNodes     = document.createElementNS(svgNS, 'g');
+    // Layers (back-to-front)
+    const gEdges      = document.createElementNS(svgNS, 'g');
+    const gEdgeCosts  = document.createElementNS(svgNS, 'g');
+    const gNodes      = document.createElementNS(svgNS, 'g');
     const gNodeLabels = document.createElementNS(svgNS, 'g');
-    const gDuals     = document.createElementNS(svgNS, 'g');
+    const gDuals      = document.createElementNS(svgNS, 'g');
     svg.appendChild(gEdges);
     svg.appendChild(gEdgeCosts);
     svg.appendChild(gNodes);
@@ -87,8 +106,10 @@ HTMLWidgets.widget({
       isPlaying: false,
       speedMs: 800,
       timer: null,
-      layout: null,    // {nodeR, rowX, colX, ys: {rows:[], cols:[]}, w, h}
-      edgeKey: {}      // map "r-c" -> SVG line element
+      layout: null,
+      rowNodes: [], colNodes: [],
+      rowLabels: [], colLabels: [],
+      liveEdges: new Map()   // "r-c" -> { line, costEl, type }
     };
 
     // -----------------------------------------------------------------------
@@ -97,13 +118,10 @@ HTMLWidgets.widget({
     function edgeKey(r, c) { return r + '-' + c; }
 
     function normalizeEdgeList(edges) {
-      if (!edges) return [];
       if (!Array.isArray(edges)) return [];
       const out = [];
       for (const e of edges) {
-        if (Array.isArray(e) && e.length >= 2) {
-          out.push([+e[0], +e[1]]);
-        }
+        if (Array.isArray(e) && e.length >= 2) out.push([+e[0], +e[1]]);
       }
       return out;
     }
@@ -121,6 +139,9 @@ HTMLWidgets.widget({
     // -----------------------------------------------------------------------
     // Layout
     // -----------------------------------------------------------------------
+    // Single shared spacing for both columns. R_i sits at slot (i-1), C_j
+    // at slot (j-1). Total slot count is max(n, m).
+    // -----------------------------------------------------------------------
     function computeLayout() {
       const rect = canvas.getBoundingClientRect();
       const W = Math.max(rect.width, 320);
@@ -130,130 +151,254 @@ HTMLWidgets.widget({
       svg.setAttribute('width', W);
       svg.setAttribute('height', H);
 
+      const nSlots = Math.max(state.n, state.m, 1);
       const padY = 24;
-      const padX = 64;
-      const nMax = Math.max(state.n, state.m, 1);
-      const spacing = (H - 2 * padY) / Math.max(nMax - 1, 1);
-      const nodeR = Math.max(8, Math.min(22, spacing * 0.35));
+      const spacing = (H - 2 * padY) / Math.max(nSlots - 1, 1);
 
-      const rowX = padX;
-      const colX = W - padX;
+      const showNodeLabels = nSlots <= 10;
+      const showCostLabels = state.n <= 8 && state.m <= 8;
+      const showDualLabels = nSlots <= 15;
 
-      // Center each column vertically
-      function ys(count) {
-        if (count <= 0) return [];
-        if (count === 1) return [H / 2];
-        const totalH = (count - 1) * spacing;
+      const padX = showNodeLabels ? 64 : 36;
+      const nodeR = Math.max(2, Math.min(spacing * 0.42, 22));
+
+      const slotY = new Array(nSlots);
+      if (nSlots === 1) {
+        slotY[0] = H / 2;
+      } else {
+        const totalH = (nSlots - 1) * spacing;
         const startY = (H - totalH) / 2;
-        const out = [];
-        for (let i = 0; i < count; i++) out.push(startY + i * spacing);
-        return out;
+        for (let s = 0; s < nSlots; s++) slotY[s] = startY + s * spacing;
       }
 
       state.layout = {
         W: W, H: H,
-        rowX: rowX, colX: colX,
+        rowX: padX, colX: W - padX,
         nodeR: nodeR,
-        rowYs: ys(state.n),
-        colYs: ys(state.m)
+        spacing: spacing,
+        slotY: slotY,
+        showNodeLabels: showNodeLabels,
+        showCostLabels: showCostLabels,
+        showDualLabels: showDualLabels
       };
     }
 
     // -----------------------------------------------------------------------
-    // Scene construction (nodes, all edges) — rebuilt on renderValue/resize
+    // Stage construction: row and column dots in natural order.
     // -----------------------------------------------------------------------
     function buildScene() {
-      // Clear
       gEdges.innerHTML = '';
       gEdgeCosts.innerHTML = '';
       gNodes.innerHTML = '';
       gNodeLabels.innerHTML = '';
       gDuals.innerHTML = '';
-      state.edgeKey = {};
+      state.liveEdges.clear();
+      state.rowNodes = []; state.colNodes = [];
+      state.rowLabels = []; state.colLabels = [];
 
       const L = state.layout;
-      const cost = state.trace.meta.cost_matrix;
-      const showCosts = (state.n <= 8 && state.m <= 8);
+      const strokeW = L.nodeR >= 6 ? 1.5 : 0;
 
-      // --- Edges (n * m) ----
-      for (let i = 0; i < state.n; i++) {
-        for (let j = 0; j < state.m; j++) {
-          const c = (cost && cost[i] && cost[i][j] !== undefined) ? cost[i][j] : null;
-          // Skip forbidden edges in rendering (null/NaN)
-          if (c === null || !Number.isFinite(c)) continue;
+      for (let i = 1; i <= state.n; i++) {
+        const y = L.slotY[i - 1];
+        const node = document.createElementNS(svgNS, 'circle');
+        node.setAttribute('cx', L.rowX);
+        node.setAttribute('cy', y);
+        node.setAttribute('r', L.nodeR);
+        node.setAttribute('stroke-width', strokeW);
+        node.setAttribute('class', 'couplr-node row');
+        gNodes.appendChild(node);
+        state.rowNodes[i] = node;
 
-          const line = document.createElementNS(svgNS, 'line');
-          line.setAttribute('x1', L.rowX);
-          line.setAttribute('y1', L.rowYs[i]);
-          line.setAttribute('x2', L.colX);
-          line.setAttribute('y2', L.colYs[j]);
-          line.setAttribute('class', 'couplr-edge');
-          gEdges.appendChild(line);
-          state.edgeKey[edgeKey(i + 1, j + 1)] = line;
-
-          if (showCosts) {
-            const t = document.createElementNS(svgNS, 'text');
-            const mx = (L.rowX + L.colX) / 2;
-            const my = (L.rowYs[i] + L.colYs[j]) / 2;
-            t.setAttribute('x', mx);
-            t.setAttribute('y', my);
-            t.setAttribute('class', 'couplr-edge-cost');
-            t.setAttribute('text-anchor', 'middle');
-            t.setAttribute('dominant-baseline', 'central');
-            t.textContent = fmtNum(c);
-            // Background rect for legibility
-            const bg = document.createElementNS(svgNS, 'rect');
-            const w = 22, h = 12;
-            bg.setAttribute('x', mx - w / 2);
-            bg.setAttribute('y', my - h / 2);
-            bg.setAttribute('width', w);
-            bg.setAttribute('height', h);
-            bg.setAttribute('fill', '#FAFAFA');
-            bg.setAttribute('stroke', 'none');
-            bg.setAttribute('opacity', '0.85');
-            gEdgeCosts.appendChild(bg);
-            gEdgeCosts.appendChild(t);
-          }
+        if (L.showNodeLabels) {
+          const label = document.createElementNS(svgNS, 'text');
+          label.setAttribute('x', L.rowX);
+          label.setAttribute('y', y);
+          label.setAttribute('class', 'couplr-node-label');
+          label.textContent = 'R' + i;
+          gNodeLabels.appendChild(label);
+          state.rowLabels[i] = label;
         }
       }
 
-      // --- Row nodes ----
-      for (let i = 0; i < state.n; i++) {
-        const node = document.createElementNS(svgNS, 'circle');
-        node.setAttribute('cx', L.rowX);
-        node.setAttribute('cy', L.rowYs[i]);
-        node.setAttribute('r', L.nodeR);
-        node.setAttribute('class', 'couplr-node row');
-        gNodes.appendChild(node);
-
-        const label = document.createElementNS(svgNS, 'text');
-        label.setAttribute('x', L.rowX);
-        label.setAttribute('y', L.rowYs[i]);
-        label.setAttribute('class', 'couplr-node-label');
-        label.textContent = 'R' + (i + 1);
-        gNodeLabels.appendChild(label);
-      }
-
-      // --- Col nodes ----
-      for (let j = 0; j < state.m; j++) {
+      for (let j = 1; j <= state.m; j++) {
+        const y = L.slotY[j - 1];
         const node = document.createElementNS(svgNS, 'circle');
         node.setAttribute('cx', L.colX);
-        node.setAttribute('cy', L.colYs[j]);
+        node.setAttribute('cy', y);
         node.setAttribute('r', L.nodeR);
+        node.setAttribute('stroke-width', strokeW);
         node.setAttribute('class', 'couplr-node col');
         gNodes.appendChild(node);
+        state.colNodes[j] = node;
 
-        const label = document.createElementNS(svgNS, 'text');
-        label.setAttribute('x', L.colX);
-        label.setAttribute('y', L.colYs[j]);
-        label.setAttribute('class', 'couplr-node-label');
-        label.textContent = 'C' + (j + 1);
-        gNodeLabels.appendChild(label);
+        if (L.showNodeLabels) {
+          const label = document.createElementNS(svgNS, 'text');
+          label.setAttribute('x', L.colX);
+          label.setAttribute('y', y);
+          label.setAttribute('class', 'couplr-node-label');
+          label.textContent = 'C' + j;
+          gNodeLabels.appendChild(label);
+          state.colLabels[j] = label;
+        }
+      }
+    }
+
+    function rowY(r) { return state.layout.slotY[r - 1]; }
+    function colY(c) { return state.layout.slotY[c - 1]; }
+
+    // -----------------------------------------------------------------------
+    // Edge lifecycle
+    // -----------------------------------------------------------------------
+    function createEdge(r, c, type) {
+      const L = state.layout;
+      const cost = state.trace.meta.cost_matrix;
+      const cVal = (cost && cost[r - 1] && cost[r - 1][c - 1] !== undefined)
+                   ? cost[r - 1][c - 1] : null;
+      if (cVal === null || !Number.isFinite(cVal)) return null;
+
+      const x1 = L.rowX, y1 = rowY(r);
+      const x2 = L.colX, y2 = colY(c);
+      const len = Math.hypot(x2 - x1, y2 - y1);
+
+      const line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'couplr-edge ' + type);
+      line.setAttribute('stroke-dasharray', len);
+      line.setAttribute('stroke-dashoffset', len);
+      gEdges.appendChild(line);
+
+      if (typeof line.animate === 'function') {
+        const anim = line.animate(
+          [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+          { duration: 320, easing: 'ease-out', fill: 'forwards' }
+        );
+        anim.onfinish = function () {
+          line.setAttribute('stroke-dashoffset', '0');
+        };
+      } else {
+        line.setAttribute('stroke-dashoffset', '0');
+      }
+
+      // Pulse-on-commit: a new matched edge enters at full opacity and
+      // thicker stroke, then settles to the faded CSS look.
+      if (type === 'matched') pulseMatch(line);
+
+      let costEl = null;
+      if (L.showCostLabels) {
+        const mx = (x1 + x2) / 2;
+        const my = (y1 + y2) / 2;
+        costEl = document.createElementNS(svgNS, 'text');
+        costEl.setAttribute('x', mx);
+        costEl.setAttribute('y', my);
+        costEl.setAttribute('class', 'couplr-edge-cost');
+        costEl.setAttribute('text-anchor', 'middle');
+        costEl.setAttribute('dominant-baseline', 'central');
+        costEl.textContent = fmtNum(cVal);
+        gEdgeCosts.appendChild(costEl);
+      }
+
+      return { line: line, costEl: costEl, type: type, r: r, c: c };
+    }
+
+    function removeEdge(rec) {
+      if (rec.line && rec.line.parentNode) rec.line.parentNode.removeChild(rec.line);
+      if (rec.costEl && rec.costEl.parentNode) rec.costEl.parentNode.removeChild(rec.costEl);
+    }
+
+    // Flash an edge at full opacity + thicker stroke, then settle. Used
+    // when an edge enters or transitions into the "matched" state, so
+    // the moment of commitment is visible before the edge fades into
+    // the matched-backbone group.
+    function pulseMatch(line) {
+      if (typeof line.animate !== 'function') return;
+      line.animate(
+        [
+          { opacity: 1.0, strokeWidth: 4.4, offset: 0 },
+          { opacity: 1.0, strokeWidth: 3.4, offset: 0.45 },
+          { opacity: 0.4, strokeWidth: 2.4, offset: 1.0 }
+        ],
+        { duration: 600, easing: 'ease-out', fill: 'forwards' }
+      );
+    }
+
+    function reconcileEdges(frame) {
+      const desired = new Map();
+      if (Array.isArray(frame.matching)) {
+        for (let i = 0; i < frame.matching.length; i++) {
+          const c = frame.matching[i];
+          if (c && c > 0) desired.set(edgeKey(i + 1, c), 'matched');
+        }
+      }
+      for (const rc of normalizeEdgeList(frame.active_edges)) {
+        desired.set(edgeKey(rc[0], rc[1]), 'active');
+      }
+      for (const rc of normalizeEdgeList(frame.path)) {
+        desired.set(edgeKey(rc[0], rc[1]), 'path');
+      }
+
+      for (const [k, rec] of state.liveEdges) {
+        if (!desired.has(k)) {
+          removeEdge(rec);
+          state.liveEdges.delete(k);
+        }
+      }
+
+      for (const [k, type] of desired) {
+        const existing = state.liveEdges.get(k);
+        if (!existing) {
+          const dash = k.indexOf('-');
+          const r = +k.substring(0, dash);
+          const c = +k.substring(dash + 1);
+          const rec = createEdge(r, c, type);
+          if (rec) state.liveEdges.set(k, rec);
+        } else if (existing.type !== type) {
+          existing.line.setAttribute('class', 'couplr-edge ' + type);
+          if (type === 'matched') pulseMatch(existing.line);
+          existing.type = type;
+        }
       }
     }
 
     // -----------------------------------------------------------------------
-    // Frame rendering: drive edge classes + dual labels + header/footer text
+    // Match emphasis: fade nodes (and labels) whose pair is in the current
+    // matching. The matched edge stays bright green, but its endpoints
+    // recede so the eye lands on the unmatched nodes still in play.
+    // -----------------------------------------------------------------------
+    function applyMatchedClass(frame) {
+      const matching = Array.isArray(frame.matching) ? frame.matching : [];
+      const matchedCols = new Set();
+      for (let i = 1; i <= state.n; i++) {
+        const c = matching[i - 1];
+        const node = state.rowNodes[i];
+        const label = state.rowLabels[i];
+        if (c && c > 0) {
+          matchedCols.add(c);
+          if (node) node.setAttribute('class', 'couplr-node row matched');
+          if (label) label.setAttribute('class', 'couplr-node-label matched');
+        } else {
+          if (node) node.setAttribute('class', 'couplr-node row');
+          if (label) label.setAttribute('class', 'couplr-node-label');
+        }
+      }
+      for (let j = 1; j <= state.m; j++) {
+        const node = state.colNodes[j];
+        const label = state.colLabels[j];
+        if (matchedCols.has(j)) {
+          if (node) node.setAttribute('class', 'couplr-node col matched');
+          if (label) label.setAttribute('class', 'couplr-node-label matched');
+        } else {
+          if (node) node.setAttribute('class', 'couplr-node col');
+          if (label) label.setAttribute('class', 'couplr-node-label');
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Frame rendering
     // -----------------------------------------------------------------------
     function renderFrame(idx) {
       const trace = state.trace;
@@ -265,76 +410,65 @@ HTMLWidgets.widget({
 
       const frame = trace.frames[idx];
 
-      // Reset every edge to default
-      for (const k in state.edgeKey) {
-        state.edgeKey[k].setAttribute('class', 'couplr-edge');
-      }
+      reconcileEdges(frame);
+      applyMatchedClass(frame);
 
-      // Matched edges from frame.matching (row -> col, 1-indexed, 0 = unmatched)
-      if (Array.isArray(frame.matching)) {
-        for (let i = 0; i < frame.matching.length; i++) {
-          const c = frame.matching[i];
-          if (c && c > 0) {
-            const line = state.edgeKey[edgeKey(i + 1, c)];
-            if (line) line.setAttribute('class', 'couplr-edge matched');
+      gDuals.innerHTML = '';
+      const L = state.layout;
+      if (L.showDualLabels) {
+        const ur = frame.dual_u, vc = frame.dual_v;
+        if (Array.isArray(ur)) {
+          for (let i = 1; i <= state.n && i - 1 < ur.length; i++) {
+            const u = ur[i - 1];
+            if (u === null || u === undefined) continue;
+            const t = document.createElementNS(svgNS, 'text');
+            t.setAttribute('x', L.rowX - L.nodeR - 6);
+            t.setAttribute('y', rowY(i));
+            t.setAttribute('class', 'couplr-dual-label');
+            t.setAttribute('text-anchor', 'end');
+            t.setAttribute('dominant-baseline', 'central');
+            t.textContent = 'u=' + fmtNum(u);
+            gDuals.appendChild(t);
+          }
+        }
+        if (Array.isArray(vc)) {
+          for (let j = 1; j <= state.m && j - 1 < vc.length; j++) {
+            const v = vc[j - 1];
+            if (v === null || v === undefined) continue;
+            const t = document.createElementNS(svgNS, 'text');
+            t.setAttribute('x', L.colX + L.nodeR + 6);
+            t.setAttribute('y', colY(j));
+            t.setAttribute('class', 'couplr-dual-label');
+            t.setAttribute('text-anchor', 'start');
+            t.setAttribute('dominant-baseline', 'central');
+            t.textContent = 'v=' + fmtNum(v);
+            gDuals.appendChild(t);
           }
         }
       }
 
-      // Active edges
-      const active = normalizeEdgeList(frame.active_edges);
-      for (const [r, c] of active) {
-        const line = state.edgeKey[edgeKey(r, c)];
-        if (line) line.setAttribute('class', 'couplr-edge active');
-      }
-
-      // Path edges (drawn last so they win over matched/active)
-      const path = normalizeEdgeList(frame.path);
-      for (const [r, c] of path) {
-        const line = state.edgeKey[edgeKey(r, c)];
-        if (line) line.setAttribute('class', 'couplr-edge path');
-      }
-
-      // Dual labels
-      gDuals.innerHTML = '';
-      const L = state.layout;
-      const ur = frame.dual_u, vc = frame.dual_v;
-      if (Array.isArray(ur)) {
-        for (let i = 0; i < ur.length && i < state.n; i++) {
-          if (ur[i] === null || ur[i] === undefined) continue;
-          const t = document.createElementNS(svgNS, 'text');
-          t.setAttribute('x', L.rowX - L.nodeR - 6);
-          t.setAttribute('y', L.rowYs[i]);
-          t.setAttribute('class', 'couplr-dual-label');
-          t.setAttribute('text-anchor', 'end');
-          t.setAttribute('dominant-baseline', 'central');
-          t.textContent = 'u=' + fmtNum(ur[i]);
-          gDuals.appendChild(t);
-        }
-      }
-      if (Array.isArray(vc)) {
-        for (let j = 0; j < vc.length && j < state.m; j++) {
-          if (vc[j] === null || vc[j] === undefined) continue;
-          const t = document.createElementNS(svgNS, 'text');
-          t.setAttribute('x', L.colX + L.nodeR + 6);
-          t.setAttribute('y', L.colYs[j]);
-          t.setAttribute('class', 'couplr-dual-label');
-          t.setAttribute('text-anchor', 'start');
-          t.setAttribute('dominant-baseline', 'central');
-          t.textContent = 'v=' + fmtNum(vc[j]);
-          gDuals.appendChild(t);
+      let matchedCount = 0;
+      if (Array.isArray(frame.matching)) {
+        for (let i = 0; i < frame.matching.length; i++) {
+          if (frame.matching[i] && frame.matching[i] > 0) matchedCount++;
         }
       }
 
-      // Header / footer text
+      // Algorithms whose progress metric is something other than matched-edge
+      // count (e.g. GT bit-scaling, where the matched count yo-yos but
+      // bit-precision is monotonic) can override the counter text per frame.
+      const counterText = (typeof frame.progress_text === 'string' && frame.progress_text)
+        ? frame.progress_text
+        : (matchedCount + ' / ' + state.n + ' matched');
+
       header.querySelector('.algo-name').textContent = trace.meta.algorithm || '';
       header.querySelector('.phase-badge').textContent = frame.phase || '';
+      header.querySelector('.match-counter').textContent = counterText;
       header.querySelector('.step-counter').textContent =
         'Step ' + (idx + 1) + ' / ' + nFrames;
       footer.querySelector('.couplr-description').textContent =
         frame.description || '';
 
-      // Disable step buttons at boundaries
       footer.querySelector('.step-prev').disabled = (idx <= 0);
       footer.querySelector('.step-next').disabled = (idx >= nFrames - 1);
     }
@@ -357,9 +491,6 @@ HTMLWidgets.widget({
       }
     }
 
-    // -----------------------------------------------------------------------
-    // Control wiring
-    // -----------------------------------------------------------------------
     footer.querySelector('.play-pause').addEventListener('click', () => {
       if (!state.trace) return;
       if (state.frameIdx >= state.trace.frames.length - 1 && !state.isPlaying) {
@@ -380,17 +511,11 @@ HTMLWidgets.widget({
       renderFrame(0);
     });
     footer.querySelector('.speed-control input').addEventListener('input', (ev) => {
-      // Higher value = slower (ms per frame). Invert slider feel:
-      // slider is min=100 (fast) max=2000 (slow); use directly as ms.
       state.speedMs = +ev.target.value;
-      if (state.isPlaying) setPlaying(true); // restart with new speed
+      if (state.isPlaying) setPlaying(true);
     });
 
-    // -----------------------------------------------------------------------
-    // htmlwidgets interface
-    // -----------------------------------------------------------------------
     return {
-
       renderValue: function (x) {
         state.trace = x;
         state.n = x.meta.n_rows || 0;
@@ -402,14 +527,12 @@ HTMLWidgets.widget({
         buildScene();
         renderFrame(0);
       },
-
       resize: function (w, h) {
         if (!state.trace) return;
         computeLayout();
         buildScene();
         renderFrame(state.frameIdx);
       }
-
     };
   }
 });

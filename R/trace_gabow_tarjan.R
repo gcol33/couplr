@@ -108,19 +108,30 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
   frames <- list()
   step <- 0L
 
+  # `matching` defaults to the global matching_row, but the inner loop
+  # passes its local row_loc so the on-screen matched edges show the
+  # actual within-phase rebuild GT does at every bit boundary.
+  #
+  # `bits_resolved` is the GT-specific progress metric (matched-count is
+  # the wrong metric here -- GT solves the problem fully at each scale,
+  # so edges yo-yo while bit-precision is monotonic). The progress_text
+  # field overrides the widget's default "k/n matched" counter.
+  bits_resolved <- 0L
   emit <- function(phase, description,
                    active_edges = list(), path = list(),
-                   show_duals = FALSE) {
+                   show_duals = FALSE,
+                   matching = matching_row) {
     step <<- step + 1L
     frames[[length(frames) + 1L]] <<- list(
-      step         = step,
-      phase        = phase,
-      description  = description,
-      matching     = matching_row,
-      dual_u       = if (show_duals) y_u_global else NULL,
-      dual_v       = if (show_duals) y_v_global else NULL,
-      active_edges = active_edges,
-      path         = path
+      step          = step,
+      phase         = phase,
+      description   = description,
+      matching      = matching,
+      dual_u        = if (show_duals) y_u_global else NULL,
+      dual_v        = if (show_duals) y_v_global else NULL,
+      active_edges  = active_edges,
+      path          = path,
+      progress_text = sprintf("Bit %d / %d resolved", bits_resolved, k_bits)
     )
   }
 
@@ -174,11 +185,13 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
         paste0(
           "Phase %d/%d - incorporate bit %d (value 2^%d). c_current[i,j] doubled and OR'd ",
           "with bit %d of the (n+1)-scaled true cost. Largest entry now: %s. ",
-          "Doubling the carried duals as y <- 2*y - 1 keeps them within 1 of feasible for the new scale."
+          "Doubling the carried duals as y <- 2*y - 1 keeps them within 1 of feasible for the new scale. ",
+          "GT does scale_match from an empty matching at every bit boundary, so the matched-counter resets."
         ),
         phase_idx, k_bits, s, s, s, format(max_c_now)
       ),
-      show_duals = TRUE
+      show_duals = TRUE,
+      matching = integer(n)
     )
 
     # -----------------------------------------------------------------------
@@ -253,7 +266,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
             inner_iter, n_eligible, length(paths), length(all_path_edges)
           ),
           active_edges = eligible_edges,
-          path = all_path_edges
+          path = all_path_edges,
+          matching = row_loc
         )
 
         # Augment each path; track path columns
@@ -274,7 +288,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
               "Matched edges stay tight (u+v = c); other edges still satisfy u+v <= c+1."
             ),
             inner_iter, length(paths), length(path_cols)
-          )
+          ),
+          matching = row_loc
         )
 
       } else {
@@ -289,7 +304,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
             ),
             inner_iter, n_eligible
           ),
-          active_edges = eligible_edges
+          active_edges = eligible_edges,
+          matching = row_loc
         )
 
         res <- gt_hungarian_step_one_feasible(
@@ -323,7 +339,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
             ),
             length(new_path_edges)
           ),
-          path = new_path_edges
+          path = new_path_edges,
+          matching = row_loc
         )
       }
     }
@@ -339,6 +356,7 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
     y_v_global <- y_v_global + y_v_loc
     matching_row <- row_loc
     matching_col <- col_loc
+    bits_resolved <- phase_idx
 
     cur_total <- sum(cost_orig[cbind(seq_len(n), matching_row)], na.rm = TRUE)
     emit(

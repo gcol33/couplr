@@ -33,8 +33,12 @@ Rplots.pdf
 cpp_tests/build/
 build_site.R
 
-# Throwaway animation smoke-test renders
-dev_notes/animation_preview/
+# Developer scratch (logs, traces, A/B runs, source PDFs); not for the public repo
+dev_notes/
+
+# Stray local outputs that occasionally land in root
+gt-speedup*.md
+ns_check_out*.txt
 
 # Rendered vignette outputs (built artifacts)
 vignettes/*.html

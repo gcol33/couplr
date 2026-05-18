@@ -36,7 +36,7 @@ Optimal matching is central to experimental design, causal inference, and resour
 
 This package addresses **direct covariate matching**: selecting optimal pairs based on observed variables without intermediate modeling. It provides:
 
-- 20 LAP algorithms for different problem sizes and structures,
+- 20 LAP algorithms (19 sum-cost solvers via `assignment()` plus `bottleneck_assignment()` for min-max problems),
 - automatic preprocessing with variable health checks,
 - balance diagnostics for assessing match quality,
 - analysis-ready joined output.

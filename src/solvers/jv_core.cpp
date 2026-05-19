@@ -182,12 +182,15 @@ JvCoreResult jv_core(const CostMatrix& work, const JvCoreOpts& opts) {
                 rowsol[i] = j1;
                 colsol[j1] = i;
                 if (i0 >= 0) {
-                    if (j2 >= 0 && umin < usubmin) {
-                        // Reprocess the displaced row in this same pass.
-                        cur[--k] = i0;
-                    } else {
-                        free0.push_back(i0);
-                    }
+                    // Canonical LAPJV: displaced rows always go to the next
+                    // pass via free0. Reprocessing in the same pass via
+                    // cur[--k] = i0 can ping-pong indefinitely on inputs
+                    // where two rows alternately displace each other and
+                    // floating-point ordering makes the umin/usubmin gap
+                    // borderline (observed on macOS-arm64 with a 10x10
+                    // dense Euclidean matrix from test-cardinality.R). The
+                    // outer 2-pass cap still bounds total work to O(n).
+                    free0.push_back(i0);
                 }
             }
         }

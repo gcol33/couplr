@@ -81,7 +81,7 @@ theme_diagram <- function() {
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R packages still use nothing else.
 
-couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods that exist in no other R package: Gabow-Tarjan, Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan.
+couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods that exist in no other R package (Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan) and, to our knowledge, no publicly available open-source implementation in any language for Gabow-Tarjan bit-scaling assignment.
 
 ### Who This Vignette Is For
 

@@ -72,7 +72,12 @@ machinery a matching workflow needs.
 point rather than a side option behind a propensity score, and ships 19
 assignment solvers spanning classical dense assignment, sparse and
 rectangular variants, k-best [@Murty1968], bottleneck, min-cost flow, and
-entropy-regularized transport, with an automatic dispatcher.
+entropy-regularized transport, with an automatic dispatcher. To our
+knowledge, `couplr` provides the first publicly available open-source
+implementation of the Gabow–Tarjan bit-scaling assignment algorithm
+[@GabowTarjan1989] in any language; the algorithm's
+$O(\sqrt{n}\, m \log(n\,C_{\max}))$ bound has stood since 1989 without a
+library counterpart.
 
 # Software design
 

@@ -45,8 +45,30 @@ jobs:
           needs: check
           cache-version: 1
 
+      - name: Prepare diagnostic progress log
+        shell: bash
+        run: |
+          mkdir -p "${RUNNER_TEMP}/couplr-diag"
+          : > "${RUNNER_TEMP}/couplr-diag/test_progress.log"
+          echo "COUPLR_TEST_PROGRESS_LOG=${RUNNER_TEMP}/couplr-diag/test_progress.log" >> "$GITHUB_ENV"
+
       - uses: r-lib/actions/check-r-package@v2
         timeout-minutes: 25
         with:
           upload-snapshots: true
           upload-results: true
+
+      - name: Dump test progress log (rescue on timeout/failure)
+        if: always()
+        shell: bash
+        run: |
+          echo "::group::test progress log (tail 300)"
+          if [ -s "${COUPLR_TEST_PROGRESS_LOG}" ]; then
+            tail -300 "${COUPLR_TEST_PROGRESS_LOG}"
+          else
+            echo "(progress log empty or missing)"
+          fi
+          echo "::endgroup::"
+          echo "::group::testthat.Rout (tail 300)"
+          find check -name 'testthat.Rout*' -print -exec tail -300 '{}' \; 2>/dev/null || echo "(no testthat.Rout)"
+          echo "::endgroup::"

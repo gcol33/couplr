@@ -1,30 +1,35 @@
-## Release notes (1.4.0)
+## Release notes (1.4.1)
 
-This is a minor release adding animation coverage for the remaining ten
-`assignment()` methods (`auction_gs`, `ramshaw_tarjan`, `ssap_bucket`, `hk01`,
-`csflow`, `cycle_cancel`, `push_relabel`, `csa`, `orlin`, `network_simplex`)
-and fixing three correctness bugs:
+This is an out-of-cycle patch release because 1.4.0 (accepted two days ago)
+caused 1.5-hour test timeouts on the M1mac and linux-arm64 additional CRAN
+checks (https://www.stats.ox.ac.uk/pub/bdr/M1mac/couplr.out,
+https://github.com/r-devel/linux-arm64-checks/tree/HEAD/couplr). The same
+expected NOTE on CRAN incoming feasibility ("Days since last update: 2") is
+therefore unavoidable; the alternative is letting 1.4.0 hit the additional-
+check archival threshold.
 
-* `prepare_cost_matrix.cpp` previously treated `+Inf` as a finite cost rather
-  than a forbidden marker, which caused `assignment(method = X, maximize = TRUE)`
-  to silently skip the maximize-flip and return the minimizing answer on any
-  matrix containing `Inf`. Fixed: `NA` and any non-finite value are now marked
-  forbidden consistently.
+In 1.4.0, two solver paths could stall indefinitely when `match_couples()`
+was called with `max_distance`, calipers, or other forbidden-edge
+constraints:
 
-* `lap_solve_orlin()` and `lap_solve_network_simplex_wrapper()` used
-  `work[is.na(work)] <- Inf`, which missed the `-Inf` produced by negating
-  `+Inf` in maximize mode. Fixed: `work[!is.finite(work)] <- Inf`.
+* Forbidden cells were marked with a large finite value (`BIG_COST`). The
+  Jonker-Volgenant and small-`n` SSP solvers saw `BIG_COST` as a regular
+  expensive edge and could degenerate on sparse, near-square inputs
+  rather than short-circuiting on infeasibility. Switched to `Inf` so the
+  C++ solvers' non-finite check fires.
 
-* The network-simplex initial spanning tree (`src/solvers/network_simplex/`
-  `ns_init.h`) was built from a greedy matching that could leave rows
-  unmatched, producing an infeasible starting basis that the pivot loop
-  could not recover from. Fixed by adding an augmenting-path repair after
-  the greedy pass.
+* Auto-dispatch routed sparse inputs with `n <= 100` through SSP, which
+  has its own worst-case stall on near-square highly-sparse matrices.
+  All sparse inputs now go through `lapmod` regardless of size.
 
-A new parametric test (`tests/testthat/test-trace-parity.R`) exercises every
-registered animation trace on a battery of cost matrices including forbidden
-cells, verifying per-frame matching validity and final-frame agreement with
-the C++ oracle.
+`match_couples()` additionally now drops rows/columns with no allowed
+edges before the LAP call and falls back to `greedy_matching()` if the
+feasibility-pruned submatrix still has no perfect matching.
+
+The full test suite (with `NOT_CRAN=true`, i.e. all `skip_on_cran()`
+guards lifted) now finishes in ~6.4 minutes locally with 0 failures;
+on CRAN, where `skip_on_cran()` is honoured, the constraint tests
+in `test-matching*.R` no longer hit the stall paths.
 
 ## R CMD check results
 
@@ -33,8 +38,6 @@ the C++ oracle.
 ## Test environments
 
 * local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
-* win-builder: R-devel (Status: OK,
-  https://win-builder.r-project.org/EO1CC0CS8iE5, 18 May 2026)
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)
 

@@ -1,3 +1,43 @@
+# couplr 1.4.1
+
+## Bug fixes (solver stalls on constrained matching)
+
+Fixes two solver paths that could stall indefinitely on `match_couples()`
+inputs with `max_distance`, calipers, or other forbidden-edge constraints.
+These stalls caused the M1mac and linux-arm64 additional CRAN checks for
+1.4.0 to hit the 1.5-hour test timeout.
+
+* **Forbidden-cell marker is now `Inf` instead of a large finite value.**
+  `apply_max_distance()`, `apply_calipers()`, and `mark_forbidden_pairs()`
+  previously wrote a large finite `BIG_COST` into forbidden cells. The
+  Jonker-Volgenant and small-`n` SSP solvers treated `BIG_COST` as a
+  regular expensive edge and could degenerate on sparse, near-square
+  inputs instead of short-circuiting on infeasibility. Switched to `Inf`
+  so the C++ solvers' non-finite check fires.
+
+* **Auto-dispatch no longer routes sparse inputs through SSP for small `n`.**
+  Previously `lap_solve()` with `method = "auto"` selected `"sap"`
+  (`lap_solve_ssp`) for sparse matrices with `n <= 100`. SSP has its own
+  worst-case stall on near-square, highly-sparse cost matrices. All
+  sparse inputs now go through `lapmod` regardless of size.
+
+* **`match_couples()` now drops fully-forbidden rows/columns before LAP.**
+  `match_couples()` and `.couples_from_distance()` route through a new
+  internal `.solve_with_partial_feasibility()` helper. It removes rows
+  and columns with no allowed edges before the LAP call and falls back
+  to `greedy_matching()` if the optimal solver still cannot find a
+  perfect matching on the feasibility-pruned submatrix (Hall's-condition
+  violation). Dropped rows/columns are returned as unmatched, preserving
+  the partial-matching semantics that tests with tight `max_distance` /
+  caliper constraints already expected.
+
+## Other fixes
+
+* **`jv_core`:** drop the same-pass reprocess in `AUGMENTING ROW REDUCTION`.
+  The reprocess could revisit a freshly-reduced row in the same pass and
+  delay convergence on degenerate inputs without changing the final
+  assignment.
+
 # couplr 1.4.0
 
 ## Animation coverage

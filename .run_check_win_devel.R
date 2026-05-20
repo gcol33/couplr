@@ -1,7 +1,0 @@
-cat("R version:", R.version.string, "\n")
-cat("loading devtools...\n"); flush.console()
-suppressMessages(library(devtools))
-cat("devtools loaded\n"); flush.console()
-cat("calling check_win_devel...\n"); flush.console()
-check_win_devel(pkg = "C:/Users/Gilles Colling/Documents/dev/couplr")
-cat("done\n")

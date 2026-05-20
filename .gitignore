@@ -40,6 +40,12 @@ dev_notes/
 gt-speedup*.md
 ns_check_out*.txt
 
+# Local launcher scripts (auto-commit picks these up otherwise)
+.run_*.R
+
+# Local backups (timestamped or labelled .bak_*)
+*.bak_*
+
 # Rendered vignette outputs (built artifacts)
 vignettes/*.html
 

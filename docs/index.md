@@ -153,7 +153,7 @@ These features make the package useful in domains like:
 install.packages("couplr")
 
 # Or install development version from GitHub
-# install.packages("pak")
+install.packages("pak")
 pak::pak("gcol33/couplr")
 ```
 

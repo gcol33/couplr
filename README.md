@@ -1,6 +1,6 @@
 # couplr
 
-*the best way to pair two groups up*
+*matching two groups into pairs*
 
 [![CRAN status](https://www.r-pkg.org/badges/version/couplr)](https://CRAN.R-project.org/package=couplr)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/couplr)](https://cran.r-project.org/package=couplr)

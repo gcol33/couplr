@@ -45,7 +45,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,369 +109,125 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="couplr">couplr<a class="anchor" aria-label="anchor" href="#couplr"></a>
 </h1></div>
+<blockquote>
+<p>Small exact engines for scientific computing in R.</p>
+</blockquote>
+<p><em>matching two groups into pairs</em></p>
 <p><a href="https://CRAN.R-project.org/package=couplr" class="external-link"><img src="https://www.r-pkg.org/badges/version/couplr" alt="CRAN status"></a> <a href="https://cran.r-project.org/package=couplr" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/grand-total/couplr" alt="CRAN downloads"></a> <a href="https://cran.r-project.org/package=couplr" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/couplr" alt="Monthly downloads"></a> <a href="https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://app.codecov.io/gh/gcol33/couplr" class="external-link"><img src="https://codecov.io/gh/gcol33/couplr/graph/badge.svg?flag=r" alt="Coverage"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
-<p><strong>Optimal Pairing and Matching via Linear Assignment</strong></p>
-<p>The <code>couplr</code> package provides high-level functions for <strong>optimal one-to-one matching</strong> between two groups. Whether you need to pair treatment and control units, assign workers to tasks, or align images pixel-by-pixel, <code>couplr</code> offers fast, deterministic solutions with automatic preprocessing and balance diagnostics.</p>
-<div class="section level2">
-<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
-</h2>
+<p><strong>Optimal one-to-one matching by linear assignment, solved exactly in C++.</strong></p>
+<p>Hand it two groups. <code>couplr</code> returns the pairing that minimizes total covariate distance across the whole sample, solved by linear assignment (Jonker-Volgenant, Hungarian, Auction, cost-scaling) on <code>RcppEigen</code>. The common tool, greedy nearest neighbour, locks in each pair as it goes and gives back whatever the ordering produced. This finds the global minimum, and the same answer every run.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gillescolling.com/couplr/">couplr</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Match treatment and control groups on covariates</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span>, <span class="st">"education"</span><span class="op">)</span>,</span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
+<span><span class="co"># match treatment and control on covariates, in a single call</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">treated</span>, <span class="va">control</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, auto_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Check covariate balance</span></span>
-<span><span class="fu"><a href="reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">treated</span>, <span class="va">control</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span>, <span class="st">"education"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get analysis-ready dataset</span></span>
-<span><span class="va">matched_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/join_matched.html">join_matched</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">treated</span>, <span class="va">control</span><span class="op">)</span></span></code></pre></div>
-</div>
+<span><span class="co"># analysis-ready paired data</span></span>
+<span><span class="fu"><a href="reference/join_matched.html">join_matched</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">treated</span>, <span class="va">control</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="statement-of-need">Statement of Need<a class="anchor" aria-label="anchor" href="#statement-of-need"></a>
+<h2 id="optimal-not-greedy">Optimal, not greedy<a class="anchor" aria-label="anchor" href="#optimal-not-greedy"></a>
 </h2>
-<p>Optimal matching is central to experimental design, causal inference, and resource allocation. Existing R packages (MatchIt, optmatch) focus on propensity score workflows, requiring users to estimate scores before matching. This adds complexity and can obscure the direct relationship between covariates and match quality.</p>
-<p>This package addresses <strong>direct covariate matching</strong>: selecting optimal pairs based on observed variables without intermediate modeling. It provides:</p>
-<ul>
-<li>20 LAP algorithms for different problem sizes and structures,</li>
-<li>automatic preprocessing with variable health checks,</li>
-<li>balance diagnostics for assessing match quality,</li>
-<li>analysis-ready joined output.</li>
-</ul>
-<p>These features make the package useful in domains like:</p>
-<ul>
-<li>causal inference (matching treated/control units),</li>
-<li>experimental design (pairing samples for within-pair comparisons),</li>
-<li>resource allocation (assigning workers to tasks),</li>
-<li>image processing (pixel-level morphing and alignment).</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
-</h2>
-<div class="section level3">
-<h3 id="high-level-matching-functions">High-Level Matching Functions<a class="anchor" aria-label="anchor" href="#high-level-matching-functions"></a>
-</h3>
-<ul>
-<li>
-<strong><code><a href="reference/match_couples.html">match_couples()</a></code></strong>: Optimal one-to-one matching
-<ul>
-<li>Automatic preprocessing with variable health checks</li>
-<li>Multiple scaling methods: robust (MAD), standardize (SD), range</li>
-<li>Distance constraints via <code>max_distance</code> and <code>calipers</code>
-</li>
-<li>Blocking support for stratified matching</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/greedy_couples.html">greedy_couples()</a></code></strong>: Fast approximate matching
-<ul>
-<li>Three strategies: <code>sorted</code>, <code>row_best</code>, <code>pq</code> (priority queue)</li>
-<li>10-100x faster than optimal for large datasets</li>
-<li>Same preprocessing and constraint options</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="matching-extensions">Matching Extensions<a class="anchor" aria-label="anchor" href="#matching-extensions"></a>
-</h3>
-<ul>
-<li>
-<strong><code><a href="reference/ps_match.html">ps_match()</a></code></strong>: Propensity score matching
-<ul>
-<li>Logistic regression or pre-fitted model</li>
-<li>Logit caliper (default: 0.2 SD per <a href="https://doi.org/10.1080/00031305.1985.10479383" class="external-link">Rosenbaum &amp; Rubin, 1985</a>)</li>
-<li>Supports ratio and replacement matching</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/full_match.html">full_match()</a></code></strong>: Variable-ratio full matching
-<ul>
-<li>Optimal (min-cost max-flow) or greedy group formation</li>
-<li>Constraints: <code>min_controls</code>, <code>max_controls</code>, <code>caliper</code>
-</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/cem_match.html">cem_match()</a></code></strong>: Coarsened exact matching
-<ul>
-<li>Automatic binning (Sturges, FD, Scott) or custom cutpoints</li>
-<li>Model-free: no distance function or propensity score needed</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/subclass_match.html">subclass_match()</a></code></strong>: Propensity score subclassification
-<ul>
-<li>Quantile-based stratification with ATT/ATE/ATC weighting</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/cardinality_match.html">cardinality_match()</a></code></strong>: Balance-constrained matching
-<ul>
-<li>Maximizes sample size subject to balance thresholds</li>
-<li>Iterative pruning of imbalanced pairs</li>
-</ul>
-</li>
-<li>
-<strong>Ratio matching</strong>: k:1 matching via <code>ratio</code> parameter</li>
-<li>
-<strong>Replacement matching</strong>: with-replacement via <code>replace</code> parameter</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="ecosystem-integration">Ecosystem Integration<a class="anchor" aria-label="anchor" href="#ecosystem-integration"></a>
-</h3>
-<ul>
-<li>
-<strong><code><a href="reference/match_data.html">match_data()</a></code></strong>: Unified analysis-ready output with treatment, weights, subclass columns</li>
-<li>
-<strong><code><a href="reference/as_matchit.html">as_matchit()</a></code></strong>: Convert any couplr result to <code>matchit</code>-class for cobalt and marginaleffects</li>
-<li>
-<strong><code>bal.tab()</code> methods</strong> for direct cobalt integration</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="balance-diagnostics--analysis">Balance Diagnostics &amp; Analysis<a class="anchor" aria-label="anchor" href="#balance-diagnostics--analysis"></a>
-</h3>
-<ul>
-<li>
-<strong><code><a href="reference/balance_diagnostics.html">balance_diagnostics()</a></code></strong>: Comprehensive balance assessment
-<ul>
-<li>Standardized differences, variance ratios, KS tests</li>
-<li>Quality thresholds: &lt;0.1 excellent, 0.1-0.25 good, 0.25-0.5 acceptable (<a href="https://doi.org/10.1002/sim.3697" class="external-link">Austin, 2009</a>)</li>
-<li>Per-block statistics when blocking is used</li>
-<li>Publication-ready tables via <code><a href="reference/balance_table.html">balance_table()</a></code>
-</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/sensitivity_analysis.html">sensitivity_analysis()</a></code></strong>: <a href="https://doi.org/10.1007/978-1-4757-3692-2" class="external-link">Rosenbaum bounds</a>
-<ul>
-<li>Assesses sensitivity to hidden bias</li>
-<li>Reports critical gamma for inference robustness</li>
-</ul>
-</li>
-<li>
-<strong><code>autoplot()</code> methods</strong> for ggplot2 visualizations of matching results, balance diagnostics, and sensitivity analysis</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="low-level-lap-solving">Low-Level LAP Solving<a class="anchor" aria-label="anchor" href="#low-level-lap-solving"></a>
-</h3>
-<ul>
-<li>
-<strong><code><a href="reference/lap_solve.html">lap_solve()</a></code></strong>: Tidy interface for LAP algorithms
-<ul>
-<li>20 solvers: Hungarian, Jonker-Volgenant, Auction, Network Simplex, etc.</li>
-<li>Automatic method selection via <code>method = "auto"</code>
-</li>
-<li>Supports rectangular matrices and forbidden assignments</li>
-</ul>
-</li>
-<li>
-<strong><code><a href="reference/lap_solve_batch.html">lap_solve_batch()</a></code></strong>: Batch solving for multiple matrices</li>
-<li>
-<strong><code><a href="reference/lap_solve_kbest.html">lap_solve_kbest()</a></code></strong>: K-best solutions via Murty’s algorithm</li>
-</ul>
-</div>
-</div>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
+<p><code>MatchIt</code>, the most used matching package in R, pairs units greedily on an estimated propensity score: it takes them in order, grabs the nearest free control for each, and the result depends on that order. <code>couplr</code> matches directly on the covariates and solves the assignment exactly, so total distance is the global minimum and the pairing is the same every time.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install from CRAN</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"couplr"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Or install development version from GitHub</span></span>
-<span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">treated</span>, <span class="va">control</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, auto_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>   <span class="co"># optimal, deterministic</span></span>
+<span><span class="fu"><a href="reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span><span class="va">treated</span>, <span class="va">control</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>, strategy <span class="op">=</span> <span class="st">"pq"</span><span class="op">)</span>    <span class="co"># greedy, for large pools</span></span></code></pre></div>
+<p>For large control pools, <code><a href="reference/greedy_couples.html">greedy_couples()</a></code> trades the exact guarantee for speed, with three strategies (<code>sorted</code>, <code>row_best</code>, <code>pq</code>) and the same preprocessing and constraints.</p>
 </div>
 <div class="section level2">
-<h2 id="usage-examples">Usage Examples<a class="anchor" aria-label="anchor" href="#usage-examples"></a>
+<h2 id="whats-in-the-box">What’s in the box<a class="anchor" aria-label="anchor" href="#whats-in-the-box"></a>
 </h2>
-<div class="section level3">
-<h3 id="optimal-matching-match_couples">Optimal Matching (<code>match_couples</code>)<a class="anchor" aria-label="anchor" href="#optimal-matching-match_couples"></a>
-</h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gillescolling.com/couplr/">couplr</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Basic matching with automatic scaling</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># With distance constraint</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  max_distance <span class="op">=</span> <span class="fl">0.5</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># With blocking (exact matching on site)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  block_by <span class="op">=</span> <span class="st">"site"</span>,</span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check what was matched</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">pairs</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="greedy-matching-greedy_couples">Greedy Matching (<code>greedy_couples</code>)<a class="anchor" aria-label="anchor" href="#greedy-matching-greedy_couples"></a>
-</h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Fast matching for large datasets</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  strategy <span class="op">=</span> <span class="st">"row_best"</span>,</span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Priority queue strategy (often best quality)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  strategy <span class="op">=</span> <span class="st">"pq"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="low-level-lap-solving-1">Low-Level LAP Solving<a class="anchor" aria-label="anchor" href="#low-level-lap-solving-1"></a>
-</h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Solve a cost matrix</span></span>
-<span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">7</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">assignment</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">total_cost</span></span>
-<span></span>
-<span><span class="co"># Choose a specific algorithm</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># K-best solutions</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lap_solve_kbest.html">lap_solve_kbest</a></span><span class="op">(</span><span class="va">cost</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-</div>
+<ul>
+<li>
+<strong><code><a href="reference/match_couples.html">match_couples()</a></code></strong>: optimal one-to-one matching with automatic scaling (robust / standardize / range), distance constraints (<code>max_distance</code>, <code>calipers</code>), blocking, and <code>ratio</code> / <code>replace</code> matching.</li>
+<li>
+<strong><code><a href="reference/greedy_couples.html">greedy_couples()</a></code></strong>: fast approximate matching for large datasets, three strategies.</li>
+<li>
+<strong><code><a href="reference/full_match.html">full_match()</a></code> / <code><a href="reference/cem_match.html">cem_match()</a></code> / <code><a href="reference/subclass_match.html">subclass_match()</a></code> / <code><a href="reference/cardinality_match.html">cardinality_match()</a></code></strong>: variable-ratio full matching, coarsened exact matching, propensity subclassification, and balance-constrained matching.</li>
+<li>
+<strong><code><a href="reference/ps_match.html">ps_match()</a></code></strong>: propensity score matching with a logit caliper.</li>
+<li>
+<strong><code><a href="reference/balance_diagnostics.html">balance_diagnostics()</a></code> / <code><a href="reference/sensitivity_analysis.html">sensitivity_analysis()</a></code></strong>: standardized differences, variance ratios, KS tests, and Rosenbaum bounds for hidden bias.</li>
+<li>
+<strong><code><a href="reference/lap_solve.html">lap_solve()</a></code></strong>: tidy interface to the assignment backend, 20 solvers with <code>method = "auto"</code>, plus <code><a href="reference/lap_solve_batch.html">lap_solve_batch()</a></code> and <code><a href="reference/lap_solve_kbest.html">lap_solve_kbest()</a></code> (Murty’s algorithm).</li>
+</ul>
 </div>
 <div class="section level2">
-<h2 id="choosing-between-match_couples-and-greedy_couples">Choosing Between <code>match_couples</code> and <code>greedy_couples</code>
-<a class="anchor" aria-label="anchor" href="#choosing-between-match_couples-and-greedy_couples"></a>
+<h2 id="the-assignment-backend">The assignment backend<a class="anchor" aria-label="anchor" href="#the-assignment-backend"></a>
+</h2>
+<p><code><a href="reference/lap_solve.html">lap_solve()</a></code> exposes the solver layer directly. It takes a cost matrix, handles rectangular shapes and forbidden edges (<code>NA</code> / <code>Inf</code>), and picks an algorithm from the problem when <code>method = "auto"</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">7</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">6</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span>                      <span class="co"># auto-selected solver</span></span>
+<span><span class="fu"><a href="reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span>, method <span class="op">=</span> <span class="st">"hungarian"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/lap_solve_kbest.html">lap_solve_kbest</a></span><span class="op">(</span><span class="va">cost</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>         <span class="co"># the three best assignments</span></span></code></pre></div>
+<p>The solvers span the classics and the scaling algorithms: Jonker-Volgenant, Hungarian, Kuhn-Munkres, Bertsekas auction (with epsilon-scaling variants), Goldberg-Kennedy cost-scaling, Gabow-Tarjan bit-scaling, push-relabel, network simplex, and Sinkhorn entropy-regularized transport.</p>
+</div>
+<div class="section level2">
+<h2 id="match_couples-or-greedy_couples">
+<code>match_couples</code> or <code>greedy_couples</code>?<a class="anchor" aria-label="anchor" href="#match_couples-or-greedy_couples"></a>
 </h2>
 <table class="table">
 <thead><tr>
-<th>Feature</th>
+<th></th>
 <th><code><a href="reference/match_couples.html">match_couples()</a></code></th>
 <th><code><a href="reference/greedy_couples.html">greedy_couples()</a></code></th>
 </tr></thead>
 <tbody>
 <tr>
-<td><strong>Optimality</strong></td>
-<td>Guaranteed optimal</td>
+<td>Result</td>
+<td>Globally optimal</td>
 <td>Approximate</td>
 </tr>
 <tr>
-<td><strong>Speed</strong></td>
-<td>O(n^3)</td>
-<td>O(n^2) or better</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>n &lt; 5000</td>
-<td>n &gt; 5000</td>
-</tr>
-<tr>
-<td><strong>Supports constraints?</strong></td>
+<td>Deterministic?</td>
 <td>Yes</td>
 <td>Yes</td>
 </tr>
 <tr>
-<td><strong>Supports blocking?</strong></td>
+<td>Cost</td>
+<td><code>O(n^3)</code></td>
+<td>
+<code>O(n^2)</code> or better</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td><code>n &lt; 5000</code></td>
+<td>large control pools</td>
+</tr>
+<tr>
+<td>Constraints, blocking?</td>
 <td>Yes</td>
 <td>Yes</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Tip</strong>: Start with <code><a href="reference/match_couples.html">match_couples()</a></code>. Switch to <code><a href="reference/greedy_couples.html">greedy_couples()</a></code> if runtime is too long.</p>
+<p>Start with <code><a href="reference/match_couples.html">match_couples()</a></code>. Switch to <code><a href="reference/greedy_couples.html">greedy_couples()</a></code> when the optimal solve runs too long.</p>
 </div>
 <div class="section level2">
-<h2 id="advanced-features">Advanced Features<a class="anchor" aria-label="anchor" href="#advanced-features"></a>
+<h2 id="fits-the-matching-ecosystem">Fits the matching ecosystem<a class="anchor" aria-label="anchor" href="#fits-the-matching-ecosystem"></a>
 </h2>
-<div class="section level3">
-<h3 id="distance-caching">Distance Caching<a class="anchor" aria-label="anchor" href="#distance-caching"></a>
-</h3>
-<p>Precompute distances for rapid experimentation:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Compute once</span></span>
-<span><span class="va">dist_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_distances.html">compute_distances</a></span><span class="op">(</span><span class="va">treated</span>, <span class="va">control</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
+<p><code>couplr</code> results convert to <code>matchit</code>-class with <code><a href="reference/as_matchit.html">as_matchit()</a></code>, so <code>cobalt</code> balance tables and <code>marginaleffects</code> estimates work without rewiring your analysis. <code><a href="reference/match_data.html">match_data()</a></code> returns treatment, weights, and subclass columns in one analysis-ready frame, and <code>autoplot()</code> methods cover matching results, balance, and sensitivity.</p>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"couplr"</span><span class="op">)</span>            <span class="co"># CRAN</span></span>
 <span></span>
-<span><span class="co"># Reuse with different constraints</span></span>
-<span><span class="va">result1</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_obj</span>, max_distance <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span>
-<span><span class="va">result2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">dist_obj</span>, max_distance <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="parallel-processing">Parallel Processing<a class="anchor" aria-label="anchor" href="#parallel-processing"></a>
-</h3>
-<p>Speed up blocked matching with multi-core processing:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
-<span>  <span class="va">treated</span>, <span class="va">control</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  block_by <span class="op">=</span> <span class="st">"site"</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="propensity-score-matching">Propensity Score Matching<a class="anchor" aria-label="anchor" href="#propensity-score-matching"></a>
-</h3>
-<p>Match on estimated propensity scores with a logit caliper:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ps_match.html">ps_match</a></span><span class="op">(</span></span>
-<span>  <span class="va">treatment</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">education</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">combined_data</span>,</span>
-<span>  treatment <span class="op">=</span> <span class="st">"treated"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="sensitivity-analysis">Sensitivity Analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a>
-</h3>
-<p>Assess robustness of matched comparisons to hidden bias:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sa</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sensitivity_analysis.html">sensitivity_analysis</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">treated</span>, <span class="va">control</span>, outcome_var <span class="op">=</span> <span class="st">"outcome"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
-<span><span class="co"># Critical gamma: 1.75 — results robust to moderate hidden bias</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="pixel-morphing">Pixel Morphing<a class="anchor" aria-label="anchor" href="#pixel-morphing"></a>
-</h3>
-<p>Align images pixel-by-pixel using optimal assignment:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">morph</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pixel_morph.html">pixel_morph</a></span><span class="op">(</span><span class="va">image_a</span>, <span class="va">image_b</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/pixel_morph_animate.html">pixel_morph_animate</a></span><span class="op">(</span><span class="va">morph</span>, <span class="st">"output.gif"</span><span class="op">)</span></span></code></pre></div>
-</div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>               <span class="co"># development version</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
 <ul>
 <li><a href="https://gillescolling.com/couplr/articles/getting-started.html">Getting Started</a></li>
-<li><a href="https://gillescolling.com/couplr/articles/algorithms.html">Algorithm Details</a></li>
 <li><a href="https://gillescolling.com/couplr/articles/matching-workflows.html">Matching Workflows</a></li>
+<li><a href="https://gillescolling.com/couplr/articles/algorithms.html">Algorithms</a></li>
+<li><a href="https://gillescolling.com/couplr/articles/comparison.html">Comparison</a></li>
 <li><a href="https://gillescolling.com/couplr/articles/pixel-morphing.html">Pixel Morphing</a></li>
 </ul>
-</div>
-<div class="section level2">
-<h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
-</h2>
-<p>The package was developed using a modern AI-assisted developer stack. The author designed the package architecture, made the algorithm-selection choices, and wrote the implementation in a TUI-first command-line workflow, using a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B active per token, 4-bit MLX quantization, running on a single Apple M4 Pro) for code completion, refactoring, and boilerplate through Anthropic’s Claude Code CLI, with requests routed to the local model and no cloud inference.</p>
 </div>
 <div class="section level2">
 <h2 id="support">Support<a class="anchor" aria-label="anchor" href="#support"></a>
@@ -491,12 +247,12 @@
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co">@software{couplr,</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">  author = {Colling, Gilles},</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">  title = {couplr: Optimal Matching via Linear Assignment},</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">  year = {2026},</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">  url = {https://github.com/gcol33/couplr}</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co">@software{couplr,</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">  author = {Colling, Gilles},</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">  title  = {couplr: Optimal Matching via Linear Assignment},</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">  year   = {2026},</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">  url    = {https://github.com/gcol33/couplr}</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

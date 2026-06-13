@@ -1,7 +1,5 @@
 # couplr
 
-> Small exact engines for scientific computing in R.
-
 *matching two groups into pairs*
 
 [![CRAN status](https://www.r-pkg.org/badges/version/couplr)](https://CRAN.R-project.org/package=couplr)

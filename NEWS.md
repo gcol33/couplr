@@ -106,6 +106,16 @@ a wrong "optimal" or a crash (#13):
 * **Bounds.** The internal `morph_pixel_level` helpers assert their pixel /
   assignment buffer sizes, matching the exported wrappers.
 
+* **`csa` shipped path now carries the fixes it was tested for.** The Rcpp
+  entry point for `method = "csa"` ran a separate copy of the solver that never
+  received the integer-scaling fix above, so `assignment(method = "csa")` could
+  still return a suboptimal matching on fractional costs. It now delegates to
+  the single pure `solve_csa` implementation exercised by the C++ tests. That
+  implementation also gained square padding for rectangular problems, which it
+  previously solved greedily (and suboptimally). The Rcpp `*_impl` wrappers now
+  share one `rcpp_to_cost_matrix` / `lap_result_to_rcpp` conversion pair instead
+  of per-file copies (#15).
+
 ## Tests
 
 * Added a parameter-recovery and coverage suite for the statistical layer

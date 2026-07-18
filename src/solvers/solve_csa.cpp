@@ -27,16 +27,15 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
 
     // Prepare working costs (negated if maximize, BIG for forbidden)
     CostMatrix work = prepare_for_solve(cost, maximize);
-    const int nn = work.nrow;
 
-    // Check feasibility
-    ensure_each_row_has_option(work.mask, nn, m);
+    // Check feasibility on the real rows
+    ensure_each_row_has_option(work.mask, n, m);
 
     // Find maximum absolute cost for epsilon initialization, and detect whether
     // all allowed costs are already integers.
     double max_abs_cost = 0.0;
     bool all_integer = true;
-    for (int i = 0; i < nn; ++i) {
+    for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             if (work.allowed(i, j)) {
                 double v = work.at(i, j);
@@ -56,7 +55,7 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
     // the reported total is still computed from the ORIGINAL costs below.
     if (!all_integer && max_abs_cost > 0.0) {
         const double scale = 1e6 / max_abs_cost;
-        for (int i = 0; i < nn; ++i) {
+        for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
                 if (work.allowed(i, j)) {
                     work.at(i, j) = std::round(work.at(i, j) * scale);
@@ -65,6 +64,31 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
         }
         max_abs_cost = 1e6;
     }
+
+    // For rectangular problems (n < m) the auction has more objects than
+    // persons, so free objects stay at price 0 and no real price competition
+    // forms: each person greedily takes its cheapest object and the result is
+    // suboptimal. Pad to a square m x m problem with dummy persons whose edges
+    // all cost far more than any real assignment, restoring full competition
+    // over all m objects. Only rows 0..n-1 are extracted below.
+    const int nn = m;
+    CostMatrix sq(nn, m);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            sq.at(i, j) = work.at(i, j);
+            sq.mask[i * m + j] = work.mask[i * m + j];
+        }
+    }
+    if (n < nn) {
+        const double dummy_cost = (max_abs_cost + 1.0) * m * 10.0;
+        for (int i = n; i < nn; ++i) {
+            for (int j = 0; j < m; ++j) {
+                sq.at(i, j) = dummy_cost;
+                sq.mask[i * m + j] = 1;
+            }
+        }
+    }
+    work = std::move(sq);
 
     // Build CSR-style allowed lists for efficient iteration
     std::vector<int> row_ptr, cols;

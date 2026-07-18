@@ -6,24 +6,6 @@
 #include "../core/lap_error.h"
 #include "../core/lap_utils_rcpp.h"
 
-// Helper: Convert Rcpp::NumericMatrix to lap::CostMatrix
-static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
-    const int n = cost.nrow();
-    const int m = cost.ncol();
-
-    lap::CostMatrix cm(n, m);
-
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            double v = cost(i, j);
-            cm.at(i, j) = v;
-            cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
-        }
-    }
-
-    return cm;
-}
-
 // Helper: Convert lap::DualResult to Rcpp::List (with 1-based indexing for assignment)
 static Rcpp::List dual_result_to_rcpp(const lap::DualResult& result,
                                        const Rcpp::NumericMatrix& original_cost) {

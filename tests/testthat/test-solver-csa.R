@@ -230,6 +230,62 @@ test_that("csa handles wide value range", {
 })
 
 # ------------------------------------------------------------------------------
+# Optimality regression tests
+#
+# csa was previously suboptimal on (a) fractional costs, because its
+# epsilon-scaling termination only guarantees optimality for integer costs, and
+# (b) rectangular problems, because without padding to a square problem the
+# auction has no price competition over the surplus columns. Both are checked
+# here against an independent optimal solver.
+# ------------------------------------------------------------------------------
+
+test_that("csa is optimal on fractional-cost matrices", {
+  set.seed(1234)
+  for (i in seq_len(150)) {
+    n <- sample(3:9, 1)
+    cost <- matrix(runif(n * n) * 1e-3, n, n)  # tiny gaps stress eps-optimality
+    ref <- assignment(cost, method = "jv")$total_cost
+    csa <- assignment(cost, method = "csa")$total_cost
+    expect_equal(csa, ref, tolerance = 1e-9,
+                 info = paste("fractional seed iter", i))
+  }
+})
+
+test_that("csa is optimal on rectangular matrices (n < m)", {
+  set.seed(56)
+  for (i in seq_len(120)) {
+    n <- sample(3:5, 1)
+    m <- n + sample(1:3, 1)
+    maximize <- (i %% 2 == 0)
+    cost <- matrix(sample(1:40, n * m, replace = TRUE), n, m)
+    ref <- assignment(cost, method = "bruteforce", maximize = maximize)$total_cost
+    csa <- assignment(cost, method = "csa", maximize = maximize)$total_cost
+    expect_equal(csa, ref, tolerance = 1e-9,
+                 info = paste("rectangular iter", i, "maximize", maximize))
+  }
+})
+
+test_that("csa matches jv with forbidden edges", {
+  set.seed(77)
+  for (i in seq_len(120)) {
+    n <- sample(3:6, 1)
+    m <- sample(n:(n + 2), 1)
+    cost <- matrix(sample(1:30, n * m, replace = TRUE), n, m)
+    nf <- sample(0:2, 1)
+    if (nf > 0) cost[sample(seq_len(n * m), nf)] <- Inf
+    ref <- tryCatch(assignment(cost, method = "jv")$total_cost,
+                    error = function(e) NA_real_)
+    csa <- tryCatch(assignment(cost, method = "csa")$total_cost,
+                    error = function(e) NA_real_)
+    # Agree on both feasibility and value
+    expect_equal(is.na(ref), is.na(csa), info = paste("forbidden iter", i))
+    if (!is.na(ref)) {
+      expect_equal(csa, ref, tolerance = 1e-9, info = paste("forbidden iter", i))
+    }
+  }
+})
+
+# ------------------------------------------------------------------------------
 # Via lap_solve interface
 # ------------------------------------------------------------------------------
 

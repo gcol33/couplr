@@ -8,24 +8,6 @@
 
 using namespace Rcpp;
 
-// Helper: Convert Rcpp::NumericMatrix to lap::CostMatrix
-static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
-    const int n = cost.nrow();
-    const int m = cost.ncol();
-
-    lap::CostMatrix cm(n, m);
-
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            double v = cost(i, j);
-            cm.at(i, j) = v;
-            cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
-        }
-    }
-
-    return cm;
-}
-
 // Helper: Convert std::vector<double> to Rcpp::NumericVector
 static Rcpp::NumericVector vec_to_rcpp(const std::vector<double>& vec) {
     return Rcpp::NumericVector(vec.begin(), vec.end());

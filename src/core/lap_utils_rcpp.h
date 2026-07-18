@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include "lap_types.h"
 
 // Error macro using Rcpp::stop for proper C++ stack unwinding
 // (Rf_error uses longjmp which skips destructors, causing memory leaks)
@@ -85,6 +86,19 @@ Rcpp::List make_result(const Rcpp::IntegerVector& match, double total);
 //   - Only sums over real, finite edges
 double compute_total_cost(const Rcpp::NumericMatrix& original_cost,
                           const Rcpp::IntegerVector& assignment);
+
+// Convert an Rcpp cost matrix to a pure lap::CostMatrix.
+// mask = 1 (allowed) for finite entries, 0 (forbidden) for NA/Inf.
+// Single source of truth for the adapter pattern that wraps every pure
+// lap::solve_* implementation as an Rcpp *_impl entry point.
+lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost);
+
+// Convert a pure lap::LapResult to the standard Rcpp result list.
+// Assignment is shifted 0-based -> 1-based (0 = unmatched) and the total is
+// recomputed from original_cost via compute_total_cost for cross-solver
+// consistency (works for both minimize and maximize).
+Rcpp::List lap_result_to_rcpp(const lap::LapResult& result,
+                              const Rcpp::NumericMatrix& original_cost);
 
 // Transpose helper (inline for performance)
 inline Rcpp::NumericMatrix transpose(const Rcpp::NumericMatrix& M) {

@@ -55,9 +55,7 @@ TEST_CASE("CSA solver - basic square matrices", "[csa][basic]") {
 }
 
 TEST_CASE("CSA solver - rectangular matrices", "[csa][rectangular]") {
-    // Note: CSA may not be optimal for rectangular matrices
-    // Just verify it returns a valid matching
-    SECTION("2x3 (more cols than rows)") {
+    SECTION("2x3 (more cols than rows) is optimal") {
         auto cost = make_cost({
             {1, 2, 3},
             {4, 5, 6}
@@ -67,12 +65,11 @@ TEST_CASE("CSA solver - rectangular matrices", "[csa][rectangular]") {
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.n_matched() == 2);
-        // CSA may not find optimal for rectangular - just check valid range
-        REQUIRE(result.total_cost >= 5.0);  // minimum possible
-        REQUIRE(result.total_cost <= 9.0);  // maximum possible for 2 matches
+        // Optimal: row0->col0 (1) + row1->col1 (5) = 6
+        REQUIRE(result.total_cost == Approx(6.0));
     }
 
-    SECTION("3x5 returns valid matching") {
+    SECTION("3x5 is optimal") {
         auto cost = make_cost({
             {10, 1, 20, 30, 40},
             {50, 60, 2, 70, 80},
@@ -83,7 +80,9 @@ TEST_CASE("CSA solver - rectangular matrices", "[csa][rectangular]") {
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.n_matched() == 3);
-        // Just verify it's a valid assignment (columns are unique)
+        // Optimal: 1 (row0,col1) + 2 (row1,col2) + 3 (row2,col3) = 6
+        REQUIRE(result.total_cost == Approx(6.0));
+
         std::vector<bool> used(5, false);
         for (int j : result.assignment) {
             REQUIRE(j >= 0);
@@ -91,6 +90,25 @@ TEST_CASE("CSA solver - rectangular matrices", "[csa][rectangular]") {
             REQUIRE(!used[j]);
             used[j] = true;
         }
+    }
+}
+
+TEST_CASE("CSA solver - fractional costs are optimal", "[csa][fractional]") {
+    // Epsilon-scaling termination only guarantees optimality for integer costs;
+    // solve_csa scales fractional costs to integers first. This pins the case
+    // where competing assignments differ by less than the scaling epsilon.
+    SECTION("near-tied fractional 3x3") {
+        auto cost = make_cost({
+            {0.0000010, 0.0000020, 0.0000030},
+            {0.0000020, 0.0000010, 0.0000030},
+            {0.0000030, 0.0000020, 0.0000010}
+        });
+
+        auto result = lap::solve_csa(cost, false);
+
+        REQUIRE(result.status == "optimal");
+        // Diagonal is the unique optimum: 1e-6 + 1e-6 + 1e-6 = 3e-6
+        REQUIRE(result.total_cost == Approx(3e-6));
     }
 }
 

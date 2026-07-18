@@ -6,23 +6,6 @@
 #include "../core/lap_error.h"
 #include "../core/lap_utils_rcpp.h"
 
-static lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
-    const int n = cost.nrow();
-    const int m = cost.ncol();
-
-    lap::CostMatrix cm(n, m);
-
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            double v = cost(i, j);
-            cm.at(i, j) = v;
-            cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
-        }
-    }
-
-    return cm;
-}
-
 Rcpp::List solve_hungarian_impl(Rcpp::NumericMatrix cost, bool maximize) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);

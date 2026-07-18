@@ -5,7 +5,20 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Changelog"></head><body>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Changelog"><script>
+(function () {
+  var D = String.fromCharCode(36);
+  window.MathJax = {
+    tex: {
+      inlineMath: [[D, D], ["\\(", "\\)"]],
+      displayMath: [[D + D, D + D], ["\\[", "\\]"]]
+    },
+    chtml: { linebreaks: { automatic: true, width: "90% container" } },
+    svg: { linebreaks: { automatic: true, width: "90% container" } },
+    options: { renderActions: { addMenu: [] } }
+  };
+})();
+</script></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -13,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +83,73 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.4.0" id="couplr-140">couplr 1.4.0<a class="anchor" aria-label="anchor" href="#couplr-140"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.4.2" id="couplr-142">couplr 1.4.2<a class="anchor" aria-label="anchor" href="#couplr-142"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-1-4-2">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-4-2"></a></h3>
+<ul><li>
+<strong><code>greedy_couples()</code> is removed; greedy matching is now <code>match_couples(method = "greedy")</code>.</strong> The two functions duplicated ~130 lines of identical scaffolding (validation, scaling, id extraction, blocking dispatch, metadata) over the same shared engine. They are now one front door: <code><a href="../reference/match_couples.html">match_couples()</a></code> gains a <code>method = "greedy"</code> value and a <code>strategy</code> argument (“row_best”, “sorted”, “pq”). Replace <code>greedy_couples(x, strategy = "sorted")</code> with <code>match_couples(x, method = "greedy", strategy = "sorted")</code>. The result object and <code>info$method == "greedy"</code> are unchanged.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-4-2">New features<a class="anchor" aria-label="anchor" href="#new-features-1-4-2"></a></h3>
+<ul><li>
+<code><a href="../reference/pixel_morph.html">pixel_morph()</a></code> and <code><a href="../reference/pixel_morph_animate.html">pixel_morph_animate()</a></code> gain a <code>mode = "color_match"</code> option: pixels sharing a quantized colour are matched spatially and any remainder falls back to identity. A lighter-weight alternative to the default <code>"color_walk"</code> palette LAP.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-statistical--causal-inference-layer-1-4-2">Bug fixes (statistical / causal-inference layer)<a class="anchor" aria-label="anchor" href="#bug-fixes-statistical--causal-inference-layer-1-4-2"></a></h3>
+<ul><li><p><strong><code><a href="../reference/sensitivity_analysis.html">sensitivity_analysis()</a></code> no longer scrambles matched pairs.</strong> Outcomes were assembled with two independent <code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code> calls, each sorted by its own key, so the pair difference subtracted outcomes from mismatched pairs and every downstream quantity (Wilcoxon T+, Rosenbaum bounds, critical gamma) was computed on a scrambled pairing. Outcomes are now looked up by ID, preserving the row-wise pair correspondence (<a href="https://github.com/gcol33/couplr/issues/4" class="external-link">#4</a>).</p></li>
+<li><p><strong><code>subclass_match(estimand = "ATE")</code> weights corrected.</strong> ATE subclass weights carried an extra factor of the stratum size, over-weighting large subclasses quadratically. A treated unit in subclass k now carries <code>(n_k / N) / n_t</code> as intended; ATT and ATC were already correct (<a href="https://github.com/gcol33/couplr/issues/5" class="external-link">#5</a>).</p></li>
+<li><p><strong><code><a href="../reference/balance_diagnostics.html">balance_diagnostics()</a></code> now applies stratum weights for full matching, CEM, and subclassification.</strong> The weights were computed and discarded, so standardized differences were unweighted for the very estimators whose balance is achieved through weighting. Weighted mean, variance, and standardized difference are now used on both sides. Also: the variance ratio is now a true ratio of variances (matching the conventional 0.5-2 bounds) rather than a ratio of standard deviations, and the unmatched right-unit count no longer goes negative under <code>ratio &gt; 1</code> / <code>replace</code> (it counts distinct matched right units, not pair rows) (<a href="https://github.com/gcol33/couplr/issues/6" class="external-link">#6</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-solvers-1-4-2">Bug fixes (solvers)<a class="anchor" aria-label="anchor" href="#bug-fixes-solvers-1-4-2"></a></h3>
+<ul><li><p><strong><code>ssap_bucket</code> no longer silently rounds fractional costs to a wrong optimum.</strong> The integer-scaling step tried only multipliers <code>{1, 10, 100, 1000}</code> and, failing those, rounded at <code>1000</code> – flipping which permutation was optimal on costs needing more than three decimals. It now searches ascending powers of ten with a fixed (scale-independent) integrality tolerance and refuses the problem, redirecting to <code>method = "jv"</code> or <code>"auction"</code>, when no bounded integer scaling is exact. The animation mirror <code>trace_ssap_bucket()</code> applies the same rule (<a href="https://github.com/gcol33/couplr/issues/19" class="external-link">#19</a>).</p></li>
+<li><p><strong><code>lap_solve_line_metric(maximize = TRUE)</code> now returns the true maximum-weight matching.</strong> The DP always built the sorted (minimum-cost) pairing and merely negated the total; on a line the maximum-weight matching is the anti-monotone pairing. The DP now runs against the descending target ordering and returns that assignment and its true total (<a href="https://github.com/gcol33/couplr/issues/8" class="external-link">#8</a>).</p></li>
+<li><p><strong><code>gabow_tarjan</code> returns a perfect matching when the diagonal is forbidden.</strong> The <code>C_max == 0</code> fast path assigned the diagonal without checking feasibility, returning an empty matching when the diagonal cells were forbidden but a perfect matching existed. It now finds a maximum-cardinality matching over the allowed edges via augmenting paths (<a href="https://github.com/gcol33/couplr/issues/9" class="external-link">#9</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-front-doors-and-input-handling-1-4-2">Bug fixes (front doors and input handling)<a class="anchor" aria-label="anchor" href="#bug-fixes-front-doors-and-input-handling-1-4-2"></a></h3>
+<ul><li><p><strong><code>compute_distances(auto_scale = TRUE)</code> now scales.</strong> It read a nonexistent field (making <code>vars</code> <code>NULL</code>) and disabled scaling under the belief it had already happened. It now reads the selected variables and forwards the chosen scaling method to the cost builder (<a href="https://github.com/gcol33/couplr/issues/7" class="external-link">#7</a>).</p></li>
+<li><p><strong>Pre-fitted propensity models predict on the supplied data.</strong> <code><a href="../reference/ps_match.html">ps_match()</a></code> and <code><a href="../reference/subclass_match.html">subclass_match()</a></code> called <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> without <code>newdata =</code>, so a <code>ps_model</code> fitted on a differently ordered or subset frame attached scores to the wrong rows. They now pass <code>newdata = data</code> (<a href="https://github.com/gcol33/couplr/issues/10" class="external-link">#10</a>).</p></li>
+<li><p><strong><code>match_couples(ratio &gt; 1)</code> falls back to a partial match on infeasibility.</strong> The <code>ratio &gt; 1</code> path called the solver directly and hard errored when constraints forbade every edge of some unit, whereas the 1:1 path returned a partial matching. Both paths now share the same partial-feasibility / greedy fallback (<a href="https://github.com/gcol33/couplr/issues/10" class="external-link">#10</a>).</p></li>
+<li><p><strong><code><a href="../reference/lap_solve.html">lap_solve()</a></code> honors the <code>forbidden</code> sentinel for matrix input, and <code><a href="../reference/lap_solve_batch.html">lap_solve_batch()</a></code> preserves singleton-dimension orientation.</strong> The matrix path silently ignored a non-<code>NA</code> <code>forbidden</code>; it now masks matching cells as forbidden. A 3-D array slice with a singleton row or column dimension was dropped to a vector and transposed; slices are now reshaped explicitly (<a href="https://github.com/gcol33/couplr/issues/11" class="external-link">#11</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="robustness-c-solver-hardening-1-4-2">Robustness (C++ solver hardening)<a class="anchor" aria-label="anchor" href="#robustness-c-solver-hardening-1-4-2"></a></h3>
+<p>Guarded the C++ solvers against silently wrong results and crashes at extreme scale. None of these affect ordinary inputs; they add error paths and 64-bit arithmetic where 32-bit overflow or a fixed tolerance could previously produce a wrong “optimal” or a crash (<a href="https://github.com/gcol33/couplr/issues/13" class="external-link">#13</a>):</p>
+<ul><li><p><strong>Overflow / narrowing.</strong> <code>ssap_bucket</code> errors clearly when cost magnitudes exceed what the integer-bucket solver can represent (rather than overflowing the sentinel or allocating an enormous bucket queue); the network-simplex iteration bound and <code>gabow_tarjan</code>’s bit-scaling range are computed and checked in 64-bit; <code>gabow_tarjan</code> also rejects costs that collide with its forbidden sentinel; the brute-force solver caps total enumeration work instead of running unbounded in the number of columns.</p></li>
+<li><p><strong>Large <code>n*m</code> indexing.</strong> Flat cost/kernel indexing in <code>prepare_cost_matrix</code>, <code>solve_sinkhorn</code>, and the auction epsilon is done in 64-bit; <code>network_simplex</code> and <code>lapmod</code> reject problems whose arc / entry counts would overflow a 32-bit index.</p></li>
+<li><p><strong>Tolerances and status.</strong> <code>solve_munkres</code> scales its zero tolerance with the cost magnitude (a fixed <code>1e-12</code> could make a solvable large-cost matrix throw); <code>solve_csa</code> scales non-integer costs to integers before the epsilon-scaling auction, so its optimality guarantee (which assumes integer costs) also holds for real-valued inputs with near-tied assignments; <code>full_matching</code> now reports <code>infeasible</code> when the group capacity is below the number of units instead of silently dropping units as <code>optimal</code>; <code>solve_sinkhorn</code> reports the correct iteration count on non-convergence.</p></li>
+<li><p><strong>hk01 fallback.</strong> The pure <code>solve_hk01</code> now falls back to the exact weighted solver (<code>solve_csflow</code>) when the zero-cost subgraph of a <code>{0,1}</code> matrix has no perfect matching, instead of erroring – matching the Rcpp path that <code>assignment(method = "hk01")</code> already used.</p></li>
+<li><p><strong>Bounds.</strong> The internal <code>morph_pixel_level</code> helpers assert their pixel / assignment buffer sizes, matching the exported wrappers.</p></li>
+<li><p><strong><code>csa</code> shipped path now carries the fixes it was tested for.</strong> The Rcpp entry point for <code>method = "csa"</code> ran a separate copy of the solver that never received the integer-scaling fix above, so <code>assignment(method = "csa")</code> could still return a suboptimal matching on fractional costs. It now delegates to the single pure <code>solve_csa</code> implementation exercised by the C++ tests. That implementation also gained square padding for rectangular problems, which it previously solved greedily (and suboptimally). The Rcpp <code>*_impl</code> wrappers now share one <code>rcpp_to_cost_matrix</code> / <code>lap_result_to_rcpp</code> conversion pair instead of per-file copies (<a href="https://github.com/gcol33/couplr/issues/15" class="external-link">#15</a>).</p></li>
+<li><p><strong>Remaining solvers now ship the tested implementation.</strong> Following <code>csa</code>, the Rcpp entry points for <code>sap</code>/<code>ssp</code>, <code>csflow</code>, <code>cycle_cancel</code>, <code>push_relabel</code>, <code>ssap_bucket</code>, <code>bruteforce</code>, <code>bottleneck</code>, <code>hk01</code>, <code>network_simplex</code>, and the three <code>auction</code> variants each ran a second copy of the algorithm that had drifted from the pure <code>lap::solve_*</code> exercised by the C++ tests. They now delegate to that single pure implementation, so the shipped path and the tested path are identical. Each pure copy was checked against brute force over randomised integer, fractional, rectangular, maximize, and forbidden-edge inputs before its wrapper was pointed at it. <code>network_simplex</code> thereby picks up the pure copy’s <code>O(n^2)</code> pivot bound (the shipped copy used the slower <code>O(arcs * nodes)</code> bound).</p></li>
+<li><p><strong><code>auction</code>, <code>auction_gs</code>, and <code>auction_scaled</code> now return the exact optimum.</strong> The basic and Gauss-Seidel auctions used a single fixed epsilon, which leaves a duality-gap slack of up to <code>n * eps</code> and returned suboptimal matchings on closely-spaced costs (<code>assignment(method = "auction")</code> could disagree with <code>jv</code>); <code>auction_scaled</code> additionally threw on some feasible rectangular problems with forbidden edges under <code>maximize</code>. All three now run one shared epsilon-scaling core that scales epsilon down to a tiny final value, recovering the exact assignment. <code>lap_solve_auction_gs()</code> keeps its <code>bids</code> diagnostic.</p></li>
+<li><p><strong><code>hk01</code> maximize.</strong> The pure <code>solve_hk01</code> flipped <code>maximize</code> by negation, turning a <code>{0,1}</code> matrix into <code>{0,-1}</code>, which its palette check no longer recognised as binary – so it threw on feasible binary maximization problems. It now flips via <code>cmax - c</code>, preserving the <code>{0,1}</code> palette so the fast path and the <code>solve_csflow</code> fallback engage.</p></li>
+<li><p><strong>Greedy matching wrappers</strong> (<code>greedy_matching</code>, <code>_sorted</code>, <code>_row_best</code>, <code>_pq</code>) now delegate to the pure <code>lap::greedy_matching_*</code>. To keep the shipped behaviour identical, the pure copies gained the two tolerances the Rcpp copies had and they lacked: they skip the large-finite <code>BIG</code> sentinel the matching layer uses for forbidden edges (so a row whose only remaining options are forbidden is left unmatched rather than paired to a forbidden column), and they accept <code>n &gt; m</code> by returning a partial matching instead of erroring. Verified byte-identical to the previous wrappers over 400 randomised cases spanning integer ties, <code>NA</code>/<code>BIG</code>-forbidden edges, and rectangular shapes. The three per-strategy Rcpp exports (<code>greedy_matching_sorted</code> / <code>_row_best</code> / <code>_pq</code>) were folded into the single <code>greedy_matching(strategy = ...)</code> dispatcher they duplicated; <code>greedy_couples(strategy = ...)</code> remains the user-facing verb.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="tests-1-4-2">Tests<a class="anchor" aria-label="anchor" href="#tests-1-4-2"></a></h3>
+<ul><li>Added a parameter-recovery and coverage suite for the statistical layer (<code>test-statistical-recovery.R</code>): sensitivity pair alignment, prefitted-PS row alignment, propensity-matching imbalance reduction, ATE subclass weight values, weighted-balance means, known-effect recovery across seeds, and nominal coverage of matched-pair confidence intervals (<a href="https://github.com/gcol33/couplr/issues/14" class="external-link">#14</a>).</li>
+<li>Added a randomised ground-truth harness (<code>cpp_tests/tests/test_ground_truth.cpp</code>) that compares every optimal pure solver against brute-force enumeration over thousands of integer, fractional, rectangular, maximize, and forbidden-edge matrices (bottleneck against a brute-force minimax). This is the gate that decides whether a solver’s Rcpp wrapper may delegate to the pure copy, and it is what surfaced the <code>auction</code> and <code>hk01</code> bugs above.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.1" id="couplr-141">couplr 1.4.1<a class="anchor" aria-label="anchor" href="#couplr-141"></a></h2><p class="text-muted">CRAN release: 2026-05-23</p>
+<div class="section level3">
+<h3 id="bug-fixes-solver-stalls-on-constrained-matching-1-4-1">Bug fixes (solver stalls on constrained matching)<a class="anchor" aria-label="anchor" href="#bug-fixes-solver-stalls-on-constrained-matching-1-4-1"></a></h3>
+<p>Fixes two solver paths that could stall indefinitely on <code><a href="../reference/match_couples.html">match_couples()</a></code> inputs with <code>max_distance</code>, calipers, or other forbidden-edge constraints. These stalls caused the M1mac and linux-arm64 additional CRAN checks for 1.4.0 to hit the 1.5-hour test timeout.</p>
+<ul><li><p><strong>Forbidden-cell marker is now <code>Inf</code> instead of a large finite value.</strong> <code><a href="../reference/apply_max_distance.html">apply_max_distance()</a></code>, <code><a href="../reference/apply_calipers.html">apply_calipers()</a></code>, and <code><a href="../reference/mark_forbidden_pairs.html">mark_forbidden_pairs()</a></code> previously wrote a large finite <code>BIG_COST</code> into forbidden cells. The Jonker-Volgenant and small-<code>n</code> SSP solvers treated <code>BIG_COST</code> as a regular expensive edge and could degenerate on sparse, near-square inputs instead of short-circuiting on infeasibility. Switched to <code>Inf</code> so the C++ solvers’ non-finite check fires.</p></li>
+<li><p><strong>Auto-dispatch no longer routes sparse inputs through SSP for small <code>n</code>.</strong> Previously <code><a href="../reference/lap_solve.html">lap_solve()</a></code> with <code>method = "auto"</code> selected <code>"sap"</code> (<code>lap_solve_ssp</code>) for sparse matrices with <code>n &lt;= 100</code>. SSP has its own worst-case stall on near-square, highly-sparse cost matrices. All sparse inputs now go through <code>lapmod</code> regardless of size.</p></li>
+<li><p><strong><code><a href="../reference/match_couples.html">match_couples()</a></code> now drops fully-forbidden rows/columns before LAP.</strong> <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/dot-couples_from_distance.html">.couples_from_distance()</a></code> route through a new internal <code>.solve_with_partial_feasibility()</code> helper. It removes rows and columns with no allowed edges before the LAP call and falls back to <code>greedy_matching()</code> if the optimal solver still cannot find a perfect matching on the feasibility-pruned submatrix (Hall’s-condition violation). Dropped rows/columns are returned as unmatched, preserving the partial-matching semantics that tests with tight <code>max_distance</code> / caliper constraints already expected.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="other-fixes-1-4-1">Other fixes<a class="anchor" aria-label="anchor" href="#other-fixes-1-4-1"></a></h3>
+<ul><li>
+<strong><code>jv_core</code>:</strong> drop the same-pass reprocess in <code>AUGMENTING ROW REDUCTION</code>. The reprocess could revisit a freshly-reduced row in the same pass and delay convergence on degenerate inputs without changing the final assignment.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.0" id="couplr-140">couplr 1.4.0<a class="anchor" aria-label="anchor" href="#couplr-140"></a></h2><p class="text-muted">CRAN release: 2026-05-18</p>
 <div class="section level3">
 <h3 id="animation-coverage-1-4-0">Animation coverage<a class="anchor" aria-label="anchor" href="#animation-coverage-1-4-0"></a></h3>
 <ul><li>
@@ -211,7 +290,7 @@
 <strong>Robust singularity check</strong> using <code><a href="https://rdrr.io/r/base/kappa.html" class="external-link">rcond()</a></code> instead of fragile <code>det() == 0</code>
 </li>
 <li>
-<strong>Custom <code>sigma</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code>, <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>, and <code><a href="../reference/compute_distance_matrix.html">compute_distance_matrix()</a></code> for user-supplied covariance matrices</li>
+<strong>Custom <code>sigma</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code>, <code>greedy_couples()</code>, and <code><a href="../reference/compute_distance_matrix.html">compute_distance_matrix()</a></code> for user-supplied covariance matrices</li>
 <li>
 <strong>Vectorized computation</strong> replacing nested R for-loops for ~10x speedup</li>
 </ul></div>
@@ -242,7 +321,7 @@
 <div class="section level4">
 <h4 id="ratio-and-replacement-matching-1-1-0">Ratio and Replacement Matching<a class="anchor" aria-label="anchor" href="#ratio-and-replacement-matching-1-1-0"></a></h4>
 <ul><li>
-<strong>k:1 ratio matching</strong> via <code>ratio</code> parameter in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>. Matches k control units to each treated unit by replicating the cost matrix, then deduplicates assignments.</li>
+<strong>k:1 ratio matching</strong> via <code>ratio</code> parameter in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code>greedy_couples()</code>. Matches k control units to each treated unit by replicating the cost matrix, then deduplicates assignments.</li>
 <li>
 <strong>With-replacement matching</strong> via <code>replace</code> parameter. Each treated unit independently selects its nearest control, allowing controls to be reused across multiple treated units.</li>
 </ul></div>
@@ -281,7 +360,7 @@
 <div class="section level4">
 <h4 id="visualization-1-1-0">Visualization<a class="anchor" aria-label="anchor" href="#visualization-1-1-0"></a></h4>
 <ul><li>
-<strong><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods</strong> for ggplot2-based visualizations (requires ggplot2):
+<strong><code>autoplot()</code> methods</strong> for ggplot2-based visualizations (requires ggplot2):
 <ul><li>
 <code><a href="../reference/autoplot.matching_result.html">autoplot.matching_result()</a></code>: histogram, density, or ecdf of distances</li>
 <li>
@@ -313,7 +392,7 @@
 <div class="section level3">
 <h3 id="bug-fixes-1-0-7">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-7"></a></h3>
 <ul><li>Fixed undefined behavior (UB) in Gabow-Tarjan algorithm: replaced left bit-shift of potentially negative values with multiplication to avoid sanitizer errors on M1-SAN checks</li>
-<li>Fixed namespace conflict with <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code> in vignettes by using explicit <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code> to prevent masking by MASS or other packages</li>
+<li>Fixed namespace conflict with <code>select()</code> in vignettes by using explicit <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code> to prevent masking by MASS or other packages</li>
 </ul><hr></div>
 </div>
     <div class="section level2">
@@ -335,7 +414,7 @@
 <h4 id="automatic-preprocessing-and-scaling-1-0-0">Automatic Preprocessing and Scaling<a class="anchor" aria-label="anchor" href="#automatic-preprocessing-and-scaling-1-0-0"></a></h4>
 <p>The package now includes intelligent preprocessing to improve matching quality:</p>
 <ul><li>
-<strong>New <code>auto_scale</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code> enables automatic preprocessing</li>
+<strong>New <code>auto_scale</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code>greedy_couples()</code> enables automatic preprocessing</li>
 <li>
 <strong>Variable health checks</strong> detect and handle problematic variables:
 <ul><li>Constant columns (SD = 0) are automatically excluded with warnings</li>
@@ -420,7 +499,7 @@
 <li>
 <strong>Distance objects</strong> (S3 class <code>distance_object</code>):
 <ul><li>Self-contained: cost matrix, IDs, metadata, original data</li>
-<li>Works with both <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>
+<li>Works with both <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code>greedy_couples()</code>
 </li>
 <li>Pass as first argument instead of datasets: <code>match_couples(dist_obj, max_distance = 5)</code>
 </li>
@@ -444,7 +523,7 @@
 <h4 id="parallel-processing-1-0-0">Parallel Processing<a class="anchor" aria-label="anchor" href="#parallel-processing-1-0-0"></a></h4>
 <p>Speed up blocked matching with multi-core processing:</p>
 <ul><li>
-<strong>New <code>parallel</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>:
+<strong>New <code>parallel</code> parameter</strong> in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code>greedy_couples()</code>:
 <ul><li>Enable with <code>parallel = TRUE</code> for automatic configuration</li>
 <li>Specify plan with <code>parallel = "multisession"</code> or other future plan</li>
 <li>Works with any number of blocks - automatically determines if beneficial</li>
@@ -474,7 +553,7 @@
 <h4 id="fun-error-messages-and-cost-checking-1-0-0">Fun Error Messages and Cost Checking<a class="anchor" aria-label="anchor" href="#fun-error-messages-and-cost-checking-1-0-0"></a></h4>
 <p>Like testthat, couplr makes errors light, memorable, and helpful with couple-themed messages:</p>
 <ul><li>
-<strong>New <code>check_costs</code> parameter</strong> (default: <code>TRUE</code>) in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>:
+<strong>New <code>check_costs</code> parameter</strong> (default: <code>TRUE</code>) in <code><a href="../reference/match_couples.html">match_couples()</a></code> and <code>greedy_couples()</code>:
 <ul><li>Automatically checks distance distributions before matching</li>
 <li>Provides friendly, actionable warnings for common problems</li>
 <li>Set to <code>FALSE</code> to skip checks in production code</li>
@@ -641,6 +720,5 @@
 
 
 
-  
-</body></html>
+  </body></html>
 

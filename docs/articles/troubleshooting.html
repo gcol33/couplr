@@ -13,14 +13,27 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Troubleshooting Guide">
+<script>
+(function () {
+  var D = String.fromCharCode(36);
+  window.MathJax = {
+    tex: {
+      inlineMath: [[D, D], ["\\(", "\\)"]],
+      displayMath: [[D + D, D + D], ["\\[", "\\]"]]
+    },
+    chtml: { linebreaks: { automatic: true, width: "90% container" } },
+    svg: { linebreaks: { automatic: true, width: "90% container" } },
+    options: { renderActions: { addMenu: [] } }
+  };
+})();
+</script>
 </head>
 <body>
-
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -28,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-05-19</h4>
+            <h4 data-toc-skip class="date">2026-07-18</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/troubleshooting.Rmd" class="external-link"><code>vignettes/troubleshooting.Rmd</code></a></small>
       <div class="d-none name"><code>troubleshooting.Rmd</code></div>
@@ -167,7 +180,7 @@ and provides step-by-step solutions.</p>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="cn">Inf</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve.html">lap_solve</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Infeasible given forbidden edges</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Infeasible: row 2 has no allowed edges</span></span></code></pre></div>
 <p>Error message: “No feasible assignment found” or total cost is
 Inf.</p>
 </div>
@@ -399,8 +412,8 @@ entries, no valid assignment exists.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             30.6         32.5       -<span style="color: #BB0000;">1.89</span>     -<span style="color: #BB0000;">0.386</span>        1.05      0.22</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">77</span>666.       <span style="text-decoration: underline;">41</span>353.     <span style="text-decoration: underline;">36</span>313.        2.40         2.15      0.81</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             30.6         32.5       -<span style="color: #BB0000;">1.89</span>     -<span style="color: #BB0000;">0.386</span>        1.10      0.22</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">77</span>666.       <span style="text-decoration: underline;">41</span>353.     <span style="text-decoration: underline;">36</span>313.        2.40         4.63      0.81</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Overall Balance:</span></span>
 <span><span class="co">#&gt;   Mean |Std Diff|: 1.391 (Poor)</span></span>
@@ -478,8 +491,8 @@ weighted</p></li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             31.2         31.2        0.04      0.009       1.03        0.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">53</span>160.       <span style="text-decoration: underline;">51</span>959.      <span style="text-decoration: underline;">1</span>201.        0.16        0.998       0.2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             31.2         31.2        0.04      0.009       1.06        0.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">53</span>160.       <span style="text-decoration: underline;">51</span>959.      <span style="text-decoration: underline;">1</span>201.        0.16        0.996       0.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Overall Balance:</span></span>
 <span><span class="co">#&gt;   Mean |Std Diff|: 0.085 (Excellent)</span></span>
@@ -577,15 +590,15 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <span></span>
 <span><span class="co"># Greedy is much faster</span></span>
 <span><span class="va">time_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>  <span class="va">result_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
+<span>  <span class="va">result_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>    <span class="va">large_left</span>, <span class="va">large_right</span>,</span>
 <span>    vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span><span class="op">)</span>,</span>
 <span>    strategy <span class="op">=</span> <span class="st">"row_best"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  , method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching (n=500):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Greedy matching (n=500): 0.24 seconds</span></span>
+<span><span class="co">#&gt; Greedy matching (n=500): 0.49 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Quality (mean distance):"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Quality (mean distance): 0.2886</span></span></code></pre></div>
 <p><strong>2. Use blocking to divide the problem:</strong></p>
@@ -702,11 +715,11 @@ complexity. For n = 5,000, this means ~125 billion operations.</p>
 <p><strong>1. Use greedy matching (avoids full matrix):</strong></p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Greedy computes distances on-the-fly</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  <span class="va">left</span>, <span class="va">right</span>,</span>
 <span>  vars <span class="op">=</span> <span class="va">covariates</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"row_best"</span>  <span class="co"># Most memory-efficient</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>, method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>2. Use blocking to create smaller subproblems:</strong></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Each block is much smaller</span></span>
@@ -1024,8 +1037,7 @@ packages</p></li>
 
 
 
-  
-<script>
+  <script>
 /* SVG Copy Button Functionality */
 (function() {
   "use strict";

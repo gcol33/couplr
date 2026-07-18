@@ -89,9 +89,8 @@ An S3 object of class "distance_object" containing:
 This function computes distances once and stores them in a reusable
 object. The resulting distance_object can be passed to
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-or
-[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-instead of providing datasets and variables.
+(optionally with `method = "greedy"`) instead of providing datasets and
+variables.
 
 Benefits:
 
@@ -126,7 +125,7 @@ dist_obj <- compute_distances(
 # Reuse for different matching strategies
 result1 <- match_couples(dist_obj, max_distance = 0.5)
 result2 <- match_couples(dist_obj, max_distance = 1.0)
-result3 <- greedy_couples(dist_obj, strategy = "sorted")
+result3 <- match_couples(dist_obj, method = "greedy", strategy = "sorted")
 
 # All use the same precomputed distances
 ```

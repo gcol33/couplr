@@ -798,14 +798,14 @@ matching. couplr handles this with greedy matching:
 ``` r
 
 # Greedy matching (fast for large control pools)
-result_lalonde <- greedy_couples(
+result_lalonde <- match_couples(
   left = nsw_treat,
   right = cps_control,
   vars = vars_lalonde,
   strategy = "pq",       # Priority queue - efficient for large pools
   auto_scale = TRUE,
   scale = "robust"
-)
+, method = "greedy")
 
 cat("Matched", result_lalonde$info$n_matched, "of", nrow(nsw_treat), "treatment units\n")
 #> Matched 100 of 100 treatment units

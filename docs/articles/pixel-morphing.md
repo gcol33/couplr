@@ -968,7 +968,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 
 ``` r
 
-result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+result <- match_couples(left, right, vars = vars, strategy = "sorted", method = "greedy")
 ```
 
 **For n \> 50,000**: Combine strategies (blocking + greedy within
@@ -1024,5 +1024,4 @@ size and accuracy requirements.
   Production matching pipelines
 
 - [`?lap_solve`](https://gillescolling.com/couplr/reference/lap_solve.md),
-  [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
-  [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md)
+  [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md)

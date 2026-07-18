@@ -10,7 +10,7 @@ pixel_morph(
   imgA,
   imgB,
   n_frames = 16L,
-  mode = c("color_walk", "exact", "recursive"),
+  mode = c("color_walk", "exact", "recursive", "color_match"),
   lap_method = "jv",
   maximize = FALSE,
   quantize_bits = 5L,
@@ -39,7 +39,9 @@ pixel_morph(
 
 - mode:
 
-  Assignment algorithm: "color_walk" (default), "exact", or "recursive"
+  Assignment algorithm: "color_walk" (default), "exact", "recursive", or
+  "color_match" (spatially match pixels of identical quantized colour,
+  filling the remainder by identity)
 
 - lap_method:
 

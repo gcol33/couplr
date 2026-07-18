@@ -1,6 +1,279 @@
 # Changelog
 
+## couplr 1.4.2
+
+### Breaking changes
+
+- **`greedy_couples()` is removed; greedy matching is now
+  `match_couples(method = "greedy")`.** The two functions duplicated
+  ~130 lines of identical scaffolding (validation, scaling, id
+  extraction, blocking dispatch, metadata) over the same shared engine.
+  They are now one front door:
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  gains a `method = "greedy"` value and a `strategy` argument
+  (“row_best”, “sorted”, “pq”). Replace
+  `greedy_couples(x, strategy = "sorted")` with
+  `match_couples(x, method = "greedy", strategy = "sorted")`. The result
+  object and `info$method == "greedy"` are unchanged.
+
+### New features
+
+- [`pixel_morph()`](https://gillescolling.com/couplr/reference/pixel_morph.md)
+  and
+  [`pixel_morph_animate()`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
+  gain a `mode = "color_match"` option: pixels sharing a quantized
+  colour are matched spatially and any remainder falls back to identity.
+  A lighter-weight alternative to the default `"color_walk"` palette
+  LAP.
+
+### Bug fixes (statistical / causal-inference layer)
+
+- **[`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  no longer scrambles matched pairs.** Outcomes were assembled with two
+  independent [`merge()`](https://rdrr.io/r/base/merge.html) calls, each
+  sorted by its own key, so the pair difference subtracted outcomes from
+  mismatched pairs and every downstream quantity (Wilcoxon T+, Rosenbaum
+  bounds, critical gamma) was computed on a scrambled pairing. Outcomes
+  are now looked up by ID, preserving the row-wise pair correspondence
+  ([\#4](https://github.com/gcol33/couplr/issues/4)).
+
+- **`subclass_match(estimand = "ATE")` weights corrected.** ATE subclass
+  weights carried an extra factor of the stratum size, over-weighting
+  large subclasses quadratically. A treated unit in subclass k now
+  carries `(n_k / N) / n_t` as intended; ATT and ATC were already
+  correct ([\#5](https://github.com/gcol33/couplr/issues/5)).
+
+- **[`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  now applies stratum weights for full matching, CEM, and
+  subclassification.** The weights were computed and discarded, so
+  standardized differences were unweighted for the very estimators whose
+  balance is achieved through weighting. Weighted mean, variance, and
+  standardized difference are now used on both sides. Also: the variance
+  ratio is now a true ratio of variances (matching the conventional
+  0.5-2 bounds) rather than a ratio of standard deviations, and the
+  unmatched right-unit count no longer goes negative under `ratio > 1` /
+  `replace` (it counts distinct matched right units, not pair rows)
+  ([\#6](https://github.com/gcol33/couplr/issues/6)).
+
+### Bug fixes (solvers)
+
+- **`lap_solve_line_metric(maximize = TRUE)` now returns the true
+  maximum-weight matching.** The DP always built the sorted
+  (minimum-cost) pairing and merely negated the total; on a line the
+  maximum-weight matching is the anti-monotone pairing. The DP now runs
+  against the descending target ordering and returns that assignment and
+  its true total ([\#8](https://github.com/gcol33/couplr/issues/8)).
+
+- **`gabow_tarjan` returns a perfect matching when the diagonal is
+  forbidden.** The `C_max == 0` fast path assigned the diagonal without
+  checking feasibility, returning an empty matching when the diagonal
+  cells were forbidden but a perfect matching existed. It now finds a
+  maximum-cardinality matching over the allowed edges via augmenting
+  paths ([\#9](https://github.com/gcol33/couplr/issues/9)).
+
+### Bug fixes (front doors and input handling)
+
+- **`compute_distances(auto_scale = TRUE)` now scales.** It read a
+  nonexistent field (making `vars` `NULL`) and disabled scaling under
+  the belief it had already happened. It now reads the selected
+  variables and forwards the chosen scaling method to the cost builder
+  ([\#7](https://github.com/gcol33/couplr/issues/7)).
+
+- **Pre-fitted propensity models predict on the supplied data.**
+  [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+  and
+  [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+  called [`predict()`](https://rdrr.io/r/stats/predict.html) without
+  `newdata =`, so a `ps_model` fitted on a differently ordered or subset
+  frame attached scores to the wrong rows. They now pass
+  `newdata = data` ([\#10](https://github.com/gcol33/couplr/issues/10)).
+
+- **`match_couples(ratio > 1)` falls back to a partial match on
+  infeasibility.** The `ratio > 1` path called the solver directly and
+  hard errored when constraints forbade every edge of some unit, whereas
+  the 1:1 path returned a partial matching. Both paths now share the
+  same partial-feasibility / greedy fallback
+  ([\#10](https://github.com/gcol33/couplr/issues/10)).
+
+- **[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
+  honors the `forbidden` sentinel for matrix input, and
+  [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  preserves singleton-dimension orientation.** The matrix path silently
+  ignored a non-`NA` `forbidden`; it now masks matching cells as
+  forbidden. A 3-D array slice with a singleton row or column dimension
+  was dropped to a vector and transposed; slices are now reshaped
+  explicitly ([\#11](https://github.com/gcol33/couplr/issues/11)).
+
+### Robustness (C++ solver hardening)
+
+Guarded the C++ solvers against silently wrong results and crashes at
+extreme scale. None of these affect ordinary inputs; they add error
+paths and 64-bit arithmetic where 32-bit overflow or a fixed tolerance
+could previously produce a wrong “optimal” or a crash
+([\#13](https://github.com/gcol33/couplr/issues/13)):
+
+- **Overflow / narrowing.** `ssap_bucket` errors clearly when cost
+  magnitudes exceed what the integer-bucket solver can represent (rather
+  than overflowing the sentinel or allocating an enormous bucket queue);
+  the network-simplex iteration bound and `gabow_tarjan`’s bit-scaling
+  range are computed and checked in 64-bit; `gabow_tarjan` also rejects
+  costs that collide with its forbidden sentinel; the brute-force solver
+  caps total enumeration work instead of running unbounded in the number
+  of columns.
+
+- **Large `n*m` indexing.** Flat cost/kernel indexing in
+  `prepare_cost_matrix`, `solve_sinkhorn`, and the auction epsilon is
+  done in 64-bit; `network_simplex` and `lapmod` reject problems whose
+  arc / entry counts would overflow a 32-bit index.
+
+- **Tolerances and status.** `solve_munkres` scales its zero tolerance
+  with the cost magnitude (a fixed `1e-12` could make a solvable
+  large-cost matrix throw); `solve_csa` scales non-integer costs to
+  integers before the epsilon-scaling auction, so its optimality
+  guarantee (which assumes integer costs) also holds for real-valued
+  inputs with near-tied assignments; `full_matching` now reports
+  `infeasible` when the group capacity is below the number of units
+  instead of silently dropping units as `optimal`; `solve_sinkhorn`
+  reports the correct iteration count on non-convergence.
+
+- **hk01 fallback.** The pure `solve_hk01` now falls back to the exact
+  weighted solver (`solve_csflow`) when the zero-cost subgraph of a
+  `{0,1}` matrix has no perfect matching, instead of erroring – matching
+  the Rcpp path that `assignment(method = "hk01")` already used.
+
+- **Bounds.** The internal `morph_pixel_level` helpers assert their
+  pixel / assignment buffer sizes, matching the exported wrappers.
+
+- **`csa` shipped path now carries the fixes it was tested for.** The
+  Rcpp entry point for `method = "csa"` ran a separate copy of the
+  solver that never received the integer-scaling fix above, so
+  `assignment(method = "csa")` could still return a suboptimal matching
+  on fractional costs. It now delegates to the single pure `solve_csa`
+  implementation exercised by the C++ tests. That implementation also
+  gained square padding for rectangular problems, which it previously
+  solved greedily (and suboptimally). The Rcpp `*_impl` wrappers now
+  share one `rcpp_to_cost_matrix` / `lap_result_to_rcpp` conversion pair
+  instead of per-file copies
+  ([\#15](https://github.com/gcol33/couplr/issues/15)).
+
+- **Remaining solvers now ship the tested implementation.** Following
+  `csa`, the Rcpp entry points for `sap`/`ssp`, `csflow`,
+  `cycle_cancel`, `push_relabel`, `ssap_bucket`, `bruteforce`,
+  `bottleneck`, `hk01`, `network_simplex`, and the three `auction`
+  variants each ran a second copy of the algorithm that had drifted from
+  the pure `lap::solve_*` exercised by the C++ tests. They now delegate
+  to that single pure implementation, so the shipped path and the tested
+  path are identical. Each pure copy was checked against brute force
+  over randomised integer, fractional, rectangular, maximize, and
+  forbidden-edge inputs before its wrapper was pointed at it.
+  `network_simplex` thereby picks up the pure copy’s `O(n^2)` pivot
+  bound (the shipped copy used the slower `O(arcs * nodes)` bound).
+
+- **`auction`, `auction_gs`, and `auction_scaled` now return the exact
+  optimum.** The basic and Gauss-Seidel auctions used a single fixed
+  epsilon, which leaves a duality-gap slack of up to `n * eps` and
+  returned suboptimal matchings on closely-spaced costs
+  (`assignment(method = "auction")` could disagree with `jv`);
+  `auction_scaled` additionally threw on some feasible rectangular
+  problems with forbidden edges under `maximize`. All three now run one
+  shared epsilon-scaling core that scales epsilon down to a tiny final
+  value, recovering the exact assignment. `lap_solve_auction_gs()` keeps
+  its `bids` diagnostic.
+
+- **`hk01` maximize.** The pure `solve_hk01` flipped `maximize` by
+  negation, turning a `{0,1}` matrix into `{0,-1}`, which its palette
+  check no longer recognised as binary – so it threw on feasible binary
+  maximization problems. It now flips via `cmax - c`, preserving the
+  `{0,1}` palette so the fast path and the `solve_csflow` fallback
+  engage.
+
+- **Greedy matching wrappers** (`greedy_matching`, `_sorted`,
+  `_row_best`, `_pq`) now delegate to the pure `lap::greedy_matching_*`.
+  To keep the shipped behaviour identical, the pure copies gained the
+  two tolerances the Rcpp copies had and they lacked: they skip the
+  large-finite `BIG` sentinel the matching layer uses for forbidden
+  edges (so a row whose only remaining options are forbidden is left
+  unmatched rather than paired to a forbidden column), and they accept
+  `n > m` by returning a partial matching instead of erroring. Verified
+  byte-identical to the previous wrappers over 400 randomised cases
+  spanning integer ties, `NA`/`BIG`-forbidden edges, and rectangular
+  shapes. The three per-strategy Rcpp exports (`greedy_matching_sorted`
+  / `_row_best` / `_pq`) were folded into the single
+  `greedy_matching(strategy = ...)` dispatcher they duplicated;
+  `greedy_couples(strategy = ...)` remains the user-facing verb.
+
+### Tests
+
+- Added a parameter-recovery and coverage suite for the statistical
+  layer (`test-statistical-recovery.R`): sensitivity pair alignment,
+  prefitted-PS row alignment, propensity-matching imbalance reduction,
+  ATE subclass weight values, weighted-balance means, known-effect
+  recovery across seeds, and nominal coverage of matched-pair confidence
+  intervals ([\#14](https://github.com/gcol33/couplr/issues/14)).
+- Added a randomised ground-truth harness
+  (`cpp_tests/tests/test_ground_truth.cpp`) that compares every optimal
+  pure solver against brute-force enumeration over thousands of integer,
+  fractional, rectangular, maximize, and forbidden-edge matrices
+  (bottleneck against a brute-force minimax). This is the gate that
+  decides whether a solver’s Rcpp wrapper may delegate to the pure copy,
+  and it is what surfaced the `auction` and `hk01` bugs above.
+
+## couplr 1.4.1
+
+CRAN release: 2026-05-23
+
+### Bug fixes (solver stalls on constrained matching)
+
+Fixes two solver paths that could stall indefinitely on
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+inputs with `max_distance`, calipers, or other forbidden-edge
+constraints. These stalls caused the M1mac and linux-arm64 additional
+CRAN checks for 1.4.0 to hit the 1.5-hour test timeout.
+
+- **Forbidden-cell marker is now `Inf` instead of a large finite
+  value.**
+  [`apply_max_distance()`](https://gillescolling.com/couplr/reference/apply_max_distance.md),
+  [`apply_calipers()`](https://gillescolling.com/couplr/reference/apply_calipers.md),
+  and
+  [`mark_forbidden_pairs()`](https://gillescolling.com/couplr/reference/mark_forbidden_pairs.md)
+  previously wrote a large finite `BIG_COST` into forbidden cells. The
+  Jonker-Volgenant and small-`n` SSP solvers treated `BIG_COST` as a
+  regular expensive edge and could degenerate on sparse, near-square
+  inputs instead of short-circuiting on infeasibility. Switched to `Inf`
+  so the C++ solvers’ non-finite check fires.
+
+- **Auto-dispatch no longer routes sparse inputs through SSP for small
+  `n`.** Previously
+  [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
+  with `method = "auto"` selected `"sap"` (`lap_solve_ssp`) for sparse
+  matrices with `n <= 100`. SSP has its own worst-case stall on
+  near-square, highly-sparse cost matrices. All sparse inputs now go
+  through `lapmod` regardless of size.
+
+- **[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  now drops fully-forbidden rows/columns before LAP.**
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  and
+  [`.couples_from_distance()`](https://gillescolling.com/couplr/reference/dot-couples_from_distance.md)
+  route through a new internal `.solve_with_partial_feasibility()`
+  helper. It removes rows and columns with no allowed edges before the
+  LAP call and falls back to `greedy_matching()` if the optimal solver
+  still cannot find a perfect matching on the feasibility-pruned
+  submatrix (Hall’s-condition violation). Dropped rows/columns are
+  returned as unmatched, preserving the partial-matching semantics that
+  tests with tight `max_distance` / caliper constraints already
+  expected.
+
+### Other fixes
+
+- **`jv_core`:** drop the same-pass reprocess in
+  `AUGMENTING ROW REDUCTION`. The reprocess could revisit a
+  freshly-reduced row in the same pass and delay convergence on
+  degenerate inputs without changing the final assignment.
+
 ## couplr 1.4.0
+
+CRAN release: 2026-05-18
 
 ### Animation coverage
 
@@ -215,8 +488,7 @@ CRAN release: 2026-03-20
   `det() == 0`
 - **Custom `sigma` parameter** in
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md),
-  and
+  `greedy_couples()`, and
   [`compute_distance_matrix()`](https://gillescolling.com/couplr/reference/compute_distance_matrix.md)
   for user-supplied covariance matrices
 - **Vectorized computation** replacing nested R for-loops for ~10x
@@ -255,10 +527,8 @@ CRAN release: 2026-03-03
 
 - **k:1 ratio matching** via `ratio` parameter in
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  and
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md).
-  Matches k control units to each treated unit by replicating the cost
-  matrix, then deduplicates assignments.
+  and `greedy_couples()`. Matches k control units to each treated unit
+  by replicating the cost matrix, then deduplicates assignments.
 - **With-replacement matching** via `replace` parameter. Each treated
   unit independently selects its nearest control, allowing controls to
   be reused across multiple treated units.
@@ -375,9 +645,7 @@ quality:
 
 - **New `auto_scale` parameter** in
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  and
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-  enables automatic preprocessing
+  and `greedy_couples()` enables automatic preprocessing
 - **Variable health checks** detect and handle problematic variables:
   - Constant columns (SD = 0) are automatically excluded with warnings
   - High missingness (\>50%) triggers warnings
@@ -461,8 +729,7 @@ Performance optimization for exploring multiple matching strategies:
   - Self-contained: cost matrix, IDs, metadata, original data
   - Works with both
     [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-    and
-    [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
+    and `greedy_couples()`
   - Pass as first argument instead of datasets:
     `match_couples(dist_obj, max_distance = 5)`
   - Informative print and summary methods with distance statistics
@@ -483,8 +750,7 @@ Speed up blocked matching with multi-core processing:
 
 - **New `parallel` parameter** in
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  and
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
+  and `greedy_couples()`:
   - Enable with `parallel = TRUE` for automatic configuration
   - Specify plan with `parallel = "multisession"` or other future plan
   - Works with any number of blocks - automatically determines if
@@ -511,8 +777,7 @@ couple-themed messages:
 
 - **New `check_costs` parameter** (default: `TRUE`) in
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  and
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
+  and `greedy_couples()`:
   - Automatically checks distance distributions before matching
   - Provides friendly, actionable warnings for common problems
   - Set to `FALSE` to skip checks in production code

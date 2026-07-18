@@ -9,7 +9,6 @@
 <url><loc>https://gillescolling.com/couplr/articles/pixel-morphing.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/articles/troubleshooting.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/authors.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/CHANGELOG.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/CLAUDE.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/CONTRIBUTING.html</loc></url>
@@ -17,7 +16,6 @@
 <url><loc>https://gillescolling.com/couplr/index.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/LICENSE-text.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/LICENSE.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/NETWORK_SIMPLEX_PLAN.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/news/index.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/animated_methods.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/apply_all_constraints.html</loc></url>
@@ -89,10 +87,6 @@
 <url><loc>https://gillescolling.com/couplr/reference/get_method_used.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/get_total_cost.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/greedy_blocks_parallel.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/reference/greedy_couples.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/reference/greedy_couples_blocked.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/reference/greedy_couples_from_distance.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/reference/greedy_couples_single.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/group_by.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/has_blocks.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/has_valid_pairs.html</loc></url>
@@ -167,7 +161,5 @@
 <url><loc>https://gillescolling.com/couplr/reference/warn_many_zeros.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/warn_parallel_unavailable.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/warn_poor_quality.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/todo.html</loc></url>
-<url><loc>https://gillescolling.com/couplr/VIGNETTE_IMPROVEMENT_PLAN.html</loc></url>
 </urlset>
 

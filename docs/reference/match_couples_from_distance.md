@@ -12,6 +12,7 @@ match_couples_from_distance(
   ignore_blocks = FALSE,
   require_full_matching = FALSE,
   method = "auto",
+  strategy = "row_best",
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   check_costs = TRUE

@@ -13,14 +13,27 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="The Algorithm Collection">
+<script>
+(function () {
+  var D = String.fromCharCode(36);
+  window.MathJax = {
+    tex: {
+      inlineMath: [[D, D], ["\\(", "\\)"]],
+      displayMath: [[D + D, D + D], ["\\[", "\\]"]]
+    },
+    chtml: { linebreaks: { automatic: true, width: "90% container" } },
+    svg: { linebreaks: { automatic: true, width: "90% container" } },
+    options: { renderActions: { addMenu: [] } }
+  };
+})();
+</script>
 </head>
 <body>
-
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -28,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,14 +106,14 @@
 
 <link href="algorithms_files/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
 <script src="algorithms_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="algorithms_files/lap_animate-1.0.0/lap_animate.css" rel="stylesheet">
-<script src="algorithms_files/lap_animate-binding-1.4.0/lap_animate.js"></script><div class="row">
+<script src="algorithms_files/lap_animate-binding-1.4.2/lap_animate.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>The Algorithm Collection</h1>
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-05-19</h4>
+            <h4 data-toc-skip class="date">2026-07-18</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/algorithms.Rmd" class="external-link"><code>vignettes/algorithms.Rmd</code></a></small>
       <div class="d-none name"><code>algorithms.Rmd</code></div>
@@ -113,9 +126,13 @@ Colling</h4>
 </h2>
 <p>The Hungarian algorithm was published in 1955. Sixty years later,
 most R packages still use nothing else.</p>
-<p>couplr implements <strong>20 algorithms</strong> (19 solvers plus
-automatic selection), including methods that exist in no other R
-package: Gabow-Tarjan, Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan.</p>
+<p>couplr implements <strong>20 algorithms</strong> (19 sum-cost solvers
+callable via <code><a href="../reference/assignment.html">assignment()</a></code> plus
+<code><a href="../reference/bottleneck_assignment.html">bottleneck_assignment()</a></code> for min-max problems), including
+methods that exist in no other R package (Orlin-Ahuja, Network Simplex,
+Ramshaw-Tarjan) and, to our knowledge, no publicly available open-source
+implementation in any language for Gabow-Tarjan bit-scaling
+assignment.</p>
 <div class="section level3">
 <h3 id="who-this-vignette-is-for">Who This Vignette Is For<a class="anchor" aria-label="anchor" href="#who-this-vignette-is-for"></a>
 </h3>
@@ -1060,6 +1077,5 @@ optimal transport. <em>NeurIPS</em>.</p></li>
 
 
 
-  
-</body>
+  </body>
 </html>

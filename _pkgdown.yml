@@ -88,7 +88,6 @@ reference:
   desc: High-level matching for observational studies
   contents:
   - match_couples
-  - greedy_couples
   - matchmaker
   - ps_match
   - cardinality_match

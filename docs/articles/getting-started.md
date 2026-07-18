@@ -225,9 +225,8 @@ concentrated near zero indicates good matches.
 ## Large Datasets: Use Greedy Matching
 
 For datasets larger than a few thousand observations, optimal matching
-becomes slow. Use
-[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-instead; it’s 10-100x faster with nearly identical results:
+becomes slow. Use `match_couples(method = "greedy")` instead; it’s
+10-100x faster with nearly identical results:
 
 ``` r
 
@@ -246,12 +245,12 @@ large_control <- tibble(
 )
 
 # Fast greedy matching
-result_greedy <- greedy_couples(
+result_greedy <- match_couples(
   large_treatment, large_control,
   vars = c("age", "income"),
   auto_scale = TRUE,
   strategy = "row_best"  # fastest strategy
-)
+, method = "greedy")
 #> Auto-selected scaling method: standardize
 
 cat("Matched", result_greedy$info$n_matched, "pairs\n")
@@ -266,7 +265,7 @@ cat("Mean distance:", round(mean(result_greedy$pairs$distance), 3), "\n")
 |----|----|
 | \< 1,000 per group | [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md) |
 | 1,000 - 5,000 | Either works; greedy is faster |
-| \> 5,000 | [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md) |
+| \> 5,000 | `match_couples(method = "greedy")` |
 
 ------------------------------------------------------------------------
 
@@ -706,8 +705,8 @@ print(kbest)
 - [`?full_match`](https://gillescolling.com/couplr/reference/full_match.md) -
   Full matching (variable-ratio groups)
 
-- [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md) -
-  Fast approximate matching
+- [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md)
+  with `method = "greedy"` - Fast approximate matching
 
 - [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md) -
   Formal balance assessment

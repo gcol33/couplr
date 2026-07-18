@@ -18,6 +18,7 @@ match_couples_blocked(
   max_distance,
   calipers,
   method,
+  strategy = "row_best",
   parallel = FALSE,
   replace = FALSE,
   ratio = 1L,

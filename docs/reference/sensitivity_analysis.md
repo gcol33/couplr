@@ -24,8 +24,6 @@ sensitivity_analysis(
 
   A matching_result object from
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  or
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
 
 - left:
 

@@ -1,8 +1,7 @@
-# Optimal matching using linear assignment
+# Match two datasets into couples
 
-Performs optimal one-to-one matching between two datasets using linear
-assignment problem (LAP) solvers. Supports blocking, distance
-constraints, and various distance metrics.
+Performs one-to-one matching between two datasets. Supports blocking,
+distance constraints, and various distance metrics.
 
 ## Usage
 
@@ -21,6 +20,7 @@ match_couples(
   ignore_blocks = FALSE,
   require_full_matching = FALSE,
   method = "auto",
+  strategy = c("row_best", "sorted", "pq"),
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   parallel = FALSE,
@@ -85,7 +85,19 @@ match_couples(
 
 - method:
 
-  LAP solver: "auto", "hungarian", "jv", "gabow_tarjan", etc.
+  Matching method. A LAP solver for optimal matching ("auto",
+  "hungarian", "jv", "gabow_tarjan", ...), or "greedy" for fast
+  approximate matching (see `strategy`).
+
+- strategy:
+
+  Greedy strategy, used only when `method = "greedy"`:
+
+  - "row_best": for each row, take its best available column (default)
+
+  - "sorted": sort all pairs by distance, greedily assign
+
+  - "pq": priority queue (memory-efficient for very large problems)
 
 - return_unmatched:
 
@@ -139,10 +151,11 @@ A list with class "matching_result" containing:
 
 ## Details
 
-This function finds the matching that minimizes total distance among all
-feasible matchings, subject to constraints. Use
-[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-for faster approximate matching on large datasets.
+With `method` set to a LAP solver (the default `"auto"`, or `"jv"`,
+`"hungarian"`, ...) it finds the matching that minimizes total distance
+among all feasible matchings. With `method = "greedy"` it uses a fast
+greedy strategy (selected by `strategy`) that does not guarantee the
+optimal total distance but scales to very large datasets.
 
 ## Examples
 
@@ -163,4 +176,8 @@ left$region <- c("A", "A", "B", "B", "B")
 right$region <- c("A", "A", "B", "B", "B")
 blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
 result <- match_couples(blocks$left, blocks$right, vars = c("x", "y"))
+
+# Fast greedy matching for large datasets
+result <- match_couples(left, right, vars = c("x", "y"),
+                        method = "greedy", strategy = "sorted")
 ```

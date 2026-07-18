@@ -1,8 +1,8 @@
 # Shared matching from precomputed distance object
 
 Core logic for both optimal (LAP) and greedy matching from distance
-objects. Called by match_couples_from_distance() and
-greedy_couples_from_distance().
+objects. Called by match_couples_from_distance() (optimal and greedy
+paths).
 
 ## Usage
 

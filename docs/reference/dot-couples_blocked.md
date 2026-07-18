@@ -1,7 +1,7 @@
 # Shared blocked matching implementation
 
 Core logic for both optimal (LAP) and greedy blocked matching. Called by
-match_couples_blocked() and greedy_couples_blocked().
+match_couples_blocked() (optimal and greedy paths).
 
 ## Usage
 

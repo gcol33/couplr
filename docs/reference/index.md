@@ -28,9 +28,7 @@ Core functions for solving linear assignment problems
 High-level matching for observational studies
 
 - [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  : Optimal matching using linear assignment
-- [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-  : Fast approximate matching using greedy algorithm
+  : Match two datasets into couples
 - [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
   : Create blocks for stratified matching
 - [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)

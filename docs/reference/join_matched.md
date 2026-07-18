@@ -42,7 +42,6 @@ join_matched(result, data = NULL, ...)
 
   A result object from
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
-  [`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md),
   [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md),
   or
   [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)

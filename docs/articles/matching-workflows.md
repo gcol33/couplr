@@ -521,35 +521,35 @@ time_optimal <- system.time({
 
 # Greedy matching (row_best strategy)
 time_greedy <- system.time({
-  result_greedy <- greedy_couples(
+  result_greedy <- match_couples(
     large_left, large_right,
     vars = c("x1", "x2", "x3"),
     strategy = "row_best"
-  )
+  , method = "greedy")
 })
 
 # Compare
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 1.5 seconds
+#>   Time: 2.37 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.96 seconds
+#>   Time: 1.7 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 1.6 x
+#>   Speedup: 1.4 x
 ```
 
 ### Greedy Strategies
 
 Three greedy strategies available via
-[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md):
+`match_couples(method = "greedy")`:
 
 **1. Sorted** (`strategy = "sorted"`):
 
@@ -617,11 +617,11 @@ results <- list()
 
 for (strat in strategies) {
   time <- system.time({
-    result <- greedy_couples(
+    result <- match_couples(
       test_left, test_right,
       vars = "x",
       strategy = strat
-    )
+    , method = "greedy")
   })
 
   results[[strat]] <- list(
@@ -643,9 +643,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.03        0.0912          18.24
-#> elapsed1 row_best     0.05        0.0968          19.36
-#> elapsed2       pq     0.05        0.0912          18.24
+#> elapsed    sorted     0.06        0.0912          18.24
+#> elapsed1 row_best     0.07        0.0968          19.36
+#> elapsed2       pq     0.07        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -709,7 +709,7 @@ cat("  Matched:", result_no_cal$info$n_matched, "\n")
 cat("  Mean distance:", round(mean(result_no_cal$pairs$distance), 3), "\n")
 #>   Mean distance: 1.129
 cat("  Max distance:", round(max(result_no_cal$pairs$distance), 3), "\n\n")
-#>   Max distance: 5.788
+#>   Max distance: 5.851
 
 cat("With caliper (1.5):\n")
 #> With caliper (1.5):
@@ -792,7 +792,7 @@ refined_matches <- match_couples(
 )
 
 cat("90th percentile caliper:", round(caliper_90, 3), "\n")
-#> 90th percentile caliper: 4.551
+#> 90th percentile caliper: 4.337
 cat("Matches retained:",
     round(100 * refined_matches$info$n_matched / all_matches$info$n_matched, 1), "%\n")
 #> Matches retained: 100 %
@@ -1025,8 +1025,8 @@ print(balance)
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             45.9         47.3       -1.43     -0.148       0.891      0.18
-#> 2 income       58387.       56118.      2269.        0.155       0.982      0.09
+#> 1 age             45.9         47.3       -1.43     -0.148       0.794      0.18
+#> 2 income       58387.       56118.      2269.        0.155       0.965      0.09
 #> 
 #> Overall Balance:
 #>   Mean |Std Diff|: 0.151 (Good)
@@ -1044,8 +1044,8 @@ balance_table(balance)
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             45.9         47.3       -1.43     -0.148       0.891      0.18
-#> 2 income       58387.       56118.      2269.        0.155       0.982      0.09
+#> 1 age             45.9         47.3       -1.43     -0.148       0.794      0.18
+#> 2 income       58387.       56118.      2269.        0.155       0.965      0.09
 ```
 
 ### How to Interpret Balance Results
@@ -1294,10 +1294,10 @@ print(job_balance)
 #> # A tibble: 4 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             35.4       36.0        -0.656     -0.081       0.869     0.1  
-#> 2 educati…        13.9       13.5         0.4        0.195       0.93      0.18 
-#> 3 prior_e…     35015.     33795.       1219.         0.121       1.01      0.08 
-#> 4 employed         0.7        0.635       0.065      0.138       0.952     0.065
+#> 1 age             35.4       36.0        -0.656     -0.081       0.756     0.1  
+#> 2 educati…        13.9       13.5         0.4        0.195       0.865     0.18 
+#> 3 prior_e…     35015.     33795.       1219.         0.121       1.03      0.08 
+#> 4 employed         0.7        0.635       0.065      0.138       0.906     0.065
 #> 
 #> Overall Balance:
 #>   Mean |Std Diff|: 0.134 (Good)
@@ -1488,11 +1488,11 @@ result <- match_couples(
 ``` r
 
 # Quick greedy match for exploration
-quick <- greedy_couples(
+quick <- match_couples(
   left_data, right_data,
   vars = covariates,
   strategy = "row_best"
-)
+, method = "greedy")
 
 # Assess balance
 balance_quick <- balance_diagnostics(quick, left_data, right_data, vars = covariates)
@@ -1593,7 +1593,7 @@ for optimal matching.
 ``` r
 
 # For n > 3000: use greedy
-result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+result <- match_couples(left, right, vars = vars, strategy = "sorted", method = "greedy")
 
 # For n > 5000: add blocking
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
@@ -1608,9 +1608,8 @@ result <- match_couples(blocks$left, blocks$right, vars = vars,
 **Cause**: Full cost matrix doesn’t fit in RAM. A 10,000×10,000 matrix
 needs ~800 MB.
 
-**Solutions**: - Use
-[`greedy_couples()`](https://gillescolling.com/couplr/reference/greedy_couples.md)
-which doesn’t require full matrix
+**Solutions**: - Use `match_couples(method = "greedy")` which doesn’t
+require full matrix
 
 - Use blocking to create smaller sub-problems
 
@@ -2117,20 +2116,20 @@ sa
 #> 
 #> Matched pairs: 50 
 #> Alternative: greater 
-#> Test statistic (T+): 850.0 
+#> Test statistic (T+): 889.0 
 #> 
 #> Gamma    p (upper bound)
 #> -----    ---------------
-#> 1.00     0.0204 *
-#> 1.25     0.0852
-#> 1.50     0.2026
-#> 1.75     0.3510
-#> 2.00     0.5020
+#> 1.00     0.0077 *
+#> 1.25     0.0401 *
+#> 1.50     0.1118
+#> 1.75     0.2195
+#> 2.00     0.3467
 #> 
 #> * significant at alpha = 0.05
 #> 
-#> Insensitive to hidden bias up to Gamma = 1.00
-#> To explain away the effect, hidden bias would need Gamma >= 1.25
+#> Insensitive to hidden bias up to Gamma = 1.25
+#> To explain away the effect, hidden bias would need Gamma >= 1.50
 ```
 
 The **critical gamma** (\\\Gamma\\) is the smallest value at which the
@@ -2205,7 +2204,6 @@ labels as needed.
   Large-scale approximation strategies
 
 - [`?match_couples`](https://gillescolling.com/couplr/reference/match_couples.md),
-  [`?greedy_couples`](https://gillescolling.com/couplr/reference/greedy_couples.md),
   [`?full_match`](https://gillescolling.com/couplr/reference/full_match.md),
   [`?balance_diagnostics`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
   [`?matchmaker`](https://gillescolling.com/couplr/reference/matchmaker.md)

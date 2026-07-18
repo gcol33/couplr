@@ -6,7 +6,7 @@ key metric for assessing balance in matched samples.
 ## Usage
 
 ``` r
-standardized_difference(x1, x2, pooled = TRUE)
+standardized_difference(x1, x2, pooled = TRUE, w1 = NULL, w2 = NULL)
 ```
 
 ## Arguments

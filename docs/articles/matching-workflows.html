@@ -13,14 +13,27 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Matching Workflows">
+<script>
+(function () {
+  var D = String.fromCharCode(36);
+  window.MathJax = {
+    tex: {
+      inlineMath: [[D, D], ["\\(", "\\)"]],
+      displayMath: [[D + D, D + D], ["\\[", "\\]"]]
+    },
+    chtml: { linebreaks: { automatic: true, width: "90% container" } },
+    svg: { linebreaks: { automatic: true, width: "90% container" } },
+    options: { renderActions: { addMenu: [] } }
+  };
+})();
+</script>
 </head>
 <body>
-
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -28,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-05-19</h4>
+            <h4 data-toc-skip class="date">2026-07-18</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -740,35 +753,35 @@ matters</p></li>
 <span></span>
 <span><span class="co"># Greedy matching (row_best strategy)</span></span>
 <span><span class="va">time_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>  <span class="va">result_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
+<span>  <span class="va">result_greedy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>    <span class="va">large_left</span>, <span class="va">large_right</span>,</span>
 <span>    vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span><span class="op">)</span>,</span>
 <span>    strategy <span class="op">=</span> <span class="st">"row_best"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  , method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Compare</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 1.5 seconds</span></span>
+<span><span class="co">#&gt;   Time: 2.37 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.96 seconds</span></span>
+<span><span class="co">#&gt;   Time: 1.7 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 1.6 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 1.4 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
 </h3>
 <p>Three greedy strategies available via
-<code><a href="../reference/greedy_couples.html">greedy_couples()</a></code>:</p>
+<code>match_couples(method = "greedy")</code>:</p>
 <p><strong>1. Sorted</strong> (<code>strategy = "sorted"</code>):</p>
 <ul>
 <li><p>Sort all possible pairs by distance</p></li>
@@ -821,11 +834,11 @@ default):</p>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">strat</span> <span class="kw">in</span> <span class="va">strategies</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
+<span>    <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>      <span class="va">test_left</span>, <span class="va">test_right</span>,</span>
 <span>      vars <span class="op">=</span> <span class="st">"x"</span>,</span>
 <span>      strategy <span class="op">=</span> <span class="va">strat</span></span>
-<span>    <span class="op">)</span></span>
+<span>    , method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">results</span><span class="op">[[</span><span class="va">strat</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -847,9 +860,9 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted     0.03        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.05        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq     0.05        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed    sorted     0.06        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed1 row_best     0.07        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed2       pq     0.07        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li><p>Default to <code>strategy = "row_best"</code> for good
@@ -912,7 +925,7 @@ matching</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_no_cal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 1.129</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Max distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">result_no_cal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Max distance: 5.788</span></span>
+<span><span class="co">#&gt;   Max distance: 5.851</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With caliper (1.5):\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; With caliper (1.5):</span></span>
@@ -990,36 +1003,36 @@ matching</p></li>
 </defs>
 <g clip-path='url(#cpMzMuMTN8NDA3LjkyfDIzLjE4fDMyOC41MA==)'>
 <rect x='33.13' y='23.18' width='374.79' height='305.33' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-<rect x='50.16' y='118.01' width='11.36' height='196.61' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='61.52' y='187.41' width='11.36' height='127.22' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='72.88' y='268.36' width='11.36' height='46.26' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='84.24' y='268.36' width='11.36' height='46.26' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='95.59' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='106.95' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='50.16' y='106.45' width='11.36' height='208.18' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='61.52' y='175.84' width='11.36' height='138.78' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='72.88' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='84.24' y='279.93' width='11.36' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='95.59' y='268.36' width='11.36' height='46.26' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='106.95' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='118.31' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='129.67' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='129.67' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='141.02' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='152.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='163.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='175.09' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='186.45' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='197.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='197.81' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='209.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='220.52' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='231.88' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='243.24' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='254.60' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='265.95' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='277.31' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='288.67' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='300.03' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='311.38' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='322.74' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='254.60' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='265.95' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='277.31' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='288.67' y='279.93' width='11.36' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='300.03' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='311.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='322.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='334.10' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='345.46' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='356.81' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='356.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='368.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
-<rect x='379.53' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='379.53' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
 <rect x='50.16' y='37.06' width='11.36' height='277.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
 <rect x='61.52' y='198.97' width='11.36' height='115.65' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
 <rect x='72.88' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
@@ -1050,7 +1063,7 @@ matching</p></li>
 <rect x='356.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
 <rect x='368.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
 <rect x='379.53' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
-<line x1='141.11' y1='328.50' x2='141.11' y2='23.18' style='stroke-width: 1.07; stroke: #FF0000; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<line x1='140.19' y1='328.50' x2='140.19' y2='23.18' style='stroke-width: 1.07; stroke: #FF0000; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
 </g>
 <g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
 <text x='28.20' y='317.78' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>0</text>
@@ -1060,9 +1073,9 @@ matching</p></li>
 <text x='28.20' y='86.47' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='9.78px' lengthAdjust='spacingAndGlyphs'>20</text>
 <text x='28.20' y='28.64' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='9.78px' lengthAdjust='spacingAndGlyphs'>25</text>
 <text x='55.73' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>0</text>
-<text x='169.57' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>2</text>
-<text x='283.42' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>4</text>
-<text x='397.26' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>6</text>
+<text x='168.35' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>2</text>
+<text x='280.96' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>4</text>
+<text x='393.58' y='339.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>6</text>
 <text x='220.52' y='352.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='42.81px' lengthAdjust='spacingAndGlyphs'>Distance</text>
 <text transform='translate(13.36,175.84) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='29.38px' lengthAdjust='spacingAndGlyphs'>Count</text>
 <rect x='418.88' y='145.24' width='79.64' height='61.19' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
@@ -1116,7 +1129,7 @@ exclude extreme tail</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"90th percentile caliper:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">caliper_90</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 90th percentile caliper: 4.551</span></span>
+<span><span class="co">#&gt; 90th percentile caliper: 4.337</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Matches retained:"</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="va">refined_matches</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span> <span class="op">/</span> <span class="va">all_matches</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Matches retained: 100 %</span></span></code></pre></div>
@@ -1344,8 +1357,8 @@ blocks:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.891      0.18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.982      0.09</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.794      0.18</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.965      0.09</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Overall Balance:</span></span>
 <span><span class="co">#&gt;   Mean |Std Diff|: 0.151 (Good)</span></span>
@@ -1363,8 +1376,8 @@ blocks:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.891      0.18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.982      0.09</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.794      0.18</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.965      0.09</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="how-to-interpret-balance-results">How to Interpret Balance Results<a class="anchor" aria-label="anchor" href="#how-to-interpret-balance-results"></a>
@@ -1725,10 +1738,10 @@ status</p></li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 7</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             35.4       36.0        -<span style="color: #BB0000;">0.656</span>     -<span style="color: #BB0000;">0.081</span>       0.869     0.1  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> educati…        13.9       13.5         0.4        0.195       0.93      0.18 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> prior_e…     <span style="text-decoration: underline;">35</span>015.     <span style="text-decoration: underline;">33</span>795.       <span style="text-decoration: underline;">1</span>219.         0.121       1.01      0.08 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> employed         0.7        0.635       0.065      0.138       0.952     0.065</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             35.4       36.0        -<span style="color: #BB0000;">0.656</span>     -<span style="color: #BB0000;">0.081</span>       0.756     0.1  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> educati…        13.9       13.5         0.4        0.195       0.865     0.18 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> prior_e…     <span style="text-decoration: underline;">35</span>015.     <span style="text-decoration: underline;">33</span>795.       <span style="text-decoration: underline;">1</span>219.         0.121       1.03      0.08 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> employed         0.7        0.635       0.065      0.138       0.906     0.065</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Overall Balance:</span></span>
 <span><span class="co">#&gt;   Mean |Std Diff|: 0.134 (Good)</span></span>
@@ -1906,11 +1919,11 @@ status</p></li>
 <p><strong>2. Start with greedy, refine if needed</strong></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Quick greedy match for exploration</span></span>
-<span><span class="va">quick</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span></span>
+<span><span class="va">quick</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  <span class="va">left_data</span>, <span class="va">right_data</span>,</span>
 <span>  vars <span class="op">=</span> <span class="va">covariates</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"row_best"</span></span>
-<span><span class="op">)</span></span>
+<span>, method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Assess balance</span></span>
 <span><span class="va">balance_quick</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">quick</span>, <span class="va">left_data</span>, <span class="va">right_data</span>, vars <span class="op">=</span> <span class="va">covariates</span><span class="op">)</span></span>
@@ -1998,7 +2011,7 @@ matching.</p>
 <p><strong>Solutions</strong>:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># For n &gt; 3000: use greedy</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/greedy_couples.html">greedy_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="va">vars</span>, strategy <span class="op">=</span> <span class="st">"sorted"</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="va">vars</span>, strategy <span class="op">=</span> <span class="st">"sorted"</span>, method <span class="op">=</span> <span class="st">"greedy"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># For n &gt; 5000: add blocking</span></span>
 <span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/matchmaker.html">matchmaker</a></span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, block_type <span class="op">=</span> <span class="st">"cluster"</span>, n_blocks <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
@@ -2012,8 +2025,9 @@ matching.</p>
 vector of size X”.</p>
 <p><strong>Cause</strong>: Full cost matrix doesn’t fit in RAM. A
 10,000×10,000 matrix needs ~800 MB.</p>
-<p><strong>Solutions</strong>: - Use <code><a href="../reference/greedy_couples.html">greedy_couples()</a></code> which
-doesn’t require full matrix</p>
+<p><strong>Solutions</strong>: - Use
+<code>match_couples(method = "greedy")</code> which doesn’t require full
+matrix</p>
 <ul>
 <li><p>Use blocking to create smaller sub-problems</p></li>
 <li><p>Consider random sampling if sample size permits</p></li>
@@ -2615,20 +2629,20 @@ confounding.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matched pairs: 50 </span></span>
 <span><span class="co">#&gt; Alternative: greater </span></span>
-<span><span class="co">#&gt; Test statistic (T+): 850.0 </span></span>
+<span><span class="co">#&gt; Test statistic (T+): 889.0 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Gamma    p (upper bound)</span></span>
 <span><span class="co">#&gt; -----    ---------------</span></span>
-<span><span class="co">#&gt; 1.00     0.0204 *</span></span>
-<span><span class="co">#&gt; 1.25     0.0852</span></span>
-<span><span class="co">#&gt; 1.50     0.2026</span></span>
-<span><span class="co">#&gt; 1.75     0.3510</span></span>
-<span><span class="co">#&gt; 2.00     0.5020</span></span>
+<span><span class="co">#&gt; 1.00     0.0077 *</span></span>
+<span><span class="co">#&gt; 1.25     0.0401 *</span></span>
+<span><span class="co">#&gt; 1.50     0.1118</span></span>
+<span><span class="co">#&gt; 1.75     0.2195</span></span>
+<span><span class="co">#&gt; 2.00     0.3467</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; * significant at alpha = 0.05</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Insensitive to hidden bias up to Gamma = 1.00</span></span>
-<span><span class="co">#&gt; To explain away the effect, hidden bias would need Gamma &gt;= 1.25</span></span></code></pre></div>
+<span><span class="co">#&gt; Insensitive to hidden bias up to Gamma = 1.25</span></span>
+<span><span class="co">#&gt; To explain away the effect, hidden bias would need Gamma &gt;= 1.50</span></span></code></pre></div>
 <p>The <strong>critical gamma</strong> (<span class="math inline">\(\Gamma\)</span>) is the smallest value at which
 the upper-bound p-value crosses 0.05. A larger critical gamma means the
 finding is more robust: a critical gamma of 1.75, for example, means an
@@ -2862,21 +2876,19 @@ produce publication-ready plots:</p>
   </clipPath>
 </defs>
 <g clip-path='url(#cpMzUuNTZ8NDk4LjUyfDIzLjE4fDI1NC4wNg==)'>
-<polyline points='56.61,243.56 161.83,215.33 267.04,164.17 372.26,99.49 477.48,33.67 ' style='stroke-width: 2.13; stroke: #4682B4; stroke-linecap: butt;' />
+<polyline points='56.61,243.56 161.83,223.53 267.04,179.08 372.26,112.45 477.48,33.67 ' style='stroke-width: 2.13; stroke: #4682B4; stroke-linecap: butt;' />
 <circle cx='56.61' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
-<circle cx='161.83' cy='215.33' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
-<circle cx='267.04' cy='164.17' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
-<circle cx='372.26' cy='99.49' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='161.83' cy='223.53' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='267.04' cy='179.08' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='372.26' cy='112.45' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
 <circle cx='477.48' cy='33.67' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
-<line x1='35.56' y1='230.64' x2='498.52' y2='230.64' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<line x1='35.56' y1='217.37' x2='498.52' y2='217.37' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
 </g>
 <g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
-<text x='30.63' y='255.58' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.0</text>
-<text x='30.63' y='212.01' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.1</text>
-<text x='30.63' y='168.43' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.2</text>
-<text x='30.63' y='124.86' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.3</text>
-<text x='30.63' y='81.29' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.4</text>
-<text x='30.63' y='37.71' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.5</text>
+<text x='30.63' y='251.48' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.0</text>
+<text x='30.63' y='189.57' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.1</text>
+<text x='30.63' y='127.66' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.2</text>
+<text x='30.63' y='65.75' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='12.22px' lengthAdjust='spacingAndGlyphs'>0.3</text>
 <text x='56.61' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>1.00</text>
 <text x='161.83' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>1.25</text>
 <text x='267.04' y='265.29' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='17.11px' lengthAdjust='spacingAndGlyphs'>1.50</text>
@@ -2908,9 +2920,8 @@ MatchIt, optmatch, designmatch</p></li>
 solutions</p></li>
 <li><p><code><a href="../articles/pixel-morphing.html">vignette("pixel-morphing")</a></code> - Large-scale
 approximation strategies</p></li>
-<li><p><code><a href="../reference/match_couples.html">?match_couples</a></code>, <code><a href="../reference/greedy_couples.html">?greedy_couples</a></code>,
-<code><a href="../reference/full_match.html">?full_match</a></code>, <code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code>,
-<code><a href="../reference/matchmaker.html">?matchmaker</a></code></p></li>
+<li><p><code><a href="../reference/match_couples.html">?match_couples</a></code>, <code><a href="../reference/full_match.html">?full_match</a></code>,
+<code><a href="../reference/balance_diagnostics.html">?balance_diagnostics</a></code>, <code><a href="../reference/matchmaker.html">?matchmaker</a></code></p></li>
 <li><p><code><a href="../reference/ps_match.html">?ps_match</a></code>, <code><a href="../reference/cardinality_match.html">?cardinality_match</a></code>,
 <code><a href="../reference/sensitivity_analysis.html">?sensitivity_analysis</a></code>, <code><a href="../reference/cem_match.html">?cem_match</a></code>,
 <code><a href="../reference/subclass_match.html">?subclass_match</a></code></p></li>
@@ -2939,8 +2950,7 @@ integration</p></li>
 
 
 
-  
-<script>
+  <script>
 /* SVG Copy Button Functionality */
 (function() {
   "use strict";

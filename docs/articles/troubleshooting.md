@@ -30,7 +30,7 @@ provides step-by-step solutions.
 cost <- matrix(c(1, Inf, Inf, Inf, Inf, Inf, Inf, 2, 3), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost)
 #> Error:
-#> ! Infeasible given forbidden edges
+#> ! Infeasible: row 2 has no allowed edges
 ```
 
 Error message: “No feasible assignment found” or total cost is Inf.
@@ -189,8 +189,8 @@ print(balance)
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             30.6         32.5       -1.89     -0.386        1.05      0.22
-#> 2 income       77666.       41353.     36313.        2.40         2.15      0.81
+#> 1 age             30.6         32.5       -1.89     -0.386        1.10      0.22
+#> 2 income       77666.       41353.     36313.        2.40         4.63      0.81
 #> 
 #> Overall Balance:
 #>   Mean |Std Diff|: 1.391 (Poor)
@@ -271,8 +271,8 @@ print(balance_strict)
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             31.2         31.2        0.04      0.009       1.03        0.1
-#> 2 income       53160.       51959.      1201.        0.16        0.998       0.2
+#> 1 age             31.2         31.2        0.04      0.009       1.06        0.1
+#> 2 income       53160.       51959.      1201.        0.16        0.996       0.2
 #> 
 #> Overall Balance:
 #>   Mean |Std Diff|: 0.085 (Excellent)
@@ -380,15 +380,15 @@ large_right <- tibble(id = 1:n, x1 = rnorm(n), x2 = rnorm(n))
 
 # Greedy is much faster
 time_greedy <- system.time({
-  result_greedy <- greedy_couples(
+  result_greedy <- match_couples(
     large_left, large_right,
     vars = c("x1", "x2"),
     strategy = "row_best"
-  )
+  , method = "greedy")
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.24 seconds
+#> Greedy matching (n=500): 0.49 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -519,11 +519,11 @@ for (n in c(1000, 5000, 10000, 20000, 50000)) {
 ``` r
 
 # Greedy computes distances on-the-fly
-result <- greedy_couples(
+result <- match_couples(
   left, right,
   vars = covariates,
   strategy = "row_best"  # Most memory-efficient
-)
+, method = "greedy")
 ```
 
 **2. Use blocking to create smaller subproblems:**

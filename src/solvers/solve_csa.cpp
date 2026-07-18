@@ -32,15 +32,38 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
     // Check feasibility
     ensure_each_row_has_option(work.mask, nn, m);
 
-    // Find maximum absolute cost for epsilon initialization
+    // Find maximum absolute cost for epsilon initialization, and detect whether
+    // all allowed costs are already integers.
     double max_abs_cost = 0.0;
+    bool all_integer = true;
     for (int i = 0; i < nn; ++i) {
         for (int j = 0; j < m; ++j) {
             if (work.allowed(i, j)) {
-                double av = std::abs(work.at(i, j));
+                double v = work.at(i, j);
+                double av = std::abs(v);
                 if (av > max_abs_cost) max_abs_cost = av;
+                if (all_integer && std::abs(v - std::round(v)) > 1e-9) all_integer = false;
             }
         }
+    }
+
+    // CSA's epsilon-scaling optimality guarantee (eps < 1/n at the final scale)
+    // holds only for integer costs; for real-valued inputs, competing
+    // assignments can differ by less than n*eps and terminate suboptimally with
+    // no error. Scale the allowed costs to integers first (as gabow_tarjan does)
+    // so distinct assignment sums differ by >= 1 on the scaled problem. Only
+    // allowed cells are touched, so the forbidden big-M sentinel is left intact;
+    // the reported total is still computed from the ORIGINAL costs below.
+    if (!all_integer && max_abs_cost > 0.0) {
+        const double scale = 1e6 / max_abs_cost;
+        for (int i = 0; i < nn; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (work.allowed(i, j)) {
+                    work.at(i, j) = std::round(work.at(i, j) * scale);
+                }
+            }
+        }
+        max_abs_cost = 1e6;
     }
 
     // Build CSR-style allowed lists for efficient iteration

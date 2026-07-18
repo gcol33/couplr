@@ -93,9 +93,16 @@ a wrong "optimal" or a crash (#13):
   counts would overflow a 32-bit index.
 * **Tolerances and status.** `solve_munkres` scales its zero tolerance with the
   cost magnitude (a fixed `1e-12` could make a solvable large-cost matrix
-  throw); `full_matching` now reports `infeasible` when the group capacity is
-  below the number of units instead of silently dropping units as `optimal`;
+  throw); `solve_csa` scales non-integer costs to integers before the
+  epsilon-scaling auction, so its optimality guarantee (which assumes integer
+  costs) also holds for real-valued inputs with near-tied assignments;
+  `full_matching` now reports `infeasible` when the group capacity is below the
+  number of units instead of silently dropping units as `optimal`;
   `solve_sinkhorn` reports the correct iteration count on non-convergence.
+* **hk01 fallback.** The pure `solve_hk01` now falls back to the exact weighted
+  solver (`solve_csflow`) when the zero-cost subgraph of a `{0,1}` matrix has no
+  perfect matching, instead of erroring -- matching the Rcpp path that
+  `assignment(method = "hk01")` already used.
 * **Bounds.** The internal `morph_pixel_level` helpers assert their pixel /
   assignment buffer sizes, matching the exported wrappers.
 

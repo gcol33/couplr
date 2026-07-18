@@ -116,6 +116,22 @@ test_that("csa matches JV on random maximization problems", {
   }
 })
 
+test_that("csa matches JV on real-valued costs with fine differences", {
+  # Values in [0, 1] at 1e-5 resolution give small optimal gaps -- the regime
+  # where CSA's absolute epsilon termination could previously pick a suboptimal
+  # assignment. The integer-scaling of non-integer costs keeps it exact; JV is
+  # the ground-truth optimum.
+  set.seed(20260718)
+  for (trial in 1:12) {
+    n <- sample(4:12, 1)
+    cost <- matrix(round(runif(n * n, 0, 1), 5), nrow = n, ncol = n)
+    csa <- assignment(cost, method = "csa")
+    jv  <- assignment(cost, method = "jv")
+    expect_equal(csa$total_cost, jv$total_cost, tolerance = 1e-9,
+                 info = sprintf("trial %d n=%d", trial, n))
+  }
+})
+
 test_that("csa handles sparse problems (many NA entries)", {
   set.seed(789)
   n <- 15

@@ -2,6 +2,7 @@
 // Pure C++ Hopcroft-Karp solver for 0/1 costs - NO Rcpp dependencies
 
 #include "solve_hk01.h"
+#include "solve_csflow.h"
 #include "../core/lap_error.h"
 #include "../core/lap_utils.h"
 #include <vector>
@@ -244,9 +245,10 @@ LapResult solve_hk01(const CostMatrix& cost, bool maximize) {
                 assignment[i] = v1 - 1;
             }
         } else {
-            // Need to include some 1-cost edges -> fall back to weighted solver
-            // For now, throw error since we don't have solve_csflow yet
-            LAP_THROW("hk01: binary {0,1} costs require some 1-edges; fallback to weighted solver needed");
+            // Optimum needs some 1-cost edges: the 0-cost subgraph has no
+            // perfect matching. Fall back to the exact weighted solver on the
+            // original costs (the rcpp twin does the same via lap_solve_csflow).
+            return solve_csflow(cost, maximize);
         }
 
     } else {

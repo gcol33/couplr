@@ -40,10 +40,8 @@ LapResult greedy_matching_sorted(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    // Greedy is a partial-matching heuristic: when n > m it matches min(n, m)
+    // rows and leaves the rest unmatched, rather than rejecting the problem.
 
     // Collect all valid candidate pairs
     std::vector<CandidatePair> candidates;
@@ -53,8 +51,12 @@ LapResult greedy_matching_sorted(const CostMatrix& cost, bool maximize) {
         for (int j = 0; j < m; j++) {
             double c = cost.at(i, j);
 
-            // Skip forbidden pairs (non-finite costs)
-            if (!std::isfinite(c) || !cost.allowed(i, j)) {
+            // Skip forbidden pairs: non-finite, masked, or the large-finite
+            // BIG sentinel the matching layer uses for forbidden edges. Unlike
+            // the optimal solvers (which avoid huge costs by minimizing), greedy
+            // would otherwise pick a BIG edge when it is a row's only option
+            // instead of leaving that row unmatched.
+            if (!std::isfinite(c) || !cost.allowed(i, j) || c >= BIG) {
                 continue;
             }
 
@@ -121,10 +123,8 @@ LapResult greedy_matching_row_best(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    // Greedy is a partial-matching heuristic: when n > m it matches min(n, m)
+    // rows and leaves the rest unmatched, rather than rejecting the problem.
 
     std::vector<bool> col_matched(m, false);
     std::vector<int> assignment(n, -1);  // 0-based, -1 = unmatched
@@ -145,7 +145,7 @@ LapResult greedy_matching_row_best(const CostMatrix& cost, bool maximize) {
             double c = cost.at(i, j);
 
             // Skip forbidden pairs
-            if (!std::isfinite(c) || !cost.allowed(i, j)) {
+            if (!std::isfinite(c) || !cost.allowed(i, j) || c >= BIG) {
                 continue;
             }
 
@@ -188,10 +188,8 @@ LapResult greedy_matching_pq(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    // Greedy is a partial-matching heuristic: when n > m it matches min(n, m)
+    // rows and leaves the rest unmatched, rather than rejecting the problem.
 
     // Min-heap priority queue
     std::priority_queue<CandidatePair, std::vector<CandidatePair>,
@@ -202,7 +200,7 @@ LapResult greedy_matching_pq(const CostMatrix& cost, bool maximize) {
         for (int j = 0; j < m; j++) {
             double c = cost.at(i, j);
 
-            if (!std::isfinite(c) || !cost.allowed(i, j)) {
+            if (!std::isfinite(c) || !cost.allowed(i, j) || c >= BIG) {
                 continue;
             }
 

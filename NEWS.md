@@ -139,6 +139,15 @@ a wrong "optimal" or a crash (#13):
   recognised as binary -- so it threw on feasible binary maximization problems.
   It now flips via `cmax - c`, preserving the `{0,1}` palette so the fast path and
   the `solve_csflow` fallback engage.
+* **Greedy matching wrappers** (`greedy_matching`, `_sorted`, `_row_best`, `_pq`)
+  now delegate to the pure `lap::greedy_matching_*`. To keep the shipped
+  behaviour identical, the pure copies gained the two tolerances the Rcpp copies
+  had and they lacked: they skip the large-finite `BIG` sentinel the matching
+  layer uses for forbidden edges (so a row whose only remaining options are
+  forbidden is left unmatched rather than paired to a forbidden column), and they
+  accept `n > m` by returning a partial matching instead of erroring. Verified
+  byte-identical to the previous wrappers over 400 randomised cases spanning
+  integer ties, `NA`/`BIG`-forbidden edges, and rectangular shapes.
 
 ## Tests
 

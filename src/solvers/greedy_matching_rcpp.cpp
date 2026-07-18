@@ -23,36 +23,6 @@ static Rcpp::List greedy_result(const lap::LapResult& result, NumericMatrix cost
     return out;
 }
 
-List greedy_matching_sorted_impl(NumericMatrix cost_matrix, bool maximize) {
-    try {
-        lap::CostMatrix cm = rcpp_to_cost_matrix(cost_matrix);
-        return greedy_result(lap::greedy_matching_sorted(cm, maximize), cost_matrix);
-    } catch (const lap::LapException& e) {
-        Rcpp::stop(e.what());
-    }
-    return List();
-}
-
-List greedy_matching_row_best_impl(NumericMatrix cost_matrix, bool maximize) {
-    try {
-        lap::CostMatrix cm = rcpp_to_cost_matrix(cost_matrix);
-        return greedy_result(lap::greedy_matching_row_best(cm, maximize), cost_matrix);
-    } catch (const lap::LapException& e) {
-        Rcpp::stop(e.what());
-    }
-    return List();
-}
-
-List greedy_matching_pq_impl(NumericMatrix cost_matrix, bool maximize) {
-    try {
-        lap::CostMatrix cm = rcpp_to_cost_matrix(cost_matrix);
-        return greedy_result(lap::greedy_matching_pq(cm, maximize), cost_matrix);
-    } catch (const lap::LapException& e) {
-        Rcpp::stop(e.what());
-    }
-    return List();
-}
-
 List greedy_matching_impl(NumericMatrix cost_matrix, bool maximize,
                           std::string strategy) {
     try {

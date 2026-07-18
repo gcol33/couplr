@@ -147,7 +147,10 @@ a wrong "optimal" or a crash (#13):
   forbidden is left unmatched rather than paired to a forbidden column), and they
   accept `n > m` by returning a partial matching instead of erroring. Verified
   byte-identical to the previous wrappers over 400 randomised cases spanning
-  integer ties, `NA`/`BIG`-forbidden edges, and rectangular shapes.
+  integer ties, `NA`/`BIG`-forbidden edges, and rectangular shapes. The three
+  per-strategy Rcpp exports (`greedy_matching_sorted` / `_row_best` / `_pq`) were
+  folded into the single `greedy_matching(strategy = ...)` dispatcher they
+  duplicated; `greedy_couples(strategy = ...)` remains the user-facing verb.
 
 ## Tests
 

@@ -14,10 +14,7 @@
 using namespace Rcpp;
 
 // =======================
-// Forward decls for greedy matching (implemented in solvers/greedy_matching.cpp)
-extern Rcpp::List greedy_matching_sorted_impl(Rcpp::NumericMatrix cost_matrix, bool maximize);
-extern Rcpp::List greedy_matching_row_best_impl(Rcpp::NumericMatrix cost_matrix, bool maximize);
-extern Rcpp::List greedy_matching_pq_impl(Rcpp::NumericMatrix cost_matrix, bool maximize);
+// Forward decl for greedy matching (implemented in solvers/greedy_matching.cpp)
 extern Rcpp::List greedy_matching_impl(Rcpp::NumericMatrix cost_matrix, bool maximize, std::string strategy);
 
 // =======================
@@ -268,21 +265,9 @@ Rcpp::List lap_solve_full_matching(Rcpp::NumericMatrix cost, int min_controls, i
 // Greedy matching exports (implemented in solvers/greedy_matching.cpp)
 // =======================
 
-// [[Rcpp::export]]
-Rcpp::List greedy_matching_sorted(Rcpp::NumericMatrix cost_matrix, bool maximize = false) {
-  return greedy_matching_sorted_impl(cost_matrix, maximize);
-}
-
-// [[Rcpp::export]]
-Rcpp::List greedy_matching_row_best(Rcpp::NumericMatrix cost_matrix, bool maximize = false) {
-  return greedy_matching_row_best_impl(cost_matrix, maximize);
-}
-
-// [[Rcpp::export]]
-Rcpp::List greedy_matching_pq(Rcpp::NumericMatrix cost_matrix, bool maximize = false) {
-  return greedy_matching_pq_impl(cost_matrix, maximize);
-}
-
+// One front door: strategy selects the greedy variant. The per-strategy
+// implementations live in solvers/greedy_matching.cpp (lap::greedy_matching_*)
+// and are reached through the lap::greedy_matching dispatcher.
 // [[Rcpp::export]]
 Rcpp::List greedy_matching(Rcpp::NumericMatrix cost_matrix, bool maximize = false,
                           std::string strategy = "row_best") {

@@ -109,18 +109,6 @@ lap_solve_full_matching <- function(cost, min_controls, max_controls_val) {
     .Call(`_couplr_lap_solve_full_matching`, cost, min_controls, max_controls_val)
 }
 
-greedy_matching_sorted <- function(cost_matrix, maximize = FALSE) {
-    .Call(`_couplr_greedy_matching_sorted`, cost_matrix, maximize)
-}
-
-greedy_matching_row_best <- function(cost_matrix, maximize = FALSE) {
-    .Call(`_couplr_greedy_matching_row_best`, cost_matrix, maximize)
-}
-
-greedy_matching_pq <- function(cost_matrix, maximize = FALSE) {
-    .Call(`_couplr_greedy_matching_pq`, cost_matrix, maximize)
-}
-
 greedy_matching <- function(cost_matrix, maximize = FALSE, strategy = "row_best") {
     .Call(`_couplr_greedy_matching`, cost_matrix, maximize, strategy)
 }

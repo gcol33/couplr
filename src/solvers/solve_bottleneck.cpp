@@ -128,7 +128,7 @@ LapResult solve_bottleneck(const CostMatrix& cost, bool maximize) {
     }
 
     if (unique_costs.empty()) {
-        LAP_THROW_INFEASIBLE("No finite costs in matrix");
+        LAP_THROW_INFEASIBLE("Infeasible: no finite costs in matrix");
     }
 
     // Sort and deduplicate
@@ -177,7 +177,7 @@ LapResult solve_bottleneck(const CostMatrix& cost, bool maximize) {
 
     // First check if any matching is possible
     if (!can_match(unique_costs[hi])) {
-        LAP_THROW_INFEASIBLE("No perfect matching possible");
+        LAP_THROW_INFEASIBLE("Infeasible: no perfect matching possible");
     }
 
     while (lo <= hi) {

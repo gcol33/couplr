@@ -51,7 +51,10 @@ LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize = false,
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol (auto-transposes)
 //   ConvergenceException if iteration limit exceeded
-LapResult solve_auction_gs(const CostMatrix& cost, bool maximize = false, double eps = -1.0);
+// out_bids (optional): receives the cumulative number of bids across all
+// epsilon-scaling phases, a convergence diagnostic exposed by the R interface.
+LapResult solve_auction_gs(const CostMatrix& cost, bool maximize = false, double eps = -1.0,
+                           long long* out_bids = nullptr);
 
 // Solve LAP using scaled-epsilon auction with custom parameters
 // Parameters:

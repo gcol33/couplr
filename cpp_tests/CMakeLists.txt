@@ -94,6 +94,7 @@ set(TEST_SOURCES
     tests/test_ramshaw_tarjan.cpp
     tests/test_sinkhorn.cpp
     tests/test_ssap_bucket.cpp
+    tests/test_ground_truth.cpp
 )
 
 # Main test executable

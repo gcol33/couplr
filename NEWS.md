@@ -115,6 +115,30 @@ a wrong "optimal" or a crash (#13):
   previously solved greedily (and suboptimally). The Rcpp `*_impl` wrappers now
   share one `rcpp_to_cost_matrix` / `lap_result_to_rcpp` conversion pair instead
   of per-file copies (#15).
+* **Remaining solvers now ship the tested implementation.** Following `csa`, the
+  Rcpp entry points for `sap`/`ssp`, `csflow`, `cycle_cancel`, `push_relabel`,
+  `ssap_bucket`, `bruteforce`, `bottleneck`, `hk01`, `network_simplex`, and the
+  three `auction` variants each ran a second copy of the algorithm that had
+  drifted from the pure `lap::solve_*` exercised by the C++ tests. They now
+  delegate to that single pure implementation, so the shipped path and the tested
+  path are identical. Each pure copy was checked against brute force over
+  randomised integer, fractional, rectangular, maximize, and forbidden-edge
+  inputs before its wrapper was pointed at it. `network_simplex` thereby picks up
+  the pure copy's `O(n^2)` pivot bound (the shipped copy used the slower
+  `O(arcs * nodes)` bound).
+* **`auction`, `auction_gs`, and `auction_scaled` now return the exact optimum.**
+  The basic and Gauss-Seidel auctions used a single fixed epsilon, which leaves a
+  duality-gap slack of up to `n * eps` and returned suboptimal matchings on
+  closely-spaced costs (`assignment(method = "auction")` could disagree with
+  `jv`); `auction_scaled` additionally threw on some feasible rectangular
+  problems with forbidden edges under `maximize`. All three now run one shared
+  epsilon-scaling core that scales epsilon down to a tiny final value, recovering
+  the exact assignment. `lap_solve_auction_gs()` keeps its `bids` diagnostic.
+* **`hk01` maximize.** The pure `solve_hk01` flipped `maximize` by negation,
+  turning a `{0,1}` matrix into `{0,-1}`, which its palette check no longer
+  recognised as binary -- so it threw on feasible binary maximization problems.
+  It now flips via `cmax - c`, preserving the `{0,1}` palette so the fast path and
+  the `solve_csflow` fallback engage.
 
 ## Tests
 
@@ -123,6 +147,12 @@ a wrong "optimal" or a crash (#13):
   row alignment, propensity-matching imbalance reduction, ATE subclass weight
   values, weighted-balance means, known-effect recovery across seeds, and
   nominal coverage of matched-pair confidence intervals (#14).
+* Added a randomised ground-truth harness (`cpp_tests/tests/test_ground_truth.cpp`)
+  that compares every optimal pure solver against brute-force enumeration over
+  thousands of integer, fractional, rectangular, maximize, and forbidden-edge
+  matrices (bottleneck against a brute-force minimax). This is the gate that
+  decides whether a solver's Rcpp wrapper may delegate to the pure copy, and it
+  is what surfaced the `auction` and `hk01` bugs above.
 
 # couplr 1.4.1
 

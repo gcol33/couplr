@@ -1,94 +1,28 @@
-// Network Simplex algorithm for the assignment problem
-// Implementation based on LEMON library and Király-Kovács (2012)
+// src/solvers/network_simplex/solve_network_simplex_rcpp.cpp
+// Rcpp wrapper for the network-simplex solver - delegates to the pure C++
+// implementation. The algorithm lives in solve_network_simplex.cpp
+// (lap::solve_network_simplex), the single source of truth exercised by
+// cpp_tests, so the shipped path and the tested path are identical. The pure
+// copy carries the O(n^2) pivot bound and the maximize/forbidden handling; the
+// R-level wrapper negates for maximize and marks forbidden cells before calling.
 
-#include "ns_types.h"
-#include "ns_graph.h"
-#include "ns_init.h"
-#include "ns_pivot.h"
 #include <Rcpp.h>
-
-namespace couplr {
-namespace ns {
-
-// Main solver function
-NSResult solve_network_simplex_impl(const Rcpp::NumericMatrix& cost_matrix) {
-    int n_rows = cost_matrix.nrow();
-    int n_cols = cost_matrix.ncol();
-
-    // Handle edge cases
-    if (n_rows == 0 || n_cols == 0) {
-        NSResult result;
-        result.optimal = false;
-        result.status = "empty";
-        result.total_cost = 0.0;
-        result.pivot_count = 0;
-        return result;
-    }
-
-    if (n_rows > n_cols) {
-        // More rows than columns - some rows cannot be matched
-        NSResult result;
-        result.optimal = false;
-        result.status = "infeasible";
-        result.total_cost = 0.0;
-        result.pivot_count = 0;
-        result.assignment.resize(n_rows, -1);
-        return result;
-    }
-
-    // Build network
-    NSState state;
-    build_assignment_network(state, &cost_matrix[0], n_rows, n_cols);
-
-    // Initialize spanning tree with greedy solution
-    initialize_spanning_tree_greedy(state);
-
-    // Compute initial potentials
-    compute_potentials(state);
-
-    // Main simplex loop. Iteration bound is O(arcs * nodes), which overflows a
-    // 32-bit int well before n ~ 1100; compute in 64-bit.
-    long long max_iterations =
-        static_cast<long long>(state.num_arcs) * state.num_nodes;
-
-    for (long long iter = 0; iter < max_iterations; ++iter) {
-        // Find entering arc
-        int entering = find_entering_arc(state);
-
-        if (entering == NO_ARC) {
-            // Optimal: no arc with negative reduced cost
-            break;
-        }
-
-        // Find leaving arc and compute delta
-        PivotInfo info = find_leaving_arc(state, entering);
-
-        // Perform pivot
-        do_pivot(state, info);
-    }
-
-    // Extract assignment from solution
-    return extract_assignment(state);
-}
-
-} // namespace ns
-} // namespace couplr
+#include "solve_network_simplex.h"
+#include "../../core/lap_error.h"
+#include "../../core/lap_utils_rcpp.h"
 
 // Implementation function called from rcpp_interface.cpp
 Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix) {
-    couplr::ns::NSResult result = couplr::ns::solve_network_simplex_impl(cost_matrix);
+    try {
+        lap::CostMatrix cm = rcpp_to_cost_matrix(cost_matrix);
+        lap::LapResult result = lap::solve_network_simplex(cm, false);
 
-    // Convert to 1-indexed for R
-    Rcpp::IntegerVector assignment(result.assignment.size());
-    for (size_t i = 0; i < result.assignment.size(); ++i) {
-        assignment[i] = result.assignment[i] + 1;  // 1-indexed
+        Rcpp::List out = lap_result_to_rcpp(result, cost_matrix);
+        out["status"] = "optimal";
+        out["method_used"] = "network_simplex";
+        return out;
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
     }
-
-    return Rcpp::List::create(
-        Rcpp::Named("match") = assignment,
-        Rcpp::Named("total_cost") = result.total_cost,
-        Rcpp::Named("status") = result.status,
-        Rcpp::Named("method_used") = "network_simplex",
-        Rcpp::Named("n_pivots") = result.pivot_count
-    );
+    return Rcpp::List();  // unreachable
 }

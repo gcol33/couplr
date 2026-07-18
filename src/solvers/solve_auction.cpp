@@ -1,5 +1,24 @@
 // src/solvers/solve_auction.cpp
 // Pure C++ Auction LAP solver - NO Rcpp dependencies
+//
+// All public variants (basic, Gauss-Seidel, scaled) run one shared
+// epsilon-scaling forward-auction core. Epsilon-scaling is what makes the
+// auction exact rather than merely epsilon-optimal: a single fixed epsilon
+// leaves a duality-gap slack of up to n*eps, so a coarse epsilon returns a
+// suboptimal assignment on closely-spaced costs. Scaling epsilon down to a tiny
+// final value drives that slack below the smallest achievable cost gap.
+//
+// Rectangular problems (n < m) are padded to a square graph with dummy rows.
+// The padding matters for correctness, not just balance: with warm-started
+// prices carried across phases, a person facing no competition for its object
+// would otherwise flee it when the matching is rebuilt at the next (smaller)
+// epsilon, so the auction oscillates instead of converging. Dummy rows supply
+// that competition.
+//
+// The variants differ only in bidding discipline and exposed parameters:
+//   - solve_auction        : queue drain, default schedule
+//   - solve_auction_gs     : Gauss-Seidel sweep, default schedule
+//   - solve_auction_scaled : queue drain with a caller-chosen alpha schedule
 
 #include "solve_auction.h"
 #include "../core/lap_error.h"
@@ -11,173 +30,205 @@
 
 namespace lap {
 
-// Compute cost spread among allowed entries (max - min)
-static inline double allowed_spread(const CostMatrix& cost) {
-    double cmin = std::numeric_limits<double>::infinity();
-    double cmax = -std::numeric_limits<double>::infinity();
+// Terminal epsilon small enough that n*eps stays below the smallest achievable
+// cost gap on realistic inputs, lifting the auction from eps-optimal to exact.
+static inline double default_eps_final(int n) {
+    return std::min(1e-6, 1.0 / (static_cast<double>(n) * static_cast<double>(n)));
+}
 
-    for (int i = 0; i < cost.nrow; ++i) {
-        for (int j = 0; j < cost.ncol; ++j) {
-            if (cost.allowed(i, j)) {
-                double v = cost.at(i, j);
-                if (std::isfinite(v)) {
-                    if (v < cmin) cmin = v;
-                    if (v > cmax) cmax = v;
+// Shared epsilon-scaling forward-auction core.
+//   initial_epsilon_factor : multiplies the starting epsilon
+//   alpha                  : epsilon reduction factor per phase (> 1)
+//   final_epsilon          : terminal epsilon (<= 0 selects default_eps_final)
+//   gauss_seidel           : false drains a queue of unmatched persons; true
+//                            sweeps all persons each round until none move
+// Returns a LapResult over the ORIGINAL (unpadded) rows.
+static LapResult auction_core(const CostMatrix& cost, bool maximize,
+                              double initial_epsilon_factor, double alpha,
+                              double final_epsilon, bool gauss_seidel,
+                              long long* out_bids = nullptr) {
+    const int n0 = cost.nrow;
+    const int m0 = cost.ncol;
+
+    if (n0 == 0) return LapResult({}, 0.0, "optimal");
+    if (n0 > m0) LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    if (alpha <= 1.0) alpha = 7.0;
+
+    // Pad rectangular problems to square with dummy rows (see file header).
+    const bool needs_padding = (n0 < m0);
+    int n = n0, m = m0;
+    CostMatrix padded;
+
+    if (needs_padding) {
+        n = m0;
+        padded = CostMatrix(n, m);
+        double dummy_cost = 0.0;
+        for (int i = 0; i < n0; ++i) {
+            for (int j = 0; j < m0; ++j) {
+                padded.at(i, j) = cost.at(i, j);
+                padded.mask[i * m + j] = cost.mask[i * m + j];
+                if (cost.allowed(i, j) && std::isfinite(cost.at(i, j))) {
+                    dummy_cost = std::max(dummy_cost, std::abs(cost.at(i, j)));
                 }
             }
         }
+        // Dummy rows: high cost (minimize) / very low profit (maximize), allowed
+        // everywhere so they absorb the surplus columns.
+        dummy_cost = (dummy_cost + 1.0) * m * 10.0;
+        for (int i = n0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                padded.at(i, j) = maximize ? -dummy_cost : dummy_cost;
+                padded.mask[i * m + j] = 1;  // allowed
+            }
+        }
     }
+    const CostMatrix& base = needs_padding ? padded : cost;
 
-    if (!std::isfinite(cmin) || !std::isfinite(cmax)) return 0.0;
-    double s = cmax - cmin;
-    if (s < 0.0) s = 0.0;
-    return s;
-}
-
-// Basic auction algorithm
-LapResult solve_auction(const CostMatrix& cost, bool maximize, double eps_in) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
-
-    // Handle empty case
-    if (n == 0) {
-        return LapResult({}, 0.0, "optimal");
-    }
-
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
-
-    // Prepare working costs (negated if maximize, BIG for forbidden)
-    CostMatrix work = prepare_for_solve(cost, maximize);
-
-    // Check feasibility
+    // Prepare working costs (negated if maximize, forbidden excluded via mask).
+    CostMatrix work = prepare_for_solve(base, maximize);
     ensure_each_row_has_option(work.mask, n, m);
 
-    // Build allowed structure (CSR)
     std::vector<int> row_ptr, cols;
     build_allowed(work.mask, n, m, row_ptr, cols);
 
-    // Prices and assignments
+    double max_abs_cost = 0.0;
+    for (int i = 0; i < n; ++i) {
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+            double c = std::abs(work.at(i, cols[k]));
+            if (std::isfinite(c) && c > max_abs_cost) max_abs_cost = c;
+        }
+    }
+
+    double epsilon = std::max(1.0, max_abs_cost * initial_epsilon_factor);
+    const double eps_final = (final_epsilon > 0.0) ? final_epsilon : default_eps_final(n);
+    const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
+
     std::vector<double> price(m, 0.0);
     std::vector<int> a_of_i(n, -1), i_of_j(m, -1);
-    std::vector<int> queue;
-    queue.reserve(n);
 
-    // Determine epsilon
-    // Adaptive epsilon: scale with cost spread / n² to avoid tiny bids
-    // Scale-invariant choice: ε = spread / (2n²)
-    double eps;
-    if (std::isfinite(eps_in) && eps_in > 0.0) {
-        eps = eps_in;
-    } else {
-        const double spread = allowed_spread(work);
-        const double base = (spread > 0.0) ? spread : 1.0;
-        eps = base / (2.0 * static_cast<double>(n) * static_cast<double>(n));
-        // Defensive clamp to prevent denormal or absurd values
-        if (eps < 1e-12) eps = 1e-12;
-        if (spread > 0.0 && eps > spread) eps = spread;
-    }
-
-    // Profit function (for minimization: maximize negative cost)
-    auto profit = [&](int i, int j) {
-        double base = -(work.at(i, j) + price[j]);
-        // Tie-breaking perturbation
-        unsigned key = static_cast<unsigned>((i + 1) * 1315423911u) ^
-                       static_cast<unsigned>((j + 1) * 2654435761u);
-        double tweak = std::ldexp(static_cast<double>(key & 0xFFFFu), -80);
-        return base + tweak;
+    // Minimize reduced cost (cost - price); the bidder decreases the winning
+    // object's price so contenders see it as more expensive.
+    auto find_best = [&](int i, double& best_rc, double& second_rc, int& best_j) {
+        best_rc = std::numeric_limits<double>::infinity();
+        second_rc = std::numeric_limits<double>::infinity();
+        best_j = -1;
+        for (int k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+            int j = cols[k];
+            double rc = work.at(i, j) - price[j];
+            if (rc < best_rc) { second_rc = best_rc; best_rc = rc; best_j = j; }
+            else if (rc < second_rc) { second_rc = rc; }
+        }
     };
 
-    // Initialize queue with all persons
-    for (int i = 0; i < n; ++i) {
-        queue.push_back(i);
-    }
+    double eps_cur = eps_final;
+    const long long max_iter = static_cast<long long>(n) * m * 200 + 1000;
+    long long iter = 0;
 
-    long long reassign_guard = 0;
-    const long long max_iters = 200000000LL;
+    auto bid_person = [&](int i) -> int {
+        double best_rc, second_rc;
+        int best_j;
+        find_best(i, best_rc, second_rc, best_j);
+        if (best_j < 0) LAP_THROW_INFEASIBLE("Person has no valid objects");
 
-    while (!queue.empty()) {
-        int i = queue.back();
-        queue.pop_back();
+        double gamma;
+        if (!std::isfinite(second_rc)) {
+            gamma = eps_cur;  // only one option
+        } else {
+            gamma = second_rc - best_rc;
+            if (gamma > price_bound) gamma = price_bound;
+            if (gamma < 0.0) gamma = 0.0;
+        }
+        double new_price = price[best_j] - (gamma + eps_cur);
+        if (new_price < -price_bound) new_price = -price_bound;
+        price[best_j] = new_price;
 
-        // Find best and second-best among allowed objects
-        double best = -std::numeric_limits<double>::infinity();
-        double second = -std::numeric_limits<double>::infinity();
-        int jbest = -1;
+        int old = i_of_j[best_j];
+        i_of_j[best_j] = i;
+        a_of_i[i] = best_j;
+        if (old != -1 && old != i) a_of_i[old] = -1;
+        return old;
+    };
 
-        const int start = row_ptr[i];
-        const int end = row_ptr[i + 1];
+    for (;;) {
+        epsilon = std::max(epsilon / alpha, eps_final);
+        eps_cur = epsilon;
 
-        for (int k = start; k < end; ++k) {
-            int j = cols[k];
-            double val = profit(i, j);
-            if (val > best) {
-                second = best;
-                best = val;
-                jbest = j;
-            } else if (val > second) {
-                second = val;
+        std::fill(a_of_i.begin(), a_of_i.end(), -1);
+        std::fill(i_of_j.begin(), i_of_j.end(), -1);
+
+        if (!gauss_seidel) {
+            std::vector<int> queue;
+            queue.reserve(n);
+            for (int i = 0; i < n; ++i) queue.push_back(i);
+            while (!queue.empty()) {
+                int i = queue.back();
+                queue.pop_back();
+                int old = bid_person(i);
+                if (old != -1) queue.push_back(old);
+                if (++iter > max_iter)
+                    LAP_THROW_CONVERGENCE("Auction: iteration guard exceeded");
+            }
+        } else {
+            bool converged = false;
+            while (!converged) {
+                converged = true;
+                for (int i = 0; i < n; ++i) {
+                    if (a_of_i[i] >= 0 && i_of_j[a_of_i[i]] == i) continue;
+                    converged = false;
+                    bid_person(i);
+                    if (++iter > max_iter)
+                        LAP_THROW_CONVERGENCE("Auction (Gauss-Seidel): iteration guard exceeded");
+                }
             }
         }
 
-        if (jbest < 0) {
-            LAP_THROW_INFEASIBLE("Person has no valid objects");
-        }
-
-        // Compute bid increment
-        double bid = (second == -std::numeric_limits<double>::infinity()) ?
-                     (2.0 * eps) : (best - second + eps);
-
-        // Update price
-        price[jbest] += bid;
-
-        // Update assignment
-        int old = i_of_j[jbest];
-        i_of_j[jbest] = i;
-
-        if (old != -1) {
-            a_of_i[old] = -1;
-            queue.push_back(old);
-        }
-        a_of_i[i] = jbest;
-
-        if (++reassign_guard > max_iters) {
-            LAP_THROW_CONVERGENCE("Auction: exceeded iteration guard");
-        }
+        if (epsilon <= eps_final) break;
     }
 
-    // Build assignment vector (0-based)
-    std::vector<int> assignment(n, -1);
-    for (int i = 0; i < n; ++i) {
-        assignment[i] = a_of_i[i];
-    }
+    if (out_bids != nullptr) *out_bids = iter;
 
-    // Verify matching and compute total cost using ORIGINAL costs
+    // Verify the ORIGINAL rows and total on the ORIGINAL costs.
+    std::vector<int> assignment(n0, -1);
     double total = 0.0;
-    for (int i = 0; i < n; ++i) {
-        int j = assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
+    for (int i = 0; i < n0; ++i) {
+        int j = a_of_i[i];
+        if (j < 0) LAP_THROW_INFEASIBLE("Could not find full matching");
+        if (!cost.allowed(i, j)) LAP_THROW_INFEASIBLE("Chosen forbidden edge");
         double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
+        if (!std::isfinite(c)) LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
+        assignment[i] = j;
         total += c;
     }
-
     return LapResult(std::move(assignment), total, "optimal");
 }
 
-// Scaled-epsilon auction algorithm. Thin wrapper: maps the named schedule to
-// a numeric alpha and forwards to solve_auction_scaled_params with default
-// initial_epsilon_factor and final_epsilon. The two functions used to be
-// ~200-line near-duplicates of each other.
+// Basic auction algorithm (queue drain, epsilon-scaled)
+LapResult solve_auction(const CostMatrix& cost, bool maximize, double eps_in) {
+    // An explicit epsilon becomes the terminal epsilon (the requested precision).
+    double final_eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : -1.0;
+    return auction_core(cost, maximize, /*initial_epsilon_factor=*/1.0, /*alpha=*/7.0,
+                        final_eps, /*gauss_seidel=*/false);
+}
+
+// Gauss-Seidel auction algorithm (sweep discipline, epsilon-scaled)
+LapResult solve_auction_gs(const CostMatrix& cost, bool maximize, double eps_in,
+                           long long* out_bids) {
+    double final_eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : -1.0;
+    return auction_core(cost, maximize, /*initial_epsilon_factor=*/1.0, /*alpha=*/7.0,
+                        final_eps, /*gauss_seidel=*/true, out_bids);
+}
+
+// Scaled-epsilon auction with custom parameters (queue drain)
+LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize,
+                                       double initial_epsilon_factor,
+                                       double alpha,
+                                       double final_epsilon) {
+    return auction_core(cost, maximize, initial_epsilon_factor, alpha,
+                        final_epsilon, /*gauss_seidel=*/false);
+}
+
+// Scaled-epsilon auction. Maps the named schedule to a numeric alpha and
+// forwards to solve_auction_scaled_params with default epsilon bounds.
 LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize,
                                 const std::string& schedule) {
     double alpha = 7.0;
@@ -188,420 +239,6 @@ LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize,
                                        /*initial_epsilon_factor=*/1.0,
                                        alpha,
                                        /*final_epsilon=*/-1.0);
-}
-
-// Transpose a cost matrix
-static CostMatrix transpose_cost(const CostMatrix& cost) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
-    CostMatrix result(m, n);
-
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            result.at(j, i) = cost.at(i, j);
-            result.mask[j * n + i] = cost.mask[i * m + j];
-        }
-    }
-
-    return result;
-}
-
-// Scaled-epsilon auction with custom parameters
-LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize,
-                                       double initial_epsilon_factor,
-                                       double alpha,
-                                       double final_epsilon) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
-
-    // Handle empty case
-    if (n0 == 0) {
-        return LapResult({}, 0.0, "optimal");
-    }
-
-    // Dimension check
-    if (n0 > m0) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
-
-    // C reference requires balanced graph (n == m). If n < m, pad with dummies.
-    bool needs_padding = (n0 < m0);
-    CostMatrix padded_cost;
-    int n = n0;
-    int m = m0;
-
-    if (needs_padding) {
-        // Pad with dummy rows to make it square
-        n = m0;
-        padded_cost = CostMatrix(n, m);
-
-        // Copy original costs
-        for (int i = 0; i < n0; ++i) {
-            for (int j = 0; j < m0; ++j) {
-                padded_cost.at(i, j) = cost.at(i, j);
-                padded_cost.mask[i * m + j] = cost.mask[i * m + j];
-            }
-        }
-
-        // Set dummy rows to very high cost (very low profit in maximize case)
-        double dummy_cost = 0.0;
-        for (int i = 0; i < n0; ++i) {
-            for (int j = 0; j < m0; ++j) {
-                if (std::isfinite(cost.at(i, j))) {
-                    dummy_cost = std::max(dummy_cost, std::abs(cost.at(i, j)));
-                }
-            }
-        }
-        dummy_cost = (dummy_cost + 1.0) * m * 10.0;
-
-        for (int i = n0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                padded_cost.at(i, j) = maximize ? -dummy_cost : dummy_cost;
-                padded_cost.mask[i * m + j] = 1;  // Allow dummy edges
-            }
-        }
-    } else {
-        padded_cost = cost;
-    }
-
-    // Prepare working costs (negated if maximize, BIG for forbidden)
-    CostMatrix work = prepare_for_solve(padded_cost, maximize);
-
-    // Build CSR for the balanced (possibly padded) matrix
-    std::vector<int> row_ptr, cols;
-    build_allowed(work.mask, n, m, row_ptr, cols);
-
-    // Find max cost for epsilon initialization
-    double max_abs_cost = 0.0;
-    for (int i = 0; i < n; ++i) {
-        const int start = row_ptr[i];
-        const int end = row_ptr[i + 1];
-        for (int k = start; k < end; ++k) {
-            int j = cols[k];
-            double c = std::abs(work.at(i, j));
-            if (std::isfinite(c) && c > max_abs_cost) {
-                max_abs_cost = c;
-            }
-        }
-    }
-
-    double epsilon = std::max(1.0, max_abs_cost * initial_epsilon_factor);
-    double eps_final = (final_epsilon > 0.0) ? final_epsilon :
-                       std::min(1e-6, 1.0 / (static_cast<double>(n) * static_cast<double>(n)));
-
-    // State: prices persist, matching rebuilt each phase
-    std::vector<double> price(m, 0.0);
-    std::vector<int> a_of_i(n, -1);
-    std::vector<int> i_of_j(m, -1);
-
-    // Price bounds to prevent overflow (scaled relative to problem size)
-    const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
-
-    // C reference formulation: MINIMIZE (cost - price)
-    auto reduced_cost = [&](int i, int j) {
-        return work.at(i, j) - price[j];
-    };
-
-    // Find best (MINIMUM reduced cost) and second-best
-    auto find_best = [&](int i, double& best_rc, double& second_rc, int& best_j) {
-        const int start = row_ptr[i];
-        const int end = row_ptr[i + 1];
-        best_rc = std::numeric_limits<double>::infinity();
-        second_rc = std::numeric_limits<double>::infinity();
-        best_j = -1;
-
-        if (end - start == 1) {
-            best_j = cols[start];
-            best_rc = reduced_cost(i, best_j);
-            return;
-        }
-
-        for (int k = start; k < end; ++k) {
-            int j = cols[k];
-            double rc = reduced_cost(i, j);
-            if (rc < best_rc) {
-                second_rc = best_rc;
-                best_rc = rc;
-                best_j = j;
-            } else if (rc < second_rc) {
-                second_rc = rc;
-            }
-        }
-    };
-
-    int phase = 0;
-    const long long max_iter = static_cast<long long>(n) * m * 100;
-
-    // Epsilon-scaling loop
-    do {
-        phase++;
-
-        // Reduce epsilon (C reference does this first each phase)
-        epsilon /= alpha;
-        if (epsilon < eps_final) epsilon = eps_final;
-
-        // Discard matching
-        std::fill(a_of_i.begin(), a_of_i.end(), -1);
-        std::fill(i_of_j.begin(), i_of_j.end(), -1);
-
-        // Rebuild matching - all n persons (including dummies if padded)
-        std::vector<int> unmatched;
-        unmatched.reserve(n);
-        for (int i = 0; i < n; ++i) {
-            unmatched.push_back(i);
-        }
-
-        long long iter = 0;
-        while (!unmatched.empty()) {
-            if (++iter > max_iter) {
-                LAP_THROW_CONVERGENCE("Auction(scaled): iteration guard exceeded at phase " +
-                                     std::to_string(phase));
-            }
-
-            int i = unmatched.back();
-            unmatched.pop_back();
-
-            double best_rc, second_rc;
-            int best_j;
-            find_best(i, best_rc, second_rc, best_j);
-
-            if (best_j < 0) {
-                LAP_THROW_INFEASIBLE("Person has no valid neighbors");
-            }
-
-            // Compute gamma - use epsilon-scaled default when only one option
-            double gamma;
-            if (second_rc == std::numeric_limits<double>::infinity() || !std::isfinite(second_rc)) {
-                // Only one valid option: use small multiple of epsilon
-                gamma = epsilon;
-            } else {
-                gamma = second_rc - best_rc;
-                // Clamp gamma to prevent runaway prices
-                if (gamma > price_bound) gamma = price_bound;
-                if (gamma < 0.0) gamma = 0.0;  // Should not happen, but defensive
-            }
-
-            // DECREASE price with overflow protection
-            double new_price = price[best_j] - (gamma + epsilon);
-            if (new_price < -price_bound) new_price = -price_bound;
-            price[best_j] = new_price;
-
-            // Assignment
-            int old = i_of_j[best_j];
-            i_of_j[best_j] = i;
-            if (old != -1) {
-                a_of_i[old] = -1;
-                unmatched.push_back(old);
-            }
-            a_of_i[i] = best_j;
-        }
-    } while (epsilon > eps_final);
-
-    // Build assignment vector - only for ORIGINAL n0 rows (not dummy rows)
-    std::vector<int> assignment(n0, -1);
-    for (int i = 0; i < n0; ++i) {
-        assignment[i] = a_of_i[i];
-    }
-
-    // Verify matching and compute total cost using ORIGINAL costs
-    double total = 0.0;
-    for (int i = 0; i < n0; ++i) {
-        int j = assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
-    }
-
-    return LapResult(std::move(assignment), total, "optimal");
-}
-
-// Gauss-Seidel auction algorithm
-LapResult solve_auction_gs(const CostMatrix& cost, bool maximize, double eps_in) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
-
-    // Handle empty case
-    if (n0 == 0) {
-        return LapResult({}, 0.0, "optimal");
-    }
-
-    // Auto-transpose if n > m
-    bool transposed = false;
-    CostMatrix work_cost = cost;
-    int n = n0;
-    int m = m0;
-
-    if (n0 > m0) {
-        transposed = true;
-        work_cost = transpose_cost(cost);
-        n = work_cost.nrow;  // == m0
-        m = work_cost.ncol;  // == n0
-    }
-
-    // Prepare working costs (negated if maximize, BIG for forbidden)
-    CostMatrix work = prepare_for_solve(work_cost, maximize);
-
-    // Check feasibility
-    ensure_each_row_has_option(work.mask, n, m);
-
-    // Build allowed structure (CSR)
-    std::vector<int> row_ptr, cols;
-    build_allowed(work.mask, n, m, row_ptr, cols);
-
-    // Prices and assignments
-    std::vector<double> price(m, 0.0);
-    std::vector<int> a_of_i(n, -1), i_of_j(m, -1);
-
-    // Determine epsilon
-    // Adaptive epsilon: scale with cost spread / n² to match regular auction precision
-    double eps;
-    if (std::isfinite(eps_in) && eps_in > 0.0) {
-        eps = eps_in;
-    } else {
-        const double spread = allowed_spread(work);
-        const double base = (spread > 0.0) ? spread : 1.0;
-        eps = base / (2.0 * static_cast<double>(n) * static_cast<double>(n));
-        // Defensive clamp to prevent denormal or absurd values
-        if (eps < 1e-12) eps = 1e-12;
-        if (spread > 0.0 && eps > spread) eps = spread;
-    }
-
-    // Profit function (for minimization: maximize negative cost)
-    auto profit = [&](int i, int j) {
-        double base = -(work.at(i, j) + price[j]);
-        // Tie-breaking perturbation
-        unsigned key = static_cast<unsigned>((i + 1) * 1315423911u) ^
-                       static_cast<unsigned>((j + 1) * 2654435761u);
-        double tweak = std::ldexp(static_cast<double>(key & 0xFFFFu), -80);
-        return base + tweak;
-    };
-
-    // Gauss-Seidel: iterate until all persons are matched
-    long long total_bids = 0;
-    const long long max_bids = 200000000LL;
-
-    bool converged = false;
-    while (!converged) {
-        converged = true;
-
-        for (int i = 0; i < n; ++i) {
-            // Check if person i is still matched
-            if (a_of_i[i] >= 0) {
-                int j = a_of_i[i];
-                if (i_of_j[j] == i) continue;
-            }
-
-            // Person i needs to bid
-            converged = false;
-
-            // Find best and second-best objects
-            double best = -std::numeric_limits<double>::infinity();
-            double second = -std::numeric_limits<double>::infinity();
-            int jbest = -1;
-
-            const int start = row_ptr[i];
-            const int end = row_ptr[i + 1];
-
-            for (int k = start; k < end; ++k) {
-                int j = cols[k];
-                double val = profit(i, j);
-                if (val > best) {
-                    second = best;
-                    best = val;
-                    jbest = j;
-                } else if (val > second) {
-                    second = val;
-                }
-            }
-
-            if (jbest < 0) {
-                LAP_THROW_INFEASIBLE("Person has no valid objects");
-            }
-
-            // Compute bid increment and update price immediately (GS difference)
-            double bid = (second == -std::numeric_limits<double>::infinity()) ?
-                        (2.0 * eps) : (best - second + eps);
-            price[jbest] += bid;
-
-            // Update assignment
-            int old = i_of_j[jbest];
-            i_of_j[jbest] = i;
-            a_of_i[i] = jbest;
-
-            if (old != -1 && old != i) {
-                a_of_i[old] = -1;  // old person becomes unmatched
-            }
-
-            if (++total_bids > max_bids) {
-                LAP_THROW_CONVERGENCE("Auction (Gauss-Seidel): exceeded iteration guard");
-            }
-        }
-    }
-
-    // Extract matching (in work orientation)
-    std::vector<int> match_work(n, -1);
-    for (int i = 0; i < n; ++i) {
-        match_work[i] = a_of_i[i];
-    }
-
-    // Map back to original orientation if transposed
-    std::vector<int> assignment;
-    double total = 0.0;
-
-    if (!transposed) {
-        assignment = match_work;
-
-        // Compute cost on original scale
-        for (int i = 0; i < n; ++i) {
-            int j = assignment[i];
-            if (j < 0) {
-                LAP_THROW_INFEASIBLE("Could not find full matching");
-            }
-            if (!work_cost.allowed(i, j)) {
-                LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-            }
-            double c = work_cost.at(i, j);
-            if (!std::isfinite(c)) {
-                LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-            }
-            total += c;
-        }
-    } else {
-        // work is m0 x n0; match_work length m0
-        assignment.assign(n0, -1);
-        for (int i = 0; i < m0; ++i) {
-            int j = match_work[i];
-            if (j >= 0 && j < n0) {
-                assignment[j] = i;
-            }
-        }
-
-        // Compute cost on original scale
-        for (int i = 0; i < n0; ++i) {
-            int j = assignment[i];
-            if (j < 0) {
-                LAP_THROW_INFEASIBLE("Could not find full matching");
-            }
-            if (!cost.allowed(i, j)) {
-                LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-            }
-            double c = cost.at(i, j);
-            if (!std::isfinite(c)) {
-                LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-            }
-            total += c;
-        }
-    }
-
-    return LapResult(std::move(assignment), total, "optimal");
 }
 
 }  // namespace lap

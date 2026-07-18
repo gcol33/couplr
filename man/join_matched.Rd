@@ -33,7 +33,7 @@ join_matched(result, ...)
 }
 \arguments{
 \item{result}{A result object from \code{match_couples()},
-\code{greedy_couples()}, \code{full_match()}, or \code{cem_match()}}
+\code{full_match()}, or \code{cem_match()}}
 
 \item{...}{Additional arguments passed to methods}
 

@@ -16,8 +16,7 @@ sensitivity_analysis(
 )
 }
 \arguments{
-\item{result}{A matching_result object from \code{\link[=match_couples]{match_couples()}} or
-\code{\link[=greedy_couples]{greedy_couples()}}}
+\item{result}{A matching_result object from \code{\link[=match_couples]{match_couples()}}}
 
 \item{left}{Original left (treated) dataset}
 

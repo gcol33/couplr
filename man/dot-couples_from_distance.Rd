@@ -39,6 +39,6 @@ A matching_result object with pairs, info, and optional diagnostics.
 }
 \description{
 Core logic for both optimal (LAP) and greedy matching from distance objects.
-Called by match_couples_from_distance() and greedy_couples_from_distance().
+Called by match_couples_from_distance() (optimal and greedy paths).
 }
 \keyword{internal}

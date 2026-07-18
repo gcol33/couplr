@@ -84,7 +84,7 @@ cat("  Total distance:", round(sum(result_optimal$pairs$distance), 2), "\n")
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 3), "\n\n")
 
 # Greedy matching (sorted strategy)
-result_greedy <- greedy_couples(dist_obj, strategy = "sorted")
+result_greedy <- match_couples(dist_obj, strategy = "sorted", method = "greedy")
 cat("Greedy matching (sorted):\n")
 cat("  Matched pairs:", nrow(result_greedy$pairs), "\n")
 cat("  Total distance:", round(sum(result_greedy$pairs$distance), 2), "\n")

@@ -58,8 +58,9 @@ parameters (max_distance, calipers, methods) without recomputing distances.
 }
 \details{
 This function computes distances once and stores them in a reusable object.
-The resulting distance_object can be passed to \code{match_couples()} or
-\code{greedy_couples()} instead of providing datasets and variables.
+The resulting distance_object can be passed to \code{match_couples()}
+(optionally with \code{method = "greedy"}) instead of providing datasets and
+variables.
 
 Benefits:
 \itemize{
@@ -86,7 +87,7 @@ dist_obj <- compute_distances(
 # Reuse for different matching strategies
 result1 <- match_couples(dist_obj, max_distance = 0.5)
 result2 <- match_couples(dist_obj, max_distance = 1.0)
-result3 <- greedy_couples(dist_obj, strategy = "sorted")
+result3 <- match_couples(dist_obj, method = "greedy", strategy = "sorted")
 
 # All use the same precomputed distances
 

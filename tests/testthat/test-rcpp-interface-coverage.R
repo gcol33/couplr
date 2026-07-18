@@ -6,33 +6,33 @@
 # Greedy matching strategies
 # ------------------------------------------------------------------------------
 
-test_that("greedy_matching_sorted via greedy_couples", {
+test_that("greedy_matching_sorted via greedy matching", {
   skip_on_cran()
   left <- data.frame(x = 1:5, y = 2:6)
   right <- data.frame(x = 6:10, y = 7:11)
 
-  result <- greedy_couples(left, right, vars = c("x", "y"), strategy = "sorted")
+  result <- match_couples(left, right, vars = c("x", "y"), strategy = "sorted", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true(nrow(result$pairs) > 0)
 })
 
-test_that("greedy_matching_row_best via greedy_couples", {
+test_that("greedy_matching_row_best via greedy matching", {
   skip_on_cran()
   left <- data.frame(x = 1:5, y = 2:6)
   right <- data.frame(x = 6:10, y = 7:11)
 
-  result <- greedy_couples(left, right, vars = c("x", "y"), strategy = "row_best")
+  result <- match_couples(left, right, vars = c("x", "y"), strategy = "row_best", method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_matching_pq via greedy_couples", {
+test_that("greedy_matching_pq via greedy matching", {
   skip_on_cran()
   left <- data.frame(x = 1:5, y = 2:6)
   right <- data.frame(x = 6:10, y = 7:11)
 
-  result <- greedy_couples(left, right, vars = c("x", "y"), strategy = "pq")
+  result <- match_couples(left, right, vars = c("x", "y"), strategy = "pq", method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })

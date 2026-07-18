@@ -9,7 +9,7 @@
 #' assigned, along with block summary statistics.
 #'
 #' This function does NOT perform matching - it only creates the block structure.
-#' Use [match_couples()] or [greedy_couples()] to perform matching within blocks.
+#' Use [match_couples()] to perform matching within blocks.
 #'
 #' @param left Data frame of "left" units (e.g., treated, cases)
 #' @param right Data frame of "right" units (e.g., control, controls)

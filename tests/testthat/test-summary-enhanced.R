@@ -27,8 +27,8 @@ test_that("summary includes distance_percentiles", {
 test_that("summary handles empty matches", {
   left <- data.frame(id = 1:3, x = c(100, 200, 300))
   right <- data.frame(id = 4:6, x = c(1, 2, 3))
-  # greedy_couples doesn't error on no valid pairs (strict_no_pairs = FALSE)
-  result <- greedy_couples(left, right, vars = "x", max_distance = 0.001)
+  # greedy matching doesn't error on no valid pairs (strict_no_pairs = FALSE)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.001, method = "greedy")
 
   s <- summary(result)
   expect_true(is.null(s$distance_percentiles))

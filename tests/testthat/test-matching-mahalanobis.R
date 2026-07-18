@@ -143,7 +143,7 @@ test_that("sigma parameter propagates through match_couples", {
 })
 
 
-test_that("sigma parameter propagates through greedy_couples", {
+test_that("sigma parameter propagates through greedy matching", {
   set.seed(42)
   left <- data.frame(
     id = 1:8,
@@ -157,7 +157,7 @@ test_that("sigma parameter propagates through greedy_couples", {
   )
 
   sigma <- diag(2)
-  result <- greedy_couples(left, right, vars = c("x", "y"),
-                           distance = "mahalanobis", sigma = sigma)
+  result <- match_couples(left, right, vars = c("x", "y"),
+                           distance = "mahalanobis", sigma = sigma, method = "greedy")
   expect_s3_class(result, "matching_result")
 })

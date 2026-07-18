@@ -366,7 +366,7 @@ test_that("morph .clamp_rgb works", {
   expect_equal(dim(result), c(2, 3))
 })
 
-test_that("greedy_couples strategies work", {
+test_that("greedy matching strategies work", {
   skip_on_cran()
 
   set.seed(42)
@@ -375,7 +375,7 @@ test_that("greedy_couples strategies work", {
   right <- data.frame(id = 1:n, x = rnorm(n), y = rnorm(n))
 
   for (strategy in c("sorted", "row_best", "pq")) {
-    result <- greedy_couples(left, right, vars = c("x", "y"), strategy = strategy)
+    result <- match_couples(left, right, vars = c("x", "y"), strategy = strategy, method = "greedy")
     expect_true(nrow(result$pairs) > 0)
     expect_true("left_id" %in% names(result$pairs))
     expect_true("right_id" %in% names(result$pairs))

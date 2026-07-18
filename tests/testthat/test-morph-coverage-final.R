@@ -153,12 +153,12 @@ test_that("match_couples with return_diagnostics=TRUE", {
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with pq strategy", {
+test_that("greedy matching with pq strategy", {
   skip_on_cran()
   set.seed(123)
   left <- data.frame(id = 1:20, x = rnorm(20))
   right <- data.frame(id = 21:50, x = rnorm(30))
-  result <- greedy_couples(left, right, vars = "x", strategy = "pq")
+  result <- match_couples(left, right, vars = "x", strategy = "pq", method = "greedy")
   expect_s3_class(result, "matching_result")
 })
 

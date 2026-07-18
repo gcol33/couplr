@@ -125,27 +125,27 @@ cat("\n=== Example 3: Greedy Matching in Parallel ===\n\n")
 # Greedy matching also supports parallel processing
 cat("Sequential greedy matching:\n")
 time_greedy_seq <- system.time({
-  result_greedy_seq <- greedy_couples(
+  result_greedy_seq <- match_couples(
     left, right,
     vars = c("age", "income", "bp_systolic"),
     block_id = "region",
     scale = "standardize",
     strategy = "sorted"
-  )
+  , method = "greedy")
 })
 cat("  Time:", round(time_greedy_seq["elapsed"], 2), "seconds\n")
 cat("  Matched:", nrow(result_greedy_seq$pairs), "pairs\n\n")
 
 cat("Parallel greedy matching:\n")
 time_greedy_par <- system.time({
-  result_greedy_par <- greedy_couples(
+  result_greedy_par <- match_couples(
     left, right,
     vars = c("age", "income", "bp_systolic"),
     block_id = "region",
     scale = "standardize",
     strategy = "sorted",
     parallel = TRUE
-  )
+  , method = "greedy")
 })
 cat("  Time:", round(time_greedy_par["elapsed"], 2), "seconds\n")
 cat("  Matched:", nrow(result_greedy_par$pairs), "pairs\n")
@@ -311,7 +311,7 @@ cat("   - Monitor memory usage with large datasets\n\n")
 cat("4. Combining optimizations:\n")
 cat("   - Use parallel=TRUE for blocked matching\n")
 cat("   - Use compute_distances() to cache distances\n")
-cat("   - Use greedy_couples() for very large problems\n")
+cat("   - Use match_couples(method = 'greedy') for very large problems\n")
 cat("   - Combine all three for maximum performance!\n")
 
 cat("\n=== Demo Complete ===\n")

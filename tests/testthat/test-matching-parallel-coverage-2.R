@@ -396,7 +396,7 @@ test_that("match_couples with parallel=TRUE works", {
   future::plan(original)
 })
 
-test_that("greedy_couples with parallel=TRUE and blocking works", {
+test_that("greedy matching with parallel=TRUE and blocking works", {
   skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
@@ -405,12 +405,12 @@ test_that("greedy_couples with parallel=TRUE and blocking works", {
   future::plan(future::sequential)
 
   result <- suppressMessages(
-    greedy_couples(
+    match_couples(
       left_df, right_df,
       vars = c("age"),
       block_id = "block",
       parallel = TRUE
-    )
+    , method = "greedy")
   )
 
   expect_s3_class(result, "matching_result")

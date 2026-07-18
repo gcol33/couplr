@@ -108,31 +108,31 @@ test_that("match_couples with distance metric manhattan", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples variations
+# greedy matching variations
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples with all strategies", {
+test_that("greedy matching with all strategies", {
   skip_on_cran()
   strategies <- c("sorted", "row_best", "pq")
 
   for (s in strategies) {
-    result <- greedy_couples(
+    result <- match_couples(
       left_df, right_df,
       vars = c("age", "income"),
       strategy = s
-    )
+    , method = "greedy")
     expect_s3_class(result, "matching_result")
     expect_true(nrow(result$pairs) > 0)
   }
 })
 
-test_that("greedy_couples with scaling", {
+test_that("greedy matching with scaling", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
     scale = "robust"
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })

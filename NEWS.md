@@ -1,5 +1,16 @@
 # couplr 1.4.2
 
+## Breaking changes
+
+* **`greedy_couples()` is removed; greedy matching is now `match_couples(method =
+  "greedy")`.** The two functions duplicated ~130 lines of identical scaffolding
+  (validation, scaling, id extraction, blocking dispatch, metadata) over the same
+  shared engine. They are now one front door: `match_couples()` gains a `method =
+  "greedy"` value and a `strategy` argument ("row_best", "sorted", "pq"). Replace
+  `greedy_couples(x, strategy = "sorted")` with `match_couples(x, method =
+  "greedy", strategy = "sorted")`. The result object and `info$method == "greedy"`
+  are unchanged.
+
 ## New features
 
 * `pixel_morph()` and `pixel_morph_animate()` gain a `mode = "color_match"`

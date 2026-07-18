@@ -94,7 +94,7 @@ result_opt <- match_couples(left2, right2, vars = c("age", "bp_systolic"))
 balance_opt <- balance_diagnostics(result_opt, left2, right2, vars = c("age", "bp_systolic"))
 
 # Greedy matching
-result_greedy <- greedy_couples(left2, right2, vars = c("age", "bp_systolic"))
+result_greedy <- match_couples(left2, right2, vars = c("age", "bp_systolic"), method = "greedy")
 balance_greedy <- balance_diagnostics(result_greedy, left2, right2, vars = c("age", "bp_systolic"))
 
 cat("Optimal Matching Balance:\n")

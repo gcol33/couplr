@@ -129,69 +129,69 @@ test_that("match_couples require_full_matching errors on unmatched", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples tests
+# greedy matching tests
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples works with sorted strategy", {
+test_that("greedy matching works with sorted strategy", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "sorted")
+  result <- match_couples(left, right, vars = "x", strategy = "sorted", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true(result$info$method == "greedy")
   expect_true(result$info$strategy == "sorted")
 })
 
-test_that("greedy_couples works with row_best strategy", {
+test_that("greedy matching works with row_best strategy", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "row_best")
+  result <- match_couples(left, right, vars = "x", strategy = "row_best", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$strategy, "row_best")
 })
 
-test_that("greedy_couples works with pq strategy", {
+test_that("greedy matching works with pq strategy", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "pq")
+  result <- match_couples(left, right, vars = "x", strategy = "pq", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$strategy, "pq")
 })
 
-test_that("greedy_couples respects max_distance", {
+test_that("greedy matching respects max_distance", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 100))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
-  result <- greedy_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5, method = "greedy")
 
   expect_true(nrow(result$pairs) < 5)
 })
 
-test_that("greedy_couples works with auto_scale", {
+test_that("greedy matching works with auto_scale", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10, 1000, 100))
   right <- data.frame(id = 11:20, x = rnorm(10, 1000, 100))
 
-  result <- greedy_couples(left, right, vars = "x", auto_scale = TRUE)
+  result <- match_couples(left, right, vars = "x", auto_scale = TRUE, method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples works with weights", {
+test_that("greedy matching works with weights", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10), y = rnorm(10))
 
-  result <- greedy_couples(left, right, vars = c("x", "y"),
-                           weights = c(x = 2, y = 1))
+  result <- match_couples(left, right, vars = c("x", "y"),
+                           weights = c(x = 2, y = 1), method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
@@ -320,11 +320,11 @@ test_that("match_couples handles unequal group sizes", {
   expect_equal(nrow(result$pairs), 3)  # Matches min(3, 5)
 })
 
-test_that("greedy_couples handles unequal group sizes", {
+test_that("greedy matching handles unequal group sizes", {
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:8, x = 1:5)
 
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
 
   expect_equal(nrow(result$pairs), 3)
 })
@@ -407,43 +407,43 @@ test_that("match_couples with parallel = TRUE", {
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with manhattan distance", {
+test_that("greedy matching with manhattan distance", {
   set.seed(123)
   left <- data.frame(id = 1:10, x = rnorm(10), y = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10), y = rnorm(10))
 
-  result <- greedy_couples(left, right, vars = c("x", "y"),
-                           distance = "manhattan")
+  result <- match_couples(left, right, vars = c("x", "y"),
+                           distance = "manhattan", method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with calipers", {
+test_that("greedy matching with calipers", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5), y = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 100, 5.1), y = 1:5)
 
-  result <- greedy_couples(left, right, vars = c("x", "y"),
-                           calipers = list(x = 1))
+  result <- match_couples(left, right, vars = c("x", "y"),
+                           calipers = list(x = 1), method = "greedy")
 
   expect_true(nrow(result$pairs) < 5)
 })
 
-test_that("greedy_couples with max_distance", {
+test_that("greedy matching with max_distance", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 100))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
-  result <- greedy_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5, method = "greedy")
 
   expect_true(nrow(result$pairs) < 5)
 })
 
-test_that("greedy_couples require_full_matching errors appropriately", {
+test_that("greedy matching require_full_matching errors appropriately", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 100))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
   expect_error(
-    greedy_couples(left, right, vars = "x", max_distance = 0.5,
-                   require_full_matching = TRUE),
+    match_couples(left, right, vars = "x", max_distance = 0.5,
+                   require_full_matching = TRUE, method = "greedy"),
     "unmatched"
   )
 })
@@ -486,22 +486,22 @@ test_that("match_couples blocked with return_diagnostics = FALSE", {
   expect_true("n_matched" %in% names(result$info))
 })
 
-test_that("greedy_couples with return_unmatched = FALSE", {
+test_that("greedy matching with return_unmatched = FALSE", {
   set.seed(123)
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
 
-  result <- greedy_couples(left, right, vars = "x", return_unmatched = FALSE)
+  result <- match_couples(left, right, vars = "x", return_unmatched = FALSE, method = "greedy")
 
   expect_null(result$unmatched)
 })
 
-test_that("greedy_couples with return_diagnostics = FALSE", {
+test_that("greedy matching with return_diagnostics = FALSE", {
   set.seed(123)
   left <- data.frame(id = 1:5, x = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
 
-  result <- greedy_couples(left, right, vars = "x", return_diagnostics = FALSE)
+  result <- match_couples(left, right, vars = "x", return_diagnostics = FALSE, method = "greedy")
 
   # Should have minimal info
   expect_true(length(names(result$info)) <= 5)

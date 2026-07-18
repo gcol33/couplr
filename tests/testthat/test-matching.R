@@ -175,15 +175,15 @@ test_that("scaling works correctly", {
 })
 
 # ==============================================================================
-# Tests for greedy_couples()
+# Tests for match_couples(method = "greedy")
 # ==============================================================================
 
-test_that("greedy_couples works with simple input", {
+test_that("greedy matching works with simple input", {
   set.seed(123)
   left  <- data.frame(id = 1:5,  x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$method, "greedy")
@@ -191,17 +191,17 @@ test_that("greedy_couples works with simple input", {
   expect_true(all(result$pairs$distance < 0.2))
 })
 
-test_that("greedy_couples respects constraints", {
+test_that("greedy matching respects constraints", {
   left  <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 5, 3.1))
 
-  result <- greedy_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5, method = "greedy")
 
   expect_equal(nrow(result$pairs), 2)
   expect_true(all(result$pairs$distance <= 0.5))
 })
 
-test_that("greedy_couples works with blocking", {
+test_that("greedy matching works with blocking", {
   left <- data.frame(
     id       = 1:6,
     block_id = rep(c("A", "B"), each = 3),
@@ -213,7 +213,7 @@ test_that("greedy_couples works with blocking", {
     x        = c(1.1, 2.1, 3.1, 10.1, 20.1, 30.1)
   )
 
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
 
   expect_equal(nrow(result$pairs), 6)
   expect_true("block_id" %in% names(result$pairs))
@@ -225,9 +225,9 @@ test_that("greedy strategies produce valid matchings", {
   left  <- data.frame(id = 1:20,  x = rnorm(20))
   right <- data.frame(id = 21:40, x = rnorm(20))
 
-  result_row    <- greedy_couples(left, right, vars = "x", strategy = "row_best")
-  result_sorted <- greedy_couples(left, right, vars = "x", strategy = "sorted")
-  result_pq     <- greedy_couples(left, right, vars = "x", strategy = "pq")
+  result_row    <- match_couples(left, right, vars = "x", strategy = "row_best", method = "greedy")
+  result_sorted <- match_couples(left, right, vars = "x", strategy = "sorted", method = "greedy")
+  result_pq     <- match_couples(left, right, vars = "x", strategy = "pq", method = "greedy")
 
   # All should produce valid matchings
   expect_equal(nrow(result_row$pairs),    20)
@@ -249,7 +249,7 @@ test_that("greedy is faster than optimal (smoke test)", {
   # Just test that both complete successfully
   expect_no_error({
     result_opt    <- match_couples(left, right, vars = c("x", "y"))
-    result_greedy <- greedy_couples(left, right, vars = c("x", "y"))
+    result_greedy <- match_couples(left, right, vars = c("x", "y"), method = "greedy")
   })
 
   # Greedy should produce valid but possibly suboptimal matching
@@ -405,7 +405,7 @@ test_that("match_couples with auto_scale works correctly", {
   expect_equal(nrow(result$pairs), 10)
 })
 
-test_that("greedy_couples with auto_scale works correctly", {
+test_that("greedy matching with auto_scale works correctly", {
   set.seed(456)
   left <- data.frame(
     id = 1:10,
@@ -418,11 +418,11 @@ test_that("greedy_couples with auto_scale works correctly", {
     y = rnorm(10, 0.5, 0.1)
   )
 
-  result <- greedy_couples(
+  result <- match_couples(
     left, right,
     vars = c("x", "y"),
     auto_scale = TRUE
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$method, "greedy")
@@ -897,7 +897,7 @@ test_that("join_matched works with greedy matching", {
     age = c(24, 29, 36, 41, 44)
   )
 
-  result <- greedy_couples(left, right, vars = "age", strategy = "sorted")
+  result <- match_couples(left, right, vars = "age", strategy = "sorted", method = "greedy")
   joined <- join_matched(result, left, right)
 
   expect_s3_class(joined, "tbl_df")
@@ -1118,7 +1118,7 @@ test_that("match_couples works with distance object", {
   expect_true("distance" %in% names(result$pairs))
 })
 
-test_that("greedy_couples works with distance object", {
+test_that("greedy matching works with distance object", {
   left <- data.frame(
     id = 1:5,
     x = c(1, 2, 3, 4, 5)
@@ -1132,7 +1132,7 @@ test_that("greedy_couples works with distance object", {
   dist_obj <- compute_distances(left, right, vars = "x")
 
   # Greedy matching using distance object
-  result <- greedy_couples(dist_obj, strategy = "sorted")
+  result <- match_couples(dist_obj, strategy = "sorted", method = "greedy")
 
   # Should return valid matching_result
   expect_s3_class(result, "matching_result")
@@ -1158,7 +1158,7 @@ test_that("distance object reusable across multiple matches", {
   result1 <- match_couples(dist_obj, max_distance = 0.5)
   result2 <- match_couples(dist_obj, max_distance = 1.0)
   result3 <- match_couples(dist_obj, max_distance = 2.0)
-  result4 <- greedy_couples(dist_obj, strategy = "sorted")
+  result4 <- match_couples(dist_obj, strategy = "sorted", method = "greedy")
 
   # All should be valid
   expect_s3_class(result1, "matching_result")

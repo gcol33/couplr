@@ -171,7 +171,7 @@ The histogram shows how similar matched pairs are. A distribution concentrated n
 
 ## Large Datasets: Use Greedy Matching
 
-For datasets larger than a few thousand observations, optimal matching becomes slow. Use `greedy_couples()` instead; it's 10-100x faster with nearly identical results:
+For datasets larger than a few thousand observations, optimal matching becomes slow. Use `match_couples(method = "greedy")` instead; it's 10-100x faster with nearly identical results:
 
 ```{r greedy-example}
 # Create larger datasets
@@ -189,12 +189,12 @@ large_control <- tibble(
 )
 
 # Fast greedy matching
-result_greedy <- greedy_couples(
+result_greedy <- match_couples(
   large_treatment, large_control,
   vars = c("age", "income"),
   auto_scale = TRUE,
   strategy = "row_best"  # fastest strategy
-)
+, method = "greedy")
 
 cat("Matched", result_greedy$info$n_matched, "pairs\n")
 cat("Mean distance:", round(mean(result_greedy$pairs$distance), 3), "\n")
@@ -206,7 +206,7 @@ cat("Mean distance:", round(mean(result_greedy$pairs$distance), 3), "\n")
 |--------------|---------------------|
 | < 1,000 per group | `match_couples()` |
 | 1,000 - 5,000 | Either works; greedy is faster |
-| > 5,000 | `greedy_couples()` |
+| > 5,000 | `match_couples(method = "greedy")` |
 
 ---
 
@@ -479,7 +479,7 @@ print(kbest)
 
 - `?full_match` - Full matching (variable-ratio groups)
 
-- `?greedy_couples` - Fast approximate matching
+- `?match_couples` with `method = "greedy"` - Fast approximate matching
 
 - `?balance_diagnostics` - Formal balance assessment
 

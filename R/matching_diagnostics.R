@@ -148,7 +148,7 @@ calculate_var_balance <- function(left_vals, right_vals, var_name,
 #' matching variables between left and right units in the matched sample.
 #'
 #' @param result A matching result object from \code{match_couples()},
-#'   \code{greedy_couples()}, \code{full_match()}, \code{cem_match()}, or
+#'   \code{full_match()}, \code{cem_match()}, or
 #'   \code{subclass_match()}
 #' @param left Data frame of left units
 #' @param right Data frame of right units
@@ -222,7 +222,7 @@ balance_diagnostics <- function(result, ...) {
 
 #' @export
 balance_diagnostics.default <- function(result, ...) {
-  stop("result must be a matching_result object from match_couples() or greedy_couples()")
+  stop("result must be a matching_result object from match_couples()")
 }
 
 

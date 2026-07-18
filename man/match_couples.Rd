@@ -2,7 +2,7 @@
 % Please edit documentation in R/matching_core.R
 \name{match_couples}
 \alias{match_couples}
-\title{Optimal matching using linear assignment}
+\title{Match two datasets into couples}
 \usage{
 match_couples(
   left,
@@ -18,6 +18,7 @@ match_couples(
   ignore_blocks = FALSE,
   require_full_matching = FALSE,
   method = "auto",
+  strategy = c("row_best", "sorted", "pq"),
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   parallel = FALSE,
@@ -54,7 +55,16 @@ scaling method (default: FALSE)}
 
 \item{require_full_matching}{If TRUE, error if any units remain unmatched}
 
-\item{method}{LAP solver: "auto", "hungarian", "jv", "gabow_tarjan", etc.}
+\item{method}{Matching method. A LAP solver for optimal matching ("auto",
+"hungarian", "jv", "gabow_tarjan", ...), or "greedy" for fast approximate
+matching (see \code{strategy}).}
+
+\item{strategy}{Greedy strategy, used only when \code{method = "greedy"}:
+\itemize{
+\item "row_best": for each row, take its best available column (default)
+\item "sorted": sort all pairs by distance, greedily assign
+\item "pq": priority queue (memory-efficient for very large problems)
+}}
 
 \item{return_unmatched}{Include unmatched units in output}
 
@@ -90,14 +100,15 @@ A list with class "matching_result" containing:
 }
 }
 \description{
-Performs optimal one-to-one matching between two datasets using linear
-assignment problem (LAP) solvers. Supports blocking, distance constraints,
-and various distance metrics.
+Performs one-to-one matching between two datasets. Supports blocking,
+distance constraints, and various distance metrics.
 }
 \details{
-This function finds the matching that minimizes total distance among all
-feasible matchings, subject to constraints. Use \code{\link[=greedy_couples]{greedy_couples()}} for
-faster approximate matching on large datasets.
+With \code{method} set to a LAP solver (the default \code{"auto"}, or \code{"jv"},
+\code{"hungarian"}, ...) it finds the matching that minimizes total distance among
+all feasible matchings. With \code{method = "greedy"} it uses a fast greedy
+strategy (selected by \code{strategy}) that does not guarantee the optimal total
+distance but scales to very large datasets.
 }
 \examples{
 # Basic matching
@@ -116,5 +127,9 @@ left$region <- c("A", "A", "B", "B", "B")
 right$region <- c("A", "A", "B", "B", "B")
 blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
 result <- match_couples(blocks$left, blocks$right, vars = c("x", "y"))
+
+# Fast greedy matching for large datasets
+result <- match_couples(left, right, vars = c("x", "y"),
+                        method = "greedy", strategy = "sorted")
 
 }

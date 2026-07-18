@@ -247,88 +247,88 @@ test_that("match_couples with check_costs=FALSE skips cost check", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples tests
+# greedy matching tests
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples works with default strategy", {
+test_that("greedy matching works with default strategy", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age", "income")
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true(nrow(result$pairs) > 0)
 })
 
-test_that("greedy_couples with strategy='sorted' works", {
+test_that("greedy matching with strategy='sorted' works", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age"),
     strategy = "sorted"
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with strategy='pq' works", {
+test_that("greedy matching with strategy='pq' works", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age"),
     strategy = "pq"
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with auto_scale works", {
+test_that("greedy matching with auto_scale works", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
     auto_scale = TRUE
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with max_distance constraint", {
+test_that("greedy matching with max_distance constraint", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age"),
     max_distance = 5
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
   # Some pairs may be excluded due to distance constraint
 })
 
-test_that("greedy_couples with calipers", {
+test_that("greedy matching with calipers", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     left_df, right_df,
     vars = c("age", "income"),
     calipers = list(age = 10)
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with blocking", {
+test_that("greedy matching with blocking", {
   skip_on_cran()
   left_blocked <- left_df
   left_blocked$block <- rep(c("A", "B"), each = 10)
   right_blocked <- right_df
   right_blocked$block <- rep(c("A", "B"), each = 10)
 
-  result <- greedy_couples(
+  result <- match_couples(
     left_blocked, right_blocked,
     vars = c("age"),
     block_id = "block"
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true("block_id" %in% names(result$pairs))

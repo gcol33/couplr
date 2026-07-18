@@ -40,6 +40,6 @@ List with pairs tibble, unmatched list, and info list.
 }
 \description{
 Core logic for both optimal (LAP) and greedy blocked matching.
-Called by match_couples_blocked() and greedy_couples_blocked().
+Called by match_couples_blocked() (optimal and greedy paths).
 }
 \keyword{internal}

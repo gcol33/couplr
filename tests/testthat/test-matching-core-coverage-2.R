@@ -114,40 +114,40 @@ test_that("match_couples with return_diagnostics = TRUE", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples tests
+# greedy matching tests
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples works with different strategies", {
+test_that("greedy matching works with different strategies", {
   skip_on_cran()
   for (strategy in c("sorted", "row_best", "pq")) {
-    result <- greedy_couples(
+    result <- match_couples(
       test_left, test_right,
       vars = c("age", "income"),
       strategy = strategy
-    )
+    , method = "greedy")
 
     expect_s3_class(result, "matching_result")
   }
 })
 
-test_that("greedy_couples handles default settings", {
+test_that("greedy matching handles default settings", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     test_left, test_right,
     vars = c("age", "income")
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true(nrow(result$pairs) > 0)
 })
 
-test_that("greedy_couples handles auto_scale", {
+test_that("greedy matching handles auto_scale", {
   skip_on_cran()
-  result <- greedy_couples(
+  result <- match_couples(
     test_left, test_right,
     vars = c("age", "income"),
     auto_scale = TRUE
-  )
+  , method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })

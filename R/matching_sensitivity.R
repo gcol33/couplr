@@ -7,8 +7,7 @@
 #' Assesses how sensitive a matched comparison is to hidden bias using
 #' Rosenbaum bounds on the Wilcoxon signed-rank statistic.
 #'
-#' @param result A matching_result object from [match_couples()] or
-#'   [greedy_couples()]
+#' @param result A matching_result object from [match_couples()]
 #' @param left Original left (treated) dataset
 #' @param right Original right (control) dataset
 #' @param outcome_var Name of the outcome column in `left` and `right`

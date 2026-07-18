@@ -33,10 +33,10 @@ test_that("replace with max_distance still filters", {
   expect_true(nrow(result$pairs) == 2)
 })
 
-test_that("replace works with greedy_couples", {
+test_that("replace works with greedy matching", {
   left <- data.frame(id = 1:4, x = c(1, 1.1, 5, 6))
   right <- data.frame(id = 5:6, x = c(1, 6))
-  result <- greedy_couples(left, right, vars = "x", replace = TRUE)
+  result <- match_couples(left, right, vars = "x", replace = TRUE, method = "greedy")
 
   expect_true(nrow(result$pairs) >= 2)
 })

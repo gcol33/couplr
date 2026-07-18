@@ -446,7 +446,7 @@ test_that("matchmaker result works with match_couples", {
   expect_true("block_id" %in% names(result$pairs))
 })
 
-test_that("matchmaker result works with greedy_couples", {
+test_that("matchmaker result works with greedy matching", {
   left <- data.frame(
     id = 1:10,
     region = rep(c("A", "B"), each = 5),
@@ -459,7 +459,7 @@ test_that("matchmaker result works with greedy_couples", {
   )
 
   blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
-  result <- greedy_couples(blocks$left, blocks$right, vars = "x")
+  result <- match_couples(blocks$left, blocks$right, vars = "x", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(nrow(result$pairs), 10)

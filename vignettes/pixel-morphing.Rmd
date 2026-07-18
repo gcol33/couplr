@@ -1010,7 +1010,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "bloc
 **For n > 10,000**: Use greedy matching:
 
 ```r
-result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+result <- match_couples(left, right, vars = vars, strategy = "sorted", method = "greedy")
 ```
 
 **For n > 50,000**: Combine strategies (blocking + greedy within blocks), or implement custom approximations using the techniques in this vignette.
@@ -1051,4 +1051,4 @@ The same algorithms that morph images smoothly also track particles in physics, 
 
 - `vignette("matching-workflows")` - Production matching pipelines
 
-- `?lap_solve`, `?match_couples`, `?greedy_couples`
+- `?lap_solve`, `?match_couples`

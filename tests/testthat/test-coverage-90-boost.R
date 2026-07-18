@@ -141,7 +141,7 @@ test_that("match_couples handles NA in data", {
   expect_true(!is.null(result))
 })
 
-test_that("greedy_couples with different strategies", {
+test_that("greedy matching with different strategies", {
   skip_on_cran()
 
   set.seed(42)
@@ -151,7 +151,7 @@ test_that("greedy_couples with different strategies", {
 
   # Test all strategies
   for (strategy in c("sorted", "row_best", "pq")) {
-    result <- greedy_couples(left, right, vars = "x", strategy = strategy)
+    result <- match_couples(left, right, vars = "x", strategy = strategy, method = "greedy")
     expect_true(nrow(result$pairs) > 0)
   }
 })

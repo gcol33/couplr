@@ -5,7 +5,7 @@
 #' manual joins and provides a convenient format for downstream analysis.
 #'
 #' @param result A result object from \code{match_couples()},
-#'   \code{greedy_couples()}, \code{full_match()}, or \code{cem_match()}
+#'   \code{full_match()}, or \code{cem_match()}
 #' @param left The original left dataset
 #' @param right The original right dataset
 #' @param left_vars Character vector of variable names to include from left.
@@ -83,7 +83,7 @@ join_matched <- function(result, ...) {
 
 #' @export
 join_matched.default <- function(result, ...) {
-  stop("result must be a matching_result object from match_couples() or greedy_couples()")
+  stop("result must be a matching_result object from match_couples()")
 }
 
 

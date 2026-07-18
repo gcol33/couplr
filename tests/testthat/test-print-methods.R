@@ -65,7 +65,7 @@ test_that("print.matching_result works for optimal matching", {
 test_that("print.matching_result works for greedy matching", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
 
   expect_output(print(result), "Matching Result")
   expect_output(print(result), "greedy")

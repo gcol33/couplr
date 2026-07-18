@@ -36,13 +36,13 @@ test_that("ratio stores in info", {
   expect_equal(result$info$ratio, 2L)
 })
 
-test_that("ratio with greedy_couples produces more pairs", {
+test_that("ratio with greedy matching produces more pairs", {
   set.seed(42)
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:25, x = seq(0.5, 5.5, length.out = 20))
 
-  result_1 <- greedy_couples(left, right, vars = "x", ratio = 1L)
-  result_2 <- greedy_couples(left, right, vars = "x", ratio = 2L)
+  result_1 <- match_couples(left, right, vars = "x", ratio = 1L, method = "greedy")
+  result_2 <- match_couples(left, right, vars = "x", ratio = 2L, method = "greedy")
 
   expect_true(nrow(result_2$pairs) > nrow(result_1$pairs))
 })

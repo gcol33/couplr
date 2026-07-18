@@ -73,7 +73,7 @@ assigned, along with block summary statistics.
 }
 \details{
 This function does NOT perform matching - it only creates the block structure.
-Use \code{\link[=match_couples]{match_couples()}} or \code{\link[=greedy_couples]{greedy_couples()}} to perform matching within blocks.
+Use \code{\link[=match_couples]{match_couples()}} to perform matching within blocks.
 }
 \examples{
 # Group blocking

@@ -135,14 +135,14 @@ test_that("matchmaker returns block info structure", {
 # greedy matching
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples with different strategies", {
+test_that("greedy matching with different strategies", {
   skip_on_cran()
   set.seed(123)
   left <- data.frame(x = rnorm(10))
   right <- data.frame(x = rnorm(15))
 
   for (strategy in c("sorted", "row_best", "pq")) {
-    result <- greedy_couples(left, right, vars = "x", strategy = strategy)
+    result <- match_couples(left, right, vars = "x", strategy = strategy, method = "greedy")
     expect_s3_class(result, "matching_result")
     expect_true(nrow(result$pairs) > 0)
   }

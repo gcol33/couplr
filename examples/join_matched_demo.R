@@ -209,12 +209,12 @@ cat("\n\n=== Example 6: Greedy Matching ===\n\n")
 # join_matched() works with any matching method, including greedy
 
 # Try greedy matching for faster results
-result_greedy <- greedy_couples(
+result_greedy <- match_couples(
   treated, controls,
   vars = c("age", "income"),
   strategy = "sorted",
   scale = "standardize"
-)
+, method = "greedy")
 
 cat("Greedy matched", result_greedy$info$n_matched, "pairs\n")
 cat("Total distance:", result_greedy$info$total_distance, "\n")

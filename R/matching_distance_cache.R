@@ -27,8 +27,9 @@
 #'
 #' @details
 #' This function computes distances once and stores them in a reusable object.
-#' The resulting distance_object can be passed to \code{match_couples()} or
-#' \code{greedy_couples()} instead of providing datasets and variables.
+#' The resulting distance_object can be passed to \code{match_couples()}
+#' (optionally with \code{method = "greedy"}) instead of providing datasets and
+#' variables.
 #'
 #' Benefits:
 #' - **Performance**: Avoid recomputing distances when trying different constraints
@@ -53,7 +54,7 @@
 #' # Reuse for different matching strategies
 #' result1 <- match_couples(dist_obj, max_distance = 0.5)
 #' result2 <- match_couples(dist_obj, max_distance = 1.0)
-#' result3 <- greedy_couples(dist_obj, strategy = "sorted")
+#' result3 <- match_couples(dist_obj, method = "greedy", strategy = "sorted")
 #'
 #' # All use the same precomputed distances
 #'
@@ -116,7 +117,7 @@ compute_distances <- function(left, right,
     }
 
     # For blocked matching, we'll store the block info but compute full matrix
-    # The actual blocking will be handled by match_couples/greedy_couples
+    # The actual blocking will be handled by match_couples
     message("Note: Block information stored. Blocking will be applied during matching.")
   }
 
@@ -302,7 +303,7 @@ print.distance_object <- function(x, ...) {
 
   cat("\nUse with:\n")
   cat("  - match_couples(dist_obj, ...)\n")
-  cat("  - greedy_couples(dist_obj, ...)\n")
+  cat("  - match_couples(dist_obj, method = 'greedy', ...)\n")
   cat("  - update_constraints(dist_obj, ...)\n")
 
   invisible(x)

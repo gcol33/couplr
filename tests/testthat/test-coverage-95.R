@@ -543,14 +543,14 @@ test_that("match_couples handles single pair", {
   expect_equal(nrow(result$pairs), 1)
 })
 
-test_that("greedy_couples row_best handles different values", {
+test_that("greedy matching row_best handles different values", {
   skip_on_cran()
   set.seed(777)
   n <- 10
   left <- data.frame(id = 1:n, x = rnorm(n))
   right <- data.frame(id = (n+1):(2*n), x = rnorm(n))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "row_best")
+  result <- match_couples(left, right, vars = "x", strategy = "row_best", method = "greedy")
 
   expect_equal(result$info$n_matched, n)
 })

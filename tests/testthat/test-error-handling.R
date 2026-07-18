@@ -129,24 +129,24 @@ test_that("match_couples errors when no valid pairs after constraints", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples() error handling
+# match_couples(method = "greedy") error handling
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples errors on non-data-frame input", {
+test_that("greedy matching errors on non-data-frame input", {
   right <- data.frame(id = 1:5, x = rnorm(5))
 
   expect_error(
-    greedy_couples("not a df", right, vars = "x"),
+    match_couples("not a df", right, vars = "x", method = "greedy"),
     "must be a data frame"
   )
 })
 
-test_that("greedy_couples errors on missing vars", {
+test_that("greedy matching errors on missing vars", {
   left <- data.frame(id = 1:5, y = rnorm(5))
   right <- data.frame(id = 6:10, x = rnorm(5))
 
   expect_error(
-    greedy_couples(left, right, vars = "x"),
+    match_couples(left, right, vars = "x", method = "greedy"),
     "missing"
   )
 })

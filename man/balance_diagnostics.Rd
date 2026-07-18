@@ -44,7 +44,7 @@ balance_diagnostics(result, ...)
 }
 \arguments{
 \item{result}{A matching result object from \code{match_couples()},
-\code{greedy_couples()}, \code{full_match()}, \code{cem_match()}, or
+\code{full_match()}, \code{cem_match()}, or
 \code{subclass_match()}}
 
 \item{...}{Additional arguments passed to methods}

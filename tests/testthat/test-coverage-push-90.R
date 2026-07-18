@@ -314,7 +314,7 @@ test_that("match_couples with max_distance constraint", {
   expect_true(nrow(result$pairs) > 0)
 })
 
-test_that("greedy_couples with all strategies", {
+test_that("greedy matching with all strategies", {
   skip_on_cran()
 
   set.seed(42)
@@ -325,8 +325,8 @@ test_that("greedy_couples with all strategies", {
   strategies <- c("sorted", "row_best", "pq")
 
   for (strat in strategies) {
-    result <- greedy_couples(left, right, vars = c("x", "y"),
-                             strategy = strat)
+    result <- match_couples(left, right, vars = c("x", "y"),
+                             strategy = strat, method = "greedy")
     expect_equal(nrow(result$pairs), n)
   }
 })

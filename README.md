@@ -37,10 +37,10 @@ same every time.
 
 ```r
 match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)   # optimal, deterministic
-greedy_couples(treated, control, vars = c("age", "income"), strategy = "pq")    # greedy, for large pools
+match_couples(treated, control, vars = c("age", "income"), strategy = "pq", method = "greedy")    # greedy, for large pools
 ```
 
-For large control pools, `greedy_couples()` trades the exact guarantee for speed, with
+For large control pools, `match_couples(method = "greedy")` trades the exact guarantee for speed, with
 three strategies (`sorted`, `row_best`, `pq`) and the same preprocessing and constraints.
 
 ## What's in the box
@@ -48,7 +48,7 @@ three strategies (`sorted`, `row_best`, `pq`) and the same preprocessing and con
 - **`match_couples()`**: optimal one-to-one matching with automatic scaling
   (robust / standardize / range), distance constraints (`max_distance`, `calipers`),
   blocking, and `ratio` / `replace` matching.
-- **`greedy_couples()`**: fast approximate matching for large datasets, three strategies.
+- **`match_couples(method = "greedy")`**: fast approximate matching for large datasets, three strategies.
 - **`full_match()` / `cem_match()` / `subclass_match()` / `cardinality_match()`**:
   variable-ratio full matching, coarsened exact matching, propensity subclassification,
   and balance-constrained matching.
@@ -77,9 +77,9 @@ Kuhn-Munkres, Bertsekas auction (with epsilon-scaling variants), Goldberg-Kenned
 cost-scaling, Gabow-Tarjan bit-scaling, push-relabel, network simplex, and Sinkhorn
 entropy-regularized transport.
 
-## `match_couples` or `greedy_couples`?
+## `match_couples`: optimal or greedy?
 
-|  | `match_couples()` | `greedy_couples()` |
+|  | `match_couples()` | `match_couples(method = "greedy")` |
 |---|---|---|
 | Result | Globally optimal | Approximate |
 | Deterministic? | Yes | Yes |
@@ -87,7 +87,7 @@ entropy-regularized transport.
 | Best for | `n < 5000` | large control pools |
 | Constraints, blocking? | Yes | Yes |
 
-Start with `match_couples()`. Switch to `greedy_couples()` when the optimal solve runs too long.
+Start with `match_couples()`. Switch to `match_couples(method = "greedy")` when the optimal solve runs too long.
 
 ## Fits the matching ecosystem
 

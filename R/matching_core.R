@@ -1,5 +1,5 @@
 # ==============================================================================
-# Matching Core - match_couples() and greedy_couples()
+# Matching Core - match_couples()
 # ==============================================================================
 
 # ==============================================================================
@@ -70,7 +70,7 @@
 #' Shared single matching implementation
 #'
 #' Core logic for both optimal (LAP) and greedy matching without blocking.
-#' Called by match_couples_single() and greedy_couples_single().
+#' Called by match_couples_single() (optimal and greedy paths).
 #'
 #' @param solver_fn Solver function (assignment or greedy_matching)
 #' @param solver_params Named list of extra args passed to solver_fn
@@ -338,7 +338,7 @@
 #' Shared matching from precomputed distance object
 #'
 #' Core logic for both optimal (LAP) and greedy matching from distance objects.
-#' Called by match_couples_from_distance() and greedy_couples_from_distance().
+#' Called by match_couples_from_distance() (optimal and greedy paths).
 #'
 #' @param solver_fn Solver function (assignment or greedy_matching)
 #' @param solver_params Named list of extra args passed to solver_fn
@@ -489,7 +489,7 @@
 #' Shared blocked matching implementation
 #'
 #' Core logic for both optimal (LAP) and greedy blocked matching.
-#' Called by match_couples_blocked() and greedy_couples_blocked().
+#' Called by match_couples_blocked() (optimal and greedy paths).
 #'
 #' @param solver_fn Solver function (assignment or greedy_matching)
 #' @param solver_params Named list of extra args passed to solver_fn
@@ -658,15 +658,16 @@
 # Exported Matching Functions
 # ==============================================================================
 
-#' Optimal matching using linear assignment
+#' Match two datasets into couples
 #'
-#' Performs optimal one-to-one matching between two datasets using linear
-#' assignment problem (LAP) solvers. Supports blocking, distance constraints,
-#' and various distance metrics.
+#' Performs one-to-one matching between two datasets. Supports blocking,
+#' distance constraints, and various distance metrics.
 #'
-#' This function finds the matching that minimizes total distance among all
-#' feasible matchings, subject to constraints. Use [greedy_couples()] for
-#' faster approximate matching on large datasets.
+#' With `method` set to a LAP solver (the default `"auto"`, or `"jv"`,
+#' `"hungarian"`, ...) it finds the matching that minimizes total distance among
+#' all feasible matchings. With `method = "greedy"` it uses a fast greedy
+#' strategy (selected by `strategy`) that does not guarantee the optimal total
+#' distance but scales to very large datasets.
 #'
 #' @param left Data frame of "left" units (e.g., treated, cases)
 #' @param right Data frame of "right" units (e.g., control, controls)
@@ -682,7 +683,13 @@
 #' @param block_id Column name containing block IDs (for stratified matching)
 #' @param ignore_blocks If TRUE, ignore block_id even if present
 #' @param require_full_matching If TRUE, error if any units remain unmatched
-#' @param method LAP solver: "auto", "hungarian", "jv", "gabow_tarjan", etc.
+#' @param method Matching method. A LAP solver for optimal matching ("auto",
+#'   "hungarian", "jv", "gabow_tarjan", ...), or "greedy" for fast approximate
+#'   matching (see `strategy`).
+#' @param strategy Greedy strategy, used only when `method = "greedy"`:
+#'   - "row_best": for each row, take its best available column (default)
+#'   - "sorted": sort all pairs by distance, greedily assign
+#'   - "pq": priority queue (memory-efficient for very large problems)
 #' @param return_unmatched Include unmatched units in output
 #' @param return_diagnostics Include detailed diagnostics in output
 #' @param parallel Enable parallel processing for blocked matching.
@@ -723,6 +730,10 @@
 #' blocks <- matchmaker(left, right, block_type = "group", block_by = "region")
 #' result <- match_couples(blocks$left, blocks$right, vars = c("x", "y"))
 #'
+#' # Fast greedy matching for large datasets
+#' result <- match_couples(left, right, vars = c("x", "y"),
+#'                         method = "greedy", strategy = "sorted")
+#'
 #' @export
 match_couples <- function(left, right = NULL,
                           vars = NULL,
@@ -736,6 +747,7 @@ match_couples <- function(left, right = NULL,
                           ignore_blocks = FALSE,
                           require_full_matching = FALSE,
                           method = "auto",
+                          strategy = c("row_best", "sorted", "pq"),
                           return_unmatched = TRUE,
                           return_diagnostics = FALSE,
                           parallel = FALSE,
@@ -743,6 +755,9 @@ match_couples <- function(left, right = NULL,
                           ratio = 1L,
                           check_costs = TRUE,
                           sigma = NULL) {
+
+  strategy <- match.arg(strategy)
+  greedy <- identical(method, "greedy")
 
   # Validate replace and ratio
   if (!is.logical(replace) || length(replace) != 1) {
@@ -762,6 +777,7 @@ match_couples <- function(left, right = NULL,
       ignore_blocks = ignore_blocks,
       require_full_matching = require_full_matching,
       method = method,
+      strategy = strategy,
       return_unmatched = return_unmatched,
       return_diagnostics = return_diagnostics,
       check_costs = check_costs
@@ -827,7 +843,7 @@ match_couples <- function(left, right = NULL,
       block_col = block_info$block_col,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      method = method,
+      method = method, strategy = strategy,
       parallel = parallel_state$setup,
       replace = replace, ratio = ratio,
       sigma = sigma
@@ -838,7 +854,7 @@ match_couples <- function(left, right = NULL,
       left, right, left_ids, right_ids,
       vars = vars, distance = distance, weights = weights, scale = scale,
       max_distance = max_distance, calipers = calipers,
-      method = method,
+      method = method, strategy = strategy,
       check_costs = check_costs,
       replace = replace, ratio = ratio,
       sigma = sigma
@@ -855,7 +871,8 @@ match_couples <- function(left, right = NULL,
   }
 
   # Add metadata
-  result$info$method <- "lap"
+  result$info$method <- if (greedy) "greedy" else "lap"
+  if (greedy) result$info$strategy <- strategy
   result$info$distance_metric <- distance
   result$info$scaled <- !identical(scale, FALSE)
   result$info$n_left <- nrow(left)
@@ -868,7 +885,13 @@ match_couples <- function(left, right = NULL,
   }
 
   if (!return_diagnostics) {
-    result$info <- result$info[c("method", "n_matched", "total_distance")]
+    if (greedy) {
+      keep <- c("method", "strategy", "n_matched", "total_distance")
+      if (!is.null(result$info$n_blocks)) keep <- c(keep, "n_blocks")
+    } else {
+      keep <- c("method", "n_matched", "total_distance")
+    }
+    result$info <- result$info[keep]
   }
 
   structure(result, class = c("matching_result", "couplr_result"))
@@ -886,9 +909,11 @@ match_couples_from_distance <- function(dist_obj,
                                         ignore_blocks = FALSE,
                                         require_full_matching = FALSE,
                                         method = "auto",
+                                        strategy = "row_best",
                                         return_unmatched = TRUE,
                                         return_diagnostics = FALSE,
                                         check_costs = TRUE) {
+  greedy <- identical(method, "greedy")
   .couples_from_distance(
     dist_obj,
     max_distance = max_distance,
@@ -897,12 +922,17 @@ match_couples_from_distance <- function(dist_obj,
     require_full_matching = require_full_matching,
     return_unmatched = return_unmatched,
     return_diagnostics = return_diagnostics,
-    solver_fn = assignment,
-    solver_params = list(method = method),
-    check_costs = check_costs,
-    strict_no_pairs = TRUE,
-    method_label = "from_distance_object",
-    diagnostics_fields = c("method", "n_matched", "total_distance")
+    solver_fn = if (greedy) greedy_matching else assignment,
+    solver_params = if (greedy) list(strategy = strategy) else list(method = method),
+    check_costs = if (greedy) FALSE else check_costs,
+    strict_no_pairs = !greedy,
+    method_label = if (greedy) "greedy" else "from_distance_object",
+    extra_info = if (greedy) list(strategy = strategy) else NULL,
+    diagnostics_fields = if (greedy) {
+      c("method", "strategy", "n_matched", "total_distance")
+    } else {
+      c("method", "n_matched", "total_distance")
+    }
   )
 }
 
@@ -913,17 +943,19 @@ match_couples_from_distance <- function(dist_obj,
 match_couples_single <- function(left, right, left_ids, right_ids,
                                  vars, distance, weights, scale,
                                  max_distance, calipers, method,
+                                 strategy = "row_best",
                                  check_costs = TRUE,
                                  replace = FALSE, ratio = 1L,
                                  sigma = NULL) {
+  greedy <- identical(method, "greedy")
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
     max_distance, calipers,
-    solver_fn = assignment,
-    solver_params = list(method = method),
-    check_costs = check_costs,
-    strict_no_pairs = TRUE,
+    solver_fn = if (greedy) greedy_matching else assignment,
+    solver_params = if (greedy) list(strategy = strategy) else list(method = method),
+    check_costs = if (greedy) FALSE else check_costs,
+    strict_no_pairs = !greedy,
     replace = replace, ratio = ratio,
     sigma = sigma
   )
@@ -936,17 +968,19 @@ match_couples_single <- function(left, right, left_ids, right_ids,
 match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   block_col, vars, distance, weights, scale,
                                   max_distance, calipers, method,
+                                  strategy = "row_best",
                                   parallel = FALSE,
                                   replace = FALSE, ratio = 1L,
                                   sigma = NULL) {
+  greedy <- identical(method, "greedy")
   .couples_blocked(
     left, right, left_ids, right_ids,
     block_col, vars, distance, weights, scale,
     max_distance, calipers,
-    solver_fn = assignment,
-    solver_params = list(method = method),
+    solver_fn = if (greedy) greedy_matching else assignment,
+    solver_params = if (greedy) list(strategy = strategy) else list(method = method),
     check_costs = FALSE,
-    strict_no_pairs = TRUE,
+    strict_no_pairs = !greedy,
     parallel = parallel,
     replace = replace, ratio = ratio,
     sigma = sigma
@@ -1004,276 +1038,6 @@ check_full_matching <- function(result) {
   }
 
   invisible(TRUE)
-}
-
-# ==============================================================================
-# Greedy Matching (Approximate)
-# ==============================================================================
-
-#' Fast approximate matching using greedy algorithm
-#'
-#' Performs fast one-to-one matching using greedy strategies. Does not guarantee
-#' optimal total distance but is much faster than [match_couples()] for large
-#' datasets. Supports blocking, distance constraints, and various distance metrics.
-#'
-#' @inheritParams match_couples
-#' @param strategy Greedy strategy:
-#'   - "row_best": For each row, find best available column (default)
-#'   - "sorted": Sort all pairs by distance, greedily assign
-#'   - "pq": Use priority queue (good for very large problems)
-#'
-#' @return A list with class "matching_result" (same structure as match_couples)
-#'
-#' @details
-#' Greedy strategies do not guarantee optimal total distance but are much faster:
-#' - "row_best": O(n*m) time, simple and often produces good results
-#' - "sorted": O(n*m*log(n*m)) time, better quality but slower
-#' - "pq": O(n*m*log(n*m)) time, memory-efficient for large problems
-#'
-#' Use greedy_couples when:
-#' - Dataset is very large (> 10,000 x 10,000)
-#' - Approximate solution is acceptable
-#' - Speed is more important than optimality
-#'
-#' @examples
-#' # Basic greedy matching
-#' left <- data.frame(id = 1:100, x = rnorm(100))
-#' right <- data.frame(id = 101:200, x = rnorm(100))
-#' result <- greedy_couples(left, right, vars = "x")
-#'
-#' # Compare to optimal
-#' result_opt <- match_couples(left, right, vars = "x")
-#' result_greedy <- greedy_couples(left, right, vars = "x")
-#' result_greedy$info$total_distance / result_opt$info$total_distance  # Quality ratio
-#'
-#' @export
-greedy_couples <- function(left, right = NULL,
-                           vars = NULL,
-                           distance = "euclidean",
-                           weights = NULL,
-                           scale = FALSE,
-                           auto_scale = FALSE,
-                           max_distance = Inf,
-                           calipers = NULL,
-                           block_id = NULL,
-                           ignore_blocks = FALSE,
-                           require_full_matching = FALSE,
-                           strategy = c("row_best", "sorted", "pq"),
-                           return_unmatched = TRUE,
-                           return_diagnostics = FALSE,
-                           parallel = FALSE,
-                           replace = FALSE,
-                           ratio = 1L,
-                           check_costs = TRUE,
-                           sigma = NULL) {
-
-  strategy <- match.arg(strategy)
-
-  # Validate replace and ratio
-  if (!is.logical(replace) || length(replace) != 1) {
-    stop("replace must be TRUE or FALSE", call. = FALSE)
-  }
-  ratio <- as.integer(ratio)
-  if (length(ratio) != 1 || is.na(ratio) || ratio < 1L) {
-    stop("ratio must be a positive integer", call. = FALSE)
-  }
-
-  # Check if left is a distance_object
-  if (is_distance_object(left)) {
-    return(greedy_couples_from_distance(
-      left,
-      max_distance = max_distance,
-      calipers = calipers,
-      ignore_blocks = ignore_blocks,
-      require_full_matching = require_full_matching,
-      strategy = strategy,
-      return_unmatched = return_unmatched,
-      return_diagnostics = return_diagnostics
-    ))
-  }
-
-  # Standard path: left and right are datasets
-  if (is.null(right)) {
-    stop("When left is a dataset, right must be provided")
-  }
-
-  if (is.null(vars)) {
-    stop("When left is a dataset, vars must be specified")
-  }
-
-  # Apply automatic preprocessing if requested
-  if (auto_scale) {
-    preproc <- preprocess_matching_vars(
-      left, right, vars,
-      auto_scale = TRUE,
-      scale_method = if (identical(scale, FALSE)) "auto" else scale,
-      check_health = TRUE,
-      remove_problematic = TRUE,
-      verbose = TRUE
-    )
-
-    # Update vars and scale based on preprocessing
-    vars <- preproc$vars
-    if (preproc$scaling_method != "none") {
-      scale <- preproc$scaling_method
-    }
-  }
-
-  # Validate inputs
-  validate_matching_inputs(left, right, vars)
-  weights <- validate_weights(weights, vars)
-  calipers <- validate_calipers(calipers, vars)
-
-  # Extract IDs
-  left_ids <- extract_ids(left, "left")
-  right_ids <- extract_ids(right, "right")
-
-  # Store original row indices
-  left$..row_idx <- seq_len(nrow(left))
-  right$..row_idx <- seq_len(nrow(right))
-
-  # Detect blocking
-  block_info <- detect_blocking(left, right, block_id, ignore_blocks)
-
-  if (block_info$use_blocking) {
-    # Setup parallel processing if requested
-    parallel_state <- setup_parallel(parallel)
-    on.exit(restore_parallel(parallel_state), add = TRUE)
-
-    # Blocked matching
-    result <- greedy_couples_blocked(
-      left, right, left_ids, right_ids,
-      block_col = block_info$block_col,
-      vars = vars, distance = distance, weights = weights, scale = scale,
-      max_distance = max_distance, calipers = calipers,
-      strategy = strategy,
-      parallel = parallel_state$setup,
-      replace = replace, ratio = ratio,
-      sigma = sigma
-    )
-  } else {
-    # Single matching
-    result <- greedy_couples_single(
-      left, right, left_ids, right_ids,
-      vars = vars, distance = distance, weights = weights, scale = scale,
-      max_distance = max_distance, calipers = calipers,
-      strategy = strategy,
-      replace = replace, ratio = ratio,
-      sigma = sigma
-    )
-  }
-
-  # Clean up temporary column
-  left$..row_idx <- NULL
-  right$..row_idx <- NULL
-
-  # Check for full matching if required
-  if (require_full_matching) {
-    check_full_matching(result)
-  }
-
-  # Add metadata
-  result$info$method <- "greedy"
-  result$info$strategy <- strategy
-  result$info$distance_metric <- distance
-  result$info$scaled <- !identical(scale, FALSE)
-  result$info$n_left <- nrow(left)
-  result$info$n_right <- nrow(right)
-  if (replace) result$info$replace <- TRUE
-  if (ratio > 1L) result$info$ratio <- ratio
-
-  if (!return_unmatched) {
-    result$unmatched <- NULL
-  }
-
-  if (!return_diagnostics) {
-    # Keep n_blocks if present (for blocked matching)
-    fields_to_keep <- c("method", "strategy", "n_matched", "total_distance")
-    if (!is.null(result$info$n_blocks)) {
-      fields_to_keep <- c(fields_to_keep, "n_blocks")
-    }
-    result$info <- result$info[fields_to_keep]
-  }
-
-  structure(result, class = c("matching_result", "couplr_result"))
-}
-
-#' Greedy Matching from Precomputed Distance Object
-#'
-#' Internal function to handle greedy matching when a distance_object is provided
-#'
-#' @return A matching_result object with pairs, info, and optional diagnostics.
-#' @keywords internal
-greedy_couples_from_distance <- function(dist_obj,
-                                        max_distance = Inf,
-                                        calipers = NULL,
-                                        ignore_blocks = FALSE,
-                                        require_full_matching = FALSE,
-                                        strategy = "row_best",
-                                        return_unmatched = TRUE,
-                                        return_diagnostics = FALSE) {
-  .couples_from_distance(
-    dist_obj,
-    max_distance = max_distance,
-    calipers = calipers,
-    ignore_blocks = ignore_blocks,
-    require_full_matching = require_full_matching,
-    return_unmatched = return_unmatched,
-    return_diagnostics = return_diagnostics,
-    solver_fn = greedy_matching,
-    solver_params = list(strategy = strategy),
-    check_costs = FALSE,
-    strict_no_pairs = FALSE,
-    method_label = "greedy",
-    extra_info = list(strategy = strategy),
-    diagnostics_fields = c("method", "strategy", "n_matched", "total_distance")
-  )
-}
-
-#' Greedy matching without blocking
-#'
-#' @return List with pairs tibble and matching info.
-#' @keywords internal
-greedy_couples_single <- function(left, right, left_ids, right_ids,
-                                  vars, distance, weights, scale,
-                                  max_distance, calipers, strategy,
-                                  replace = FALSE, ratio = 1L,
-                                  sigma = NULL) {
-  .couples_single(
-    left, right, left_ids, right_ids,
-    vars, distance, weights, scale,
-    max_distance, calipers,
-    solver_fn = greedy_matching,
-    solver_params = list(strategy = strategy),
-    check_costs = FALSE,
-    strict_no_pairs = FALSE,
-    replace = replace, ratio = ratio,
-    sigma = sigma
-  )
-}
-
-#' Greedy matching with blocking
-#'
-#' @return List with pairs tibble and matching info.
-#' @keywords internal
-greedy_couples_blocked <- function(left, right, left_ids, right_ids,
-                                   block_col, vars, distance, weights, scale,
-                                   max_distance, calipers, strategy,
-                                   parallel = FALSE,
-                                   replace = FALSE, ratio = 1L,
-                                   sigma = NULL) {
-  .couples_blocked(
-    left, right, left_ids, right_ids,
-    block_col, vars, distance, weights, scale,
-    max_distance, calipers,
-    solver_fn = greedy_matching,
-    solver_params = list(strategy = strategy),
-    check_costs = FALSE,
-    strict_no_pairs = FALSE,
-    parallel = parallel,
-    replace = replace, ratio = ratio,
-    sigma = sigma
-  )
 }
 
 # ==============================================================================

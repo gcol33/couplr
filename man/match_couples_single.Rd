@@ -16,6 +16,7 @@ match_couples_single(
   max_distance,
   calipers,
   method,
+  strategy = "row_best",
   check_costs = TRUE,
   replace = FALSE,
   ratio = 1L,

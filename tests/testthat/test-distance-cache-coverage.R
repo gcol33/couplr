@@ -311,7 +311,7 @@ test_that("distance object workflow with match_couples", {
   expect_equal(nrow(result$pairs), 5)
 })
 
-test_that("distance object workflow with greedy_couples", {
+test_that("distance object workflow with greedy matching", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
@@ -320,7 +320,7 @@ test_that("distance object workflow with greedy_couples", {
 
   # Match using distance object with greedy
 
-  result <- greedy_couples(dist_obj, strategy = "sorted")
+  result <- match_couples(dist_obj, strategy = "sorted", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(nrow(result$pairs), 5)

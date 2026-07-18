@@ -17,25 +17,25 @@ test_that("match_couples validates NULL vars", {
   expect_error(match_couples(left, right, vars = NULL))
 })
 
-test_that("greedy_couples validates NULL right", {
+test_that("greedy matching validates NULL right", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
-  expect_error(greedy_couples(left, right = NULL, vars = "x"))
+  expect_error(match_couples(left, right = NULL, vars = "x", method = "greedy"))
 })
 
-test_that("greedy_couples validates NULL vars", {
+test_that("greedy matching validates NULL vars", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = rnorm(3))
   right <- data.frame(id = 4:6, x = rnorm(3))
-  expect_error(greedy_couples(left, right, vars = NULL))
+  expect_error(match_couples(left, right, vars = NULL, method = "greedy"))
 })
 
-test_that("greedy_couples handles sparse matching", {
+test_that("greedy matching handles sparse matching", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(100, 200, 300))
   expect_warning(
-    greedy_couples(left, right, vars = "x", max_distance = 0.001, auto_scale = FALSE)
+    match_couples(left, right, vars = "x", max_distance = 0.001, auto_scale = FALSE, method = "greedy")
   )
 })
 
@@ -310,12 +310,12 @@ test_that("match_couples return_diagnostics", {
 # Greedy strategies
 # ==============================================================================
 
-test_that("greedy_couples with different strategies", {
+test_that("greedy matching with different strategies", {
   skip_on_cran()
   left <- data.frame(id = 1:10, x = rnorm(10))
   right <- data.frame(id = 11:20, x = rnorm(10))
   for (strategy in c("sorted", "row_best", "pq")) {
-    result <- greedy_couples(left, right, vars = "x", strategy = strategy)
+    result <- match_couples(left, right, vars = "x", strategy = strategy, method = "greedy")
     expect_s3_class(result, "matching_result")
   }
 })

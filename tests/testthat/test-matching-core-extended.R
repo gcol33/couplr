@@ -215,74 +215,74 @@ test_that("blocked matching handles one-sided blocks", {
 })
 
 # ------------------------------------------------------------------------------
-# greedy_couples tests
+# greedy matching tests
 # ------------------------------------------------------------------------------
 
-test_that("greedy_couples basic functionality", {
+test_that("greedy matching basic functionality", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$method, "greedy")
   expect_equal(result$info$strategy, "row_best")
 })
 
-test_that("greedy_couples with sorted strategy", {
+test_that("greedy matching with sorted strategy", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "sorted")
+  result <- match_couples(left, right, vars = "x", strategy = "sorted", method = "greedy")
 
   expect_equal(result$info$strategy, "sorted")
 })
 
-test_that("greedy_couples with pq strategy", {
+test_that("greedy matching with pq strategy", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "pq")
+  result <- match_couples(left, right, vars = "x", strategy = "pq", method = "greedy")
 
   expect_equal(result$info$strategy, "pq")
 })
 
-test_that("greedy_couples errors when right is NULL", {
+test_that("greedy matching errors when right is NULL", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
 
   expect_error(
-    greedy_couples(left, right = NULL, vars = "x"),
+    match_couples(left, right = NULL, vars = "x", method = "greedy"),
     "right must be provided"
   )
 })
 
-test_that("greedy_couples errors when vars is NULL", {
+test_that("greedy matching errors when vars is NULL", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = 4:6)
 
   expect_error(
-    greedy_couples(left, right, vars = NULL),
+    match_couples(left, right, vars = NULL, method = "greedy"),
     "vars must be specified"
   )
 })
 
-test_that("greedy_couples with auto_scale", {
+test_that("greedy matching with auto_scale", {
   skip_on_cran()
   set.seed(456)
   left <- data.frame(id = 1:10, x = rnorm(10, 100, 10))
   right <- data.frame(id = 11:20, x = rnorm(10, 100, 10))
 
-  result <- greedy_couples(left, right, vars = "x", auto_scale = TRUE)
+  result <- match_couples(left, right, vars = "x", auto_scale = TRUE, method = "greedy")
 
   expect_s3_class(result, "matching_result")
 })
 
-test_that("greedy_couples with blocking", {
+test_that("greedy matching with blocking", {
   skip_on_cran()
   left <- data.frame(
     id = 1:6,
@@ -295,31 +295,31 @@ test_that("greedy_couples with blocking", {
     block_id = c("A", "A", "A", "B", "B", "B")
   )
 
-  result <- greedy_couples(left, right, vars = "x", block_id = "block_id")
+  result <- match_couples(left, right, vars = "x", block_id = "block_id", method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_true("block_id" %in% names(result$pairs))
 })
 
-test_that("greedy_couples with require_full_matching", {
+test_that("greedy matching with require_full_matching", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 100, 200))
   right <- data.frame(id = 6:8, x = c(1.1, 2.1, 3.1))
 
   expect_error(
-    greedy_couples(left, right, vars = "x",
+    match_couples(left, right, vars = "x",
                    max_distance = 1,
-                   require_full_matching = TRUE),
+                   require_full_matching = TRUE, method = "greedy"),
     "Full matching required"
   )
 })
 
-test_that("greedy_couples return_diagnostics FALSE", {
+test_that("greedy matching return_diagnostics FALSE", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
-  result <- greedy_couples(left, right, vars = "x", return_diagnostics = FALSE)
+  result <- match_couples(left, right, vars = "x", return_diagnostics = FALSE, method = "greedy")
 
   # Only essential fields
   expect_true("method" %in% names(result$info))
@@ -327,20 +327,20 @@ test_that("greedy_couples return_diagnostics FALSE", {
   expect_false("scaled" %in% names(result$info))
 })
 
-test_that("greedy_couples from distance object", {
+test_that("greedy matching from distance object", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
   dist_obj <- compute_distances(left, right, vars = "x")
 
-  result <- greedy_couples(dist_obj)
+  result <- match_couples(dist_obj, method = "greedy")
 
   expect_s3_class(result, "matching_result")
   expect_equal(result$info$method, "greedy")
 })
 
-test_that("greedy_couples from distance object with no valid pairs", {
+test_that("greedy matching from distance object with no valid pairs", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(100, 200, 300))
@@ -349,7 +349,7 @@ test_that("greedy_couples from distance object with no valid pairs", {
 
   # Very tight constraint
   expect_warning(
-    result <- greedy_couples(dist_obj, max_distance = 0.001),
+    result <- match_couples(dist_obj, max_distance = 0.001, method = "greedy"),
     "No valid pairs"
   )
 
@@ -378,7 +378,7 @@ test_that("print.matching_result with strategy", {
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
-  result <- greedy_couples(left, right, vars = "x", strategy = "sorted")
+  result <- match_couples(left, right, vars = "x", strategy = "sorted", method = "greedy")
 
   output <- capture.output(print(result))
 
@@ -438,7 +438,7 @@ test_that("print.summary.matching_result with strategy", {
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
 
-  result <- greedy_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", method = "greedy")
   smry <- summary(result)
 
   output <- capture.output(print(smry))

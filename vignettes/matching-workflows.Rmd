@@ -462,11 +462,11 @@ time_optimal <- system.time({
 
 # Greedy matching (row_best strategy)
 time_greedy <- system.time({
-  result_greedy <- greedy_couples(
+  result_greedy <- match_couples(
     large_left, large_right,
     vars = c("x1", "x2", "x3"),
     strategy = "row_best"
-  )
+  , method = "greedy")
 })
 
 # Compare
@@ -482,7 +482,7 @@ cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x
 
 ### Greedy Strategies
 
-Three greedy strategies available via `greedy_couples()`:
+Three greedy strategies available via `match_couples(method = "greedy")`:
 
 **1. Sorted** (`strategy = "sorted"`):
 
@@ -549,11 +549,11 @@ results <- list()
 
 for (strat in strategies) {
   time <- system.time({
-    result <- greedy_couples(
+    result <- match_couples(
       test_left, test_right,
       vars = "x",
       strategy = strat
-    )
+    , method = "greedy")
   })
 
   results[[strat]] <- list(
@@ -1254,11 +1254,11 @@ result <- match_couples(
 
 ```{r optimization-greedy, eval=FALSE}
 # Quick greedy match for exploration
-quick <- greedy_couples(
+quick <- match_couples(
   left_data, right_data,
   vars = covariates,
   strategy = "row_best"
-)
+, method = "greedy")
 
 # Assess balance
 balance_quick <- balance_diagnostics(quick, left_data, right_data, vars = covariates)
@@ -1351,7 +1351,7 @@ ggplot(combined, aes(x = age, fill = group)) +
 **Solutions**:
 ```{r slow-matching-fix, eval=FALSE}
 # For n > 3000: use greedy
-result <- greedy_couples(left, right, vars = vars, strategy = "sorted")
+result <- match_couples(left, right, vars = vars, strategy = "sorted", method = "greedy")
 
 # For n > 5000: add blocking
 blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
@@ -1366,7 +1366,7 @@ result <- match_couples(blocks$left, blocks$right, vars = vars,
 **Cause**: Full cost matrix doesn't fit in RAM. A 10,000×10,000 matrix needs ~800 MB.
 
 **Solutions**:
-- Use `greedy_couples()` which doesn't require full matrix
+- Use `match_couples(method = "greedy")` which doesn't require full matrix
 
 - Use blocking to create smaller sub-problems
 
@@ -1793,7 +1793,7 @@ All `autoplot()` methods return `ggplot` objects, so you can add layers, themes,
 
 - `vignette("pixel-morphing")` - Large-scale approximation strategies
 
-- `?match_couples`, `?greedy_couples`, `?full_match`, `?balance_diagnostics`, `?matchmaker`
+- `?match_couples`, `?full_match`, `?balance_diagnostics`, `?matchmaker`
 
 - `?ps_match`, `?cardinality_match`, `?sensitivity_analysis`, `?cem_match`, `?subclass_match`
 

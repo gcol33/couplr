@@ -90,6 +90,12 @@ List color_palette_info(const NumericVector& pixelsA,
   const int N  = H * W;
   const int HW = H * W;
 
+  if (H <= 0 || W <= 0 ||
+      pixelsA.size() < static_cast<R_xlen_t>(3) * HW ||
+      pixelsB.size() < static_cast<R_xlen_t>(3) * HW) {
+    Rcpp::stop("color_palette_info: pixel buffers must hold 3*H*W values (H, W > 0).");
+  }
+
   // Build palettes as ordered maps for stable indexing
   std::map<ColorKey, std::vector<int>> paletteA, paletteB;
   for (int i = 0; i < N; ++i) {
@@ -231,6 +237,12 @@ DownscaleInfo compute_downscale(int H, int W, int steps) {
 NumericVector downscale_image(const NumericVector& pixels, int H, int W, int H_new, int W_new) {
   const int HW     = H * W;
   const int HW_new = H_new * W_new;
+
+  if (H <= 0 || W <= 0 || H_new <= 0 || W_new <= 0 ||
+      pixels.size() < static_cast<R_xlen_t>(3) * HW) {
+    Rcpp::stop("downscale_image: pixels must hold 3*H*W values and all dims > 0.");
+  }
+
   NumericVector result(HW_new * 3);
 
   double scale_y = double(H) / H_new;
@@ -262,6 +274,12 @@ IntegerVector upscale_assignment(const IntegerVector& assignment,
                                  int H_orig, int W_orig,
                                  int H_scaled, int W_scaled) {
   const int N_orig   = H_orig * W_orig;
+
+  if (H_orig <= 0 || W_orig <= 0 || H_scaled <= 0 || W_scaled <= 0 ||
+      assignment.size() < static_cast<R_xlen_t>(H_scaled) * W_scaled) {
+    Rcpp::stop("upscale_assignment: assignment must hold H_scaled*W_scaled entries (all dims > 0).");
+  }
+
   IntegerVector out  = no_init(N_orig);
 
   double scale_y = double(H_scaled) / H_orig;
@@ -311,6 +329,12 @@ List analyze_color_overlap(const NumericVector& pixelsA,
   const int N  = H * W;
   const int HW = H * W;
 
+  if (H <= 0 || W <= 0 ||
+      pixelsA.size() < static_cast<R_xlen_t>(3) * HW ||
+      pixelsB.size() < static_cast<R_xlen_t>(3) * HW) {
+    Rcpp::stop("analyze_color_overlap: pixel buffers must hold 3*H*W values (H, W > 0).");
+  }
+
   std::unordered_map<ColorKey, int, ColorKeyHash> colorsA;
   std::unordered_map<ColorKey, int, ColorKeyHash> colorsB;
 
@@ -356,6 +380,12 @@ NumericMatrix compute_pixel_cost(const NumericVector& pixelsA,
                                  double alpha, double beta) {
   const int N  = H * W;
   const int HW = H * W;
+
+  if (H <= 0 || W <= 0 ||
+      pixelsA.size() < static_cast<R_xlen_t>(3) * HW ||
+      pixelsB.size() < static_cast<R_xlen_t>(3) * HW) {
+    Rcpp::stop("compute_pixel_cost: pixel buffers must hold 3*H*W values (H, W > 0).");
+  }
 
   NumericMatrix cost(N, N);
   const double diag = std::sqrt(double(W) * double(W) + double(H) * double(H));

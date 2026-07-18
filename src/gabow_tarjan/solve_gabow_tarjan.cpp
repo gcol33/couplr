@@ -157,7 +157,39 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
             }
         }
     }
-    
+
+    // Guard the bit-scaling arithmetic against overflow / sentinel collision.
+    // The inner routine forms (n+1) * (c - min_c) in long long and uses BIG_INT
+    // (1e15) as the forbidden marker. A finite scaled cost reaching that
+    // magnitude would be silently treated as forbidden, and the (n+1) product
+    // can exceed LLONG_MAX at extreme scale -- both would yield a wrong
+    // "optimal" with no error. Reject such inputs with a clear message instead.
+    {
+        long long lo = 0, hi = 0;
+        bool any_finite = false;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                long long c = cost_matrix[i][j];
+                if (c >= BIG_INT) continue;  // forbidden sentinel
+                if (!any_finite) { lo = hi = c; any_finite = true; }
+                else { if (c < lo) lo = c; if (c > hi) hi = c; }
+            }
+        }
+        if (any_finite) {
+            if (hi >= BIG_INT || lo <= -BIG_INT) {
+                Rcpp::stop("gabow_tarjan: cost magnitudes collide with the "
+                           "forbidden sentinel (>= 1e15); use method = 'jv' or "
+                           "'auction'.");
+            }
+            long long range = hi - lo;
+            if (range > 0 &&
+                range > std::numeric_limits<long long>::max() / static_cast<long long>(n + 1)) {
+                Rcpp::stop("gabow_tarjan: cost range too large for bit-scaling "
+                           "(overflows 64-bit); use method = 'jv' or 'auction'.");
+            }
+        }
+    }
+
     // State for inner solver
     MatchVec row_match(n, NIL);
     MatchVec col_match(m, NIL);

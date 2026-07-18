@@ -8,8 +8,9 @@ Rcpp::List prepare_cost_matrix_impl(Rcpp::NumericMatrix cost, bool maximize) {
   const int n = cost.nrow();
   const int m = cost.ncol();
 
-  std::vector<double> rowmaj(n * m);
-  std::vector<int>    mask(n * m, 0);
+  const std::size_t nm = static_cast<std::size_t>(n) * static_cast<std::size_t>(m);
+  std::vector<double> rowmaj(nm);
+  std::vector<int>    mask(nm, 0);
 
   double cmax = R_NegInf;
 
@@ -18,7 +19,7 @@ Rcpp::List prepare_cost_matrix_impl(Rcpp::NumericMatrix cost, bool maximize) {
   // cmax becomes Inf and the maximize flip below is silently skipped.
   for (int j = 0; j < m; ++j) {
     for (int i = 0; i < n; ++i) {
-      const int idx = i * m + j;  // row-major index
+      const std::size_t idx = static_cast<std::size_t>(i) * m + j;  // row-major index
       double x = cost(i, j);
       if (Rcpp::NumericVector::is_na(x) || !R_finite(x)) {
         rowmaj[idx] = R_PosInf;
@@ -32,7 +33,7 @@ Rcpp::List prepare_cost_matrix_impl(Rcpp::NumericMatrix cost, bool maximize) {
 
   // If maximize, flip finite costs: c' = cmax - c
   if (maximize && R_finite(cmax)) {
-    for (int k = 0; k < n * m; ++k) {
+    for (std::size_t k = 0; k < nm; ++k) {
       if (!R_finite(rowmaj[k])) continue; // keep +Inf for forbidden
       rowmaj[k] = cmax - rowmaj[k];
     }

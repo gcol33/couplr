@@ -32,7 +32,8 @@ Rcpp::NumericMatrix apply_constraints(
     int j_forbid);
 
 // Build CSR-style "allowed" structure from a mask of size n*m.
-// mask is length n*m, row-major, with nonzero meaning allowed.
+// mask is length n*m, row-major, with zero meaning allowed (nonzero = forbidden),
+// matching prepare_cost_matrix (mask = 1 for NA/Inf) and this file's build_allowed.
 // row_ptr size is n + 1; cols collects allowed column indices per row (0-based).
 void build_allowed(
     const std::vector<int>& mask,

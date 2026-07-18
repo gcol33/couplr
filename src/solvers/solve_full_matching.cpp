@@ -308,7 +308,12 @@ FullMatchResult solve_full_matching(
         }
     }
 
-    if (flow_sent < target_flow && group_count == 0) {
+    // Signal infeasibility when not every unit could be placed. Besides the
+    // no-groups case, total_max_cap < n_unit means the target flow was clamped
+    // below n_unit, so some units are silently left with group 0 -- that is not
+    // a complete full matching and must not be reported as "optimal".
+    if ((flow_sent < target_flow && group_count == 0) ||
+        total_max_cap < static_cast<long long>(n_unit)) {
         result.status = "infeasible";
     }
 

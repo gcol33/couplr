@@ -16,7 +16,7 @@ Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 // Auto-transposes when n > m.
 Rcpp::List solve_ssp_impl(NumericMatrix cost, bool maximize) {
   int n0 = cost.nrow(), m0 = cost.ncol();
-  if (n0 == 0)   if (n0 == 0) return make_result(IntegerVector(), 0.0);
+  if (n0 == 0) return make_result(IntegerVector(), 0.0);
 
   // If n>m, solve on transposed matrix and map back.
   bool transposed = false;

@@ -2,7 +2,9 @@
 #define COUPLR_NS_GRAPH_H
 
 #include "ns_types.h"
+#include "../../core/lap_error.h"
 #include <cmath>
+#include <limits>
 
 namespace couplr {
 namespace ns {
@@ -25,7 +27,19 @@ inline void build_assignment_network(NSState& state,
     state.n_rows = n_rows;
     state.n_cols = n_cols;
     state.num_nodes = n_rows + n_cols + 2;  // source + rows + cols + sink
-    state.num_arcs = n_rows + n_rows * n_cols + n_cols;
+
+    // Arc count is n_rows + n_rows*n_cols + n_cols. The row->col block alone is
+    // O(n*m), which overflows a 32-bit int (num_arcs and every arc index) around
+    // n*m ~ 2^31. Compute in 64-bit and reject before the wrap silently corrupts
+    // indexing (such a network would exhaust memory anyway).
+    long long arcs = static_cast<long long>(n_rows)
+                   + static_cast<long long>(n_rows) * n_cols
+                   + n_cols;
+    if (arcs > static_cast<long long>(std::numeric_limits<int>::max())) {
+        LAP_THROW_DIMENSION("network_simplex: problem too large "
+                            "(arc count exceeds 2^31); use method = 'jv' or 'auction'.");
+    }
+    state.num_arcs = static_cast<int>(arcs);
 
     // Allocate arc arrays
     state.arc_source.resize(state.num_arcs);

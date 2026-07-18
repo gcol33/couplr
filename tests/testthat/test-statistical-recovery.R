@@ -113,3 +113,49 @@ test_that("balance_diagnostics uses subclass weights (weighted means)", {
   expect_equal(vs$mean_left, expected_weighted_mean, tolerance = 1e-6)
   # The unweighted mean generally differs, so this would fail if weights were ignored.
 })
+
+# A homogeneous additive treatment effect makes ATT = ATE = tau. Matching on the
+# (correctly specified) propensity removes the x-driven confounding, so the mean
+# matched-pair outcome difference recovers tau. left_id = treated, right_id =
+# control, as elsewhere in couplr.
+.sim_ps_effect <- function(seed, tau = 1.0, n = 800) {
+  set.seed(seed)
+  x <- rnorm(n)
+  treat <- rbinom(n, 1, stats::plogis(-0.2 + 0.9 * x))
+  y <- tau * treat + 0.6 * x + rnorm(n)
+  d <- data.frame(id = seq_len(n), x = x, treat = treat, y = y)
+  r <- suppressWarnings(ps_match(formula = treat ~ x, data = d,
+                                 treatment = "treat"))
+  yt <- d$y[match(r$pairs$left_id, d$id)]
+  yc <- d$y[match(r$pairs$right_id, d$id)]
+  diff <- yt - yc
+  ci <- stats::t.test(diff)$conf.int
+  naive <- mean(d$y[d$treat == 1]) - mean(d$y[d$treat == 0])
+  list(est = mean(diff), ci = ci, naive = naive)
+}
+
+test_that("propensity matching recovers a known treatment effect across seeds", {
+  skip_on_cran()
+  tau <- 1.0
+  res <- lapply(31:60, .sim_ps_effect)
+  ests   <- vapply(res, function(z) z$est,   numeric(1))
+  naives <- vapply(res, function(z) z$naive, numeric(1))
+
+  # Averaged over seeds the matched estimate is close to tau...
+  expect_lt(abs(mean(ests) - tau), 0.1)
+  # ...and materially less biased than the naive unadjusted difference (which is
+  # inflated by the positive x-confounding).
+  expect_lt(abs(mean(ests) - tau), abs(mean(naives) - tau))
+})
+
+test_that("matched-pair confidence intervals cover the true effect at ~nominal rate", {
+  skip_on_cran()
+  tau <- 1.0
+  res <- lapply(201:230, .sim_ps_effect)
+  covered <- vapply(res, function(z) tau >= z$ci[1] && tau <= z$ci[2], logical(1))
+
+  # Nominal 95% paired-difference CI should cover the truth on >= 85% of the
+  # >= 20 simulated seeds.
+  expect_gte(length(covered), 20)
+  expect_gte(mean(covered), 0.85)
+})

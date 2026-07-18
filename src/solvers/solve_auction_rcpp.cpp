@@ -252,7 +252,8 @@ Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize,
 
   double epsilon = std::max(1.0, max_abs_cost * initial_epsilon_factor);
   // Use smaller final epsilon for better optimality guarantee
-  double eps_final = (final_epsilon > 0.0) ? final_epsilon : std::min(1e-6, 1.0 / (nn * nn));
+  double eps_final = (final_epsilon > 0.0) ? final_epsilon
+                     : std::min(1e-6, 1.0 / (static_cast<double>(nn) * nn));
 
   // State: prices persist, matching rebuilt each phase
   std::vector<double> price(m, 0.0);

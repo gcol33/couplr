@@ -35,6 +35,17 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
         C[k] = work.mask[k] ? work.data[k] : INF;
     }
 
+    // Magnitude-aware zero tolerance. The row/column reductions below subtract
+    // running minima, so an intended-zero accumulates float error on the order
+    // of (largest cost) * epsilon. A fixed absolute TOL (1e-12) then misses it
+    // on large-magnitude inputs and a solvable matrix throws; scale by the
+    // largest finite cost so ordinary small-cost inputs keep ~1e-12.
+    double max_abs = 0.0;
+    for (int k = 0; k < n * m; ++k) {
+        if (std::isfinite(C[k])) max_abs = std::max(max_abs, std::abs(C[k]));
+    }
+    const double zero_tol = TOL * std::max(1.0, max_abs);
+
     auto row_min = [&](int i) {
         double mn = INF;
         for (int j = 0; j < m; ++j) {
@@ -65,7 +76,7 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
 
     auto is_zero = [&](int i, int j) {
         double x = C[i * m + j];
-        return std::isfinite(x) && std::abs(x) <= TOL;
+        return std::isfinite(x) && std::abs(x) <= zero_tol;
     };
 
     for (int i = 0; i < n; ++i) {

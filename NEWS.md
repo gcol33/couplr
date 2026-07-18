@@ -68,22 +68,37 @@
 
 ## Robustness (C++ solver hardening)
 
-* Guarded against silently wrong results and crashes at extreme scale:
-  `ssap_bucket` now errors clearly when cost magnitudes exceed what the
-  integer-bucket solver can represent (rather than overflowing the sentinel
-  or allocating an enormous bucket queue); the network-simplex iteration
-  bound is computed in 64-bit (it overflowed a 32-bit `int` and could return
-  the greedy initial matching); the brute-force solver caps total
-  enumeration work instead of running unbounded in the number of columns;
-  and `solve_sinkhorn()` reports the correct iteration count on
-  non-convergence (#13).
+Guarded the C++ solvers against silently wrong results and crashes at extreme
+scale. None of these affect ordinary inputs; they add error paths and 64-bit
+arithmetic where 32-bit overflow or a fixed tolerance could previously produce
+a wrong "optimal" or a crash (#13):
+
+* **Overflow / narrowing.** `ssap_bucket` errors clearly when cost magnitudes
+  exceed what the integer-bucket solver can represent (rather than overflowing
+  the sentinel or allocating an enormous bucket queue); the network-simplex
+  iteration bound and `gabow_tarjan`'s bit-scaling range are computed and
+  checked in 64-bit; `gabow_tarjan` also rejects costs that collide with its
+  forbidden sentinel; the brute-force solver caps total enumeration work
+  instead of running unbounded in the number of columns.
+* **Large `n*m` indexing.** Flat cost/kernel indexing in
+  `prepare_cost_matrix`, `solve_sinkhorn`, and the auction epsilon is done in
+  64-bit; `network_simplex` and `lapmod` reject problems whose arc / entry
+  counts would overflow a 32-bit index.
+* **Tolerances and status.** `solve_munkres` scales its zero tolerance with the
+  cost magnitude (a fixed `1e-12` could make a solvable large-cost matrix
+  throw); `full_matching` now reports `infeasible` when the group capacity is
+  below the number of units instead of silently dropping units as `optimal`;
+  `solve_sinkhorn` reports the correct iteration count on non-convergence.
+* **Bounds.** The internal `morph_pixel_level` helpers assert their pixel /
+  assignment buffer sizes, matching the exported wrappers.
 
 ## Tests
 
-* Added a parameter-recovery suite for the statistical layer
+* Added a parameter-recovery and coverage suite for the statistical layer
   (`test-statistical-recovery.R`): sensitivity pair alignment, prefitted-PS
-  row alignment, propensity-matching imbalance reduction, ATE subclass
-  weight values, and weighted-balance means (#14).
+  row alignment, propensity-matching imbalance reduction, ATE subclass weight
+  values, weighted-balance means, known-effect recovery across seeds, and
+  nominal coverage of matched-pair confidence intervals (#14).
 
 # couplr 1.4.1
 

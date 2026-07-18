@@ -39,6 +39,16 @@ SparseMatrix build_sparse(const CostMatrix& cost, bool maximize) {
     SparseMatrix sp;
     sp.n = cost.nrow;
     sp.m = cost.ncol;
+
+    // nnz and the row_ptr prefix sums are int; a dense n*m exceeding 2^31 would
+    // overflow them into wrong offsets. nnz can never exceed n*m, so reject when
+    // n*m does not fit in an int (such a matrix is >16 GB and infeasible anyway).
+    if (static_cast<long long>(sp.n) * sp.m >
+        static_cast<long long>(std::numeric_limits<int>::max())) {
+        LAP_THROW_DIMENSION("lapmod: problem too large (n*m exceeds 2^31); "
+                            "use method = 'jv' or 'auction'.");
+    }
+
     sp.row_ptr.resize(sp.n + 1);
 
     // Find max cost for negation if maximize

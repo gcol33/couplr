@@ -12,7 +12,7 @@ Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize) {
   const int n = cost.nrow();
   const int m = cost.ncol();
   if (n > m) LAP_ERROR("Infeasible: more rows than columns");
-  if (n == 0)   if (n == 0) return make_result(IntegerVector(), 0.0);
+  if (n == 0) return make_result(IntegerVector(), 0.0);
   if (n > 8)  LAP_ERROR("bruteforce only supports n <= 8 for now");
 
   // Use prepared mask (independent of maximize)

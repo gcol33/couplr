@@ -27,7 +27,7 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
 
     // Prepare working costs (negated if maximize, BIG for forbidden)
     CostMatrix work = prepare_for_solve(cost, maximize);
-    const int nn = work.nrow;  // May be padded to square
+    const int nn = work.nrow;
 
     // Check feasibility
     ensure_each_row_has_option(work.mask, nn, m);

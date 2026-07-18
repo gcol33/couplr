@@ -116,7 +116,7 @@ static Palette analyze_palette(const NumericVector &W, const IntegerVector &mask
 // Non-exported impl; wrapper is in rcpp_interface.cpp
 Rcpp::List solve_hk01_impl(NumericMatrix cost, bool maximize) {
   int n0 = cost.nrow(), m0 = cost.ncol();
-  if (n0 == 0)   if (n0 == 0) return make_result(IntegerVector(), 0.0);
+  if (n0 == 0) return make_result(IntegerVector(), 0.0);
 
   // Auto-transpose for n>m
   bool transposed = false;

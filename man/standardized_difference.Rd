@@ -4,7 +4,7 @@
 \alias{standardized_difference}
 \title{Calculate Standardized Difference}
 \usage{
-standardized_difference(x1, x2, pooled = TRUE)
+standardized_difference(x1, x2, pooled = TRUE, w1 = NULL, w2 = NULL)
 }
 \arguments{
 \item{x1}{Numeric vector for group 1}

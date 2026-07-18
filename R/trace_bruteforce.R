@@ -21,23 +21,8 @@
 #' @keywords internal
 #' @noRd
 trace_bruteforce <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_bruteforce currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"bruteforce\") or ",
-      "lap_solve(cost, method = \"bruteforce\").",
-      call. = FALSE
-    )
-  }
+  vc <- validate_square_cost(cost, "trace_bruteforce", maximize, solver_hint = "bruteforce")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   if (n > 7L) {
     stop(
       "trace_bruteforce caps at n <= 7 because the animation would enumerate ",
@@ -48,11 +33,8 @@ trace_bruteforce <- function(cost, maximize = FALSE, ...) {
   }
 
   cost_orig <- cost
-  cost_signed <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_signed)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
+  cost_signed <- vc$cost_signed
+  finite_mask <- vc$finite_mask
 
   # Enumerate all permutations of 1..n lexicographically.
   all_perms <- function(x) {
@@ -87,13 +69,9 @@ trace_bruteforce <- function(cost, maximize = FALSE, ...) {
   emit <- function(phase, description, matching, active_edges = list(),
                    path = list()) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
-      step         = step,
-      phase        = phase,
-      description  = description,
+    frames[[length(frames) + 1L]] <<- make_frame(
+      step, phase, description,
       matching     = matching,
-      dual_u       = NULL,
-      dual_v       = NULL,
       active_edges = active_edges,
       path         = path
     )
@@ -198,13 +176,8 @@ trace_bruteforce <- function(cost, maximize = FALSE, ...) {
   )
 
   list(
-    meta = list(
-      algorithm   = "bruteforce",
-      n_rows      = n,
-      n_cols      = m,
-      cost_matrix = cost_orig,
-      maximize    = maximize,
-      total_cost  = total,
+    meta = make_meta(
+      "bruteforce", n, m, cost_orig, maximize, total,
       description = paste0(
         "Brute force: enumerate every permutation of column assignments, ",
         "compute each one's total cost, keep the best. Trivially optimal, ",

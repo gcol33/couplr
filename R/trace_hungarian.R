@@ -31,23 +31,9 @@
 #' @keywords internal
 #' @noRd
 trace_hungarian <- function(cost, maximize = FALSE, ...) {
-  v_in <- validate_cost_input(cost, "trace_hungarian")
-  cost <- v_in$cost; n <- v_in$n; m <- v_in$m
-
-  if (n != m) {
-    stop(
-      "trace_hungarian currently requires a square cost matrix (nrow == ncol). ",
-      "The classical Hungarian algorithm is defined on square assignment problems; ",
-      "rectangular inputs are normally preprocessed by padding with zero-cost ",
-      "dummy rows or columns, which is a separate pedagogical step worth its own ",
-      "animation. For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"hungarian\") or lap_solve(cost, method = \"hungarian\").",
-      call. = FALSE
-    )
-  }
-
-  prep <- prepare_cost_work(cost, maximize)
-  cost_work <- prep$cost_work
+  vc <- validate_square_cost(cost, "trace_hungarian", maximize, solver_hint = "hungarian")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
+  cost_work <- vc$cost_work
 
   u <- numeric(n)
   v <- numeric(m)

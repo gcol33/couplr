@@ -1,5 +1,12 @@
 # couplr 1.4.2
 
+## New features
+
+* `pixel_morph()` and `pixel_morph_animate()` gain a `mode = "color_match"`
+  option: pixels sharing a quantized colour are matched spatially and any
+  remainder falls back to identity. A lighter-weight alternative to the default
+  `"color_walk"` palette LAP.
+
 ## Bug fixes (statistical / causal-inference layer)
 
 * **`sensitivity_analysis()` no longer scrambles matched pairs.** Outcomes

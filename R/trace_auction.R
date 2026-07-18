@@ -31,31 +31,20 @@
 trace_auction <- function(cost, maximize = FALSE,
                           sweep = c("lifo", "gauss_seidel"), ...) {
   sweep <- match.arg(sweep)
-  v_in <- validate_cost_input(cost, sprintf("trace_auction (sweep=%s)", sweep))
-  cost <- v_in$cost; n <- v_in$n; m <- v_in$m
-  if (n != m) {
-    stop(
-      "trace_auction currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"auction\") or lap_solve(cost, method = \"auction\").",
-      call. = FALSE
-    )
-  }
+  vc <- validate_square_cost(cost, sprintf("trace_auction (sweep=%s)", sweep),
+                             maximize, solver_hint = "auction")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
 
   # --- Internal max-problem view ---------------------------------------------
-  # vmat[i,j] is the "value" person i gets from object j. We are maximising
-  # the total value, equivalently minimising the total cost when maximize=FALSE.
-  # We can't reuse prepare_cost_work() here because we need values flipped to
-  # a *maximization* internal view (auction maximizes profit), and forbidden
-  # entries must become very *negative* (not very positive) so no one bids.
-  vmat <- if (maximize) cost else -cost
-  finite_mask <- is.finite(vmat)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
-  scale <- max(abs(vmat[finite_mask]))
-  big <- (scale + 1) * (n + m + 1)
-  vmat[!finite_mask] <- -big   # forbidden -> very negative value (won't be bid on)
+  # vmat[i,j] is the "value" person i gets from object j. Auction maximises total
+  # value, equivalently minimising total cost, so the values are the negated
+  # minimisation view (cost_signed). Forbidden entries become very *negative*
+  # (using the same big-M as prepare_cost_work) so no one ever bids on them.
+  vmat <- -vc$cost_signed
+  finite_mask <- vc$finite_mask
+  scale <- vc$scale
+  big <- vc$big_m
+  vmat[!finite_mask] <- -big
 
   # --- Pick eps ---------------------------------------------------------------
   # Integer costs => eps < 1/n suffices for exact optimality.

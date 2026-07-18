@@ -26,7 +26,9 @@
 #' @param format Output format: "gif", "webp", or "mp4"
 #' @param outfile Optional output file path
 #' @param show Logical, display animation in viewer (default: interactive())
-#' @param mode Assignment algorithm: "color_walk" (default), "exact", or "recursive"
+#' @param mode Assignment algorithm: "color_walk" (default), "exact",
+#'   "recursive", or "color_match" (spatially match pixels of identical
+#'   quantized colour, filling the remainder by identity)
 #' @param lap_method LAP solver method (default: "jv")
 #' @param maximize Logical, maximize instead of minimize cost (default: FALSE)
 #' @param quantize_bits Color quantization for "color_walk" mode (default: 5)
@@ -122,7 +124,7 @@ pixel_morph_animate <- function(imgA,
                                 format = c("gif", "webp", "mp4"),
                                 outfile = NULL,
                                 show = interactive(),
-                                mode = c("color_walk", "exact", "recursive"),
+                                mode = c("color_walk", "exact", "recursive", "color_match"),
                                 lap_method = "jv",
                                 maximize = FALSE,
                                 quantize_bits = 5L,
@@ -131,169 +133,19 @@ pixel_morph_animate <- function(imgA,
                                 beta  = 0,
                                 patch_size = 1L,
                                 upscale = 1) {
+  format <- match.arg(format)
 
-  format  <- match.arg(format)
-  mode    <- match.arg(mode)
-  
-  # Robust input validation
-  if (!is.numeric(upscale) || length(upscale) != 1 || is.na(upscale)) {
-    stop("upscale must be a single numeric value", call. = FALSE)
-  }
-  upscale <- as.numeric(upscale)
-  if (upscale <= 0) {
-    warning("upscale must be positive, setting to 1", call. = FALSE)
-    upscale <- 1
-  }
-  
-  if (!is.numeric(n_frames) || length(n_frames) != 1 || is.na(n_frames)) {
-    stop("n_frames must be a single numeric value", call. = FALSE)
-  }
-  n_frames <- as.integer(n_frames)
-  if (n_frames < 2L) {
-    warning("n_frames must be at least 2, setting to 2", call. = FALSE)
-    n_frames <- 2L
-  }
-  
-  if (!is.numeric(alpha) || length(alpha) != 1 || is.na(alpha) || alpha < 0) {
-    stop("alpha must be a single non-negative numeric value", call. = FALSE)
-  }
-  if (!is.numeric(beta) || length(beta) != 1 || is.na(beta) || beta < 0) {
-    stop("beta must be a single non-negative numeric value", call. = FALSE)
-  }
-  if (alpha == 0 && beta == 0) {
-    stop("alpha and beta cannot both be zero", call. = FALSE)
-  }
-  
-  if (!is.numeric(patch_size) || length(patch_size) != 1 || is.na(patch_size)) {
-    stop("patch_size must be a single numeric value", call. = FALSE)
-  }
-  patch_size <- as.integer(patch_size)
-  if (patch_size < 1L) {
-    stop("patch_size must be at least 1", call. = FALSE)
-  }
-  
-  if (!is.numeric(downscale_steps) || length(downscale_steps) != 1 || is.na(downscale_steps)) {
-    stop("downscale_steps must be a single numeric value", call. = FALSE)
-  }
-  downscale_steps <- as.integer(downscale_steps)
-  if (downscale_steps < 0L) {
-    stop("downscale_steps must be non-negative", call. = FALSE)
-  }
-
-  if (!.has_namespace("magick")) stop("Package 'magick' is required.")
-
-  # Read images and align sizes
-  A <- if (is.character(imgA)) magick::image_read(imgA) else imgA
-  B <- if (is.character(imgB)) magick::image_read(imgB) else imgB
-
-  infoA <- magick::image_info(A)
-  infoB <- magick::image_info(B)
-
-  if (infoA$width != infoB$width || infoA$height != infoB$height) {
-    B <- magick::image_resize(
-      B,
-      geometry = sprintf("%dx%d!", infoA$width, infoA$height)
-    )
-    infoB <- magick::image_info(B)
-  }
-
-  H <- as.integer(infoA$height)
-  W <- as.integer(infoA$width)
-  N <- H * W
-
-  # Planar RGB buffers (0-255, column-major)
-  arrA    <- .to_array_rgb(A)
-  arrB    <- .to_array_rgb(B)
-  planarA <- .to_planar_rgb(arrA)
-  planarB <- .to_planar_rgb(arrB)
-
-  # Optional downscaling for assignment computation
-  ds   <- .downscale_both(planarA, planarB, H, W, steps = downscale_steps)
-  Hs   <- ds$Hs
-  Ws   <- ds$Ws
-  A_s  <- ds$A_s
-  B_s  <- ds$B_s
-  Ns   <- Hs * Ws
-
-  # Size checks based on mode (after downscaling)
-  patch_size <- as.integer(patch_size)
-  if (patch_size < 1L) patch_size <- 1L
-
-  if (mode %in% c("exact", "recursive")) {
-
-    if (patch_size <= 1L && mode == "exact") {
-      MAX_EXACT <- 4096L
-      if (Ns > MAX_EXACT) {
-        warning(sprintf(
-          paste0(
-            "Image is large for 'exact' global LAP: %d x %d = %d pixels (recommended max %d).\n",
-            "Computation may be slow -- consider using patch_size > 1, mode='recursive',",
-            " or mode='color_walk'."
-          ),
-          Hs, Ws, Ns, MAX_EXACT
-        ), call. = FALSE)
-      }
-
-    } else {
-      tile_n <- patch_size * patch_size
-      MAX_TILE_EXACT <- 400L
-
-      if (tile_n > MAX_TILE_EXACT) {
-        warning(sprintf(
-          paste0(
-            "Tile is large for LAP: patch_size=%d -> %d pixels per tile (recommended max %d).\n",
-            "Computation may be slow -- reduce patch_size or use mode='color_walk'."
-          ),
-          patch_size, tile_n, MAX_TILE_EXACT
-        ), call. = FALSE)
-      }
-    }
-
-  } else if (mode == "color_walk") {
-
-    WARN_THRESHOLD <- 250000L
-    if (Ns > WARN_THRESHOLD) {
-      warning(sprintf(
-        paste0(
-          "Large image: %d x %d = %d pixels. This may take a while.\n",
-          "Consider increasing downscale_steps or reducing image size."
-        ),
-        Hs, Ws, Ns
-      ), call. = FALSE)
-    }
-  }
-
-  # Compute pixel assignment at (Hs, Ws)
-  assign_s <- .solve_pixel_assignment(mode, A_s, B_s, Hs, Ws, patch_size,
-                                      alpha, beta, lap_method, maximize,
-                                      quantize_bits)
-
-  # Upscale assignment back to original resolution and convert to 0-based
-  assign_in <- as.integer(assign_s) - 1L
-
-  if (downscale_steps > 0L && (Hs != H || Ws != W)) {
-    assign_0based <- .upscale_assignment(
-      assign_in,
-      H  = H,
-      W  = W,
-      Hs = Hs,
-      Ws = Ws
-    )
-  } else {
-    assign_0based <- assign_in
-  }
-
-  # Render morph frames via C++ (assignment is 0-based here)
-  # NOTE: morph_pixel_level_cpp() returns a sharp, transport-only final frame
-  #       (no motion blur), while intermediate frames use bilinear splatting.
-  frames <- morph_pixel_level_cpp(
-    planarA,
-    planarB,
-    assign_0based,
-    H,
-    W,
-    n_frames
-  )
+  eng <- .pixel_morph_engine(imgA, imgB, n_frames, mode, lap_method, maximize,
+                             quantize_bits, downscale_steps, alpha, beta,
+                             patch_size, upscale)
+  frames        <- eng$frames
+  H             <- eng$H
+  W             <- eng$W
+  n_frames      <- eng$n_frames
+  upscale       <- eng$upscale
+  assign_0based <- eng$assign_0based
+  mode          <- eng$mode
+  N             <- eng$N
 
   magick_list <- lapply(frames, function(fr) {
     Hf  <- fr$H
@@ -408,7 +260,9 @@ pixel_morph_animate <- function(imgA,
 #' @param imgA Source image (file path or magick image object)
 #' @param imgB Target image (file path or magick image object)
 #' @param n_frames Internal parameter for rendering (default: 16)
-#' @param mode Assignment algorithm: "color_walk" (default), "exact", or "recursive"
+#' @param mode Assignment algorithm: "color_walk" (default), "exact",
+#'   "recursive", or "color_match" (spatially match pixels of identical
+#'   quantized colour, filling the remainder by identity)
 #' @param lap_method LAP solver method (default: "jv")
 #' @param maximize Logical, maximize instead of minimize cost (default: FALSE)
 #' @param quantize_bits Color quantization for "color_walk" mode (default: 5)
@@ -471,7 +325,7 @@ pixel_morph_animate <- function(imgA,
 pixel_morph <- function(imgA,
                         imgB,
                         n_frames = 16L,
-                        mode = c("color_walk", "exact", "recursive"),
+                        mode = c("color_walk", "exact", "recursive", "color_match"),
                         lap_method = "jv",
                         maximize = FALSE,
                         quantize_bits = 5L,
@@ -481,9 +335,76 @@ pixel_morph <- function(imgA,
                         patch_size = 1L,
                         upscale = 1,
                         show = interactive()) {
+  eng <- .pixel_morph_engine(imgA, imgB, n_frames, mode, lap_method, maximize,
+                             quantize_bits, downscale_steps, alpha, beta,
+                             patch_size, upscale)
+  frames   <- eng$frames
+  H        <- eng$H
+  W        <- eng$W
+  n_frames <- eng$n_frames
+  upscale  <- eng$upscale
 
-  mode <- match.arg(mode)
-  
+  stopifnot(length(frames) == n_frames)
+
+  last_fr <- frames[[length(frames)]]
+  Hf      <- last_fr$H
+  Wf      <- last_fr$W
+  vec     <- last_fr$data
+  Cch     <- length(vec) / (Hf * Wf)
+
+  if (!Cch %in% c(3, 4)) {
+    stop("Unexpected channel count from morph_pixel_level_cpp: ", Cch)
+  }
+
+  arr <- array(vec / 255, dim = c(Hf, Wf, Cch))
+  final_img <- magick::image_read(arr)
+
+  # Optional upscaling of final frame
+  if (upscale != 1) {
+    if (abs(upscale - round(upscale)) < 1e-9) {
+      target_width  <- as.integer(round(W * upscale))
+      target_height <- as.integer(round(H * upscale))
+      final_img <- magick::image_scale(
+        final_img,
+        geometry = sprintf("%dx%d!", target_width, target_height)
+      )
+    } else {
+      pct <- upscale * 100
+      final_img <- magick::image_scale(
+        final_img,
+        geometry = sprintf("%.2f%%", pct)
+      )
+    }
+  }
+
+  if (show) {
+    print(final_img)
+  }
+
+  invisible(final_img)
+}
+
+
+# =============================================================================
+# Core solvers
+# =============================================================================
+
+#' Shared compute core for pixel_morph() and pixel_morph_animate()
+#'
+#' Validates arguments, reads and aligns the two images, computes the optimal
+#' pixel assignment (optionally at a downscaled resolution), and renders the
+#' transport frames via morph_pixel_level_cpp(). The two public front doors
+#' differ only in how they present these frames -- a single final image versus
+#' an animation -- so everything up to and including frame rendering lives here.
+#'
+#' Returns a list with: frames, H, W, n_frames (clamped), upscale (clamped),
+#' assign_0based, mode (matched), N.
+#' @noRd
+.pixel_morph_engine <- function(imgA, imgB, n_frames, mode, lap_method, maximize,
+                                quantize_bits, downscale_steps, alpha, beta,
+                                patch_size, upscale) {
+  mode <- match.arg(mode, c("color_walk", "exact", "recursive", "color_match"))
+
   # Robust input validation
   if (!is.numeric(upscale) || length(upscale) != 1 || is.na(upscale)) {
     stop("upscale must be a single numeric value", call. = FALSE)
@@ -493,7 +414,7 @@ pixel_morph <- function(imgA,
     warning("upscale must be positive, setting to 1", call. = FALSE)
     upscale <- 1
   }
-  
+
   if (!is.numeric(n_frames) || length(n_frames) != 1 || is.na(n_frames)) {
     stop("n_frames must be a single numeric value", call. = FALSE)
   }
@@ -502,7 +423,7 @@ pixel_morph <- function(imgA,
     warning("n_frames must be at least 2, setting to 2", call. = FALSE)
     n_frames <- 2L
   }
-  
+
   if (!is.numeric(alpha) || length(alpha) != 1 || is.na(alpha) || alpha < 0) {
     stop("alpha must be a single non-negative numeric value", call. = FALSE)
   }
@@ -512,7 +433,7 @@ pixel_morph <- function(imgA,
   if (alpha == 0 && beta == 0) {
     stop("alpha and beta cannot both be zero", call. = FALSE)
   }
-  
+
   if (!is.numeric(patch_size) || length(patch_size) != 1 || is.na(patch_size)) {
     stop("patch_size must be a single numeric value", call. = FALSE)
   }
@@ -520,7 +441,7 @@ pixel_morph <- function(imgA,
   if (patch_size < 1L) {
     stop("patch_size must be at least 1", call. = FALSE)
   }
-  
+
   if (!is.numeric(downscale_steps) || length(downscale_steps) != 1 || is.na(downscale_steps)) {
     stop("downscale_steps must be a single numeric value", call. = FALSE)
   }
@@ -548,8 +469,9 @@ pixel_morph <- function(imgA,
 
   H <- as.integer(infoA$height)
   W <- as.integer(infoA$width)
+  N <- H * W
 
-  # Planar RGB buffers
+  # Planar RGB buffers (0-255, column-major)
   arrA    <- .to_array_rgb(A)
   arrB    <- .to_array_rgb(B)
   planarA <- .to_planar_rgb(arrA)
@@ -597,7 +519,7 @@ pixel_morph <- function(imgA,
       }
     }
 
-  } else if (mode == "color_walk") {
+  } else if (mode %in% c("color_walk", "color_match")) {
 
     WARN_THRESHOLD <- 250000L
     if (Ns > WARN_THRESHOLD) {
@@ -616,79 +538,21 @@ pixel_morph <- function(imgA,
                                       alpha, beta, lap_method, maximize,
                                       quantize_bits)
 
-  # 1-based -> 0-based
+  # 1-based -> 0-based, then upscale back to full resolution if downscaled
   assign_in <- as.integer(assign_s) - 1L
-
-  # Upscale assignment if we computed it at a smaller resolution
   if (downscale_steps > 0L && (Hs != H || Ws != W)) {
-    assign_0based <- .upscale_assignment(
-      assign_in,
-      H  = H,
-      W  = W,
-      Hs = Hs,
-      Ws = Ws
-    )
+    assign_0based <- .upscale_assignment(assign_in, H = H, W = W, Hs = Hs, Ws = Ws)
   } else {
     assign_0based <- assign_in
   }
 
-  # Render morph frames and take final frame only
-  # NOTE: morph_pixel_level_cpp() returns a sharp, non-splatted final frame.
-  #       We take only that frame here (transport-only morph).
-  frames <- morph_pixel_level_cpp(
-    planarA,
-    planarB,
-    assign_0based,
-    H,
-    W,
-    n_frames
-  )
-  
-  # Safety check: ensure we got the expected number of frames
-  stopifnot(length(frames) == n_frames)
+  # Render morph frames via C++ (assignment is 0-based here). The final frame is
+  # a sharp, transport-only render; intermediate frames use bilinear splatting.
+  frames <- morph_pixel_level_cpp(planarA, planarB, assign_0based, H, W, n_frames)
 
-  last_fr <- frames[[length(frames)]]
-  Hf      <- last_fr$H
-  Wf      <- last_fr$W
-  vec     <- last_fr$data
-  Cch     <- length(vec) / (Hf * Wf)
-
-  if (!Cch %in% c(3, 4)) {
-    stop("Unexpected channel count from morph_pixel_level_cpp: ", Cch)
-  }
-
-  arr <- array(vec / 255, dim = c(Hf, Wf, Cch))
-  final_img <- magick::image_read(arr)
-
-  # Optional upscaling of final frame
-  if (upscale != 1) {
-    if (abs(upscale - round(upscale)) < 1e-9) {
-      target_width  <- as.integer(round(W * upscale))
-      target_height <- as.integer(round(H * upscale))
-      final_img <- magick::image_scale(
-        final_img,
-        geometry = sprintf("%dx%d!", target_width, target_height)
-      )
-    } else {
-      pct <- upscale * 100
-      final_img <- magick::image_scale(
-        final_img,
-        geometry = sprintf("%.2f%%", pct)
-      )
-    }
-  }
-
-  if (show) {
-    print(final_img)
-  }
-
-  invisible(final_img)
+  list(frames = frames, H = H, W = W, n_frames = n_frames, upscale = upscale,
+       assign_0based = assign_0based, mode = mode, N = N)
 }
-
-
-# =============================================================================
-# Core solvers
-# =============================================================================
 
 #' Dispatch a pixel-morph mode to its solver (shared by pixel_morph and
 #' pixel_morph_animate)
@@ -712,6 +576,10 @@ pixel_morph <- function(imgA,
       patch_size = patch_size, alpha = alpha, beta = beta,
       method = lap_method, maximize = maximize
     )
+  } else if (mode == "color_match") {
+    # Identity-palette matching: pixels sharing a quantized colour are matched
+    # spatially, and any left over fall back to identity.
+    .solve_color_match_pipeline(A_s, B_s, Hs, Ws, quantize_bits, lap_method, maximize)
   } else {
     # color_walk mode - positional arguments matching the function signature
     .solve_color_walk_pipeline(A_s, B_s, Hs, Ws, quantize_bits, lap_method, maximize)

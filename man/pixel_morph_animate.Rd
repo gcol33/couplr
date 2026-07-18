@@ -12,7 +12,7 @@ pixel_morph_animate(
   format = c("gif", "webp", "mp4"),
   outfile = NULL,
   show = interactive(),
-  mode = c("color_walk", "exact", "recursive"),
+  mode = c("color_walk", "exact", "recursive", "color_match"),
   lap_method = "jv",
   maximize = FALSE,
   quantize_bits = 5L,
@@ -38,7 +38,9 @@ pixel_morph_animate(
 
 \item{show}{Logical, display animation in viewer (default: interactive())}
 
-\item{mode}{Assignment algorithm: "color_walk" (default), "exact", or "recursive"}
+\item{mode}{Assignment algorithm: "color_walk" (default), "exact",
+"recursive", or "color_match" (spatially match pixels of identical
+quantized colour, filling the remainder by identity)}
 
 \item{lap_method}{LAP solver method (default: "jv")}
 

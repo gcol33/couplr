@@ -48,33 +48,16 @@ trace_auction_scaled <- function(cost,
                                   initial_epsilon_factor = 1.0,
                                   final_epsilon = NULL,
                                   ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_auction_scaled currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"auction_scaled\") or ",
-      "lap_solve(cost, method = \"auction_scaled\").",
-      call. = FALSE
-    )
-  }
+  vc <- validate_square_cost(cost, "trace_auction_scaled", maximize,
+                             solver_hint = "auction_scaled")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 1) {
     stop("`alpha` must be a single number > 1.", call. = FALSE)
   }
 
   cost_orig <- cost
-  cost_signed <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_signed)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
+  cost_signed <- vc$cost_signed
+  finite_mask <- vc$finite_mask
   for (i in seq_len(n)) {
     if (!any(finite_mask[i, ])) {
       stop("Row ", i, " has no finite (allowed) entries.", call. = FALSE)
@@ -82,7 +65,7 @@ trace_auction_scaled <- function(cost,
   }
 
   # Epsilon schedule (matches solve_auction_scaled_params exactly)
-  max_abs_cost <- max(abs(cost_signed[finite_mask]))
+  max_abs_cost <- vc$scale
   eps_init <- max(1, max_abs_cost * initial_epsilon_factor)
   eps_final <- if (is.null(final_epsilon)) min(1e-6, 1 / (n * n))
                else as.numeric(final_epsilon)
@@ -107,12 +90,9 @@ trace_auction_scaled <- function(cost,
   emit <- function(phase_lbl, description,
                    active_edges = list(), path = list()) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
-      step         = step,
-      phase        = phase_lbl,
-      description  = description,
+    frames[[length(frames) + 1L]] <<- make_frame(
+      step, phase_lbl, description,
       matching     = assign_object,
-      dual_u       = NULL,
       dual_v       = p,
       active_edges = active_edges,
       path         = path
@@ -283,13 +263,8 @@ trace_auction_scaled <- function(cost,
   )
 
   list(
-    meta = list(
-      algorithm   = "auction_scaled",
-      n_rows      = n,
-      n_cols      = m,
-      cost_matrix = cost_orig,
-      maximize    = maximize,
-      total_cost  = total,
+    meta = make_meta(
+      "auction_scaled", n, m, cost_orig, maximize, total,
       description = paste0(
         "Bertsekas auction with epsilon-scaling. The outer loop reduces eps by ",
         "a factor alpha each phase (default alpha = 7); within each phase a ",

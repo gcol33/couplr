@@ -312,3 +312,15 @@ test_that("pixel_morph_animate warns on small n_frames (sets to 2)", {
     "n_frames must be at least 2"
   )
 })
+
+test_that("pixel_morph mode = 'color_match' produces a valid image", {
+  skip_on_cran()
+  skip_if_not_installed("magick")
+  imgs <- get_test_images()
+
+  img <- pixel_morph(imgs$A, imgs$B, mode = "color_match",
+                     n_frames = 3, show = FALSE)
+  info <- magick::image_info(img)
+  expect_gt(info$width, 0)
+  expect_gt(info$height, 0)
+})

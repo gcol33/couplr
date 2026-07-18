@@ -37,28 +37,10 @@
 #' @keywords internal
 #' @noRd
 trace_bottleneck <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_bottleneck currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "bottleneck_assignment(cost).",
-      call. = FALSE
-    )
-  }
-
+  vc <- validate_square_cost(cost, "trace_bottleneck", maximize)
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   cost_orig <- cost
-  finite_mask <- is.finite(cost)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
+  finite_mask <- vc$finite_mask
 
   unique_costs <- sort(unique(cost[finite_mask]))
   if (maximize) unique_costs <- rev(unique_costs)
@@ -73,13 +55,9 @@ trace_bottleneck <- function(cost, maximize = FALSE, ...) {
   emit <- function(phase, description, matching = matching_state,
                    active_edges = list(), path = list()) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
-      step         = step,
-      phase        = phase,
-      description  = description,
+    frames[[length(frames) + 1L]] <<- make_frame(
+      step, phase, description,
       matching     = matching,
-      dual_u       = NULL,
-      dual_v       = NULL,
       active_edges = active_edges,
       path         = path
     )
@@ -296,13 +274,8 @@ trace_bottleneck <- function(cost, maximize = FALSE, ...) {
   )
 
   list(
-    meta = list(
-      algorithm   = "bottleneck",
-      n_rows      = n,
-      n_cols      = m,
-      cost_matrix = cost_orig,
-      maximize    = maximize,
-      total_cost  = as.numeric(bottleneck_value),
+    meta = make_meta(
+      "bottleneck", n, m, cost_orig, maximize, as.numeric(bottleneck_value),
       description = paste0(
         "Bottleneck assignment. Different objective from standard LAP: instead ",
         "of minimising the SUM of matched-edge costs, minimise the MAX (or, ",

@@ -19,8 +19,9 @@
 #' @noRd
 make_frame <- function(step, phase, description, matching,
                        dual_u = NULL, dual_v = NULL,
-                       active_edges = list(), path = list()) {
-  list(
+                       active_edges = list(), path = list(),
+                       progress_text = NULL) {
+  frame <- list(
     step         = as.integer(step),
     phase        = phase,
     description  = description,
@@ -30,6 +31,10 @@ make_frame <- function(step, phase, description, matching,
     active_edges = active_edges,
     path         = path
   )
+  # Only dual-scaling traces (e.g. gabow_tarjan) carry a per-frame progress
+  # label; omit the field entirely otherwise so the wire shape is unchanged.
+  if (!is.null(progress_text)) frame$progress_text <- progress_text
+  frame
 }
 
 #' Construct the meta block for a trace

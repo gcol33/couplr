@@ -56,29 +56,12 @@
 #' @keywords internal
 #' @noRd
 trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_gabow_tarjan currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"gabow_tarjan\").",
-      call. = FALSE
-    )
-  }
-
+  vc <- validate_square_cost(cost, "trace_gabow_tarjan", maximize,
+                             solver_hint = "gabow_tarjan")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   cost_orig <- cost
-  cost_signed <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_signed)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
+  cost_signed <- vc$cost_signed
+  finite_mask <- vc$finite_mask
 
   # Round to integers (GT is defined on integer costs).
   cost_int <- cost_signed
@@ -122,10 +105,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
                    show_duals = FALSE,
                    matching = matching_row) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
-      step          = step,
-      phase         = phase,
-      description   = description,
+    frames[[length(frames) + 1L]] <<- make_frame(
+      step, phase, description,
       matching      = matching,
       dual_u        = if (show_duals) y_u_global else NULL,
       dual_v        = if (show_duals) y_v_global else NULL,
@@ -387,13 +368,8 @@ trace_gabow_tarjan <- function(cost, maximize = FALSE, ...) {
 .gt_make_result <- function(cost_orig, matching_row, n, m, maximize, frames) {
   total <- sum(cost_orig[cbind(seq_len(n), matching_row)], na.rm = TRUE)
   list(
-    meta = list(
-      algorithm   = "gabow_tarjan",
-      n_rows      = n,
-      n_cols      = m,
-      cost_matrix = cost_orig,
-      maximize    = maximize,
-      total_cost  = total,
+    meta = make_meta(
+      "gabow_tarjan", n, m, cost_orig, maximize, total,
       description = paste0(
         "Gabow-Tarjan (1989) bit-scaling with maintained 1-feasibility. ",
         "Multiply integer costs by (n+1), process bits MSB to LSB. Each scale phase runs ",

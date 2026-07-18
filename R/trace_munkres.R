@@ -47,32 +47,11 @@
 #' @keywords internal
 #' @noRd
 trace_munkres <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_munkres currently requires a square cost matrix (nrow == ncol). ",
-      "The matrix-form Munkres algorithm is normally presented on square ",
-      "assignment problems; rectangular inputs require padding which is a ",
-      "separate pedagogical step worth its own animation. For production ",
-      "solving on rectangular inputs use ",
-      "assignment(cost, method = \"munkres\") or lap_solve(cost, method = \"munkres\").",
-      call. = FALSE
-    )
-  }
-
+  vc <- validate_square_cost(cost, "trace_munkres", maximize, solver_hint = "munkres")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   cost_orig <- cost
-  cost_signed <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_signed)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
+  cost_signed <- vc$cost_signed
+  finite_mask <- vc$finite_mask
   for (i in seq_len(n)) {
     if (!any(finite_mask[i, ])) {
       stop("Row ", i, " has no finite (allowed) entries.", call. = FALSE)
@@ -111,10 +90,8 @@ trace_munkres <- function(cost, maximize = FALSE, ...) {
                    active_edges = list(), path = list(),
                    show_duals = TRUE) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
-      step         = step,
-      phase        = phase,
-      description  = description,
+    frames[[length(frames) + 1L]] <<- make_frame(
+      step, phase, description,
       matching     = matching_row(),
       dual_u       = if (show_duals) u else NULL,
       dual_v       = if (show_duals) v else NULL,
@@ -396,13 +373,8 @@ trace_munkres <- function(cost, maximize = FALSE, ...) {
   )
 
   list(
-    meta = list(
-      algorithm   = "munkres",
-      n_rows      = n,
-      n_cols      = m,
-      cost_matrix = cost_orig,
-      maximize    = maximize,
-      total_cost  = total,
+    meta = make_meta(
+      "munkres", n, m, cost_orig, maximize, total,
       description = paste0(
         "Matrix-form Kuhn-Munkres (Munkres 1957). Row-reduce, star a maximal ",
         "set of independent zeros, then cover columns with stars. As long as ",

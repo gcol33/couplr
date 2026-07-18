@@ -121,9 +121,9 @@ TEST_CASE("Line metric solver - maximization", "[line_metric][maximize]") {
         auto result = lap::solve_line_metric(x, y, "L1", true);
 
         REQUIRE(result.status == "optimal");
-        // For maximize, cost is negated: sorted match gives 0, so max = -0 = 0
-        // Actually maximize returns the negated cost, so it should still be 0
-        REQUIRE(result.total_cost == Approx(0.0));
+        // Maximize L1: the cross match 1->2, 2->1 gives |1-2| + |2-1| = 2,
+        // which beats the identity match (0). Optimal maximum cost is 2.
+        REQUIRE(result.total_cost == Approx(2.0));
     }
 }
 

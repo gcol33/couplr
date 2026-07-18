@@ -3,9 +3,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
+#include <cmath>
+#include <random>
+
 #include "core/lap_types.h"
 #include "core/lap_error.h"
 #include "solvers/solve_ssap_bucket.h"
+#include "solvers/solve_bruteforce.h"
 
 using Catch::Approx;
 
@@ -188,6 +192,71 @@ TEST_CASE("SSAP Bucket solver - assignment validity", "[ssap_bucket][validity]")
             REQUIRE(j < 4);
             REQUIRE(!used[j]);
             used[j] = true;
+        }
+    }
+}
+
+TEST_CASE("SSAP Bucket solver - fractional precision never yields a wrong optimum",
+          "[ssap_bucket][fractional][regression]") {
+    // Regression for gcol33/couplr#19: find_scale_factor used to fall back to
+    // scale 1000 + round, silently flipping the optimum on costs needing more
+    // than three decimals (differential fuzz found true -2.622920 returned as
+    // -2.621840). It must now either scale exactly or throw - never return a
+    // rounded, wrong optimum.
+
+    SECTION("six-decimal costs that scale exactly are solved, not rounded") {
+        // Every entry is an exact multiple of 1e-6, so the power-of-ten search
+        // must reach scale 1e6 instead of rounding at 1e3.
+        auto cost = make_cost({
+            {0.142857, 0.285714, 0.428571},
+            {0.571428, 0.714285, 0.857142},
+            {0.999999, 0.111111, 0.222222}
+        });
+        auto got = lap::solve_ssap_bucket(cost, false);
+        auto truth = lap::solve_bruteforce(cost, false);
+        REQUIRE(got.total_cost == Approx(truth.total_cost).margin(1e-9));
+    }
+
+    SECTION("differential fuzz: exact optimum or clean throw, never wrong") {
+        std::mt19937 rng(0x55A9u);  // fixed seed: every failure reproducible
+        std::uniform_int_distribution<int> ndist(2, 5);
+        std::uniform_real_distribution<double> cdist(0.0, 3.0);
+        std::bernoulli_distribution exact_p(0.5);
+
+        for (int trial = 0; trial < 5000; ++trial) {
+            int n = ndist(rng);
+            int m = n + std::uniform_int_distribution<int>(0, 1)(rng);
+            bool maximize = (trial % 2 == 0);
+            bool make_exact = exact_p(rng);
+
+            lap::CostMatrix c(n, m);
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < m; ++j) {
+                    double v = cdist(rng);
+                    // Half the trials use exactly-representable six-decimal
+                    // costs (scale 1e6 makes them integral); the rest use raw
+                    // reals that generally admit no bounded 10^-k scaling.
+                    if (make_exact) v = std::round(v * 1e6) / 1e6;
+                    c.at(i, j) = v;
+                }
+            }
+
+            double truth = lap::solve_bruteforce(c, maximize).total_cost;
+
+            lap::LapResult got;
+            bool threw = false;
+            try { got = lap::solve_ssap_bucket(c, maximize); }
+            catch (const lap::LapException&) { threw = true; }
+
+            INFO("trial=" << trial << " n=" << n << " m=" << m
+                 << " maximize=" << maximize << " make_exact=" << make_exact);
+
+            if (make_exact) {
+                // Exactly integer-scalable within budget: must solve, not reject.
+                REQUIRE_FALSE(threw);
+            }
+            if (threw) continue;  // rejecting rather than rounding is allowed
+            CHECK(got.total_cost == Approx(truth).margin(1e-9));
         }
     }
 }

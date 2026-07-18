@@ -13,40 +13,47 @@ namespace lap {
 
 namespace {
 
-constexpr double INT_TOL = 1e-9;
 constexpr int INF_INT = 1000000000;
 
-inline bool is_int(double x) {
-    return std::abs(x - std::round(x)) <= INT_TOL;
-}
+// Integrality tolerance in *scaled* units. It is deliberately fixed, not
+// proportional to the scale: a scale-proportional tolerance grows to exceed
+// half a quantum at large scales, at which point every real reads as "integral"
+// (any value lies within half a unit of some integer) and the rounding bug
+// returns silently. 1e-6 sits well above the ~1e-7 floating-point noise at the
+// solver's largest usable scaled magnitude (< INF_INT) yet far below any
+// genuine non-integer's scaled fractional part.
+constexpr double SCALE_INT_TOL = 1e-6;
 
-std::pair<int, bool> find_scale_factor(const std::vector<double>& finite_vals) {
-    if (finite_vals.empty()) return {1, false};
+// Smallest power of ten that renders every cost integral to within
+// SCALE_INT_TOL. Returns {scale, true} on success. Returns {scale, false} when
+// no power of ten within the solver's representable range makes the costs
+// integral: the caller then rejects the problem rather than silently rounding,
+// which can flip which permutation is optimal.
+std::pair<long long, bool> find_scale_factor(const std::vector<double>& vals) {
+    if (vals.empty()) return {1, false};
 
-    // Check if already integers
-    bool all_int = true;
-    for (double v : finite_vals) {
-        if (!is_int(v)) {
-            all_int = false;
-            break;
-        }
-    }
-    if (all_int) return {1, true};
+    double max_abs = 0.0;
+    for (double v : vals) max_abs = std::max(max_abs, std::abs(v));
+    if (max_abs == 0.0) return {1, true};
 
-    // Try scaling factors
-    for (int scale : {10, 100, 1000}) {
-        bool works = true;
-        for (double v : finite_vals) {
-            if (!is_int(v * scale)) {
-                works = false;
+    for (long long scale = 1; ; scale *= 10) {
+        const double s = static_cast<double>(scale);
+        bool all_int = true;
+        for (double v : vals) {
+            const double scaled = v * s;
+            if (std::abs(scaled - std::round(scaled)) > SCALE_INT_TOL) {
+                all_int = false;
                 break;
             }
         }
-        if (works) return {scale, true};
-    }
+        if (all_int) return {scale, true};
 
-    // Fallback: use 1000 and round
-    return {1000, true};
+        // Stop before the next scale pushes the largest cost past the integer
+        // range this solver uses; beyond it the magnitude guard rejects anyway.
+        if (max_abs * s * 10.0 >= static_cast<double>(INF_INT)) {
+            return {scale, false};
+        }
+    }
 }
 
 // Min-cost flow edge structure
@@ -249,8 +256,12 @@ LapResult solve_ssap_bucket(const CostMatrix& cost, bool maximize) {
         abs_vals.push_back(std::abs(v + shift));
     }
 
-    auto [scale, success] = find_scale_factor(abs_vals);
-    (void)success;
+    auto [scale, exact] = find_scale_factor(abs_vals);
+    if (!exact) {
+        LAP_THROW("ssap_bucket: costs need finer fractional precision than the "
+                  "integer bucket solver can represent exactly; use method = "
+                  "'jv' or 'auction'");
+    }
 
     // Guard against cost magnitudes this integer-bucket solver cannot handle:
     // the int cost matrix would overflow / collide with the INF_INT sentinel,

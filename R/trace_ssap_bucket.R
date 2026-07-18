@@ -13,8 +13,8 @@
 #
 # Algorithmic outline:
 #
-#   1. Scale costs to non-negative integers (try multipliers 1, 10, 100, 1000;
-#      shift if needed).
+#   1. Scale costs to non-negative integers (smallest exact power-of-ten
+#      multiplier; shift if needed).
 #   2. Initialise duals u, v so reduced costs c[i,j] - u[i] - v[j] >= 0 and
 #      integer.
 #   3. For each row k:
@@ -46,14 +46,37 @@ trace_ssap_bucket <- function(cost, maximize = FALSE, ...) {
   finite_vals <- cost_int[finite_mask]
   shift <- if (min(finite_vals) < 0) -min(finite_vals) else 0
   shifted <- finite_vals + shift
-  scale <- 1L
-  for (s in c(1L, 10L, 100L, 1000L)) {
-    if (all(abs(shifted * s - round(shifted * s)) < 1e-9)) {
+  # Smallest power of ten that renders every shifted cost integral, mirroring
+  # src/solvers/solve_ssap_bucket.cpp. The tolerance is fixed in scaled units,
+  # not proportional to the scale: a proportional tolerance grows to exceed half
+  # a quantum at large scales, at which point every real reads as integral and
+  # the optimum can flip via silent rounding (gcol33/couplr#19). When no bounded
+  # power of ten is exact, or the scaled magnitudes exceed the bucket solver's
+  # integer range, refuse rather than round -- exactly as the production solver.
+  INF_INT <- 1e9
+  SCALE_INT_TOL <- 1e-6
+  BUCKET_BUDGET <- 1e8
+  max_abs <- max(abs(shifted))
+  scale <- NA_integer_
+  s <- 1
+  repeat {
+    if (all(abs(shifted * s - round(shifted * s)) <= SCALE_INT_TOL)) {
       scale <- s; break
-    } else {
-      scale <- 1000L  # fallback
     }
+    if (max_abs * s * 10 >= INF_INT) break
+    s <- s * 10
   }
+  redirect <- "; use method = 'jv' or 'auction'"
+  if (is.na(scale)) {
+    stop("ssap_bucket: costs need finer fractional precision than the integer ",
+         "bucket solver can represent exactly", redirect, call. = FALSE)
+  }
+  max_scaled <- max(round(shifted * scale))
+  if (max_scaled >= INF_INT || n * max_scaled > BUCKET_BUDGET) {
+    stop("ssap_bucket: cost magnitudes too large for the integer bucket solver",
+         redirect, call. = FALSE)
+  }
+  scale <- as.integer(scale)
 
   # Build internal integer cost matrix. Forbidden cells get a very large int.
   big_int <- as.integer(round((max(shifted) + 1) * scale * (n + m + 1)))

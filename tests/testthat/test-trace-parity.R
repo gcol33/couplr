@@ -59,6 +59,18 @@
   if (identical(method, "bruteforce")) {
     return(base[1:3])
   }
+  if (identical(method, "ssap_bucket")) {
+    # ssap_bucket is exact only for costs of bounded decimal precision (it
+    # scales to integers); full-precision reals are refused by contract
+    # (gcol33/couplr#19). Round the doubles case to two decimals so it still
+    # exercises fractional scaling within the supported domain.
+    for (i in seq_along(base)) {
+      if (identical(base[[i]]$name, "4x4 doubles")) {
+        base[[i]]$cost <- round(base[[i]]$cost, 2)
+      }
+    }
+    return(base)
+  }
   base
 }
 

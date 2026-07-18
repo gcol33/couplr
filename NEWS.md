@@ -44,6 +44,15 @@
 
 ## Bug fixes (solvers)
 
+* **`ssap_bucket` no longer silently rounds fractional costs to a wrong
+  optimum.** The integer-scaling step tried only multipliers `{1, 10, 100,
+  1000}` and, failing those, rounded at `1000` -- flipping which permutation
+  was optimal on costs needing more than three decimals. It now searches
+  ascending powers of ten with a fixed (scale-independent) integrality
+  tolerance and refuses the problem, redirecting to `method = "jv"` or
+  `"auction"`, when no bounded integer scaling is exact. The animation mirror
+  `trace_ssap_bucket()` applies the same rule (#19).
+
 * **`lap_solve_line_metric(maximize = TRUE)` now returns the true
   maximum-weight matching.** The DP always built the sorted (minimum-cost)
   pairing and merely negated the total; on a line the maximum-weight

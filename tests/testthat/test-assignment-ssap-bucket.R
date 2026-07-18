@@ -339,3 +339,57 @@ test_that("ssap_bucket handles costs with different scales", {
   result_hungarian <- assignment(cost, method = "hungarian")
   expect_equal(result$total_cost, result_hungarian$total_cost, tolerance = 1e-10)
 })
+
+test_that("ssap_bucket solves exactly-scalable six-decimal costs (#19)", {
+  # Every entry is a multiple of 1e-6, so the extended power-of-ten search
+  # reaches scale 1e6 instead of rounding at 1e3 and flipping the optimum.
+  cost <- matrix(c(
+    0.142857, 0.285714, 0.428571,
+    0.571428, 0.714285, 0.857142,
+    0.999999, 0.111111, 0.222222
+  ), nrow = 3, byrow = TRUE)
+
+  result <- assignment(cost, method = "ssap_bucket")
+  result_jv <- assignment(cost, method = "jv")
+  expect_equal(result$total_cost, result_jv$total_cost, tolerance = 1e-9)
+})
+
+test_that("ssap_bucket rejects costs it cannot integer-scale exactly (#19)", {
+  # Full-precision reals admit no bounded 10^-k scaling; the solver must refuse
+  # rather than silently round and return a wrong optimum.
+  set.seed(19)
+  cost <- matrix(runif(9), nrow = 3)
+  # Either rejection path (precision or magnitude) is correct; both refuse and
+  # redirect rather than round to a wrong optimum.
+  expect_error(
+    assignment(cost, method = "ssap_bucket"),
+    "jv' or 'auction'"
+  )
+})
+
+test_that("ssap_bucket never returns a wrong optimum on fractional costs (#19)", {
+  # Regression fuzz for the silent-rounding bug: for each random fractional
+  # matrix, ssap_bucket must either error or match jv's exact optimum.
+  set.seed(2192)
+  for (trial in seq_len(400)) {
+    n <- sample(2:5, 1)
+    m <- n + sample(0:1, 1)
+    maximize <- (trial %% 2L == 0L)
+    if (trial %% 2L == 0L) {
+      cost <- matrix(round(runif(n * m, 0, 3), 6), nrow = n)  # exactly 6-decimal
+    } else {
+      cost <- matrix(runif(n * m, 0, 3), nrow = n)            # full precision
+    }
+
+    got <- tryCatch(
+      assignment(cost, method = "ssap_bucket", maximize = maximize),
+      error = function(e) e
+    )
+    if (inherits(got, "error")) next  # refusing is allowed; rounding wrong is not
+
+    truth <- assignment(cost, method = "jv", maximize = maximize)
+    expect_equal(got$total_cost, truth$total_cost, tolerance = 1e-9,
+                 info = sprintf("trial=%d n=%d m=%d maximize=%s",
+                                trial, n, m, maximize))
+  }
+})

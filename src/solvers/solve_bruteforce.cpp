@@ -30,6 +30,21 @@ LapResult solve_bruteforce(const CostMatrix& cost, bool maximize) {
         LAP_THROW_DIMENSION("Brute-force solver only supports n <= 8 (too computationally expensive)");
     }
 
+    // Bound the total enumeration work. The solver enumerates every injective
+    // assignment: m! / (m - n)! = C(m, n) * n! of them. This grows without
+    // bound in m even for small n (e.g. 8 x 1000), so cap it explicitly.
+    {
+        double injective_count = 1.0;
+        for (int k = 0; k < n; ++k) {
+            injective_count *= static_cast<double>(m - k);
+        }
+        if (injective_count > 1e8) {
+            LAP_THROW_DIMENSION("Brute-force solver: problem too large "
+                                "(injective-assignment enumeration exceeds limit); "
+                                "use a different method");
+        }
+    }
+
     // Check feasibility - each row must have at least one allowed edge
     ensure_each_row_has_option(cost.mask, n, m);
 

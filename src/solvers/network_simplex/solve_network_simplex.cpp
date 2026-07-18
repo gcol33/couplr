@@ -67,9 +67,11 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
 
     // Main simplex loop.  Practical bound: O(n^2) pivots suffices for assignment.
     // num_arcs * num_nodes is O(n^3) and caused ~100 s at n=200; cap here prevents runaway.
-    int max_iterations = 4 * state.num_nodes * state.num_nodes;
+    // Computed in 64-bit: 4 * num_nodes^2 overflows a 32-bit int near n ~ 11500.
+    long long max_iterations =
+        4LL * static_cast<long long>(state.num_nodes) * state.num_nodes;
 
-    for (int iter = 0; iter < max_iterations; ++iter) {
+    for (long long iter = 0; iter < max_iterations; ++iter) {
         // Find entering arc
         int entering = couplr::ns::find_entering_arc(state);
 

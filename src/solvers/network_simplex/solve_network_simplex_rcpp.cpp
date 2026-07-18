@@ -46,10 +46,12 @@ NSResult solve_network_simplex_impl(const Rcpp::NumericMatrix& cost_matrix) {
     // Compute initial potentials
     compute_potentials(state);
 
-    // Main simplex loop
-    int max_iterations = state.num_arcs * state.num_nodes;
+    // Main simplex loop. Iteration bound is O(arcs * nodes), which overflows a
+    // 32-bit int well before n ~ 1100; compute in 64-bit.
+    long long max_iterations =
+        static_cast<long long>(state.num_arcs) * state.num_nodes;
 
-    for (int iter = 0; iter < max_iterations; ++iter) {
+    for (long long iter = 0; iter < max_iterations; ++iter) {
         // Find entering arc
         int entering = find_entering_arc(state);
 

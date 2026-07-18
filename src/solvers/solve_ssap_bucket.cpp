@@ -252,6 +252,25 @@ LapResult solve_ssap_bucket(const CostMatrix& cost, bool maximize) {
     auto [scale, success] = find_scale_factor(abs_vals);
     (void)success;
 
+    // Guard against cost magnitudes this integer-bucket solver cannot handle:
+    // the int cost matrix would overflow / collide with the INF_INT sentinel,
+    // and Dial's bucket queue allocates one bucket per distance unit up to
+    // ~n * max_cost, which blows up memory. Throw a clear error rather than
+    // silently returning a wrong "optimal".
+    {
+        long long max_scaled = 0;
+        for (double v : finite_vals) {
+            long long s = std::llround((v + shift) * static_cast<double>(scale));
+            if (s > max_scaled) max_scaled = s;
+        }
+        const long long BUCKET_BUDGET = 100000000LL;  // 1e8
+        if (max_scaled >= INF_INT ||
+            static_cast<long long>(n) * max_scaled > BUCKET_BUDGET) {
+            LAP_THROW("ssap_bucket: cost magnitudes too large for the integer "
+                      "bucket solver; use method = 'jv' or 'auction'");
+        }
+    }
+
     // Build integer cost matrix: shift then scale
     std::vector<std::vector<int>> CI(n, std::vector<int>(m, INF_INT));
     for (int i = 0; i < n; ++i) {

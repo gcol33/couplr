@@ -181,7 +181,9 @@ SinkhornResult solve_sinkhorn(
     result.u = std::move(u);
     result.v = std::move(v);
     result.converged = converged;
-    result.iterations = iter + 1;
+    // On convergence `iter` is the 0-based iteration at break (count = iter+1);
+    // on non-convergence the loop ran the full max_iter (iter == max_iter).
+    result.iterations = converged ? (iter + 1) : iter;
     result.lambda = lambda;
 
     return result;

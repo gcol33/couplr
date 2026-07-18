@@ -44,39 +44,14 @@
 #' @keywords internal
 #' @noRd
 trace_jv <- function(cost, maximize = FALSE, ...) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix.", call. = FALSE)
-  }
-  n <- nrow(cost); m <- ncol(cost)
-  if (n == 0 || m == 0) {
-    stop("Cost matrix must have at least one row and one column.", call. = FALSE)
-  }
-  if (n != m) {
-    stop(
-      "trace_jv currently requires a square cost matrix (nrow == ncol). ",
-      "For production solving on rectangular inputs use ",
-      "assignment(cost, method = \"jv\") or lap_solve(cost, method = \"jv\").",
-      call. = FALSE
-    )
-  }
-
+  vc <- validate_square_cost(cost, "trace_jv", maximize, solver_hint = "jv")
+  cost <- vc$cost; n <- vc$n; m <- vc$m
   cost_orig <- cost
-  cost_signed <- if (maximize) -cost else cost
-  finite_mask <- is.finite(cost_signed)
-  if (!any(finite_mask)) {
-    stop("`cost` has no finite entries.", call. = FALSE)
-  }
-
-  any_forbidden <- !all(finite_mask)
-
-  # Replace forbidden with a big sentinel for arithmetic safety. With BIG
-  # at any cell, that cell will never win a min(), reduction transfer, or ARR
-  # comparison, so the algorithm just steers around it.
-  scale <- max(abs(cost_signed[finite_mask]))
-  BIG <- (scale + 1) * (n + m + 1)
-  cost_work <- cost_signed
-  cost_work[!finite_mask] <- BIG
+  any_forbidden <- vc$any_forbidden
+  # Forbidden cells carry a big sentinel so they never win a min(), reduction
+  # transfer, or ARR comparison; the algorithm just steers around them.
+  BIG <- vc$big_m
+  cost_work <- vc$cost_work
 
   u <- numeric(n)
   v <- numeric(m)

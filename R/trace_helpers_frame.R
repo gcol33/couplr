@@ -4,14 +4,9 @@
 # Frame and meta constructors used by every R/trace_*.R file. Single source of
 # truth for the on-the-wire shape consumed by inst/htmlwidgets/lap_animate.js.
 #
-# Why these exist: before extraction, the frame field layout was inlined in
-# each trace's local emit() closure - eight near-duplicates that could drift
-# (and would drift the moment we added a new field like alpha or layer). With
-# make_frame(), adding a field is one edit.
-#
-# Per-trace state (matching vectors, duals, prices, scanned sets, ...) still
-# lives in the trace function's lexical scope; make_frame() is only the
-# constructor for one trace frame, called from each trace's local emit().
+# Per-trace state (matching vectors, duals, prices, scanned sets, ...) lives in
+# the trace function's lexical scope; make_frame() is only the constructor for
+# one trace frame, called from each trace's local emit().
 # ==============================================================================
 
 #' Construct a single trace frame
@@ -125,4 +120,44 @@ validate_cost_input <- function(cost, fn_name) {
     stop(sprintf("%s: NaN not allowed in `cost`.", fn_name), call. = FALSE)
   }
   list(cost = cost, n = n, m = m)
+}
+
+#' Validate and prepare a square cost matrix for a trace function
+#'
+#' Combines the empty/non-numeric/NaN check, the square (nrow == ncol)
+#' requirement, and the forbidden-cell big-M substitution used by the dual-based
+#' traces. Returns everything the trace body needs.
+#'
+#' Returns a list with: cost (numeric matrix), n, m, cost_signed (sign-flipped
+#' for maximize), cost_work (big-M for forbidden cells), finite_mask, any_forbidden,
+#' big_m, scale.
+#'
+#' @param solver_hint Method name to suggest in the rectangular-input error
+#'   (e.g. "jv"); if NULL, the suggestion is omitted.
+#' @keywords internal
+#' @noRd
+validate_square_cost <- function(cost, fn_name, maximize = FALSE,
+                                 solver_hint = NULL) {
+  v <- validate_cost_input(cost, fn_name)
+  cost <- v$cost; n <- v$n; m <- v$m
+  if (n != m) {
+    stop(sprintf("%s requires a square cost matrix (nrow == ncol).", fn_name),
+         if (!is.null(solver_hint))
+           sprintf(" For production solving on rectangular inputs use assignment(cost, method = \"%s\") or lap_solve(cost, method = \"%s\").",
+                   solver_hint, solver_hint)
+         else "",
+         call. = FALSE)
+  }
+  pw <- prepare_cost_work(cost, maximize)
+  list(
+    cost          = cost,
+    n             = n,
+    m             = m,
+    cost_signed   = if (maximize) -cost else cost,
+    cost_work     = pw$cost_work,
+    finite_mask   = pw$finite_mask,
+    any_forbidden = !all(pw$finite_mask),
+    big_m         = pw$big_m,
+    scale         = pw$scale
+  )
 }

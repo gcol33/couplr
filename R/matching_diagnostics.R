@@ -4,6 +4,23 @@
 # Functions to assess the quality of matches by comparing distributions
 # of matching variables between left and right units in matched pairs
 
+# Weighted mean and (unbiased) weighted variance/sd. With all weights equal to
+# 1 this reduces exactly to mean() and the n-1 sample variance, so unweighted
+# callers are unaffected.
+.weighted_moments <- function(x, w) {
+  if (length(x) == 0) {
+    return(list(mean = NA_real_, var = NA_real_, sd = NA_real_))
+  }
+  sw <- sum(w)
+  if (sw == 0) {
+    return(list(mean = NA_real_, var = NA_real_, sd = NA_real_))
+  }
+  m <- sum(w * x) / sw
+  denom <- sw^2 - sum(w^2)
+  v <- if (denom > 0) sw / denom * sum(w * (x - m)^2) else NA_real_
+  list(mean = m, var = v, sd = sqrt(v))
+}
+
 #' Calculate Standardized Difference
 #'
 #' Computes the standardized mean difference between two groups.
@@ -24,28 +41,29 @@
 #' balance, 0.25-0.5 is acceptable balance, and greater than 0.5 is poor balance.
 #'
 #' @keywords internal
-standardized_difference <- function(x1, x2, pooled = TRUE) {
-  # Remove NA values
-  x1 <- x1[!is.na(x1)]
-  x2 <- x2[!is.na(x2)]
+standardized_difference <- function(x1, x2, pooled = TRUE, w1 = NULL, w2 = NULL) {
+  if (is.null(w1)) w1 <- rep(1, length(x1))
+  if (is.null(w2)) w2 <- rep(1, length(x2))
+
+  # Remove NA values (in tandem with their weights)
+  ok1 <- !is.na(x1) & !is.na(w1)
+  ok2 <- !is.na(x2) & !is.na(w2)
+  x1 <- x1[ok1]; w1 <- w1[ok1]
+  x2 <- x2[ok2]; w2 <- w2[ok2]
 
   # Handle edge cases
   if (length(x1) == 0 || length(x2) == 0) {
     return(NA_real_)
   }
 
-  mean1 <- mean(x1)
-  mean2 <- mean(x2)
-  mean_diff <- mean1 - mean2
+  m1 <- .weighted_moments(x1, w1)
+  m2 <- .weighted_moments(x2, w2)
+  mean_diff <- m1$mean - m2$mean
 
   if (pooled) {
-    # Pooled standard deviation
-    sd1 <- stats::sd(x1)
-    sd2 <- stats::sd(x2)
-    pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
+    pooled_sd <- sqrt((m1$var + m2$var) / 2)
   } else {
-    # Use group 1 SD
-    pooled_sd <- stats::sd(x1)
+    pooled_sd <- m1$sd
   }
 
   # Avoid division by zero
@@ -62,30 +80,43 @@ standardized_difference <- function(x1, x2, pooled = TRUE) {
 #' @param left_vals Numeric vector of values from left group
 #' @param right_vals Numeric vector of values from right group
 #' @param var_name Character, name of the variable
+#' @param w_left Optional numeric vector of weights for \code{left_vals}
+#'   (e.g. stratum weights from full matching, CEM, or subclassification).
+#'   Defaults to equal weights.
+#' @param w_right Optional numeric vector of weights for \code{right_vals}.
 #'
 #' @return List with balance statistics for this variable
 #'
 #' @keywords internal
-calculate_var_balance <- function(left_vals, right_vals, var_name) {
-  # Remove NAs
-  left_clean <- left_vals[!is.na(left_vals)]
-  right_clean <- right_vals[!is.na(right_vals)]
+calculate_var_balance <- function(left_vals, right_vals, var_name,
+                                  w_left = NULL, w_right = NULL) {
+  if (is.null(w_left)) w_left <- rep(1, length(left_vals))
+  if (is.null(w_right)) w_right <- rep(1, length(right_vals))
 
-  # Basic statistics
-  mean_left <- mean(left_clean)
-  mean_right <- mean(right_clean)
+  # Remove NAs (in tandem with their weights)
+  okL <- !is.na(left_vals) & !is.na(w_left)
+  okR <- !is.na(right_vals) & !is.na(w_right)
+  left_clean <- left_vals[okL];  wl <- w_left[okL]
+  right_clean <- right_vals[okR]; wr <- w_right[okR]
+
+  # Weighted moments (reduce to plain mean/sd when weights are all 1)
+  mL <- .weighted_moments(left_clean, wl)
+  mR <- .weighted_moments(right_clean, wr)
+  mean_left <- mL$mean
+  mean_right <- mR$mean
   mean_diff <- mean_left - mean_right
 
-  sd_left <- stats::sd(left_clean)
-  sd_right <- stats::sd(right_clean)
+  sd_left <- mL$sd
+  sd_right <- mR$sd
 
   # Standardized difference
-  std_diff <- standardized_difference(left_clean, right_clean, pooled = TRUE)
+  std_diff <- standardized_difference(left_clean, right_clean, pooled = TRUE,
+                                      w1 = wl, w2 = wr)
 
-  # Variance ratio
-  var_ratio <- if (!is.na(sd_right) && sd_right > 0) sd_left / sd_right else NA_real_
+  # Variance ratio (left / right), the conventional matching-balance diagnostic
+  var_ratio <- if (!is.na(sd_right) && sd_right > 0) (sd_left / sd_right)^2 else NA_real_
 
-  # Kolmogorov-Smirnov test for distribution similarity
+  # Kolmogorov-Smirnov test for distribution similarity (unweighted)
   ks_result <- tryCatch({
     stats::ks.test(left_clean, right_clean)
   }, error = function(e) NULL)
@@ -147,8 +178,10 @@ calculate_var_balance <- function(left_vals, right_vals, var_name) {
 #' standard deviation. Values less than 0.1 indicate excellent balance,
 #' 0.1-0.25 good balance.
 #'
-#' Variance Ratio: The ratio of standard deviations (left/right).
-#' Values close to 1 are ideal.
+#' Variance Ratio: The ratio of variances (left/right). Values close to 1
+#' are ideal; the conventional acceptable range is 0.5 to 2. For weighted
+#' estimators (full matching, CEM, subclassification) the means and variances
+#' are computed using the stratum weights.
 #'
 #' KS Statistic: Kolmogorov-Smirnov test statistic comparing distributions.
 #' Lower values indicate more similar distributions.
@@ -239,11 +272,13 @@ balance_diagnostics.matching_result <- function(result,
   matched_pairs <- pairs[pairs[[2]] > 0, ]
   n_matched <- nrow(matched_pairs)
 
-  # Count unmatched
+  # Count unmatched. Count distinct matched right units (not pair rows), since
+  # with ratio > 1 or replacement a right unit can appear in several pairs.
   n_unmatched_left <- sum(pairs[[2]] == 0)
   n_total_left <- nrow(left)
   n_total_right <- nrow(right)
-  n_unmatched_right <- n_total_right - n_matched
+  n_matched_right <- length(unique(matched_pairs[[2]]))
+  n_unmatched_right <- n_total_right - n_matched_right
 
   # Join variables for matched pairs
   left_matched <- merge(
@@ -388,14 +423,16 @@ balance_diagnostics.full_matching_result <- function(result,
   left_matched <- left[as.character(left[[left_id]]) %in% left_in$id, ]
   right_matched <- right[as.character(right[[right_id]]) %in% right_in$id, ]
 
-  # Weighted balance: apply group weights
+  # Weighted balance: apply the full-matching group weights on both sides.
+  left_weights <- stats::setNames(left_in$weight, left_in$id)
   right_weights <- stats::setNames(right_in$weight, right_in$id)
 
   var_stats_list <- lapply(vars, function(v) {
     lv <- left_matched[[v]]
     rv <- right_matched[[v]]
-    rw <- right_weights[as.character(right_matched[[right_id]])]
-    calculate_var_balance(lv, rv, v)
+    lw <- unname(left_weights[as.character(left_matched[[left_id]])])
+    rw <- unname(right_weights[as.character(right_matched[[right_id]])])
+    calculate_var_balance(lv, rv, v, w_left = lw, w_right = rw)
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
@@ -439,14 +476,21 @@ balance_diagnostics.cem_result <- function(result,
   if (is.null(vars)) stop("vars must be specified", call. = FALSE)
 
   matched <- result$matched
-  matched_ids_left <- matched$id[matched$side == "left" & matched$weight > 0]
-  matched_ids_right <- matched$id[matched$side == "right" & matched$weight > 0]
+  left_side <- matched[matched$side == "left" & matched$weight > 0, ]
+  right_side <- matched[matched$side == "right" & matched$weight > 0, ]
 
-  left_matched <- left[as.character(left[[left_id]]) %in% matched_ids_left, ]
-  right_matched <- right[as.character(right[[right_id]]) %in% matched_ids_right, ]
+  left_matched <- left[as.character(left[[left_id]]) %in% left_side$id, ]
+  right_matched <- right[as.character(right[[right_id]]) %in% right_side$id, ]
+
+  # CEM stratum weights, applied on both sides.
+  left_weights <- stats::setNames(left_side$weight, left_side$id)
+  right_weights <- stats::setNames(right_side$weight, right_side$id)
 
   var_stats_list <- lapply(vars, function(v) {
-    calculate_var_balance(left_matched[[v]], right_matched[[v]], v)
+    lw <- unname(left_weights[as.character(left_matched[[left_id]])])
+    rw <- unname(right_weights[as.character(right_matched[[right_id]])])
+    calculate_var_balance(left_matched[[v]], right_matched[[v]], v,
+                          w_left = lw, w_right = rw)
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
@@ -497,20 +541,27 @@ balance_diagnostics.subclass_result <- function(result,
   matched <- result$matched
   weighted <- matched[matched$weight > 0, ]
 
-  left_ids <- weighted$id[weighted$side == "left"]
-  right_ids <- weighted$id[weighted$side == "right"]
+  left_side <- weighted[weighted$side == "left", ]
+  right_side <- weighted[weighted$side == "right", ]
 
   if (!is.null(data)) {
-    left_data <- data[as.character(data$id) %in% left_ids, ]
-    right_data <- data[as.character(data$id) %in% right_ids, ]
+    left_data <- data[as.character(data$id) %in% left_side$id, ]
+    right_data <- data[as.character(data$id) %in% right_side$id, ]
   } else {
     stop("data must be provided for subclass_result balance diagnostics",
          call. = FALSE)
   }
 
+  # Subclassification weights, applied on both sides.
+  left_weights <- stats::setNames(left_side$weight, left_side$id)
+  right_weights <- stats::setNames(right_side$weight, right_side$id)
+
   var_stats_list <- lapply(vars, function(v) {
     if (!v %in% names(data)) return(NULL)
-    calculate_var_balance(left_data[[v]], right_data[[v]], v)
+    lw <- unname(left_weights[as.character(left_data$id)])
+    rw <- unname(right_weights[as.character(right_data$id)])
+    calculate_var_balance(left_data[[v]], right_data[[v]], v,
+                          w_left = lw, w_right = rw)
   })
   var_stats_list <- var_stats_list[!sapply(var_stats_list, is.null)]
 
@@ -529,8 +580,8 @@ balance_diagnostics.subclass_result <- function(result,
     overall = overall,
     pairs = NULL,
     n_matched = nrow(weighted),
-    n_unmatched_left = result$info$n_left - length(left_ids),
-    n_unmatched_right = result$info$n_right - length(right_ids),
+    n_unmatched_left = result$info$n_left - nrow(left_side),
+    n_unmatched_right = result$info$n_right - nrow(right_side),
     n_total_left = result$info$n_left,
     n_total_right = result$info$n_right,
     method = "subclassification",

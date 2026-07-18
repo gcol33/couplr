@@ -66,9 +66,13 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
   # Convert to list of matrices
   matrices <- NULL
   if (is.array(x) && length(dim(x)) == 3) {
-    # 3D array
-    n_problems <- dim(x)[3]
-    matrices <- lapply(seq_len(n_problems), function(i) x[, , i])
+    # 3D array. Reshape each slice explicitly so problems with a singleton
+    # row or column dimension keep their orientation (x[, , i] would drop it).
+    d <- dim(x)
+    n_problems <- d[3]
+    matrices <- lapply(seq_len(n_problems), function(i) {
+      matrix(x[, , i], nrow = d[1], ncol = d[2])
+    })
   } else if (is.list(x)) {
     # List of matrices
     matrices <- lapply(x, as.matrix)

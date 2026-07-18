@@ -73,37 +73,6 @@
 #' Convert planar RGB vector (RRR...GGG...BBB...) back to H x W x 3 array
 #' @noRd
 .from_planar_rgb <- function(planar, H, W) {
-  H <- as.integer(H)
-  W <- as.integer(W)
-  N <- H * W
-
-  if (length(planar) != 3L * N) {
-    stop(
-      sprintf(
-        ".from_planar_rgb: expected length %d (3 * %d * %d), got %d",
-        3L * N, H, W, length(planar)
-      ),
-      call. = FALSE
-    )
-  }
-
-  arr <- array(0, dim = c(H, W, 3L))
-
-  for (ch in 1:3) {
-    offset <- (ch - 1L) * N
-    block  <- planar[(offset + 1L):(offset + N)]
-    # as.vector() in .to_planar_rgb used column-major;
-    # so we reconstruct with byrow = FALSE
-    arr[,, ch] <- matrix(block, nrow = H, ncol = W, byrow = FALSE)
-  }
-
-  arr
-}
-
-
-#' Convert planar format back to H x W x 3 array
-#' @noRd
-.from_planar_rgb <- function(planar, H, W) {
   HW <- as.integer(H) * as.integer(W)
   if (!is.numeric(planar) || length(planar) != HW * 3L) {
     stop("planar data has wrong length; expected ", HW * 3L)
@@ -296,9 +265,6 @@
   .lap_assign(C, method = method, maximize = maximize) + 1L
 }
 
-# NOTE: .patch_cost_and_solve() has been removed and replaced with
-# .square_tiling_solver() in pixel_morph.R which is much more efficient
-
 # -------------------------------------------------------------------
 # Palette pipelines
 # -------------------------------------------------------------------
@@ -332,7 +298,7 @@
   assign
 }
 
-# Identity fill helper (kept, though color_walk will not use it)
+# Identity fill helper
 .fill_unassigned_identity <- function(assign) {
   N <- length(assign)
   z <- which(assign < 0L)
@@ -476,7 +442,7 @@
   as.integer(assignment)  # return 1-based indices
 }
 
-# Identity palette pipeline (kept for completeness; not used in auto)
+# Identity palette pipeline
 .solve_color_match_pipeline <- function(A_planar, B_planar, H, W, quantize_bits = 5,
                                         method = "jv", maximize = FALSE,
                                         fill_identity_for_unmatched = TRUE) {
@@ -487,20 +453,6 @@
   if (fill_identity_for_unmatched) assign <- .fill_unassigned_identity(assign)
   assign
 }
-
-# -------------------------------------------------------------------
-# Hierarchical patch matching functions REMOVED
-# -------------------------------------------------------------------
-# The following inefficient functions have been removed:
-# - .extract_patches_at_size() - replaced by square tiling
-# - .extract_hierarchical_patches() - replaced by .generate_square_tiles()
-# - .match_patches_at_size() - replaced by .solve_tile_lap()
-# - .expand_patch_assignment_spatial() - replaced by local LAP per tile
-# - .solve_hierarchical_patch_pipeline() - replaced by .square_tiling_solver()
-#
-# These functions used global LAPs with O(n^3) complexity and have been
-# replaced with efficient local LAP solving in pixel_morph.R
-# -------------------------------------------------------------------
 
 # small infix helper
 `%||%` <- function(a, b) if (!is.null(a)) a else b

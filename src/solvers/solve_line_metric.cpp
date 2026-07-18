@@ -37,7 +37,7 @@ inline double compute_cost(double diff, CostType cost_type) {
     return (cost_type == CostType::L1) ? abs_diff : (abs_diff * abs_diff);
 }
 
-// Sort indices by values
+// Sort indices by values (ascending)
 std::vector<int> argsort(const std::vector<double>& vec) {
     std::vector<int> indices(vec.size());
     for (size_t i = 0; i < vec.size(); ++i) {
@@ -45,6 +45,17 @@ std::vector<int> argsort(const std::vector<double>& vec) {
     }
     std::sort(indices.begin(), indices.end(),
               [&vec](int i, int j) { return vec[i] < vec[j]; });
+    return indices;
+}
+
+// Sort indices by values (descending)
+std::vector<int> argsort_desc(const std::vector<double>& vec) {
+    std::vector<int> indices(vec.size());
+    for (size_t i = 0; i < vec.size(); ++i) {
+        indices[i] = static_cast<int>(i);
+    }
+    std::sort(indices.begin(), indices.end(),
+              [&vec](int i, int j) { return vec[i] > vec[j]; });
     return indices;
 }
 
@@ -71,16 +82,20 @@ LapResult solve_line_metric(const std::vector<double>& x,
     // Parse cost type
     CostType cost_type = parse_cost_type(cost_str);
 
-    // Get sorted indices
+    // Get sorted indices. The min-cost matching on a line is monotone
+    // (non-crossing), so both x and y are sorted ascending. The max-cost
+    // matching is anti-monotone, so y is sorted descending; the same
+    // order-preserving DP over the descending y ordering then explores exactly
+    // the anti-monotone matchings.
     std::vector<int> xi = argsort(x);
-    std::vector<int> yi = argsort(y);
+    std::vector<int> yi = maximize ? argsort_desc(y) : argsort(y);
 
     // Create sorted arrays
     std::vector<double> xs(n), ys(m);
     for (int i = 0; i < n; ++i) xs[i] = x[xi[i]];
     for (int j = 0; j < m; ++j) ys[j] = y[yi[j]];
 
-    // Handle square case (n == m) - simple sorted matching
+    // Handle square case (n == m) - direct order matching in the chosen ordering
     if (n == m) {
         double total = 0.0;
         for (int i = 0; i < n; ++i) {
@@ -95,15 +110,15 @@ LapResult solve_line_metric(const std::vector<double>& x,
             assignment[i_orig] = j_orig;  // 0-based
         }
 
-        if (maximize) total = -total;
         return LapResult(std::move(assignment), total, "optimal");
     }
 
-    // Rectangular case (n < m) - dynamic programming
-    const double INF = std::numeric_limits<double>::infinity();
-
-    // DP table: dp[i][j] = minimum cost to match first i elements of x to first j elements of y
-    std::vector<std::vector<double>> dp(n + 1, std::vector<double>(m + 1, INF));
+    // Rectangular case (n < m) - dynamic programming.
+    // dp[i][j] = best (min or max) cost to match first i elements of x to a
+    // subsequence of the first j elements of the (ordered) y array.
+    const double WORST = maximize ? -std::numeric_limits<double>::infinity()
+                                  :  std::numeric_limits<double>::infinity();
+    std::vector<std::vector<double>> dp(n + 1, std::vector<double>(m + 1, WORST));
 
     // Base case: 0 elements of x can be matched to any number of y elements with 0 cost
     for (int j = 0; j <= m; ++j) {
@@ -120,7 +135,7 @@ LapResult solve_line_metric(const std::vector<double>& x,
             double match_cost = compute_cost(xs[i - 1] - ys[j - 1], cost_type);
             double alt = dp[i - 1][j - 1] + match_cost;
 
-            if (alt < dp[i][j]) {
+            if (maximize ? (alt > dp[i][j]) : (alt < dp[i][j])) {
                 dp[i][j] = alt;
             }
         }
@@ -154,7 +169,6 @@ LapResult solve_line_metric(const std::vector<double>& x,
         assignment[i_orig] = j_orig;  // 0-based
     }
 
-    if (maximize) total = -total;
     return LapResult(std::move(assignment), total, "optimal");
 }
 

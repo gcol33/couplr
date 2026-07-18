@@ -10,6 +10,7 @@
 #include <queue>
 #include <map>
 #include <algorithm>
+#include <functional>
 #include <limits>
 // stdexcept removed - use LAP_ERROR() instead
 // #include <iostream>  // Removed for CRAN compliance (no std::cerr allowed)
@@ -1460,18 +1461,34 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
     }
     
     if (C_max == 0) {
-        // All costs are equal after scaling
+        // All allowed edges have equal (zero) scaled cost, so any perfect
+        // matching over the allowed edges is optimal. Find a maximum-cardinality
+        // matching via augmenting paths rather than assuming the diagonal is
+        // available -- a forbidden diagonal would otherwise leave units
+        // unmatched even when a perfect matching exists.
         row_match.assign(n, NIL);
         col_match.assign(m, NIL);
         y_u.assign(n, min_cost);
         y_v.assign(m, 0);
-        
-        // Find any perfect matching
-        for (int i = 0; i < n && i < m; ++i) {
-            if (cost[i][i] < BIG_INT) {
-                row_match[i] = i;
-                col_match[i] = i;
+
+        std::vector<char> seen(m);
+        std::function<bool(int)> try_augment = [&](int u) -> bool {
+            for (int v = 0; v < m; ++v) {
+                if (cost[u][v] < BIG_INT && !seen[v]) {
+                    seen[v] = 1;
+                    if (col_match[v] == NIL || try_augment(col_match[v])) {
+                        row_match[u] = v;
+                        col_match[v] = u;
+                        return true;
+                    }
+                }
             }
+            return false;
+        };
+
+        for (int u = 0; u < n; ++u) {
+            std::fill(seen.begin(), seen.end(), 0);
+            try_augment(u);
         }
         return;
     }

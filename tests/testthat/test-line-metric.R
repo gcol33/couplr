@@ -143,17 +143,36 @@ test_that("line_metric cost aliases work correctly", {
   expect_equal(r4$total_cost, r7$total_cost)
 })
 
-test_that("line_metric maximize parameter works", {
+test_that("line_metric maximize returns the true maximum-weight matching", {
+  # All injective maps 1..n -> 1..m
+  injections <- function(n, m) {
+    res <- list()
+    rec <- function(prefix, used) {
+      if (length(prefix) == n) { res[[length(res) + 1L]] <<- prefix; return() }
+      for (j in setdiff(seq_len(m), used)) rec(c(prefix, j), c(used, j))
+    }
+    rec(integer(0), integer(0))
+    res
+  }
+  cost_fn <- function(a, b, type) if (type == "L2") (a - b)^2 else abs(a - b)
+
+  check <- function(x, y, type) {
+    maps <- injections(length(x), length(y))
+    totals <- vapply(maps, function(p) sum(cost_fn(x, y[p], type)), numeric(1))
+    r_min <- lap_solve_line_metric(x, y, cost = type, maximize = FALSE)
+    r_max <- lap_solve_line_metric(x, y, cost = type, maximize = TRUE)
+    expect_equal(r_min$total_cost, min(totals), tolerance = 1e-9)
+    expect_equal(r_max$total_cost, max(totals), tolerance = 1e-9)
+    expect_gte(r_max$total_cost, r_min$total_cost)
+  }
+
   set.seed(654)
-  x <- runif(4, -5, 5)
-  y <- runif(4, -5, 5)
-  
-  r_min <- lap_solve_line_metric(x, y, cost = "L1", maximize = FALSE)
-  r_max <- lap_solve_line_metric(x, y, cost = "L1", maximize = TRUE)
-  
-  # Maximizing should give the negative of minimizing the negated costs
-  # For distance-based costs, this means we want the WORST matching
-  expect_equal(r_min$total_cost, -r_max$total_cost, tolerance = 1e-10)
+  # Square case (n == m)
+  check(runif(5, -5, 5), runif(5, -5, 5), "L1")
+  check(runif(5, -5, 5), runif(5, -5, 5), "L2")
+  # Rectangular case (n < m)
+  check(runif(3, -5, 5), runif(6, -5, 5), "L1")
+  check(runif(3, -5, 5), runif(6, -5, 5), "L2")
 })
 
 test_that("line_metric handles edge cases", {

@@ -86,13 +86,15 @@ compute_distances <- function(left, right,
     stop("Variables not found in both datasets: ", paste(missing_vars, collapse = ", "))
   }
 
-  # Apply auto-scaling if requested
+  # Apply auto-scaling if requested. preprocess_matching_vars() only *selects*
+  # a scaling method and prunes unhealthy variables; the scaling itself is
+  # applied by build_cost_matrix() below, so we forward the chosen method as
+  # `scale` rather than pretending the data is already scaled.
   if (auto_scale) {
     preprocess_result <- preprocess_matching_vars(left, right, vars, scale_method = "auto")
-    left <- preprocess_result$left
-    right <- preprocess_result$right
-    vars <- preprocess_result$vars_kept
-    scale <- FALSE  # Already scaled
+    vars <- preprocess_result$vars
+    auto_method <- preprocess_result$scaling_method
+    scale <- if (identical(auto_method, "none")) FALSE else auto_method
   }
 
   # Extract IDs

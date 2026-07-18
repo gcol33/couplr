@@ -275,12 +275,13 @@
   row_map <- rep(seq_len(n_left), each = ratio)
   expanded_cost <- cost_matrix[row_map, , drop = FALSE]
 
-  # Solve the expanded problem
-  solver_result <- do.call(solver_fn, c(list(expanded_cost, maximize = FALSE),
-                                        solver_params))
-
-  # Extract matches and map back to original left indices
-  matched_exp_rows <- which(solver_result$match > 0)
+  # Solve the expanded problem, pruning all-forbidden rows/cols and falling back
+  # to greedy on infeasibility, exactly as the 1:1 path does. Solving directly
+  # would hard-error when constraints forbid every edge of some left unit.
+  solved <- .solve_with_partial_feasibility(expanded_cost, solver_fn,
+                                            solver_params)
+  solver_result <- solved$result
+  matched_exp_rows <- solved$matched_rows
 
   if (length(matched_exp_rows) == 0) {
     pairs <- tibble::tibble(
@@ -290,7 +291,7 @@
     matched_cols <- integer(0)
   } else {
     original_rows <- row_map[matched_exp_rows]
-    matched_cols <- solver_result$match[matched_exp_rows]
+    matched_cols <- solved$matched_cols
 
     # Get distances from original cost matrix
     distances <- vapply(seq_along(matched_exp_rows), function(i) {
@@ -326,7 +327,7 @@
       right = right_ids[unmatched_right]
     ),
     info = list(
-      solver = solver_result$method_used,
+      solver = if (!is.null(solver_result)) solver_result$method_used else NA_character_,
       n_matched = nrow(pairs),
       total_distance = sum(pairs$distance, na.rm = TRUE),
       ratio = ratio

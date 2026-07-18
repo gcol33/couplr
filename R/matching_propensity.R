@@ -94,7 +94,9 @@ ps_match <- function(formula = NULL,
   }
 
   # --- Compute propensity scores ---
-  ps <- stats::predict(ps_model, type = "response")
+  # Predict on `data` explicitly so a pre-fitted ps_model (possibly fit on a
+  # differently ordered or subset frame) produces scores aligned to these rows.
+  ps <- stats::predict(ps_model, newdata = data, type = "response")
 
   # Clip extreme values to avoid Inf logit
   ps <- pmax(ps, 1e-6)

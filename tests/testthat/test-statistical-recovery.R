@@ -1,0 +1,115 @@
+# Parameter-recovery / correctness tests for the statistical (causal-inference)
+# layer: propensity matching, subclassification weights, weighted balance, and
+# Rosenbaum sensitivity pairing. These validate the methods against known truth,
+# not just object structure.
+
+test_that("sensitivity_analysis pairs outcomes by the true matched pairing", {
+  # Correct pairing (row-wise) vs the pairing you get from sorting each side's
+  # ids independently give DIFFERENT Wilcoxon T+, so t_observed pins down which
+  # pairing was used.
+  left <- data.frame(id = c("L1", "L2", "L3", "L4"),
+                     y = c(41, 32, 23, 14), stringsAsFactors = FALSE)
+  right <- data.frame(id = c("R1", "R2", "R3", "R4"),
+                      y = c(10, 20, 30, 40), stringsAsFactors = FALSE)
+  # True pairs: L1-R4, L2-R3, L3-R2, L4-R1  ->  d = 1, 2, 3, 4 (all positive)
+  res <- structure(
+    list(pairs = tibble::tibble(left_id = c("L1", "L2", "L3", "L4"),
+                                right_id = c("R4", "R3", "R2", "R1"))),
+    class = "matching_result"
+  )
+
+  sa <- sensitivity_analysis(res, left, right, outcome_var = "y")
+
+  # Correct pairing: every d > 0, so T+ = sum of ranks 1..4 = 10.
+  # The sorted-merge bug would pair L*-R* by sorted id, giving d = 31,12,-7,-26
+  # and T+ = 6.
+  expect_equal(sa$t_observed, 10)
+  expect_equal(sa$n_pairs, 4)
+})
+
+test_that("prefitted propensity model is applied to the supplied data rows", {
+  set.seed(1)
+  n <- 300
+  d <- data.frame(id = 1:n, x = rnorm(n))
+  d$treat <- rbinom(n, 1, stats::plogis(-0.4 + 1.4 * d$x))
+
+  # Same model, but one is fit on a row-permuted copy of the data. glm
+  # coefficients are order-invariant, so predict(newdata = d) is identical for
+  # both -> the two matchings must be identical. Using the model's own fitted
+  # values (in training-row order) would misalign the shuffled fit.
+  m       <- stats::glm(treat ~ x, data = d, family = stats::binomial())
+  d_shuf  <- d[sample(n), ]
+  m_shuf  <- stats::glm(treat ~ x, data = d_shuf, family = stats::binomial())
+
+  r1 <- suppressWarnings(ps_match(data = d, treatment = "treat", ps_model = m))
+  r2 <- suppressWarnings(ps_match(data = d, treatment = "treat", ps_model = m_shuf))
+
+  expect_equal(r1$pairs, r2$pairs)
+})
+
+test_that("propensity matching reduces covariate imbalance", {
+  set.seed(2)
+  n <- 400
+  d <- data.frame(id = 1:n, x = rnorm(n))
+  d$treat <- rbinom(n, 1, stats::plogis(-0.3 + 1.6 * d$x))
+
+  pre <- couplr:::standardized_difference(d$x[d$treat == 1], d$x[d$treat == 0])
+
+  r <- suppressWarnings(ps_match(formula = treat ~ x, data = d, treatment = "treat"))
+  tr_x <- d$x[match(r$pairs$left_id, d$id)]
+  ct_x <- d$x[match(r$pairs$right_id, d$id)]
+  post <- couplr:::standardized_difference(tr_x, ct_x)
+
+  expect_lt(abs(post), abs(pre))
+})
+
+test_that("ATE subclass weights sum to the stratum fraction within each arm", {
+  set.seed(5)
+  n <- 400
+  dat <- data.frame(id = 1:n, x = rnorm(n))
+  dat$treat <- rbinom(n, 1, stats::plogis(0.8 * dat$x))
+
+  sc <- subclass_match(formula = treat ~ x, data = dat, treatment = "treat",
+                       estimand = "ATE", n_subclasses = 5)
+  mt <- sc$matched
+  N <- n
+
+  # For ATE, within each overlapping subclass the weights of each arm sum to
+  # n_k / N (the stratum fraction). The old n_k^2 / N formula fails this.
+  for (k in unique(mt$subclass)) {
+    ink <- mt[mt$subclass == k, ]
+    left_w  <- sum(ink$weight[ink$side == "left"])
+    right_w <- sum(ink$weight[ink$side == "right"])
+    if (left_w > 0 && right_w > 0) {  # overlapping stratum
+      frac <- nrow(ink) / N
+      expect_equal(left_w, frac, tolerance = 1e-6)
+      expect_equal(right_w, frac, tolerance = 1e-6)
+    }
+  }
+  # Arm totals sum to 1.
+  expect_equal(sum(mt$weight[mt$side == "left"]), 1, tolerance = 1e-6)
+})
+
+test_that("balance_diagnostics uses subclass weights (weighted means)", {
+  set.seed(7)
+  n <- 300
+  dat <- data.frame(id = 1:n, x = rnorm(n))
+  dat$treat <- rbinom(n, 1, stats::plogis(0.9 * dat$x))
+
+  sc <- subclass_match(formula = treat ~ x, data = dat, treatment = "treat",
+                       estimand = "ATE", n_subclasses = 5)
+  bal <- balance_diagnostics(sc, data = dat, vars = "x")
+  vs <- bal$var_stats[bal$var_stats$variable == "x", ]
+
+  # Expected weighted mean of x on the left (treated) arm, computed by hand.
+  mt <- sc$matched
+  left_w <- mt[mt$side == "left" & mt$weight > 0, ]
+  wx <- stats::setNames(left_w$weight, left_w$id)
+  ids <- as.character(dat$id) %in% left_w$id
+  xl <- dat$x[ids]
+  w  <- unname(wx[as.character(dat$id[ids])])
+  expected_weighted_mean <- sum(w * xl) / sum(w)
+
+  expect_equal(vs$mean_left, expected_weighted_mean, tolerance = 1e-6)
+  # The unweighted mean generally differs, so this would fail if weights were ignored.
+})

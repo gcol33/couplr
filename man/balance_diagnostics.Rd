@@ -88,8 +88,10 @@ Standardized Difference: The difference in means divided by the pooled
 standard deviation. Values less than 0.1 indicate excellent balance,
 0.1-0.25 good balance.
 
-Variance Ratio: The ratio of standard deviations (left/right).
-Values close to 1 are ideal.
+Variance Ratio: The ratio of variances (left/right). Values close to 1
+are ideal; the conventional acceptable range is 0.5 to 2. For weighted
+estimators (full matching, CEM, subclassification) the means and variances
+are computed using the stratum weights.
 
 KS Statistic: Kolmogorov-Smirnov test statistic comparing distributions.
 Lower values indicate more similar distributions.

@@ -4,7 +4,13 @@
 \alias{calculate_var_balance}
 \title{Calculate Variable-Level Balance Statistics}
 \usage{
-calculate_var_balance(left_vals, right_vals, var_name)
+calculate_var_balance(
+  left_vals,
+  right_vals,
+  var_name,
+  w_left = NULL,
+  w_right = NULL
+)
 }
 \arguments{
 \item{left_vals}{Numeric vector of values from left group}
@@ -12,6 +18,12 @@ calculate_var_balance(left_vals, right_vals, var_name)
 \item{right_vals}{Numeric vector of values from right group}
 
 \item{var_name}{Character, name of the variable}
+
+\item{w_left}{Optional numeric vector of weights for \code{left_vals}
+(e.g. stratum weights from full matching, CEM, or subclassification).
+Defaults to equal weights.}
+
+\item{w_right}{Optional numeric vector of weights for \code{right_vals}.}
 }
 \value{
 List with balance statistics for this variable

@@ -90,18 +90,14 @@ sensitivity_analysis <- function(result,
     stop("No matched pairs to analyze", call. = FALSE)
   }
 
-  # Merge outcomes
-  left_outcomes <- merge(
-    data.frame(left_id = pairs$left_id, stringsAsFactors = FALSE),
-    left[, c(left_id, outcome_var), drop = FALSE],
-    by.x = "left_id", by.y = left_id, all.x = TRUE
-  )[[outcome_var]]
-
-  right_outcomes <- merge(
-    data.frame(right_id = pairs$right_id, stringsAsFactors = FALSE),
-    right[, c(right_id, outcome_var), drop = FALSE],
-    by.x = "right_id", by.y = right_id, all.x = TRUE
-  )[[outcome_var]]
+  # Look up outcomes by ID, preserving the row-wise pair correspondence stored
+  # in `pairs` (left_id[i] is matched to right_id[i]). Keyed lookup rather than
+  # two independent merges, which would each sort by their own key and mis-pair
+  # the differences.
+  left_lookup <- stats::setNames(left[[outcome_var]], as.character(left[[left_id]]))
+  right_lookup <- stats::setNames(right[[outcome_var]], as.character(right[[right_id]]))
+  left_outcomes <- unname(left_lookup[as.character(pairs$left_id)])
+  right_outcomes <- unname(right_lookup[as.character(pairs$right_id)])
 
   # Pair differences
   d <- left_outcomes - right_outcomes

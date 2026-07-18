@@ -1,3 +1,90 @@
+# couplr 1.4.2
+
+## Bug fixes (statistical / causal-inference layer)
+
+* **`sensitivity_analysis()` no longer scrambles matched pairs.** Outcomes
+  were assembled with two independent `merge()` calls, each sorted by its
+  own key, so the pair difference subtracted outcomes from mismatched
+  pairs and every downstream quantity (Wilcoxon T+, Rosenbaum bounds,
+  critical gamma) was computed on a scrambled pairing. Outcomes are now
+  looked up by ID, preserving the row-wise pair correspondence (#4).
+
+* **`subclass_match(estimand = "ATE")` weights corrected.** ATE subclass
+  weights carried an extra factor of the stratum size, over-weighting large
+  subclasses quadratically. A treated unit in subclass k now carries
+  `(n_k / N) / n_t` as intended; ATT and ATC were already correct (#5).
+
+* **`balance_diagnostics()` now applies stratum weights for full matching,
+  CEM, and subclassification.** The weights were computed and discarded, so
+  standardized differences were unweighted for the very estimators whose
+  balance is achieved through weighting. Weighted mean, variance, and
+  standardized difference are now used on both sides. Also: the variance
+  ratio is now a true ratio of variances (matching the conventional 0.5-2
+  bounds) rather than a ratio of standard deviations, and the unmatched
+  right-unit count no longer goes negative under `ratio > 1` / `replace`
+  (it counts distinct matched right units, not pair rows) (#6).
+
+## Bug fixes (solvers)
+
+* **`lap_solve_line_metric(maximize = TRUE)` now returns the true
+  maximum-weight matching.** The DP always built the sorted (minimum-cost)
+  pairing and merely negated the total; on a line the maximum-weight
+  matching is the anti-monotone pairing. The DP now runs against the
+  descending target ordering and returns that assignment and its true
+  total (#8).
+
+* **`gabow_tarjan` returns a perfect matching when the diagonal is
+  forbidden.** The `C_max == 0` fast path assigned the diagonal without
+  checking feasibility, returning an empty matching when the diagonal cells
+  were forbidden but a perfect matching existed. It now finds a
+  maximum-cardinality matching over the allowed edges via augmenting
+  paths (#9).
+
+## Bug fixes (front doors and input handling)
+
+* **`compute_distances(auto_scale = TRUE)` now scales.** It read a
+  nonexistent field (making `vars` `NULL`) and disabled scaling under the
+  belief it had already happened. It now reads the selected variables and
+  forwards the chosen scaling method to the cost builder (#7).
+
+* **Pre-fitted propensity models predict on the supplied data.**
+  `ps_match()` and `subclass_match()` called `predict()` without
+  `newdata =`, so a `ps_model` fitted on a differently ordered or subset
+  frame attached scores to the wrong rows. They now pass
+  `newdata = data` (#10).
+
+* **`match_couples(ratio > 1)` falls back to a partial match on
+  infeasibility.** The `ratio > 1` path called the solver directly and hard
+  errored when constraints forbade every edge of some unit, whereas the 1:1
+  path returned a partial matching. Both paths now share the same
+  partial-feasibility / greedy fallback (#10).
+
+* **`lap_solve()` honors the `forbidden` sentinel for matrix input, and
+  `lap_solve_batch()` preserves singleton-dimension orientation.** The
+  matrix path silently ignored a non-`NA` `forbidden`; it now masks matching
+  cells as forbidden. A 3-D array slice with a singleton row or column
+  dimension was dropped to a vector and transposed; slices are now reshaped
+  explicitly (#11).
+
+## Robustness (C++ solver hardening)
+
+* Guarded against silently wrong results and crashes at extreme scale:
+  `ssap_bucket` now errors clearly when cost magnitudes exceed what the
+  integer-bucket solver can represent (rather than overflowing the sentinel
+  or allocating an enormous bucket queue); the network-simplex iteration
+  bound is computed in 64-bit (it overflowed a 32-bit `int` and could return
+  the greedy initial matching); the brute-force solver caps total
+  enumeration work instead of running unbounded in the number of columns;
+  and `solve_sinkhorn()` reports the correct iteration count on
+  non-convergence (#13).
+
+## Tests
+
+* Added a parameter-recovery suite for the statistical layer
+  (`test-statistical-recovery.R`): sensitivity pair alignment, prefitted-PS
+  row alignment, propensity-matching imbalance reduction, ATE subclass
+  weight values, and weighted-balance means (#14).
+
 # couplr 1.4.1
 
 ## Bug fixes (solver stalls on constrained matching)

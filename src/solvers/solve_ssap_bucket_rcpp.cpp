@@ -242,7 +242,24 @@ Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize) {
   
   auto [scale, success] = find_scale_factor(abs_vals);
   (void)success;
-  
+
+  // Guard against cost magnitudes this integer-bucket solver cannot handle:
+  // the int cost matrix would overflow / collide with the INF_INT sentinel,
+  // and Dial's bucket queue allocates one bucket per distance unit up to
+  // ~n * max_cost. Throw a clear error rather than silently returning wrong.
+  {
+    long long max_scaled = 0;
+    for (double v : finite_vals) {
+      long long s = (long long)std::llround((v + shift) * (double)scale);
+      if (s > max_scaled) max_scaled = s;
+    }
+    const long long BUCKET_BUDGET = 100000000LL;  // 1e8
+    if (max_scaled >= INF_INT || (long long)n * max_scaled > BUCKET_BUDGET) {
+      Rcpp::stop("ssap_bucket: cost magnitudes too large for the integer "
+                 "bucket solver; use method = 'jv' or 'auction'");
+    }
+  }
+
   // Build integer cost matrix: shift then scale
   std::vector<std::vector<int>> CI(n, std::vector<int>(m, INF_INT));
   for (int i = 0; i < n; ++i) {

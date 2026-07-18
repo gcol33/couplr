@@ -115,7 +115,9 @@ subclass_match <- function(formula = NULL,
     if (is.null(ps_model)) {
       ps_model <- stats::glm(formula, data = data, family = stats::binomial())
     }
-    ps <- stats::predict(ps_model, type = "response")
+    # Predict on `data` explicitly so a pre-fitted ps_model produces scores
+    # aligned to these rows rather than the model's original training frame.
+    ps <- stats::predict(ps_model, newdata = data, type = "response")
   }
 
   if (length(ps) != nrow(data)) {
@@ -171,10 +173,12 @@ subclass_match <- function(formula = NULL,
         weight[treated_in_k] <- 1
         weight[control_in_k] <- n_t / n_c
       } else if (estimand == "ATE") {
-        # Weight so each subclass contributes proportionally to its size
+        # Each subclass contributes proportionally to its size (n_k / N). Within
+        # the subclass a unit's weight is that stratum fraction spread over the
+        # units of its treatment arm, so the arm's weights sum to n_k / N.
         stratum_frac <- length(in_k) / n_total
-        weight[treated_in_k] <- stratum_frac * (length(in_k) / n_t)
-        weight[control_in_k] <- stratum_frac * (length(in_k) / n_c)
+        weight[treated_in_k] <- stratum_frac / n_t
+        weight[control_in_k] <- stratum_frac / n_c
       } else {
         # ATC
         weight[control_in_k] <- 1

@@ -43,8 +43,10 @@ static Rcpp::List lap_result_to_rcpp(const lap::LapResult& result,
         }
     }
 
-    if (maximize) total = -total;
-
+    // total is the actual matched cost sum; for maximize this is already the
+    // maximum achievable (the assignment is the anti-monotone one), so it is
+    // returned as-is rather than negated.
+    (void)maximize;
     return make_result(match, total);
 }
 

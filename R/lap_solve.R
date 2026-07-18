@@ -307,7 +307,13 @@ lap_solve <- function(x, source = NULL, target = NULL, cost = NULL,
   
   # Handle matrix input
   cost_matrix <- as.matrix(x)
-  
+
+  # Honor a non-NA `forbidden` sentinel by masking matching cells as forbidden.
+  # (NA/Inf cells are already treated as forbidden by assignment().)
+  if (!is.na(forbidden)) {
+    cost_matrix[cost_matrix == forbidden] <- Inf
+  }
+
   # Call the underlying assignment function
   result <- assignment(cost_matrix, maximize = maximize, method = method)
   

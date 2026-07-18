@@ -25,7 +25,6 @@ License: MIT + file LICENSE
 Language: en-US
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -74,3 +73,4 @@ VignetteBuilder: knitr
 URL: https://gillescolling.com/couplr/, https://github.com/gcol33/couplr
 BugReports: https://github.com/gcol33/couplr/issues
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

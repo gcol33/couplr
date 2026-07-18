@@ -258,7 +258,7 @@ test_that("push_relabel errors on infeasible problem", {
   # Row 1 has no valid assignments
   cost <- matrix(c(Inf, Inf, Inf, 1, 2, 3, 4, 5, 6), nrow = 3, byrow = TRUE)
 
-  expect_error(assignment(cost, method = "push_relabel"), "no valid")
+  expect_error(assignment(cost, method = "push_relabel"), "Infeasible")
 })
 
 test_that("push_relabel handles integer costs", {

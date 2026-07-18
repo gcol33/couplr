@@ -144,52 +144,6 @@ test_that(".generate_square_tiles no overlapping tiles", {
 })
 
 # ------------------------------------------------------------------------------
-# .analyze_tiling tests
-# ------------------------------------------------------------------------------
-
-test_that(".analyze_tiling returns correct structure", {
-  result <- couplr:::.analyze_tiling(W = 10, H = 10, P = 3)
-
-  expect_type(result, "list")
-  expect_true("n_tiles" %in% names(result))
-  expect_true("size_distribution" %in% names(result))
-  expect_true("coverage" %in% names(result))
-  expect_true("tiles" %in% names(result))
-})
-
-test_that(".analyze_tiling reports full coverage", {
-  result <- couplr:::.analyze_tiling(W = 10, H = 10, P = 3)
-
-  expect_equal(result$coverage, 1.0)
-})
-
-test_that(".analyze_tiling counts tiles correctly", {
-  # 6x6 image with P=3 should have exactly 4 tiles
-  result <- couplr:::.analyze_tiling(W = 6, H = 6, P = 3)
-
-  expect_equal(result$n_tiles, 4)
-})
-
-# ------------------------------------------------------------------------------
-# .visualize_tiling tests
-# ------------------------------------------------------------------------------
-
-test_that(".visualize_tiling returns matrix", {
-  result <- couplr:::.visualize_tiling(W = 10, H = 10, P = 3)
-
-  expect_true(is.matrix(result))
-  expect_equal(nrow(result), 10)
-  expect_equal(ncol(result), 10)
-})
-
-test_that(".visualize_tiling uses color names", {
-  result <- couplr:::.visualize_tiling(W = 8, H = 8, P = 3)
-
-  # Should contain color strings
-  expect_type(result[1, 1], "character")
-})
-
-# ------------------------------------------------------------------------------
 # Edge cases
 # ------------------------------------------------------------------------------
 

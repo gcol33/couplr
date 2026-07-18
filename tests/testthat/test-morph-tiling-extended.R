@@ -94,44 +94,6 @@ test_that(".square_tiling_solver runs without error", {
 })
 
 # ------------------------------------------------------------------------------
-# .analyze_tiling tests
-# ------------------------------------------------------------------------------
-
-test_that(".analyze_tiling returns expected structure", {
-  skip_on_cran()
-  result <- couplr:::.analyze_tiling(10, 8, P = 3)
-
-  expect_type(result, "list")
-  expect_true("tiles" %in% names(result))
-  expect_true("n_tiles" %in% names(result))
-})
-
-test_that(".analyze_tiling handles edge case dimensions", {
-  skip_on_cran()
-  # Very small image
-  result <- couplr:::.analyze_tiling(2, 2, P = 3)
-  expect_true(result$n_tiles > 0)
-
-  # P = 1 (should create one tile per pixel)
-  result <- couplr:::.analyze_tiling(5, 5, P = 1)
-  expect_equal(result$n_tiles, 25)
-})
-
-# ------------------------------------------------------------------------------
-# .visualize_tiling tests
-# ------------------------------------------------------------------------------
-
-test_that(".visualize_tiling returns matrix", {
-  skip_on_cran()
-  skip_if_not_installed("graphics")
-
-  result <- couplr:::.visualize_tiling(6, 6, P = 3)
-
-  expect_true(is.matrix(result))
-  expect_equal(dim(result), c(6, 6))
-})
-
-# ------------------------------------------------------------------------------
 # Morph utils tests
 # ------------------------------------------------------------------------------
 

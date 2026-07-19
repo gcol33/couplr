@@ -1,35 +1,23 @@
-## Release notes (1.4.1)
+## Release notes (1.5.0)
 
-This is an out-of-cycle patch release because 1.4.0 (accepted two days ago)
-caused 1.5-hour test timeouts on the M1mac and linux-arm64 additional CRAN
-checks (https://www.stats.ox.ac.uk/pub/bdr/M1mac/couplr.out,
-https://github.com/r-devel/linux-arm64-checks/tree/HEAD/couplr). The same
-expected NOTE on CRAN incoming feasibility ("Days since last update: 2") is
-therefore unavoidable; the alternative is letting 1.4.0 hit the additional-
-check archival threshold.
+This is a feature and correctness release.
 
-In 1.4.0, two solver paths could stall indefinitely when `match_couples()`
-was called with `max_distance`, calipers, or other forbidden-edge
-constraints:
+One user-visible breaking change: `greedy_couples()` is removed and greedy
+matching is now `match_couples(method = "greedy")`. The two functions shared
+the same engine over ~130 lines of duplicated scaffolding; they are now a
+single front door with a `strategy` argument.
 
-* Forbidden cells were marked with a large finite value (`BIG_COST`). The
-  Jonker-Volgenant and small-`n` SSP solvers saw `BIG_COST` as a regular
-  expensive edge and could degenerate on sparse, near-square inputs
-  rather than short-circuiting on infeasibility. Switched to `Inf` so the
-  C++ solvers' non-finite check fires.
-
-* Auto-dispatch routed sparse inputs with `n <= 100` through SSP, which
-  has its own worst-case stall on near-square highly-sparse matrices.
-  All sparse inputs now go through `lapmod` regardless of size.
-
-`match_couples()` additionally now drops rows/columns with no allowed
-edges before the LAP call and falls back to `greedy_matching()` if the
-feasibility-pruned submatrix still has no perfect matching.
-
-The full test suite (with `NOT_CRAN=true`, i.e. all `skip_on_cran()`
-guards lifted) now finishes in ~6.4 minutes locally with 0 failures;
-on CRAN, where `skip_on_cran()` is honoured, the constraint tests
-in `test-matching*.R` no longer hit the stall paths.
+The bulk of the release hardens the C++ solvers. Each solver's shipped Rcpp
+entry point previously ran a second copy of the algorithm that had drifted
+from the pure `lap::solve_*` implementation exercised by the C++ tests; every
+wrapper now delegates to that single tested implementation, checked against
+brute force over randomised integer, fractional, rectangular, maximize, and
+forbidden-edge inputs. Several solvers gained exact-optimum fixes as a result
+(`auction*`, `csa`, `ssap_bucket`, `hk01`, `line_metric`, `gabow_tarjan`), plus
+64-bit indexing and overflow guards at extreme scale. The statistical layer
+fixes matched-pair scrambling in `sensitivity_analysis()`, ATE subclass
+weights, and stratum-weighted balance diagnostics. See NEWS.md for the full
+list.
 
 ## R CMD check results
 
@@ -38,6 +26,7 @@ in `test-matching*.R` no longer hit the stall paths.
 ## Test environments
 
 * local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
+* win-builder: r-devel
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)
 

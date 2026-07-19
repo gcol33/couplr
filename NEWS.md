@@ -1,4 +1,4 @@
-# couplr 1.4.2
+# couplr 1.5.0
 
 ## Breaking changes
 

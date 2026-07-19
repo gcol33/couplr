@@ -11,11 +11,10 @@
 
 **Optimal one-to-one matching by linear assignment, solved exactly in C++.**
 
-Hand it two groups. `couplr` returns the pairing that minimizes total covariate
-distance across the whole sample, solved by linear assignment (Jonker-Volgenant,
-Hungarian, Auction, cost-scaling) on `RcppEigen`. The common tool, greedy nearest
-neighbour, locks in each pair as it goes and gives back whatever the ordering
-produced. This finds the global minimum, and the same answer every run.
+Hand `couplr` two groups and it returns the pairing that minimizes total covariate
+distance across the whole sample. The assignment is solved exactly on `RcppEigen`,
+so the pairing is the global optimum and comes back identical on every run and every
+machine.
 
 ```r
 library(couplr)
@@ -27,74 +26,115 @@ result <- match_couples(treated, control, vars = c("age", "income"), auto_scale 
 join_matched(result, treated, control)
 ```
 
-## Optimal, not greedy
+## Optimal and deterministic
 
-`MatchIt`, the most used matching package in R, pairs units greedily on an estimated
-propensity score: it takes them in order, grabs the nearest free control for each, and
-the result depends on that order. `couplr` matches directly on the covariates and solves
-the assignment exactly, so total distance is the global minimum and the pairing is the
-same every time.
+`match_couples()` evaluates the pairing as a whole and returns the assignment with the
+lowest total covariate distance. Because the solve is exact, the total distance is the
+global minimum, and the same input gives the same pairing every time, with no dependence
+on row order or a random seed.
+
+When a control pool grows too large to solve exactly, `method = "greedy"` trades the
+optimality guarantee for speed while keeping the same scaling, constraints, and blocking.
+Three strategies cover different memory and speed tradeoffs:
 
 ```r
-match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)   # optimal, deterministic
-match_couples(treated, control, vars = c("age", "income"), strategy = "pq", method = "greedy")    # greedy, for large pools
+match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)   # optimal
+
+match_couples(treated, control, vars = c("age", "income"),
+              method = "greedy", strategy = "pq")                               # fast, large pools
 ```
 
-For large control pools, `match_couples(method = "greedy")` trades the exact guarantee for speed, with
-three strategies (`sorted`, `row_best`, `pq`) and the same preprocessing and constraints.
+## Scaling and constraints
 
-## What's in the box
+Covariates on different scales are put on common footing before distances are computed,
+and pairs can be constrained or matched within strata:
 
-- **`match_couples()`**: optimal one-to-one matching with automatic scaling
-  (robust / standardize / range), distance constraints (`max_distance`, `calipers`),
-  blocking, and `ratio` / `replace` matching.
-- **`match_couples(method = "greedy")`**: fast approximate matching for large datasets, three strategies.
-- **`full_match()` / `cem_match()` / `subclass_match()` / `cardinality_match()`**:
-  variable-ratio full matching, coarsened exact matching, propensity subclassification,
-  and balance-constrained matching.
-- **`ps_match()`**: propensity score matching with a logit caliper.
-- **`balance_diagnostics()` / `sensitivity_analysis()`**: standardized differences,
-  variance ratios, KS tests, and Rosenbaum bounds for hidden bias.
-- **`lap_solve()`**: tidy interface to the assignment backend, 20 solvers with
-  `method = "auto"`, plus `lap_solve_batch()` and `lap_solve_kbest()` (Murty's algorithm).
+```r
+match_couples(
+  treated, control,
+  vars         = c("age", "income", "bmi"),
+  scale        = "robust",             # or "standardize", "range"; auto_scale = TRUE picks one
+  max_distance = 2,                    # forbid pairs beyond this covariate distance
+  calipers     = list(age = 5),        # per-variable maximum absolute difference
+  block_id     = "site",               # match only within site
+  ratio        = 2                     # two controls per treated unit
+)
+```
+
+## A family of matching designs
+
+The same two-group input drives several established designs, each returning a result the
+diagnostics and join helpers understand:
+
+```r
+# variable-ratio full matching
+full_match(treated, control, vars = c("age", "income"), min_controls = 1, max_controls = 3)
+
+# coarsened exact matching
+cem_match(treated, control, vars = c("age", "income"))
+
+# balance-constrained cardinality matching
+cardinality_match(treated, control, vars = c("age", "income"), max_std_diff = 0.1)
+
+# propensity subclassification and propensity matching, formula interface
+subclass_match(treated ~ age + income, data = df, n_subclasses = 5)
+ps_match(treated ~ age + income, data = df)
+```
+
+## Balance and sensitivity
+
+Check covariate balance before and after matching, and probe how sensitive a conclusion is
+to unmeasured confounding:
+
+```r
+bal <- balance_diagnostics(result)      # standardized differences, variance ratios, KS tests
+bal
+autoplot(bal)                           # love plot of standardized differences
+
+sensitivity_analysis(result, treated, control, outcome_var = "recovery_days")   # Rosenbaum bounds
+```
+
+## Works with the matching ecosystem
+
+A `couplr` result converts to `matchit`-class with `as_matchit()`, so `cobalt` balance
+tables and `marginaleffects` estimates run against it without rewiring the analysis.
+`match_data()` returns treatment, weights, and subclass columns in one analysis-ready
+frame, and `autoplot()` methods cover matching results, balance, and sensitivity.
+
+```r
+m  <- as_matchit(result)
+md <- match_data(result)
+```
 
 ## The assignment backend
 
 `lap_solve()` exposes the solver layer directly. It takes a cost matrix, handles
-rectangular shapes and forbidden edges (`NA` / `Inf`), and picks an algorithm from the
-problem when `method = "auto"`:
+rectangular shapes and forbidden edges (`NA` / `Inf`), and picks from twenty solvers when
+`method = "auto"`:
 
 ```r
 cost <- matrix(c(4, 2, 8, 4, 3, 7, 3, 1, 6), nrow = 3, byrow = TRUE)
 
 lap_solve(cost)                      # auto-selected solver
 lap_solve(cost, method = "hungarian")
-lap_solve_kbest(cost, k = 3)         # the three best assignments
+lap_solve_kbest(cost, k = 3)         # the three best assignments (Murty's algorithm)
+lap_solve_batch(problems)            # many independent problems in one call
 ```
 
 The solvers span the classics and the scaling algorithms: Jonker-Volgenant, Hungarian,
 Kuhn-Munkres, Bertsekas auction (with epsilon-scaling variants), Goldberg-Kennedy
 cost-scaling, Gabow-Tarjan bit-scaling, push-relabel, network simplex, and Sinkhorn
-entropy-regularized transport.
+entropy-regularized transport. `bottleneck_assignment()` minimizes the largest edge
+instead of the total, and `sinkhorn()` returns a soft transport plan.
 
-## `match_couples`: optimal or greedy?
+## Watching a solve
 
-|  | `match_couples()` | `match_couples(method = "greedy")` |
-|---|---|---|
-| Result | Globally optimal | Approximate |
-| Deterministic? | Yes | Yes |
-| Cost | `O(n^3)` | `O(n^2)` or better |
-| Best for | `n < 5000` | large control pools |
-| Constraints, blocking? | Yes | Yes |
+`pixel_morph()` treats two images as source and target pixel sets and morphs one into the
+other along the optimal assignment, so a matching problem becomes something you can look at:
 
-Start with `match_couples()`. Switch to `match_couples(method = "greedy")` when the optimal solve runs too long.
-
-## Fits the matching ecosystem
-
-`couplr` results convert to `matchit`-class with `as_matchit()`, so `cobalt` balance tables
-and `marginaleffects` estimates work without rewiring your analysis. `match_data()` returns
-treatment, weights, and subclass columns in one analysis-ready frame, and `autoplot()`
-methods cover matching results, balance, and sensitivity.
+```r
+pixel_morph(imgA, imgB, n_frames = 16)
+```
 
 ## Installation
 

@@ -13,6 +13,9 @@ repo_root <- if (file.exists("DESCRIPTION")) {
   stop("Run this script from the package root or the paper directory.")
 }
 
+## pkgbuild's default profile compiles the package at -O0. Timings must come
+## from an optimised build, matching how the package is installed in use.
+options(pkg.build_extra_flags = FALSE)
 pkgload::load_all(repo_root, quiet = TRUE)
 
 TIMES    <- 5L

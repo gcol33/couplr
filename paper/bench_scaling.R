@@ -7,11 +7,23 @@
 ##
 ## NOTE: From n_total = 10000, `optmatch::pairmatch()` exceeds the default
 ## `optmatch_max_problem_size` (1e7 entries). Setting the option to Inf
-## (done below) lets the call start, but the solve crashes the R process
-## without surfacing a recoverable error. The CSV has the refusal recorded
-## from a prior run; re-running this script in a fresh session will hit
-## the same crash. Use `bench_scaling_couplr_only.R` to push couplr alone
-## to n_total in {20000, 50000}.
+## (done below) lets the call start. On macOS / arm64 the solve then runs to
+## completion; on Windows / x86_64 it has been observed to terminate the R
+## process without surfacing a recoverable error. Where that happens, run
+## `bench_scaling_couplr_only.R` to cover couplr at the large sizes and
+## `bench_scaling_alternatives.R` for the other two.
+
+repo_root <- if (file.exists("DESCRIPTION")) {
+  normalizePath(".", winslash = "/", mustWork = TRUE)
+} else if (basename(getwd()) == "paper" && file.exists("../DESCRIPTION")) {
+  normalizePath("..", winslash = "/", mustWork = TRUE)
+} else {
+  stop("Run this script from the package root or the paper directory.")
+}
+
+## pkgbuild's default profile compiles the package at -O0, which would time an
+## unoptimised couplr against optimised installs of the comparison packages.
+options(pkg.build_extra_flags = FALSE)
 
 suppressPackageStartupMessages({
   needed <- c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")
@@ -23,7 +35,7 @@ suppressPackageStartupMessages({
   library(optmatch)
   library(R.utils)
   library(RhpcBLASctl)
-  pkgload::load_all("C:/GillesC/Documents/dev/couplr", quiet = TRUE)
+  pkgload::load_all(repo_root, quiet = TRUE)
 })
 
 ## Single-core wall-clock: pin BLAS / OpenMP to one thread.
@@ -37,7 +49,7 @@ Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
 ## not "what optmatch refuses to attempt". Flagged in the paper.
 options(optmatch_max_problem_size = Inf)
 
-paper_dir <- "C:/GillesC/Documents/dev/couplr/paper"
+paper_dir <- file.path(repo_root, "paper")
 out_csv   <- file.path(paper_dir, "scaling-results.csv")
 
 ## ---- benchmark grid ----

@@ -68,15 +68,13 @@
 #' `method = "auto"` selects an algorithm based on problem size/shape and data
 #' characteristics:
 #' \itemize{
-#'   \item Very small (n <= 8): `"bruteforce"` — exact enumeration
+#'   \item Very small (n <= 8 and m <= 8): `"bruteforce"` — exact enumeration
 #'   \item Binary/constant costs: `"hk01"` — specialized for 0/1 costs
-#'   \item Large sparse (n>100, >50\% NA/Inf): `"lapmod"` — sparse JV variant
-#'   \item Sparse or very rectangular: `"sap"` — handles sparsity well
-#'   \item Small-medium (8 < n <= 50): `"hungarian"` — provides exact dual solutions
-#'   \item Medium (50 < n <= 75): `"jv"` — fast general-purpose solver
-#'   \item Large (n>75): `"auction_scaled"` — fastest for large dense problems
+#'   \item Sparse (>50\% NA/Inf): `"lapmod"` — sparse JV variant, at every size
+#'   \item Very rectangular (m >= 3n): `"sap"` — handles rectangular well
+#'   \item Otherwise: `"jv"` — fastest general-purpose solver at every size
 #' }
-#' Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.
+#' The other solvers are available by naming them explicitly.
 #'
 #' @seealso
 #' \itemize{
@@ -142,7 +140,7 @@ assignment <- function(cost, maximize = FALSE,
     # - dense square / near-square: jv (fastest at every size since warm-start)
     # Special cases override size-based selection:
     # - Binary/constant costs: hk01 (specialized algorithm)
-    # - Sparse (>50% NA/Inf): lapmod for large, sap for small
+    # - Sparse (>50% NA/Inf): lapmod at every size
     # - Very rectangular (m >= 3n): sap (handles rectangular well)
 
     if (n <= 8 && m <= 8) {

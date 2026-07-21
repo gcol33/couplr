@@ -4,6 +4,18 @@
 ##
 ## Reproducible via:  Rscript paper/bench_lalonde.R
 
+repo_root <- if (file.exists("DESCRIPTION")) {
+  normalizePath(".", winslash = "/", mustWork = TRUE)
+} else if (basename(getwd()) == "paper" && file.exists("../DESCRIPTION")) {
+  normalizePath("..", winslash = "/", mustWork = TRUE)
+} else {
+  stop("Run this script from the package root or the paper directory.")
+}
+
+## pkgbuild's default profile compiles the package at -O0, which would time an
+## unoptimised couplr against optimised installs of the comparison packages.
+options(pkg.build_extra_flags = FALSE)
+
 suppressPackageStartupMessages({
   if (!requireNamespace("MatchIt",        quietly = TRUE)) install.packages("MatchIt",        repos = "https://cloud.r-project.org")
   if (!requireNamespace("optmatch",       quietly = TRUE)) install.packages("optmatch",       repos = "https://cloud.r-project.org")
@@ -14,12 +26,12 @@ suppressPackageStartupMessages({
   library(optmatch)
   library(cobalt)
   library(microbenchmark)
-  pkgload::load_all("C:/GillesC/Documents/dev/couplr", quiet = TRUE)
+  pkgload::load_all(repo_root, quiet = TRUE)
 })
 
 set.seed(20260515)
 
-paper_dir <- "C:/GillesC/Documents/dev/couplr/paper"
+paper_dir <- file.path(repo_root, "paper")
 
 ## ---- data: Lalonde NSW, with the standard MatchIt formula ----
 data("lalonde", package = "MatchIt")

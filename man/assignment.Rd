@@ -84,15 +84,13 @@ using several algorithms. Forbidden edges can be marked as \code{NA} or \code{In
 \code{method = "auto"} selects an algorithm based on problem size/shape and data
 characteristics:
 \itemize{
-\item Very small (n <= 8): \code{"bruteforce"} — exact enumeration
+\item Very small (n <= 8 and m <= 8): \code{"bruteforce"} — exact enumeration
 \item Binary/constant costs: \code{"hk01"} — specialized for 0/1 costs
-\item Large sparse (n>100, >50\\% NA/Inf): \code{"lapmod"} — sparse JV variant
-\item Sparse or very rectangular: \code{"sap"} — handles sparsity well
-\item Small-medium (8 < n <= 50): \code{"hungarian"} — provides exact dual solutions
-\item Medium (50 < n <= 75): \code{"jv"} — fast general-purpose solver
-\item Large (n>75): \code{"auction_scaled"} — fastest for large dense problems
+\item Sparse (>50\\% NA/Inf): \code{"lapmod"} — sparse JV variant, at every size
+\item Very rectangular (m >= 3n): \code{"sap"} — handles rectangular well
+\item Otherwise: \code{"jv"} — fastest general-purpose solver at every size
 }
-Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.
+The other solvers are available by naming them explicitly.
 }
 \examples{
 cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)

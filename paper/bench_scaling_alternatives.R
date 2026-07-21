@@ -3,6 +3,14 @@
 ## crashes at scale; the two-step path completes). MatchIt is given a
 ## pre-built distance matrix so it does not re-trigger the same path.
 
+repo_root <- if (file.exists("DESCRIPTION")) {
+  normalizePath(".", winslash = "/", mustWork = TRUE)
+} else if (basename(getwd()) == "paper" && file.exists("../DESCRIPTION")) {
+  normalizePath("..", winslash = "/", mustWork = TRUE)
+} else {
+  stop("Run this script from the package root or the paper directory.")
+}
+
 suppressPackageStartupMessages({
   library(MatchIt)
   library(optmatch)
@@ -11,9 +19,9 @@ suppressPackageStartupMessages({
 options(optmatch_max_problem_size = Inf)
 blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
-           MKL_NUM_THREADS = "1")
+           MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-paper_dir <- "C:/GillesC/Documents/dev/couplr/paper"
+paper_dir <- file.path(repo_root, "paper")
 out_csv   <- file.path(paper_dir, "scaling-results.csv")
 
 make_data <- function(n_total, seed) {

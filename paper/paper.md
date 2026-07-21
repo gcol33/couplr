@@ -14,7 +14,7 @@ authors:
 affiliations:
   - name: Department of Botany and Biodiversity Research, University of Vienna, Austria
     index: 1
-date: 15 May 2026
+date: 20 July 2026
 repository: https://github.com/gcol33/couplr
 bibliography: paper.bib
 header-includes:
@@ -110,7 +110,7 @@ $$
 certify optimality; `assignment_duals()` returns $(u, v)$. Worst-case time
 is $O(n^3)$ for Hungarian and Jonker–Volgenant,
 $O(n^3 \log(n\,C_{\max}))$ for cost scaling, and
-$O(n^{3/4} m \log(n\,C_{\max}))$ for Gabow–Tarjan bit scaling, where
+$O(\sqrt{n}\, m \log(n\,C_{\max}))$ for Gabow–Tarjan bit scaling, where
 $C_{\max} = \max_{i,j} |C_{ij}|$ is the largest cost magnitude; the
 dispatcher selects among solvers using $n$, $m$, sparsity, and
 rectangularity. All 19 solvers
@@ -120,34 +120,39 @@ Jonker–Volgenant shortest augmenting paths [@JonkerVolgenant1987], auction
 algorithms [@Bertsekas1988], cost scaling [@GoldbergKennedy1995],
 Gabow–Tarjan scaling [@GabowTarjan1989], push-relabel min-cost flow ideas
 [@GoldbergTarjan1988], network simplex, Ramshaw–Tarjan rectangular
-assignment [@RamshawTarjan2012], and related specialized solvers. The third layer returns structured result objects with
-pairs, costs, diagnostics, weights, subclass information, and conversion
-methods for other R matching tools.
+assignment [@RamshawTarjan2012], and related specialized solvers. Each optimal solver
+is checked against brute-force enumeration over randomised integer,
+fractional, rectangular, maximizing, and forbidden-edge instances, so the
+shipped path and the verified path are the same implementation. The third
+layer returns structured result objects with pairs, costs, diagnostics,
+weights, subclass information, and conversion methods for other R matching
+tools.
 
 Distances cover Euclidean, Manhattan, Mahalanobis (pooled within-group
 covariance by default), Chebyshev, and squared-Euclidean metrics, or a
 user-supplied function; propensity-score distances use a separate entry
 point. Three constraint mechanisms reshape the cost matrix before it reaches
 the solver: a global `max_distance` ceiling, per-variable calipers, and
-forbidden pairs encoded as large finite costs so the matrix stays usable
-across all solvers. Blocking either reuses a factor variable or constructs
+forbidden pairs marked as non-finite entries, which every solver recognises
+as a missing edge and uses to short-circuit on infeasibility. Blocking either reuses a factor variable or constructs
 blocks via $k$-means or hierarchical clustering, and the solver is called
 once per block.
 
-The dispatcher in `lap_solve(method = "auto")` chooses by matrix shape,
-sparsity, cost type, and size: dense square problems use Jonker–Volgenant
-or cost scaling; sparse matrices use sparse augmenting-path solvers;
-rectangular problems avoid padding through rectangular assignment methods.
+The dispatcher in `lap_solve(method = "auto")` chooses by shape, sparsity,
+cost type, and size: dense problems use Jonker–Volgenant; matrices over half
+forbidden use its sparse variant `lapmod`; strongly rectangular problems
+avoid padding through shortest augmenting paths; binary and very small
+problems use specialized solvers. Other solvers are named explicitly.
 Figure \ref{fig:benchmark} shows median solve time across problem sizes for
-all 19 solvers; benchmarks are reproducible via `paper/make-figure.R`.
+all 19 solvers.
 
 ![(a) Median wall-clock solve time versus problem size $n$ for all 19
 assignment solvers in `couplr`, arranged as five small-multiple panels
 grouped by algorithm family (JV / augmenting-path, Auction, Cost-scaling,
 Flow-based, and Other). Within each panel, individual solvers share a
 single family colour and are distinguished by line style; all panels share
-log--log axes. Median of 5 replicates on a single core; integer cost
-matrices with entries in $[1, 10{,}000]$. (b) Absolute standardized mean
+log--log axes. Median of 5 replicates on a single core of an Apple M4 Pro;
+integer cost matrices with entries in $[1, 10{,}000]$. (b) Absolute standardized mean
 differences on the LaLonde NSW data (185 treated, 429 control, eight
 covariates) before and after 1-to-1 optimal Mahalanobis matching. After
 matching, `couplr`, `MatchIt`, and `optmatch` produce identical $|SMD|$ to
@@ -195,8 +200,8 @@ matched <- join_matched(m, treated, control)
 
 On this dataset the matched pairs achieve absolute standardized differences
 below $0.15$ on all three matching covariates. The same `match_couples()`
-call accepts `calipers`, `max_distance`, `block_id`, `method`, `replace`,
-and `ratio` for harder problems. Identification also requires conditional
+call accepts `calipers`, `max_distance`, `block_id`, `method`, `strategy`,
+`replace`, and `ratio` for harder problems. Identification also requires conditional
 ignorability, positivity, and SUTVA; the matched output is designed to feed
 into an outcome regression for a doubly robust estimate [@Stuart2010].
 
@@ -208,41 +213,45 @@ Mahalanobis distance with pooled within-group covariance, the convention
 `optmatch::match_on()` uses by default and `couplr` adopts as of 1.3.1. On
 the canonical Lalonde NSW dataset [@LaLonde1986; @DehejiaWahba1999] (185
 treated, 429 control, eight covariates) all three packages produce identical
-absolute standardized mean differences to three decimal places, reducing
-the maximum $|\text{SMD}|$ from $1.757$ to $1.053$ on `race_Black` (a
-residual no 1-to-1 matcher can resolve here) and the remaining seven
-covariates to $\le 0.124$ [@Stuart2010]; per-covariate values are in
+absolute standardized mean differences to three decimal places
+(Figure \ref{fig:benchmark}b), with the remaining seven covariates at
+$\le 0.128$ [@Stuart2010]; per-covariate values are in
 `paper/lalonde-per-covariate.csv`.
 
 Table \ref{tab:scaling} reports median wall-clock time on synthetic
-problems with the same eight-covariate structure, at five sizes from
-$n = 500$ to $n = 20{,}000$ with treated:control = 1:2. `couplr` is
-$1.5$–$1.6\times$ faster than `optmatch` and $2.0$–$2.5\times$ faster than
-`MatchIt` where all three complete; at $n = 20{,}000$ `couplr` finishes in
-$3.5$ minutes, `optmatch` in $11$ minutes ($3.1\times$ slower), and
+problems with the same eight-covariate structure, at six sizes from
+$n = 500$ to $n = 50{,}000$ with treated:control = 1:2. The margin widens
+with problem size: `couplr` is $9\times$ faster than `optmatch` at
+$n = 500$ and $24\times$ faster at $n = 20{,}000$, and $11\times$ to
+$24\times$ faster than `MatchIt` up to $n = 10{,}000$, the largest size
+`MatchIt` completes. At $n = 20{,}000$ `couplr` finishes in $11.6$ seconds
+against $4.7$ minutes for `optmatch`, while
 `MatchIt::matchit(method = "optimal")` aborts inside the `optmatch` backend
-with an integer-size overflow. `couplr` reaches large dense problems
-through its dispatcher, which routes to Jonker–Volgenant
-[@JonkerVolgenant1987], auction with scaling [@Bertsekas1988], and
-cost-scaling [@GoldbergKennedy1995] algorithms.
+with an integer-size overflow. At $n = 50{,}000$ `couplr` completes in
+$83$ seconds; both alternatives exceed the $300$-second per-replicate cap.
+`couplr` reaches large dense problems through its dispatcher, which routes
+them to Jonker–Volgenant [@JonkerVolgenant1987].
 
 Table: 1-to-1 optimal Mahalanobis matching, median wall-clock by problem
 size. Treated:control = 1:2; eight covariates; pooled within-group
-covariance; single core, single-threaded BLAS. Median of 5 / 5 / 3 / 3 / 1
-replicates respectively for the rows; `optmatch_max_problem_size` set to
-`Inf` for $n \ge 10{,}000$. `int overflow` marks an integer-size overflow
+covariance; single core, single-threaded BLAS, on an Apple M4 Pro.
+Median of 5 / 5 / 3 / 3 / 1 / 1 replicates respectively for the rows;
+`optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$.
+`int overflow` marks an integer-size overflow
 (\texttt{result would exceed 2\textasciicircum 31-1 bytes}) inside the
-`optmatch` backend reached through `MatchIt`. Reproducible from
+`optmatch` backend reached through `MatchIt`; `timeout` marks a replicate
+exceeding the $300$-second cap. Reproducible from
 `paper/bench_scaling.R` and `paper/bench_scaling_alternatives.R`.
 \label{tab:scaling}
 
 | Problem size ($n_t + n_c$) | `couplr` |  `optmatch`  |   `MatchIt`  |
 | :------------------------- | -------: | -----------: | -----------: |
-| $167 + 333$                |   80 ms  |       120 ms |       190 ms |
-| $667 + 1{,}333$            |  1.37 s  |       2.09 s |       3.40 s |
-| $1{,}667 + 3{,}333$        |  10.1 s  |       16.4 s |       23.8 s |
-| $3{,}333 + 6{,}667$        |  53.7 s  |       79.3 s |        110 s |
-| $6{,}667 + 13{,}333$       |   210 s  |        657 s | int overflow |
+| $167 + 333$                |   11 ms  |        99 ms |       117 ms |
+| $667 + 1{,}333$            |  146 ms  |       1.70 s |       2.11 s |
+| $1{,}667 + 3{,}333$        |  749 ms  |       13.1 s |       15.9 s |
+| $3{,}333 + 6{,}667$        |  3.07 s  |       60.2 s |       73.3 s |
+| $6{,}667 + 13{,}333$       |  11.6 s  |        279 s | int overflow |
+| $16{,}667 + 33{,}333$      |  83.1 s  |      timeout |      timeout |
 
 Table \ref{tab:capability} summarises feature coverage. `couplr` exposes 19
 solvers through a single dispatcher, supports k-best, bottleneck, and

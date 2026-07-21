@@ -170,7 +170,8 @@ a wrong "optimal" or a crash (#13):
   integer ties, `NA`/`BIG`-forbidden edges, and rectangular shapes. The three
   per-strategy Rcpp exports (`greedy_matching_sorted` / `_row_best` / `_pq`) were
   folded into the single `greedy_matching(strategy = ...)` dispatcher they
-  duplicated; `greedy_couples(strategy = ...)` remains the user-facing verb.
+  duplicated; `match_couples(method = "greedy", strategy = ...)` is the
+  user-facing verb.
 
 ## Tests
 

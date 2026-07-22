@@ -12,9 +12,9 @@
 **Optimal one-to-one matching by linear assignment, solved exactly in C++.**
 
 Hand `couplr` two groups and it returns the pairing that minimizes total covariate
-distance across the whole sample. The assignment is solved exactly on `RcppEigen`,
-so the pairing is the global optimum and comes back identical on every run and every
-machine.
+distance across the whole sample. The assignment is solved exactly with the
+Jonker-Volgenant and Gabow-Tarjan algorithms, so the pairing is the global optimum
+and comes back identical on every run and every machine.
 
 ```r
 library(couplr)

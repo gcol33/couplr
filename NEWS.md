@@ -1,3 +1,26 @@
+# couplr 1.5.1
+
+## Installation
+
+* **`RcppEigen` is no longer required to build the package.** It was declared in
+  `LinkingTo` but never used: the only Eigen reference in `src/` was the
+  `#include <RcppEigen.h>` that `Rcpp::compileAttributes()` emits for each
+  `LinkingTo` entry, and no solver instantiated an Eigen type. The declaration
+  forced every source install to build RcppEigen first, which was reported as an
+  install failure. `LinkingTo` is now `Rcpp` alone; the unused `testthat` entry
+  and the `-DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE` compile flags are removed
+  with it.
+
+* **`htmlwidgets` moved from `Imports` to `Suggests`.** It is used only by
+  `lap_animate()`, which now checks for it at call time and errors with an
+  install hint if it is missing. This drops about 24 packages from a default
+  install, including `knitr`, `rmarkdown`, `bslib`, `sass`, and `tinytex`.
+
+## Documentation
+
+* The README and `paper/paper.md` stated that the assignment is solved on
+  RcppEigen. The solvers are hand-written C++ via Rcpp; both now say so.
+
 # couplr 1.5.0
 
 ## Breaking changes

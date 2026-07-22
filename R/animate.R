@@ -166,7 +166,6 @@ normalise_for_json <- function(x) {
 #' lap_animate(cost, method = "hungarian")
 #' }
 #'
-#' @importFrom htmlwidgets createWidget sizingPolicy
 #' @export
 lap_animate <- function(cost,
                         method = "hungarian",
@@ -175,6 +174,11 @@ lap_animate <- function(cost,
                         height = NULL,
                         elementId = NULL,
                         ...) {
+  if (!requireNamespace("htmlwidgets", quietly = TRUE)) {
+    stop("lap_animate() requires the 'htmlwidgets' package. ",
+         "Install it with install.packages(\"htmlwidgets\").", call. = FALSE)
+  }
+
   cost <- as.matrix(cost)
   n <- nrow(cost)
   m <- ncol(cost)

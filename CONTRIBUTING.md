@@ -53,7 +53,7 @@ git pull origin dev
 
 ### Setting up your R environment
 
-couplr is an R package that uses C++ code via Rcpp and RcppEigen.
+couplr is an R package that uses C++ code via Rcpp.
 
 1. **Install required tools**
    - R (≥ 3.5.0)
@@ -63,7 +63,7 @@ couplr is an R package that uses C++ code via Rcpp and RcppEigen.
 
 2. **Install development dependencies**
    ```r
-   install.packages(c("devtools", "roxygen2", "testthat", "rmarkdown", "knitr", "pkgdown", "Rcpp", "RcppEigen"))
+   install.packages(c("devtools", "roxygen2", "testthat", "rmarkdown", "knitr", "pkgdown", "Rcpp"))
    ```
 
 3. **Load the development build**
@@ -179,7 +179,7 @@ couplr/
 ├── README.md
 ├── _pkgdown.yml
 ├── R/                      <- R source files
-├── src/                    <- C++ source files (Rcpp/RcppEigen)
+├── src/                    <- C++ source files (Rcpp)
 │   ├── core/               <- Core utilities
 │   ├── solvers/            <- LAP algorithm implementations
 │   └── rcpp_interface.cpp  <- All [[Rcpp::export]] declarations

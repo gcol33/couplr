@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.5.0
+Version: 1.5.1
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
            role = c("aut", "cre", "cph"),
@@ -33,10 +33,10 @@ Imports:
     dplyr (>= 1.0.0),
     rlang (>= 0.4.0),
     purrr (>= 0.3.0),
-    methods,
-    htmlwidgets
+    methods
 Suggests:
     testthat (>= 3.0.0),
+    htmlwidgets,
     xml2,
     e1071,
     R.utils,
@@ -64,9 +64,7 @@ Suggests:
     marginaleffects,
     optmatch
 LinkingTo:
-    Rcpp,
-    RcppEigen,
-    testthat
+    Rcpp
 SystemRequirements: C++17
 LazyData: true
 VignetteBuilder: knitr

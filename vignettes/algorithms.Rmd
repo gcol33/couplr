@@ -27,6 +27,9 @@ if (!has_viz) {
   message("This vignette requires ggraph, tidygraph, and ggplot2 packages for visualizations.")
 }
 
+# lap_animate() returns an htmlwidget; the animation chunks are gated on it
+has_widgets <- requireNamespace("htmlwidgets", quietly = TRUE)
+
 library(couplr)
 library(tibble)
 if (has_viz) {
@@ -180,7 +183,7 @@ All four demos below run on a 30x30 cost matrix so you can see the algorithm's s
 
 ### Hungarian on a 30x30
 
-```{r animate-hungarian, eval = TRUE}
+```{r animate-hungarian, eval = has_widgets}
 set.seed(1)
 cost_hg <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
 lap_animate(cost_hg, method = "hungarian")
@@ -190,7 +193,7 @@ Each row's processing grows a Dijkstra shortest-path tree on reduced costs from 
 
 ### Auction on a 30x30
 
-```{r animate-auction, eval = TRUE}
+```{r animate-auction, eval = has_widgets}
 set.seed(2)
 cost_a <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
 lap_animate(cost_a, method = "auction")
@@ -200,7 +203,7 @@ Bidders compete: each unassigned row picks its most-valued column and bids `(bes
 
 ### Gabow-Tarjan bit-scaling on a 30x30
 
-```{r animate-gt, eval = TRUE}
+```{r animate-gt, eval = has_widgets}
 set.seed(3)
 cost_gt <- matrix(sample(1:50, 900, replace = TRUE), 30, 30)
 lap_animate(cost_gt, method = "gabow_tarjan")
@@ -210,7 +213,7 @@ The header here tracks `Bit k / n_bits resolved` rather than matched edges, beca
 
 ### Jonker-Volgenant pre-stages on a 30x30
 
-```{r animate-jv, eval = TRUE}
+```{r animate-jv, eval = has_widgets}
 set.seed(4)
 cost_jv <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
 lap_animate(cost_jv, method = "jv")

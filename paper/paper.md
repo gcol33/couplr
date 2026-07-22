@@ -114,7 +114,7 @@ $O(\sqrt{n}\, m \log(n\,C_{\max}))$ for Gabow–Tarjan bit scaling, where
 $C_{\max} = \max_{i,j} |C_{ij}|$ is the largest cost magnitude; the
 dispatcher selects among solvers using $n$, $m$, sparsity, and
 rectangularity. All 19 solvers
-are implemented from scratch in C++ via Rcpp and RcppEigen, so the package
+are implemented from scratch in C++ via Rcpp, so the package
 adds no external solver dependency: the Hungarian method [@Kuhn1955],
 Jonker–Volgenant shortest augmenting paths [@JonkerVolgenant1987], auction
 algorithms [@Bertsekas1988], cost scaling [@GoldbergKennedy1995],

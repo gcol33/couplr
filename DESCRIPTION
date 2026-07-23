@@ -1,6 +1,6 @@
 Package: couplr
 Title: Optimal Pairing and Matching via Linear Assignment
-Version: 1.5.1
+Version: 1.5.2
 Authors@R:
     person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
            role = c("aut", "cre", "cph"),
@@ -37,7 +37,6 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     htmlwidgets,
-    xml2,
     e1071,
     R.utils,
     microbenchmark,
@@ -53,10 +52,7 @@ Suggests:
     ggraph,
     tidygraph,
     magick,
-    OpenImageR,
-    farver,
     av,
-    reticulate,
     png,
     combinat,
     cobalt,

@@ -1,3 +1,31 @@
+# couplr 1.5.2
+
+## Performance
+
+* **`method = "ssap_bucket"` is much faster on fine-grained fractional costs.**
+  Dial's queue was built as a `std::vector<std::vector<int>>` grown to the
+  largest *distance* in the shortest-path tree, so costs needing six decimals
+  (scale `1e6`) allocated roughly 15 million bucket vectors per augmentation.
+  It is now the textbook circular ring, sized by the largest
+  *reduced edge cost* and holding intrusive lists over a pooled arena, which is
+  what bounds Dial's memory to `O(maxC)` instead of `O(N * maxC)`. Measured over
+  200 randomised solves: 36.0 s to 2.5 s at six decimals, 2.5 s to 0.23 s at
+  five. The accepted inputs and returned optima are unchanged.
+
+* **`lap_solve_batch()` honours the check-environment core limit.** With
+  `n_threads = NULL` it sized its cluster from `parallel::detectCores()`, which
+  reports the physical core count and ignores `_R_CHECK_LIMIT_CORES_`. It now
+  uses two workers when that variable is set, and every available core
+  otherwise. Both the matrix-list and grouped-data-frame paths read the same
+  helper.
+
+## Installation
+
+* **Four unused packages dropped from `Suggests`:** `OpenImageR`, `reticulate`,
+  `xml2`, and `farver` had no call site anywhere in the package, tests,
+  vignettes, or scripts. `av` is kept: `pixel_morph_animate()` uses it for mp4
+  output, guarded at call time.
+
 # couplr 1.5.1
 
 ## Installation

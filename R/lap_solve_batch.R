@@ -1,3 +1,17 @@
+#' Number of worker processes to use when `n_threads` is NULL
+#'
+#' `parallel::detectCores()` reports the physical core count and ignores the
+#' two-core limit that `R CMD check` advertises through `_R_CHECK_LIMIT_CORES_`,
+#' so it is honoured here.
+#'
+#' @return Integer number of workers, at least 1.
+#' @noRd
+.batch_threads <- function() {
+  if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) return(2L)
+  n <- parallel::detectCores()
+  if (is.na(n)) 1L else as.integer(n)
+}
+
 #' Solve multiple assignment problems efficiently
 #'
 #' Solve many independent assignment problems at once. Supports lists of matrices,
@@ -89,10 +103,10 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
   
   # Determine number of threads
   if (is.null(n_threads)) {
-    n_threads <- parallel::detectCores()
+    n_threads <- .batch_threads()
   }
   n_threads <- max(1, as.integer(n_threads))
-  
+
   # Solve problems
   if (n_threads == 1 || n_problems < 4) {
     # Sequential execution
@@ -191,10 +205,10 @@ lap_solve_batch_grouped <- function(df, source_col, target_col, cost_col,
   
   # Determine number of threads
   if (is.null(n_threads)) {
-    n_threads <- parallel::detectCores()
+    n_threads <- .batch_threads()
   }
   n_threads <- max(1, as.integer(n_threads))
-  
+
   # Solve each group
   if (n_threads == 1 || n_problems < 4) {
     # Sequential execution

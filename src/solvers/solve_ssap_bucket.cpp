@@ -77,6 +77,20 @@ struct MinCostFlowBuckets {
         g[to].push_back(rev);
     }
 
+    // Largest reduced edge cost over the current residual graph. Dial's queue
+    // needs one bucket per distinct reduced cost, so this sizes the ring.
+    int max_reduced_cost(const std::vector<int>& h) const {
+        int maxc = 0;
+        for (int v = 0; v < N; ++v) {
+            for (const MCFEdge &e : g[v]) {
+                if (e.cap <= 0) continue;
+                int rcost = e.cost + h[v] - h[e.to];
+                if (rcost > maxc) maxc = rcost;
+            }
+        }
+        return maxc;
+    }
+
     // Successive shortest path with bucket queue
     // Returns (flow, total_cost)
     std::pair<int, long long> min_cost_flow(int s, int t, int maxf) {
@@ -86,6 +100,13 @@ struct MinCostFlowBuckets {
         std::vector<int> prevv(N);       // previous vertex
         std::vector<int> preve(N);       // previous edge index
 
+        // Dial's queue as a ring of intrusive lists. Entries live in a pool so a
+        // node can sit in several buckets at once (decrease-key by re-insert,
+        // resolved by the dist[] staleness check on pop).
+        std::vector<int> head;           // bucket -> pool index, -1 when empty
+        std::vector<int> pool_node;
+        std::vector<int> pool_next;
+
         int flow = 0;
         long long total_cost = 0;
 
@@ -94,16 +115,25 @@ struct MinCostFlowBuckets {
             std::fill(dist.begin(), dist.end(), INF);
             dist[s] = 0;
 
-            std::vector<std::vector<int>> buckets(1);
+            // Every key pushed lies in [dcur, dcur + maxC], so maxC + 1 buckets
+            // indexed cyclically hold the whole live frontier. Sizing the ring by
+            // the largest reduced cost instead of the largest distance is what
+            // keeps this O(maxC) rather than O(N * maxC) in memory.
+            const int ring = max_reduced_cost(h) + 1;
+            head.assign(ring, -1);
+            pool_node.clear();
+            pool_next.clear();
+
             int maxd = 0;
+            int bcur = 0;  // ring slot matching dcur, advanced in lockstep
 
             auto push_bucket = [&](int d, int v) {
                 if (d < 0) d = 0;
                 if (d >= INF) return;
-                while (d >= (int)buckets.size()) {
-                    buckets.emplace_back();
-                }
-                buckets[d].push_back(v);
+                int b = d % ring;
+                pool_node.push_back(v);
+                pool_next.push_back(head[b]);
+                head[b] = (int)pool_node.size() - 1;
                 if (d > maxd) maxd = d;
             };
 
@@ -114,33 +144,44 @@ struct MinCostFlowBuckets {
             // Do NOT break when reaching t - need all distances for potential update
             while (dcur <= maxd) {
                 // Find next non-empty bucket
-                while (dcur <= maxd &&
-                       (dcur >= (int)buckets.size() || buckets[dcur].empty())) {
+                while (dcur <= maxd && head[bcur] == -1) {
                     ++dcur;
+                    if (++bcur == ring) bcur = 0;
                 }
                 if (dcur > maxd) break;
 
-                int v = buckets[dcur].back();
-                buckets[dcur].pop_back();
+                // Drain the slot. Relaxing at reduced cost 0 can refill it, so
+                // keep draining until it stays empty.
+                while (head[bcur] != -1) {
+                    int idx = head[bcur];
+                    head[bcur] = -1;
 
-                // Skip if stale
-                if (dist[v] != dcur) continue;
+                    while (idx != -1) {
+                        int v = pool_node[idx];
+                        idx = pool_next[idx];
 
-                // Relax edges from v
-                for (int ei = 0; ei < (int)g[v].size(); ++ei) {
-                    const MCFEdge &e = g[v][ei];
-                    if (e.cap <= 0) continue;
+                        // Skip if stale. Live keys span at most one lap of the
+                        // ring, so anything in this slot that is not at dcur has
+                        // already been finalised at a smaller distance.
+                        if (dist[v] != dcur) continue;
 
-                    // Reduced cost (should be >= 0 with correct potentials)
-                    int rcost = e.cost + h[v] - h[e.to];
-                    if (rcost < 0) rcost = 0;  // defensive clamp
+                        // Relax edges from v
+                        for (int ei = 0; ei < (int)g[v].size(); ++ei) {
+                            const MCFEdge &e = g[v][ei];
+                            if (e.cap <= 0) continue;
 
-                    int nd = dist[v] + rcost;
-                    if (nd < dist[e.to] && nd < INF) {
-                        dist[e.to] = nd;
-                        prevv[e.to] = v;
-                        preve[e.to] = ei;
-                        push_bucket(nd, e.to);
+                            // Reduced cost (should be >= 0 with correct potentials)
+                            int rcost = e.cost + h[v] - h[e.to];
+                            if (rcost < 0) rcost = 0;  // defensive clamp
+
+                            int nd = dist[v] + rcost;
+                            if (nd < dist[e.to] && nd < INF) {
+                                dist[e.to] = nd;
+                                prevv[e.to] = v;
+                                preve[e.to] = ei;
+                                push_bucket(nd, e.to);
+                            }
+                        }
                     }
                 }
             }

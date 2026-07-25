@@ -23,7 +23,8 @@
   parallel = FALSE,
   replace = FALSE,
   ratio = 1L,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 }
 \arguments{

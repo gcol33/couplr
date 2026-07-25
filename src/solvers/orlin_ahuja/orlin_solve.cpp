@@ -202,8 +202,8 @@ bool ssp_augment_once(
 // Main solver implementation
 LapResult solve_orlin(const CostMatrix& cost, bool maximize,
                       double alpha, int auction_rounds) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {

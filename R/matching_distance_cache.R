@@ -15,6 +15,12 @@
 #' @param left_id Name of ID column in left (default: "id")
 #' @param right_id Name of ID column in right (default: "id")
 #' @param block_id Optional block ID column name for blocked matching
+#' @param memory_mode One of "auto" (default), "dense", or "lazy". "auto"
+#'   warns (or, for a built-in distance metric, switches) when the dense
+#'   matrix would consume a large fraction of free system RAM. "lazy" returns
+#'   a `lazy_cost_spec` instead of a matrix (built-in distance metrics only);
+#'   pass it straight to \code{match_couples()} the same way as a dense
+#'   `cost_matrix`. "dense" skips the RAM check entirely.
 #'
 #' @return An S3 object of class "distance_object" containing:
 #'   - `cost_matrix`: Numeric matrix of distances
@@ -35,7 +41,13 @@
 #' - **Performance**: Avoid recomputing distances when trying different constraints
 #' - **Exploration**: Quickly test max_distance, calipers, or methods
 #' - **Consistency**: Ensures same distances used across comparisons
-#' - **Memory efficient**: Can use sparse matrices when many pairs are forbidden
+#'
+#' With the default `memory_mode = "auto"`/`"dense"`, the stored `cost_matrix`
+#' is a plain dense matrix; couplr has no sparse matrix representation, so
+#' forbidden pairs (`Inf`) still occupy a cell rather than being dropped from
+#' storage. With `memory_mode = "lazy"`, `cost_matrix` is instead a
+#' `lazy_cost_spec` that recomputes distances on demand from the underlying
+#' feature data.
 #'
 #' The distance_object stores the original datasets, allowing downstream
 #' functions like \code{join_matched()} to work seamlessly.
@@ -67,7 +79,8 @@ compute_distances <- function(left, right,
                               auto_scale = FALSE,
                               left_id = "id",
                               right_id = "id",
-                              block_id = NULL) {
+                              block_id = NULL,
+                              memory_mode = "auto") {
 
   # Validate inputs
   if (!is.data.frame(left) || !is.data.frame(right)) {
@@ -122,11 +135,16 @@ compute_distances <- function(left, right,
   }
 
   # Build cost matrix
-  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale)
+  cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale,
+                                   memory_mode = memory_mode)
 
-  # Store row and column names for clarity
-  rownames(cost_matrix) <- left_ids
-  colnames(cost_matrix) <- right_ids
+  # Store row and column names for clarity (a lazy_cost_spec is a list, not
+  # a matrix -- it has no dimnames to set, and left_ids/right_ids below
+  # already carry this information for both representations).
+  if (!is_lazy_cost_spec(cost_matrix)) {
+    rownames(cost_matrix) <- left_ids
+    colnames(cost_matrix) <- right_ids
+  }
 
   # Create distance object
   dist_obj <- structure(
@@ -214,23 +232,20 @@ update_constraints <- function(dist_obj, max_distance = Inf, calipers = NULL) {
     stop("dist_obj must be a distance_object from compute_distances()")
   }
 
-  # Start with a copy of the original cost matrix
-  new_cost <- dist_obj$cost_matrix
+  # Start with a copy of the original cost matrix. Delegate to
+  # apply_max_distance()/apply_calipers() (rather than masking `new_cost`
+  # inline) so this works identically whether cost_matrix is a dense matrix
+  # or a lazy_cost_spec -- both already dispatch correctly on the object's
+  # class.
+  new_cost <- apply_max_distance(dist_obj$cost_matrix, max_distance)
 
-  # Apply max_distance constraint
-  if (!is.infinite(max_distance)) {
-    new_cost[new_cost > max_distance] <- Inf
-  }
-
-  # Apply calipers
   if (!is.null(calipers)) {
-    new_cost <- apply_all_constraints(
+    new_cost <- apply_calipers(
       new_cost,
       dist_obj$original_left,
       dist_obj$original_right,
-      dist_obj$metadata$vars,
-      max_distance = Inf,  # Already applied above
-      calipers = calipers
+      calipers,
+      dist_obj$metadata$vars
     )
   }
 
@@ -276,18 +291,27 @@ print.distance_object <- function(x, ...) {
   cat("  Computed:    ", format(x$metadata$computed_at, "%Y-%m-%d %H:%M:%S"), "\n\n")
 
   # Distance statistics
-  finite_dists <- x$cost_matrix[is.finite(x$cost_matrix)]
-  if (length(finite_dists) > 0) {
+  if (is_lazy_cost_spec(x$cost_matrix)) {
+    # A full pass over every pair to report min/median/mean/max is exactly
+    # the O(n*m) cost lazy mode exists to avoid; a streaming (single-pass)
+    # equivalent is a documented future addition, not implemented yet.
     cat("Distance Summary:\n")
-    cat("  Valid pairs: ", length(finite_dists), " (",
-        round(100 * length(finite_dists) / length(x$cost_matrix), 1), "%)\n", sep = "")
-    cat("  Min:         ", round(min(finite_dists), 3), "\n")
-    cat("  Median:      ", round(median(finite_dists), 3), "\n")
-    cat("  Mean:        ", round(mean(finite_dists), 3), "\n")
-    cat("  Max:         ", round(max(finite_dists), 3), "\n")
+    cat("  (memory_mode = \"lazy\": distance statistics not computed;",
+        "would require a full O(n*m) pass)\n")
   } else {
-    cat("Distance Summary:\n")
-    cat("  No valid pairs (all Inf)\n")
+    finite_dists <- x$cost_matrix[is.finite(x$cost_matrix)]
+    if (length(finite_dists) > 0) {
+      cat("Distance Summary:\n")
+      cat("  Valid pairs: ", length(finite_dists), " (",
+          round(100 * length(finite_dists) / length(x$cost_matrix), 1), "%)\n", sep = "")
+      cat("  Min:         ", round(min(finite_dists), 3), "\n")
+      cat("  Median:      ", round(median(finite_dists), 3), "\n")
+      cat("  Mean:        ", round(mean(finite_dists), 3), "\n")
+      cat("  Max:         ", round(max(finite_dists), 3), "\n")
+    } else {
+      cat("Distance Summary:\n")
+      cat("  No valid pairs (all Inf)\n")
+    }
   }
 
   if (!is.null(x$metadata$constraints_applied)) {
@@ -325,6 +349,18 @@ summary.distance_object <- function(object, ...) {
 
   # Additional statistics
   cat("\nDetailed Statistics:\n")
+
+  if (is_lazy_cost_spec(object$cost_matrix)) {
+    # Quantiles, standard deviation, skewness, and the forbidden-pair count
+    # below all require a full O(n*m) pass -- not implemented yet for a lazy
+    # cost source (a streaming, single-pass equivalent is a documented
+    # future addition). Skip rather than materialize the matrix these
+    # statistics exist to avoid materializing in the first place.
+    cat("  (memory_mode = \"lazy\": detailed statistics not computed;",
+        "would require a full O(n*m) pass)\n")
+    return(invisible(object))
+  }
+
   finite_dists <- object$cost_matrix[is.finite(object$cost_matrix)]
 
   if (length(finite_dists) > 0) {
@@ -356,7 +392,8 @@ summary.distance_object <- function(object, ...) {
   cat("  Forbidden pairs: ", n_inf, " (", round(pct_inf, 1), "%)\n", sep = "")
 
   if (pct_inf > 50) {
-    cat("  Note: >50% forbidden - consider sparse matrix storage\n")
+    cat("  Note: >50% forbidden - method = \"lapmod\" handles this many\n")
+    cat("        forbidden edges faster than general-purpose solvers\n")
   }
 
   invisible(object)

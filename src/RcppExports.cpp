@@ -46,6 +46,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_lap_solve_jv_lazy
+Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
+RcppExport SEXP _couplr_cpp_lap_solve_jv_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lap_solve_jv_lazy(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lap_solve_auction_lazy
+Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize, Rcpp::Nullable<double> eps);
+RcppExport SEXP _couplr_cpp_lap_solve_auction_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<double> >::type eps(epsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lap_solve_auction_lazy(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_kbest_murty
 Rcpp::List lap_kbest_murty(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);
 RcppExport SEXP _couplr_lap_kbest_murty(SEXP costSEXP, SEXP kSEXP, SEXP maximizeSEXP, SEXP single_methodSEXP) {
@@ -626,6 +663,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_prepare_cost_matrix", (DL_FUNC) &_couplr_lap_prepare_cost_matrix, 2},
     {"_couplr_lap_solve_bruteforce", (DL_FUNC) &_couplr_lap_solve_bruteforce, 2},
     {"_couplr_lap_solve_jv", (DL_FUNC) &_couplr_lap_solve_jv, 2},
+    {"_couplr_cpp_lap_solve_jv_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_lazy, 8},
+    {"_couplr_cpp_lap_solve_auction_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_auction_lazy, 9},
     {"_couplr_lap_kbest_murty", (DL_FUNC) &_couplr_lap_kbest_murty, 4},
     {"_couplr_lap_solve_auction", (DL_FUNC) &_couplr_lap_solve_auction, 3},
     {"_couplr_lap_solve_auction_scaled", (DL_FUNC) &_couplr_lap_solve_auction_scaled, 3},

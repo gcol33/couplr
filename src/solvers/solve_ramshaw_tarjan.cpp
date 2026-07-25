@@ -14,15 +14,16 @@ namespace lap {
 
 // Helper: Transpose a cost matrix
 static CostMatrix transpose_cost_matrix(const CostMatrix& cost) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     CostMatrix result(m, n);
 
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             result.at(j, i) = cost.at(i, j);
-            result.mask[j * n + i] = cost.mask[i * m + j];
+            result.mask[static_cast<size_t>(flat_index(j, i, n))] =
+                cost.mask[static_cast<size_t>(flat_index(i, j, m))];
         }
     }
 
@@ -30,8 +31,8 @@ static CostMatrix transpose_cost_matrix(const CostMatrix& cost) {
 }
 
 LapResult solve_ramshaw_tarjan(const CostMatrix& cost, bool maximize) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
+    const int n0 = static_cast<int>(cost.nrow);
+    const int m0 = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n0 == 0 || m0 == 0) {

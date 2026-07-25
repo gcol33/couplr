@@ -17,40 +17,40 @@ std::string match_to_key(const std::vector<int>& match) {
     return os.str();
 }
 
-void build_allowed(const std::vector<int>& mask, int n, int m,
-                   std::vector<int>& row_ptr, std::vector<int>& cols) {
-    row_ptr.assign(n + 1, 0);
+void build_allowed(const std::vector<int>& mask, int64_t n, int64_t m,
+                   std::vector<int64_t>& row_ptr, std::vector<int>& cols) {
+    row_ptr.assign(static_cast<size_t>(n + 1), 0);
 
     // Count allowed entries per row
     // Note: mask uses 0=forbidden, nonzero=allowed
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            if (mask[i * m + j] != 0) ++row_ptr[i + 1];
+    for (int64_t i = 0; i < n; ++i) {
+        for (int64_t j = 0; j < m; ++j) {
+            if (mask[static_cast<size_t>(flat_index(i, j, m))] != 0) ++row_ptr[static_cast<size_t>(i + 1)];
         }
     }
 
     // Prefix sum
-    for (int i = 1; i <= n; ++i) {
-        row_ptr[i] += row_ptr[i - 1];
+    for (int64_t i = 1; i <= n; ++i) {
+        row_ptr[static_cast<size_t>(i)] += row_ptr[static_cast<size_t>(i - 1)];
     }
 
     // Fill column indices
-    cols.assign(row_ptr.back(), -1);
-    std::vector<int> fill = row_ptr;
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            if (mask[i * m + j] != 0) {
-                cols[fill[i]++] = j;
+    cols.assign(static_cast<size_t>(row_ptr.back()), -1);
+    std::vector<int64_t> fill = row_ptr;
+    for (int64_t i = 0; i < n; ++i) {
+        for (int64_t j = 0; j < m; ++j) {
+            if (mask[static_cast<size_t>(flat_index(i, j, m))] != 0) {
+                cols[static_cast<size_t>(fill[static_cast<size_t>(i)]++)] = static_cast<int>(j);
             }
         }
     }
 }
 
-void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m) {
-    for (int i = 0; i < n; ++i) {
+void ensure_each_row_has_option(const std::vector<int>& mask, int64_t n, int64_t m) {
+    for (int64_t i = 0; i < n; ++i) {
         bool has_option = false;
-        for (int j = 0; j < m; ++j) {
-            if (mask[i * m + j] != 0) {
+        for (int64_t j = 0; j < m; ++j) {
+            if (mask[static_cast<size_t>(flat_index(i, j, m))] != 0) {
                 has_option = true;
                 break;
             }
@@ -66,9 +66,9 @@ bool is_feasible(const CostMatrix& cost) {
     if (cost.empty()) return false;
     if (cost.nrow > cost.ncol) return false;
 
-    for (int i = 0; i < cost.nrow; ++i) {
+    for (int64_t i = 0; i < cost.nrow; ++i) {
         bool has_finite = false;
-        for (int j = 0; j < cost.ncol; ++j) {
+        for (int64_t j = 0; j < cost.ncol; ++j) {
             if (cost.allowed(i, j) && std::isfinite(cost.at(i, j))) {
                 has_finite = true;
                 break;
@@ -80,8 +80,8 @@ bool is_feasible(const CostMatrix& cost) {
 }
 
 bool is_valid_matching(const CostMatrix& cost, const std::vector<int>& match) {
-    for (int i = 0; i < cost.nrow && i < static_cast<int>(match.size()); ++i) {
-        int j = match[i];  // 0-based
+    for (int64_t i = 0; i < cost.nrow && i < static_cast<int64_t>(match.size()); ++i) {
+        int j = match[static_cast<size_t>(i)];  // 0-based
         if (j < 0 || j >= cost.ncol) continue;  // Skip unmatched
         if (!cost.allowed(i, j) || !std::isfinite(cost.at(i, j))) {
             return false;  // Forbidden edge was chosen
@@ -105,8 +105,12 @@ static bool dfs_augment(int u, const std::vector<std::vector<int>>& adj,
 }
 
 bool has_valid_matching(const CostMatrix& cost) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    // DFS-augmenting-path feasibility check: already O(n*m) with per-row DFS
+    // overhead, impractical well before n/m individually approach INT_MAX, so
+    // truncation here is intentional (unlike the flat-index sites above, which
+    // overflow at a realistic ~46,341-square scale).
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     if (n == 0) return true;
     if (n > m) return false;
@@ -139,8 +143,8 @@ bool has_valid_matching(const CostMatrix& cost) {
 double compute_total_cost(const CostMatrix& cost, const std::vector<int>& match) {
     double total = 0.0;
 
-    for (int i = 0; i < static_cast<int>(match.size()) && i < cost.nrow; ++i) {
-        int j = match[i];  // 0-based
+    for (int64_t i = 0; i < static_cast<int64_t>(match.size()) && i < cost.nrow; ++i) {
+        int j = match[static_cast<size_t>(i)];  // 0-based
         if (j < 0 || j >= cost.ncol) continue;  // Skip unmatched or dummy
 
         double c = cost.at(i, j);
@@ -173,8 +177,8 @@ CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize) {
     CostMatrix result = maximize ? negate_costs(cost) : cost;
 
     // Ensure forbidden entries are BIG
-    for (int i = 0; i < result.nrow; ++i) {
-        for (int j = 0; j < result.ncol; ++j) {
+    for (int64_t i = 0; i < result.nrow; ++i) {
+        for (int64_t j = 0; j < result.ncol; ++j) {
             if (!result.allowed(i, j)) {
                 result.at(i, j) = BIG;
             }

@@ -54,6 +54,13 @@
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
 #' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
 #'   its value is used for `auction_eps`.
+#' @param memory_mode One of "auto" (default), "dense", or "lazy". `cost` is
+#'   already a materialized matrix by the time it reaches `assignment()`, so
+#'   "auto" here is diagnostic only: it warns if the matrix is large relative
+#'   to free system RAM (nothing else can be done post-hoc once the matrix
+#'   already exists -- build it via `compute_distances(memory_mode = ...)`
+#'   instead to avoid materializing it in the first place). No lazy solver
+#'   exists yet, so `memory_mode = "lazy"` currently always errors.
 #'
 #' @return An object of class `lap_solve_result`, a list with elements:
 #' \itemize{
@@ -96,10 +103,16 @@ assignment <- function(cost, maximize = FALSE,
                                   "sap","ssp","csflow","hk01","bruteforce",
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
                                   "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
-                       auction_eps = NULL, eps = NULL
+                       auction_eps = NULL, eps = NULL, memory_mode = "auto"
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
                        ) {
+  if (is_lazy_cost_spec(cost)) {
+    if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
+    return(.assignment_lazy(cost, maximize = maximize, method = method,
+                            auction_eps = auction_eps))
+  }
+
   method <- match.arg(method)
 
   # Back-compat: eps → auction_eps
@@ -115,6 +128,10 @@ assignment <- function(cost, maximize = FALSE,
   if (n == 0 || m == 0) {
     stop("Cost matrix must have at least one row and one column.")
   }
+
+  # Diagnostic-only: `cost` is already materialized by this point, so "auto"
+  # can only warn, not avoid the allocation. See resolve_memory_mode().
+  resolve_memory_mode(n, m, memory_mode, solver_supports_lazy = FALSE)
 
   if (!is.numeric(cost)) {
     stop("`cost` must be a numeric matrix, got ", typeof(cost))
@@ -200,6 +217,89 @@ assignment <- function(cost, maximize = FALSE,
     n0 <- ncol(work); m0 <- nrow(work)
     inv <- integer(n0); inv[] <- 0L
     for (i in seq_len(m0)) {
+      j <- match_out[i]
+      if (j > 0L) inv[j] <- i
+    }
+    match_out <- inv
+  }
+
+  out <- list(
+    match = match_out,
+    total_cost = as.numeric(res_raw$total_cost),
+    status = "optimal",
+    method_used = method
+  )
+  class(out) <- "lap_solve_result"
+  out
+}
+
+#' Solve a lazy_cost_spec (memory_mode = "lazy" backend for assignment())
+#'
+#' Mirrors assignment()'s contract (same result shape) but computes costs
+#' on demand from the underlying feature data instead of a materialized
+#' matrix. Only "jv" and "auction" are supported -- every other method is
+#' fundamentally dense (repeated full-matrix scans, or an algorithm not yet
+#' templated for a lazy cost source) and gets a clear error here rather than
+#' a silent dense fallback that would defeat the point of `memory_mode =
+#' "lazy"`.
+#'
+#' @keywords internal
+.assignment_lazy <- function(cost, maximize = FALSE, method = "auto",
+                             auction_eps = NULL) {
+  if (!is.logical(maximize) || length(maximize) != 1 || is.na(maximize)) {
+    stop("maximize must be TRUE or FALSE", call. = FALSE)
+  }
+
+  # `method` may still be the full default-enumeration vector from
+  # assignment()'s signature if the caller didn't pass one explicitly.
+  if (length(method) > 1 || identical(method, "ssp")) method <- "auto"
+
+  # Lazy mode cannot scan a non-materialized matrix for the dense auto-method
+  # heuristic (range()/na_rate in assignment()); default to "jv", matching
+  # that heuristic's own "otherwise: jv" fallback for the common case.
+  if (identical(method, "auto")) method <- "jv"
+
+  if (!method %in% c("jv", "auction")) {
+    stop("method = \"", method, "\" does not support memory_mode = \"lazy\" yet; ",
+         "use \"jv\", \"auction\", or memory_mode = \"dense\".", call. = FALSE)
+  }
+
+  n0 <- cost$n_left
+  m0 <- cost$n_right
+  if (n0 == 0 || m0 == 0) {
+    stop("Cost matrix must have at least one row and one column.")
+  }
+
+  transposed <- FALSE
+  work <- cost
+  if (n0 > m0) {
+    work <- transpose_lazy_cost_spec(cost)
+    transposed <- TRUE
+  }
+
+  inv_cov <- lazy_cost_spec_inv_cov(work)
+  caliper_list <- stats::setNames(
+    lapply(work$calipers, function(cal) cal$threshold),
+    vapply(work$calipers, function(cal) work$vars[[cal$var_index]], character(1))
+  )
+
+  res_raw <- if (identical(method, "jv")) {
+    cpp_lap_solve_jv_lazy(work$left_mat, work$right_mat, work$distance,
+                          inv_cov, work$max_distance, caliper_list,
+                          work$vars, maximize)
+  } else {
+    cpp_lap_solve_auction_lazy(work$left_mat, work$right_mat, work$distance,
+                               inv_cov, work$max_distance, caliper_list,
+                               work$vars, maximize, auction_eps)
+  }
+
+  match_out <- as.integer(res_raw$match)
+  if (transposed) {
+    # Same inversion as assignment()'s dense transpose path: match_out has
+    # length work$n_left (= original n_right), values in 1..work$n_right
+    # (= original n_left); invert into a vector of length original n_left.
+    inv <- integer(n0); inv[] <- 0L
+    for (i in seq_len(work$n_left)) {
       j <- match_out[i]
       if (j > 0L) inv[j] <- i
     }

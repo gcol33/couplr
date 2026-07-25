@@ -320,6 +320,16 @@ success_good_balance <- function(mean_std_diff) {
 #' @return List with diagnostic information
 #' @keywords internal
 check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = TRUE) {
+  if (is_lazy_cost_spec(cost_matrix)) {
+    # Every check below is an O(n*m) full-matrix scan (zero-rate, constant
+    # check, extreme-cost-ratio quantiles, forbidden-rate) -- exactly what
+    # lazy mode exists to avoid. A streaming (single-pass, O(1)-memory)
+    # equivalent is a documented future addition, not implemented yet; skip
+    # rather than silently materializing the matrix these diagnostics exist
+    # to avoid materializing in the first place.
+    return(list(valid = TRUE, n_finite = NA_integer_, n_total = NA_integer_))
+  }
+
   # Get finite distances only
   finite_costs <- cost_matrix[is.finite(cost_matrix)]
 

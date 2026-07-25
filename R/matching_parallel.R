@@ -129,7 +129,8 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
                              parallel = FALSE,
                              replace = FALSE,
                              ratio = 1L,
-                             sigma = NULL) {
+                             sigma = NULL,
+                             memory_mode = "auto") {
 
   # Force-capture internal function for parallel workers (future serializes
   # closures but may not resolve package-internal names on workers)
@@ -185,7 +186,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       solver_fn = solver_fn, solver_params = solver_params,
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
       replace = replace, ratio = ratio,
-      sigma = sigma
+      sigma = sigma, memory_mode = memory_mode
     )
 
     # Add block_id column to pairs

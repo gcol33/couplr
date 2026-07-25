@@ -18,6 +18,10 @@
 #   matched_cols — 1-based indices into the *original* cost_matrix cols
 .solve_with_partial_feasibility <- function(cost_matrix, solver_fn,
                                             solver_params = list()) {
+  if (is_lazy_cost_spec(cost_matrix)) {
+    return(.solve_lazy_with_partial_feasibility(cost_matrix, solver_fn, solver_params))
+  }
+
   feasible <- is.finite(cost_matrix) & cost_matrix < BIG_COST
   row_ok <- rowSums(feasible) > 0L
   col_ok <- colSums(feasible) > 0L
@@ -67,6 +71,45 @@
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
 }
 
+# Lazy-cost-spec counterpart of .solve_with_partial_feasibility(). Row/col
+# pruning is not implemented for lazy specs (would need an O(n*m) scan --
+# exactly what lazy mode exists to avoid); instead the FULL problem is
+# solved directly, and an InfeasibleException from the solver is treated the
+# same way a fully-infeasible dense submatrix is: everyone unmatched, no
+# hard error. This is a real, coarser fallback than the dense path (which
+# recovers a partial matching via greedy on Hall's-condition violations) --
+# greedy_matching has no lazy-cost-source support, so it isn't available as
+# a fallback here.
+.solve_lazy_with_partial_feasibility <- function(cost_matrix, solver_fn,
+                                                 solver_params = list()) {
+  if (identical(solver_fn, greedy_matching)) {
+    stop("method = \"greedy\" does not support memory_mode = \"lazy\" yet; ",
+         "use an optimal method (\"jv\"/\"auction\") or memory_mode = \"dense\".",
+         call. = FALSE)
+  }
+
+  res <- tryCatch(
+    do.call(solver_fn, c(list(cost_matrix, maximize = FALSE), solver_params)),
+    error = function(e) e
+  )
+
+  if (inherits(res, "error")) {
+    warning("memory_mode = \"lazy\" found no feasible full matching under the current ",
+            "constraints (", conditionMessage(res), "). Unlike memory_mode = \"dense\", ",
+            "there is no greedy fallback yet for a lazy cost source, so all units are ",
+            "reported unmatched rather than a partial matching. Use memory_mode = ",
+            "\"dense\" to recover a partial matching, or relax max_distance/calipers.",
+            call. = FALSE)
+    return(list(result = NULL, matched_rows = integer(0), matched_cols = integer(0)))
+  }
+
+  match_vec <- as.integer(res$match)
+  matched_rows <- which(match_vec > 0L)
+  matched_cols <- match_vec[matched_rows]
+
+  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
+}
+
 #' Shared single matching implementation
 #'
 #' Core logic for both optimal (LAP) and greedy matching without blocking.
@@ -86,11 +129,12 @@
                             strict_no_pairs = FALSE,
                             replace = FALSE,
                             ratio = 1L,
-                            sigma = NULL) {
+                            sigma = NULL,
+                            memory_mode = "auto") {
 
   # Build cost matrix
   cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale,
-                                   sigma = sigma)
+                                   sigma = sigma, memory_mode = memory_mode)
 
   # Apply constraints
   cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
@@ -128,6 +172,10 @@
 
   # --- Replacement matching ---
   if (replace) {
+    if (is_lazy_cost_spec(cost_matrix)) {
+      stop("replace = TRUE does not support memory_mode = \"lazy\" yet; ",
+           "use memory_mode = \"dense\".", call. = FALSE)
+    }
     return(.couples_replace(
       cost_matrix, left, right, left_ids, right_ids, vars, ratio
     ))
@@ -135,6 +183,10 @@
 
   # --- k:1 matching (ratio > 1, without replacement) ---
   if (ratio > 1L) {
+    if (is_lazy_cost_spec(cost_matrix)) {
+      stop("ratio > 1 does not support memory_mode = \"lazy\" yet; ",
+           "use memory_mode = \"dense\".", call. = FALSE)
+    }
     return(.couples_ratio(
       cost_matrix, left, right, left_ids, right_ids, vars, ratio,
       solver_fn, solver_params
@@ -159,7 +211,11 @@
       distance = numeric(0)
     )
   } else {
-    distances <- cost_matrix[cbind(matched_rows, matched_cols)]
+    distances <- if (is_lazy_cost_spec(cost_matrix)) {
+      lazy_pair_distances(cost_matrix, matched_rows, matched_cols)
+    } else {
+      cost_matrix[cbind(matched_rows, matched_cols)]
+    }
 
     pairs <- tibble::tibble(
       left_id = left_ids[matched_rows],
@@ -435,7 +491,11 @@
       distance = numeric(0)
     )
   } else {
-    distances <- cost_matrix[cbind(matched_rows, matched_cols)]
+    distances <- if (is_lazy_cost_spec(cost_matrix)) {
+      lazy_pair_distances(cost_matrix, matched_rows, matched_cols)
+    } else {
+      cost_matrix[cbind(matched_rows, matched_cols)]
+    }
 
     pairs <- tibble::tibble(
       left_id = left_ids[matched_rows],
@@ -506,7 +566,8 @@
                              parallel = FALSE,
                              replace = FALSE,
                              ratio = 1L,
-                             sigma = NULL) {
+                             sigma = NULL,
+                             memory_mode = "auto") {
 
   blocks <- unique(c(left[[block_col]], right[[block_col]]))
 
@@ -520,7 +581,7 @@
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
       parallel = TRUE,
       replace = replace, ratio = ratio,
-      sigma = sigma
+      sigma = sigma, memory_mode = memory_mode
     )
 
     # Reorder columns to put block_id first
@@ -587,7 +648,7 @@
       solver_fn = solver_fn, solver_params = solver_params,
       check_costs = check_costs, strict_no_pairs = strict_no_pairs,
       replace = replace, ratio = ratio,
-      sigma = sigma
+      sigma = sigma, memory_mode = memory_mode
     )
 
     # Add block_id column
@@ -686,10 +747,16 @@
 #' @param method Matching method. A LAP solver for optimal matching ("auto",
 #'   "hungarian", "jv", "gabow_tarjan", ...), or "greedy" for fast approximate
 #'   matching (see `strategy`).
-#' @param strategy Greedy strategy, used only when `method = "greedy"`:
-#'   - "row_best": for each row, take its best available column (default)
-#'   - "sorted": sort all pairs by distance, greedily assign
-#'   - "pq": priority queue (memory-efficient for very large problems)
+#' @param strategy Greedy strategy, used only when `method = "greedy"`. All
+#'   three strategies solve the same full cost matrix already built by
+#'   `match_couples()`; none of them reduce the O(n*m) memory that matrix
+#'   takes.
+#'   - "row_best": for each row, take its best available column (default).
+#'     The only strategy that needs no extra storage beyond the cost matrix.
+#'   - "sorted": collect every valid pair, sort by distance, greedily assign
+#'   - "pq": collect every valid pair into a heap and pop the smallest first.
+#'     Avoids the upfront sort but holds the same number of candidate pairs
+#'     as "sorted", so it is not more memory-efficient
 #' @param return_unmatched Include unmatched units in output
 #' @param return_diagnostics Include detailed diagnostics in output
 #' @param parallel Enable parallel processing for blocked matching.
@@ -706,6 +773,17 @@
 #' @param sigma Optional covariance matrix for Mahalanobis distance. If NULL
 #'   (default), the pooled sample covariance is used. Only relevant when
 #'   \code{distance = "mahalanobis"}.
+#' @param memory_mode One of "auto" (default), "dense", or "lazy". "auto"
+#'   warns (or, when `method` is `"jv"`/`"auction"` with a built-in distance
+#'   metric, switches) when the dense cost matrix would consume a large
+#'   fraction of free system RAM. "lazy" computes each pairwise distance from
+#'   the underlying feature data as the solver needs it, instead of
+#'   allocating the full n_left x n_right matrix; supported for `method =
+#'   "jv"`/`"auction"` with a built-in distance metric, and not yet for
+#'   `replace = TRUE`, `ratio > 1`, `method = "greedy"`, or custom distance
+#'   functions (blocking via `block_id` is the other option that reduces
+#'   memory, by solving smaller sub-problems). "dense" skips the RAM check
+#'   entirely.
 #'
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
@@ -754,7 +832,8 @@ match_couples <- function(left, right = NULL,
                           replace = FALSE,
                           ratio = 1L,
                           check_costs = TRUE,
-                          sigma = NULL) {
+                          sigma = NULL,
+                          memory_mode = "auto") {
 
   strategy <- match.arg(strategy)
   greedy <- identical(method, "greedy")
@@ -846,7 +925,7 @@ match_couples <- function(left, right = NULL,
       method = method, strategy = strategy,
       parallel = parallel_state$setup,
       replace = replace, ratio = ratio,
-      sigma = sigma
+      sigma = sigma, memory_mode = memory_mode
     )
   } else {
     # Single matching
@@ -857,7 +936,7 @@ match_couples <- function(left, right = NULL,
       method = method, strategy = strategy,
       check_costs = check_costs,
       replace = replace, ratio = ratio,
-      sigma = sigma
+      sigma = sigma, memory_mode = memory_mode
     )
   }
 
@@ -946,7 +1025,8 @@ match_couples_single <- function(left, right, left_ids, right_ids,
                                  strategy = "row_best",
                                  check_costs = TRUE,
                                  replace = FALSE, ratio = 1L,
-                                 sigma = NULL) {
+                                 sigma = NULL,
+                                 memory_mode = "auto") {
   greedy <- identical(method, "greedy")
   .couples_single(
     left, right, left_ids, right_ids,
@@ -957,7 +1037,7 @@ match_couples_single <- function(left, right, left_ids, right_ids,
     check_costs = if (greedy) FALSE else check_costs,
     strict_no_pairs = !greedy,
     replace = replace, ratio = ratio,
-    sigma = sigma
+    sigma = sigma, memory_mode = memory_mode
   )
 }
 
@@ -971,7 +1051,8 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
                                   strategy = "row_best",
                                   parallel = FALSE,
                                   replace = FALSE, ratio = 1L,
-                                  sigma = NULL) {
+                                  sigma = NULL,
+                                  memory_mode = "auto") {
   greedy <- identical(method, "greedy")
   .couples_blocked(
     left, right, left_ids, right_ids,
@@ -983,7 +1064,7 @@ match_couples_blocked <- function(left, right, left_ids, right_ids,
     strict_no_pairs = !greedy,
     parallel = parallel,
     replace = replace, ratio = ratio,
-    sigma = sigma
+    sigma = sigma, memory_mode = memory_mode
   )
 }
 

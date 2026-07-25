@@ -13,6 +13,14 @@ lap_solve_jv <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_jv`, cost, maximize)
 }
 
+cpp_lap_solve_jv_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize) {
+    .Call(`_couplr_cpp_lap_solve_jv_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize)
+}
+
+cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps = NULL) {
+    .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps)
+}
+
 lap_kbest_murty <- function(cost, k, maximize, single_method = "jv") {
     .Call(`_couplr_lap_kbest_murty`, cost, k, maximize, single_method)
 }

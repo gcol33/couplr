@@ -21,7 +21,8 @@
   strict_no_pairs = FALSE,
   replace = FALSE,
   ratio = 1L,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 }
 \arguments{

@@ -200,8 +200,8 @@ bool karp_min_mean_cycle(const std::vector<std::vector<Edge>>& adj,
 }  // anonymous namespace
 
 LapResult solve_cycle_cancel(const CostMatrix& cost, bool maximize) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
+    const int n0 = static_cast<int>(cost.nrow);
+    const int m0 = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n0 == 0 || m0 == 0) {
@@ -219,7 +219,8 @@ LapResult solve_cycle_cancel(const CostMatrix& cost, bool maximize) {
         for (int i = 0; i < n0; ++i) {
             for (int j = 0; j < m0; ++j) {
                 C.at(j, i) = cost.at(i, j);
-                C.mask[j * n0 + i] = cost.mask[i * m0 + j];
+                C.mask[static_cast<size_t>(flat_index(j, i, n0))] =
+                    cost.mask[static_cast<size_t>(flat_index(i, j, m0))];
             }
         }
         n = m0;
@@ -275,8 +276,8 @@ LapResult solve_cycle_cancel(const CostMatrix& cost, bool maximize) {
     }
 
     // Iteratively cancel negative cost cycles using Karp's algorithm
-    int max_iters = n * m * 10;
-    int iters = 0;
+    const long long max_iters = static_cast<long long>(n) * m * 10;
+    long long iters = 0;
 
     while (iters < max_iters) {
         ++iters;

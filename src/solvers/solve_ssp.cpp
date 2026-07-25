@@ -13,8 +13,8 @@
 namespace lap {
 
 LapResult solve_ssp(const CostMatrix& cost, bool maximize) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
+    const int n0 = static_cast<int>(cost.nrow);
+    const int m0 = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n0 == 0) {
@@ -33,11 +33,12 @@ LapResult solve_ssp(const CostMatrix& cost, bool maximize) {
         for (int i = 0; i < n0; ++i) {
             for (int j = 0; j < m0; ++j) {
                 work.at(j, i) = cost.at(i, j);
-                work.mask[j * n0 + i] = cost.mask[i * m0 + j];
+                work.mask[static_cast<size_t>(flat_index(j, i, n0))] =
+                    cost.mask[static_cast<size_t>(flat_index(i, j, m0))];
             }
         }
-        n = work.nrow;  // now m0
-        m = work.ncol;  // now n0
+        n = static_cast<int>(work.nrow);  // now m0
+        m = static_cast<int>(work.ncol);  // now n0
     }
 
     // Prepare working costs (negated if maximize)

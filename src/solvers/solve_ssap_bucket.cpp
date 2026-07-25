@@ -232,8 +232,8 @@ struct MinCostFlowBuckets {
 
 
 LapResult solve_ssap_bucket(const CostMatrix& cost, bool maximize) {
-    const int n0 = cost.nrow;
-    const int m0 = cost.ncol;
+    const int n0 = static_cast<int>(cost.nrow);
+    const int m0 = static_cast<int>(cost.ncol);
 
     // Handle empty matrix
     if (n0 == 0 || m0 == 0) {
@@ -251,7 +251,8 @@ LapResult solve_ssap_bucket(const CostMatrix& cost, bool maximize) {
         for (int i = 0; i < m0; ++i) {
             for (int j = 0; j < n0; ++j) {
                 C.at(i, j) = cost.at(j, i);
-                C.mask[i * n0 + j] = cost.mask[j * m0 + i];
+                C.mask[static_cast<size_t>(flat_index(i, j, n0))] =
+                    cost.mask[static_cast<size_t>(flat_index(j, i, m0))];
             }
         }
         n = m0;
@@ -261,7 +262,7 @@ LapResult solve_ssap_bucket(const CostMatrix& cost, bool maximize) {
 
     // Collect finite values for scaling
     std::vector<double> finite_vals;
-    finite_vals.reserve(n * m);
+    finite_vals.reserve(static_cast<size_t>(static_cast<int64_t>(n) * m));
     double min_val = 0.0;  // Track minimum for shifting
     bool has_finite = false;
 

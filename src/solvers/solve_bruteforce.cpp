@@ -12,8 +12,8 @@
 namespace lap {
 
 LapResult solve_bruteforce(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {

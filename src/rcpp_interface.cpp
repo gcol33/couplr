@@ -36,6 +36,15 @@ Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_impl(NumericMatrix cost, bool maximize);
+Rcpp::List solve_jv_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                              std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                              double max_distance, Rcpp::List calipers,
+                              Rcpp::CharacterVector var_names, bool maximize);
+Rcpp::List solve_auction_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                   std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                   double max_distance, Rcpp::List calipers,
+                                   Rcpp::CharacterVector var_names, bool maximize,
+                                   Rcpp::Nullable<double> eps);
 Rcpp::List solve_murty_impl(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);
 Rcpp::List solve_auction_impl(Rcpp::NumericMatrix cost, bool maximize, double eps_in);
 Rcpp::List solve_auction_scaled_impl(Rcpp::NumericMatrix cost, bool maximize, std::string schedule);
@@ -114,6 +123,25 @@ Rcpp::List lap_solve_bruteforce(NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_jv(NumericMatrix cost, bool maximize) {
   return solve_jv_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                 std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                 double max_distance, Rcpp::List calipers,
+                                 Rcpp::CharacterVector var_names, bool maximize) {
+  return solve_jv_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
+                            calipers, var_names, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                      std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                      double max_distance, Rcpp::List calipers,
+                                      Rcpp::CharacterVector var_names, bool maximize,
+                                      Rcpp::Nullable<double> eps = R_NilValue) {
+  return solve_auction_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
+                                 calipers, var_names, maximize, eps);
 }
 
 // [[Rcpp::export]]

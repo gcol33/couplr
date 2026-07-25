@@ -521,12 +521,17 @@ All packages slow down with problem size, but at different rates:
 
 | Package | Memory Model |
 |---------|--------------|
-| couplr | Full distance matrix by default; greedy avoids this |
+| couplr | Full distance matrix by default; `memory_mode = "lazy"` computes distances on demand for `method = "jv"`/`"auction"` |
 | MatchIt | Propensity scores + sparse distance |
 | optmatch | Sparse distance matrices |
 | designmatch | Full distance + constraint matrices |
 
-For very large problems (n > 10,000), use couplr's blocking or greedy modes.
+couplr's greedy mode solves the same full matrix faster; it does not reduce
+memory use. `memory_mode = "lazy"` (with `method = "jv"`/`"auction"`) does
+reduce memory use, by computing each pairwise distance from the underlying
+feature data instead of allocating the full matrix; `memory_mode = "auto"`
+(the default) switches to it automatically for large problems. Blocking
+further shrinks the matrix allocated per block under either memory mode.
 
 ---
 

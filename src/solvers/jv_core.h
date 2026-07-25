@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../core/lap_types.h"
+#include "../core/lap_lazy_types.h"
 #include <vector>
 
 namespace lap {
@@ -22,12 +23,23 @@ struct JvCoreResult {
     std::vector<double> v;        // size ncol, column potentials
 };
 
-// Solve LAP on a prepared cost matrix.
-// Precondition: `work` came from prepare_for_solve() — forbidden cells = BIG,
-// negated if the caller wants maximize, padded if needed.
-// Caller is responsible for feasibility checks (ensure_each_row_has_option),
-// dimension checks (n <= m), and computing total_cost from the original matrix.
-JvCoreResult jv_core(const CostMatrix& work, const JvCoreOpts& opts = {});
+// Solve LAP on a prepared cost source.
+// Precondition: `work` came from prepare_for_solve() (CostMatrix) or was
+// constructed already-negated/caliper-aware (LazyCostMatrix) -- forbidden
+// cells read as BIG via at(), negated if the caller wants maximize, padded
+// if needed. Caller is responsible for feasibility checks
+// (ensure_each_row_has_option), dimension checks (n <= m), and computing
+// total_cost from the original matrix.
+//
+// Templated on cost-source type so the dense (CostMatrix) and lazy
+// (LazyCostMatrix) paths share one algorithm body; explicitly instantiated
+// for both in jv_core.cpp. CostMatrix behavior/performance is unchanged --
+// this is a source-level generalization, not a new dense implementation.
+template <typename CostSourceT>
+JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts = {});
+
+extern template JvCoreResult jv_core<CostMatrix>(const CostMatrix&, const JvCoreOpts&);
+extern template JvCoreResult jv_core<LazyCostMatrix>(const LazyCostMatrix&, const JvCoreOpts&);
 
 }  // namespace detail
 }  // namespace lap

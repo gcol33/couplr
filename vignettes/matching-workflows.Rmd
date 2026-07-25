@@ -1220,11 +1220,20 @@ print(effect_table)
 
 - n = 10,000: ~ 800 MB
 
+`build_cost_matrix()` allocates this full matrix in `memory_mode = "dense"`
+for every `method`, including `"greedy"`: greedy changes how the matrix is
+solved, not how much memory it takes.
+
 For very large problems:
 
-1. Use greedy matching to avoid full cost matrix
+1. Use `memory_mode = "lazy"` with `method = "jv"`/`"auction"` to compute
+   distances on demand from the underlying feature data instead of
+   allocating the full matrix -- `memory_mode = "auto"` (the default)
+   switches to this automatically when the dense matrix would need a large
+   share of free RAM
 
-2. Use blocking to reduce within-block size
+2. Use blocking to reduce within-block size -- combines with either memory
+   mode
 
 3. Consider approximate methods (upcoming vignette)
 

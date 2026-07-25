@@ -19,7 +19,8 @@ full_match(
   sigma = NULL,
   left_id = "id",
   right_id = "id",
-  method = "optimal"
+  method = "optimal",
+  memory_mode = "auto"
 )
 }
 \arguments{
@@ -58,6 +59,13 @@ of the pooled distance distribution rather than absolute units.}
 \item{method}{Matching algorithm: \code{"optimal"} (default) uses min-cost
 max-flow to find the globally optimal group assignment minimizing total
 distance; \code{"greedy"} uses a fast two-pass heuristic.}
+
+\item{memory_mode}{One of "auto" (default) or "dense". "auto" warns if the
+dense cost matrix would consume a large fraction of free system RAM.
+\code{full_match()} uses a different (min-cost-flow) solver backend than
+\code{match_couples()}/\code{assignment()}, so \code{memory_mode = "lazy"} is not
+available here yet and errors if requested; "dense" skips the RAM check
+entirely.}
 }
 \value{
 An S3 object of class \code{c("full_matching_result", "couplr_result")}

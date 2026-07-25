@@ -32,8 +32,8 @@ struct CandidatePair {
 // Collect all valid pairs, sort by cost, greedily assign
 
 LapResult greedy_matching_sorted(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {
@@ -115,8 +115,8 @@ LapResult greedy_matching_sorted(const CostMatrix& cost, bool maximize) {
 // For each unmatched row, find its best available column
 
 LapResult greedy_matching_row_best(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {
@@ -180,8 +180,8 @@ LapResult greedy_matching_row_best(const CostMatrix& cost, bool maximize) {
 // Use priority queue for efficient selection (good for very large problems)
 
 LapResult greedy_matching_pq(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {

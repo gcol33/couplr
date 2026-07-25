@@ -30,6 +30,12 @@
 #' @param method Matching algorithm: \code{"optimal"} (default) uses min-cost
 #'   max-flow to find the globally optimal group assignment minimizing total
 #'   distance; \code{"greedy"} uses a fast two-pass heuristic.
+#' @param memory_mode One of "auto" (default) or "dense". "auto" warns if the
+#'   dense cost matrix would consume a large fraction of free system RAM.
+#'   `full_match()` uses a different (min-cost-flow) solver backend than
+#'   `match_couples()`/`assignment()`, so `memory_mode = "lazy"` is not
+#'   available here yet and errors if requested; "dense" skips the RAM check
+#'   entirely.
 #'
 #' @return An S3 object of class \code{c("full_matching_result", "couplr_result")}
 #'   containing:
@@ -86,7 +92,8 @@ full_match <- function(left, right, vars,
                        sigma = NULL,
                        left_id = "id",
                        right_id = "id",
-                       method = "optimal") {
+                       method = "optimal",
+                       memory_mode = "auto") {
 
   # --- Input validation ---
   if (!is.data.frame(left) || !is.data.frame(right)) {
@@ -139,8 +146,14 @@ full_match <- function(left, right, vars,
   r_ids <- as.character(right[[right_id]])
 
   # --- Distance matrix ---
+  # full_match() uses a different (min-cost-flow group-matching) C++ backend
+  # that has not been made lazy-aware; caller_supports_lazy = FALSE keeps
+  # memory_mode = "auto" from ever promoting to lazy here, and makes an
+  # explicit memory_mode = "lazy" request fail clearly instead of returning
+  # a lazy_cost_spec this function cannot consume.
   cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale,
-                                   sigma = sigma)
+                                   sigma = sigma, memory_mode = memory_mode,
+                                   caller_supports_lazy = FALSE)
 
   # --- Caliper ---
   caliper_val <- NULL

@@ -17,15 +17,18 @@ namespace lap {
 // Convert CostMatrix to flat array for network simplex functions
 // Network simplex expects column-major layout (R convention)
 static std::vector<double> convert_to_column_major(const CostMatrix& cost) {
-    int n = cost.nrow;
-    int m = cost.ncol;
-    std::vector<double> result(n * m);
+    int n = static_cast<int>(cost.nrow);
+    int m = static_cast<int>(cost.ncol);
+    // n*m computed in int64_t: as plain `int` this overflows the vector size
+    // and every flat index below past a ~46,341-square matrix.
+    const int64_t cell_count = static_cast<int64_t>(n) * static_cast<int64_t>(m);
+    std::vector<double> result(static_cast<size_t>(cell_count));
 
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
+    for (int64_t i = 0; i < n; ++i) {
+        for (int64_t j = 0; j < m; ++j) {
             // cost.at(i,j) is row-major access
             // result[i + j*n] is column-major storage
-            result[i + j * n] = cost.at(i, j);
+            result[static_cast<size_t>(i + j * n)] = cost.at(i, j);
         }
     }
 
@@ -33,8 +36,8 @@ static std::vector<double> convert_to_column_major(const CostMatrix& cost) {
 }
 
 LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
-    const int n_rows = cost.nrow;
-    const int n_cols = cost.ncol;
+    const int n_rows = static_cast<int>(cost.nrow);
+    const int n_cols = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n_rows == 0) {

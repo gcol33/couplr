@@ -25,7 +25,8 @@ match_couples(
   replace = FALSE,
   ratio = 1L,
   check_costs = TRUE,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 }
 \arguments{
@@ -59,11 +60,17 @@ scaling method (default: FALSE)}
 "hungarian", "jv", "gabow_tarjan", ...), or "greedy" for fast approximate
 matching (see \code{strategy}).}
 
-\item{strategy}{Greedy strategy, used only when \code{method = "greedy"}:
+\item{strategy}{Greedy strategy, used only when \code{method = "greedy"}. All
+three strategies solve the same full cost matrix already built by
+\code{match_couples()}; none of them reduce the O(n*m) memory that matrix
+takes.
 \itemize{
-\item "row_best": for each row, take its best available column (default)
-\item "sorted": sort all pairs by distance, greedily assign
-\item "pq": priority queue (memory-efficient for very large problems)
+\item "row_best": for each row, take its best available column (default).
+The only strategy that needs no extra storage beyond the cost matrix.
+\item "sorted": collect every valid pair, sort by distance, greedily assign
+\item "pq": collect every valid pair into a heap and pop the smallest first.
+Avoids the upfront sort but holds the same number of candidate pairs
+as "sorted", so it is not more memory-efficient
 }}
 
 \item{return_unmatched}{Include unmatched units in output}
@@ -90,6 +97,17 @@ and provide helpful warnings before matching (default: TRUE)}
 \item{sigma}{Optional covariance matrix for Mahalanobis distance. If NULL
 (default), the pooled sample covariance is used. Only relevant when
 \code{distance = "mahalanobis"}.}
+
+\item{memory_mode}{One of "auto" (default), "dense", or "lazy". "auto"
+warns (or, when \code{method} is \code{"jv"}/\code{"auction"} with a built-in distance
+metric, switches) when the dense cost matrix would consume a large
+fraction of free system RAM. "lazy" computes each pairwise distance from
+the underlying feature data as the solver needs it, instead of
+allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, and not yet for
+\code{replace = TRUE}, \code{ratio > 1}, \code{method = "greedy"}, or custom distance
+functions (blocking via \code{block_id} is the other option that reduces
+memory, by solving smaller sub-problems). "dense" skips the RAM check
+entirely.}
 }
 \value{
 A list with class "matching_result" containing:

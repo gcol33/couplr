@@ -265,7 +265,7 @@ test_that("summary.distance_object shows sparsity warning for >50% forbidden", {
   # Set >50% to Inf
   dist_obj$cost_matrix[1:2, ] <- Inf
 
-  expect_output(summary(dist_obj), "consider sparse matrix")
+  expect_output(summary(dist_obj), "method = .lapmod.")
 })
 
 test_that("summary.distance_object handles highly skewed distribution", {

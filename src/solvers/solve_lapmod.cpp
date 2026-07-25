@@ -37,8 +37,8 @@ struct SparseMatrix {
 // Build sparse matrix from CostMatrix
 SparseMatrix build_sparse(const CostMatrix& cost, bool maximize) {
     SparseMatrix sp;
-    sp.n = cost.nrow;
-    sp.m = cost.ncol;
+    sp.n = static_cast<int>(cost.nrow);
+    sp.m = static_cast<int>(cost.ncol);
 
     // nnz and the row_ptr prefix sums are int; a dense n*m exceeding 2^31 would
     // overflow them into wrong offsets. nnz can never exceed n*m, so reject when
@@ -191,8 +191,8 @@ bool augment(const SparseMatrix& sp, int free_row,
 }  // anonymous namespace
 
 LapResult solve_lapmod(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {

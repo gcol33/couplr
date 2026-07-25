@@ -16,6 +16,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/greedy_matching_rcpp.cpp \
           solvers/solve_auction.cpp \
           solvers/solve_auction_rcpp.cpp \
+          solvers/solve_auction_lazy_rcpp.cpp \
           solvers/solve_bruteforce.cpp \
           solvers/solve_bruteforce_rcpp.cpp \
           solvers/solve_csflow.cpp \
@@ -33,6 +34,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/jv_core.cpp \
           solvers/solve_jv.cpp \
           solvers/solve_jv_rcpp.cpp \
+          solvers/solve_jv_lazy_rcpp.cpp \
           solvers/solve_kbest_lawler.cpp \
           solvers/solve_line_metric.cpp \
           solvers/solve_line_metric_rcpp.cpp \
@@ -72,6 +74,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/greedy_matching_rcpp.o \
           solvers/solve_auction.o \
           solvers/solve_auction_rcpp.o \
+          solvers/solve_auction_lazy_rcpp.o \
           solvers/solve_bruteforce.o \
           solvers/solve_bruteforce_rcpp.o \
           solvers/solve_csflow.o \
@@ -89,6 +92,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/jv_core.o \
           solvers/solve_jv.o \
           solvers/solve_jv_rcpp.o \
+          solvers/solve_jv_lazy_rcpp.o \
           solvers/solve_kbest_lawler.o \
           solvers/solve_line_metric.o \
           solvers/solve_line_metric_rcpp.o \

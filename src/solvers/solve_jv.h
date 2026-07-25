@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../core/lap_types.h"
+#include "../core/lap_lazy_types.h"
 
 namespace lap {
 
@@ -20,5 +21,16 @@ namespace lap {
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
 LapResult solve_jv(const CostMatrix& cost, bool maximize = false);
+
+// Lazy cost-source overload: computes distances on demand from the
+// underlying feature data instead of a materialized dense matrix, trading
+// compute for RAM. `maximize` is already baked into the source's internal
+// negate flag at construction, so there is no separate parameter here (a
+// second maximize argument would invite a "which one wins" ambiguity).
+//
+// Throws:
+//   InfeasibleException if no valid matching exists
+//   DimensionException if nrow > ncol
+LapResult solve_jv(const LazyCostMatrix& cost);
 
 }  // namespace lap

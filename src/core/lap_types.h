@@ -6,6 +6,7 @@
 #include <string>
 #include <limits>
 #include <cmath>
+#include <cstdint>
 
 namespace lap {
 
@@ -13,18 +14,26 @@ namespace lap {
 constexpr double BIG = 1e100;   // Used for forbidden edges
 constexpr double TOL = 1e-12;   // Tolerance for zero comparisons
 
+// Flat row-major index, computed in 64-bit to avoid overflow past
+// nrow*ncol > INT_MAX (~46,341 square) which plain `int` arithmetic
+// silently wraps (undefined behavior) on matrices the package's own
+// vignettes already reach (n=50,000).
+inline int64_t flat_index(int64_t i, int64_t j, int64_t ncol) {
+    return i * ncol + j;
+}
+
 // Cost matrix: row-major flat vector + dimensions
 struct CostMatrix {
     std::vector<double> data;   // row-major, size = nrow * ncol
     std::vector<int> mask;      // 1=allowed, 0=forbidden, size = nrow * ncol
-    int nrow = 0;
-    int ncol = 0;
+    int64_t nrow = 0;
+    int64_t ncol = 0;
 
     CostMatrix() = default;
 
-    CostMatrix(int rows, int cols)
-        : data(rows * cols, 0.0)
-        , mask(rows * cols, 1)
+    CostMatrix(int64_t rows, int64_t cols)
+        : data(static_cast<size_t>(rows * cols), 0.0)
+        , mask(static_cast<size_t>(rows * cols), 1)
         , nrow(rows)
         , ncol(cols) {}
 
@@ -33,30 +42,30 @@ struct CostMatrix {
             nrow = ncol = 0;
             return;
         }
-        nrow = static_cast<int>(mat.size());
-        ncol = static_cast<int>(mat[0].size());
-        data.resize(nrow * ncol);
-        mask.resize(nrow * ncol, 1);
-        for (int i = 0; i < nrow; ++i) {
-            for (int j = 0; j < ncol; ++j) {
-                double v = mat[i][j];
-                data[i * ncol + j] = v;
-                mask[i * ncol + j] = std::isfinite(v) ? 1 : 0;
+        nrow = static_cast<int64_t>(mat.size());
+        ncol = static_cast<int64_t>(mat[0].size());
+        data.resize(static_cast<size_t>(nrow * ncol));
+        mask.resize(static_cast<size_t>(nrow * ncol), 1);
+        for (int64_t i = 0; i < nrow; ++i) {
+            for (int64_t j = 0; j < ncol; ++j) {
+                double v = mat[static_cast<size_t>(i)][static_cast<size_t>(j)];
+                data[static_cast<size_t>(flat_index(i, j, ncol))] = v;
+                mask[static_cast<size_t>(flat_index(i, j, ncol))] = std::isfinite(v) ? 1 : 0;
             }
         }
     }
 
     // Element access
-    double& at(int i, int j) { return data[i * ncol + j]; }
-    double at(int i, int j) const { return data[i * ncol + j]; }
+    double& at(int64_t i, int64_t j) { return data[static_cast<size_t>(flat_index(i, j, ncol))]; }
+    double at(int64_t i, int64_t j) const { return data[static_cast<size_t>(flat_index(i, j, ncol))]; }
 
     // Check if edge is allowed (finite cost)
-    bool allowed(int i, int j) const { return mask[i * ncol + j] != 0; }
+    bool allowed(int64_t i, int64_t j) const { return mask[static_cast<size_t>(flat_index(i, j, ncol))] != 0; }
 
     // Set edge as forbidden
-    void forbid(int i, int j) {
-        mask[i * ncol + j] = 0;
-        data[i * ncol + j] = BIG;
+    void forbid(int64_t i, int64_t j) {
+        mask[static_cast<size_t>(flat_index(i, j, ncol))] = 0;
+        data[static_cast<size_t>(flat_index(i, j, ncol))] = BIG;
     }
 
     // Check if empty

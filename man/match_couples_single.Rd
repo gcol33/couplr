@@ -20,7 +20,8 @@ match_couples_single(
   check_costs = TRUE,
   replace = FALSE,
   ratio = 1L,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 }
 \value{

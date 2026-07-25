@@ -12,8 +12,8 @@
 namespace lap {
 
 LapResult solve_csa(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {
@@ -76,7 +76,7 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             sq.at(i, j) = work.at(i, j);
-            sq.mask[i * m + j] = work.mask[i * m + j];
+            sq.mask[static_cast<size_t>(flat_index(i, j, m))] = work.mask[static_cast<size_t>(flat_index(i, j, m))];
         }
     }
     if (n < nn) {
@@ -84,14 +84,15 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
         for (int i = n; i < nn; ++i) {
             for (int j = 0; j < m; ++j) {
                 sq.at(i, j) = dummy_cost;
-                sq.mask[i * m + j] = 1;
+                sq.mask[static_cast<size_t>(flat_index(i, j, m))] = 1;
             }
         }
     }
     work = std::move(sq);
 
     // Build CSR-style allowed lists for efficient iteration
-    std::vector<int> row_ptr, cols;
+    std::vector<int64_t> row_ptr;
+    std::vector<int> cols;
     build_allowed(work.mask, nn, m, row_ptr, cols);
 
     // Dual variables (prices for objects)
@@ -108,7 +109,7 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
 
     // Find best (min reduced cost) and second-best for person i
     auto find_best = [&](int i, double& best_rc, double& second_rc, int& best_j) {
-        const int start = row_ptr[i], end = row_ptr[i + 1];
+        const int64_t start = row_ptr[i], end = row_ptr[i + 1];
         best_rc = std::numeric_limits<double>::infinity();
         second_rc = std::numeric_limits<double>::infinity();
         best_j = -1;
@@ -119,7 +120,7 @@ LapResult solve_csa(const CostMatrix& cost, bool maximize) {
             return;
         }
 
-        for (int k = start; k < end; ++k) {
+        for (int64_t k = start; k < end; ++k) {
             int j = cols[k];
             double rc = reduced_cost(i, j);
             if (rc < best_rc) {

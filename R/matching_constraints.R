@@ -30,6 +30,13 @@ apply_max_distance <- function(cost_matrix, max_distance = Inf) {
     stop("max_distance must be positive", call. = FALSE)
   }
 
+  if (is_lazy_cost_spec(cost_matrix)) {
+    # O(1): just record the threshold. Cheaper than the dense O(n*m) masking
+    # below, since no matrix ever gets materialized in the first place.
+    cost_matrix$max_distance <- max_distance
+    return(cost_matrix)
+  }
+
   # Mark pairs exceeding max_distance as forbidden (Inf, not BIG_COST: the
   # LAP solvers detect non-finite cells as forbidden and short-circuit on
   # infeasibility; a huge finite "BIG_COST" looks like a regular edge to JV
@@ -47,6 +54,22 @@ apply_max_distance <- function(cost_matrix, max_distance = Inf) {
 #' @keywords internal
 apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
   if (is.null(calipers)) {
+    return(cost_matrix)
+  }
+
+  if (is_lazy_cost_spec(cost_matrix)) {
+    # O(length(calipers)): resolve each caliper variable to its column index
+    # in `vars` (the same order as left_mat/right_mat) and record it, rather
+    # than an O(n*m*length(calipers)) dense scan.
+    new_calipers <- cost_matrix$calipers
+    for (var_name in names(calipers)) {
+      var_index <- match(var_name, vars)
+      if (is.na(var_index)) next  # not a matching variable, same as dense path
+      new_calipers[[length(new_calipers) + 1]] <- list(
+        var_index = var_index, threshold = calipers[[var_name]]
+      )
+    }
+    cost_matrix$calipers <- new_calipers
     return(cost_matrix)
   }
 
@@ -89,6 +112,11 @@ mark_forbidden_pairs <- function(cost_matrix, forbidden_indices) {
     return(cost_matrix)
   }
 
+  if (is_lazy_cost_spec(cost_matrix)) {
+    stop("Explicit forbidden pairs are not supported with memory_mode = \"lazy\" yet; ",
+         "use memory_mode = \"dense\".", call. = FALSE)
+  }
+
   # forbidden_indices should be a 2-column matrix of (row, col) indices
   for (k in seq_len(nrow(forbidden_indices))) {
     i <- forbidden_indices[k, 1]
@@ -125,6 +153,14 @@ apply_all_constraints <- function(cost_matrix, left, right, vars,
 #' @return Logical indicating whether any valid pairs exist.
 #' @keywords internal
 has_valid_pairs <- function(cost_matrix) {
+  if (is_lazy_cost_spec(cost_matrix)) {
+    # Deferred to solve time: an O(n*m) scan here to answer this precisely
+    # would cost exactly what the lazy path exists to avoid. If the
+    # constraints actually leave no valid pairs, the solve attempt itself
+    # throws an InfeasibleException, which callers (.solve_with_partial_feasibility)
+    # already catch and translate into the same "no valid pairs" outcome.
+    return(TRUE)
+  }
   any(is.finite(cost_matrix) & cost_matrix < BIG_COST)
 }
 

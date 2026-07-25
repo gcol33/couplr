@@ -74,6 +74,9 @@ set(CPP_IMPL_SOURCES
 
 # Test sources
 set(TEST_SOURCES
+    tests/test_lap_types_overflow.cpp
+    tests/test_lazy_jv.cpp
+    tests/test_lazy_auction.cpp
     tests/test_jv.cpp
     tests/test_jv_duals.cpp
     tests/test_hungarian.cpp

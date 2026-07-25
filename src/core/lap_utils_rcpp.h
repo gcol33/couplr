@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include "lap_types.h"
+#include "lap_lazy_types.h"
 
 // Error macro using Rcpp::stop for proper C++ stack unwinding
 // (Rf_error uses longjmp which skips destructors, causing memory leaks)
@@ -38,13 +39,13 @@ Rcpp::NumericMatrix apply_constraints(
 // row_ptr size is n + 1; cols collects allowed column indices per row (0-based).
 void build_allowed(
     const std::vector<int>& mask,
-    int n,
-    int m,
+    int64_t n,
+    int64_t m,
     std::vector<int>& row_ptr,
     std::vector<int>& cols);
 
 // Ensure each row has at least one finite option (used by some solvers)
-void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m);
+void ensure_each_row_has_option(const std::vector<int>& mask, int64_t n, int64_t m);
 
 // Check if matrix is feasible (each row has at least one finite value)
 // Returns true if feasible, false otherwise (does not throw)
@@ -61,7 +62,7 @@ bool is_valid_matching(const Rcpp::NumericMatrix& cost,
 bool has_valid_matching(const Rcpp::NumericMatrix& M);
 
 // Overload for Rcpp::IntegerVector (converts and calls vector version)
-inline void ensure_each_row_has_option(const Rcpp::IntegerVector& mask, int n, int m) {
+inline void ensure_each_row_has_option(const Rcpp::IntegerVector& mask, int64_t n, int64_t m) {
   std::vector<int> mask_vec(mask.begin(), mask.end());
   ensure_each_row_has_option(mask_vec, n, m);
 }
@@ -92,6 +93,29 @@ double compute_total_cost(const Rcpp::NumericMatrix& original_cost,
 // Single source of truth for the adapter pattern that wraps every pure
 // lap::solve_* implementation as an Rcpp *_impl entry point.
 lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost);
+
+// Convert R feature matrices (column-major) into a lap::LazyCostMatrix
+// (row-major internally). `left_mat`/`right_mat` are the already-scaled,
+// already-weighted matching-variable matrices (see R's build_cost_matrix()).
+// `metric` is one of the strings accepted by compute_distance_matrix()
+// ("euclidean"/"l2", "manhattan"/"l1"/"cityblock", "squared_euclidean"/
+// "sqeuclidean"/"sq", "chebyshev"/"chebychev"/"maximum"/"max",
+// "mahalanobis"/"maha"). `inv_cov` is the precomputed p x p inverse
+// covariance matrix (only read for Mahalanobis; pass R_NilValue otherwise --
+// computing it is R's job, matching compute_distance_matrix()'s existing
+// pooled-covariance logic, not reimplemented here). `calipers` is a named
+// R list (variable name -> numeric threshold); names are resolved to column
+// indices via `var_names` (the `vars` vector, in the same column order as
+// left_mat/right_mat).
+lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+    double max_distance,
+    Rcpp::List calipers,
+    const Rcpp::CharacterVector& var_names,
+    bool maximize);
 
 // Convert a pure lap::LapResult to the standard Rcpp result list.
 // Assignment is shifted 0-based -> 1-based (0 = unmatched) and the total is

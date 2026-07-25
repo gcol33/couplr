@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../core/lap_types.h"
+#include "../core/lap_lazy_types.h"
 #include <string>
 
 namespace lap {
@@ -75,5 +76,17 @@ LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize = fa
                                        double initial_epsilon_factor = 1.0,
                                        double alpha = 7.0,
                                        double final_epsilon = -1.0);
+
+// Lazy cost-source overload of the basic (queue-drain) auction. `maximize`
+// is already baked into `cost`'s internal negate flag at construction, so
+// there is no separate parameter here (matching solve_jv(LazyCostMatrix)'s
+// convention). Handles rectangular problems via PaddedCostView, without
+// materializing a dense padded copy.
+//
+// Throws:
+//   InfeasibleException if no valid matching exists
+//   DimensionException if nrow > ncol
+//   ConvergenceException if iteration limit exceeded
+LapResult solve_auction(const LazyCostMatrix& cost, double eps = -1.0);
 
 }  // namespace lap

@@ -12,7 +12,8 @@ assignment(
     "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan", "push_relabel",
     "orlin", "network_simplex"),
   auction_eps = NULL,
-  eps = NULL
+  eps = NULL,
+  memory_mode = "auto"
 )
 }
 \arguments{
@@ -65,6 +66,14 @@ If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}
 
 \item{eps}{Deprecated. Use \code{auction_eps}. If provided and \code{auction_eps} is \code{NULL},
 its value is used for \code{auction_eps}.}
+
+\item{memory_mode}{One of "auto" (default), "dense", or "lazy". \code{cost} is
+already a materialized matrix by the time it reaches \code{assignment()}, so
+"auto" here is diagnostic only: it warns if the matrix is large relative
+to free system RAM (nothing else can be done post-hoc once the matrix
+already exists -- build it via \code{compute_distances(memory_mode = ...)}
+instead to avoid materializing it in the first place). No lazy solver
+exists yet, so \code{memory_mode = "lazy"} currently always errors.}
 }
 \value{
 An object of class \code{lap_solve_result}, a list with elements:

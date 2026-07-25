@@ -196,13 +196,12 @@ test_that("matchmaker validates block_type", {
 # matching_constraints.R - Edge cases
 # ==============================================================================
 
-test_that("update_constraints with max_distance = 0", {
+test_that("update_constraints rejects max_distance = 0, consistent with apply_max_distance()", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1, 2, 3))
   dist_obj <- compute_distances(left, right, vars = "x")
-  updated <- update_constraints(dist_obj, max_distance = 0)
-  expect_true(inherits(updated, "distance_object") || inherits(updated, "couplr_distance"))
+  expect_error(update_constraints(dist_obj, max_distance = 0), "positive")
 })
 
 # ==============================================================================

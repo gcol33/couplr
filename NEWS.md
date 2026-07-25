@@ -1,3 +1,53 @@
+# couplr 1.5.3
+
+## Bug Fixes
+
+* **Fixed a silent integer overflow in the core cost-matrix type.**
+  `lap::CostMatrix` computed its flat row-major index as `i * ncol + j` using
+  plain 32-bit `int` arithmetic, which wraps (undefined behavior) once
+  `nrow * ncol` exceeds `INT_MAX` (~46,341 square) -- a scale the package's
+  own vignettes already walk through as a normal example. The same pattern
+  was duplicated, uncaught, in several solvers' own raw index arithmetic
+  (`auction`, `csa`, `cycle_cancel`, `munkres`, `ramshaw_tarjan`,
+  `ssap_bucket`, `sap`/`ssp`, `network_simplex`) and in the Rcpp boundary's
+  matrix conversion. All flat-index arithmetic is now computed in 64-bit,
+  with a new arithmetic-only regression test covering the exact overflow
+  point without allocating an overflow-sized matrix.
+
+## New Features
+
+* **`memory_mode = "lazy"`: compute costs on demand instead of materializing
+  the full matrix.** `match_couples()`, `compute_distances()`, and
+  `assignment()` now accept `memory_mode = c("auto", "dense", "lazy")`.
+  `"lazy"` (with `method = "jv"` or `"auction"`) computes each pairwise
+  distance from the underlying feature data as the solver needs it, rather
+  than allocating an n_left x n_right matrix up front -- a 100k x 100k
+  match needs ~80GB dense, but the underlying 100k x 100 feature data needs
+  ~80MB. `"auto"` (the default) estimates the dense matrix's memory
+  footprint against free system RAM and switches to lazy (with a warning
+  giving concrete GB numbers) before a huge allocation, rather than silently
+  crashing or thrashing; `"dense"` skips the check entirely. Supports all
+  built-in distance metrics, per-variable calipers, and `max_distance`;
+  `replace = TRUE`, `ratio > 1`, `method = "greedy"`, custom distance
+  functions, and `full_match()` are not lazy-capable yet and error clearly
+  rather than silently falling back to dense or producing a wrong answer.
+  Ordinary-sized problems never probe RAM at all (a cheap cell-count
+  short-circuit), so this adds no overhead for existing usage.
+
+## Documentation
+
+* **Corrected memory-usage claims for greedy matching.** The vignettes and
+  `compute_distances()` docs said greedy matching "computes distances
+  on-the-fly" and "avoids the full cost matrix", and that a caliper "creates
+  a sparse matrix". None of that is true: `build_cost_matrix()` allocates the
+  full n_left x n_right matrix for every `method`, including `"greedy"`, and
+  couplr has no sparse matrix representation anywhere. Greedy and calipers
+  change how that matrix is solved, not how much memory it takes; blocking is
+  the only documented option that actually shrinks the allocation. Also fixed
+  the `strategy = "pq"` docs, which called it "memory-efficient" when it
+  holds the same candidate pairs as `"sorted"` and only `"row_best"` avoids
+  that extra storage.
+
 # couplr 1.5.2
 
 ## Performance

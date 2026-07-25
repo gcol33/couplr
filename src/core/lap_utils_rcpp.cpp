@@ -7,20 +7,108 @@
 // ------------------------- adapter conversions -------------------------
 
 lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
-  const int n = cost.nrow();
-  const int m = cost.ncol();
+  const int64_t n = cost.nrow();
+  const int64_t m = cost.ncol();
 
   lap::CostMatrix cm(n, m);
 
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
+  for (int64_t i = 0; i < n; ++i) {
+    for (int64_t j = 0; j < m; ++j) {
       double v = cost(i, j);
       cm.at(i, j) = v;
-      cm.mask[i * m + j] = (R_finite(v)) ? 1 : 0;
+      cm.mask[static_cast<size_t>(lap::flat_index(i, j, m))] = (R_finite(v)) ? 1 : 0;
     }
   }
 
   return cm;
+}
+
+// Maps the same metric name spellings accepted by R's compute_distance_matrix()
+// (R/matching_distance.R) -- single source of truth for the string set stays
+// in R; this just needs to recognize what R already validated and normalized
+// to lowercase before calling down here.
+static lap::DistanceMetric metric_from_string(const std::string& metric) {
+  if (metric == "euclidean" || metric == "l2") return lap::DistanceMetric::Euclidean;
+  if (metric == "manhattan" || metric == "l1" || metric == "cityblock") return lap::DistanceMetric::Manhattan;
+  if (metric == "squared_euclidean" || metric == "sqeuclidean" || metric == "sq") return lap::DistanceMetric::SquaredEuclidean;
+  if (metric == "chebyshev" || metric == "chebychev" || metric == "maximum" || metric == "max") return lap::DistanceMetric::Chebyshev;
+  if (metric == "mahalanobis" || metric == "maha") return lap::DistanceMetric::Mahalanobis;
+  LAP_ERROR("rcpp_to_lazy_cost_matrix: unknown distance metric '%s'", metric.c_str());
+  return lap::DistanceMetric::Euclidean;  // unreachable
+}
+
+lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+    double max_distance,
+    Rcpp::List calipers,
+    const Rcpp::CharacterVector& var_names,
+    bool maximize) {
+  const int64_t n = left_mat.nrow();
+  const int64_t m = right_mat.nrow();
+  const int64_t p = left_mat.ncol();
+
+  if (right_mat.ncol() != p) {
+    LAP_ERROR("rcpp_to_lazy_cost_matrix: left_mat and right_mat must have the same number of columns");
+  }
+
+  // Repack column-major R matrices into row-major flat vectors: the solver
+  // inner loops fix a row and scan all variables for a fixed unit, which
+  // needs that unit's features contiguous for cache efficiency.
+  std::vector<double> left_flat(static_cast<size_t>(n * p));
+  for (int64_t i = 0; i < n; ++i) {
+    for (int64_t k = 0; k < p; ++k) {
+      left_flat[static_cast<size_t>(i * p + k)] = left_mat(i, k);
+    }
+  }
+  std::vector<double> right_flat(static_cast<size_t>(m * p));
+  for (int64_t j = 0; j < m; ++j) {
+    for (int64_t k = 0; k < p; ++k) {
+      right_flat[static_cast<size_t>(j * p + k)] = right_mat(j, k);
+    }
+  }
+
+  std::vector<double> inv_cov_flat;
+  if (inv_cov.isNotNull()) {
+    Rcpp::NumericMatrix ic(inv_cov);
+    if (ic.nrow() != p || ic.ncol() != p) {
+      LAP_ERROR("rcpp_to_lazy_cost_matrix: inv_cov must be %lld x %lld",
+                (long long)p, (long long)p);
+    }
+    inv_cov_flat.resize(static_cast<size_t>(p * p));
+    for (int64_t a = 0; a < p; ++a) {
+      for (int64_t b = 0; b < p; ++b) {
+        inv_cov_flat[static_cast<size_t>(a * p + b)] = ic(a, b);
+      }
+    }
+  }
+
+  std::vector<lap::CaliperSpec> caliper_specs;
+  if (calipers.size() > 0) {
+    // An empty R list() has no `names` attribute at all (calipers.names()
+    // returns R_NilValue), so only construct/read the CharacterVector when
+    // there is at least one element -- converting a NULL SEXP to
+    // CharacterVector throws "Not compatible with STRSXP".
+    Rcpp::CharacterVector caliper_names = calipers.names();
+    for (int k = 0; k < calipers.size(); ++k) {
+      std::string name = Rcpp::as<std::string>(caliper_names[k]);
+      int64_t var_index = -1;
+      for (int64_t vi = 0; vi < var_names.size(); ++vi) {
+        if (Rcpp::as<std::string>(var_names[vi]) == name) { var_index = vi; break; }
+      }
+      if (var_index < 0) {
+        LAP_ERROR("rcpp_to_lazy_cost_matrix: caliper variable '%s' not found in vars", name.c_str());
+      }
+      double threshold = Rcpp::as<double>(calipers[k]);
+      caliper_specs.push_back(lap::CaliperSpec{var_index, threshold});
+    }
+  }
+
+  return lap::LazyCostMatrix(std::move(left_flat), std::move(right_flat), p,
+                             metric_from_string(metric), std::move(inv_cov_flat),
+                             max_distance, std::move(caliper_specs), maximize);
 }
 
 Rcpp::List lap_result_to_rcpp(const lap::LapResult& result,
@@ -83,31 +171,31 @@ Rcpp::NumericMatrix apply_constraints(const Rcpp::NumericMatrix& M,
 }
 
 // Build CSR-like lists of allowed columns (mask: 0 = allowed, 1 = forbidden)
-void build_allowed(const std::vector<int>& mask, int n, int m,
+void build_allowed(const std::vector<int>& mask, int64_t n, int64_t m,
                    std::vector<int>& row_ptr, std::vector<int>& cols) {
-  row_ptr.assign(n + 1, 0);
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < m; ++j)
-      if (!mask[i * m + j]) ++row_ptr[i + 1];
+  row_ptr.assign(static_cast<size_t>(n + 1), 0);
+  for (int64_t i = 0; i < n; ++i)
+    for (int64_t j = 0; j < m; ++j)
+      if (!mask[static_cast<size_t>(lap::flat_index(i, j, m))]) ++row_ptr[static_cast<size_t>(i + 1)];
 
-  for (int i = 1; i <= n; ++i) row_ptr[i] += row_ptr[i - 1];
+  for (int64_t i = 1; i <= n; ++i) row_ptr[static_cast<size_t>(i)] += row_ptr[static_cast<size_t>(i - 1)];
 
-  cols.assign(row_ptr.back(), -1);
+  cols.assign(static_cast<size_t>(row_ptr.back()), -1);
   std::vector<int> fill = row_ptr;
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < m; ++j)
-      if (!mask[i * m + j]) cols[fill[i]++] = j;
+  for (int64_t i = 0; i < n; ++i)
+    for (int64_t j = 0; j < m; ++j)
+      if (!mask[static_cast<size_t>(lap::flat_index(i, j, m))]) cols[static_cast<size_t>(fill[static_cast<size_t>(i)]++)] = static_cast<int>(j);
 }
 
 // Check that each row has at least one allowed (non-forbidden) edge
-void ensure_each_row_has_option(const std::vector<int>& mask, int n, int m) {
-  for (int i = 0; i < n; ++i) {
+void ensure_each_row_has_option(const std::vector<int>& mask, int64_t n, int64_t m) {
+  for (int64_t i = 0; i < n; ++i) {
     bool ok = false;
-    for (int j = 0; j < m; ++j) {
-      if (!mask[i * m + j]) { ok = true; break; }
+    for (int64_t j = 0; j < m; ++j) {
+      if (!mask[static_cast<size_t>(lap::flat_index(i, j, m))]) { ok = true; break; }
     }
     if (!ok) {
-      LAP_ERROR("Infeasible: row %d has no allowed edges", i + 1);
+      LAP_ERROR("Infeasible: row %lld has no allowed edges", static_cast<long long>(i + 1));
     }
   }
 }

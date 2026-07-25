@@ -13,8 +13,8 @@
 namespace lap {
 
 DualResult solve_jv_duals(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     if (n == 0) {
         DualResult result;

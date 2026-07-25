@@ -25,8 +25,8 @@ static Palette analyze_palette(const CostMatrix& cost) {
     double a = 0.0, b = 0.0;
     bool has_a = false, has_b = false;
 
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
@@ -169,8 +169,8 @@ struct HK {
 LapResult solve_csflow(const CostMatrix& cost, bool maximize);
 
 LapResult solve_hk01(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     // Handle empty case
     if (n == 0) {

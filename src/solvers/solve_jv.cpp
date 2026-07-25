@@ -12,8 +12,8 @@
 namespace lap {
 
 LapResult solve_jv(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     if (n == 0) {
         return LapResult({}, 0.0, "optimal");
@@ -39,6 +39,45 @@ LapResult solve_jv(const CostMatrix& cost, bool maximize) {
             LAP_THROW_INFEASIBLE("Chosen forbidden edge");
         }
         double c = cost.at(i, j);
+        if (!std::isfinite(c)) {
+            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
+        }
+        total += c;
+    }
+
+    return LapResult(std::move(core.assignment), total, "optimal");
+}
+
+LapResult solve_jv(const LazyCostMatrix& cost) {
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
+
+    if (n == 0) {
+        return LapResult({}, 0.0, "optimal");
+    }
+    if (n > m) {
+        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    }
+
+    // No prepare_for_solve() step: the LazyCostMatrix is already "prepared"
+    // (forbidden -> BIG via at(), negated if maximize) at construction.
+    ensure_each_row_has_option(cost);
+
+    detail::JvCoreOpts opts;
+    opts.use_warm_start = true;  // inert for LazyCostMatrix (see jv_core.cpp)
+    auto core = detail::jv_core(cost, opts);
+
+    double total = 0.0;
+    for (int i = 0; i < n; ++i) {
+        int j = core.assignment[i];
+        if (j < 0) {
+            LAP_THROW_INFEASIBLE("Could not find full matching");
+        }
+        if (!cost.allowed(i, j)) {
+            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
+        }
+        double c = cost.at(i, j);
+        if (cost.is_negated()) c = -c;  // report using original (unnegated) costs
         if (!std::isfinite(c)) {
             LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
         }

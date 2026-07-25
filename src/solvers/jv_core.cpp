@@ -16,6 +16,7 @@
 
 #include "jv_core.h"
 #include "../core/lap_types.h"
+#include "../core/lap_cost_source_traits.h"
 #include <vector>
 #include <limits>
 #include <cmath>
@@ -25,9 +26,13 @@
 namespace lap {
 namespace detail {
 
-JvCoreResult jv_core(const CostMatrix& work, const JvCoreOpts& opts) {
-    const int n = work.nrow;
-    const int m = work.ncol;
+template <typename CostSourceT>
+JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts) {
+    // Per-row/per-column working arrays below are legitimately sized n+1/m+1
+    // as plain `int`; individual dimensions never realistically approach
+    // INT_MAX. Only the n*m product (line ~62) needs 64-bit arithmetic.
+    const int n = static_cast<int>(work.nrow);
+    const int m = static_cast<int>(work.ncol);
 
     JvCoreResult result;
     result.assignment.assign(n, -1);
@@ -55,10 +60,21 @@ JvCoreResult jv_core(const CostMatrix& work, const JvCoreOpts& opts) {
     // the same column-min computation gets contaminated by BIG. Gate the
     // warm-start to the safe regime and fall back otherwise.
     bool safe_warm_start = opts.use_warm_start && (n == m);
-    if (safe_warm_start) {
-        for (int k = 0; k < n * m; ++k) {
-            if (work.mask[k] == 0) { safe_warm_start = false; break; }
+    if constexpr (supports_raw_mask<CostSourceT>::value) {
+        if (safe_warm_start) {
+            // n*m computed in int64_t: as plain `int` this overflows past a
+            // ~46,341-square matrix even though n/m individually fit in int.
+            const int64_t cell_count = static_cast<int64_t>(n) * static_cast<int64_t>(m);
+            for (int64_t k = 0; k < cell_count; ++k) {
+                if (work.mask[static_cast<size_t>(k)] == 0) { safe_warm_start = false; break; }
+            }
         }
+    } else {
+        // LazyCostMatrix has no raw mask array to scan cheaply; the
+        // warm-start pre-stages are disabled for the lazy path (a documented
+        // performance gap, not a correctness gap -- every row still gets a
+        // full augmenting-path search below).
+        safe_warm_start = false;
     }
 
     if (safe_warm_start) {
@@ -283,6 +299,9 @@ JvCoreResult jv_core(const CostMatrix& work, const JvCoreOpts& opts) {
 
     return result;
 }
+
+template JvCoreResult jv_core<CostMatrix>(const CostMatrix&, const JvCoreOpts&);
+template JvCoreResult jv_core<LazyCostMatrix>(const LazyCostMatrix&, const JvCoreOpts&);
 
 }  // namespace detail
 }  // namespace lap

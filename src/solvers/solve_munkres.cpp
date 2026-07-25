@@ -15,8 +15,8 @@
 namespace lap {
 
 LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
-    const int n = cost.nrow;
-    const int m = cost.ncol;
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
 
     if (n == 0) {
         return LapResult({}, 0.0, "optimal");
@@ -30,9 +30,12 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
 
     const double INF = std::numeric_limits<double>::infinity();
 
-    std::vector<double> C(n * m);
-    for (int k = 0; k < n * m; ++k) {
-        C[k] = work.mask[k] ? work.data[k] : INF;
+    // n*m computed in int64_t: as plain `int` this overflows the vector size
+    // and every flat index below past a ~46,341-square matrix.
+    const int64_t cell_count = static_cast<int64_t>(n) * static_cast<int64_t>(m);
+    std::vector<double> C(static_cast<size_t>(cell_count));
+    for (int64_t k = 0; k < cell_count; ++k) {
+        C[static_cast<size_t>(k)] = work.mask[static_cast<size_t>(k)] ? work.data[static_cast<size_t>(k)] : INF;
     }
 
     // Magnitude-aware zero tolerance. The row/column reductions below subtract
@@ -41,16 +44,16 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
     // on large-magnitude inputs and a solvable matrix throws; scale by the
     // largest finite cost so ordinary small-cost inputs keep ~1e-12.
     double max_abs = 0.0;
-    for (int k = 0; k < n * m; ++k) {
-        if (std::isfinite(C[k])) max_abs = std::max(max_abs, std::abs(C[k]));
+    for (int64_t k = 0; k < cell_count; ++k) {
+        if (std::isfinite(C[static_cast<size_t>(k)])) max_abs = std::max(max_abs, std::abs(C[static_cast<size_t>(k)]));
     }
     const double zero_tol = TOL * std::max(1.0, max_abs);
 
     auto row_min = [&](int i) {
         double mn = INF;
         for (int j = 0; j < m; ++j) {
-            if (std::isfinite(C[i * m + j])) {
-                mn = std::min(mn, C[i * m + j]);
+            if (std::isfinite(C[static_cast<size_t>(flat_index(i, j, m))])) {
+                mn = std::min(mn, C[static_cast<size_t>(flat_index(i, j, m))]);
             }
         }
         return mn;
@@ -62,8 +65,8 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
             LAP_THROW_INFEASIBLE("Row has no finite values (all forbidden)");
         }
         for (int j = 0; j < m; ++j) {
-            if (std::isfinite(C[i * m + j])) {
-                C[i * m + j] -= mn;
+            if (std::isfinite(C[static_cast<size_t>(flat_index(i, j, m))])) {
+                C[static_cast<size_t>(flat_index(i, j, m))] -= mn;
             }
         }
     }
@@ -75,7 +78,7 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
     std::vector<char> col_cov(m, 0);
 
     auto is_zero = [&](int i, int j) {
-        double x = C[i * m + j];
+        double x = C[static_cast<size_t>(flat_index(i, j, m))];
         return std::isfinite(x) && std::abs(x) <= zero_tol;
     };
 
@@ -115,8 +118,8 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
         for (int i = 0; i < n; ++i) {
             if (!row_cov[i]) {
                 for (int j = 0; j < m; ++j) {
-                    if (!col_cov[j] && std::isfinite(C[i * m + j])) {
-                        mn = std::min(mn, C[i * m + j]);
+                    if (!col_cov[j] && std::isfinite(C[static_cast<size_t>(flat_index(i, j, m))])) {
+                        mn = std::min(mn, C[static_cast<size_t>(flat_index(i, j, m))]);
                     }
                 }
             }
@@ -168,11 +171,11 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
 
                 for (int i = 0; i < n; ++i) {
                     for (int j = 0; j < m; ++j) {
-                        if (row_cov[i] && std::isfinite(C[i * m + j])) {
-                            C[i * m + j] += d;
+                        if (row_cov[i] && std::isfinite(C[static_cast<size_t>(flat_index(i, j, m))])) {
+                            C[static_cast<size_t>(flat_index(i, j, m))] += d;
                         }
-                        if (!col_cov[j] && std::isfinite(C[i * m + j])) {
-                            C[i * m + j] -= d;
+                        if (!col_cov[j] && std::isfinite(C[static_cast<size_t>(flat_index(i, j, m))])) {
+                            C[static_cast<size_t>(flat_index(i, j, m))] -= d;
                         }
                     }
                 }

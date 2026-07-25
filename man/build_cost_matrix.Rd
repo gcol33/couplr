@@ -11,8 +11,26 @@ build_cost_matrix(
   distance = "euclidean",
   weights = NULL,
   scale = FALSE,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto",
+  caller_supports_lazy = TRUE
 )
+}
+\arguments{
+\item{memory_mode}{One of "auto" (default), "dense", or "lazy". "auto"
+warns (or, when the caller supports it, switches) when the dense matrix
+would consume a large fraction of free system RAM. \code{memory_mode = "lazy"} returns a \code{lazy_cost_spec} instead of a matrix when the calling
+path and distance metric support it (built-in metrics via \code{assignment()}
+with \code{method = "jv"}/\code{"auction"}); otherwise it errors clearly rather
+than silently falling back to dense.}
+
+\item{caller_supports_lazy}{Whether the calling code path can actually
+consume a \code{lazy_cost_spec} result. Defaults to \code{TRUE}; callers whose
+downstream solve path has not been made lazy-aware (e.g. \code{full_match()},
+which uses an entirely different min-cost-flow backend) pass \code{FALSE} so
+\code{memory_mode = "auto"} never promotes to lazy for them, and an explicit
+\code{memory_mode = "lazy"} request errors clearly instead of returning a
+\code{lazy_cost_spec} the caller cannot use.}
 }
 \value{
 Numeric matrix of distances with optional scaling/weights applied.

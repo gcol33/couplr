@@ -22,7 +22,8 @@ match_couples_blocked(
   parallel = FALSE,
   replace = FALSE,
   ratio = 1L,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 ```
 

@@ -19,7 +19,8 @@ compute_distances(
   auto_scale = FALSE,
   left_id = "id",
   right_id = "id",
-  block_id = NULL
+  block_id = NULL,
+  memory_mode = "auto"
 )
 ```
 
@@ -65,6 +66,17 @@ compute_distances(
 
   Optional block ID column name for blocked matching
 
+- memory_mode:
+
+  One of "auto" (default), "dense", or "lazy". "auto" warns (or, for a
+  built-in distance metric, switches) when the dense matrix would
+  consume a large fraction of free system RAM. "lazy" returns a
+  `lazy_cost_spec` instead of a matrix (built-in distance metrics only);
+  pass it straight to
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+  the same way as a dense `cost_matrix`. "dense" skips the RAM check
+  entirely.
+
 ## Value
 
 An S3 object of class "distance_object" containing:
@@ -101,8 +113,12 @@ Benefits:
 
 - **Consistency**: Ensures same distances used across comparisons
 
-- **Memory efficient**: Can use sparse matrices when many pairs are
-  forbidden
+With the default `memory_mode = "auto"`/`"dense"`, the stored
+`cost_matrix` is a plain dense matrix; couplr has no sparse matrix
+representation, so forbidden pairs (`Inf`) still occupy a cell rather
+than being dropped from storage. With `memory_mode = "lazy"`,
+`cost_matrix` is instead a `lazy_cost_spec` that recomputes distances on
+demand from the underlying feature data.
 
 The distance_object stores the original datasets, allowing downstream
 functions like

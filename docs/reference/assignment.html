@@ -28,7 +28,7 @@ using several algorithms. Forbidden edges can be marked as NA or Inf."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,7 +100,8 @@ using several algorithms. Forbidden edges can be marked as <code>NA</code> or <c
 <span>    <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>, <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>, <span class="st">"push_relabel"</span>,</span>
 <span>    <span class="st">"orlin"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
 <span>  auction_eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  eps <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -152,6 +153,16 @@ If <code>NULL</code>, an internal default (e.g., <code>1e-9</code>) is used.</p>
 <dd><p>Deprecated. Use <code>auction_eps</code>. If provided and <code>auction_eps</code> is <code>NULL</code>,
 its value is used for <code>auction_eps</code>.</p></dd>
 
+
+<dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
+<dd><p>One of "auto" (default), "dense", or "lazy". <code>cost</code> is
+already a materialized matrix by the time it reaches <code>assignment()</code>, so
+"auto" here is diagnostic only: it warns if the matrix is large relative
+to free system RAM (nothing else can be done post-hoc once the matrix
+already exists – build it via <code>compute_distances(memory_mode = ...)</code>
+instead to avoid materializing it in the first place). No lazy solver
+exists yet, so <code>memory_mode = "lazy"</code> currently always errors.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -164,14 +175,12 @@ giving the assigned column for each row (0 if unassigned).</p></li>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>method = "auto"</code> selects an algorithm based on problem size/shape and data
-characteristics:</p><ul><li><p>Very small (n &lt;= 8): <code>"bruteforce"</code> — exact enumeration</p></li>
+characteristics:</p><ul><li><p>Very small (n &lt;= 8 and m &lt;= 8): <code>"bruteforce"</code> — exact enumeration</p></li>
 <li><p>Binary/constant costs: <code>"hk01"</code> — specialized for 0/1 costs</p></li>
-<li><p>Large sparse (n&gt;100, &gt;50\<!-- % NA/Inf): \code{"lapmod"} — sparse JV variant --></p></li>
-<li><p>Sparse or very rectangular: <code>"sap"</code> — handles sparsity well</p></li>
-<li><p>Small-medium (8 &lt; n &lt;= 50): <code>"hungarian"</code> — provides exact dual solutions</p></li>
-<li><p>Medium (50 &lt; n &lt;= 75): <code>"jv"</code> — fast general-purpose solver</p></li>
-<li><p>Large (n&gt;75): <code>"auction_scaled"</code> — fastest for large dense problems</p></li>
-</ul><p>Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than 'Hungarian' at n=500.</p>
+<li><p>Sparse (&gt;50\<!-- % NA/Inf): \code{"lapmod"} — sparse JV variant, at every size --></p></li>
+<li><p>Very rectangular (m &gt;= 3n): <code>"sap"</code> — handles rectangular well</p></li>
+<li><p>Otherwise: <code>"jv"</code> — fastest general-purpose solver at every size</p></li>
+</ul><p>The other solvers are available by naming them explicitly.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

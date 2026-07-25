@@ -15,7 +15,8 @@ assignment(
     "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan", "push_relabel",
     "orlin", "network_simplex"),
   auction_eps = NULL,
-  eps = NULL
+  eps = NULL,
+  memory_mode = "auto"
 )
 ```
 
@@ -103,6 +104,16 @@ assignment(
   Deprecated. Use `auction_eps`. If provided and `auction_eps` is
   `NULL`, its value is used for `auction_eps`.
 
+- memory_mode:
+
+  One of "auto" (default), "dense", or "lazy". `cost` is already a
+  materialized matrix by the time it reaches `assignment()`, so "auto"
+  here is diagnostic only: it warns if the matrix is large relative to
+  free system RAM (nothing else can be done post-hoc once the matrix
+  already exists – build it via `compute_distances(memory_mode = ...)`
+  instead to avoid materializing it in the first place). No lazy solver
+  exists yet, so `memory_mode = "lazy"` currently always errors.
+
 ## Value
 
 An object of class `lap_solve_result`, a list with elements:
@@ -121,23 +132,17 @@ An object of class `lap_solve_result`, a list with elements:
 `method = "auto"` selects an algorithm based on problem size/shape and
 data characteristics:
 
-- Very small (n \<= 8): `"bruteforce"` — exact enumeration
+- Very small (n \<= 8 and m \<= 8): `"bruteforce"` — exact enumeration
 
 - Binary/constant costs: `"hk01"` — specialized for 0/1 costs
 
-- Large sparse (n\>100, \>50\\
+- Sparse (\>50\\
 
-- Sparse or very rectangular: `"sap"` — handles sparsity well
+- Very rectangular (m \>= 3n): `"sap"` — handles rectangular well
 
-- Small-medium (8 \< n \<= 50): `"hungarian"` — provides exact dual
-  solutions
+- Otherwise: `"jv"` — fastest general-purpose solver at every size
 
-- Medium (50 \< n \<= 75): `"jv"` — fast general-purpose solver
-
-- Large (n\>75): `"auction_scaled"` — fastest for large dense problems
-
-Benchmarks show 'Auction-scaled' and 'JV' are 100-1500x faster than
-'Hungarian' at n=500.
+The other solvers are available by naming them explicitly.
 
 ## See also
 

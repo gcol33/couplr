@@ -32,7 +32,7 @@ parameters (max_distance, calipers, methods) without recomputing distances."><sc
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,7 +108,8 @@ parameters (max_distance, calipers, methods) without recomputing distances.</p>
 <span>  auto_scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  left_id <span class="op">=</span> <span class="st">"id"</span>,</span>
 <span>  right_id <span class="op">=</span> <span class="st">"id"</span>,</span>
-<span>  block_id <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  block_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -155,6 +156,15 @@ parameters (max_distance, calipers, methods) without recomputing distances.</p>
 <dt id="arg-block-id">block_id<a class="anchor" aria-label="anchor" href="#arg-block-id"></a></dt>
 <dd><p>Optional block ID column name for blocked matching</p></dd>
 
+
+<dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
+<dd><p>One of "auto" (default), "dense", or "lazy". "auto"
+warns (or, for a built-in distance metric, switches) when the dense
+matrix would consume a large fraction of free system RAM. "lazy" returns
+a <code>lazy_cost_spec</code> instead of a matrix (built-in distance metrics only);
+pass it straight to <code><a href="match_couples.html">match_couples()</a></code> the same way as a dense
+<code>cost_matrix</code>. "dense" skips the RAM check entirely.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -175,8 +185,13 @@ variables.</p>
 <p>Benefits:</p><ul><li><p><strong>Performance</strong>: Avoid recomputing distances when trying different constraints</p></li>
 <li><p><strong>Exploration</strong>: Quickly test max_distance, calipers, or methods</p></li>
 <li><p><strong>Consistency</strong>: Ensures same distances used across comparisons</p></li>
-<li><p><strong>Memory efficient</strong>: Can use sparse matrices when many pairs are forbidden</p></li>
-</ul><p>The distance_object stores the original datasets, allowing downstream
+</ul><p>With the default <code>memory_mode = "auto"</code>/<code>"dense"</code>, the stored <code>cost_matrix</code>
+is a plain dense matrix; couplr has no sparse matrix representation, so
+forbidden pairs (<code>Inf</code>) still occupy a cell rather than being dropped from
+storage. With <code>memory_mode = "lazy"</code>, <code>cost_matrix</code> is instead a
+<code>lazy_cost_spec</code> that recomputes distances on demand from the underlying
+feature data.</p>
+<p>The distance_object stores the original datasets, allowing downstream
 functions like <code><a href="join_matched.html">join_matched()</a></code> to work seamlessly.</p>
     </div>
 

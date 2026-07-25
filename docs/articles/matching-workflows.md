@@ -532,18 +532,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 2.37 seconds
+#>   Time: 1.83 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 1.7 seconds
+#>   Time: 1.57 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 1.4 x
+#>   Speedup: 1.2 x
 ```
 
 ### Greedy Strategies
@@ -643,9 +643,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.06        0.0912          18.24
-#> elapsed1 row_best     0.07        0.0968          19.36
-#> elapsed2       pq     0.07        0.0912          18.24
+#> elapsed    sorted     0.07        0.0912          18.24
+#> elapsed1 row_best     0.04        0.0968          19.36
+#> elapsed2       pq     0.08        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -1452,11 +1452,21 @@ for row-best
 
 - n = 10,000: ~ 800 MB
 
+[`build_cost_matrix()`](https://gillescolling.com/couplr/reference/build_cost_matrix.md)
+allocates this full matrix in `memory_mode = "dense"` for every
+`method`, including `"greedy"`: greedy changes how the matrix is solved,
+not how much memory it takes.
+
 For very large problems:
 
-1.  Use greedy matching to avoid full cost matrix
+1.  Use `memory_mode = "lazy"` with `method = "jv"`/`"auction"` to
+    compute distances on demand from the underlying feature data instead
+    of allocating the full matrix – `memory_mode = "auto"` (the default)
+    switches to this automatically when the dense matrix would need a
+    large share of free RAM
 
-2.  Use blocking to reduce within-block size
+2.  Use blocking to reduce within-block size – combines with either
+    memory mode
 
 3.  Consider approximate methods (upcoming vignette)
 

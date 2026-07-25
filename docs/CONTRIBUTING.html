@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
 </div>
 <div class="section level3">
 <h3 id="setting-up-your-r-environment">Setting up your R environment<a class="anchor" aria-label="anchor" href="#setting-up-your-r-environment"></a></h3>
-<p>couplr is an R package that uses C++ code via Rcpp and RcppEigen.</p>
+<p>couplr is an R package that uses C++ code via Rcpp.</p>
 <ol style="list-style-type: decimal"><li>
 <p><strong>Install required tools</strong></p>
 <ul><li>R (≥ 3.5.0)</li>
@@ -137,7 +137,7 @@
 <li>
 <p><strong>Install development dependencies</strong></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"roxygen2"</span>, <span class="st">"testthat"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"knitr"</span>, <span class="st">"pkgdown"</span>, <span class="st">"Rcpp"</span>, <span class="st">"RcppEigen"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"roxygen2"</span>, <span class="st">"testthat"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"knitr"</span>, <span class="st">"pkgdown"</span>, <span class="st">"Rcpp"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Load the development build</strong></p>
@@ -224,7 +224,7 @@
 ├── README.md
 ├── _pkgdown.yml
 ├── R/                      &lt;- R source files
-├── src/                    &lt;- C++ source files (Rcpp/RcppEigen)
+├── src/                    &lt;- C++ source files (Rcpp)
 │   ├── core/               &lt;- Core utilities
 │   ├── solvers/            &lt;- LAP algorithm implementations
 │   └── rcpp_interface.cpp  &lt;- All [[Rcpp::export]] declarations

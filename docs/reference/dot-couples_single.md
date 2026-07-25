@@ -23,7 +23,8 @@ Called by match_couples_single() (optimal and greedy paths).
   strict_no_pairs = FALSE,
   replace = FALSE,
   ratio = 1L,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 ```
 

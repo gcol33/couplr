@@ -23,7 +23,8 @@ full_match(
   sigma = NULL,
   left_id = "id",
   right_id = "id",
-  method = "optimal"
+  method = "optimal",
+  memory_mode = "auto"
 )
 ```
 
@@ -94,6 +95,15 @@ full_match(
   Matching algorithm: `"optimal"` (default) uses min-cost max-flow to
   find the globally optimal group assignment minimizing total distance;
   `"greedy"` uses a fast two-pass heuristic.
+
+- memory_mode:
+
+  One of "auto" (default) or "dense". "auto" warns if the dense cost
+  matrix would consume a large fraction of free system RAM.
+  `full_match()` uses a different (min-cost-flow) solver backend than
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)/[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md),
+  so `memory_mode = "lazy"` is not available here yet and errors if
+  requested; "dense" skips the RAM check entirely.
 
 ## Value
 

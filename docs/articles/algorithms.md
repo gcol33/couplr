@@ -44,6 +44,10 @@ why modern algorithms beat Hungarian by 20x or more.
 
 But first: the same problem, five different solutions.
 
+![Five algorithms solving the same 400x400 assignment problem with
+dramatically different
+speeds](algorithms_files/figure-html/the-race-1.svg)
+
 When you run five different assignment algorithms on identical input,
 they all find the same optimal answer, but the fastest finishes **22
 times quicker** than the slowest.
@@ -192,6 +196,10 @@ Mathematically:
 where \\\pi\\ is a permutation (each worker gets exactly one job, each
 job gets exactly one worker).
 
+![Bipartite graph showing workers on left, jobs on right, with weighted
+edges and optimal assignment
+highlighted](algorithms_files/figure-html/bipartite-graph-1.svg)
+
 Simple to state. Not simple to solve efficiently.
 
 There are \\n!\\ possible assignments. For \\n = 20\\, that’s 2.4
@@ -241,6 +249,9 @@ by Hungarian mathematicians Koenig and Egervary.
 \leq c\_{ij}\\ for all pairs. Edges where equality holds are “tight”:
 the only edges that can appear in an optimal solution.
 
+![Hungarian algorithm showing alternating path augmentation through
+tight edges](algorithms_files/figure-html/hungarian-diagram-1.svg)
+
 **The algorithm**:
 
 1.  Initialize prices. Find tight edges.
@@ -262,6 +273,18 @@ matrix, you might wait 10+ seconds.
 cost <- matrix(c(10, 19, 8, 15, 10, 11, 9, 12, 14), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost, method = "hungarian")
 print(result)
+#> Assignment Result
+#> =================
+#> 
+#> # A tibble: 3 × 3
+#>   source target  cost
+#>    <int>  <int> <dbl>
+#> 1      1      3     8
+#> 2      2      2    10
+#> 3      3      1     9
+#> 
+#> Total cost: 27 
+#> Method: hungarian
 ```
 
 Hungarian works. It’s clean and easy to teach. But in 1987, two Dutch
@@ -277,6 +300,10 @@ and fix it?
 **The key insight**: Column reduction. Before any sophisticated search,
 greedily assign each row to its cheapest available column. This often
 gets most of the matching right immediately.
+
+![JV algorithm showing column reduction initialization followed by
+shortest path
+augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
 
 **The algorithm**:
 
@@ -299,6 +326,7 @@ n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
 result <- lap_solve(cost, method = "jv")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 149.09
 ```
 
 JV became the de facto standard. For dense problems up to a few thousand
@@ -337,6 +365,9 @@ economics problem?
 price. Workers bid for their favorite jobs. Prices rise when there’s
 competition. Equilibrium = optimal assignment.
 
+![Auction algorithm bidding process showing workers bidding for jobs
+with prices](algorithms_files/figure-html/auction-diagram-1.svg)
+
 **The algorithm**:
 
 1.  Each unassigned worker finds their best job (highest value minus
@@ -371,6 +402,7 @@ n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
 result <- lap_solve(cost, method = "auction")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 149.09
 ```
 
 Auction shines for large dense problems. But it’s sensitive to epsilon.
@@ -389,6 +421,9 @@ automatically?
 halve epsilon and refine the current solution. After \\O(\log C)\\
 phases, epsilon is essentially zero: optimality.
 
+![CSA algorithm showing epsilon-scaling phases converging to optimal
+solution](algorithms_files/figure-html/csa-diagram-1.svg)
+
 **Why it’s fast**: Each phase is cheap because the previous phase’s
 solution is a good starting point. The algorithm exploits its own
 progress.
@@ -402,6 +437,7 @@ n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
 result <- lap_solve(cost, method = "csa")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 192.48
 ```
 
 CSA often wins benchmarks for medium-large dense problems. It’s the
@@ -421,6 +457,9 @@ binary representations. It’s also one of the most complex to implement.
 Process costs from most significant to least significant bit. At each
 scale, solve a simpler problem. Use that solution to warm-start the next
 scale.
+
+![Gabow-Tarjan bit-scaling showing costs processed from high bits to low
+bits](algorithms_files/figure-html/gabow-tarjan-diagram-1.svg)
 
 **The algorithm** (simplified):
 
@@ -443,13 +482,14 @@ position. At each scaling phase, we only need reduced costs to be within
 After processing all \\\log C\\ bits, the slack is less than 1, which
 for integers means exactly 0: true optimality.
 
-**Complexity**: \\O(n^{3/4} m \log(nC))\\ where \\C\\ is the maximum
+**Complexity**: \\O(\sqrt{n}\\ m \log(nC))\\ where \\C\\ is the maximum
 cost and \\m\\ is the number of finite edges. For dense graphs with \\m
-= n^2\\, this is \\O(n^{11/4} \log(nC))\\ — sub-cubic in \\n\\, which is
-why Gabow and Tarjan’s result was a breakthrough. The improvement over
-the \\O(n^3 \log C)\\ bound for plain cost-scaling comes from finding a
-*maximal vertex-disjoint set* of augmenting paths at each bit, rather
-than one path at a time.
+= n^2\\, this is \\O(n^{5/2} \log(nC))\\ — sub-cubic in \\n\\, which is
+why Gabow and Tarjan’s result was a breakthrough. It improves on the
+earlier \\O(n^{3/4} m \log C)\\ scaling bound of Gabow (1985). The
+improvement over the \\O(n^3 \log C)\\ bound for plain cost-scaling
+comes from finding a *maximal vertex-disjoint set* of augmenting paths
+at each bit, rather than one path at a time.
 
 Rarely seen outside academic papers. The bookkeeping across scaling
 phases is complex enough that most implementations skip it.
@@ -462,6 +502,7 @@ n <- 50
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 result <- lap_solve(cost, method = "gabow_tarjan")
 cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 151632
 ```
 
 Gabow-Tarjan is primarily of theoretical interest. It provides the best
@@ -513,6 +554,7 @@ n <- 50
 cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
 result <- lap_solve(cost, method = "orlin")
 cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 123035
 ```
 
 Orlin-Ahuja provides the best theoretical bounds for sparse problems
@@ -552,6 +594,9 @@ The simplex method, specialized for networks. The key insight: for
 network flow problems, the simplex basis corresponds to a **spanning
 tree** of the graph. This makes basis operations (pivoting) much faster
 than general LP.
+
+![Network simplex spanning tree structure for assignment
+problem](algorithms_files/figure-html/network-simplex-diagram-1.svg)
 
 **The algorithm**:
 
@@ -594,6 +639,7 @@ n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
 result <- lap_solve(cost, method = "network_simplex")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 156.88
 ```
 
 Network Simplex is a standard tool in operations research. Not always
@@ -656,6 +702,7 @@ n <- 100
 cost <- matrix(runif(n * n, 0, 100), n, n)
 result <- lap_solve(cost, method = "push_relabel")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 169.7
 ```
 
 Two network perspectives. Same problem. Different algorithmic
@@ -684,6 +731,7 @@ n <- 100
 cost <- matrix(sample(0:1, n^2, replace = TRUE, prob = c(0.3, 0.7)), n, n)
 result <- lap_solve(cost, method = "hk01")
 cat("Total cost:", get_total_cost(result), "\n")
+#> Total cost: 0
 ```
 
 When you have binary costs and large \\n\\, HK01 is dramatically faster.
@@ -709,6 +757,7 @@ edges <- sample(1:(n^2), floor(0.2 * n^2))  # Only 20% allowed
 cost[edges] <- runif(length(edges), 0, 100)
 result <- lap_solve(cost, method = "sap")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
+#> Total cost: 794.94
 ```
 
 For very sparse problems, SAP can be orders of magnitude faster than
@@ -757,6 +806,8 @@ n_cols <- 100  # Highly rectangular: 30 x 100
 cost <- matrix(runif(n_rows * n_cols, 0, 100), n_rows, n_cols)
 result <- lap_solve(cost, method = "ramshaw_tarjan")
 cat("Matched", sum(result$assignment > 0), "of", n_rows, "rows\n")
+#> Warning: Unknown or uninitialised column: `assignment`.
+#> Matched 0 of 30 rows
 ```
 
 When you have significantly more columns than rows (or vice versa),
@@ -781,6 +832,14 @@ cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13, 16, 9, 14, 12, 19, 8, 18),
                nrow = 4, byrow = TRUE)
 kbest <- lap_solve_kbest(cost, k = 5)
 summary(kbest)
+#> # A tibble: 5 × 4
+#>    rank solution_id total_cost n_assignments
+#>   <int>       <int>      <dbl>         <int>
+#> 1     1           1         49             4
+#> 2     2           2         50             4
+#> 3     3           3         50             4
+#> 4     4           4         51             4
+#> 5     5           5         51             4
 ```
 
 **Use cases**: Sensitivity analysis. Alternative plans when the optimal
@@ -795,6 +854,7 @@ Minimize the **maximum** edge cost instead of the sum.
 cost <- matrix(c(5, 9, 2, 10, 3, 7, 8, 4, 6), nrow = 3, byrow = TRUE)
 result <- bottleneck_assignment(cost)
 cat("Bottleneck (max edge):", result$bottleneck, "\n")
+#> Bottleneck (max edge): 6
 ```
 
 **Use cases**: Load balancing. Fairness constraints. Worst-case
@@ -810,6 +870,9 @@ produce a doubly-stochastic transport plan.
 cost <- matrix(c(1, 2, 3, 4), nrow = 2)
 result <- sinkhorn(cost, lambda = 10)
 print(round(result$transport_plan, 3))
+#>      [,1] [,2]
+#> [1,] 0.25 0.25
+#> [2,] 0.25 0.25
 ```
 
 **Use cases**: Probabilistic matching. Domain adaptation. Wasserstein
@@ -824,7 +887,9 @@ Extract dual prices for sensitivity analysis.
 cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13), nrow = 3, byrow = TRUE)
 result <- assignment_duals(cost)
 cat("Row duals (u):", result$u, "\n")
+#> Row duals (u): 3 8 8
 cat("Col duals (v):", result$v, "\n")
+#> Col duals (v): -1 2 5
 ```
 
 **Use cases**: Shadow prices. Identifying critical assignments. Marginal
@@ -836,9 +901,15 @@ cost analysis.
 
 You’ve seen what the algorithms do. Now: how fast?
 
+![Runtime comparison of LAP algorithms across problem sizes showing CSA
+and JV leading](algorithms_files/figure-html/benchmark-plot-1.svg)
+
 **For dense matrices**: CSA and JV are consistently fastest. Hungarian
 falls behind rapidly. Auction and Network Simplex are solid
 middle-ground choices.
+
+![Sparse algorithm performance showing SAP and LAPMOD outperforming
+dense algorithms](algorithms_files/figure-html/sparse-plot-1.svg)
 
 **For sparse matrices**: SAP and LAPMOD are 10x faster than dense
 algorithms. Use them.
@@ -856,7 +927,7 @@ algorithms. Use them.
 | Auction (Scaled) | \\O(n^2 \log(nC)/\epsilon)\\ | Large dense, fastest | `"auction_scaled"` |
 | CSA | \\O(n^3)\\ amortized | Medium-large dense | `"csa"` |
 | Cost-Scaling Flow | \\O(n^3 \log(nC))\\ | General min-cost flow | `"csflow"` |
-| Gabow-Tarjan | \\O(n^{3/4} m \log(nC))\\ | Large integer costs | `"gabow_tarjan"` |
+| Gabow-Tarjan | \\O(\sqrt{n}\\ m \log(nC))\\ | Large integer costs | `"gabow_tarjan"` |
 | Orlin-Ahuja | \\O(\sqrt{n} m \log(nC))\\ | Large sparse | `"orlin"` |
 | Network Simplex | \\O(n^3)\\ typical | Dual info needed | `"network_simplex"` |
 | Push-Relabel | \\O(n^2 m)\\ | Max-flow style | `"push_relabel"` |

@@ -27,7 +27,8 @@ match_couples(
   replace = FALSE,
   ratio = 1L,
   check_costs = TRUE,
-  sigma = NULL
+  sigma = NULL,
+  memory_mode = "auto"
 )
 ```
 
@@ -91,13 +92,21 @@ match_couples(
 
 - strategy:
 
-  Greedy strategy, used only when `method = "greedy"`:
+  Greedy strategy, used only when `method = "greedy"`. All three
+  strategies solve the same full cost matrix already built by
+  `match_couples()`; none of them reduce the O(n\*m) memory that matrix
+  takes.
 
-  - "row_best": for each row, take its best available column (default)
+  - "row_best": for each row, take its best available column (default).
+    The only strategy that needs no extra storage beyond the cost
+    matrix.
 
-  - "sorted": sort all pairs by distance, greedily assign
+  - "sorted": collect every valid pair, sort by distance, greedily
+    assign
 
-  - "pq": priority queue (memory-efficient for very large problems)
+  - "pq": collect every valid pair into a heap and pop the smallest
+    first. Avoids the upfront sort but holds the same number of
+    candidate pairs as "sorted", so it is not more memory-efficient
 
 - return_unmatched:
 
@@ -138,6 +147,20 @@ match_couples(
   Optional covariance matrix for Mahalanobis distance. If NULL
   (default), the pooled sample covariance is used. Only relevant when
   `distance = "mahalanobis"`.
+
+- memory_mode:
+
+  One of "auto" (default), "dense", or "lazy". "auto" warns (or, when
+  `method` is `"jv"`/`"auction"` with a built-in distance metric,
+  switches) when the dense cost matrix would consume a large fraction of
+  free system RAM. "lazy" computes each pairwise distance from the
+  underlying feature data as the solver needs it, instead of allocating
+  the full n_left x n_right matrix; supported for
+  `method = "jv"`/`"auction"` with a built-in distance metric, and not
+  yet for `replace = TRUE`, `ratio > 1`, `method = "greedy"`, or custom
+  distance functions (blocking via `block_id` is the other option that
+  reduces memory, by solving smaller sub-problems). "dense" skips the
+  RAM check entirely.
 
 ## Value
 

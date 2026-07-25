@@ -87,7 +87,7 @@
 <text x='245.69' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='33.34px' lengthAdjust='spacingAndGlyphs'>Current</text>
 <text x='307.27' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.25px' lengthAdjust='spacingAndGlyphs'>Processed</text>
 <text x='382.76' y='254.99' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='47.80px' lengthAdjust='spacingAndGlyphs'>Remaining</text>
-<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='339.30px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(n^3 log C)</text>
+<text x='324.00' y='81.67' text-anchor='middle' style='font-size: 10.00px;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='372.92px' lengthAdjust='spacingAndGlyphs'>Process integer costs bit-by-bit from coarse to fine. Complexity: O(sqrt(n) m log(nC))</text>
 <text x='324.00' y='67.78' text-anchor='middle' style='font-size: 13.00px; font-weight: bold;fill: #3E3F3A; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;' textLength='161.53px' lengthAdjust='spacingAndGlyphs'>Gabow-Tarjan: Bit-Scaling</text>
 </g>
 </g>

@@ -60,6 +60,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/couplr_warn.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/detect_blocking.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/diagnose_distance_matrix.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/dot-assignment_lazy.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_hist.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_love.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/dot-autoplot_variance.html</loc></url>
@@ -77,6 +78,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/err_missing_data.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/err_missing_vars.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/err_no_valid_pairs.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/estimate_dense_matrix_mb.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/example_costs.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/example_df.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/extract_ids.html</loc></url>
@@ -84,6 +86,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/filter_blocks.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/full_match.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/get_block_id_column.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/get_free_ram_mb.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/get_method_used.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/get_total_cost.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/greedy_blocks_parallel.html</loc></url>
@@ -103,6 +106,8 @@
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve_batch.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve_kbest.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/lap_solve_line_metric.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/lazy_cost_spec_inv_cov.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/lazy_pair_distances.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/mark_forbidden_pairs.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/matchmaker.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/match_blocks_parallel.html</loc></url>
@@ -111,6 +116,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/match_couples_from_distance.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/match_couples_single.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/match_data.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/new_lazy_cost_spec.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/parallel_lapply.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/pipe.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/pixel_morph.html</loc></url>
@@ -133,6 +139,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/print.subclass_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/print.variable_health.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/ps_match.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/resolve_memory_mode.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/restore_parallel.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/sensitivity_analysis.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/setup_parallel.html</loc></url>
@@ -148,6 +155,7 @@
 <url><loc>https://gillescolling.com/couplr/reference/summary.lap_solve_kbest_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/summary.matching_result.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/summary.sensitivity_analysis.html</loc></url>
+<url><loc>https://gillescolling.com/couplr/reference/transpose_lazy_cost_spec.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/update_constraints.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/use_emoji.html</loc></url>
 <url><loc>https://gillescolling.com/couplr/reference/validate_calipers.html</loc></url>

@@ -28,7 +28,7 @@ distance constraints, and various distance metrics."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,7 +113,8 @@ distance constraints, and various distance metrics.</p>
 <span>  replace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  ratio <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  check_costs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  sigma <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  sigma <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -178,9 +179,15 @@ matching (see <code>strategy</code>).</p></dd>
 
 
 <dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
-<dd><p>Greedy strategy, used only when <code>method = "greedy"</code>:</p><ul><li><p>"row_best": for each row, take its best available column (default)</p></li>
-<li><p>"sorted": sort all pairs by distance, greedily assign</p></li>
-<li><p>"pq": priority queue (memory-efficient for very large problems)</p></li>
+<dd><p>Greedy strategy, used only when <code>method = "greedy"</code>. All
+three strategies solve the same full cost matrix already built by
+<code>match_couples()</code>; none of them reduce the O(n*m) memory that matrix
+takes.</p><ul><li><p>"row_best": for each row, take its best available column (default).
+The only strategy that needs no extra storage beyond the cost matrix.</p></li>
+<li><p>"sorted": collect every valid pair, sort by distance, greedily assign</p></li>
+<li><p>"pq": collect every valid pair into a heap and pop the smallest first.
+Avoids the upfront sort but holds the same number of candidate pairs
+as "sorted", so it is not more memory-efficient</p></li>
 </ul></dd>
 
 
@@ -219,6 +226,19 @@ and provide helpful warnings before matching (default: TRUE)</p></dd>
 <dd><p>Optional covariance matrix for Mahalanobis distance. If NULL
 (default), the pooled sample covariance is used. Only relevant when
 <code>distance = "mahalanobis"</code>.</p></dd>
+
+
+<dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
+<dd><p>One of "auto" (default), "dense", or "lazy". "auto"
+warns (or, when <code>method</code> is <code>"jv"</code>/<code>"auction"</code> with a built-in distance
+metric, switches) when the dense cost matrix would consume a large
+fraction of free system RAM. "lazy" computes each pairwise distance from
+the underlying feature data as the solver needs it, instead of
+allocating the full n_left x n_right matrix; supported for <code>method = "jv"</code>/<code>"auction"</code> with a built-in distance metric, and not yet for
+<code>replace = TRUE</code>, <code>ratio &gt; 1</code>, <code>method = "greedy"</code>, or custom distance
+functions (blocking via <code>block_id</code> is the other option that reduces
+memory, by solving smaller sub-problems). "dense" skips the RAM check
+entirely.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -388,7 +388,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.49 seconds
+#> Greedy matching (n=500): 0.25 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -514,19 +514,33 @@ for (n in c(1000, 5000, 10000, 20000, 50000)) {
 
 ### Solutions
 
-**1. Use greedy matching (avoids full matrix):**
+**1. Use `memory_mode = "lazy"` to avoid materializing the matrix:**
+
+With `method = "jv"` or `"auction"`, `memory_mode = "lazy"` computes
+each pairwise distance on demand from the underlying feature data
+instead of allocating the full n_left x n_right matrix – a 100k x 100k
+match needs ~80GB dense, but the underlying feature data for that same
+match needs only tens of megabytes. `memory_mode = "auto"` (the default)
+switches to this automatically when the dense matrix would use a large
+share of free RAM, with a warning; pass it explicitly to opt in sooner:
 
 ``` r
 
-# Greedy computes distances on-the-fly
-result <- match_couples(
-  left, right,
-  vars = covariates,
-  strategy = "row_best"  # Most memory-efficient
-, method = "greedy")
+result <- match_couples(left, right, vars = vars, method = "jv",
+                        memory_mode = "lazy")
 ```
 
+This trades RAM for compute – costs are recomputed as the solver needs
+them rather than read once from a table – and currently supports
+built-in distance metrics with `method = "jv"`/`"auction"` only;
+`replace = TRUE`, `ratio > 1`, `method = "greedy"`, and custom distance
+functions still require `memory_mode = "dense"`.
+
 **2. Use blocking to create smaller subproblems:**
+
+Blocking reduces the size of each allocated matrix directly – each block
+gets its own, much smaller cost matrix instead of one large one – and
+combines with either memory mode.
 
 ``` r
 
@@ -535,26 +549,24 @@ blocks <- matchmaker(left, right, block_type = "cluster", n_blocks = 20)
 result <- match_couples(blocks$left, blocks$right, vars = vars, block_id = "block_id")
 ```
 
-**3. Use caliper to create sparse matrix:**
-
-``` r
-
-# Caliper excludes distant pairs (sparse representation)
-result <- match_couples(
-  left, right,
-  vars = covariates,
-  max_distance = 0.5,
-  method = "sap"  # Sparse-optimized algorithm
-)
-```
-
-**4. Increase R’s memory limit (Windows):**
+**3. Increase R’s memory limit (Windows):**
 
 ``` r
 
 # Increase to 16 GB (if available)
 memory.limit(size = 16000)
 ```
+
+**Note on greedy matching and calipers in `memory_mode = "dense"`:**
+[`build_cost_matrix()`](https://gillescolling.com/couplr/reference/build_cost_matrix.md)
+allocates the full n_left x n_right matrix before matching starts, for
+every `method`, including `"greedy"`. Greedy and calipers change how
+that matrix is solved, not how much memory it takes: a caliper marks
+distant pairs `Inf` inside the same full-size matrix, and solvers like
+`"sap"` and `"lapmod"` handle a matrix with many forbidden cells faster,
+but they still receive the full matrix. couplr has no sparse matrix
+representation, so neither greedy nor calipers reduce a dense-mode
+allocation – use `memory_mode = "lazy"` (solution 1) for that.
 
 ------------------------------------------------------------------------
 

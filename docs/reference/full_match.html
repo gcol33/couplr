@@ -32,7 +32,7 @@ right unit."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,7 +113,8 @@ right unit.</p>
 <span>  sigma <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  left_id <span class="op">=</span> <span class="st">"id"</span>,</span>
 <span>  right_id <span class="op">=</span> <span class="st">"id"</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"optimal"</span></span>
+<span>  method <span class="op">=</span> <span class="st">"optimal"</span>,</span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -185,6 +186,15 @@ of the pooled distance distribution rather than absolute units.</p></dd>
 <dd><p>Matching algorithm: <code>"optimal"</code> (default) uses min-cost
 max-flow to find the globally optimal group assignment minimizing total
 distance; <code>"greedy"</code> uses a fast two-pass heuristic.</p></dd>
+
+
+<dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
+<dd><p>One of "auto" (default) or "dense". "auto" warns if the
+dense cost matrix would consume a large fraction of free system RAM.
+<code>full_match()</code> uses a different (min-cost-flow) solver backend than
+<code><a href="match_couples.html">match_couples()</a></code>/<code><a href="assignment.html">assignment()</a></code>, so <code>memory_mode = "lazy"</code> is not
+available here yet and errors if requested; "dense" skips the RAM check
+entirely.</p></dd>
 
 </dl></div>
     <div class="section level2">

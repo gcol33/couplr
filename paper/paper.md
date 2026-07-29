@@ -82,9 +82,8 @@ library counterpart.
 # Software design
 
 The package has three layers. The first validates inputs and converts data
-frames into cost matrices, handling scaling, missing-data checks, blocking,
-calipers, maximum-distance rules, and user weights. The second solves the
-linear assignment problem: given a cost matrix
+frames into cost matrices, handling scaling, missing-data checks, and user
+weights. The second solves the linear assignment problem: given a cost matrix
 $C \in \mathbb{R}^{n \times m}$ with entries $C_{ij}$ for row
 $i \in \{1, \ldots, n\}$ and column $j \in \{1, \ldots, m\}$, find a binary
 assignment matrix $X \in \{0,1\}^{n \times m}$ ($X_{ij} = 1$ iff row $i$ is
@@ -145,6 +144,15 @@ avoid padding through shortest augmenting paths; binary and very small
 problems use specialized solvers. Other solvers are named explicitly.
 Figure \ref{fig:benchmark} shows median solve time across problem sizes for
 all 19 solvers.
+
+Cost storage is a second automatic choice. Under `memory_mode = "lazy"` each
+cost is evaluated from the underlying feature data as the solver requests it,
+so the footprint follows the covariates rather than the pairs: 100,000 units
+on 100 covariates hold as 80 MB of features where the dense matrix needs
+80 GB. Lazy evaluation covers Jonker–Volgenant and auction with the built-in
+metrics, calipers, and `max_distance`, and returns the same assignment as the
+dense path. The default `"auto"` weighs the estimated dense footprint against
+free system memory and switches before an oversized allocation.
 
 ![(a) Median wall-clock solve time versus problem size $n$ for all 19
 assignment solvers in `couplr`, arranged as five small-multiple panels
@@ -207,9 +215,9 @@ into an outcome regression for a doubly robust estimate [@Stuart2010].
 
 # Comparison against established alternatives
 
-We compare `couplr` against `MatchIt` and `optmatch` on runtime and feature
-coverage. The matching task is fixed: 1-to-1 optimal matching on a
-Mahalanobis distance with pooled within-group covariance, the convention
+We compare `couplr` against `MatchIt` and `optmatch`. The matching task is
+fixed: 1-to-1 optimal matching on a Mahalanobis distance with pooled
+within-group covariance, the convention
 `optmatch::match_on()` uses by default and `couplr` adopts as of 1.3.1. On
 the canonical Lalonde NSW dataset [@LaLonde1986; @DehejiaWahba1999] (185
 treated, 429 control, eight covariates) all three packages produce identical
@@ -222,21 +230,25 @@ Table \ref{tab:scaling} reports median wall-clock time on synthetic
 problems with the same eight-covariate structure, at six sizes from
 $n = 500$ to $n = 50{,}000$ with treated:control = 1:2. The margin widens
 with problem size: `couplr` is $9\times$ faster than `optmatch` at
-$n = 500$ and $24\times$ faster at $n = 20{,}000$, and $11\times$ to
-$24\times$ faster than `MatchIt` up to $n = 10{,}000$, the largest size
-`MatchIt` completes. At $n = 20{,}000$ `couplr` finishes in $11.6$ seconds
-against $4.7$ minutes for `optmatch`, while
-`MatchIt::matchit(method = "optimal")` aborts inside the `optmatch` backend
-with an integer-size overflow. At $n = 50{,}000$ `couplr` completes in
-$83$ seconds; both alternatives exceed the $300$-second per-replicate cap.
-`couplr` reaches large dense problems through its dispatcher, which routes
-them to Jonker–Volgenant [@JonkerVolgenant1987].
+$n = 500$ and $24\times$ faster at $n = 20{,}000$, where it finishes in
+$11.4$ seconds against $4.7$ minutes, and $11\times$ to $24\times$ faster
+than `MatchIt` up to $n = 10{,}000$, the largest size `MatchIt` completes
+before `MatchIt::matchit(method = "optimal")` aborts inside the `optmatch`
+backend with an integer-size overflow. At $n = 50{,}000$ `couplr` completes
+in $79$ seconds; both alternatives exceed the $300$-second per-replicate
+cap. `couplr` reaches large dense problems through its dispatcher, which
+routes them to Jonker–Volgenant [@JonkerVolgenant1987]. Under
+`memory_mode = "lazy"` the same $n = 50{,}000$ match completes in $61$
+seconds without ever building the matrix, returning the assignment the dense
+path returns (`paper/bench_scaling_lazy.R`).
 
 Table: 1-to-1 optimal Mahalanobis matching, median wall-clock by problem
 size. Treated:control = 1:2; eight covariates; pooled within-group
 covariance; single core, single-threaded BLAS, on an Apple M4 Pro.
 Median of 5 / 5 / 3 / 3 / 1 / 1 replicates respectively for the rows;
-`optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$.
+`optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$. `couplr` is
+timed with `memory_mode = "dense"`, so all three packages materialize the
+distance matrix; the lazy path is reported in the text.
 `int overflow` marks an integer-size overflow
 (\texttt{result would exceed 2\textasciicircum 31-1 bytes}) inside the
 `optmatch` backend reached through `MatchIt`; `timeout` marks a replicate
@@ -247,16 +259,13 @@ exceeding the $300$-second cap. Reproducible from
 | Problem size ($n_t + n_c$) | `couplr` |  `optmatch`  |   `MatchIt`  |
 | :------------------------- | -------: | -----------: | -----------: |
 | $167 + 333$                |   11 ms  |        99 ms |       117 ms |
-| $667 + 1{,}333$            |  146 ms  |       1.70 s |       2.11 s |
-| $1{,}667 + 3{,}333$        |  749 ms  |       13.1 s |       15.9 s |
-| $3{,}333 + 6{,}667$        |  3.07 s  |       60.2 s |       73.3 s |
-| $6{,}667 + 13{,}333$       |  11.6 s  |        279 s | int overflow |
-| $16{,}667 + 33{,}333$      |  83.1 s  |      timeout |      timeout |
+| $667 + 1{,}333$            |  144 ms  |       1.70 s |       2.12 s |
+| $1{,}667 + 3{,}333$        |  742 ms  |       12.9 s |       15.7 s |
+| $3{,}333 + 6{,}667$        |  3.08 s  |       59.3 s |       73.4 s |
+| $6{,}667 + 13{,}333$       |  11.4 s  |        280 s | int overflow |
+| $16{,}667 + 33{,}333$      |  78.5 s  |      timeout |      timeout |
 
-Table \ref{tab:capability} summarises feature coverage. `couplr` exposes 19
-solvers through a single dispatcher, supports k-best, bottleneck, and
-Rosenbaum sensitivity bounds in the core package, and accepts both data
-frames and user-supplied cost matrices.
+Table \ref{tab:capability} summarises feature coverage.
 
 Table: Differentiating feature coverage; rows where all three packages
 support the feature (covariate distance, propensity-score matching, exact

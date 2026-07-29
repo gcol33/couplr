@@ -60,39 +60,19 @@ grid <- data.frame(
 TIMEOUT_S <- 300  # per-replicate cap
 
 ## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
-make_data <- function(n_total, seed) {
-  set.seed(seed)
-  n_t <- round(n_total / 3)
-  n_c <- n_total - n_t
-  ## 6 continuous (age-like, educ-like, two-earnings-like, two extras),
-  ## 2 binary (race / nodegree-like). Treated shifted slightly to make
-  ## the matching problem non-degenerate.
-  make_group <- function(n, shift) {
-    data.frame(
-      v1 = rnorm(n,  0 + 0.30 * shift, 1),
-      v2 = rnorm(n,  0 + 0.10 * shift, 1),
-      v3 = rnorm(n,  0 + 0.40 * shift, 1),
-      v4 = rnorm(n,  0 + 0.20 * shift, 1),
-      v5 = rnorm(n,  0 + 0.15 * shift, 1),
-      v6 = rnorm(n,  0 + 0.05 * shift, 1),
-      b1 = rbinom(n, 1, 0.40 + 0.10 * shift),
-      b2 = rbinom(n, 1, 0.30 - 0.05 * shift)
-    )
-  }
-  treated <- make_group(n_t, shift = 1); treated$treat <- 1L
-  control <- make_group(n_c, shift = 0); control$treat <- 0L
-  d <- rbind(treated, control)
-  d$id <- seq_len(nrow(d))
-  d
-}
-
-covars <- c("v1", "v2", "v3", "v4", "v5", "v6", "b1", "b2")
-form   <- as.formula(paste("treat ~", paste(covars, collapse = " + ")))
+source(file.path(repo_root, "paper", "bench_common.R"))
 
 ## ---- per-package callables ----
+## memory_mode is pinned to "dense" so all three packages are timed on the same
+## kind of work: MatchIt and optmatch both materialize the distance matrix.
+## Under the default "auto", couplr's choice of dense or lazy depends on how
+## much RAM happens to be free, which would make the timing depend on machine
+## state rather than on problem size. The lazy path is timed separately by
+## bench_scaling_lazy.R.
 couplr_call <- function(d) {
   tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
-  match_couples(left = tr, right = ct, vars = covars, distance = "mahalanobis")
+  match_couples(left = tr, right = ct, vars = covars, distance = "mahalanobis",
+                memory_mode = "dense")
 }
 matchit_call <- function(d) {
   matchit(form, data = d, method = "optimal",
@@ -142,7 +122,7 @@ for (i in seq_len(nrow(grid))) {
   reps    <- grid$reps[i]
   cat(sprintf("\n=== n_total = %d, reps = %d ===\n", n_total, reps))
   flush.console()
-  d <- make_data(n_total, seed = 20260515 + n_total)
+  d <- make_data(n_total, seed = bench_seed(n_total))
 
   for (pkg in names(callables)) {
     done <- nrow(results) > 0 &&

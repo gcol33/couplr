@@ -24,27 +24,7 @@ Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
 paper_dir <- file.path(repo_root, "paper")
 out_csv   <- file.path(paper_dir, "scaling-results.csv")
 
-make_data <- function(n_total, seed) {
-  set.seed(seed)
-  n_t <- round(n_total / 3); n_c <- n_total - n_t
-  make_group <- function(n, shift) {
-    data.frame(
-      v1 = rnorm(n,  0.30 * shift, 1),
-      v2 = rnorm(n,  0.10 * shift, 1),
-      v3 = rnorm(n,  0.40 * shift, 1),
-      v4 = rnorm(n,  0.20 * shift, 1),
-      v5 = rnorm(n,  0.15 * shift, 1),
-      v6 = rnorm(n,  0.05 * shift, 1),
-      b1 = rbinom(n, 1, 0.40 + 0.10 * shift),
-      b2 = rbinom(n, 1, 0.30 - 0.05 * shift)
-    )
-  }
-  tr <- make_group(n_t, 1); tr$treat <- 1L
-  ct <- make_group(n_c, 0); ct$treat <- 0L
-  d  <- rbind(tr, ct); d$id <- seq_len(nrow(d)); d
-}
-covars <- c("v1","v2","v3","v4","v5","v6","b1","b2")
-form <- as.formula(paste("treat ~", paste(covars, collapse = " + ")))
+source(file.path(repo_root, "paper", "bench_common.R"))
 
 results <- read.csv(out_csv, stringsAsFactors = FALSE)
 
@@ -73,7 +53,7 @@ upsert <- function(results, n_total, pkg, ok, elapsed) {
 
 for (n_total in c(10000, 20000)) {
   cat(sprintf("\n=== n_total = %d ===\n", n_total)); flush.console()
-  d <- make_data(n_total, seed = 20260515 + n_total)
+  d <- make_data(n_total, seed = bench_seed(n_total))
 
   ## optmatch via the two-step path
   r_opt <- run_one("optmatch (match_on + pairmatch)", {

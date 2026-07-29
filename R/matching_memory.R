@@ -16,14 +16,83 @@
 # for the overwhelming majority of existing, small problems).
 COUPLR_MEMORY_PROBE_THRESHOLD_CELLS <- 1e7
 
-#' Estimate free system RAM in megabytes
+#' Page size behind a block of `vm_stat` output
+#'
+#' `vm_stat` counts in pages and states its own page size in the header line
+#' ("page size of 16384 bytes"). Apple Silicon pages are 16K and Intel pages are
+#' 4K, so the size is read rather than assumed; `sysctl hw.pagesize` is the
+#' fallback when the header cannot be parsed.
+#'
+#' @param vm Character vector of `vm_stat` output lines.
+#' @return Page size in bytes, or `NA_real_` if undetermined.
+#' @keywords internal
+vm_stat_page_size <- function(vm) {
+  header <- grep("page size of", vm, value = TRUE)
+  page_size <- if (length(header) > 0) {
+    suppressWarnings(as.numeric(
+      sub(".*page size of ([0-9]+) bytes.*", "\\1", header[1])))
+  } else {
+    NA_real_
+  }
+  if (length(page_size) == 0 || is.na(page_size)) {
+    # /usr/sbin is not on a non-interactive PATH, so try the absolute path too.
+    for (sysctl in c("sysctl", "/usr/sbin/sysctl")) {
+      page_size <- tryCatch(
+        suppressWarnings(as.numeric(system2(sysctl, c("-n", "hw.pagesize"),
+                                            stdout = TRUE, stderr = FALSE)[1])),
+        error = function(e) NA_real_
+      )
+      if (length(page_size) > 0 && !is.na(page_size)) break
+    }
+  }
+  if (length(page_size) == 0 || is.na(page_size) || page_size <= 0) {
+    return(NA_real_)
+  }
+  page_size
+}
+
+#' Available megabytes implied by a block of `vm_stat` output
+#'
+#' Inactive and speculative pages are reclaimed on demand, so they count as
+#' available to an allocation in the same sense as Linux's `MemAvailable`; macOS
+#' keeps almost nothing on the free list, so the free count alone understates
+#' what a large matrix can actually obtain.
+#'
+#' Split from [get_free_ram_mb()] so the page-size and page-class handling can be
+#' checked without a macOS host.
+#'
+#' @param vm Character vector of `vm_stat` output lines.
+#' @param page_size Page size in bytes, as returned by [vm_stat_page_size()].
+#' @return Numeric scalar (MB available), or `NA_real_` if unparseable.
+#' @keywords internal
+vm_stat_available_mb <- function(vm, page_size) {
+  pages_in <- function(label) {
+    hit <- grep(paste0("^", label, ":"), vm, value = TRUE)
+    if (length(hit) == 0) return(NA_real_)
+    v <- suppressWarnings(as.numeric(
+      regmatches(hit[1], regexpr("[0-9]+", hit[1]))))
+    if (length(v) == 0) NA_real_ else v[1]
+  }
+  free_pages <- pages_in("Pages free")
+  if (is.na(free_pages)) return(NA_real_)
+  reclaimable <- c(pages_in("Pages inactive"), pages_in("Pages speculative"))
+  ((free_pages + sum(reclaimable, na.rm = TRUE)) * page_size) / 1024^2
+}
+
+#' Estimate available system RAM in megabytes
 #'
 #' Cross-platform, base-R-only (shells out; no new package dependency).
 #' Never errors: returns `NA_real_` if detection fails or the platform is
 #' unrecognized, so callers must treat `NA` as "unknown" and fall back to a
 #' fixed threshold rather than skipping the guard entirely.
 #'
-#' @return Numeric scalar (MB of free RAM), or `NA_real_` if undetermined.
+#' "Available" means memory an allocation can obtain without swapping, which on
+#' every platform is more than the untouched free list: Linux reports it
+#' directly as `MemAvailable`, and on macOS it is the free, inactive and
+#' speculative pages together, since the kernel keeps almost nothing on the
+#' free list and reclaims the rest on demand.
+#'
+#' @return Numeric scalar (MB of available RAM), or `NA_real_` if undetermined.
 #' @keywords internal
 get_free_ram_mb <- function() {
   sysname <- Sys.info()[["sysname"]]
@@ -52,12 +121,10 @@ get_free_ram_mb <- function() {
       kb[1] / 1024
     } else if (identical(sysname, "Darwin")) {
       vm <- suppressWarnings(system2("vm_stat", stdout = TRUE, stderr = FALSE))
-      free_line <- grep("^Pages free:", vm, value = TRUE)
-      if (length(free_line) == 0) return(NA_real_)
-      free_pages <- suppressWarnings(as.numeric(
-        regmatches(free_line, regexpr("[0-9]+", free_line))))
-      if (length(free_pages) == 0 || is.na(free_pages[1])) return(NA_real_)
-      (free_pages[1] * 4096) / 1024^2
+      if (length(vm) == 0) return(NA_real_)
+      page_size <- vm_stat_page_size(vm)
+      if (is.na(page_size)) return(NA_real_)
+      vm_stat_available_mb(vm, page_size)
     } else {
       NA_real_
     }
@@ -89,9 +156,9 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #'   caller's chosen solver/distance combination (`TRUE` only for `method =
 #'   "jv"`/`"auction"` with a built-in distance metric, on a caller whose
 #'   solve path consumes a `lazy_cost_spec`; see R/matching_lazy.R).
-#' @param ram_fraction Fraction of free RAM the dense matrix may consume
+#' @param ram_fraction Fraction of available RAM the dense matrix may consume
 #'   before "auto" switches away from dense.
-#' @param fallback_threshold_mb Fixed threshold used when free RAM can't be
+#' @param fallback_threshold_mb Fixed threshold used when available RAM can't be
 #'   determined (mirrors the warn+fallback precedent in
 #'   `R/morph_utils.R`'s `matrix_size > 1e8` cell guard).
 #'
@@ -129,12 +196,12 @@ resolve_memory_mode <- function(n, m,
     if (needed_mb > fallback_threshold_mb) {
       if (solver_supports_lazy) {
         warning(sprintf(
-          "Could not determine free system RAM; the dense cost matrix would need ~%.0f MB. Switching to memory_mode = \"lazy\".",
+          "Could not determine available system RAM; the dense cost matrix would need ~%.0f MB. Switching to memory_mode = \"lazy\".",
           needed_mb), call. = FALSE)
         return("lazy")
       }
       warning(sprintf(
-        "Could not determine free system RAM; the dense cost matrix would need ~%.0f MB. Proceeding densely -- consider blocking (block_id), method = \"greedy\", or reducing the problem size.",
+        "Could not determine available system RAM; the dense cost matrix would need ~%.0f MB. Proceeding densely -- consider blocking (block_id), method = \"greedy\", or reducing the problem size.",
         needed_mb), call. = FALSE)
     }
     return("dense")
@@ -143,12 +210,12 @@ resolve_memory_mode <- function(n, m,
   if (needed_mb > ram_fraction * free_mb) {
     if (solver_supports_lazy) {
       warning(sprintf(
-        "Dense cost matrix would need ~%.1f GB against ~%.1f GB free RAM. Switching to memory_mode = \"lazy\".",
+        "Dense cost matrix would need ~%.1f GB against ~%.1f GB available RAM. Switching to memory_mode = \"lazy\".",
         needed_mb / 1e3, free_mb / 1e3), call. = FALSE)
       return("lazy")
     }
     warning(sprintf(
-      "Dense cost matrix would need ~%.1f GB against ~%.1f GB free RAM, and this path does not support memory_mode = \"lazy\" yet. Proceeding densely -- consider blocking (block_id), method = \"greedy\", reducing the problem size, or running on a machine with more RAM.",
+      "Dense cost matrix would need ~%.1f GB against ~%.1f GB available RAM, and this path does not support memory_mode = \"lazy\" yet. Proceeding densely -- consider blocking (block_id), method = \"greedy\", reducing the problem size, or running on a machine with more RAM.",
       needed_mb / 1e3, free_mb / 1e3), call. = FALSE)
   }
 

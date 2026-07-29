@@ -1,3 +1,24 @@
+# couplr 1.5.4
+
+## Bug Fixes
+
+* **`memory_mode = "auto"` no longer under-reads available memory on Apple
+  Silicon.** `get_free_ram_mb()` converted `vm_stat`'s page counts with a
+  hardcoded 4096-byte page, but Apple Silicon pages are 16384 bytes, so every
+  M-series Mac saw a quarter of the memory it actually had -- measured on a
+  64 GB M4 Pro, 7.7 GB reported against 41.7 GB available. `"auto"` therefore
+  switched to the lazy path, or warned about a dense allocation, at a quarter
+  of the intended threshold. The page size is now read from `vm_stat`'s own
+  header line, with `sysctl hw.pagesize` as a fallback, and the parsing is
+  split into `vm_stat_page_size()` and `vm_stat_available_mb()` so it is
+  testable without a macOS host.
+
+* **The macOS memory figure now counts reclaimable pages.** Only the free list
+  was counted, which macOS keeps nearly empty by design. Inactive and
+  speculative pages are reclaimed on demand, so they are included, matching the
+  `MemAvailable` semantics the Linux branch already used. The reported quantity
+  is available rather than free memory, and the `memory_mode` warnings say so.
+
 # couplr 1.5.3
 
 ## Bug Fixes

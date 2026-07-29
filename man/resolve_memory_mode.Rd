@@ -23,10 +23,10 @@ skip probing entirely), or "lazy" (always, error if unsupported here).}
 caller's chosen solver/distance combination (\code{TRUE} only for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, on a caller whose
 solve path consumes a \code{lazy_cost_spec}; see R/matching_lazy.R).}
 
-\item{ram_fraction}{Fraction of free RAM the dense matrix may consume
+\item{ram_fraction}{Fraction of available RAM the dense matrix may consume
 before "auto" switches away from dense.}
 
-\item{fallback_threshold_mb}{Fixed threshold used when free RAM can't be
+\item{fallback_threshold_mb}{Fixed threshold used when available RAM can't be
 determined (mirrors the warn+fallback precedent in
 \code{R/morph_utils.R}'s \code{matrix_size > 1e8} cell guard).}
 }

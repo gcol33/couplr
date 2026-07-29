@@ -36,13 +36,13 @@ resolve_memory_mode(
 
 - ram_fraction:
 
-  Fraction of free RAM the dense matrix may consume before "auto"
+  Fraction of available RAM the dense matrix may consume before "auto"
   switches away from dense.
 
 - fallback_threshold_mb:
 
-  Fixed threshold used when free RAM can't be determined (mirrors the
-  warn+fallback precedent in `R/morph_utils.R`'s `matrix_size > 1e8`
+  Fixed threshold used when available RAM can't be determined (mirrors
+  the warn+fallback precedent in `R/morph_utils.R`'s `matrix_size > 1e8`
   cell guard).
 
 ## Value

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.5.3" id="couplr-153">couplr 1.5.3<a class="anchor" aria-label="anchor" href="#couplr-153"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.5.4" id="couplr-154">couplr 1.5.4<a class="anchor" aria-label="anchor" href="#couplr-154"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-4">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-4"></a></h3>
+<ul><li><p><strong><code>memory_mode = "auto"</code> no longer under-reads available memory on Apple Silicon.</strong> <code><a href="../reference/get_free_ram_mb.html">get_free_ram_mb()</a></code> converted <code>vm_stat</code>’s page counts with a hardcoded 4096-byte page, but Apple Silicon pages are 16384 bytes, so every M-series Mac saw a quarter of the memory it actually had – measured on a 64 GB M4 Pro, 7.7 GB reported against 41.7 GB available. <code>"auto"</code> therefore switched to the lazy path, or warned about a dense allocation, at a quarter of the intended threshold. The page size is now read from <code>vm_stat</code>’s own header line, with <code>sysctl hw.pagesize</code> as a fallback, and the parsing is split into <code><a href="../reference/vm_stat_page_size.html">vm_stat_page_size()</a></code> and <code><a href="../reference/vm_stat_available_mb.html">vm_stat_available_mb()</a></code> so it is testable without a macOS host.</p></li>
+<li><p><strong>The macOS memory figure now counts reclaimable pages.</strong> Only the free list was counted, which macOS keeps nearly empty by design. Inactive and speculative pages are reclaimed on demand, so they are included, matching the <code>MemAvailable</code> semantics the Linux branch already used. The reported quantity is available rather than free memory, and the <code>memory_mode</code> warnings say so.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.3" id="couplr-153">couplr 1.5.3<a class="anchor" aria-label="anchor" href="#couplr-153"></a></h2><p class="text-muted">CRAN release: 2026-07-25</p>
 <div class="section level3">
 <h3 id="bug-fixes-1-5-3">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-3"></a></h3>
 <ul><li>

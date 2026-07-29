@@ -209,7 +209,9 @@ df <- read.csv(BENCHMARK_TABLE, stringsAsFactors = FALSE)
 x_breaks <- c(10, 100, 1000)
 x_lbls   <- c("10", "100", "1000")
 y_breaks <- c(0.01, 1, 100, 10000)
-y_lbls   <- c("0.01 ms", "1 ms", "100 ms", "10 s")
+# mu via plotmath rather than a literal U+00B5: the symbol font is always
+# present, so the label survives devices whose text font lacks the glyph.
+y_lbls   <- expression("10 " * mu * "s", "1 ms", "100 ms", "10 s")
 x_dom    <- c(4, 5000)
 y_dom    <- c(0.005, 1e8)   # extra headroom for in-panel legends
 

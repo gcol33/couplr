@@ -152,7 +152,7 @@ on 100 covariates hold as 80 MB of features where the dense matrix needs
 80 GB. Lazy evaluation covers Jonker–Volgenant and auction with the built-in
 metrics, calipers, and `max_distance`, and returns the same assignment as the
 dense path. The default `"auto"` weighs the estimated dense footprint against
-free system memory and switches before an oversized allocation.
+available system memory and switches before an oversized allocation.
 
 ![(a) Median wall-clock solve time versus problem size $n$ for all 19
 assignment solvers in `couplr`, arranged as five small-multiple panels

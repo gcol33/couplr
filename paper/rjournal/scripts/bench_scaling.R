@@ -1,0 +1,163 @@
+## Scaling benchmark: couplr vs MatchIt vs optmatch across problem size.
+## 1-to-1 optimal Mahalanobis matching on synthetic data, treated:control = 1:2,
+## single-core, per-cell timeout. Resume-safe: writes paper/scaling-results.csv
+## after each (n, package) cell.
+##
+## Reproducible via:  Rscript paper/bench_scaling.R
+##
+## NOTE: From n_total = 10000, `optmatch::pairmatch()` exceeds the default
+## `optmatch_max_problem_size` (1e7 entries). Setting the option to Inf
+## (done below) lets the call start. On macOS / arm64 the solve then runs to
+## completion; on Windows / x86_64 it has been observed to terminate the R
+## process without surfacing a recoverable error. Where that happens, run
+## `bench_scaling_couplr_only.R` to cover couplr at the large sizes and
+## `bench_scaling_alternatives.R` for the other two.
+
+repo_root <- if (file.exists("DESCRIPTION")) {
+  normalizePath(".", winslash = "/", mustWork = TRUE)
+} else if (basename(getwd()) == "paper" && file.exists("../DESCRIPTION")) {
+  normalizePath("..", winslash = "/", mustWork = TRUE)
+} else {
+  stop("Run this script from the package root or the paper directory.")
+}
+
+## pkgbuild's default profile compiles the package at -O0, which would time an
+## unoptimised couplr against optimised installs of the comparison packages.
+options(pkg.build_extra_flags = FALSE)
+
+suppressPackageStartupMessages({
+  needed <- c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")
+  for (p in needed) {
+    if (!requireNamespace(p, quietly = TRUE))
+      install.packages(p, repos = "https://cloud.r-project.org")
+  }
+  library(MatchIt)
+  library(optmatch)
+  library(R.utils)
+  library(RhpcBLASctl)
+  pkgload::load_all(repo_root, quiet = TRUE)
+})
+
+## Single-core wall-clock: pin BLAS / OpenMP to one thread.
+blas_set_num_threads(1)
+omp_set_num_threads(1)
+Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
+           MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
+
+## optmatch refuses problems with more than 1e7 finite entries by default.
+## We raise the cap so the comparison is "what optmatch can solve when asked",
+## not "what optmatch refuses to attempt". Flagged in the paper.
+options(optmatch_max_problem_size = Inf)
+
+paper_dir <- file.path(repo_root, "paper")
+out_csv   <- file.path(paper_dir, "scaling-results.csv")
+
+## ---- benchmark grid ----
+grid <- data.frame(
+  n_total = c(500, 2000, 5000, 10000, 20000, 50000),
+  reps    = c(  5,    5,    3,     3,     1,     1)
+)
+TIMEOUT_S <- 300  # per-replicate cap
+
+## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
+source(file.path(repo_root, "paper", "bench_common.R"))
+
+## ---- per-package callables ----
+## memory_mode is pinned to "dense" so all three packages are timed on the same
+## kind of work: MatchIt and optmatch both materialize the distance matrix.
+## Under the default "auto", couplr's choice of dense or lazy depends on how
+## much RAM happens to be free, which would make the timing depend on machine
+## state rather than on problem size. The lazy path is timed separately by
+## bench_scaling_lazy.R.
+couplr_call <- function(d) {
+  tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
+  match_couples(left = tr, right = ct, vars = covars, distance = "mahalanobis",
+                memory_mode = "dense")
+}
+matchit_call <- function(d) {
+  matchit(form, data = d, method = "optimal",
+          distance = "mahalanobis", ratio = 1)
+}
+optmatch_call <- function(d) {
+  pairmatch(form, data = d, controls = 1)
+}
+
+callables <- list(couplr = couplr_call, optmatch = optmatch_call,
+                  MatchIt = matchit_call)
+
+## ---- timed call: returns list(elapsed_s, status) ----
+time_one <- function(fn, d, timeout_s) {
+  res <- tryCatch(
+    withTimeout({
+      t0 <- proc.time()[["elapsed"]]
+      .x <- fn(d)
+      t1 <- proc.time()[["elapsed"]]
+      list(elapsed = t1 - t0, status = "ok")
+    }, timeout = timeout_s, onTimeout = "error"),
+    TimeoutException = function(e) list(elapsed = NA_real_, status = "timeout"),
+    error            = function(e) list(elapsed = NA_real_, status = paste0("error: ", conditionMessage(e)))
+  )
+  res
+}
+
+## ---- main loop, writing partial results ----
+results <- data.frame(
+  n_total = integer(0), package = character(0),
+  reps = integer(0), median_s = numeric(0), status = character(0)
+)
+if (file.exists(out_csv)) {
+  prior <- read.csv(out_csv, stringsAsFactors = FALSE)
+  if (nrow(prior) > 0) {
+    results <- prior
+    cat("Resuming from", out_csv, "with", nrow(results), "rows already done.\n")
+  }
+}
+
+write_partial <- function() {
+  write.csv(results, out_csv, row.names = FALSE)
+}
+
+for (i in seq_len(nrow(grid))) {
+  n_total <- grid$n_total[i]
+  reps    <- grid$reps[i]
+  cat(sprintf("\n=== n_total = %d, reps = %d ===\n", n_total, reps))
+  flush.console()
+  d <- make_data(n_total, seed = bench_seed(n_total))
+
+  for (pkg in names(callables)) {
+    done <- nrow(results) > 0 &&
+      any(results$n_total == n_total & results$package == pkg)
+    if (done) {
+      cat(sprintf("  %-8s : already recorded, skipping\n", pkg))
+      next
+    }
+    fn <- callables[[pkg]]
+    ## warm-up at small n only (avoid burning the timeout twice at large n)
+    if (n_total <= 2000) invisible(try(fn(d), silent = TRUE))
+    times <- numeric(0); final_status <- "ok"
+    for (r in seq_len(reps)) {
+      tr <- time_one(fn, d, TIMEOUT_S)
+      if (tr$status == "ok") {
+        times <- c(times, tr$elapsed)
+      } else {
+        final_status <- tr$status
+        break
+      }
+    }
+    med <- if (length(times) > 0) median(times) else NA_real_
+    cat(sprintf("  %-8s : median = %s s, status = %s\n", pkg,
+                ifelse(is.na(med), "NA", sprintf("%.3f", med)), final_status))
+    flush.console()
+    results <- rbind(results, data.frame(
+      n_total = n_total, package = pkg, reps = length(times),
+      median_s = round(med, 4), status = final_status,
+      stringsAsFactors = FALSE
+    ))
+    write_partial()
+  }
+}
+
+cat("\nFinal results:\n")
+print(results)
+write_partial()
+cat("\nWrote", out_csv, "\n")

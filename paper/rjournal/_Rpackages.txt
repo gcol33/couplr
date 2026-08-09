@@ -1,0 +1,5 @@
+couplr
+ggplot2
+knitr
+rmarkdown
+rjtools

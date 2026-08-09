@@ -131,7 +131,6 @@ entries are treated as forbidden assignments.</p></dd>
 <li><p><code>"lapmod"</code> — Sparse JV variant, faster when &gt;50\<!-- % entries are NA/Inf --></p></li>
 <li><p><code>"hk01"</code> — 'Hopcroft-Karp' for binary (0/1) costs only</p></li>
 <li><p><code>"ssap_bucket"</code> — 'Dial' algorithm for integer costs</p></li>
-<li><p><code>"line_metric"</code> — O(n log n) for 1D assignment problems</p></li>
 <li><p><code>"bruteforce"</code> — Exact enumeration for tiny problems (n &lt;= 8)</p></li>
 </ul><p><strong>Advanced solvers:</strong></p><ul><li><p><code>"csa"</code> — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large</p></li>
 <li><p><code>"gabow_tarjan"</code> — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)</p></li>
@@ -141,7 +140,22 @@ entries are treated as forbidden assignments.</p></dd>
 <li><p><code>"orlin"</code> — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))</p></li>
 <li><p><code>"push_relabel"</code> — 'Push-relabel' max-flow based solver</p></li>
 <li><p><code>"ramshaw_tarjan"</code> — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)</p></li>
-</ul></dd>
+</ul><p>One-dimensional problems have their own entry point,
+<code><a href="lap_solve_line_metric.html">lap_solve_line_metric()</a></code>, which takes two point vectors rather than a
+cost matrix and runs in O(n log n).</p>
+<p>Under <code>"auto"</code>, a single pass over <code>cost</code> supplies the facts the following
+rules need, and the first matching rule wins:</p><ol><li><p>at most 8 rows and 8 columns: <code>"bruteforce"</code>, exact and faster
+than setting up a general solver;</p></li>
+<li><p>finite entries all equal, or all either 0 or 1: <code>"hk01"</code>, which
+exploits the absence of a real cost scale;</p></li>
+<li><p>more than half the entries non-finite: <code>"lapmod"</code>, which carries
+forbidden edges in its adjacency structure;</p></li>
+<li><p>at least 3 times as many columns as rows: <code>"sap"</code>, avoiding the
+padding a square-oriented solver would need;</p></li>
+<li><p>everything else: <code>"jv"</code>.</p></li>
+</ol><p>Naming a method skips the pass. Rectangular problems are transposed
+internally so the solver always sees at least as many columns as rows, and
+the assignment is mapped back afterwards.</p></dd>
 
 
 <dt id="arg-auction-eps">auction_eps<a class="anchor" aria-label="anchor" href="#arg-auction-eps"></a></dt>

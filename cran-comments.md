@@ -38,6 +38,14 @@ way to the dispatcher.
   reclaimed on demand, matching the `MemAvailable` semantics the Linux branch
   already used.
 
+### Documentation
+
+* `?assignment` listed `"line_metric"` among the `method` values, but it was
+  never accepted by `match.arg()`; one-dimensional problems are solved by
+  `lap_solve_line_metric()`, and the documentation now points there.
+* The five `"auto"` selection rules are stated in `?assignment` rather than
+  only summarised as "automatic selection".
+
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes

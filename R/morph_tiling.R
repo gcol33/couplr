@@ -12,8 +12,8 @@
 #' 
 #' Creates a tiling structure with:
 #' - Bulk region filled with P×P tiles (top-left anchored)
-#' - Right strip with largest squares ≤ remaining width
-#' - Bottom strip with largest squares ≤ remaining height
+#' - Right strip with largest squares <= remaining width
+#' - Bottom strip with largest squares <= remaining height
 #' 
 #' @param W Image width
 #' @param H Image height

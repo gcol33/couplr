@@ -51,3 +51,6 @@ vignettes/*.html
 
 # Local R CMD check workdirs
 _check*/
+
+# Knit artifacts from the R Journal build
+paper/rjournal/*.log

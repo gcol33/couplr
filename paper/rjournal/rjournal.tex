@@ -75,7 +75,7 @@ detail: object model, C++ organisation, dispatch rules, memory modes,
 verification and dependency footprint. A performance section reports per-solver
 timings, a balance comparison against \pkg{MatchIt} and \pkg{optmatch} on the
 LaLonde data, and a scaling comparison. Results were produced with couplr
-version 1.5.4.
+version 1.5.5.
 
 \section{The assignment problem behind matching}\label{the-assignment-problem-behind-matching}
 
@@ -701,10 +701,10 @@ dense square problem to Jonker-Volgenant.
 
 The lazy path removes the memory ceiling as well. The same \(n = 50{,}000\) match
 under \texttt{memory\_mode\ =\ "lazy"} completes in
-61 seconds without ever
+68 seconds without ever
 building the distance matrix, returning the assignment the dense path returns.
 At \(n = 20{,}000\) it takes
-6.3 seconds against 11.4
+7.0 seconds against 11.4
 for the dense path, so on these problems recomputing distances is cheaper than
 materialising and traversing the matrix.
 

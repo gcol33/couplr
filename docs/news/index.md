@@ -25,6 +25,23 @@
   probe reads `INTSXP` in place, so an integer matrix no longer pays for
   a full double copy on the way to the dispatcher.
 
+### Documentation
+
+- **[`?assignment`](https://gillescolling.com/couplr/reference/assignment.md)
+  no longer lists `"line_metric"` as a `method`.** It was never one of
+  the accepted values, so `method = "line_metric"` failed
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html).
+  One-dimensional problems are solved by
+  [`lap_solve_line_metric()`](https://gillescolling.com/couplr/reference/lap_solve_line_metric.md),
+  which takes two point vectors rather than a cost matrix; the
+  documentation now points there.
+
+- **The `"auto"` selection rules are documented.**
+  [`?assignment`](https://gillescolling.com/couplr/reference/assignment.md)
+  previously described `"auto"` only as “automatic selection based on
+  problem characteristics”. It now states the five rules and the order
+  they are applied in, matching the dispatcher.
+
 ## couplr 1.5.4
 
 ### Bug Fixes

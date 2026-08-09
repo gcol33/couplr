@@ -45,7 +45,6 @@ entries are treated as forbidden assignments.}
 \item \code{"lapmod"} — Sparse JV variant, faster when >50\\% entries are NA/Inf
 \item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) costs only
 \item \code{"ssap_bucket"} — 'Dial' algorithm for integer costs
-\item \code{"line_metric"} — O(n log n) for 1D assignment problems
 \item \code{"bruteforce"} — Exact enumeration for tiny problems (n <= 8)
 }
 
@@ -59,7 +58,28 @@ entries are treated as forbidden assignments.}
 \item \code{"orlin"} — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
 \item \code{"push_relabel"} — 'Push-relabel' max-flow based solver
 \item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
-}}
+}
+
+One-dimensional problems have their own entry point,
+\code{\link[=lap_solve_line_metric]{lap_solve_line_metric()}}, which takes two point vectors rather than a
+cost matrix and runs in O(n log n).
+
+Under \code{"auto"}, a single pass over \code{cost} supplies the facts the following
+rules need, and the first matching rule wins:
+\enumerate{
+\item at most 8 rows and 8 columns: \code{"bruteforce"}, exact and faster
+than setting up a general solver;
+\item finite entries all equal, or all either 0 or 1: \code{"hk01"}, which
+exploits the absence of a real cost scale;
+\item more than half the entries non-finite: \code{"lapmod"}, which carries
+forbidden edges in its adjacency structure;
+\item at least 3 times as many columns as rows: \code{"sap"}, avoiding the
+padding a square-oriented solver would need;
+\item everything else: \code{"jv"}.
+}
+Naming a method skips the pass. Rectangular problems are transposed
+internally so the solver always sees at least as many columns as rows, and
+the assignment is mapped back afterwards.}
 
 \item{auction_eps}{Optional numeric epsilon for the 'Auction'/'Auction-GS' methods.
 If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}

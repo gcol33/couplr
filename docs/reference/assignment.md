@@ -68,8 +68,6 @@ assignment(
 
   - `"ssap_bucket"` — 'Dial' algorithm for integer costs
 
-  - `"line_metric"` — O(n log n) for 1D assignment problems
-
   - `"bruteforce"` — Exact enumeration for tiny problems (n \<= 8)
 
   **Advanced solvers:**
@@ -93,6 +91,32 @@ assignment(
 
   - `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular
     matrices (n != m)
+
+  One-dimensional problems have their own entry point,
+  [`lap_solve_line_metric()`](https://gillescolling.com/couplr/reference/lap_solve_line_metric.md),
+  which takes two point vectors rather than a cost matrix and runs in
+  O(n log n).
+
+  Under `"auto"`, a single pass over `cost` supplies the facts the
+  following rules need, and the first matching rule wins:
+
+  1.  at most 8 rows and 8 columns: `"bruteforce"`, exact and faster
+      than setting up a general solver;
+
+  2.  finite entries all equal, or all either 0 or 1: `"hk01"`, which
+      exploits the absence of a real cost scale;
+
+  3.  more than half the entries non-finite: `"lapmod"`, which carries
+      forbidden edges in its adjacency structure;
+
+  4.  at least 3 times as many columns as rows: `"sap"`, avoiding the
+      padding a square-oriented solver would need;
+
+  5.  everything else: `"jv"`.
+
+  Naming a method skips the pass. Rectangular problems are transposed
+  internally so the solver always sees at least as many columns as rows,
+  and the assignment is mapped back afterwards.
 
 - auction_eps:
 

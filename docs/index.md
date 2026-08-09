@@ -130,7 +130,7 @@ md <- match_data(result)
 [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 exposes the solver layer directly. It takes a cost matrix, handles
 rectangular shapes and forbidden edges (`NA` / `Inf`), and picks from
-twenty solvers when `method = "auto"`:
+nineteen solvers when `method = "auto"`:
 
 ``` r
 

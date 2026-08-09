@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,6 +82,14 @@
       <small>Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.5" id="couplr-155">couplr 1.5.5<a class="anchor" aria-label="anchor" href="#couplr-155"></a></h2>
+<div class="section level3">
+<h3 id="performance-1-5-5">Performance<a class="anchor" aria-label="anchor" href="#performance-1-5-5"></a></h3>
+<ul><li><p><strong><code>method = "auto"</code> no longer allocates the cost matrix several times over to pick a solver.</strong> Selecting a solver needs three data-dependent facts: whether any entry is <code>NaN</code>, whether the finite entries are constant or binary, and what fraction of entries are non-finite. These were read with <code>any(is.nan())</code>, <code>range(finite = TRUE)</code> and <code>mean(is.na() | is.infinite())</code>, each of which allocates a temporary the size of the cost matrix, so choosing a solver cost several full-size allocations and several passes before any solving started. A single C++ pass (<code>lap_probe_cost_matrix()</code>) now returns all of them without allocating. The probe itself is 7 to 18 times faster than the code it replaces, measured from <code>n = 10</code> to <code>n = 5000</code>, and the gap between <code>method = "auto"</code> and naming the solver it selects falls from as much as 2x to a few percent. Dispatch decisions are unchanged: the new probe reproduces the previous solver choice on every case tested, including all-<code>Inf</code>, exactly-half-sparse, constant, binary-with-<code>NA</code> and integer inputs.</p></li>
+<li><p><strong>Integer cost matrices are no longer coerced during selection.</strong> The probe reads <code>INTSXP</code> in place, so an integer matrix no longer pays for a full double copy on the way to the dispatcher.</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.4" id="couplr-154">couplr 1.5.4<a class="anchor" aria-label="anchor" href="#couplr-154"></a></h2>
 <div class="section level3">

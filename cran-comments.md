@@ -1,39 +1,42 @@
-## Release notes (1.5.3)
+## Release notes (1.5.5)
 
-This release supersedes 1.5.0, the version currently on CRAN. It fixes a
-correctness bug and is submitted promptly for that reason.
+This release supersedes 1.5.3, the version currently on CRAN. It collects the
+performance work in 1.5.5 and the macOS memory-detection fixes in 1.5.4, which
+was tagged but not submitted.
 
-`lap::CostMatrix` computed its flat row-major index as `i * ncol + j` in
-32-bit `int` arithmetic, which silently overflows once `nrow * ncol` exceeds
-`INT_MAX` (about a 46,341-square matrix) -- a scale the package's own
-vignettes already use as a normal example. The same pattern was duplicated in
-several solvers' own index arithmetic (`auction`, `csa`, `cycle_cancel`,
-`munkres`, `ramshaw_tarjan`, `ssap_bucket`, `sap`/`ssp`, `network_simplex`)
-and in the Rcpp boundary's matrix conversion. All flat-index arithmetic is
-now computed in 64-bit, with a new arithmetic-only regression test covering
-the exact overflow point without allocating an overflow-sized matrix.
+### Performance (1.5.5)
 
-Also included since 1.5.0:
+`method = "auto"` selects a solver from three data-dependent facts: whether any
+entry is `NaN`, whether the finite entries are constant or binary, and what
+fraction of entries are non-finite. These were read with `any(is.nan())`,
+`range(finite = TRUE)` and `mean(is.na() | is.infinite())`, each of which
+allocates a temporary the size of the cost matrix, so selecting a solver cost
+several full-size allocations and several passes before any solving began. A
+single C++ pass now returns all of them without allocating. The probe is 7 to
+18 times faster than the code it replaces, measured from `n = 10` to
+`n = 5000`, and the gap between `method = "auto"` and naming the solver it
+selects falls from as much as 2x to a few percent.
 
-* New `memory_mode = "lazy"` option for `match_couples()`, `compute_distances()`,
-  and `assignment()`: computes each pairwise distance on demand instead of
-  materializing the full cost matrix, with an `"auto"` mode that estimates
-  memory footprint against free RAM before a large dense allocation.
-* `method = "ssap_bucket"` is markedly faster on fine-grained fractional
-  costs (36.0s to 2.5s over 200 randomised solves at six decimals); accepted
-  inputs and returned optima are unchanged.
-* `lap_solve_batch(n_threads = NULL)` now honours `_R_CHECK_LIMIT_CORES_`
-  (two workers instead of `parallel::detectCores()`) in both the
-  matrix-list and grouped-data-frame paths.
-* `LinkingTo: RcppEigen` removed: it was declared but no Eigen type was ever
-  instantiated in `src/`, and the unused declaration forced every source
-  install to build RcppEigen first. `LinkingTo` is now `Rcpp` alone.
-* `htmlwidgets` moved from `Imports` to `Suggests`, checked at call time by
-  `lap_animate()`; this drops about 24 packages from a default install.
-* `OpenImageR`, `reticulate`, `xml2`, and `farver` dropped from `Suggests`:
-  no call site anywhere in the package, tests, vignettes, or scripts.
-* Corrected memory-usage claims in the vignettes and `compute_distances()`
-  docs for greedy matching and the `strategy = "pq"` candidate-pair search.
+Dispatch decisions are unchanged. The new probe reproduces the previous solver
+choice on every case tested, including all-`Inf`, exactly-half-sparse,
+constant, binary-with-`NA` and integer inputs; `tests/testthat/test-dispatch-probe.R`
+covers these along with the `NaN` rejection that runs for every method.
+
+Integer cost matrices are read as `INTSXP` in place during selection rather
+than coerced, so an integer matrix no longer pays for a full double copy on the
+way to the dispatcher.
+
+### Bug fixes (1.5.4)
+
+* `memory_mode = "auto"` under-read available memory on Apple Silicon.
+  `get_free_ram_mb()` converted `vm_stat`'s page counts with a hardcoded
+  4096-byte page, but Apple Silicon pages are 16384 bytes, so every M-series
+  Mac saw a quarter of the memory it had (7.7 GB reported against 41.7 GB
+  available on a 64 GB M4 Pro). The page size is now read from `vm_stat`'s own
+  header, with `sysctl hw.pagesize` as a fallback.
+* The macOS memory figure now counts inactive and speculative pages, which are
+  reclaimed on demand, matching the `MemAvailable` semantics the Linux branch
+  already used.
 
 ## R CMD check results
 

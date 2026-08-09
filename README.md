@@ -109,7 +109,7 @@ md <- match_data(result)
 ## The assignment backend
 
 `lap_solve()` exposes the solver layer directly. It takes a cost matrix, handles
-rectangular shapes and forbidden edges (`NA` / `Inf`), and picks from twenty solvers when
+rectangular shapes and forbidden edges (`NA` / `Inf`), and picks from nineteen solvers when
 `method = "auto"`:
 
 ```r

@@ -22,6 +22,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_probe_cost_matrix
+Rcpp::List lap_probe_cost_matrix(SEXP cost);
+RcppExport SEXP _couplr_lap_probe_cost_matrix(SEXP costSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type cost(costSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_probe_cost_matrix(cost));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_solve_bruteforce
 Rcpp::List lap_solve_bruteforce(NumericMatrix cost, bool maximize);
 RcppExport SEXP _couplr_lap_solve_bruteforce(SEXP costSEXP, SEXP maximizeSEXP) {
@@ -661,6 +672,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_prepare_cost_matrix", (DL_FUNC) &_couplr_lap_prepare_cost_matrix, 2},
+    {"_couplr_lap_probe_cost_matrix", (DL_FUNC) &_couplr_lap_probe_cost_matrix, 1},
     {"_couplr_lap_solve_bruteforce", (DL_FUNC) &_couplr_lap_solve_bruteforce, 2},
     {"_couplr_lap_solve_jv", (DL_FUNC) &_couplr_lap_solve_jv, 2},
     {"_couplr_cpp_lap_solve_jv_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_lazy, 8},

@@ -34,6 +34,7 @@ Rcpp::List solve_jv_duals_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
+Rcpp::List probe_cost_matrix_impl(SEXP cost);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
@@ -113,6 +114,14 @@ extern Rcpp::NumericMatrix spatial_cost_matrix(const Rcpp::IntegerVector& idxA,
 // [[Rcpp::export]]
 Rcpp::List lap_prepare_cost_matrix(NumericMatrix cost, bool maximize) {
   return prepare_cost_matrix_impl(cost, maximize);
+}
+
+// Takes SEXP rather than NumericMatrix so an integer cost matrix is read in
+// place; a NumericMatrix parameter would coerce it and allocate the copy this
+// probe exists to avoid.
+// [[Rcpp::export]]
+Rcpp::List lap_probe_cost_matrix(SEXP cost) {
+  return probe_cost_matrix_impl(cost);
 }
 
 // [[Rcpp::export]]

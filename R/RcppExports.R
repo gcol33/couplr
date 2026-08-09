@@ -5,6 +5,10 @@ lap_prepare_cost_matrix <- function(cost, maximize) {
     .Call(`_couplr_lap_prepare_cost_matrix`, cost, maximize)
 }
 
+lap_probe_cost_matrix <- function(cost) {
+    .Call(`_couplr_lap_probe_cost_matrix`, cost)
+}
+
 lap_solve_bruteforce <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_bruteforce`, cost, maximize)
 }

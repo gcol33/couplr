@@ -1,3 +1,27 @@
+# couplr 1.5.5
+
+## Performance
+
+* **`method = "auto"` no longer allocates the cost matrix several times over to
+  pick a solver.** Selecting a solver needs three data-dependent facts: whether
+  any entry is `NaN`, whether the finite entries are constant or binary, and
+  what fraction of entries are non-finite. These were read with
+  `any(is.nan())`, `range(finite = TRUE)` and
+  `mean(is.na() | is.infinite())`, each of which allocates a temporary the size
+  of the cost matrix, so choosing a solver cost several full-size allocations
+  and several passes before any solving started. A single C++ pass
+  (`lap_probe_cost_matrix()`) now returns all of them without allocating. The
+  probe itself is 7 to 18 times faster than the code it replaces, measured from
+  `n = 10` to `n = 5000`, and the gap between `method = "auto"` and naming the
+  solver it selects falls from as much as 2x to a few percent. Dispatch
+  decisions are unchanged: the new probe reproduces the previous solver choice
+  on every case tested, including all-`Inf`, exactly-half-sparse, constant,
+  binary-with-`NA` and integer inputs.
+
+* **Integer cost matrices are no longer coerced during selection.** The probe
+  reads `INTSXP` in place, so an integer matrix no longer pays for a full
+  double copy on the way to the dispatcher.
+
 # couplr 1.5.4
 
 ## Bug Fixes

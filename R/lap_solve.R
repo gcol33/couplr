@@ -136,22 +136,16 @@ assignment <- function(cost, maximize = FALSE,
   if (!is.numeric(cost)) {
     stop("`cost` must be a numeric matrix, got ", typeof(cost))
   }
-  if (any(is.nan(cost))) stop("NaN not allowed in `cost`")
+
+  # One C++ pass supplies the NaN check and every data-dependent input the
+  # "auto" branch below needs. Reading them separately in R (any(is.nan()),
+  # range(finite = TRUE), mean(is.na() | is.infinite())) allocated a temporary
+  # the size of the cost matrix for each test, which at n = 5000 made
+  # method = "auto" measurably slower than naming the solver it would pick.
+  probe <- lap_probe_cost_matrix(cost)
+  if (probe$has_nan) stop("NaN not allowed in `cost`")
 
   if (method == "auto") {
-    # Check for special cost structures. Use range() to bail out early on the
-    # typical case (non-binary, non-constant) without a full unique/sort scan;
-    # this matters at n>=1000 where the matrix has >=1M entries.
-    hk01_candidate <- function(M) {
-      r <- suppressWarnings(range(M, na.rm = TRUE, finite = TRUE))
-      if (!all(is.finite(r))) return(FALSE)
-      if (r[1] == r[2]) return(TRUE)           # constant
-      if (r[1] != 0 || r[2] != 1) return(FALSE) # outside {0,1} envelope
-      # range is exactly [0,1]; confirm there are no intermediate values
-      x <- M[is.finite(M)]
-      length(unique(x)) == 2L
-    }
-
     # Strategy based on comprehensive benchmarks (post LAPJV warm-start):
     # - n<=8: bruteforce (exact enumeration for very small problems)
     # - dense square / near-square: jv (fastest at every size since warm-start)
@@ -162,21 +156,18 @@ assignment <- function(cost, maximize = FALSE,
 
     if (n <= 8 && m <= 8) {
       method <- "bruteforce"
-    } else if (hk01_candidate(cost)) {
+    } else if (probe$constant || probe$binary) {
       method <- "hk01"
+    } else if (probe$n_nonfinite > 0.5 * probe$n_total) {
+      # Sparse: lapmod handles forbidden edges natively at every size.
+      # The previous fallback to "sap" for n <= 100 has a worst-case stall on
+      # near-square highly-sparse matrices (e.g. propensity-score matching
+      # with tight calipers), so always use lapmod when sparse.
+      method <- "lapmod"
+    } else if (m >= 3 * n) {
+      method <- "sap"
     } else {
-      na_rate <- mean(is.na(cost) | is.infinite(cost))
-      if (na_rate > 0.5) {
-        # Sparse: lapmod handles forbidden edges natively at every size.
-        # The previous fallback to "sap" for n <= 100 has a worst-case stall on
-        # near-square highly-sparse matrices (e.g. propensity-score matching
-        # with tight calipers), so always use lapmod when sparse.
-        method <- "lapmod"
-      } else if (m >= 3 * n) {
-        method <- "sap"
-      } else {
-        method <- "jv"
-      }
+      method <- "jv"
     }
   }
 

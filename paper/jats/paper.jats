@@ -33,16 +33,17 @@ assignment</article-title>
 </contrib>
 <aff id="aff-1">
 <institution-wrap>
-<institution>University of Vienna, Austria</institution>
+<institution>Department of Botany and Biodiversity Research, University
+of Vienna, Austria</institution>
 </institution-wrap>
 </aff>
 </contrib-group>
 <author-notes>
 <corresp id="cor-1">* E-mail: <email></email></corresp>
 </author-notes>
-<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2026-05-08">
-<day>8</day>
-<month>5</month>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2026-07-20">
+<day>20</day>
+<month>7</month>
 <year>2026</year>
 </pub-date>
 <volume>¿VOL?</volume>
@@ -77,187 +78,581 @@ a Creative Commons Attribution 4.0 International License (CC BY
   2026</xref>) is an R package for optimal pairing, matching, and
   assignment. It solves linear assignment problems: given two sets of
   objects and a cost for each possible pair, choose the pairs with
-  minimum total cost. That simple operation appears in causal inference,
+  minimum total cost. That operation appears in causal inference,
   experimental design, task allocation, sample pairing, and image
   alignment.</p>
-  <p>The package provides two entry points. High-level matching
-  functions such as <monospace>match_couples()</monospace>,
-  <monospace>ps_match()</monospace>,
-  <monospace>full_match()</monospace>,
-  <monospace>cem_match()</monospace>, and
-  <monospace>subclass_match()</monospace> prepare data, build distances,
-  enforce constraints, and return analysis-ready matched data. Low-level
-  functions such as <monospace>lap_solve()</monospace>,
-  <monospace>lap_solve_batch()</monospace>,
-  <monospace>lap_solve_kbest()</monospace>, and
-  <monospace>assignment_duals()</monospace> expose a collection of
-  assignment solvers directly for users who already have a cost matrix.
-  This lets the same package support both statistical matching workflows
-  and general-purpose assignment tasks.</p>
+  <p>The package provides two entry points. A high-level data-frame
+  interface prepares data, builds distances, enforces constraints, and
+  returns analysis-ready matched output for optimal, greedy,
+  propensity-score, full, coarsened-exact, subclassification, and
+  cardinality matching, with balance diagnostics and Rosenbaum
+  sensitivity bounds
+  (<xref alt="Rosenbaum, 2002" rid="ref-Rosenbaum2002" ref-type="bibr">Rosenbaum,
+  2002</xref>). A low-level interface exposes the solvers directly when
+  the user already has a cost matrix. An automatic dispatcher routes
+  each problem to one of 19 internal solvers based on shape, sparsity,
+  cost type, and size, so the same package supports statistical matching
+  workflows and general-purpose assignment tasks.</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
-  <p>Matching is a common way to make treated and control groups more
-  comparable before downstream analysis. In practice, researchers often
-  need more than a single nearest-neighbor match on a propensity score.
-  They may need exact blocking by site, calipers on multiple variables,
-  pairwise distances on observed covariates, variable-ratio full
-  matching, replacement matching, or direct control over the assignment
-  algorithm. Those choices are scattered across R packages and usually
-  require users to move between data preparation, distance calculation,
-  solver calls, and balance checks by hand.</p>
-  <p><monospace>couplr</monospace> packages this workflow around the
-  linear assignment problem. Users can match directly on observed
-  covariates, add blocking and distance constraints, inspect
-  standardized differences and distributional diagnostics, then join the
-  matched groups for analysis. The lower-level interface remains
-  available when the matching problem has already been reduced to a cost
-  matrix, which matters for operations research and scientific computing
-  use cases where rows and columns are not treated and control
-  units.</p>
-  <p>This split is important. A causal-inference user should not need to
-  know which solver handles rectangular matrices well, and an operations
-  researcher should not need the package to impose a statistical
-  matching vocabulary. <monospace>couplr</monospace> keeps those layers
-  separate while sharing the same tested assignment core.</p>
+  <p>A serious matching workflow in R today threads three packages by
+  hand: one for the assignment solver, one for preprocessing and
+  constraint construction, one for balance diagnostics. Any non-default
+  choice (exact blocking, calipers on multiple variables, pairwise
+  distances on observed covariates, variable-ratio full matching,
+  replacement matching, direct control over the solver) pulls the user
+  into a different corner of that toolchain.</p>
+  <p><monospace>couplr</monospace> packages the workflow around the
+  linear assignment problem. A causal-inference user starts with a data
+  frame, observed covariates, and a treatment indicator; an
+  operations-research user starts with a cost matrix already in hand.
+  The same solver core serves both.</p>
 </sec>
 <sec id="state-of-the-field">
   <title>State of the field</title>
-  <p>Several R packages address parts of this problem.
-  <monospace>MatchIt</monospace> provides a widely used interface for
-  preprocessing and matching in causal inference, with strong support
-  for propensity score workflows and downstream balance assessment
+  <p><monospace>MatchIt</monospace>
   (<xref alt="Ho et al., 2011" rid="ref-MatchIt" ref-type="bibr">Ho et
-  al., 2011</xref>). <monospace>optmatch</monospace> implements optimal
-  and full matching through network flow formulations
-  (<xref alt="Hansen &amp; Klopfer, 2006" rid="ref-optmatch" ref-type="bibr">Hansen
-  &amp; Klopfer, 2006</xref>). <monospace>cobalt</monospace> supplies
-  balance diagnostics that work across matching packages
+  al., 2011</xref>), <monospace>optmatch</monospace>
+  (<xref alt="Hansen, 2007" rid="ref-optmatch" ref-type="bibr">Hansen,
+  2007</xref>), <monospace>Matching</monospace>
+  (<xref alt="Sekhon, 2011" rid="ref-Matching" ref-type="bibr">Sekhon,
+  2011</xref>), and <monospace>designmatch</monospace>
+  (<xref alt="Zubizarreta et al., 2024" rid="ref-designmatch" ref-type="bibr">Zubizarreta
+  et al., 2024</xref>) handle preprocessing and matching for causal
+  inference; <monospace>cobalt</monospace> supplies cross-package
+  balance diagnostics
   (<xref alt="Greifer, 2025" rid="ref-cobalt" ref-type="bibr">Greifer,
-  2025</xref>). For the linear assignment problem itself, R users often
-  reach for packages such as <monospace>clue</monospace>,
-  <monospace>lpSolve</monospace>, or domain-specific wrappers around one
-  or two solvers
+  2025</xref>). For the assignment problem itself, R users reach for
+  <monospace>clue</monospace> (Hungarian via
+  <monospace>solve_LSAP</monospace>) or <monospace>lpSolve</monospace>
+  (general LP)
   (<xref alt="Berkelaar &amp; others, 2024" rid="ref-lpSolve" ref-type="bibr">Berkelaar
   &amp; others, 2024</xref>;
   <xref alt="Hornik, 2024" rid="ref-clue" ref-type="bibr">Hornik,
-  2024</xref>).</p>
-  <p><monospace>couplr</monospace> is designed for the gap between these
-  layers. It provides a model-light interface for direct covariate
-  matching, exports compatibility methods for
-  <monospace>MatchIt</monospace> and <monospace>cobalt</monospace>, and
-  includes a broad collection of native C++ solvers under a single R
-  API. The solver set covers classical dense assignment, sparse and
-  rectangular variants, k-best assignment, bottleneck assignment,
-  min-cost flow formulations, and entropy-regularized transport. This
-  lets users start with a statistical matching task and still keep
-  access to the algorithmic machinery when the problem size or structure
-  changes.</p>
+  2024</xref>). The causal-inference packages assume a treated/control
+  framing and route through a single fixed back-end
+  (<monospace>optmatch</monospace> for <monospace>MatchIt</monospace>,
+  network flow for <monospace>optmatch</monospace>, genetic search for
+  <monospace>Matching</monospace>, integer programming via commercial
+  solvers for <monospace>designmatch</monospace>); the solver-focused
+  packages expose one algorithm each without the preprocessing,
+  constraint, or diagnostic machinery a matching workflow needs.</p>
+  <p><monospace>couplr</monospace> combines both. It treats covariate
+  distance as the primary entry point rather than a side option behind a
+  propensity score, and ships 19 assignment solvers spanning classical
+  dense assignment, sparse and rectangular variants, k-best
+  (<xref alt="Murty, 1968" rid="ref-Murty1968" ref-type="bibr">Murty,
+  1968</xref>), bottleneck, min-cost flow, and entropy-regularized
+  transport, with an automatic dispatcher. To our knowledge,
+  <monospace>couplr</monospace> provides the first publicly available
+  open-source implementation of the Gabow–Tarjan bit-scaling assignment
+  algorithm
+  (<xref alt="Gabow &amp; Tarjan, 1989" rid="ref-GabowTarjan1989" ref-type="bibr">Gabow
+  &amp; Tarjan, 1989</xref>) in any language; the algorithm’s
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[O(\sqrt{n}\, m \log(n\,C_{\max}))]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msqrt><mml:mi>n</mml:mi></mml:msqrt><mml:mspace width="0.167em"></mml:mspace><mml:mi>m</mml:mi><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mspace width="0.167em"></mml:mspace><mml:msub><mml:mi>C</mml:mi><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo></mml:msub><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  bound has stood since 1989 without a library counterpart.</p>
 </sec>
 <sec id="software-design">
   <title>Software design</title>
-  <p>The package has three main layers. The first layer validates inputs
-  and converts data frames into cost matrices. It handles scaling,
-  missing data checks, blocking, calipers, maximum-distance rules, and
-  user-supplied weights. The second layer solves the assignment problem.
-  It includes implementations of the Hungarian method
+  <p>The package has three layers. The first validates inputs and
+  converts data frames into cost matrices, handling scaling,
+  missing-data checks, and user weights. The second solves the linear
+  assignment problem: given a cost matrix <inline-formula><alternatives>
+  <tex-math><![CDATA[C \in \mathbb{R}^{n \times m}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>C</mml:mi><mml:mo>∈</mml:mo><mml:msup><mml:mi>ℝ</mml:mi><mml:mrow><mml:mi>n</mml:mi><mml:mo>×</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></alternatives></inline-formula>
+  with entries <inline-formula><alternatives>
+  <tex-math><![CDATA[C_{ij}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:msub><mml:mi>C</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub></mml:math></alternatives></inline-formula>
+  for row <inline-formula><alternatives>
+  <tex-math><![CDATA[i \in \{1, \ldots, n\}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>i</mml:mi><mml:mo>∈</mml:mo><mml:mo stretchy="false" form="prefix">{</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mi>…</mml:mi><mml:mo>,</mml:mo><mml:mi>n</mml:mi><mml:mo stretchy="false" form="postfix">}</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  and column <inline-formula><alternatives>
+  <tex-math><![CDATA[j \in \{1, \ldots, m\}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>j</mml:mi><mml:mo>∈</mml:mo><mml:mo stretchy="false" form="prefix">{</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mi>…</mml:mi><mml:mo>,</mml:mo><mml:mi>m</mml:mi><mml:mo stretchy="false" form="postfix">}</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>,
+  find a binary assignment matrix <inline-formula><alternatives>
+  <tex-math><![CDATA[X \in \{0,1\}^{n \times m}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>X</mml:mi><mml:mo>∈</mml:mo><mml:mo stretchy="false" form="prefix">{</mml:mo><mml:mn>0</mml:mn><mml:mo>,</mml:mo><mml:mn>1</mml:mn><mml:msup><mml:mo stretchy="false" form="postfix">}</mml:mo><mml:mrow><mml:mi>n</mml:mi><mml:mo>×</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:msup></mml:mrow></mml:math></alternatives></inline-formula>
+  (<inline-formula><alternatives>
+  <tex-math><![CDATA[X_{ij} = 1]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>X</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  iff row <inline-formula><alternatives>
+  <tex-math><![CDATA[i]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>i</mml:mi></mml:math></alternatives></inline-formula>
+  is matched to column <inline-formula><alternatives>
+  <tex-math><![CDATA[j]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>j</mml:mi></mml:math></alternatives></inline-formula>)
+  solving</p>
+  <p><disp-formula><alternatives>
+  <tex-math><![CDATA[
+  \min_{X} \; \sum_{i,j} C_{ij} X_{ij}
+  \quad \text{subject to} \quad
+  \sum_{j} X_{ij} \le 1 \ \forall i, \quad
+  \sum_{i} X_{ij} \le 1 \ \forall j.
+  ]]></tex-math>
+  <mml:math display="block" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:munder><mml:mi>min</mml:mi><mml:mo>&#8289;</mml:mo><mml:mi>X</mml:mi></mml:munder><mml:mspace width="0.278em"></mml:mspace><mml:munder><mml:mo>∑</mml:mo><mml:mrow><mml:mi>i</mml:mi><mml:mo>,</mml:mo><mml:mi>j</mml:mi></mml:mrow></mml:munder><mml:msub><mml:mi>C</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mi>X</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mspace width="1.0em"></mml:mspace><mml:mtext mathvariant="normal">subject to</mml:mtext><mml:mspace width="1.0em"></mml:mspace><mml:munder><mml:mo>∑</mml:mo><mml:mi>j</mml:mi></mml:munder><mml:msub><mml:mi>X</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo>≤</mml:mo><mml:mn>1</mml:mn><mml:mspace width="0.222em"></mml:mspace><mml:mo>∀</mml:mo><mml:mi>i</mml:mi><mml:mo>,</mml:mo><mml:mspace width="1.0em"></mml:mspace><mml:munder><mml:mo>∑</mml:mo><mml:mi>i</mml:mi></mml:munder><mml:msub><mml:mi>X</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo>≤</mml:mo><mml:mn>1</mml:mn><mml:mspace width="0.222em"></mml:mspace><mml:mo>∀</mml:mo><mml:mi>j</mml:mi><mml:mi>.</mml:mi></mml:mrow></mml:math></alternatives></disp-formula></p>
+  <p>The bipartite structure makes the LP relaxation integral
+  (Birkhoff–von Neumann), so row potentials
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[u_i \in \mathbb{R}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>u</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>∈</mml:mo><mml:mi>ℝ</mml:mi></mml:mrow></mml:math></alternatives></inline-formula>
+  (<inline-formula><alternatives>
+  <tex-math><![CDATA[i = 1, \ldots, n]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mi>…</mml:mi><mml:mo>,</mml:mo><mml:mi>n</mml:mi></mml:mrow></mml:math></alternatives></inline-formula>)
+  and column potentials <inline-formula><alternatives>
+  <tex-math><![CDATA[v_j \in \mathbb{R}]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>v</mml:mi><mml:mi>j</mml:mi></mml:msub><mml:mo>∈</mml:mo><mml:mi>ℝ</mml:mi></mml:mrow></mml:math></alternatives></inline-formula>
+  (<inline-formula><alternatives>
+  <tex-math><![CDATA[j = 1, \ldots, m]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>j</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mi>…</mml:mi><mml:mo>,</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:math></alternatives></inline-formula>)
+  satisfying</p>
+  <p><disp-formula><alternatives>
+  <tex-math><![CDATA[
+  u_i + v_j \le C_{ij} \quad \forall (i,j),
+  \qquad
+  u_i + v_j = C_{ij} \quad \text{whenever } X_{ij} = 1
+  ]]></tex-math>
+  <mml:math display="block" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>u</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>j</mml:mi></mml:msub><mml:mo>≤</mml:mo><mml:msub><mml:mi>C</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mspace width="1.0em"></mml:mspace><mml:mo>∀</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>i</mml:mi><mml:mo>,</mml:mo><mml:mi>j</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo>,</mml:mo><mml:mspace width="2.0em"></mml:mspace><mml:msub><mml:mi>u</mml:mi><mml:mi>i</mml:mi></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>v</mml:mi><mml:mi>j</mml:mi></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mi>C</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mspace width="1.0em"></mml:mspace><mml:mrow><mml:mtext mathvariant="normal">whenever </mml:mtext><mml:mspace width="0.333em"></mml:mspace></mml:mrow><mml:msub><mml:mi>X</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow></mml:math></alternatives></disp-formula></p>
+  <p>certify optimality; <monospace>assignment_duals()</monospace>
+  returns <inline-formula><alternatives>
+  <tex-math><![CDATA[(u, v)]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>u</mml:mi><mml:mo>,</mml:mo><mml:mi>v</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>.
+  Worst-case time is <inline-formula><alternatives>
+  <tex-math><![CDATA[O(n^3)]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  for Hungarian and Jonker–Volgenant, <inline-formula><alternatives>
+  <tex-math><![CDATA[O(n^3 \log(n\,C_{\max}))]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mspace width="0.167em"></mml:mspace><mml:msub><mml:mi>C</mml:mi><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo></mml:msub><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  for cost scaling, and <inline-formula><alternatives>
+  <tex-math><![CDATA[O(\sqrt{n}\, m \log(n\,C_{\max}))]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msqrt><mml:mi>n</mml:mi></mml:msqrt><mml:mspace width="0.167em"></mml:mspace><mml:mi>m</mml:mi><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mspace width="0.167em"></mml:mspace><mml:msub><mml:mi>C</mml:mi><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo></mml:msub><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  for Gabow–Tarjan bit scaling, where <inline-formula><alternatives>
+  <tex-math><![CDATA[C_{\max} = \max_{i,j} |C_{ij}|]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>C</mml:mi><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo></mml:msub><mml:mo>=</mml:mo><mml:msub><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo><mml:mrow><mml:mi>i</mml:mi><mml:mo>,</mml:mo><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false" form="prefix">|</mml:mo><mml:msub><mml:mi>C</mml:mi><mml:mrow><mml:mi>i</mml:mi><mml:mi>j</mml:mi></mml:mrow></mml:msub><mml:mo stretchy="false" form="prefix">|</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  is the largest cost magnitude; the dispatcher selects among solvers
+  using <inline-formula><alternatives>
+  <tex-math><![CDATA[n]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>n</mml:mi></mml:math></alternatives></inline-formula>,
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[m]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>m</mml:mi></mml:math></alternatives></inline-formula>,
+  sparsity, and rectangularity. All 19 solvers are implemented from
+  scratch in C++ via Rcpp, so the package adds no external solver
+  dependency: the Hungarian method
   (<xref alt="Kuhn, 1955" rid="ref-Kuhn1955" ref-type="bibr">Kuhn,
-  1955</xref>), Jonker-Volgenant shortest augmenting paths
+  1955</xref>), Jonker–Volgenant shortest augmenting paths
   (<xref alt="Jonker &amp; Volgenant, 1987" rid="ref-JonkerVolgenant1987" ref-type="bibr">Jonker
   &amp; Volgenant, 1987</xref>), auction algorithms
   (<xref alt="Bertsekas, 1988" rid="ref-Bertsekas1988" ref-type="bibr">Bertsekas,
   1988</xref>), cost scaling
   (<xref alt="Goldberg &amp; Kennedy, 1995" rid="ref-GoldbergKennedy1995" ref-type="bibr">Goldberg
-  &amp; Kennedy, 1995</xref>), Gabow-Tarjan scaling
+  &amp; Kennedy, 1995</xref>), Gabow–Tarjan scaling
   (<xref alt="Gabow &amp; Tarjan, 1989" rid="ref-GabowTarjan1989" ref-type="bibr">Gabow
   &amp; Tarjan, 1989</xref>), push-relabel min-cost flow ideas
   (<xref alt="Goldberg &amp; Tarjan, 1988" rid="ref-GoldbergTarjan1988" ref-type="bibr">Goldberg
-  &amp; Tarjan, 1988</xref>), network simplex, Ramshaw-Tarjan
+  &amp; Tarjan, 1988</xref>), network simplex, Ramshaw–Tarjan
   rectangular assignment
   (<xref alt="Ramshaw &amp; Tarjan, 2012" rid="ref-RamshawTarjan2012" ref-type="bibr">Ramshaw
-  &amp; Tarjan, 2012</xref>), and related specialized solvers. The third
-  layer returns structured result objects with pairs, costs,
-  diagnostics, weights, subclass information, and conversion methods for
-  other R matching tools.</p>
-  <p>The automatic solver selection in
-  <monospace>lap_solve(method = &quot;auto&quot;)</monospace> uses
-  matrix shape, sparsity, cost type, and problem size to choose a
-  method. Dense square problems can use fast dense solvers such as
-  Jonker-Volgenant or cost scaling; sparse matrices can use sparse
-  augmenting-path solvers; rectangular problems can avoid padding
-  through rectangular assignment methods. Integer scaling solvers are
-  exposed where their assumptions are met. For example, the package
-  documents Gabow-Tarjan as an integer scaling method with theoretical
-  dense square complexity <inline-formula><alternatives>
-  <tex-math><![CDATA[O(n^3 \log C)]]></tex-math>
-  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mi>C</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>,
-  or <inline-formula><alternatives>
-  <tex-math><![CDATA[O(n^3 \log(nC))]]></tex-math>
-  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msup><mml:mi>n</mml:mi><mml:mn>3</mml:mn></mml:msup><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mi>C</mml:mi><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
-  under the common bound that includes problem size and maximum cost.
+  &amp; Tarjan, 2012</xref>), and related specialized solvers. Each
+  optimal solver is checked against brute-force enumeration over
+  randomised integer, fractional, rectangular, maximizing, and
+  forbidden-edge instances, so the shipped path and the verified path
+  are the same implementation. The third layer returns structured result
+  objects with pairs, costs, diagnostics, weights, subclass information,
+  and conversion methods for other R matching tools.</p>
+  <p>Distances cover Euclidean, Manhattan, Mahalanobis (pooled
+  within-group covariance by default), Chebyshev, and squared-Euclidean
+  metrics, or a user-supplied function; propensity-score distances use a
+  separate entry point. Three constraint mechanisms reshape the cost
+  matrix before it reaches the solver: a global
+  <monospace>max_distance</monospace> ceiling, per-variable calipers,
+  and forbidden pairs marked as non-finite entries, which every solver
+  recognises as a missing edge and uses to short-circuit on
+  infeasibility. Blocking either reuses a factor variable or constructs
+  blocks via <inline-formula><alternatives>
+  <tex-math><![CDATA[k]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>k</mml:mi></mml:math></alternatives></inline-formula>-means
+  or hierarchical clustering, and the solver is called once per
+  block.</p>
+  <p>The dispatcher in
+  <monospace>lap_solve(method = &quot;auto&quot;)</monospace> chooses by
+  shape, sparsity, cost type, and size: dense problems use
+  Jonker–Volgenant; matrices over half forbidden use its sparse variant
+  <monospace>lapmod</monospace>; strongly rectangular problems avoid
+  padding through shortest augmenting paths; binary and very small
+  problems use specialized solvers. Other solvers are named explicitly.
   Figure
   <xref alt="[fig:benchmark]" rid="figU003Abenchmark">[fig:benchmark]</xref>
-  shows observed median solve time across problem sizes for all 18
-  solvers; benchmarks are reproducible via
-  <monospace>paper/make-figure.R</monospace>.</p>
+  shows median solve time across problem sizes for all 19 solvers.</p>
+  <p>Cost storage is a second automatic choice. Under
+  <monospace>memory_mode = &quot;lazy&quot;</monospace> each cost is
+  evaluated from the underlying feature data as the solver requests it,
+  so the footprint follows the covariates rather than the pairs: 100,000
+  units on 100 covariates hold as 80 MB of features where the dense
+  matrix needs 80 GB. Lazy evaluation covers Jonker–Volgenant and
+  auction with the built-in metrics, calipers, and
+  <monospace>max_distance</monospace>, and returns the same assignment
+  as the dense path. The default <monospace>&quot;auto&quot;</monospace>
+  weighs the estimated dense footprint against available system memory
+  and switches before an oversized allocation.</p>
   <fig>
-    <caption><p>Median solve time versus problem size
+    <caption><p>(a) Median wall-clock solve time versus problem size
     <inline-formula><alternatives>
     <tex-math><![CDATA[n]]></tex-math>
     <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>n</mml:mi></mml:math></alternatives></inline-formula>
-    for all 18 assignment solvers in <monospace>couplr</monospace>.
-    Integer cost matrices with entries in <inline-formula><alternatives>
+    for all 19 assignment solvers in <monospace>couplr</monospace>,
+    arranged as five small-multiple panels grouped by algorithm family
+    (JV / augmenting-path, Auction, Cost-scaling, Flow-based, and
+    Other). Within each panel, individual solvers share a single family
+    colour and are distinguished by line style; all panels share log–log
+    axes. Median of 5 replicates on a single core of an Apple M4 Pro;
+    integer cost matrices with entries in <inline-formula><alternatives>
     <tex-math><![CDATA[[1, 10{,}000]]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">[</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>10</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn><mml:mo stretchy="false" form="postfix">]</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
-    were used for general-purpose solvers; HK-01
-    (<inline-formula><alternatives>
-    <tex-math><![CDATA[*]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>*</mml:mi></mml:math></alternatives></inline-formula>)
-    uses binary cost matrices and Bruteforce
-    (<inline-formula><alternatives>
-    <tex-math><![CDATA[\dagger]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>†</mml:mi></mml:math></alternatives></inline-formula>)
-    is limited to <inline-formula><alternatives>
-    <tex-math><![CDATA[n \le 8]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>≤</mml:mo><mml:mn>8</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>.
-    Log-log scale; each line is a distinct algorithm, coloured by
-    algorithm family.
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">[</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>10</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn><mml:mo stretchy="false" form="postfix">]</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>.
+    (b) Absolute standardized mean differences on the LaLonde NSW data
+    (185 treated, 429 control, eight covariates) before and after 1-to-1
+    optimal Mahalanobis matching. After matching,
+    <monospace>couplr</monospace>, <monospace>MatchIt</monospace>, and
+    <monospace>optmatch</monospace> produce identical
+    <inline-formula><alternatives>
+    <tex-math><![CDATA[|SMD|]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">|</mml:mo><mml:mi>S</mml:mi><mml:mi>M</mml:mi><mml:mi>D</mml:mi><mml:mo stretchy="false" form="prefix">|</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+    to three decimal places, so a single matched point per covariate is
+    shown. Five of the eight covariates fall below the 0.1 balance
+    threshold (dashed line); <monospace>married</monospace> and
+    <monospace>re74</monospace> sit just above at
+    <inline-formula><alternatives>
+    <tex-math><![CDATA[0.124]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>0.124</mml:mn></mml:math></alternatives></inline-formula>
+    and <inline-formula><alternatives>
+    <tex-math><![CDATA[0.128]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>0.128</mml:mn></mml:math></alternatives></inline-formula>,
+    and the <monospace>race_Black</monospace> indicator is reduced from
+    <inline-formula><alternatives>
+    <tex-math><![CDATA[1.757]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>1.757</mml:mn></mml:math></alternatives></inline-formula>
+    to <inline-formula><alternatives>
+    <tex-math><![CDATA[1.053]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>1.053</mml:mn></mml:math></alternatives></inline-formula>,
+    a residual no 1-to-1 matcher can resolve here. Reproducible from
+    <monospace>paper/make-figure.R</monospace> and
+    <monospace>paper/bench_lalonde.R</monospace>.
     <styled-content id="figU003Abenchmark"></styled-content></p></caption>
     <graphic mimetype="image" mime-subtype="png" xlink:href="benchmark.png" />
   </fig>
-  <p>The matching layer returns ordinary R objects with print, summary,
-  plot, and join methods. This keeps the output usable in base R,
-  tidyverse pipelines, and causal-inference workflows that expect
-  matched data, weights, or subclasses.</p>
+  <p><monospace>balance_diagnostics()</monospace> reports standardized
+  mean differences, variance ratios, and Kolmogorov–Smirnov statistics,
+  summarised through <monospace>balance_table()</monospace>;
+  <monospace>sensitivity_analysis()</monospace> reports the critical
+  Rosenbaum <inline-formula><alternatives>
+  <tex-math><![CDATA[\Gamma]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi mathvariant="normal">Γ</mml:mi></mml:math></alternatives></inline-formula>
+  at which inference would no longer be significant
+  (<xref alt="Rosenbaum, 2002" rid="ref-Rosenbaum2002" ref-type="bibr">Rosenbaum,
+  2002</xref>). Blocked designs surface per-block diagnostics so
+  imbalance is not hidden by averaging across strata.</p>
 </sec>
-<sec id="research-impact-statement">
-  <title>Research impact statement</title>
-  <p><monospace>couplr</monospace> is already released on CRAN and has
-  continuous integration across Windows, macOS, and Linux. Its
-  documentation includes vignettes for getting started, matching
-  workflows, algorithm selection, troubleshooting, and pixel-level
-  morphing examples. The package is useful for experimental designs
-  where samples must be paired before measurement, observational studies
-  that need transparent covariate matching, and allocation problems
-  where each object must be assigned once under costs and
-  constraints.</p>
-  <p>The research contribution is practical:
-  <monospace>couplr</monospace> brings several assignment methods into
-  one R package and connects them to preprocessing, constraints, balance
-  diagnostics, sensitivity analysis, and joined output. The result is a
-  shorter path from a scientific matching question to a reproducible set
-  of pairs.</p>
+<sec id="quickstart">
+  <title>Quickstart</title>
+  <p>The package ships with <monospace>hospital_staff</monospace>, a
+  small example dataset for a treated/control workflow that runs without
+  external data.</p>
+  <code language="r script">library(couplr)
+
+data(hospital_staff)
+treated &lt;- transform(hospital_staff$nurses_extended,   id = nurse_id)
+control &lt;- transform(hospital_staff$controls_extended, id = nurse_id)
+
+# Optimal one-to-one matching on three pre-treatment covariates, with
+# automatic scaling and solver selection.
+m &lt;- match_couples(
+  left  = treated,
+  right = control,
+  vars  = c(&quot;age&quot;, &quot;experience_years&quot;, &quot;certification_level&quot;),
+  auto_scale = TRUE
+)
+
+# Balance on matching variables; analysis-ready paired output.
+bal &lt;- balance_diagnostics(m, treated, control,
+  vars = c(&quot;age&quot;, &quot;experience_years&quot;, &quot;certification_level&quot;))
+balance_table(bal)
+matched &lt;- join_matched(m, treated, control)</code>
+  <p>On this dataset the matched pairs achieve absolute standardized
+  differences below <inline-formula><alternatives>
+  <tex-math><![CDATA[0.15]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>0.15</mml:mn></mml:math></alternatives></inline-formula>
+  on all three matching covariates. The same
+  <monospace>match_couples()</monospace> call accepts
+  <monospace>calipers</monospace>, <monospace>max_distance</monospace>,
+  <monospace>block_id</monospace>, <monospace>method</monospace>,
+  <monospace>strategy</monospace>, <monospace>replace</monospace>, and
+  <monospace>ratio</monospace> for harder problems. Identification also
+  requires conditional ignorability, positivity, and SUTVA; the matched
+  output is designed to feed into an outcome regression for a doubly
+  robust estimate
+  (<xref alt="Stuart, 2010" rid="ref-Stuart2010" ref-type="bibr">Stuart,
+  2010</xref>).</p>
+</sec>
+<sec id="comparison-against-established-alternatives">
+  <title>Comparison against established alternatives</title>
+  <p>We compare <monospace>couplr</monospace> against
+  <monospace>MatchIt</monospace> and <monospace>optmatch</monospace>.
+  The matching task is fixed: 1-to-1 optimal matching on a Mahalanobis
+  distance with pooled within-group covariance, the convention
+  <monospace>optmatch::match_on()</monospace> uses by default and
+  <monospace>couplr</monospace> adopts as of 1.3.1. On the canonical
+  Lalonde NSW dataset
+  (<xref alt="Dehejia &amp; Wahba, 1999" rid="ref-DehejiaWahba1999" ref-type="bibr">Dehejia
+  &amp; Wahba, 1999</xref>;
+  <xref alt="LaLonde, 1986" rid="ref-LaLonde1986" ref-type="bibr">LaLonde,
+  1986</xref>) (185 treated, 429 control, eight covariates) all three
+  packages produce identical absolute standardized mean differences to
+  three decimal places (Figure
+  <xref alt="[fig:benchmark]" rid="figU003Abenchmark">[fig:benchmark]</xref>b),
+  with the remaining seven covariates at <inline-formula><alternatives>
+  <tex-math><![CDATA[\le 0.128]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo>≤</mml:mo><mml:mn>0.128</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  (<xref alt="Stuart, 2010" rid="ref-Stuart2010" ref-type="bibr">Stuart,
+  2010</xref>); per-covariate values are in
+  <monospace>paper/lalonde-per-covariate.csv</monospace>.</p>
+  <p>Table <xref alt="1" rid="tabU003Ascaling">1</xref> reports median
+  wall-clock time on synthetic problems with the same eight-covariate
+  structure, at six sizes from <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 500]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>500</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  to <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 50{,}000]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>50</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  with treated:control = 1:2. The margin widens with problem size:
+  <monospace>couplr</monospace> is <inline-formula><alternatives>
+  <tex-math><![CDATA[9\times]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>9</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  faster than <monospace>optmatch</monospace> at
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 500]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>500</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  and <inline-formula><alternatives>
+  <tex-math><![CDATA[24\times]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>24</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  faster at <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 20{,}000]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>20</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>,
+  where it finishes in <inline-formula><alternatives>
+  <tex-math><![CDATA[11.4]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>11.4</mml:mn></mml:math></alternatives></inline-formula>
+  seconds against <inline-formula><alternatives>
+  <tex-math><![CDATA[4.7]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>4.7</mml:mn></mml:math></alternatives></inline-formula>
+  minutes, and <inline-formula><alternatives>
+  <tex-math><![CDATA[11\times]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>11</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  to <inline-formula><alternatives>
+  <tex-math><![CDATA[24\times]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>24</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  faster than <monospace>MatchIt</monospace> up to
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 10{,}000]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>10</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>,
+  the largest size <monospace>MatchIt</monospace> completes before
+  <monospace>MatchIt::matchit(method = &quot;optimal&quot;)</monospace>
+  aborts inside the <monospace>optmatch</monospace> backend with an
+  integer-size overflow. At <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 50{,}000]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>50</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  <monospace>couplr</monospace> completes in
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[79]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>79</mml:mn></mml:math></alternatives></inline-formula>
+  seconds; both alternatives exceed the <inline-formula><alternatives>
+  <tex-math><![CDATA[300]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>300</mml:mn></mml:math></alternatives></inline-formula>-second
+  per-replicate cap. <monospace>couplr</monospace> reaches large dense
+  problems through its dispatcher, which routes them to Jonker–Volgenant
+  (<xref alt="Jonker &amp; Volgenant, 1987" rid="ref-JonkerVolgenant1987" ref-type="bibr">Jonker
+  &amp; Volgenant, 1987</xref>). Under
+  <monospace>memory_mode = &quot;lazy&quot;</monospace> the same
+  <inline-formula><alternatives>
+  <tex-math><![CDATA[n = 50{,}000]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>50</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
+  match completes in <inline-formula><alternatives>
+  <tex-math><![CDATA[61]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>61</mml:mn></mml:math></alternatives></inline-formula>
+  seconds without ever building the matrix, returning the assignment the
+  dense path returns
+  (<monospace>paper/bench_scaling_lazy.R</monospace>).</p>
+  <table-wrap>
+    <caption>
+      <p>1-to-1 optimal Mahalanobis matching, median wall-clock by
+      problem size. Treated:control = 1:2; eight covariates; pooled
+      within-group covariance; single core, single-threaded BLAS, on an
+      Apple M4 Pro. Median of 5 / 5 / 3 / 3 / 1 / 1 replicates
+      respectively for the rows;
+      <monospace>optmatch_max_problem_size</monospace> set to
+      <monospace>Inf</monospace> for <inline-formula><alternatives>
+      <tex-math><![CDATA[n \ge 10{,}000]]></tex-math>
+      <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>≥</mml:mo><mml:mn>10</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>.
+      <monospace>couplr</monospace> is timed with
+      <monospace>memory_mode = &quot;dense&quot;</monospace>, so all
+      three packages materialize the distance matrix; the lazy path is
+      reported in the text. <monospace>int overflow</monospace> marks an
+      integer-size overflow
+      (<monospace>result would exceed 2^31-1 bytes</monospace>) inside
+      the <monospace>optmatch</monospace> backend reached through
+      <monospace>MatchIt</monospace>; <monospace>timeout</monospace>
+      marks a replicate exceeding the <inline-formula><alternatives>
+      <tex-math><![CDATA[300]]></tex-math>
+      <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>300</mml:mn></mml:math></alternatives></inline-formula>-second
+      cap. Reproducible from
+      <monospace>paper/bench_scaling.R</monospace> and
+      <monospace>paper/bench_scaling_alternatives.R</monospace>.
+      <styled-content id="tabU003Ascaling"></styled-content></p>
+    </caption>
+    <table>
+      <thead>
+        <tr>
+          <th align="left">Problem size (<inline-formula><alternatives>
+          <tex-math><![CDATA[n_t + n_c]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>n</mml:mi><mml:mi>t</mml:mi></mml:msub><mml:mo>+</mml:mo><mml:msub><mml:mi>n</mml:mi><mml:mi>c</mml:mi></mml:msub></mml:mrow></mml:math></alternatives></inline-formula>)</th>
+          <th align="right"><monospace>couplr</monospace></th>
+          <th align="right"><monospace>optmatch</monospace></th>
+          <th align="right"><monospace>MatchIt</monospace></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[167 + 333]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>167</mml:mn><mml:mo>+</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">11 ms</td>
+          <td align="right">99 ms</td>
+          <td align="right">117 ms</td>
+        </tr>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[667 + 1{,}333]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">144 ms</td>
+          <td align="right">1.70 s</td>
+          <td align="right">2.12 s</td>
+        </tr>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[1{,}667 + 3{,}333]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">742 ms</td>
+          <td align="right">12.9 s</td>
+          <td align="right">15.7 s</td>
+        </tr>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[3{,}333 + 6{,}667]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn><mml:mo>+</mml:mo><mml:mn>6</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">3.08 s</td>
+          <td align="right">59.3 s</td>
+          <td align="right">73.4 s</td>
+        </tr>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[6{,}667 + 13{,}333]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>6</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>13</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">11.4 s</td>
+          <td align="right">280 s</td>
+          <td align="right">int overflow</td>
+        </tr>
+        <tr>
+          <td align="left"><inline-formula><alternatives>
+          <tex-math><![CDATA[16{,}667 + 33{,}333]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>16</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>33</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
+          <td align="right">78.5 s</td>
+          <td align="right">timeout</td>
+          <td align="right">timeout</td>
+        </tr>
+      </tbody>
+    </table>
+  </table-wrap>
+  <p>Table <xref alt="2" rid="tabU003Acapability">2</xref> summarises
+  feature coverage.</p>
+  <table-wrap>
+    <caption>
+      <p>Differentiating feature coverage; rows where all three packages
+      support the feature (covariate distance, propensity-score
+      matching, exact blocking, cost-matrix entry point) are omitted.
+      <italic>partial</italic> indicates the feature is achievable but
+      not via a first-class user-facing API.
+      <styled-content id="tabU003Acapability"></styled-content></p>
+    </caption>
+    <table>
+      <colgroup>
+        <col width="58%" />
+        <col width="12%" />
+        <col width="14%" />
+        <col width="15%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th align="left">Feature</th>
+          <th align="center"><monospace>couplr</monospace></th>
+          <th align="center"><monospace>MatchIt</monospace></th>
+          <th align="center"><monospace>optmatch</monospace></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="left">Per-variable calipers (named vector)</td>
+          <td align="center">yes</td>
+          <td align="center">yes</td>
+          <td align="center">partial</td>
+        </tr>
+        <tr>
+          <td align="left">Rectangular <inline-formula><alternatives>
+          <tex-math><![CDATA[n_t \neq n_c]]></tex-math>
+          <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:msub><mml:mi>n</mml:mi><mml:mi>t</mml:mi></mml:msub><mml:mo>≠</mml:mo><mml:msub><mml:mi>n</mml:mi><mml:mi>c</mml:mi></mml:msub></mml:mrow></mml:math></alternatives></inline-formula>,
+          no padding</td>
+          <td align="center">yes</td>
+          <td align="center">partial</td>
+          <td align="center">partial</td>
+        </tr>
+        <tr>
+          <td align="left">Sparse-cost support</td>
+          <td align="center">yes</td>
+          <td align="center">no</td>
+          <td align="center">yes</td>
+        </tr>
+        <tr>
+          <td align="left">k-best assignments (Murty)</td>
+          <td align="center">yes</td>
+          <td align="center">no</td>
+          <td align="center">no</td>
+        </tr>
+        <tr>
+          <td align="left">Bottleneck (minimax) assignment</td>
+          <td align="center">yes</td>
+          <td align="center">no</td>
+          <td align="center">no</td>
+        </tr>
+        <tr>
+          <td align="left">Rosenbaum sensitivity bounds</td>
+          <td align="center">yes</td>
+          <td align="center">no</td>
+          <td align="center">no</td>
+        </tr>
+      </tbody>
+    </table>
+  </table-wrap>
 </sec>
 <sec id="ai-usage-disclosure">
   <title>AI usage disclosure</title>
-  <p>The author designed the package architecture and made the
-  algorithm-selection choices. The assisted-workflow coding stack
-  pairs a self-hosted Qwen3-Coder-Next-REAP-48B-A3B model (a
-  48-billion-parameter mixture-of-experts coder, Router-weighted
-  Expert Activation Pruning, 4-bit MLX quantization, running on-device
-  on a single Apple M4 Pro with no cloud inference) with Anthropic's
-  Claude Code on Claude Sonnet 4.6. Generated code was reviewed before
-  merge.</p>
+  <p>The package was developed using a modern AI-assisted developer
+  stack. The author designed the package architecture, made the
+  algorithm-selection choices, and wrote the implementation in a
+  TUI-first command-line workflow, using a self-hosted
+  Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B
+  active per token, 4-bit MLX quantization, running on a single Apple M4
+  Pro) for code completion, refactoring, and boilerplate generation
+  through Anthropic’s Claude Code CLI, with requests routed to the local
+  model and no cloud inference.</p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
@@ -300,16 +695,15 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
         <name><surname>Hansen</surname><given-names>Ben B.</given-names></name>
-        <name><surname>Klopfer</surname><given-names>Stephanie Olsen</given-names></name>
       </person-group>
       <article-title>Optmatch: Flexible, optimal matching for observational studies</article-title>
-      <source>The R Journal</source>
-      <year iso-8601-date="2006">2006</year>
-      <volume>2</volume>
+      <source>R News</source>
+      <year iso-8601-date="2007">2007</year>
+      <volume>7</volume>
       <issue>2</issue>
-      <uri>https://journal.r-project.org/archive/2006-2/RJournal_2006-2_Hansen+Klopfer.pdf</uri>
-      <fpage>29</fpage>
-      <lpage>36</lpage>
+      <uri>https://journal.r-project.org/articles/RN-2007-014/</uri>
+      <fpage>18</fpage>
+      <lpage>24</lpage>
     </element-citation>
   </ref>
   <ref id="ref-cobalt">
@@ -451,6 +845,106 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <publisher-name>HP Laboratories</publisher-name>
       <year iso-8601-date="2012">2012</year>
       <uri>https://www.hpl.hp.com/techreports/2012/HPL-2012-40R1.html</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Murty1968">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Murty</surname><given-names>Katta G.</given-names></name>
+      </person-group>
+      <article-title>An algorithm for ranking all the assignments in order of increasing cost</article-title>
+      <source>Operations Research</source>
+      <year iso-8601-date="1968">1968</year>
+      <volume>16</volume>
+      <issue>3</issue>
+      <pub-id pub-id-type="doi">10.1287/opre.16.3.682</pub-id>
+      <fpage>682</fpage>
+      <lpage>687</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Matching">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Sekhon</surname><given-names>Jasjeet S.</given-names></name>
+      </person-group>
+      <article-title>Multivariate and propensity score matching software with automated balance optimization: The Matching package for R</article-title>
+      <source>Journal of Statistical Software</source>
+      <year iso-8601-date="2011">2011</year>
+      <volume>42</volume>
+      <issue>7</issue>
+      <pub-id pub-id-type="doi">10.18637/jss.v042.i07</pub-id>
+      <fpage>1</fpage>
+      <lpage>52</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-designmatch">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Zubizarreta</surname><given-names>José R.</given-names></name>
+        <name><surname>Kilcioglu</surname><given-names>Cinar</given-names></name>
+        <name><surname>Vielma</surname><given-names>Juan P.</given-names></name>
+      </person-group>
+      <source>Designmatch: Matched samples that are balanced and representative by design</source>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://CRAN.R-project.org/package=designmatch</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Stuart2010">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Stuart</surname><given-names>Elizabeth A.</given-names></name>
+      </person-group>
+      <article-title>Matching methods for causal inference: A review and a look forward</article-title>
+      <source>Statistical Science</source>
+      <year iso-8601-date="2010">2010</year>
+      <volume>25</volume>
+      <issue>1</issue>
+      <pub-id pub-id-type="doi">10.1214/09-STS313</pub-id>
+      <fpage>1</fpage>
+      <lpage>21</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-LaLonde1986">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>LaLonde</surname><given-names>Robert J.</given-names></name>
+      </person-group>
+      <article-title>Evaluating the econometric evaluations of training programs with experimental data</article-title>
+      <source>The American Economic Review</source>
+      <year iso-8601-date="1986">1986</year>
+      <volume>76</volume>
+      <issue>4</issue>
+      <uri>https://www.jstor.org/stable/1806062</uri>
+      <fpage>604</fpage>
+      <lpage>620</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-DehejiaWahba1999">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Dehejia</surname><given-names>Rajeev H.</given-names></name>
+        <name><surname>Wahba</surname><given-names>Sadek</given-names></name>
+      </person-group>
+      <article-title>Causal effects in nonexperimental studies: Reevaluating the evaluation of training programs</article-title>
+      <source>Journal of the American Statistical Association</source>
+      <year iso-8601-date="1999">1999</year>
+      <volume>94</volume>
+      <issue>448</issue>
+      <pub-id pub-id-type="doi">10.1080/01621459.1999.10473858</pub-id>
+      <fpage>1053</fpage>
+      <lpage>1062</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Rosenbaum2002">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Rosenbaum</surname><given-names>Paul R.</given-names></name>
+      </person-group>
+      <source>Observational studies</source>
+      <publisher-name>Springer</publisher-name>
+      <year iso-8601-date="2002">2002</year>
+      <edition>2</edition>
+      <pub-id pub-id-type="doi">10.1007/978-1-4757-3692-2</pub-id>
     </element-citation>
   </ref>
 </ref-list>

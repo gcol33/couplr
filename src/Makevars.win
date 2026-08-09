@@ -10,6 +10,7 @@ PKG_CPPFLAGS = -DNDEBUG -I. -Icore -Iinterface -Isolvers -Igabow_tarjan -Imorph 
 # Rcpp wrapper files: foo_rcpp.cpp (R bindings)
 SOURCES = RcppExports.cpp rcpp_interface.cpp \
           interface/prepare_cost_matrix.cpp \
+          interface/probe_cost_matrix.cpp \
           core/lap_utils.cpp \
           core/lap_utils_rcpp.cpp \
           solvers/greedy_matching.cpp \
@@ -68,6 +69,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
 # Convert to object files
 OBJECTS = RcppExports.o rcpp_interface.o \
           interface/prepare_cost_matrix.o \
+          interface/probe_cost_matrix.o \
           core/lap_utils.o \
           core/lap_utils_rcpp.o \
           solvers/greedy_matching.o \

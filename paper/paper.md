@@ -165,8 +165,9 @@ differences on the LaLonde NSW data (185 treated, 429 control, eight
 covariates) before and after 1-to-1 optimal Mahalanobis matching. After
 matching, `couplr`, `MatchIt`, and `optmatch` produce identical $|SMD|$ to
 three decimal places, so a single matched point per covariate is shown.
-Seven of the eight covariates fall below the 0.1 balance threshold (dashed
-line); the `race_Black` indicator is reduced from $1.757$ to $1.053$, a residual no
+Five of the eight covariates fall below the 0.1 balance threshold (dashed
+line), `married` and `re74` just above it; the `race_Black` indicator is
+reduced from $1.757$ to $1.053$, a residual no
 1-to-1 matcher can resolve here. Reproducible from `paper/make-figure.R`
 and `paper/bench_lalonde.R`.
 \label{fig:benchmark}](figures/benchmark.png){width=100%}

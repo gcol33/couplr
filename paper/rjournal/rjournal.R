@@ -11,6 +11,7 @@ library(ggplot2)
 
 bench     <- read.csv("data/benchmark-table.csv", stringsAsFactors = FALSE)
 lalonde   <- read.csv("data/lalonde-per-covariate.csv", stringsAsFactors = FALSE)
+lal_obj   <- read.csv("data/lalonde-results.csv", stringsAsFactors = FALSE)
 scaling   <- read.csv("data/scaling-results.csv", stringsAsFactors = FALSE)
 lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
 couplr_ver <- as.character(utils::packageVersion("couplr"))
@@ -46,6 +47,17 @@ matched <- join_matched(m, treated, control)
 dim(matched)
 
 
+## ----workflow-effect, echo=TRUE-----------------------------------------------
+d  <- matched$hourly_rate_left - matched$hourly_rate_right
+tt <- t.test(d)
+c(estimate = mean(d), lower = tt$conf.int[1], upper = tt$conf.int[2])
+
+
+## ----workflow-sensitivity, echo=TRUE------------------------------------------
+sens <- sensitivity_analysis(m, treated, control, outcome_var = "hourly_rate")
+sens$results[sens$results$gamma %in% c(1, 1.5, 1.75, 2), ]
+
+
 ## ----constraints, echo=TRUE---------------------------------------------------
 m_cal <- match_couples(
   treated, control, vars = covars,
@@ -64,8 +76,15 @@ res
 
 
 ## ----solver-duals, echo=TRUE--------------------------------------------------
-d <- assignment_duals(cost)
-all(outer(d$u, d$v, "+") <= cost + 1e-9)
+d   <- assignment_duals(cost)
+i   <- which(d$match > 0)
+j   <- d$match[i]
+sel <- cbind(i, j)
+
+c(primal   = length(i) == min(dim(cost)) && !anyDuplicated(j),
+  dual     = all(outer(d$u, d$v, "+") <= cost + 1e-9),
+  tight    = all(abs(d$u[i] + d$v[j] - cost[sel]) < 1e-9),
+  no_gap   = abs(sum(cost[sel]) - sum(d$u) - sum(d$v)) < 1e-9)
 
 
 ## ----solver-kbest, echo=TRUE--------------------------------------------------
@@ -140,7 +159,7 @@ ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
                                colour = label, linetype = label),
                linewidth = 0.6, inherit.aes = FALSE) +
   geom_text(data = key, aes(x = xend, y = y, label = label),
-            hjust = -0.15, vjust = 0.45, size = 2.4, colour = "grey15",
+            hjust = -0.15, vjust = 0.45, size = 3.1, colour = "grey15",
             inherit.aes = FALSE) +
   facet_wrap(~ panel, ncol = 2) +
   scale_x_log10(breaks = c(10, 100, 1000), limits = x_lim,
@@ -151,11 +170,13 @@ ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
   scale_colour_manual(values = pal, guide = "none") +
   scale_linetype_manual(values = lt, guide = "none") +
   labs(x = "problem size, n", y = "median solve time") +
-  theme_minimal(base_size = 10) +
+  theme_minimal(base_size = 12) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major = element_line(colour = "grey92", linewidth = 0.3),
-    strip.text = element_text(face = "bold", hjust = 0),
+    strip.text = element_text(face = "bold", hjust = 0, size = 11),
+    axis.text = element_text(size = 9),
+    axis.title = element_text(size = 11),
     axis.line = element_line(colour = "grey20", linewidth = 0.4)
   )
 
@@ -240,12 +261,12 @@ cap <- data.frame(
               "Rosenbaum sensitivity bounds",
               "User-selectable assignment algorithm"),
   couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "partial", "no", "no", "no", "no", "fixed"),
-  optmatch = c("partial", "partial", "yes", "no", "no", "no", "fixed"),
+  MatchIt = c("yes", "via optmatch", "no", "no", "no", "no", "via optmatch"),
+  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "2 back ends"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Differentiating feature coverage. partial marks a feature that is achievable but not through a first-class user-facing interface: optmatch calipers threshold one distance object at a time, so per-variable calipers require combining objects, and both alternatives handle unequal group sizes through discarding or variable-ratio designs rather than natively."
+  caption = "Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(). Assessed 2026-08-09 against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 

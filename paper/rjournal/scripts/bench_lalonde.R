@@ -31,7 +31,7 @@ suppressPackageStartupMessages({
 
 set.seed(20260515)
 
-paper_dir <- file.path(repo_root, "paper")
+paper_dir <- file.path(repo_root, "paper", "rjournal", "data")
 
 ## ---- data: Lalonde NSW, with the standard MatchIt formula ----
 data("lalonde", package = "MatchIt")
@@ -130,10 +130,61 @@ smd_pre <- vapply(covars, function(v) {
   (mean(l, na.rm = TRUE) - mean(r, na.rm = TRUE)) / treated_sd[v]
 }, numeric(1))
 
+## ---- score every package on one common objective ----
+## Identical marginal SMDs do not show that two packages found the same
+## assignment, let alone one of the same total cost. Build the Mahalanobis
+## distance matrix once, with the pooled within-group covariance all three
+## use, then sum it over each package's chosen pairs.
+Xt <- as.matrix(treated[, covars])
+Xc <- as.matrix(control[, covars])
+pooled <- ((nrow(Xt) - 1) * cov(Xt) + (nrow(Xc) - 1) * cov(Xc)) /
+  (nrow(Xt) + nrow(Xc) - 2)
+Sinv <- solve(pooled)
+Dref <- matrix(0, nrow(Xt), nrow(Xc))
+for (i in seq_len(nrow(Xt))) {
+  dif <- sweep(Xc, 2, Xt[i, ], "-")
+  Dref[i, ] <- sqrt(pmax(rowSums((dif %*% Sinv) * dif), 0))
+}
+
+t_rows <- which(lalonde$treat == 1)
+c_rows <- which(lalonde$treat == 0)
+
+## Pairs from a stratification vector (MatchIt subclass, optmatch strata):
+## each stratum holds one treated and one control row of `lalonde`.
+pairs_from_strata <- function(strata) {
+  keep <- which(!is.na(strata))
+  sp <- split(keep, strata[keep])
+  out <- lapply(sp, function(rows) {
+    tr <- rows[lalonde$treat[rows] == 1]
+    ct <- rows[lalonde$treat[rows] == 0]
+    if (length(tr) != 1L || length(ct) != 1L) return(NULL)
+    data.frame(t = match(tr, t_rows), c = match(ct, c_rows))
+  })
+  do.call(rbind, out)
+}
+
+score <- function(p) {
+  if (is.null(p) || nrow(p) == 0) return(c(n_pairs = 0, total_cost = NA_real_))
+  c(n_pairs = nrow(p), total_cost = sum(Dref[cbind(p$t, p$c)]))
+}
+
+couplr_idx <- data.frame(t = as.integer(couplr_pairs[[1]]),
+                         c = as.integer(couplr_pairs[[2]]))
+sc_couplr   <- score(couplr_idx)
+sc_matchit  <- score(pairs_from_strata(matchit_res$subclass))
+sc_optmatch <- score(pairs_from_strata(opt_res))
+
+cat("\nCommon-objective scoring (Mahalanobis, pooled within-group):\n")
+print(rbind(couplr = sc_couplr, MatchIt = sc_matchit, optmatch = sc_optmatch))
+
 ## ---- write results ----
 results <- data.frame(
   package = c("couplr", "MatchIt", "optmatch"),
   median_ms = round(mb_summary$median, 1),
+  n_pairs = c(sc_couplr[["n_pairs"]], sc_matchit[["n_pairs"]],
+              sc_optmatch[["n_pairs"]]),
+  total_cost = round(c(sc_couplr[["total_cost"]], sc_matchit[["total_cost"]],
+                       sc_optmatch[["total_cost"]]), 3),
   max_abs_smd = c(max(abs(smd_couplr), na.rm = TRUE),
                   max(abs(smd_matchit), na.rm = TRUE),
                   max(abs(smd_optmatch), na.rm = TRUE)),

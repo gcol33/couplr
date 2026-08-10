@@ -7,7 +7,7 @@
 \maketitle
 
 \abstract{%
-Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, and it sits underneath causal-inference matching, experimental design, task allocation, sample pairing and image alignment. R users currently meet this problem through two separate families of packages: causal-inference packages that wrap a single fixed solver behind a treated/control interface, and solver packages that expose one algorithm each without preprocessing, constraints or balance diagnostics. The couplr package covers both. A data-frame interface builds distances, applies calipers, blocks and forbidden pairs, and returns analysis-ready matched output together with balance diagnostics and Rosenbaum sensitivity bounds. A matrix interface exposes the solvers directly, along with dual variables that certify optimality, k-best assignments and bottleneck assignment. Nineteen assignment algorithms are implemented from scratch in C++, spanning augmenting-path, auction, cost-scaling and network-flow families, and a dispatcher chooses among them from problem shape, sparsity, cost type and size. Solvers are templated on their cost source, so the same solver body reads a dense matrix or evaluates distances on demand from the covariates; the second path matches fifty thousand units without ever building the distance matrix. On a one-to-one optimal Mahalanobis task, couplr reproduces the balance that MatchIt and optmatch achieve and reaches problem sizes at which both alternatives stop. couplr is available on CRAN.
+Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. R users currently meet it through two separate families of packages: causal-inference packages that reach the solver through a design-level argument, and solver packages that expose one algorithm each without preprocessing, constraints or balance diagnostics. We present the couplr package, which covers both. A data-frame interface builds distances, applies calipers, blocks and forbidden pairs, and returns matched output with balance diagnostics. A matrix interface exposes nineteen assignment algorithms written from scratch in C++, together with dual variables that certify optimality, k-best assignments and bottleneck assignment. A dispatcher chooses among the solvers from problem shape, sparsity, cost type and size, and a lazy cost representation matches fifty thousand units without building the distance matrix. Constrained problems are solved to their lexicographic optimum, the largest admissible matching and the cheapest among those of its size. On a one-to-one Mahalanobis task couplr reproduces the balance MatchIt and optmatch achieve, at sizes where both stop. couplr is available on CRAN.
 }
 
 \section{Introduction}\label{introduction}
@@ -16,39 +16,46 @@ Many data-analysis tasks come down to the same question: given two sets of
 objects and a cost attached to every possible pair, which pairing has the
 smallest total cost? A researcher building an observational study pairs treated
 units with controls that resemble them on measured covariates. A scheduler
-assigns staff to shifts. An ecologist pairs surveyed plots across two time
-points. An image-processing pipeline maps the pixels of one picture onto the
-pixels of another. In each case the mathematical object is the linear
+assigns staff to shifts, an ecologist pairs surveyed plots across two time
+points, and an image-processing pipeline maps the pixels of one picture onto
+the pixels of another. In each case the mathematical object is the linear
 assignment problem, and the quality of the answer depends on solving it to
 optimality rather than greedily.
 
-R has good software for both ends of this problem, in two groups that do not
-meet. On the statistical side, \CRANpkg{MatchIt} \citep{MatchIt},
-\CRANpkg{optmatch} \citep{optmatch}, \CRANpkg{Matching} \citep{Matching} and
-\CRANpkg{designmatch} \citep{designmatch} provide preprocessing, matching designs
-and estimation support for causal inference, with \CRANpkg{cobalt} \citep{cobalt}
-supplying balance diagnostics across packages. Each routes through a single
-fixed back end: \pkg{MatchIt} delegates optimal matching to \pkg{optmatch},
-\pkg{optmatch} solves a minimum-cost flow problem \citep{HansenKlopfer2006},
-\pkg{Matching} uses genetic search, and \pkg{designmatch} formulates an integer
-program that in practice wants a commercial solver. On the algorithmic side,
-\CRANpkg{clue} \citep{clue} exposes the Hungarian method through \texttt{solve\_LSAP()}, and
-\CRANpkg{lpSolve} \citep{lpSolve} solves the assignment problem as a general linear
-program. These give the user an optimum for a cost matrix they have already
-built, and nothing else: no covariate handling, no calipers, no balance table.
+R has good software at both ends of this problem, in two separate groups of
+packages. On the statistical side, \CRANpkg{MatchIt} \citep{MatchIt} provides a
+common interface to several matching designs and delegates optimal pair and
+full matching to \CRANpkg{optmatch} \citep{optmatch}. \pkg{optmatch} formulates
+those designs as minimum-cost flow problems \citep{HansenKlopfer2006} and supports
+more than one back end, currently RELAX-IV and LEMON, selected through its
+\texttt{solver} argument. \CRANpkg{Matching} \citep{Matching} provides multivariate and
+propensity-score matching, with \texttt{GenMatch()} using genetic search to optimise
+covariate weights. \CRANpkg{designmatch} \citep{designmatch} formulates
+balance-constrained designs as integer programs and defaults to the open-source
+HiGHS solver. \CRANpkg{cobalt} \citep{cobalt} supplies balance diagnostics across
+packages. What these expose is the matching design; the assignment problem
+underneath is reached through a solver argument at most, without dual
+variables, alternative optima or a bottleneck objective. Statements about other
+packages here and in Table \ref{tab:capability} were assessed on 2026-08-09
+against \pkg{MatchIt} 4.7.2, \pkg{optmatch} 0.10.8, \pkg{Matching} 4.10-15 and
+\pkg{designmatch} 0.5.5.
 
-A workflow that needs both halves therefore threads several packages by hand,
-and any choice away from the defaults moves the user into a different corner of
-that toolchain. Matching on observed covariates rather than on a propensity
-score, imposing calipers on more than one variable at a time, blocking, or
-choosing the solver deliberately are all reachable, and each is reachable
-somewhere else.
+On the algorithmic side, \CRANpkg{clue} \citep{clue} exposes the Hungarian method
+through \texttt{solve\_LSAP()}, and \CRANpkg{lpSolve} \citep{lpSolve} solves the assignment
+problem as a general linear program. These return an optimum for a cost matrix
+the user has already built; covariate handling, calipers and balance tables sit
+outside their scope.
 
-The \CRANpkg{couplr} package \citep{couplr} treats the assignment problem itself as
-the organising object and builds the workflow around it. A user who starts from
-a data frame with covariates and a treatment indicator, and a user who starts
-from a cost matrix, enter through different functions and reach the same solver
-core. The package contributes three things to R:
+A workflow that needs both halves therefore threads several packages by hand.
+Matching on observed covariates instead of a propensity score, imposing
+calipers on more than one variable at a time, blocking, and choosing the solver
+deliberately are all available in R, each in a different package.
+
+We present the \CRANpkg{couplr} package \citep{couplr}, which treats the assignment
+problem itself as the organising object and builds the workflow around it. A
+user who starts from a data frame with covariates and a treatment indicator,
+and a user who starts from a cost matrix, enter through different functions and
+reach the same solver core. We contribute three things to R:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -68,34 +75,45 @@ core. The package contributes three things to R:
   problems grow from hundreds to tens of thousands of units.
 \end{enumerate}
 
-The rest of this article states the problem couplr solves and the algorithm
-families that solve it, walks through a matching workflow and the designs
-around it, describes the solver layer, then covers the software design in
-detail: object model, C++ organisation, dispatch rules, memory modes,
-verification and dependency footprint. A performance section reports per-solver
-timings, a balance comparison against \pkg{MatchIt} and \pkg{optmatch} on the
-LaLonde data, and a scaling comparison. Results were produced with couplr
-version 1.5.5.
+We state the problem couplr solves and the algorithm families that solve it,
+walk through a matching workflow and the designs around it, then describe the
+solver layer. The software design follows in detail: object model, C++
+organisation, dispatch rules, memory modes, verification and dependency
+footprint. A performance section reports per-solver timings, a balance
+comparison against \pkg{MatchIt} and \pkg{optmatch} on the LaLonde data, and a
+scaling comparison. Results were produced with couplr version 1.5.6.
 
 \section{The assignment problem behind matching}\label{the-assignment-problem-behind-matching}
 
 Let \(C \in \mathbb{R}^{n \times m}\) be a cost matrix whose entry \(C_{ij}\) is the
-cost of pairing row \(i \in \{1, \dots, n\}\) with column \(j \in \{1, \dots, m\}\).
+cost of pairing row \(i \in \{1, \dots, n\}\) with column \(j \in \{1, \dots, m\}\),
+and take \(n \le m\); couplr transposes the problem internally when it is not and
+maps the assignment back afterwards, so the user never sees the transpose.
 Write \(X \in \{0,1\}^{n \times m}\) for the assignment matrix, with \(X_{ij} = 1\)
 when row \(i\) is matched to column \(j\). The linear assignment problem is
 
 \begin{equation}
 \min_{X} \; \sum_{i=1}^{n} \sum_{j=1}^{m} C_{ij} X_{ij}
 \quad \text{subject to} \quad
-\sum_{j} X_{ij} \le 1 \; \forall i, \qquad
+\sum_{j} X_{ij} = 1 \; \forall i, \qquad
 \sum_{i} X_{ij} \le 1 \; \forall j .
 \label{eq:lap}
 \end{equation}
 
+Every row is matched and every column is used at most once. The row constraint
+is an equality: relaxing it to \(\sum_j X_{ij} \le 1\) would leave \(X = 0\)
+optimal for any non-negative cost matrix, which is not the problem a matching
+application poses.
+
 In a matching application, rows are treated units, columns are controls, and
 \(C_{ij}\) is a distance between covariate vectors. In a scheduling application,
 rows are workers, columns are shifts, and \(C_{ij}\) is a cost or the negative of
-a preference score. Forbidden pairs are encoded as \(C_{ij} = \infty\).
+a preference score. Forbidden pairs are encoded as \(C_{ij} = \infty\), and
+enough of them make \eqref{eq:lap} infeasible, since no assignment can then
+reach every row. couplr solves a lexicographic relaxation in that case: the
+largest number of matched rows first, then the smallest total cost among the
+assignments attaining that number. The section on constraints below describes
+how that problem is reached and what it costs.
 
 The constraint matrix of \eqref{eq:lap} is totally unimodular, so the linear
 programming relaxation has integral optima \citep{Birkhoff1946, Burkard1999} and the
@@ -109,17 +127,21 @@ u_i + v_j = C_{ij} \quad \text{whenever } X_{ij} = 1 ,
 \label{eq:duals}
 \end{equation}
 
-and a feasible pair \((u, v)\) satisfying \eqref{eq:duals} certifies that \(X\) is
-optimal. couplr returns these potentials from \texttt{assignment\_duals()}, so a user
-can check optimality without trusting the solver, and can read the reduced costs
-\(C_{ij} - u_i - v_j\) as the penalty for forcing any particular pair.
+Dual feasibility on its own says nothing about a particular \(X\). The certificate
+needs four parts together: \(X\) is primal feasible, \((u, v)\) satisfies the
+inequality in \eqref{eq:duals}, every selected edge is tight, and the primal and
+dual objectives agree. couplr returns the potentials from \texttt{assignment\_duals()},
+so a user can check all four without trusting the solver. The reduced cost
+\(C_{ij} - u_i - v_j\) is a lower bound on what forcing pair \((i,j)\) would add to
+the total rather than the whole of it, because forcing one pair can displace
+others.
 
 \subsection{Why more than one algorithm}\label{why-more-than-one-algorithm}
 
 Every solver of \eqref{eq:lap} returns the same optimal value, so the choice
 among them is a performance question rather than a statistical one, and the
-performance depends on the shape of the problem. couplr groups its solvers into
-four families and a set of special-purpose routines.
+performance depends on the shape of the problem. We group the solvers into four
+families and a set of special-purpose routines.
 
 \textbf{Augmenting-path methods} grow a matching one row at a time, each time finding
 a shortest augmenting path in the residual graph under reduced costs. The
@@ -148,8 +170,8 @@ open-source implementation in any language.
 bipartite network \citep{Ahuja1993} and apply push-relabel \citep{GoldbergTarjan1988},
 cycle cancelling, network simplex, or Orlin's strongly polynomial algorithm
 \citep{Orlin1993}. These are the most general formulations, which makes them the
-right base for variable-ratio designs where a group absorbs several units, and
-the slowest choice for a plain one-to-one problem.
+right base for variable-ratio designs where a group absorbs several units. On a
+plain one-to-one problem they are the slowest choice.
 
 \textbf{Special-purpose routines} cover cases where the general machinery is wasted:
 exhaustive enumeration below nine units, Hopcroft-Karp style bipartite matching
@@ -158,11 +180,12 @@ exhaustive enumeration below nine units, Hopcroft-Karp style bipartite matching
 matrix would dominate the work, and bottleneck assignment, which minimises the
 largest pair cost instead of the sum.
 
-Two extensions round out the set. Murty's ranking procedure \citep{Murty1968} with
-Lawler's partition scheme \citep{Lawler1972} enumerates the k cheapest assignments,
-which lets a user see how much of the total cost is forced and how much is
-arbitrary. Sinkhorn iteration \citep{Cuturi2013} solves the entropy-regularised
-relaxation, returning a doubly stochastic coupling rather than a permutation.
+Two extensions return something other than a single optimal assignment. Murty's
+ranking procedure \citep{Murty1968} with Lawler's partition scheme \citep{Lawler1972}
+enumerates the k cheapest assignments, which lets a user see how much of the
+total cost is forced and how much is arbitrary. Sinkhorn iteration \citep{Cuturi2013}
+solves the entropy-regularised relaxation, returning a doubly stochastic
+coupling rather than a permutation.
 
 \section{A matching workflow}\label{a-matching-workflow}
 
@@ -253,8 +276,9 @@ balance_table(bal)
 #> 3 certifi~        1.88         1.9       -0.015     -0.021       0.964     0.015
 \end{verbatim}
 
-All three covariates land well inside the conventional threshold of 0.1 on the
-absolute standardised difference \citep{Stuart2010}. \texttt{join\_matched()} then returns
+Experience and certification fall below the conventional 0.1 threshold on the
+absolute standardised difference \citep{Stuart2010}, while age remains slightly
+above it at 0.116; all three are below 0.15. \texttt{join\_matched()} then returns
 the analysis-ready frame, one row per pair, with every column of both input
 tables carried through under \texttt{\_left} and \texttt{\_right} suffixes, so an outcome model
 can be fitted directly on the matched data.
@@ -268,14 +292,61 @@ dim(matched)
 #> [1] 200  21
 \end{verbatim}
 
-A matched analysis rests on assumptions that no matching method can verify:
-conditional ignorability, positivity and SUTVA. What matching can offer is a
-statement about how strong an unmeasured confounder would need to be before the
-conclusion changes. \texttt{sensitivity\_analysis()} reports the Rosenbaum bound, the
-critical odds ratio \(\Gamma\) at which the inference stops being significant
-\citep{Rosenbaum2002}. The matched output is also designed to feed an outcome
-regression, so that the estimate is doubly robust rather than resting on the
-match alone \citep{Stuart2010}.
+\subsection{From matched pairs to an estimate}\label{from-matched-pairs-to-an-estimate}
+
+The matched frame is the input to an outcome analysis rather than the end of
+one. We take the hourly rate as the outcome. The paired difference within each
+matched pair then estimates the association between full-time status and pay
+among nurses comparable on age, experience and certification.
+
+\begin{verbatim}
+d  <- matched$hourly_rate_left - matched$hourly_rate_right
+tt <- t.test(d)
+c(estimate = mean(d), lower = tt$conf.int[1], upper = tt$conf.int[2])
+\end{verbatim}
+
+\begin{verbatim}
+#> estimate    lower    upper 
+#> 3.531350 1.875651 5.187049
+\end{verbatim}
+
+Full-time nurses earn 3.53
+more per hour than their matched part-time counterparts, with a 95\% interval
+that excludes zero. This is a paired difference on a matched sample and rests
+on assumptions no matching method can verify: conditional ignorability,
+positivity, and the stable unit treatment value assumption (SUTVA), under which
+a unit's outcome depends on its own treatment alone. The matched output can
+also be passed to an outcome model for regression adjustment; valid estimation
+and uncertainty quantification still depend on the estimator used \citep{Stuart2010}.
+
+What matching can offer against the first of those assumptions is a statement
+about how strong an unmeasured confounder would have to be to overturn the
+result. \texttt{sensitivity\_analysis()} implements Rosenbaum bounds for the Wilcoxon
+signed-rank statistic on one-to-one matched pairs, reporting upper and lower
+p-value bounds across a grid of the odds-ratio parameter \(\Gamma\)
+\citep{Rosenbaum2002}.
+
+\begin{verbatim}
+sens <- sensitivity_analysis(m, treated, control, outcome_var = "hourly_rate")
+sens$results[sens$results$gamma %in% c(1, 1.5, 1.75, 2), ]
+\end{verbatim}
+
+\begin{verbatim}
+#> # A tibble: 4 x 4
+#>   gamma t_stat   p_upper  p_lower
+#>   <dbl>  <dbl>     <dbl>    <dbl>
+#> 1  1    13304. 0.0000187 1.87e- 5
+#> 2  1.5  13304. 0.0435    1.01e-11
+#> 3  1.75 13304. 0.207     4.48e-15
+#> 4  2    13304. 0.481     1.69e-18
+\end{verbatim}
+
+At \(\Gamma = 1\), meaning no hidden bias, the association is significant. It
+survives an unmeasured confounder that raises one pair member's odds of being
+full-time by half, \(\Gamma = 1.5\), and stops being significant at
+\(\Gamma =\) 1.75. A reader can judge from that number whether
+a confounder of that strength is plausible in this setting; the analysis
+quantifies exposure to hidden bias rather than removing it.
 
 \section{Constraints, designs and interoperability}\label{constraints-designs-and-interoperability}
 
@@ -287,8 +358,22 @@ A global \texttt{max\_distance} forbids any pair beyond a distance ceiling. Per-
 \texttt{calipers} forbid pairs whose raw difference on a named variable exceeds a
 threshold, independently of the distance metric in use. Explicit forbidden pairs
 are passed as non-finite entries by the user. Every solver recognises a
-non-finite entry as a missing edge, and reports infeasibility rather than
-returning a pairing that quietly violates the constraint.
+non-finite entry as a missing edge, so no returned pair ever violates a
+constraint.
+
+Tight constraints usually make \eqref{eq:lap} infeasible, and the interesting
+question is what happens then. couplr first drops the rows and columns whose
+every edge is forbidden, which are reported unmatched. The remaining submatrix
+can still fail Hall's condition, with several rows competing for the same few
+admissible columns, and no assignment reaching every row. Rather than return
+whichever pairs a heuristic happens to find, couplr replaces the forbidden
+entries with a finite sentinel and re-solves with the same optimal solver. The
+sentinel is set above \((k+1)\) times the spread of the admissible costs, where
+\(k\) is the largest possible number of pairs, so one sentinel edge outweighs any
+saving available on the real edges. Minimising cost on the padded problem
+therefore minimises the number of sentinel edges first and the real cost
+second, and dropping the sentinel pairs leaves exactly the lexicographic
+optimum: the largest admissible matching, cheapest among those of its size.
 
 \begin{verbatim}
 m_cal <- match_couples(
@@ -302,13 +387,17 @@ c(pairs = nrow(m_cal$pairs), unmatched_left = length(m_cal$unmatched$left))
 
 \begin{verbatim}
 #>          pairs unmatched_left 
-#>            180             20
+#>            197              3
 \end{verbatim}
 
-The caliper costs pairs: 180 of the 200 treated units keep a
+The caliper costs pairs: 197 of the 200 treated units keep a
 partner. This is the intended behaviour of a caliper and the reason the
 unmatched identifiers are returned rather than dropped, since the units that
-fail to match define the population the estimate actually applies to.
+fail to match define the population the estimate actually applies to. The
+constraints here are severe, leaving 2,173 admissible pairs out of 60,000, so
+the padded solve is what produces this result; a greedy pass over the same
+admissible edges matches 180 units rather than
+197.
 
 Blocking is the other structural constraint. \texttt{block\_id} restricts matching to
 run within levels of a factor, and \texttt{matchmaker()} constructs blocks when no
@@ -338,7 +427,8 @@ entry points, each returning an object in the same family:
   binning covariates and matching exactly on the binned strata.
 \item
   \texttt{subclass\_match()} divides the sample into propensity-score subclasses and
-  returns subclass weights for ATT or ATE estimation.
+  returns subclass weights for estimating the average treatment effect on the
+  treated (ATT) or the average treatment effect (ATE).
 \item
   \texttt{cardinality\_match()} targets the cardinality-matching objective
   \citep{Zubizarreta2014}, the largest matched sample meeting prespecified balance
@@ -351,7 +441,7 @@ entry points, each returning an object in the same family:
 
 \subsection{Interoperability}\label{interoperability}
 
-couplr does not ask a user to abandon the packages already in their workflow.
+couplr fits into a workflow built around the established packages.
 \texttt{as\_matchit()} converts a couplr result into a \texttt{matchit} object, so downstream
 code written against \pkg{MatchIt} keeps working, and \texttt{match\_data()} returns
 data in the layout that \pkg{MatchIt} users expect. \texttt{bal.tab()} methods are
@@ -361,10 +451,11 @@ balance output on a couplr match. Weighted matched data flows into
 
 \section{The solver layer}\label{the-solver-layer}
 
-A user who already has a cost matrix does not need any of the matching
-machinery. \texttt{lap\_solve()} and \texttt{assignment()} take a matrix and return the optimal
-assignment; \texttt{lap\_solve()} also accepts a long data frame of source, target and
-cost columns, which is the natural shape when costs arrive from a database.
+The solver layer is reachable on its own, for a user who arrives with a cost
+matrix in hand. \texttt{lap\_solve()} and \texttt{assignment()} take a matrix and return the
+optimal assignment; \texttt{lap\_solve()} also accepts a long data frame of source,
+target and cost columns, which is the natural shape when costs arrive from a
+database.
 
 \begin{verbatim}
 set.seed(1)
@@ -392,19 +483,27 @@ res
 
 The \texttt{method} argument names any of the nineteen solvers; \texttt{"auto"} is the
 default. Dual potentials come from \texttt{assignment\_duals()}, which returns the
-vectors \(u\) and \(v\) of \eqref{eq:duals} alongside the assignment, so optimality
-can be certified independently:
+vectors \(u\) and \(v\) of \eqref{eq:duals} alongside the assignment, so all four
+parts of the certificate can be checked independently of the solver:
 
 \begin{verbatim}
-d <- assignment_duals(cost)
-all(outer(d$u, d$v, "+") <= cost + 1e-9)
+d   <- assignment_duals(cost)
+i   <- which(d$match > 0)
+j   <- d$match[i]
+sel <- cbind(i, j)
+
+c(primal   = length(i) == min(dim(cost)) && !anyDuplicated(j),
+  dual     = all(outer(d$u, d$v, "+") <= cost + 1e-9),
+  tight    = all(abs(d$u[i] + d$v[j] - cost[sel]) < 1e-9),
+  no_gap   = abs(sum(cost[sel]) - sum(d$u) - sum(d$v)) < 1e-9)
 \end{verbatim}
 
 \begin{verbatim}
-#> [1] TRUE
+#> primal   dual  tight no_gap 
+#>   TRUE   TRUE   TRUE   TRUE
 \end{verbatim}
 
-Three extensions operate on the same matrix. \texttt{lap\_solve\_kbest()} returns the k
+Four extensions operate on the same matrix. \texttt{lap\_solve\_kbest()} returns the k
 cheapest assignments in increasing order of cost, which shows how much of a
 solution is forced by the data. \texttt{bottleneck\_assignment()} minimises the largest
 individual pair cost, the right objective when the worst pair rather than the
@@ -443,10 +542,11 @@ The object model is S3 throughout. Matching results carry the class vector
 \texttt{couplr\_result} parent. The shared parent is what makes the diagnostic and
 conversion layer generic: \texttt{balance\_diagnostics()}, \texttt{join\_matched()},
 \texttt{match\_data()} and the \texttt{bal.tab()} methods dispatch on it once rather than being
-rewritten per design. S4 or R6 would have bought encapsulation the package does
-not need, at the cost of making result objects harder to inspect interactively
-and harder to serialise. Results are plain lists of tibbles, so a user who wants
-something the package does not provide can reach in and take it.
+rewritten per design. We chose S3 deliberately. S4 or R6 would have bought
+encapsulation the package does not need, at the cost of making result objects
+harder to inspect interactively and harder to serialise. Results are plain
+lists of tibbles, so a user who wants something the package does not provide
+can reach in and take it.
 
 Solver results are a separate family. \texttt{lap\_solve()} returns a tibble subclassed
 as \texttt{lap\_solve\_result} with \texttt{source}, \texttt{target} and \texttt{cost} columns, which means the
@@ -464,9 +564,9 @@ holds one algorithm per file with a thin \texttt{\_rcpp.cpp} wrapper each, and
 The separation means the solver bodies are ordinary C++ that can be compiled and
 tested outside R.
 
-The design decision that carries the most weight is that solvers are templated
-on their cost source rather than written against a concrete matrix. A cost
-source has to provide \texttt{at(i,\ j)}, \texttt{allowed(i,\ j)} and \texttt{empty()}. Two types
+We template solvers on their cost source rather than writing them against a
+concrete matrix. A cost source has to provide \texttt{at(i,\ j)}, \texttt{allowed(i,\ j)} and
+\texttt{empty()}. Two types
 satisfy this interface: \texttt{CostMatrix}, which owns a dense flat array plus a mask,
 and \texttt{LazyCostMatrix}, which owns the two feature matrices and computes
 \(C_{ij}\) on demand from the requested metric, applying calipers and the distance
@@ -483,9 +583,11 @@ allows the untouched solver body to work on either type.
 
 \subsection{Automatic solver selection}\label{automatic-solver-selection}
 
-\texttt{method\ =\ "auto"} inspects the problem and picks a solver. The rules are
-deliberately few and readable, and derive from the benchmark in the next
-section:
+\texttt{method\ =\ "auto"} inspects the problem and picks a solver. The rules are few,
+and the benchmark in the next section supports rule 5 directly. Rules 1 to 4
+are initial heuristics: they follow from the structure each special-purpose
+routine exploits, and the thresholds in them are not calibrated against a
+benchmark that varies sparsity or rectangularity.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -542,10 +644,10 @@ calipers and the distance ceiling.
 
 Under \texttt{"auto"}, the package decides. Below ten million cells, about 80 MB dense,
 it skips the check entirely, since probing free memory on every ordinary problem
-would be pure overhead. Above that, it estimates the dense footprint with a
-factor of four over the raw eight bytes per cell, covering the copies made
-during conversion and preparation that can coexist under garbage-collection lag,
-and compares that against available system memory. Available memory is read
+would be pure overhead. Above that, we estimate the dense footprint with a
+factor of four over the raw eight bytes per cell, which covers the copies made
+during conversion and preparation that can coexist under garbage-collection
+lag, and compare that against available system memory. Available memory is read
 per platform, from \texttt{MemAvailable} on Linux, from \texttt{vm\_stat} page counts on macOS,
 including inactive and speculative pages because the kernel keeps almost nothing
 on the free list, and from \texttt{Win32\_OperatingSystem} on Windows. If the estimate
@@ -559,14 +661,23 @@ never silently disappears on an unrecognised platform.
 
 Statistical smoke tests establish that a function returns an object of the right
 shape. For a solver, the corresponding standard is whether the returned
-assignment is the optimal one. Every optimal solver in couplr is checked against
+assignment is the optimal one. We check every optimal solver against
 exhaustive enumeration on randomised instances covering integer and fractional
 costs, square and rectangular shapes, minimisation and maximisation, and
 matrices containing forbidden edges. The brute-force reference is the same
 \texttt{bruteforce} solver the dispatcher uses below nine units, so the verified path
-and the shipped path are one implementation. The package carries 125 test files
-in total, covering the R layer, the C++ wrappers, dispatch rules and the
-matching designs.
+and the shipped path are one implementation.
+
+Constrained matching is checked against the same standard, and needs its own
+reference because the objective is lexicographic. An enumeration over all
+partial matchings of a small instance gives the largest admissible matching and
+the cheapest total among matchings of that size, and the constrained solve has
+to reproduce both. That test is what showed us the earlier behaviour was wrong:
+until version 1.5.6, a constrained problem whose admissible graph had no
+complete matching returned a greedy partial matching under the name of the
+optimal solver that had been requested. The package carries 126 test files in
+total, covering the R layer, the C++ wrappers, dispatch rules and the matching
+designs.
 
 Dual feasibility gives a second, independent check that a user can run on their
 own problem, since \eqref{eq:duals} can be verified in \(O(nm)\) without solving
@@ -581,12 +692,10 @@ so a default installation brings 18 packages including couplr itself. The
 comparable figures on the same day were 18 for \pkg{optmatch}, 8 for
 \pkg{MatchIt} and 7 for \pkg{designmatch}.
 
-Two choices sit behind that number. First, no external solver is used: all
+Two choices sit behind that number. First, we use no external solver: all
 nineteen algorithms are package source, so there is no dependency on an LP or
-MIP library, no system solver to install, and no licence question of the kind
-that arises when an integer-programming design reaches for a commercial back
-end. Second, everything that serves a single feature lives in \texttt{Suggests} and is
-loaded at call time. The animation and image-morphing functions, the plotting
+MIP library and no system solver to install. Second, everything that serves a
+single feature lives in \texttt{Suggests} and is loaded at call time. The animation and image-morphing functions, the plotting
 helpers, the interoperability layer for \pkg{MatchIt}, \pkg{optmatch} and
 \pkg{cobalt}, and the parallel back end are all optional in this sense, so a user
 who only wants to match pays for none of them. \texttt{LinkingTo} deserves particular
@@ -598,11 +707,13 @@ be built from source; couplr declares only what its headers actually include.
 \subsection{Solver benchmark}\label{solver-benchmark}
 
 Figure \ref{fig:solver-bench} reports median wall-clock solve time against
-problem size for all nineteen solvers, grouped by family. Costs are integers
-drawn uniformly from \([1, 10{,}000]\) on square matrices, timings are medians of
-five replicates on a single core of an Apple M4 Pro, and the slower families are
+problem size for all nineteen solvers, grouped by family. We draw costs as
+integers uniformly from \([1, 10{,}000]\) on square matrices and report medians of
+five replicates on a single core of an Apple M4 Pro. The slower families are
 capped at smaller sizes so that the scalable solvers can be measured to
-\(n = 5000\) within a reasonable budget.
+\(n = 5000\) within a reasonable budget. All timings in this section were measured
+on 2026-08-09 under R 4.6.0 with couplr 1.5.6, \pkg{optmatch} 0.10.8
+and \pkg{MatchIt} 4.7.2.
 
 \begin{figure}
 
@@ -613,29 +724,30 @@ capped at smaller sizes so that the scalable solvers can be measured to
 \caption{Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. Seventeen solvers are timed on square integer cost matrices with entries drawn uniformly from 1 to 10,000. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs. Medians of five replicates on a single core of an Apple M4 Pro. Cubic-time and general flow solvers are capped at smaller sizes, which is why their lines end early.}\label{fig:solver-bench}
 \end{figure}
 
-The picture is consistent across families. Jonker-Volgenant with its warm start
-is the fastest general-purpose solver at every measured size, which is why it is
-the dispatcher's default. The auction and cost-scaling families are competitive
-at small sizes and fall behind on dense uniform costs, where their advantage,
-tolerance of degenerate structure and a better asymptotic bound in the
-Gabow-Tarjan case, does not pay. General flow formulations are the slowest, as
-expected for machinery that solves a larger problem than the one posed. The two
-special-purpose routines are timed on the inputs they exist for and win
-decisively there: exhaustive enumeration below nine units, and the
-Hopcroft-Karp style solver on binary costs, where at \(n = 5000\) it runs about
-twice as fast as Jonker-Volgenant does on uniform integer costs of the same
-size.
+Jonker-Volgenant with its warm start is the fastest general-purpose solver at
+every measured size, which is why it is the dispatcher's default. The auction
+and cost-scaling families are competitive at small sizes and fall behind on
+dense uniform costs, where their advantage, tolerance of degenerate structure
+and a better asymptotic bound in the Gabow-Tarjan case, does not pay. General
+flow formulations are the slowest, as expected for machinery that solves a
+larger problem than the one posed. The two special-purpose routines run on the
+inputs they exist for, exhaustive enumeration below nine units and the
+Hopcroft-Karp style solver on binary costs, so their timings are not comparable
+with the rest of the figure and are shown only to establish that each is
+practical on its own input.
 
-These orderings hold for dense uniform integer costs on square matrices. They
-are the basis of the dispatch rules, and they are also the reason the dispatcher
-has rules at all rather than one default: sparsity, rectangularity and
-degenerate cost scales each move the answer.
+These orderings hold for dense uniform integer costs on square matrices, and
+that is the whole of what the figure establishes. They fix the dispatcher's
+default. The remaining rules rest on the structure the special-purpose routines
+exploit rather than on measurement, and the regimes that would test them,
+sparse, strongly rectangular and degenerate cost scales, are left to the
+benchmark extension described in the summary.
 
 \subsection{Balance against established alternatives}\label{balance-against-established-alternatives}
 
-Comparing packages on speed alone would be beside the point if they did not
-agree on the answer. Figure \ref{fig:love} fixes the task, one-to-one optimal
-matching on a Mahalanobis distance with pooled within-group covariance, and runs
+Speed only matters once the packages agree on the answer. We fix the task in
+Figure \ref{fig:love}, one-to-one optimal
+matching on a Mahalanobis distance with pooled within-group covariance, and run
 it on the LaLonde NSW data \citep{LaLonde1986, DehejiaWahba1999}, 185 treated units,
 429 controls and eight covariates. The pooled within-group convention is the one
 \texttt{optmatch::match\_on()} uses by default and the one couplr adopts.
@@ -651,6 +763,15 @@ it on the LaLonde NSW data \citep{LaLonde1986, DehejiaWahba1999}, 185 treated un
 
 The three packages produce identical absolute standardised mean differences to
 three decimal places, so the matched points coincide and one is plotted.
+Matching marginals could still hide different assignments, so we score all
+three on one objective: the same Mahalanobis distance matrix, summed over each
+package's chosen pairs. Each matches all
+185 treated units, at a total
+distance of 304.042
+for couplr against
+304.043 for both
+alternatives. They agree on the optimum, not only on its marginal summaries.
+
 Five of the eight covariates fall below 0.1 after matching; \texttt{married} and 1974
 earnings sit just above at 0.124 and 0.128, and the indicator for Black
 respondents drops from 1.757 to 1.053 without approaching the threshold, which
@@ -663,7 +784,7 @@ indicator.
 Table \ref{tab:scaling} reports median wall-clock time on synthetic problems
 with the same eight-covariate structure, at six sizes with a one-to-two ratio of
 treated to control units. Every package materialises the distance matrix here,
-so couplr is timed with \texttt{memory\_mode\ =\ "dense"}.
+so we time couplr with \texttt{memory\_mode\ =\ "dense"}.
 
 \begin{table}
 
@@ -693,11 +814,13 @@ largest size it completes before \texttt{matchit(method\ =\ "optimal")} aborts i
 finishes in 79 seconds and both alternatives exceed the 300-second per-replicate
 cap.
 
-The reason is dispatch rather than a faster inner loop in any single algorithm.
-\pkg{optmatch} solves a minimum-cost flow problem, which is the right
-formulation for the full and variable-ratio designs it is built around and more
-machinery than a plain one-to-one problem needs; couplr's dispatcher sends this
-dense square problem to Jonker-Volgenant.
+A likely contributor is the difference in formulation rather than a faster inner
+loop in any single algorithm. \pkg{optmatch} solves a minimum-cost flow problem,
+which is the right formulation for the full and variable-ratio designs it is
+built around and more machinery than a plain one-to-one problem needs; couplr's
+dispatcher sends this dense square problem to Jonker-Volgenant. Separating that
+contribution from implementation differences would need a benchmark that holds
+the formulation fixed across packages, which these timings do not do.
 
 The lazy path removes the memory ceiling as well. The same \(n = 50{,}000\) match
 under \texttt{memory\_mode\ =\ "lazy"} completes in
@@ -708,6 +831,8 @@ At \(n = 20{,}000\) it takes
 for the dense path, so on these problems recomputing distances is cheaper than
 materialising and traversing the matrix.
 
+\FloatBarrier
+
 \subsection{Feature coverage}\label{feature-coverage}
 
 Table \ref{tab:capability} lists the features that separate the three packages.
@@ -716,39 +841,39 @@ matching, exact blocking and a cost-matrix entry point, are omitted.
 
 \begin{table}
 
-\caption{\label{tab:capability}Differentiating feature coverage. partial marks a feature that is achievable but not through a first-class user-facing interface: optmatch calipers threshold one distance object at a time, so per-variable calipers require combining objects, and both alternatives handle unequal group sizes through discarding or variable-ratio designs rather than natively.}
+\caption{\label{tab:capability}Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(). Assessed 2026-08-09 against MatchIt 4.7.2 and optmatch 0.10.8.}
 \centering
 \begin{tabular}[t]{lccc}
 \toprule
 Feature & couplr & MatchIt & optmatch\\
 \midrule
 Per-variable calipers from a named vector & yes & yes & partial\\
-Rectangular problems without padding & yes & partial & partial\\
+Rectangular problems without padding & yes & via optmatch & via padding\\
 Sparse cost support & yes & no & yes\\
 k-best assignments & yes & no & no\\
 Bottleneck (minimax) assignment & yes & no & no\\
 \addlinespace
 Rosenbaum sensitivity bounds & yes & no & no\\
-User-selectable assignment algorithm & 19 solvers & fixed & fixed\\
+User-selectable assignment algorithm & 19 solvers & via optmatch & 2 back ends\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Discussion}\label{discussion}
+\section{Summary and discussion}\label{summary-and-discussion}
 
-couplr is built on the observation that one optimisation problem sits underneath
+We built couplr on the observation that one optimisation problem sits underneath
 a set of tasks that R currently treats as unrelated. Making the assignment
 problem the organising object, rather than a hidden step inside a matching
 function, is what lets a single package serve a causal-inference user starting
 from covariates and an operations-research user starting from a cost matrix.
-The design consequences follow from that decision: an object model with a shared
-parent class so diagnostics are written once, solvers templated on their cost
-source so the dense and lazy paths cannot drift apart, and a dispatcher that
-turns the solver zoo into an implementation detail for users who do not want to
-think about it.
+Three design consequences follow from that decision. The object model gives the
+result classes a shared parent, so diagnostics are written once. Solvers are
+templated on their cost source, so the dense and lazy paths cannot drift apart.
+A dispatcher turns the choice among nineteen solvers into an implementation
+detail for users who would rather not make it.
 
-Several limitations are worth stating. The lazy cost path covers
-Jonker-Volgenant and auction with the built-in metrics; other solvers and
+couplr has four limitations. The lazy cost path covers Jonker-Volgenant and
+auction with the built-in metrics; other solvers and
 user-supplied distance functions still require a dense matrix, and \texttt{full\_match()}
 uses a flow back end that has no lazy path yet. \texttt{cardinality\_match()} is a
 pruning heuristic and does not certify that the matched sample it returns is the
@@ -760,10 +885,12 @@ explicitly, which is why every solver stays reachable by name. Matching on
 observed covariates cannot address unmeasured confounding, and the sensitivity
 analysis quantifies exposure to it rather than removing it.
 
-Work in progress extends the lazy representation to more solvers, adds a
+We are extending the lazy representation to more solvers and adding a
 minimum-cost flow path for variable-ratio designs under the same templated cost
-interface, and widens the benchmark beyond uniform integer costs so that the
-dispatch rules can be recalibrated on structured and clustered cost matrices.
+interface. We are also widening the benchmark beyond uniform integer costs, so
+that the dispatch rules can be recalibrated on sparse, rectangular and
+clustered cost matrices rather than resting on the structure each routine
+exploits.
 
 couplr is available on CRAN and developed at
 \texttt{https://github.com/gcol33/couplr}, with documentation at

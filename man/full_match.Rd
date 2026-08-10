@@ -73,11 +73,19 @@ containing:
 \describe{
 \item{groups}{Tibble with columns \code{group_id}, \code{id}, \code{side}
 (\code{"left"}/\code{"right"}), and \code{weight}}
+\item{status}{What the solver terminated on, one of
+\code{"optimal"} (every unit placed in a group meeting
+\code{min_controls}, at minimum total distance),
+\code{"partial"} (groups formed, some units left over, under a
+maximum-cardinality-then-minimum-cost objective),
+\code{"infeasible"} (no group meets the requested bounds), or
+\code{"heuristic"} (\code{method = "greedy"}, which neither claims nor
+checks optimality). See \code{\link{solver_status_values}}.}
 \item{info}{List with \code{n_groups}, \code{n_left}, \code{n_right},
 \code{n_unmatched_left}, \code{n_unmatched_right}, \code{method},
 \code{vars}}
-\item{unmatched}{List of unmatched left and right IDs (if caliper excludes
-units)}
+\item{unmatched}{Left and right IDs that no group contains. Every unit is
+either a row of \code{groups} or an entry here.}
 }
 }
 \description{

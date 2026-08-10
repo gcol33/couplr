@@ -26,6 +26,26 @@ Rcpp::List solve_line_metric_impl(const Rcpp::NumericVector& x,
                                   bool maximize);
 Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize);
 
+// certification and feasibility witnesses
+Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
+                              Rcpp::NumericVector u, Rcpp::NumericVector v,
+                              bool maximize, double tol);
+Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                             std::string distance,
+                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                             double max_distance, Rcpp::List calipers,
+                             Rcpp::CharacterVector vars,
+                             Rcpp::IntegerVector match, Rcpp::NumericVector u,
+                             Rcpp::NumericVector v, bool maximize, double tol);
+Rcpp::List scan_reduced_costs_impl(Rcpp::NumericMatrix cost, Rcpp::NumericVector u,
+                                   Rcpp::NumericVector v, double tol);
+Rcpp::List hall_witness_dense_impl(Rcpp::NumericMatrix cost);
+Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                  std::string distance,
+                                  Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                  double max_distance, Rcpp::List calipers,
+                                  Rcpp::CharacterVector vars);
+
 // k-best solvers (internal)
 Rcpp::List solve_murty_impl(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);
 Rcpp::List solve_kbest_lawler_impl(Rcpp::NumericMatrix cost, int k, std::string method_base, bool maximize);

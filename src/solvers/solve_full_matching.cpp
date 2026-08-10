@@ -234,9 +234,14 @@ FullMatchResult solve_full_matching(
     }
 
     // Solve: min-cost max-flow from S' to T'
-    // Target = min(n_unit, total_max_cap)
-    int target_flow = (total_max_cap >= n_unit) ? n_unit
-                                                : static_cast<int>(total_max_cap);
+    // A complete full matching places every unit, so the required flow is
+    // n_unit. The flow is capped at the total capacity of the centers, which is
+    // the smaller of the two whenever max_cap keeps the centers from absorbing
+    // every unit.
+    const int required_flow = n_unit;
+    int target_flow = (total_max_cap >= required_flow)
+                          ? required_flow
+                          : static_cast<int>(total_max_cap);
     auto [flow_sent, flow_cost] = mf.min_cost_max_flow(AUX_S, AUX_T, target_flow);
 
     // ---- Extract assignments ----
@@ -308,13 +313,17 @@ FullMatchResult solve_full_matching(
         }
     }
 
-    // Signal infeasibility when not every unit could be placed. Besides the
-    // no-groups case, total_max_cap < n_unit means the target flow was clamped
-    // below n_unit, so some units are silently left with group 0 -- that is not
-    // a complete full matching and must not be reported as "optimal".
-    if ((flow_sent < target_flow && group_count == 0) ||
-        total_max_cap < static_cast<long long>(n_unit)) {
-        result.status = "infeasible";
+    // The total capacity out of S' is exactly required_flow: min_controls per
+    // center plus the residual supply. Saturating it therefore means every
+    // center reached its lower bound and every unit was placed, so
+    // flow_sent == required_flow holds exactly when no unit is left over and no
+    // center dissolves. Any shortfall means the requested full matching does
+    // not exist: the flow is a maximum one, so no assignment placing more units
+    // is possible. Groups that did survive are returned as a
+    // maximum-cardinality-then-minimum-cost partial matching; when none
+    // survived there is nothing to report but infeasibility.
+    if (flow_sent < required_flow) {
+        result.status = (group_count > 0) ? "partial" : "infeasible";
     }
 
     return result;

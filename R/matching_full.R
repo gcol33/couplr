@@ -42,11 +42,19 @@
 #' \describe{
 #'   \item{groups}{Tibble with columns \code{group_id}, \code{id}, \code{side}
 #'     (\code{"left"}/\code{"right"}), and \code{weight}}
+#'   \item{status}{What the solver terminated on, one of
+#'     \code{"optimal"} (every unit placed in a group meeting
+#'     \code{min_controls}, at minimum total distance),
+#'     \code{"partial"} (groups formed, some units left over, under a
+#'     maximum-cardinality-then-minimum-cost objective),
+#'     \code{"infeasible"} (no group meets the requested bounds), or
+#'     \code{"heuristic"} (\code{method = "greedy"}, which neither claims nor
+#'     checks optimality). See \code{\link{solver_status_values}}.}
 #'   \item{info}{List with \code{n_groups}, \code{n_left}, \code{n_right},
 #'     \code{n_unmatched_left}, \code{n_unmatched_right}, \code{method},
 #'     \code{vars}}
-#'   \item{unmatched}{List of unmatched left and right IDs (if caliper excludes
-#'     units)}
+#'   \item{unmatched}{Left and right IDs that no group contains. Every unit is
+#'     either a row of \code{groups} or an entry here.}
 #' }
 #'
 #' @details
@@ -189,38 +197,46 @@ full_match <- function(left, right, vars,
     gol <- mcmf_result$group_of_left
     gor <- mcmf_result$group_of_right
 
-    groups_rows <- list()
-    n_groups_out <- mcmf_result$n_groups
+    status <- .validate_status(mcmf_result$status)
 
-    for (g in seq_len(n_groups_out)) {
+    groups_rows <- list()
+    n_groups_out <- 0L
+    matched_left_idx <- integer(0)
+    matched_right_idx <- integer(0)
+
+    for (g in seq_len(mcmf_result$n_groups)) {
       left_in_g <- which(gol == g)
       right_in_g <- which(gor == g)
       n_right_in_group <- length(right_in_g)
       n_left_in_group <- length(left_in_g)
 
-      if (n_left_in_group > 0 && n_right_in_group > 0) {
-        # Weights: the smaller side gets weight 1, the larger side gets
-        # weight (n_small / n_large) so total weights balance.
-        # Standard convention: left weight = 1, right weight = n_left / n_right
-        left_weight <- 1.0
-        right_weight <- n_left_in_group / n_right_in_group
-        groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
-          group_id = rep(g, n_left_in_group),
-          id = l_ids[left_in_g],
-          side = rep("left", n_left_in_group),
-          weight = rep(left_weight, n_left_in_group)
-        )
-        groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
-          group_id = rep(g, n_right_in_group),
-          id = r_ids[right_in_g],
-          side = rep("right", n_right_in_group),
-          weight = rep(right_weight, n_right_in_group)
-        )
-      }
-    }
+      # A group needs a unit on each side: it is the pairing that carries the
+      # weight ratio and the matched distance. A one-sided group holds no
+      # match, so its members stay unmatched.
+      if (n_left_in_group == 0L || n_right_in_group == 0L) next
 
-    unmatched_left_idx <- which(gol == 0)
-    unmatched_right_idx <- which(gor == 0)
+      n_groups_out <- n_groups_out + 1L
+      matched_left_idx <- c(matched_left_idx, left_in_g)
+      matched_right_idx <- c(matched_right_idx, right_in_g)
+
+      # Weights: the smaller side gets weight 1, the larger side gets
+      # weight (n_small / n_large) so total weights balance.
+      # Standard convention: left weight = 1, right weight = n_left / n_right
+      left_weight <- 1.0
+      right_weight <- n_left_in_group / n_right_in_group
+      groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
+        group_id = rep(n_groups_out, n_left_in_group),
+        id = l_ids[left_in_g],
+        side = rep("left", n_left_in_group),
+        weight = rep(left_weight, n_left_in_group)
+      )
+      groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(
+        group_id = rep(n_groups_out, n_right_in_group),
+        id = r_ids[right_in_g],
+        side = rep("right", n_right_in_group),
+        weight = rep(right_weight, n_right_in_group)
+      )
+    }
 
   } else {
     # --- Greedy group formation ---
@@ -237,15 +253,11 @@ full_match <- function(left, right, vars,
 
     group_id <- 0L
     groups_list <- vector("list", n_left)
-    unmatched_left_idx <- integer(0)
 
     for (i in left_order) {
       row <- cost_matrix[i, ]
       available <- which(is.finite(row) & !right_assigned)
-      if (length(available) == 0) {
-        unmatched_left_idx <- c(unmatched_left_idx, i)
-        next
-      }
+      if (length(available) == 0) next
       best_j <- available[which.min(row[available])]
       group_id <- group_id + 1L
       left_to_right[i] <- best_j
@@ -256,7 +268,6 @@ full_match <- function(left, right, vars,
 
     # Step 2: Assign remaining right units to nearest already-matched left unit
     remaining_right <- which(!right_assigned)
-    unmatched_right_idx <- integer(0)
 
     if (length(remaining_right) > 0) {
       matched_left_idxs <- which(group_of_left > 0)
@@ -273,10 +284,7 @@ full_match <- function(left, right, vars,
           }
         }
         eligible <- eligible & is.finite(col)
-        if (!any(eligible)) {
-          unmatched_right_idx <- c(unmatched_right_idx, j)
-          next
-        }
+        if (!any(eligible)) next
         best_k <- which(eligible)[which.min(col[eligible])]
         best_left <- matched_left_idxs[best_k]
         gi <- group_of_left[best_left]
@@ -290,21 +298,25 @@ full_match <- function(left, right, vars,
       for (g in seq_len(group_id)) {
         if (is.null(groups_list[[g]])) { keep[g] <- FALSE; next }
         if (length(groups_list[[g]]$right_idxs) < min_controls) {
-          unmatched_left_idx <- c(unmatched_left_idx, groups_list[[g]]$left_idx)
-          unmatched_right_idx <- c(unmatched_right_idx, groups_list[[g]]$right_idxs)
           keep[g] <- FALSE
         }
       }
       groups_list <- groups_list[keep]
     }
 
+    status <- "heuristic"
+
     groups_rows <- list()
     n_groups_out <- 0L
+    matched_left_idx <- integer(0)
+    matched_right_idx <- integer(0)
     for (g in seq_along(groups_list)) {
       grp <- groups_list[[g]]
       if (is.null(grp)) next
       n_groups_out <- n_groups_out + 1L
       n_right_in_group <- length(grp$right_idxs)
+      matched_left_idx <- c(matched_left_idx, grp$left_idx)
+      matched_right_idx <- c(matched_right_idx, grp$right_idxs)
       right_weight <- 1 / n_right_in_group
       groups_rows[[length(groups_rows) + 1]] <- tibble::tibble(
         group_id = n_groups_out,
@@ -331,7 +343,12 @@ full_match <- function(left, right, vars,
     )
   }
 
-  # Unmatched IDs
+  # Unmatched is whatever the emitted groups do not cover, so every unit is
+  # either a row of `groups` or an entry of `unmatched`, and the counts in
+  # `info` describe the rows that were actually written.
+  unmatched_left_idx <- setdiff(seq_len(n_left), matched_left_idx)
+  unmatched_right_idx <- setdiff(seq_len(n_right), matched_right_idx)
+
   unmatched <- list(
     left = l_ids[unmatched_left_idx],
     right = r_ids[unmatched_right_idx]
@@ -352,6 +369,7 @@ full_match <- function(left, right, vars,
 
   result <- list(
     groups = groups_tbl,
+    status = status,
     info = info,
     unmatched = unmatched
   )
@@ -370,6 +388,7 @@ full_match <- function(left, right, vars,
 print.full_matching_result <- function(x, ...) {
   cat("\nFull Matching Result\n")
   cat("====================\n\n")
+  cat(sprintf("  Status: %s\n", x$status))
   cat(sprintf("  Groups formed: %d\n", x$info$n_groups))
   cat(sprintf("  Left units:  %d matched, %d unmatched (of %d)\n",
               x$info$n_matched_left, x$info$n_unmatched_left, x$info$n_left))

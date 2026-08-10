@@ -92,7 +92,11 @@ inline bool augment_match(NSState& state,
     return true;
 }
 
-inline void initialize_spanning_tree_greedy(NSState& state) {
+// Returns the number of rows the matching covers. A value below n_rows is a
+// maximum-cardinality result, so it certifies that no assignment covers every
+// row; the caller decides what to do with that, and the spanning tree is not
+// built, because its flow assumes one unit leaving every row node.
+inline int initialize_spanning_tree_greedy(NSState& state) {
     int n = state.n_rows;
     int m = state.n_cols;
     int source = state.source_node();
@@ -122,22 +126,27 @@ inline void initialize_spanning_tree_greedy(NSState& state) {
         }
     }
 
-    // Phase 2 — Augmenting paths: extend the partial matching to a perfect
-    // matching whenever one exists. Without this, unmatched rows leave the
-    // initial tree in an infeasible flow state (source supplies 1 unit to the
-    // row with no outgoing tree arc), which the pivot loop cannot reliably
-    // repair on adversarial instances. Pivots then terminate at a sub-optimal
-    // basis that still has an unmatched row.
+    // Phase 2 - Augmenting paths: extend the partial matching to a maximum
+    // matching. One attempt per unmatched row suffices: by Berge's augmenting
+    // path theorem a row with no augmenting path against the current matching
+    // has none against any matching a later augmentation can produce, so the
+    // matching left here is of maximum cardinality.
     for (int i = 0; i < n; ++i) {
         if (row_match[i] < 0) {
-            // Failure here means no perfect matching exists in the allowed
-            // subgraph. The C++ entry points already preflight feasibility for
-            // each row, but not Hall's condition globally; if we still fail
-            // here, leave the row unmatched and let downstream extraction
-            // surface the infeasibility with the existing error path.
             (void)augment_match(state, i, row_match, col_match);
         }
     }
+
+    int matched_rows = 0;
+    for (int i = 0; i < n; ++i) {
+        if (row_match[i] >= 0) ++matched_rows;
+    }
+
+    // Uncovered rows in a maximum matching mean the allowed subgraph violates
+    // Hall's condition, so no basis of this network carries a unit out of every
+    // row node. Report the cardinality instead of building a tree whose flow
+    // would not conserve.
+    if (matched_rows < n) return matched_rows;
 
     // Reset all arcs to lower bound (flow = 0)
     for (int a = 0; a < state.num_arcs; ++a) {
@@ -296,6 +305,8 @@ inline void initialize_spanning_tree_greedy(NSState& state) {
             state.subtree_size[par] += state.subtree_size[node];
         }
     }
+
+    return n;
 }
 
 // Compute potentials from the spanning tree

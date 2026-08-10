@@ -6,11 +6,35 @@
 # Shared Internal Implementations
 # ==============================================================================
 
+# Replace forbidden entries of `sub` with a finite sentinel, so that a
+# minimum-cost solve maximises the number of admissible pairs before it
+# minimises cost. The sentinel magnitude comes from .cardinality_sentinel() in
+# R/lap_cardinality.R, which is the same quantity assignment(cardinality =) uses
+# to price its dummy columns. Returns NULL when that ordering can no longer be
+# represented exactly in a double.
+.pad_forbidden <- function(sub, admissible) {
+  real <- sub[admissible]
+  sentinel <- .cardinality_sentinel(real, min(dim(sub)))
+  if (is.null(sentinel)) {
+    return(NULL)
+  }
+  sub[!admissible] <- sentinel
+  sub
+}
+
 # Solve a LAP that may have rows or columns where every edge is forbidden
 # (Inf / NA / >= BIG_COST). Such rows/cols can't be matched, and most C++
 # solvers would raise "Infeasible: row N has no allowed edges". We drop them
 # before calling the solver and re-map the result back to original indices so
 # the caller can report them as unmatched.
+#
+# The pruned submatrix can still admit no perfect matching, because Hall's
+# condition fails: several rows compete for the same few admissible columns.
+# The objective there is lexicographic, the largest number of admissible pairs
+# first and the smallest total cost among matchings of that size second, and
+# it is reached by padding the forbidden entries with a sentinel and solving
+# the padded problem with the same optimal solver. Pairs that came back on a
+# sentinel edge are dropped before the result is returned.
 #
 # Returns a list with:
 #   result       — raw solver output for the submatrix (or NULL if degenerate)
@@ -34,23 +58,38 @@
 
   if (all(row_ok) && all(col_ok)) {
     sub <- cost_matrix
+    sub_feasible <- feasible
   } else {
     sub <- cost_matrix[row_ok, col_ok, drop = FALSE]
+    sub_feasible <- feasible[row_ok, col_ok, drop = FALSE]
   }
 
   orig_rows <- which(row_ok)
   orig_cols <- which(col_ok)
 
-  # Try the requested optimal solver. If even the feasibility-pruned submatrix
-  # has no perfect matching (Hall's-condition violation), every LAP method will
-  # raise. Fall back to greedy_matching so callers with strict constraints get
-  # the partial matching the C++ greedy can produce instead of a hard error.
   res <- tryCatch(
     do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params)),
     error = function(e) NULL
   )
 
+  padded <- NULL
   if (is.null(res)) {
+    padded <- .pad_forbidden(sub, sub_feasible)
+    if (!is.null(padded)) {
+      res <- tryCatch(
+        do.call(solver_fn, c(list(padded, maximize = FALSE), solver_params)),
+        error = function(e) NULL
+      )
+      if (is.null(res)) {
+        padded <- NULL
+      }
+    }
+  }
+
+  if (is.null(res)) {
+    # Neither the direct nor the padded solve returned. Greedy still produces a
+    # partial matching, but it is not the optimal one, so say so rather than
+    # letting an optimal request come back quietly downgraded.
     res <- tryCatch(
       greedy_matching(sub, strategy = "sorted"),
       error = function(e) NULL
@@ -60,11 +99,24 @@
                   matched_rows = integer(0),
                   matched_cols = integer(0)))
     }
+    warning("constraints admit no complete matching and the cost range is too ",
+            "wide to solve the maximum-cardinality problem exactly; returning ",
+            "a greedy partial matching, which is not optimal. Relax ",
+            "max_distance/calipers or rescale the covariates to recover an ",
+            "optimal result.", call. = FALSE)
   }
 
   match_vec <- as.integer(res$match)
   matched_sub_rows <- which(match_vec > 0L)
   matched_sub_cols <- match_vec[matched_sub_rows]
+
+  if (!is.null(padded)) {
+    # Drop the pairs that were only matched through a sentinel edge.
+    keep <- sub_feasible[cbind(matched_sub_rows, matched_sub_cols)]
+    matched_sub_rows <- matched_sub_rows[keep]
+    matched_sub_cols <- matched_sub_cols[keep]
+  }
+
   matched_rows <- orig_rows[matched_sub_rows]
   matched_cols <- orig_cols[matched_sub_cols]
 
@@ -76,10 +128,10 @@
 # exactly what lazy mode exists to avoid); instead the FULL problem is
 # solved directly, and an InfeasibleException from the solver is treated the
 # same way a fully-infeasible dense submatrix is: everyone unmatched, no
-# hard error. This is a real, coarser fallback than the dense path (which
-# recovers a partial matching via greedy on Hall's-condition violations) --
-# greedy_matching has no lazy-cost-source support, so it isn't available as
-# a fallback here.
+# hard error. This is a real, coarser fallback than the dense path, which
+# prunes and then recovers the maximum-cardinality minimum-cost matching by
+# sentinel padding; both steps need the materialized matrix a lazy cost
+# source exists to avoid, so neither is available here.
 .solve_lazy_with_partial_feasibility <- function(cost_matrix, solver_fn,
                                                  solver_params = list()) {
   if (identical(solver_fn, greedy_matching)) {
@@ -95,11 +147,11 @@
 
   if (inherits(res, "error")) {
     warning("memory_mode = \"lazy\" found no feasible full matching under the current ",
-            "constraints (", conditionMessage(res), "). Unlike memory_mode = \"dense\", ",
-            "there is no greedy fallback yet for a lazy cost source, so all units are ",
-            "reported unmatched rather than a partial matching. Use memory_mode = ",
-            "\"dense\" to recover a partial matching, or relax max_distance/calipers.",
-            call. = FALSE)
+            "constraints (", conditionMessage(res), "). Recovering the partial ",
+            "matching needs the materialized cost matrix that lazy mode exists to ",
+            "avoid, so all units are reported unmatched. Use memory_mode = ",
+            "\"dense\" for the maximum-cardinality minimum-cost partial matching, ",
+            "or relax max_distance/calipers.", call. = FALSE)
     return(list(result = NULL, matched_rows = integer(0), matched_cols = integer(0)))
   }
 
@@ -535,6 +587,15 @@
     check_full_matching(result)
   }
 
+  # Before the truncation below removes info$solver and return_unmatched removes
+  # the unmatched ids, both of which the status is read from.
+  result$status <- .matching_status(
+    solver           = result$info$solver,
+    greedy           = identical(method_label, "greedy"),
+    n_pairs          = nrow(result$pairs),
+    n_unmatched_left = length(result$unmatched$left)
+  )
+
   if (!return_unmatched) {
     result$unmatched <- NULL
   }
@@ -789,6 +850,12 @@
 #'   - `pairs`: Tibble of matched pairs with distances
 #'   - `unmatched`: List of unmatched left and right IDs
 #'   - `info`: Matching diagnostics and metadata
+#'   - `status`: One of [solver_status_values()], computed from what the solve
+#'     achieved. `"optimal"` when every left unit found a partner under an
+#'     optimal method, `"partial"` when constraints left some unmatched,
+#'     `"heuristic"` when a greedy method ran, either because it was asked for
+#'     or because the constrained path fell back to it, and `"infeasible"` when
+#'     nothing could be matched.
 #'
 #' @examples
 #' # Basic matching
@@ -958,6 +1025,17 @@ match_couples <- function(left, right = NULL,
   result$info$n_right <- nrow(right)
   if (replace) result$info$replace <- TRUE
   if (ratio > 1L) result$info$ratio <- ratio
+
+  # Computed here because both inputs are about to go: info$solver is dropped by
+  # the truncation below and unmatched by return_unmatched = FALSE. Status sits
+  # at the top level for the same reason -- inside info it would not survive a
+  # default call.
+  result$status <- .matching_status(
+    solver           = result$info$solver,
+    greedy           = greedy,
+    n_pairs          = nrow(result$pairs),
+    n_unmatched_left = length(result$unmatched$left)
+  )
 
   if (!return_unmatched) {
     result$unmatched <- NULL
@@ -1153,6 +1231,9 @@ print.matching_result <- function(x, ...) {
   }
 
   cat("Total distance:", sprintf("%.4f", x$info$total_distance), "\n")
+  if (!is.null(x$status)) {
+    cat("Status:", x$status, "\n")
+  }
 
   if (nrow(x$pairs) > 0) {
     cat("\nMatched pairs:\n")

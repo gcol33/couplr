@@ -24,11 +24,16 @@ namespace lap {
 //   maximize: If true, find maximum weight matching (costs negated internally)
 //
 // Returns:
-//   LapResult with 0-based assignment and total cost (using original costs)
+//   LapResult with 0-based assignment and total cost (using original costs).
+//   status is "optimal" when pricing reached the simplex optimality condition,
+//   and "iteration_limit" when the pivot cap ended the loop first, in which case
+//   the assignment is feasible but its optimality is unproven.
 //
 // Throws:
-//   InfeasibleException if no valid matching exists
+//   InfeasibleException if no assignment covers every row
 //   DimensionException if nrow > ncol
+//   ConvergenceException if the final basis leaves a row unmatched even though
+//     a matching covering every row was found before the pivot loop
 LapResult solve_network_simplex(const CostMatrix& cost, bool maximize = false);
 
 }  // namespace lap

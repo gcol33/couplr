@@ -10,7 +10,10 @@ struct FullMatchResult {
     std::vector<int> right_to_group;  // For each right unit j: which left unit (0-based), -1 if unmatched
     std::vector<int> left_to_group;   // For each left unit i: group ID (0-based), -1 if unmatched
     double total_cost;
-    std::string status;               // "optimal" or "infeasible"
+    // "optimal"    every unit placed in a group that meets min_controls
+    // "partial"    some groups formed, some units left over
+    // "infeasible" no group meets the requested bounds
+    std::string status;
     int n_groups;
 };
 

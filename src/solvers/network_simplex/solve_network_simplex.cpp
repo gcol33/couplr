@@ -11,6 +11,7 @@
 #include <vector>
 #include <limits>
 #include <cmath>
+#include <string>
 
 namespace lap {
 
@@ -62,24 +63,31 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     couplr::ns::NSState state;
     couplr::ns::build_assignment_network(state, cost_data.data(), n_rows, n_cols);
 
-    // Initialize spanning tree with greedy solution
-    couplr::ns::initialize_spanning_tree_greedy(state);
+    // Initialize the spanning tree from a maximum-cardinality matching on the
+    // allowed edges. ensure_each_row_has_option() above only rules out a row
+    // with no edges at all; Hall's condition is decided here.
+    const int matched_rows = couplr::ns::initialize_spanning_tree_greedy(state);
+    if (matched_rows < n_rows) {
+        LAP_THROW_INFEASIBLE(
+            "Infeasible: no assignment covers every row (a maximum matching on "
+            "the allowed edges covers " + std::to_string(matched_rows) + " of " +
+            std::to_string(n_rows) + " rows)");
+    }
 
     // Compute initial potentials
     couplr::ns::compute_potentials(state);
 
-    // Main simplex loop.  Practical bound: O(n^2) pivots suffices for assignment.
-    // num_arcs * num_nodes is O(n^3) and caused ~100 s at n=200; cap here prevents runaway.
-    // Computed in 64-bit: 4 * num_nodes^2 overflows a 32-bit int near n ~ 11500.
-    long long max_iterations =
-        4LL * static_cast<long long>(state.num_nodes) * state.num_nodes;
+    // Main simplex loop. It ends either on the optimality condition, when
+    // pricing scans every arc without finding a negative reduced cost, or on
+    // the pivot cap. Which one happened is what the status is computed from.
+    const long long max_pivots = couplr::ns::pivot_limit(state.num_nodes);
+    couplr::ns::Termination termination = couplr::ns::Termination::PivotLimit;
 
-    for (long long iter = 0; iter < max_iterations; ++iter) {
-        // Find entering arc
+    for (long long iter = 0; iter < max_pivots; ++iter) {
         int entering = couplr::ns::find_entering_arc(state);
 
         if (entering == couplr::ns::NO_ARC) {
-            // Optimal: no arc with negative reduced cost
+            termination = couplr::ns::Termination::Optimality;
             break;
         }
 
@@ -91,7 +99,8 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     }
 
     // Extract assignment from solution
-    couplr::ns::NSResult ns_result = couplr::ns::extract_assignment(state);
+    couplr::ns::NSResult ns_result =
+        couplr::ns::extract_assignment(state, termination);
 
     // Convert NSResult to LapResult
     std::vector<int> assignment = std::move(ns_result.assignment);
@@ -101,7 +110,13 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     for (int i = 0; i < n_rows; ++i) {
         int j = assignment[i];
         if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
+            // A matching covering every row was found before the pivot loop, so
+            // this is a basis that stopped carrying that flow, not an input with
+            // no assignment.
+            LAP_THROW_CONVERGENCE(
+                "network_simplex: final basis leaves row " + std::to_string(i + 1) +
+                " unmatched after " + std::to_string(ns_result.pivot_count) +
+                " pivots");
         }
         if (!cost.allowed(i, j)) {
             LAP_THROW_INFEASIBLE("Chosen forbidden edge");
@@ -113,7 +128,7 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
         total += c;
     }
 
-    return LapResult(std::move(assignment), total, "optimal");
+    return LapResult(std::move(assignment), total, ns_result.status);
 }
 
 }  // namespace lap

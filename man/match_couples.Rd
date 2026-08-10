@@ -115,6 +115,12 @@ A list with class "matching_result" containing:
 \item \code{pairs}: Tibble of matched pairs with distances
 \item \code{unmatched}: List of unmatched left and right IDs
 \item \code{info}: Matching diagnostics and metadata
+\item \code{status}: One of \code{\link[=solver_status_values]{solver_status_values()}}, computed from what the solve
+achieved. \code{"optimal"} when every left unit found a partner under an
+optimal method, \code{"partial"} when constraints left some unmatched,
+\code{"heuristic"} when a greedy method ran, either because it was asked for
+or because the constrained path fell back to it, and \code{"infeasible"} when
+nothing could be matched.
 }
 }
 \description{

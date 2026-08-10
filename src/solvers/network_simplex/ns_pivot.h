@@ -9,7 +9,10 @@ namespace couplr {
 namespace ns {
 
 // Find entering arc using block search pricing.
-// Returns arc index with negative reduced cost, or NO_ARC if optimal.
+// Returns an arc index whose effective reduced cost is below -EPSILON, or
+// NO_ARC. The block-size early exit only fires once a candidate has been found,
+// so NO_ARC is returned only after all num_arcs arcs have been priced: it is
+// the optimality condition over the whole arc set, not over one block.
 inline int find_entering_arc(NSState& state) {
     int num_arcs = state.num_arcs;
     int block_size = state.block_size;
@@ -276,12 +279,18 @@ inline void do_pivot(NSState& state, const PivotInfo& info) {
 }
 
 // Extract assignment from the flow solution.
-inline NSResult extract_assignment(const NSState& state) {
+//
+// `termination` is the pivot loop's own stopping reason and is the sole source
+// of the status: "optimal" requires that pricing reached the simplex optimality
+// condition, which all-rows-matched does not test. Rows the basis leaves without
+// a column are counted, not interpreted; the caller holds the feasibility
+// information needed to say what an unmatched row means.
+inline NSResult extract_assignment(const NSState& state, Termination termination) {
     NSResult result;
-    result.assignment.resize(state.n_rows, -1);
-    result.total_cost = 0.0;
-    result.optimal    = true;
+    result.assignment.assign(state.n_rows, -1);
+    result.total_cost  = 0.0;
     result.pivot_count = state.pivot_count;
+    result.n_unmatched = 0;
 
     for (int i = 0; i < state.n_rows; ++i) {
         for (int j = 0; j < state.n_cols; ++j) {
@@ -292,16 +301,11 @@ inline NSResult extract_assignment(const NSState& state) {
                 break;
             }
         }
+        if (result.assignment[i] < 0) ++result.n_unmatched;
     }
 
-    for (int i = 0; i < state.n_rows; ++i) {
-        if (result.assignment[i] < 0) {
-            result.optimal = false;
-            result.status  = "infeasible";
-            return result;
-        }
-    }
-    result.status = "optimal";
+    result.status = (termination == Termination::Optimality) ? "optimal"
+                                                             : "iteration_limit";
     return result;
 }
 

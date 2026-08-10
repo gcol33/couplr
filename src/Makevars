@@ -13,6 +13,8 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           interface/probe_cost_matrix.cpp \
           core/lap_utils.cpp \
           core/lap_utils_rcpp.cpp \
+          core/lap_certify_rcpp.cpp \
+          core/lap_hall_rcpp.cpp \
           solvers/greedy_matching.cpp \
           solvers/greedy_matching_rcpp.cpp \
           solvers/solve_auction.cpp \
@@ -72,6 +74,8 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           interface/probe_cost_matrix.o \
           core/lap_utils.o \
           core/lap_utils_rcpp.o \
+          core/lap_certify_rcpp.o \
+          core/lap_hall_rcpp.o \
           solvers/greedy_matching.o \
           solvers/greedy_matching_rcpp.o \
           solvers/solve_auction.o \

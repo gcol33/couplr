@@ -86,6 +86,15 @@ checks optimality). See \code{\link{solver_status_values}}.}
 \code{vars}}
 \item{unmatched}{Left and right IDs that no group contains. Every unit is
 either a row of \code{groups} or an entry here.}
+\item{potentials}{Node potentials from the flow solve, a list with elements
+\code{left} and \code{right} holding one value per unit. They are one
+representative of the dual, in the gauge the solver fixes. Present for
+\code{method = "optimal"} only.}
+\item{certificate}{A \code{flow_certificate} from
+\code{\link{verify_flow}}, checking the solved flow and its potentials
+against the optimality conditions. \code{status} says what the solver
+terminated on; this says what was proven. Present for
+\code{method = "optimal"} only.}
 }
 }
 \description{

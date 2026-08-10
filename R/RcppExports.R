@@ -141,6 +141,18 @@ lap_solve_full_matching <- function(cost, min_controls, max_controls_val) {
     .Call(`_couplr_lap_solve_full_matching`, cost, min_controls, max_controls_val)
 }
 
+lap_flow_solve <- function(n_nodes, supply, tail, head, lower, upper, cost, tol = 1e-12, relax_eps = 1e-18, max_augmentations = 0.0, return_potentials = TRUE) {
+    .Call(`_couplr_lap_flow_solve`, n_nodes, supply, tail, head, lower, upper, cost, tol, relax_eps, max_augmentations, return_potentials)
+}
+
+lap_flow_certify <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol) {
+    .Call(`_couplr_lap_flow_certify`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol)
+}
+
+lap_flow_compile_full_match <- function(cost, min_controls, max_controls) {
+    .Call(`_couplr_lap_flow_compile_full_match`, cost, min_controls, max_controls)
+}
+
 greedy_matching <- function(cost_matrix, maximize = FALSE, strategy = "row_best") {
     .Call(`_couplr_greedy_matching`, cost_matrix, maximize, strategy)
 }

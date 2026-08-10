@@ -33,6 +33,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${SRC_DIR}
     ${SRC_DIR}/core
+    ${SRC_DIR}/flow
     ${SRC_DIR}/solvers
     ${SRC_DIR}/solvers/network_simplex
     ${SRC_DIR}/solvers/orlin_ahuja
@@ -44,6 +45,11 @@ include_directories(
 set(CPP_IMPL_SOURCES
     # Core utilities
     ${SRC_DIR}/core/lap_utils.cpp
+
+    # Flow model
+    ${SRC_DIR}/flow/flow_expand.cpp
+    ${SRC_DIR}/flow/flow_solve.cpp
+    ${SRC_DIR}/flow/flow_compile.cpp
 
     # Solvers
     ${SRC_DIR}/solvers/jv_core.cpp
@@ -98,6 +104,9 @@ set(TEST_SOURCES
     tests/test_sinkhorn.cpp
     tests/test_ssap_bucket.cpp
     tests/test_ground_truth.cpp
+    tests/test_flow_model.cpp
+    tests/test_flow_compile.cpp
+    tests/test_flow_certify.cpp
 )
 
 # Main test executable

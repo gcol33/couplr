@@ -68,6 +68,21 @@ Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_full_matching_impl(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val);
 
 // =======================
+// Forward decls for the flow model (implemented in flow/flow_rcpp.cpp)
+Rcpp::List flow_solve_impl(int n_nodes, Rcpp::NumericVector supply,
+                           Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                           Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                           Rcpp::NumericVector cost, double tol, double relax_eps,
+                           double max_augmentations, bool return_potentials);
+Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
+                             Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                             Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                             Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                             Rcpp::NumericVector potential, double tol);
+Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
+                                        double min_controls, double max_controls);
+
+// =======================
 // Pixel morphing core (implemented in morph_pixel_level.cpp)
 // =======================
 extern Rcpp::List analyze_color_overlap(const Rcpp::NumericVector& pixelsA,
@@ -336,6 +351,37 @@ Rcpp::List lap_solve_network_simplex(Rcpp::NumericMatrix cost) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_full_matching(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val) {
   return solve_full_matching_impl(cost, min_controls, max_controls_val);
+}
+
+// =======================
+// Flow model exports
+// =======================
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply,
+                          Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                          Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                          Rcpp::NumericVector cost, double tol = 1e-12,
+                          double relax_eps = 1e-18, double max_augmentations = 0.0,
+                          bool return_potentials = true) {
+  return flow_solve_impl(n_nodes, supply, tail, head, lower, upper, cost, tol,
+                         relax_eps, max_augmentations, return_potentials);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_certify(int n_nodes, Rcpp::NumericVector supply,
+                            Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                            Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                            Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                            Rcpp::NumericVector potential, double tol) {
+  return flow_certify_impl(n_nodes, supply, tail, head, lower, upper, cost, flow,
+                           potential, tol);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
+                                       double min_controls, double max_controls) {
+  return flow_compile_full_match_impl(cost, min_controls, max_controls);
 }
 
 // =======================

@@ -39,7 +39,11 @@ test_that("autoplot.matching_result handles empty result", {
   left <- data.frame(id = 1:3, x = c(100, 200, 300))
   right <- data.frame(id = 4:6, x = c(1, 2, 3))
   # greedy matching returns empty result rather than erroring
-  result <- match_couples(left, right, vars = "x", max_distance = 0.001, method = "greedy")
+  expect_warning(
+    result <- match_couples(left, right, vars = "x", max_distance = 0.001,
+                            method = "greedy"),
+    "No valid pairs"
+  )
 
   expect_message(ggplot2::autoplot(result), "No matched pairs")
 })

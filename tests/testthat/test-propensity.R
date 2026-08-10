@@ -9,7 +9,8 @@ test_that("ps_match works with formula", {
     age = rnorm(n, 50, 10),
     income = rnorm(n, 50000, 15000)
   )
-  result <- ps_match(treated ~ age + income, data = data, treatment = "treated")
+  result <- ps_match(treated ~ age + income, data = data, treatment = "treated",
+                     check_costs = FALSE)
 
   expect_s3_class(result, "matching_result")
   expect_true(nrow(result$pairs) > 0)
@@ -26,7 +27,8 @@ test_that("ps_match works with pre-fitted model", {
     age = rnorm(n, 50, 10)
   )
   model <- glm(treated ~ age, data = data, family = binomial())
-  result <- ps_match(data = data, treatment = "treated", ps_model = model)
+  result <- ps_match(data = data, treatment = "treated", ps_model = model,
+                     check_costs = FALSE)
 
   expect_s3_class(result, "matching_result")
   expect_true(nrow(result$pairs) > 0)
@@ -63,7 +65,7 @@ test_that("ps_match stores caliper info", {
     x = rnorm(n)
   )
   result <- ps_match(treated ~ x, data = data, treatment = "treated",
-                     caliper_sd = 0.3)
+                     caliper_sd = 0.3, check_costs = FALSE)
 
   expect_equal(result$info$caliper_sd, 0.3)
   expect_true(result$info$caliper_value > 0)
@@ -77,7 +79,8 @@ test_that("ps_match works with logical treatment", {
     treated = sample(c(TRUE, FALSE), n, replace = TRUE),
     x = rnorm(n)
   )
-  result <- ps_match(treated ~ x, data = data, treatment = "treated")
+  result <- ps_match(treated ~ x, data = data, treatment = "treated",
+                     check_costs = FALSE)
 
   expect_s3_class(result, "matching_result")
 })
@@ -91,7 +94,7 @@ test_that("ps_match works with replace and ratio", {
     x = rnorm(n)
   )
   result <- ps_match(treated ~ x, data = data, treatment = "treated",
-                     replace = TRUE, ratio = 2L)
+                     replace = TRUE, ratio = 2L, check_costs = FALSE)
 
   expect_s3_class(result, "matching_result")
 })

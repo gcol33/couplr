@@ -213,7 +213,8 @@ test_that("constraints work end-to-end via match_couples", {
   left <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 5, 3.1))
 
-  result <- match_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5,
+                          check_costs = FALSE)
 
   expect_equal(nrow(result$pairs), 2)
   expect_true(all(result$pairs$distance <= 0.5))
@@ -234,7 +235,8 @@ test_that("calipers work end-to-end via match_couples", {
   result <- match_couples(
     left, right,
     vars = c("x", "y"),
-    calipers = list(y = 2)
+    calipers = list(y = 2),
+    check_costs = FALSE
   )
 
   # Middle pair should be excluded (y diff = 5 > 2)

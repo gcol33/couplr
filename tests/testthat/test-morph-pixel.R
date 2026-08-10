@@ -318,8 +318,11 @@ test_that("pixel_morph mode = 'color_match' produces a valid image", {
   skip_if_not_installed("magick")
   imgs <- get_test_images()
 
-  img <- pixel_morph(imgs$A, imgs$B, mode = "color_match",
-                     n_frames = 3, show = FALSE)
+  expect_warning(
+    img <- pixel_morph(imgs$A, imgs$B, mode = "color_match",
+                       n_frames = 3, show = FALSE),
+    "not a permutation"
+  )
   info <- magick::image_info(img)
   expect_gt(info$width, 0)
   expect_gt(info$height, 0)

@@ -65,7 +65,8 @@ test_that("match_couples respects max_distance", {
   left  <- data.frame(id = 1:3, x = c(1, 2, 3))
   right <- data.frame(id = 4:6, x = c(1.1, 5, 3.1))
 
-  result <- match_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5,
+                          check_costs = FALSE)
 
   expect_equal(nrow(result$pairs), 2)
   expect_true(all(result$pairs$distance <= 0.5))
@@ -85,8 +86,9 @@ test_that("match_couples respects calipers", {
 
   result <- match_couples(
     left, right,
-    vars     = c("x", "y"),
-    calipers = list(y = 2)
+    vars        = c("x", "y"),
+    calipers    = list(y = 2),
+    check_costs = FALSE
   )
 
   # Should exclude middle pair where y differs by 5
@@ -1155,8 +1157,8 @@ test_that("distance object reusable across multiple matches", {
   dist_obj <- compute_distances(left, right, vars = c("x", "y"), scale = "standardize")
 
   # Use for multiple matching strategies
-  result1 <- match_couples(dist_obj, max_distance = 0.5)
-  result2 <- match_couples(dist_obj, max_distance = 1.0)
+  result1 <- match_couples(dist_obj, max_distance = 0.5, check_costs = FALSE)
+  result2 <- match_couples(dist_obj, max_distance = 1.0, check_costs = FALSE)
   result3 <- match_couples(dist_obj, max_distance = 2.0)
   result4 <- match_couples(dist_obj, strategy = "sorted", method = "greedy")
 

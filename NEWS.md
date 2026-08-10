@@ -1,3 +1,154 @@
+# couplr 1.6.0
+
+## New features
+
+* **`verify_assignment()` checks an assignment against the optimality
+  conditions and reports which of them hold.** Until now a result's
+  `status` was the solver's word for it. `verify_assignment()` returns a
+  checkable certificate instead: primal feasibility, dual feasibility, and
+  complementary slackness on both matched arcs and unmatched columns.
+  `certified_optimal` is `TRUE` only when every one of them holds.
+
+  The check needs dual variables and does not trust them. Dual feasibility is
+  tested over every admissible pair, so duals that certify nothing fail the
+  check rather than pass it. Optimal duals are shared by all optimal solutions
+  of a linear program, which is what makes it possible to certify a matching
+  from one solver against duals from another, including the solvers that return
+  no duals of their own.
+
+  Both halves of complementary slackness are checked, and the second half is not
+  optional. A verifier testing only tightness on matched arcs accepts a solution
+  whose dual bound equals the true optimum while its primal cost sits above it,
+  because a freed column carries `v_j < 0` (#28).
+
+* **`assignment()` gained a `cardinality` argument**, with `"maximum"` and
+  `"fixed"` alongside the previous behaviour, now named `"complete"`.
+  `"maximum"` returns as many pairs as the admissible edges allow and the
+  cheapest total among matchings of that size; `"fixed"` returns exactly
+  `n_matches` pairs at minimum total cost. Both are solved exactly by the same
+  solver as `"complete"`: dummy columns are appended, priced so that the
+  solver's own optimum is the requested objective, and a row that took a dummy
+  column comes back unmatched. `unmatched_penalty` replaces the lexicographic
+  objective under `"maximum"` with a single one, where a pair costing more than
+  the penalty is worth dropping.
+
+* **`explain_dispatch()` reports which solver `method = "auto"` selects, and
+  why**, without solving: the rule that fired, the property that triggered it,
+  the rules tested first that did not fire, and the shape the solver will
+  receive. The dispatch rules moved out of the branch chain in `assignment()`
+  into one ordered table that both the dispatch and the report read, so the
+  reported reason is the one that was acted on. Dispatch decisions themselves
+  are unchanged.
+
+* **`solver_status_values()` gives the closed set of values `status` can
+  take**: `"optimal"`, `"partial"`, `"infeasible"`, `"eps_optimal"`,
+  `"iteration_limit"`, `"heuristic"`. Each is documented in terms of what the
+  solver terminated on. A status outside the set is now an error at the point a
+  result is constructed rather than a string that reaches the caller.
+
+* `match_couples()` and `full_match()` results carry a `status` element from the
+  same vocabulary, so the matching layer reports what it achieved rather than
+  leaving the caller to infer it from the number of unmatched units. It is
+  computed before `return_unmatched = FALSE` and the `info` truncation remove
+  the fields it is derived from, and it sits at the top level for that reason.
+
+* Solve results carry a `dispatch` element recording how `method` was chosen,
+  and `assignment()` results additionally carry `cardinality`, `n_matched` and
+  `unmatched`.
+
+## Bug fixes
+
+* **`status` is computed from what the solver terminated on, instead of being
+  a literal.** The generic solve paths assigned `status = "optimal"`
+  unconditionally, so the field asserted optimality no matter how the solver
+  stopped (#28). Three consequences of that are fixed:
+
+  * `network_simplex` reported `"optimal"` when the pivot cap ended the loop
+    with an improving arc still available. It now reports `"iteration_limit"`,
+    which says the result is feasible and its optimality unproven (#16).
+
+  * `network_simplex` decided infeasibility by looking for unmatched rows after
+    the pivot loop, which conflated an input admitting no complete assignment
+    with a basis that stopped carrying the flow. Hall's condition is now decided
+    before the loop, from a maximum-cardinality matching on the allowed edges,
+    and the two cases raise different errors (#16).
+
+  * `full_match()` reported `"optimal"` for results that were not, and units in
+    a group that lost its counterpart appeared in neither `groups` nor
+    `unmatched` (#20). The status now comes from actual flow against required
+    flow and distinguishes `"optimal"`, `"partial"` and `"infeasible"`;
+    `unmatched` is the complement of the groups actually emitted, so every unit
+    is in exactly one of the two; and `info$n_groups` counts the groups that
+    were written rather than the ones the flow solver opened.
+
+* **Constrained matching is now optimal instead of greedy.** When calipers,
+  `max_distance` or explicit forbidden pairs left the admissible bipartite
+  graph without a complete matching, `match_couples()` caught the solver's
+  infeasibility error and returned `greedy_matching(strategy = "sorted")`
+  instead. The result was a valid partial matching, so nothing failed and
+  nothing warned, but it was not the optimal one and the reported `method`
+  still named the optimal solver that had been asked for.
+
+  Such a problem has a lexicographic optimum: the largest number of admissible
+  pairs first, then the smallest total distance among matchings of that size.
+  couplr now reaches it by replacing forbidden entries with a finite sentinel,
+  chosen above `(k + 1)` times the spread of the admissible costs so that one
+  sentinel edge outweighs any saving on the real edges, re-solving with the
+  requested optimal solver, and dropping the pairs that came back on a
+  sentinel edge.
+
+  The difference is not cosmetic. On the `hospital_staff` example with
+  `calipers = list(age = 3, experience_years = 2)` and `max_distance = 1.5`,
+  which leaves 2,173 admissible pairs out of 60,000, the greedy fallback
+  matched 180 of 200 treated units and the optimal solve matches 197.
+
+  Greedy is still used as a last resort when the cost range is too wide for the
+  sentinel arithmetic to stay exact in a double, and that case now warns
+  explicitly that the result is not optimal. `method = "greedy"` is unaffected.
+
+* `memory_mode = "lazy"` reports the same situation more accurately: recovering
+  the partial matching needs the materialized cost matrix that lazy mode exists
+  to avoid, so the warning now points at `memory_mode = "dense"` for the
+  maximum-cardinality minimum-cost result rather than describing a greedy
+  fallback that no longer exists.
+
+## Testing
+
+* New `test-constrained-optimality.R` checks the lexicographic contract against
+  exhaustive enumeration over randomised instances with forbidden edges, rather
+  than checking only that a matching of the right shape comes back.
+
+* New `test-certificate.R` checks the certificate in both directions. It sweeps
+  every solver in the registry over three shapes and three cost kinds, plus
+  maximization, negative costs, forbidden edges and both rectangular
+  orientations, and requires each answer to certify. It then requires the
+  certificate to reject a permuted matching, a matching claiming a column twice,
+  a matching using a forbidden pair, an inflated row potential, and a lowered
+  potential on an unmatched column. A verifier that only ever returns `TRUE`
+  proves nothing, so the rejection cases are what give the accepting cases their
+  meaning.
+
+  The sweep matters because `jv` had become the de facto oracle for roughly
+  seventeen per-solver test files while being ground-truthed against brute force
+  only at `n <= 6`. A certificate is checked against the cost matrix itself and
+  does not rely on any solver being right.
+
+* Solver and shape combinations known to return a suboptimal answer are held in
+  one registry, `cert_known_suboptimal()`, and are both excluded from the sweep
+  and separately asserted to still fail. Fixing one breaks that test, so the
+  entry has to be removed rather than quietly masking a bug that came back.
+
+## Known issues
+
+* **`method = "gabow_tarjan"` returns suboptimal assignments on wide (`n < m`)
+  problems**; square problems are unaffected (#31). The certification sweep
+  found this on its first randomised run: 179 of 200 random wide problems came
+  back above the optimum, and a 3 by 6 counterexample returns 20 against a
+  brute-forced optimum of 8. The existing rectangular test asserted the number
+  of matched rows and nothing about cost, which is why the suite had not caught
+  it. `method = "auto"` never dispatches to this solver, so only an explicit
+  request is affected.
+
 # couplr 1.5.5
 
 ## Performance

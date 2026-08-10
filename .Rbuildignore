@@ -32,6 +32,8 @@
 ^build_site\.R$
 ^debug_.*\.R$
 ^todo\.md$
+^roadmap\.md$
+^current\.md$
 ^ALGORITHM_ROADMAP\.md$
 ^NETWORK_SIMPLEX_PLAN\.md$
 ^VIGNETTE_IMPROVEMENT_PLAN\.md$

@@ -477,6 +477,60 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_flow_solve
+Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply, Rcpp::IntegerVector tail, Rcpp::IntegerVector head, Rcpp::NumericVector lower, Rcpp::NumericVector upper, Rcpp::NumericVector cost, double tol, double relax_eps, double max_augmentations, bool return_potentials);
+RcppExport SEXP _couplr_lap_flow_solve(SEXP n_nodesSEXP, SEXP supplySEXP, SEXP tailSEXP, SEXP headSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP costSEXP, SEXP tolSEXP, SEXP relax_epsSEXP, SEXP max_augmentationsSEXP, SEXP return_potentialsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n_nodes(n_nodesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type supply(supplySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type tail(tailSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type head(headSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type relax_eps(relax_epsSEXP);
+    Rcpp::traits::input_parameter< double >::type max_augmentations(max_augmentationsSEXP);
+    Rcpp::traits::input_parameter< bool >::type return_potentials(return_potentialsSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_solve(n_nodes, supply, tail, head, lower, upper, cost, tol, relax_eps, max_augmentations, return_potentials));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_flow_certify
+Rcpp::List lap_flow_certify(int n_nodes, Rcpp::NumericVector supply, Rcpp::IntegerVector tail, Rcpp::IntegerVector head, Rcpp::NumericVector lower, Rcpp::NumericVector upper, Rcpp::NumericVector cost, Rcpp::NumericVector flow, Rcpp::NumericVector potential, double tol);
+RcppExport SEXP _couplr_lap_flow_certify(SEXP n_nodesSEXP, SEXP supplySEXP, SEXP tailSEXP, SEXP headSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP costSEXP, SEXP flowSEXP, SEXP potentialSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n_nodes(n_nodesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type supply(supplySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type tail(tailSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type head(headSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type flow(flowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type potential(potentialSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_certify(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_flow_compile_full_match
+Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost, double min_controls, double max_controls);
+RcppExport SEXP _couplr_lap_flow_compile_full_match(SEXP costSEXP, SEXP min_controlsSEXP, SEXP max_controlsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< double >::type min_controls(min_controlsSEXP);
+    Rcpp::traits::input_parameter< double >::type max_controls(max_controlsSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_compile_full_match(cost, min_controls, max_controls));
+    return rcpp_result_gen;
+END_RCPP
+}
 // greedy_matching
 Rcpp::List greedy_matching(Rcpp::NumericMatrix cost_matrix, bool maximize, std::string strategy);
 RcppExport SEXP _couplr_greedy_matching(SEXP cost_matrixSEXP, SEXP maximizeSEXP, SEXP strategySEXP) {
@@ -786,6 +840,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_jv_duals", (DL_FUNC) &_couplr_lap_solve_jv_duals, 2},
     {"_couplr_lap_solve_network_simplex", (DL_FUNC) &_couplr_lap_solve_network_simplex, 1},
     {"_couplr_lap_solve_full_matching", (DL_FUNC) &_couplr_lap_solve_full_matching, 3},
+    {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 11},
+    {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
+    {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},
     {"_couplr_greedy_matching", (DL_FUNC) &_couplr_greedy_matching, 3},
     {"_couplr_analyze_color_overlap_cpp", (DL_FUNC) &_couplr_analyze_color_overlap_cpp, 5},
     {"_couplr_compute_pixel_cost_cpp", (DL_FUNC) &_couplr_compute_pixel_cost_cpp, 6},

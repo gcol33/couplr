@@ -4,7 +4,7 @@ test_that("replace = TRUE allows reuse of right units", {
   left <- data.frame(id = 1:5, x = c(1, 1.1, 1.2, 5, 6))
   right <- data.frame(id = 6:8, x = c(1, 5, 6))
   result <- match_couples(left, right, vars = "x", replace = TRUE,
-                          return_diagnostics = TRUE)
+                          return_diagnostics = TRUE, check_costs = FALSE)
 
   # Multiple left units can match to the same right unit
   expect_true(nrow(result$pairs) >= 3)
@@ -16,7 +16,7 @@ test_that("replace = TRUE allows reuse of right units", {
 test_that("replace = FALSE gives 1:1 matching (default)", {
   left <- data.frame(id = 1:5, x = c(1, 1.1, 1.2, 5, 6))
   right <- data.frame(id = 6:10, x = c(1, 2, 3, 5, 6))
-  result <- match_couples(left, right, vars = "x")
+  result <- match_couples(left, right, vars = "x", check_costs = FALSE)
 
   # Each right unit matched at most once
   right_counts <- table(result$pairs$right_id)

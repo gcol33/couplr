@@ -276,7 +276,8 @@ test_that("match_couples with caliper", {
   skip_on_cran()
   left <- data.frame(id = 1:10, x = 1:10, y = rnorm(10))
   right <- data.frame(id = 11:20, x = 1:10 + 0.5, y = rnorm(10))
-  result <- match_couples(left, right, vars = c("x", "y"), caliper = c(x = 1))
+  result <- match_couples(left, right, vars = c("x", "y"), caliper = c(x = 1),
+                          check_costs = FALSE)
   expect_s3_class(result, "matching_result")
 })
 

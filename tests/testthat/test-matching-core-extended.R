@@ -128,7 +128,8 @@ test_that("match_couples require_full_matching errors when not achieved", {
   expect_error(
     match_couples(left, right, vars = "x",
                   max_distance = 1,
-                  require_full_matching = TRUE),
+                  require_full_matching = TRUE,
+                  check_costs = FALSE),
     "Full matching required"
   )
 })

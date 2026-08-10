@@ -55,7 +55,8 @@ test_that("match_couples respects max_distance", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 100))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
-  result <- match_couples(left, right, vars = "x", max_distance = 0.5)
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5,
+                          check_costs = FALSE)
 
   # The unit at x=100 shouldn't be matched (too far from any control)
   expect_true(nrow(result$pairs) < 5)
@@ -123,7 +124,7 @@ test_that("match_couples require_full_matching errors on unmatched", {
 
   expect_error(
     match_couples(left, right, vars = "x", max_distance = 0.5,
-                  require_full_matching = TRUE),
+                  require_full_matching = TRUE, check_costs = FALSE),
     "unmatched"
   )
 })
@@ -254,7 +255,7 @@ test_that("match_couples with distance_object respects max_distance", {
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
   dist_obj <- compute_distances(left, right, vars = "x")
-  result <- match_couples(dist_obj, max_distance = 0.5)
+  result <- match_couples(dist_obj, max_distance = 0.5, check_costs = FALSE)
 
   expect_true(nrow(result$pairs) < 5)
 })
@@ -359,7 +360,7 @@ test_that("match_couples distance_object with max_distance constraint", {
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5))
 
   dist_obj <- compute_distances(left, right, vars = "x")
-  result <- match_couples(dist_obj, max_distance = 0.5)
+  result <- match_couples(dist_obj, max_distance = 0.5, check_costs = FALSE)
 
   expect_true(nrow(result$pairs) < 5)
 })
@@ -369,7 +370,8 @@ test_that("match_couples distance_object with calipers", {
   right <- data.frame(id = 6:10, x = 1.5:5.5, y = c(11, 21, 100, 41, 51))
 
   dist_obj <- compute_distances(left, right, vars = c("x", "y"))
-  result <- match_couples(dist_obj, calipers = list(y = 15))
+  result <- match_couples(dist_obj, calipers = list(y = 15),
+                          check_costs = FALSE)
 
   expect_s3_class(result, "matching_result")
 })

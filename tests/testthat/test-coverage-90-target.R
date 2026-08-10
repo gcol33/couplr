@@ -405,7 +405,8 @@ test_that("match_couples with max_distance", {
   right <- data.frame(id = 1:n, x = (1:n) + 0.1)
 
   # With low max_distance, some pairs may not match
-  result <- match_couples(left, right, vars = "x", max_distance = 0.5, scale = "none")
+  result <- match_couples(left, right, vars = "x", max_distance = 0.5,
+                          scale = "none", check_costs = FALSE)
 
   # All pairs should have distance < 0.5
   expect_true(all(result$pairs$distance < 0.5 | is.na(result$pairs$distance)))

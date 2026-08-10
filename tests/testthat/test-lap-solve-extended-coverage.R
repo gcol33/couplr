@@ -77,9 +77,13 @@ test_that("assignment auto selects hk01 for constant costs", {
 test_that("assignment handles eps parameter for backward compatibility", {
   skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
-  # eps should be used as auction_eps
+  # A caller-supplied epsilon stops the auction short of the terminal epsilon
+  # that makes it exact, so the status reports the bound rather than optimality.
+  # That makes the status itself the evidence that `eps` reached `auction_eps`:
+  # it stays "optimal" when no epsilon is supplied.
   result <- assignment(cost, method = "auction", eps = 1e-6)
-  expect_equal(result$status, "optimal")
+  expect_equal(result$status, "eps_optimal")
+  expect_equal(assignment(cost, method = "auction")$status, "optimal")
 })
 
 # ------------------------------------------------------------------------------

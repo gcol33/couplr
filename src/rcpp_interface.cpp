@@ -154,6 +154,46 @@ Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::Numeri
 }
 
 // [[Rcpp::export]]
+Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
+                             Rcpp::NumericVector u, Rcpp::NumericVector v,
+                             bool maximize, double tol) {
+  return certify_dense_impl(cost, match, u, v, maximize, tol);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                            std::string distance,
+                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                            double max_distance, Rcpp::List calipers,
+                            Rcpp::CharacterVector vars,
+                            Rcpp::IntegerVector match, Rcpp::NumericVector u,
+                            Rcpp::NumericVector v, bool maximize, double tol) {
+  return certify_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
+                           calipers, vars, match, u, v, maximize, tol);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_scan_reduced_costs(Rcpp::NumericMatrix cost, Rcpp::NumericVector u,
+                                  Rcpp::NumericVector v, double tol) {
+  return scan_reduced_costs_impl(cost, u, v, tol);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_hall_witness_dense(Rcpp::NumericMatrix cost) {
+  return hall_witness_dense_impl(cost);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_hall_witness_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                 std::string distance,
+                                 Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                 double max_distance, Rcpp::List calipers,
+                                 Rcpp::CharacterVector vars) {
+  return hall_witness_lazy_impl(left_mat, right_mat, distance, inv_cov,
+                                max_distance, calipers, vars);
+}
+
+// [[Rcpp::export]]
 Rcpp::List lap_kbest_murty(Rcpp::NumericMatrix cost, int k, bool maximize,
                            std::string single_method = "jv") {
   return solve_murty_impl(cost, k, maximize, single_method);

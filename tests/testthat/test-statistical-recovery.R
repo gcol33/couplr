@@ -33,10 +33,12 @@ test_that("prefitted propensity model is applied to the supplied data rows", {
   d <- data.frame(id = 1:n, x = rnorm(n))
   d$treat <- rbinom(n, 1, stats::plogis(-0.4 + 1.4 * d$x))
 
-  # Same model, but one is fit on a row-permuted copy of the data. glm
-  # coefficients are order-invariant, so predict(newdata = d) is identical for
-  # both -> the two matchings must be identical. Using the model's own fitted
-  # values (in training-row order) would misalign the shuffled fit.
+  # Same model, but one is fit on a row-permuted copy of the data. Fitting on a
+  # permutation moves the coefficients by around 1e-15, so predict(newdata = d)
+  # agrees to that tolerance rather than exactly, and the two matchings solve
+  # cost matrices that differ in their last bits. Using the model's own fitted
+  # values (in training-row order) instead of predict(newdata = ) would
+  # misalign the shuffled fit and change the scores outright.
   m       <- stats::glm(treat ~ x, data = d, family = stats::binomial())
   d_shuf  <- d[sample(n), ]
   m_shuf  <- stats::glm(treat ~ x, data = d_shuf, family = stats::binomial())
@@ -44,7 +46,14 @@ test_that("prefitted propensity model is applied to the supplied data rows", {
   r1 <- suppressWarnings(ps_match(data = d, treatment = "treat", ps_model = m))
   r2 <- suppressWarnings(ps_match(data = d, treatment = "treat", ps_model = m_shuf))
 
-  expect_equal(r1$pairs, r2$pairs)
+  # The caliper leaves this problem with several co-optimal assignments, so a
+  # perturbation that small can move which one the solver returns without
+  # changing its quality. Assert the parts that a correctly applied model
+  # fixes: who gets matched, and at what total cost. A model applied in
+  # training-row order fails the cost assertion by a wide margin.
+  expect_setequal(r1$pairs$left_id, r2$pairs$left_id)
+  expect_setequal(r1$pairs$right_id, r2$pairs$right_id)
+  expect_equal(sum(r1$pairs$distance), sum(r2$pairs$distance))
 })
 
 test_that("propensity matching reduces covariate imbalance", {

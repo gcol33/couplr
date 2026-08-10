@@ -56,8 +56,11 @@ test_that("assignment handles ssp as alias for sap", {
 test_that("assignment backward compat: eps maps to auction_eps", {
   skip_on_cran()
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
+  # "eps_optimal" is reported only when an epsilon was supplied, so the status
+  # is what shows `eps` was carried through to `auction_eps`.
   result <- assignment(cost, method = "auction", eps = 1e-6)
-  expect_equal(result$status, "optimal")
+  expect_equal(result$status, "eps_optimal")
+  expect_equal(assignment(cost, method = "auction")$status, "optimal")
 })
 
 test_that("assignment auto selects hk01 for constant costs", {

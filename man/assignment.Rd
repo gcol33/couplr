@@ -13,7 +13,10 @@ assignment(
     "orlin", "network_simplex"),
   auction_eps = NULL,
   eps = NULL,
-  memory_mode = "auto"
+  memory_mode = "auto",
+  cardinality = c("complete", "maximum", "fixed"),
+  n_matches = NULL,
+  unmatched_penalty = NULL
 )
 }
 \arguments{
@@ -94,6 +97,28 @@ to free system RAM (nothing else can be done post-hoc once the matrix
 already exists -- build it via \code{compute_distances(memory_mode = ...)}
 instead to avoid materializing it in the first place). No lazy solver
 exists yet, so \code{memory_mode = "lazy"} currently always errors.}
+
+\item{cardinality}{How many pairs to produce.
+\itemize{
+\item \code{"complete"} (default) — every row is matched; an input admitting
+no complete matching is an error.
+\item \code{"maximum"} — as many pairs as the admissible edges allow, and the
+cheapest total among matchings of that size.
+\item \code{"fixed"} — exactly \code{n_matches} pairs, chosen to minimize total
+cost.
+}
+All three are solved exactly by the same solver: the two non-complete modes
+append dummy columns priced so that the solver's own optimum is the
+requested objective.}
+
+\item{n_matches}{Integer; the number of pairs to produce. Required when
+\code{cardinality = "fixed"}, and not accepted otherwise.}
+
+\item{unmatched_penalty}{Numeric; the cost charged for leaving one row
+unmatched, under \code{cardinality = "maximum"}. Supplying it replaces the
+lexicographic objective with a single one: a pair costing more than the
+penalty is worth dropping. Left \code{NULL}, no pair is ever traded away for a
+cost saving.}
 }
 \value{
 An object of class \code{lap_solve_result}, a list with elements:
@@ -101,8 +126,14 @@ An object of class \code{lap_solve_result}, a list with elements:
 \item \code{match} — integer vector of length \code{min(nrow(cost), ncol(cost))}
 giving the assigned column for each row (0 if unassigned).
 \item \code{total_cost} — numeric scalar, the objective value.
-\item \code{status} — character scalar, e.g. \code{"optimal"}.
+\item \code{status} — character scalar drawn from \code{\link[=solver_status_values]{solver_status_values()}},
+computed from what the solver terminated on. \code{"optimal"} means the
+solver reached its own optimality condition with every row matched;
+it is not a checked proof. Use \code{\link[=verify_assignment]{verify_assignment()}} for that.
 \item \code{method_used} — character scalar, the algorithm actually used.
+\item \code{dispatch} — list recording how \code{method} was chosen: the rule that
+fired under \code{"auto"}, the condition that triggered it, and whether
+the method was named explicitly. See \code{\link[=explain_dispatch]{explain_dispatch()}}.
 }
 }
 \description{

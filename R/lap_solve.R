@@ -81,14 +81,39 @@
 #'   already exists -- build it via `compute_distances(memory_mode = ...)`
 #'   instead to avoid materializing it in the first place). No lazy solver
 #'   exists yet, so `memory_mode = "lazy"` currently always errors.
+#' @param cardinality How many pairs to produce.
+#'   \itemize{
+#'     \item `"complete"` (default) — every row is matched; an input admitting
+#'       no complete matching is an error.
+#'     \item `"maximum"` — as many pairs as the admissible edges allow, and the
+#'       cheapest total among matchings of that size.
+#'     \item `"fixed"` — exactly `n_matches` pairs, chosen to minimize total
+#'       cost.
+#'   }
+#'   All three are solved exactly by the same solver: the two non-complete modes
+#'   append dummy columns priced so that the solver's own optimum is the
+#'   requested objective.
+#' @param n_matches Integer; the number of pairs to produce. Required when
+#'   `cardinality = "fixed"`, and not accepted otherwise.
+#' @param unmatched_penalty Numeric; the cost charged for leaving one row
+#'   unmatched, under `cardinality = "maximum"`. Supplying it replaces the
+#'   lexicographic objective with a single one: a pair costing more than the
+#'   penalty is worth dropping. Left `NULL`, no pair is ever traded away for a
+#'   cost saving.
 #'
 #' @return An object of class `lap_solve_result`, a list with elements:
 #' \itemize{
 #'   \item `match` — integer vector of length `min(nrow(cost), ncol(cost))`
 #'         giving the assigned column for each row (0 if unassigned).
 #'   \item `total_cost` — numeric scalar, the objective value.
-#'   \item `status` — character scalar, e.g. `"optimal"`.
+#'   \item `status` — character scalar drawn from [solver_status_values()],
+#'         computed from what the solver terminated on. `"optimal"` means the
+#'         solver reached its own optimality condition with every row matched;
+#'         it is not a checked proof. Use [verify_assignment()] for that.
 #'   \item `method_used` — character scalar, the algorithm actually used.
+#'   \item `dispatch` — list recording how `method` was chosen: the rule that
+#'         fired under `"auto"`, the condition that triggered it, and whether
+#'         the method was named explicitly. See [explain_dispatch()].
 #' }
 #'
 #' @details
@@ -123,11 +148,19 @@ assignment <- function(cost, maximize = FALSE,
                                   "sap","ssp","csflow","hk01","bruteforce",
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
                                   "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
-                       auction_eps = NULL, eps = NULL, memory_mode = "auto"
+                       auction_eps = NULL, eps = NULL, memory_mode = "auto",
+                       cardinality = c("complete", "maximum", "fixed"),
+                       n_matches = NULL, unmatched_penalty = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
                        # , auction_final_eps = NULL                          # optional (see below)
                        ) {
   if (is_lazy_cost_spec(cost)) {
+    if (!identical(cardinality, c("complete", "maximum", "fixed")) &&
+        !identical(cardinality, "complete")) {
+      stop("cardinality = \"", cardinality[1],
+           "\" needs a materialized cost matrix; use memory_mode = \"dense\".",
+           call. = FALSE)
+    }
     if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
     return(.assignment_lazy(cost, maximize = maximize, method = method,
                             auction_eps = auction_eps))
@@ -157,45 +190,43 @@ assignment <- function(cost, maximize = FALSE,
     stop("`cost` must be a numeric matrix, got ", typeof(cost))
   }
 
+  # A cardinality other than "complete" is expressed as dummy columns priced so
+  # that the solver's own optimum is the requested objective. Everything after
+  # this point solves that matrix; "complete" leaves it untouched.
+  card <- .validate_cardinality_args(cardinality, n_matches, unmatched_penalty,
+                                     n, m)
+  reduction <- .cardinality_reduction(cost, card$cardinality, card$n_matches,
+                                      card$unmatched_penalty, maximize)
+  solve_cost <- reduction$work
+  n <- nrow(solve_cost); m <- ncol(solve_cost)
+  n_required <- reduction$n_required
+
   # One C++ pass supplies the NaN check and every data-dependent input the
   # "auto" branch below needs. Reading them separately in R (any(is.nan()),
   # range(finite = TRUE), mean(is.na() | is.infinite())) allocated a temporary
   # the size of the cost matrix for each test, which at n = 5000 made
   # method = "auto" measurably slower than naming the solver it would pick.
-  probe <- lap_probe_cost_matrix(cost)
+  probe <- lap_probe_cost_matrix(solve_cost)
   if (probe$has_nan) stop("NaN not allowed in `cost`")
 
+  # The rule table lives in R/lap_dispatch.R and is shared with
+  # explain_dispatch(), so the reported reason is the one that was acted on.
+  dispatch <- NULL
   if (method == "auto") {
-    # Strategy based on comprehensive benchmarks (post LAPJV warm-start):
-    # - n<=8: bruteforce (exact enumeration for very small problems)
-    # - dense square / near-square: jv (fastest at every size since warm-start)
-    # Special cases override size-based selection:
-    # - Binary/constant costs: hk01 (specialized algorithm)
-    # - Sparse (>50% NA/Inf): lapmod at every size
-    # - Very rectangular (m >= 3n): sap (handles rectangular well)
-
-    if (n <= 8 && m <= 8) {
-      method <- "bruteforce"
-    } else if (probe$constant || probe$binary) {
-      method <- "hk01"
-    } else if (probe$n_nonfinite > 0.5 * probe$n_total) {
-      # Sparse: lapmod handles forbidden edges natively at every size.
-      # The previous fallback to "sap" for n <= 100 has a worst-case stall on
-      # near-square highly-sparse matrices (e.g. propensity-score matching
-      # with tight calipers), so always use lapmod when sparse.
-      method <- "lapmod"
-    } else if (m >= 3 * n) {
-      method <- "sap"
-    } else {
-      method <- "jv"
-    }
+    decision <- .dispatch_decision(n, m, probe)
+    method <- decision$method
+    dispatch <- list(rule = decision$rule, condition = decision$condition,
+                     reason = decision$reason, explicit = FALSE)
+  } else {
+    dispatch <- list(rule = NA_character_, condition = NA_character_,
+                     reason = "method named explicitly", explicit = TRUE)
   }
 
   # auto-transpose if rows > cols
   transposed <- FALSE
-  work <- cost
+  work <- solve_cost
   if (n > m) {
-    work <- t(cost); transposed <- TRUE
+    work <- t(solve_cost); transposed <- TRUE
     tmp <- n; n <- m; m <- tmp
   }
 
@@ -234,13 +265,27 @@ assignment <- function(cost, maximize = FALSE,
     match_out <- inv
   }
 
-  out <- list(
-    match = match_out,
-    total_cost = as.numeric(res_raw$total_cost),
-    status = "optimal",
-    method_used = method
+  total_cost <- res_raw$total_cost
+  if (reduction$n_dummy > 0L) {
+    # A row that took a dummy column is a row left unmatched, and the objective
+    # is recomputed over real pairs so no sentinel price leaks into it.
+    restored <- .cardinality_restore(match_out, cost, reduction$n_dummy)
+    match_out <- restored$match
+    total_cost <- restored$total_cost
+  }
+
+  out <- .new_lap_solve_result(
+    match       = match_out,
+    total_cost  = total_cost,
+    status      = .compute_solve_status(match_out, n_required, method,
+                                        solver_status = res_raw$status,
+                                        auction_eps = auction_eps),
+    method_used = method,
+    dispatch    = dispatch
   )
-  class(out) <- "lap_solve_result"
+  out$cardinality <- card$cardinality
+  out$n_matched   <- sum(match_out > 0L)
+  out$unmatched   <- which(match_out == 0L)
   out
 }
 
@@ -317,14 +362,17 @@ assignment <- function(cost, maximize = FALSE,
     match_out <- inv
   }
 
-  out <- list(
-    match = match_out,
-    total_cost = as.numeric(res_raw$total_cost),
-    status = "optimal",
-    method_used = method
+  .new_lap_solve_result(
+    match       = match_out,
+    total_cost  = res_raw$total_cost,
+    status      = .compute_solve_status(match_out, min(n0, m0), method,
+                                        solver_status = res_raw$status,
+                                        auction_eps = auction_eps),
+    method_used = method,
+    dispatch    = list(rule = NA_character_, condition = NA_character_,
+                       reason = "lazy cost source; the dense probe cannot run",
+                       explicit = !identical(method, "jv"))
   )
-  class(out) <- "lap_solve_result"
-  out
 }
 
 # ==============================================================================
@@ -559,6 +607,10 @@ print.lap_solve_result <- function(x, ...) {
 
   total_cost <- attr(x, "total_cost")
   method_used <- attr(x, "method_used")
+  # Only the list form carries these; reading them off the tibble form would
+  # warn about an uninitialised column.
+  status <- NULL
+  certificate <- NULL
 
   # Check if this is a tibble (from lap_solve) or a plain list (from assignment)
   if (inherits(x, "tbl_df") || inherits(x, "data.frame")) {
@@ -580,11 +632,19 @@ print.lap_solve_result <- function(x, ...) {
     }
     total_cost <- x$total_cost
     method_used <- x$method_used
+    status <- x$status
+    certificate <- x$certificate
   }
 
   cat("\nTotal cost:", total_cost, "\n")
   if (!is.null(method_used)) {
     cat("Method:", method_used, "\n")
+  }
+  if (!is.null(status)) {
+    cat("Status:", status, "\n")
+  }
+  if (!is.null(certificate)) {
+    cat("Certified optimal:", certificate$certified_optimal, "\n")
   }
 
   invisible(x)
@@ -805,10 +865,11 @@ bottleneck_assignment <- function(cost, maximize = FALSE) {
   # Call C++ implementation
   res_raw <- lap_solve_bottleneck(cost, maximize)
 
+  match_out <- as.integer(res_raw$match)
   out <- list(
-    match = as.integer(res_raw$match),
+    match = match_out,
     bottleneck = as.numeric(res_raw$total_cost),
-    status = "optimal"
+    status = .compute_solve_status(match_out, n, "bottleneck")
   )
   class(out) <- "bottleneck_result"
   out
@@ -885,7 +946,9 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
     }
   }
 
-  list(match = result$match, total_cost = total_cost)
+  # The C++ solver reports why its pivot loop stopped; carry that through
+  # rather than letting the caller infer optimality from a full matching.
+  list(match = result$match, total_cost = total_cost, status = result$status)
 }
 
 # ==============================================================================
@@ -1108,6 +1171,9 @@ assignment_duals <- function(cost, maximize = FALSE) {
     stop("Cost matrix must have at least one row and one column.")
   }
 
+  # Read before the transpose below swaps n and m.
+  n_required <- min(n, m)
+
   # Auto-transpose if rows > cols
   transposed <- FALSE
   work <- cost
@@ -1147,7 +1213,7 @@ assignment_duals <- function(cost, maximize = FALSE) {
     total_cost = as.numeric(res_raw$total_cost),
     u = u_out,
     v = v_out,
-    status = "optimal"
+    status = .compute_solve_status(match_out, n_required, "jv")
   )
   class(out) <- "assignment_duals_result"
   out

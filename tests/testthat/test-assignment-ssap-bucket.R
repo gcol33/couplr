@@ -232,7 +232,10 @@ test_that("ssap_bucket returns proper result structure", {
   result <- assignment(cost, method = "ssap_bucket")
 
   expect_true(is.list(result))
-  expect_named(result, c("match", "total_cost", "status", "method_used"))
+  expect_named(result,
+               c("match", "total_cost", "status", "method_used", "dispatch",
+                 "cardinality", "n_matched", "unmatched"),
+               ignore.order = TRUE)
   expect_equal(result$method_used, "ssap_bucket")
   expect_s3_class(result, "lap_solve_result")
 })

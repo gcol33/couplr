@@ -2,9 +2,12 @@
 // Rcpp wrapper for the network-simplex solver - delegates to the pure C++
 // implementation. The algorithm lives in solve_network_simplex.cpp
 // (lap::solve_network_simplex), the single source of truth exercised by
-// cpp_tests, so the shipped path and the tested path are identical. The pure
-// copy carries the O(n^2) pivot bound and the maximize/forbidden handling; the
-// R-level wrapper negates for maximize and marks forbidden cells before calling.
+// cpp_tests/tests/test_network_simplex.cpp, so the shipped path and the tested
+// path are identical. The pure copy carries the pivot cap and the
+// maximize/forbidden handling; the R-level wrapper negates for maximize and
+// marks forbidden cells before calling, so this adapter passes maximize=false.
+// status comes from the solver's own termination reason and is passed through
+// unchanged.
 
 #include <Rcpp.h>
 #include "solve_network_simplex.h"
@@ -18,7 +21,7 @@ Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix) {
         lap::LapResult result = lap::solve_network_simplex(cm, false);
 
         Rcpp::List out = lap_result_to_rcpp(result, cost_matrix);
-        out["status"] = "optimal";
+        out["status"] = result.status;
         out["method_used"] = "network_simplex";
         return out;
     } catch (const lap::LapException& e) {

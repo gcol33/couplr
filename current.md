@@ -104,10 +104,10 @@ positive. When rows and columns are equal in number, every assignment uses every
 column and `v` is unrestricted. Jonker-Volgenant returns free-sign duals on a
 square problem and they are correct.
 
-## Phase 2 is nearly done: one internal flow model
+## Phase 2 is done: one internal flow model
 
 Roadmap section B, spec in `dev_notes/phase2/design.md`, ten deliverables B0 to
-B9. Nine of them are in.
+B9. All ten are in.
 
 **B0 to B6 landed as `e25fcb4`.** `FlowProblem` is the representation every
 design compiles into, `solve_min_cost_flow()` returns node potentials for all of
@@ -161,11 +161,29 @@ differing on the `potentials` and `certificate` B6 added, and every
 `match_couples/*` case identical. Suite after: 0 failed, 0 warnings, 3 skipped
 in R, and 69252 assertions over 249 cases in `cpp_tests/`.
 
-**B9's R half is open.** There is no `tests/testthat/test-flow-model.R`: the
-flow model is covered by 249 Catch2 cases in `cpp_tests/`, through
-`full_match()`, and now through `test-flow-design.R`'s cover of the compiled
-`match_couples()` designs, while `verify_flow()` is exported and has no
-testthat coverage of its own.
+**B9 landed on 2026-08-15, and phase 2 is done.** The 249 Catch2 cases in
+`cpp_tests/` own the solver and the certifier, so `tests/testthat/test-flow-model.R`
+covers the layer above them: the constructor's checks, restated in the caller's
+terms so a malformed problem is named in R rather than in node indices; the
+three steps staying separable; the status vocabulary the R wrapper validates on
+the way out; and `verify_flow()`, exported at B5 and until now the one exported
+function in the package with no testthat coverage of its own.
+
+Each of the certificate's four conditions is asserted to fail on an input that
+breaks it, because a check that passes on potentials it never read proves
+nothing. The optimal flow priced by potentials that are not optimal ones fails
+complementary slackness, potentials above every arc cost fail dual feasibility
+and name the arc that attains the worst price, a flow one unit over capacity
+fails primal feasibility and reports no objective, a flow one unit short fails
+conservation at both ends, and a fractional flow is not rounded into one that
+certifies. 118 assertions.
+
+One documentation defect came out of it. `worst_arc` was described as the most
+violated arc, with 0 meaning none; `certify_flow` sets it from the running
+minimum over the residual graph in both directions, so it names an arc whenever
+any arc can take or give up flow, and on a certified flow it is arc 1 at a
+reduced cost of 0. The C++ header always said so and the R doc was the loose
+one, so the doc changed. Suite after: 0 failed, 0 warnings, 3 skipped in R.
 
 ## The suite runs warning-free, and stays that way on purpose
 
@@ -244,11 +262,7 @@ Open, and confirmed open on GitHub:
 
 ## Next action
 
-**Finish phase 2: B9's R half.** It closes a real gap, an exported
-`verify_flow()` with no testthat coverage, and it is the last thing standing
-between phase 2 and done.
-
-Then the baseline re-capture, which three findings are waiting on: the derived
+**The baseline re-capture**, which three findings are waiting on: the derived
 status bugs 1 to 3 in `dev_notes/phase2/findings.md`, and bug 9's
 exception-and-message mismatch across ten solvers. Each changes a value B0
 holds, which is why they were queued rather than folded into a migration.

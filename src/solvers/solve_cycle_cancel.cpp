@@ -4,11 +4,12 @@
 #include "solve_cycle_cancel.h"
 #include "../core/lap_error.h"
 #include "../core/lap_utils.h"
+#include "../flow/flow_assign.h"
 #include <vector>
-#include <queue>
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <cstddef>
 
 namespace lap {
 
@@ -23,78 +24,22 @@ struct Edge {
     int rev;
 };
 
-void add_edge(std::vector<std::vector<Edge>>& adj, int u, int v, int cap, double cost) {
+// Returns the index of the forward arc inside adj[u], so a flow found
+// elsewhere can be pushed through it without searching for it again.
+int add_edge(std::vector<std::vector<Edge>>& adj, int u, int v, int cap, double cost) {
     int fwd_idx = adj[u].size();
     int rev_idx = adj[v].size();
     adj[u].push_back({v, cap, cost, rev_idx});
     adj[v].push_back({u, 0, -cost, fwd_idx});
+    return fwd_idx;
 }
 
-bool ssp_feasible(std::vector<std::vector<Edge>>& adj, int s, int t,
-                  int need_flow, double& total_cost) {
-    const int N = adj.size();
-    std::vector<double> pi(N, 0.0);
-    int flow = 0;
-
-    while (flow < need_flow) {
-        std::vector<double> dist(N, INF_DBL);
-        std::vector<int> parent(N, -1);
-        std::vector<int> pedge(N, -1);
-
-        dist[s] = 0.0;
-        std::priority_queue<std::pair<double,int>,
-                           std::vector<std::pair<double,int>>,
-                           std::greater<>> pq;
-        pq.push({0.0, s});
-
-        while (!pq.empty()) {
-            auto [d, u] = pq.top();
-            pq.pop();
-
-            if (d != dist[u]) continue;
-
-            for (int i = 0; i < (int)adj[u].size(); ++i) {
-                Edge& e = adj[u][i];
-                if (e.cap <= 0) continue;
-
-                int v = e.to;
-                double rc = e.cost + pi[u] - pi[v];
-                double nd = d + rc;
-
-                if (nd < dist[v]) {
-                    dist[v] = nd;
-                    parent[v] = u;
-                    pedge[v] = i;
-                    pq.push({nd, v});
-                }
-            }
-        }
-
-        if (dist[t] == INF_DBL) {
-            return false;
-        }
-
-        for (int v = 0; v < N; ++v) {
-            if (dist[v] < INF_DBL) {
-                pi[v] += dist[v];
-            }
-        }
-
-        int v = t;
-        while (v != s) {
-            int u = parent[v];
-            int ei = pedge[v];
-            adj[u][ei].cap -= 1;
-            int rev_idx = adj[u][ei].rev;
-            adj[v][rev_idx].cap += 1;
-            v = u;
-        }
-
-        flow += 1;
-        total_cost += pi[t] - pi[s];
-    }
-
-    return true;
+// Move one unit through the arc at adj[u][idx], taking it out of the forward
+// capacity and giving it to the reverse.
+void push_unit(std::vector<std::vector<Edge>>& adj, int u, int idx) {
+    Edge& e = adj[u][idx];
+    e.cap -= 1;
+    adj[e.to][e.rev].cap += 1;
 }
 
 bool karp_min_mean_cycle(const std::vector<std::vector<Edge>>& adj,
@@ -246,33 +191,64 @@ LapResult solve_cycle_cancel(const CostMatrix& cost, bool maximize) {
     const int N = n + m + 2;
     std::vector<std::vector<Edge>> adj(N);
 
-    // Source to left nodes
-    for (int i = 0; i < n; ++i) {
-        add_edge(adj, s, i, 1, 0.0);
-    }
-
-    // Left to right edges (cost edges)
+    // The costs the network carries: a maximization instance runs on cmax - v,
+    // which keeps every arc cost non-negative so that a negative cycle means
+    // the same thing in both directions.
+    CostMatrix W(n, m);
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             double v = C.at(i, j);
-            if (!C.allowed(i, j) || !std::isfinite(v)) continue;
+            if (!C.allowed(i, j) || !std::isfinite(v)) {
+                W.forbid(i, j);
+                continue;
+            }
+            W.at(i, j) = maximize ? (cmax - v) : v;
+        }
+    }
 
-            double w = maximize ? (cmax - v) : v;
-            add_edge(adj, i, n + j, 1, w);
+    // Source to left nodes
+    std::vector<int> src_arc(static_cast<size_t>(n), -1);
+    for (int i = 0; i < n; ++i) {
+        src_arc[static_cast<size_t>(i)] = add_edge(adj, s, i, 1, 0.0);
+    }
+
+    // Left to right edges (cost edges)
+    std::vector<int> pair_arc(static_cast<size_t>(n) * static_cast<size_t>(m), -1);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (!W.allowed(i, j)) continue;
+            pair_arc[static_cast<size_t>(flat_index(i, j, m))] =
+                add_edge(adj, i, n + j, 1, W.at(i, j));
         }
     }
 
     // Right nodes to sink
+    std::vector<int> sink_arc(static_cast<size_t>(m), -1);
     for (int j = 0; j < m; ++j) {
-        add_edge(adj, n + j, t, 1, 0.0);
+        sink_arc[static_cast<size_t>(j)] = add_edge(adj, n + j, t, 1, 0.0);
     }
 
-    // Find initial feasible flow using successive shortest path
-    double total_cost = 0.0;
-    bool ok = ssp_feasible(adj, s, t, n, total_cost);
+    // Find the initial feasible flow: the assignment over the same arcs, solved
+    // by the flow model, pushed into the residual graph the cancelling below
+    // runs on. Residual capacities are a function of the net flow alone, so a
+    // matching is all it takes to leave the graph in the state a
+    // successive-shortest-path phase would have left it in.
+    FlowOptions opts;
+    opts.relax_eps = 0.0;
+    opts.return_potentials = false;
 
-    if (!ok) {
+    SourceOracle<CostMatrix> oracle(W);
+    const AssignmentFlow flow = solve_assignment_flow(oracle, opts);
+
+    if (flow.n_matched < n) {
         LAP_THROW_INFEASIBLE("Infeasible: forbidden edges block perfect matching");
+    }
+
+    for (int i = 0; i < n; ++i) {
+        const int j = flow.match[static_cast<size_t>(i)];
+        push_unit(adj, s, src_arc[static_cast<size_t>(i)]);
+        push_unit(adj, i, pair_arc[static_cast<size_t>(flat_index(i, j, m))]);
+        push_unit(adj, n + j, sink_arc[static_cast<size_t>(j)]);
     }
 
     // Iteratively cancel negative cost cycles using Karp's algorithm

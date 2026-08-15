@@ -255,8 +255,41 @@ test_that("Gabow-Tarjan handles rectangular matrices (4x3)", {
 
   res <- lap_solve_gabow_tarjan(cost, maximize = FALSE)
 
-  # All 4 rows (including dummy-column matches) are counted
-  expect_equal(res$n_matched, 4)
+  # Three columns can hold three rows, so one row comes back unmatched. This
+  # used to report four, the fourth pointing at a padding column the caller's
+  # matrix does not have.
+  expect_equal(res$n_matched, 3)
+  matched <- res$match[!is.na(res$match)]
+  expect_true(all(matched >= 1L & matched <= ncol(cost)))
+  expect_equal(length(unique(matched)), length(matched))
+  expect_equal(res$total_cost, assignment(cost, method = "jv")$total_cost)
+})
+
+test_that("Gabow-Tarjan is optimal on wide problems (gcol33/couplr#31)", {
+  # The 1-optimality bound holds for a matching that saturates both sides, so
+  # a rectangular instance has to be padded to square. It was not, and 179 of
+  # 200 random wide problems came back worse than jv.
+  cost <- matrix(c(
+    14,  9, 17,  3,  4, 12,
+    14,  5, 14,  3, 12, 11,
+    12, 13,  1, 19,  4, 17
+  ), nrow = 3, byrow = TRUE)
+  storage.mode(cost) <- "double"
+
+  res <- assignment(cost, method = "gabow_tarjan")
+  expect_equal(res$total_cost, 8)
+  expect_true(verify_assignment(res, cost)$certified_optimal)
+
+  skip_on_cran()
+  set.seed(31)
+  for (i in seq_len(40)) {
+    n <- sample(3:7, 1)
+    m <- n + sample(1:8, 1)
+    cst <- matrix(round(stats::runif(n * m, 1, 100), 4), n, m)
+    gt <- assignment(cst, method = "gabow_tarjan")
+    expect_equal(gt$total_cost, assignment(cst, method = "jv")$total_cost,
+                 info = paste0(n, " x ", m, ", seed 31 draw ", i))
+  }
 })
 
 test_that("Gabow-Tarjan matches Hungarian on small matrices", {

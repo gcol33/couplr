@@ -54,7 +54,10 @@ entries are treated as forbidden assignments.}
 \strong{Advanced solvers:}
 \itemize{
 \item \code{"csa"} — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
-\item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)
+\item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary
+slackness O(n^3 log C). Its optimality bound holds for a matching that
+saturates both sides, so a rectangular problem is padded to square with
+zero-cost dummies and costs \code{max(n, m)} on both sides.
 \item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
 \item \code{"csflow"} — Cost-scaling network flow
 \item \code{"network_simplex"} — 'Network simplex' with spanning tree representation

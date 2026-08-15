@@ -1231,11 +1231,12 @@ void match_gt(const CostMatrix& cost,
  * This function transforms the cost matrix by subtracting global duals,
  * runs match_gt on the transformed costs to obtain a 1-optimal matching
  * with local duals, then updates the global duals and matching.
- * 
- * Supports rectangular matrices:
- * - If n > m (more rows than cols): pads with zero-cost dummy columns
- * - If n <= m: works directly on the matrix
- * 
+ *
+ * Requires a square cost matrix. 1-optimality is a statement about a matching
+ * that saturates both sides, so the padding that makes a rectangular instance
+ * square belongs to the whole bit-scaling run rather than to one scale of it;
+ * solve_gabow_tarjan_inner() does it once, before the first scale.
+ *
  * Algorithm:
  * 1. Build c'(i,j) = c(i,j) - y_u[i] - y_v[j]
  * 2. Run match_gt on c' starting from current matching to get local duals y'
@@ -1258,7 +1259,13 @@ void scale_match(const CostMatrix& cost,
     PROF_INC(scale_match_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
-    
+
+    if (n != m) {
+        LAP_ERROR("scale_match requires a square cost matrix; got " +
+                  std::to_string(n) + " rows and " + std::to_string(m) +
+                  " columns");
+    }
+
     // Ensure dual vectors are properly sized
     if (static_cast<int>(y_u.size()) != n) {
         y_u.resize(n, 0);
@@ -1266,24 +1273,12 @@ void scale_match(const CostMatrix& cost,
     if (static_cast<int>(y_v.size()) != m) {
         y_v.resize(m, 0);
     }
-    
-    // Handle rectangular matrices by padding if n > m
-    // For n <= m, work directly on the original matrix
-    int n_work = n;
-    int m_work = m;
-    
-    if (n > m) {
-        // Need to pad with dummy columns
-        m_work = n;  // Make it square
-        
-        // Resize dual vectors for padded matrix
-        y_v.resize(m_work, 0);
-        col_match.resize(m_work, NIL);
-    }
-    
+
+    const int n_work = n;
+    const int m_work = m;
+
     // 1. Build c'(i,j) = c(i,j) - y_u[i] - y_v[j]
     //    Forbidden edges (cost >= BIG_INT) remain BIG_INT
-    //    Padding columns (j >= m) are zero-cost dummy assignments
     //
     //    Paper p.9 pruning heuristic: any edge with c'(i,j) >= 6n cannot be in
     //    the optimum matching for this scale, provided scale_match's input
@@ -1296,8 +1291,7 @@ void scale_match(const CostMatrix& cost,
     //    enable_6n_prune defaults to false. Setting cost_prime cells to
     //    BIG_INT excludes them from build_equality_graph,
     //    update_equality_graph_incremental, and enqueue_edges_from_row
-    //    (all already have BIG_INT skips). Padding columns (j >= m, value 0)
-    //    sit well below the threshold.
+    //    (all already have BIG_INT skips).
     const long long prune_threshold = 6LL * static_cast<long long>(n_work);
     CostMatrix cost_prime(n_work, std::vector<long long>(m_work, BIG_INT));
     for (int i = 0; i < n; ++i) {
@@ -1312,11 +1306,8 @@ void scale_match(const CostMatrix& cost,
                     (enable_6n_prune && cp >= prune_threshold) ? BIG_INT : cp;
             }
         }
-        for (int j = m; j < m_work; ++j) {
-            cost_prime[i][j] = 0;
-        }
     }
-    
+
     // 2. Local matching and duals for match_gt on cost_prime.
     //
     //    Phase 1 note: match_gt no longer carries an O(nm) discard/restart
@@ -1340,23 +1331,13 @@ void scale_match(const CostMatrix& cost,
     for (int i = 0; i < n; ++i) {
         y_u[i] += y_u_loc[i];
     }
-    // Only update actual columns (not dummy padding)
     for (int j = 0; j < m; ++j) {
         y_v[j] += y_v_loc[j];
     }
-    
+
     // 4. Update global matching to the result from match_gt
-    //    For rectangular matrices, only copy back the actual columns
-    row_match = row_loc;  // Full row matching (may include dummy columns)
-    
-    // For col_match, only keep the actual columns
-    col_match.resize(m);
-    for (int j = 0; j < m; ++j) {
-        col_match[j] = col_loc[j];
-    }
-    
-    // Keep y_v at size m (actual columns only)
-    y_v.resize(m);
+    row_match = row_loc;
+    col_match = col_loc;
 }
 
 // ============================================================================
@@ -1426,7 +1407,47 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         y_v.clear();
         return;
     }
-    
+
+    // The 1-optimality bound compares the matching found against an optimal one
+    // through the duals, and the column terms cancel only when both matchings
+    // use every column. On a square instance they do. On a rectangular one they
+    // pay for different column sets, the bound does not hold, and the matching
+    // that comes back can be far from optimal (gcol33/couplr#31).
+    //
+    // Squaring the instance with zero-cost dummies restores it. A dummy may take
+    // any partner for nothing, so a minimum-cost perfect matching on the square
+    // instance costs what the rectangular optimum costs, and the real rows in it
+    // are that optimum. The price is the square: an n x m instance is solved as
+    // an N x N one, N = max(n, m).
+    if (n != m) {
+        const int N = (n > m) ? n : m;
+        CostMatrix square(N, std::vector<long long>(N, 0));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                square[i][j] = cost[i][j];
+            }
+        }
+
+        MatchVec square_row_match, square_col_match;
+        DualVec square_y_u, square_y_v;
+        solve_gabow_tarjan_inner(square, square_row_match, square_col_match,
+                                 square_y_u, square_y_v);
+
+        // A real unit paired with a dummy is a real unit left unmatched.
+        row_match.assign(n, NIL);
+        col_match.assign(m, NIL);
+        for (int i = 0; i < n; ++i) {
+            const int j = square_row_match[i];
+            if (j != NIL && j >= 0 && j < m) {
+                row_match[i] = j;
+                col_match[j] = i;
+            }
+        }
+        y_u.assign(square_y_u.begin(), square_y_u.begin() + n);
+        y_v.assign(square_y_v.begin(), square_y_v.begin() + m);
+        return;
+    }
+
     // Step 1: Find minimum cost to shift everything to non-negative
     long long min_cost = 0;
     for (int i = 0; i < n; ++i) {

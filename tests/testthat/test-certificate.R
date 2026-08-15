@@ -64,21 +64,25 @@ test_that("every solver in the registry returns a certifiable answer", {
 })
 
 test_that("the known-suboptimal solvers still are", {
-  # Each entry in cert_known_suboptimal() is a live bug. This test fails when
-  # one is fixed, which is the signal to delete the entry and let the sweep
-  # above cover the solver again.
+  # Each entry in cert_known_suboptimal() is a live bug, skipped by the sweep
+  # above. This asserts it still fails, so an entry has to be deleted when the
+  # bug is fixed instead of quietly masking a solver that now works. The
+  # registry is empty, so the sweep covers every solver and this holds
+  # vacuously.
   skip_on_cran()
   set.seed(116)
   cost <- cert_problem(3, 8)
-  for (known in cert_known_suboptimal()) {
-    if (!identical(known$shape, "wide")) next
+
+  fixed <- Filter(Negate(is.null), lapply(cert_known_suboptimal(), function(known) {
+    if (!identical(known$shape, "wide")) return(NULL)
     res <- cert_try_solve(cost, known$method)
-    if (is.null(res)) next
-    cert <- verify_assignment(res, cost)
-    expect_false(cert$certified_optimal,
-                 info = paste(known$method, "is fixed; remove its entry from",
-                              "cert_known_suboptimal() -", known$issue))
-  }
+    if (is.null(res)) return(NULL)
+    if (!verify_assignment(res, cost)$certified_optimal) return(NULL)
+    paste(known$method, "is fixed; remove its entry from",
+          "cert_known_suboptimal() -", known$issue)
+  }))
+
+  expect_equal(fixed, list())
 })
 
 test_that("the certificate catches an assignment that is not optimal", {

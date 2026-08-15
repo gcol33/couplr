@@ -1,14 +1,18 @@
 // src/solvers/solve_ssp.cpp
 // Pure C++ Successive Shortest Path LAP solver - NO Rcpp dependencies
+//
+// The network is the flow model's one-to-one design and the search is
+// solve_min_cost_flow(), which is successive shortest paths already. What
+// belongs to this solver is the orientation it works in, the relaxation
+// predicate its answers were produced under, and what it calls a shortfall.
 
 #include "solve_ssp.h"
 #include "../core/lap_error.h"
 #include "../core/lap_utils.h"
-#include <vector>
-#include <queue>
-#include <limits>
+#include "../flow/flow_assign.h"
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 namespace lap {
 
@@ -47,132 +51,21 @@ LapResult solve_ssp(const CostMatrix& cost, bool maximize) {
     // Check feasibility
     ensure_each_row_has_option(work_costs.mask, n, m);
 
-    // Build flow network
-    // Nodes: S=0, rows 1..n, cols n+1..n+m, T=n+m+1
-    const int S = 0;
-    const int T = 1 + n + m;
-    const int N = T + 1;
+    // A path relaxes on any strict improvement, with no slack. That is a
+    // different predicate from the one csflow uses, and it selects a different
+    // shortest path where two are equally cheap, so it stays with this solver.
+    FlowOptions opts;
+    opts.relax_eps = 0.0;
+    opts.return_potentials = false;
 
-    struct Edge {
-        int to;
-        int rev;
-        int cap;
-        double cost;
-    };
+    SourceOracle<CostMatrix> oracle(work_costs);
+    const AssignmentFlow flow = solve_assignment_flow(oracle, opts);
 
-    std::vector<std::vector<Edge>> G(N);
-
-    auto addEdge = [&](int u, int v, int cap, double cost) {
-        Edge forward{v, static_cast<int>(G[v].size()), cap, cost};
-        Edge backward{u, static_cast<int>(G[u].size()), 0, -cost};
-        G[u].push_back(forward);
-        G[v].push_back(backward);
-    };
-
-    // s -> rows (capacity 1, cost 0)
-    for (int i = 0; i < n; ++i) {
-        addEdge(S, 1 + i, 1, 0.0);
+    if (flow.n_matched < n) {
+        LAP_THROW_INFEASIBLE("Could not send full flow");
     }
 
-    // rows -> cols for allowed edges only
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            if (!work_costs.allowed(i, j)) continue;  // forbidden
-            double cij = work_costs.at(i, j);
-            if (!std::isfinite(cij)) continue;  // skip +Inf just in case
-            addEdge(1 + i, 1 + n + j, 1, cij);
-        }
-    }
-
-    // cols -> t (capacity 1, cost 0)
-    for (int j = 0; j < m; ++j) {
-        addEdge(1 + n + j, T, 1, 0.0);
-    }
-
-    // Potentials for reduced costs
-    std::vector<double> pi(N, 0.0);
-
-    // Dijkstra function to find shortest path from S to T
-    auto dijkstra = [&](std::vector<int>& pv_v, std::vector<int>& pv_e) -> bool {
-        const double INF = std::numeric_limits<double>::infinity();
-        std::vector<double> dist(N, INF);
-        pv_v.assign(N, -1);
-        pv_e.assign(N, -1);
-
-        using P = std::pair<double, int>;
-        std::priority_queue<P, std::vector<P>, std::greater<P>> pq;
-        dist[S] = 0.0;
-        pq.push({0.0, S});
-
-        while (!pq.empty()) {
-            auto [d, u] = pq.top();
-            pq.pop();
-            if (d != dist[u]) continue;
-
-            for (int ei = 0; ei < static_cast<int>(G[u].size()); ++ei) {
-                const Edge& e = G[u][ei];
-                if (e.cap <= 0) continue;
-                double rc = e.cost + pi[u] - pi[e.to];  // reduced cost
-                double nd = d + rc;
-                if (nd < dist[e.to]) {
-                    dist[e.to] = nd;
-                    pv_v[e.to] = u;
-                    pv_e[e.to] = ei;
-                    pq.push({nd, e.to});
-                }
-            }
-        }
-
-        if (!std::isfinite(dist[T])) return false;
-
-        // Update potentials
-        for (int v = 0; v < N; ++v) {
-            if (std::isfinite(dist[v])) {
-                pi[v] += dist[v];
-            }
-        }
-
-        return true;
-    };
-
-    // Send n units of flow via successive shortest paths
-    int flow = 0;
-    std::vector<int> pv_v, pv_e;
-    while (flow < n) {
-        if (!dijkstra(pv_v, pv_e)) {
-            LAP_THROW_INFEASIBLE("Could not send full flow");
-        }
-
-        // Augment along path S -> ... -> T
-        int v = T;
-        while (v != S) {
-            int u = pv_v[v];
-            int ei = pv_e[v];
-            Edge& e = G[u][ei];
-            Edge& er = G[v][e.rev];
-            e.cap -= 1;
-            er.cap += 1;
-            v = u;
-        }
-        ++flow;
-    }
-
-    // Extract matching from saturated row->col edges (in work orientation)
-    std::vector<int> match_work(n, -1);
-    for (int i = 0; i < n; ++i) {
-        int u = 1 + i;
-        for (const Edge& e : G[u]) {
-            // Original forward arc had cap 1; if cap==0 now, it's used
-            if (e.to >= 1 + n && e.to < 1 + n + m && e.cap == 0) {
-                int j = e.to - (1 + n);
-                match_work[i] = j;
-                break;
-            }
-        }
-        if (match_work[i] < 0) {
-            LAP_THROW_INFEASIBLE("Incomplete assignment");
-        }
-    }
+    const std::vector<int>& match_work = flow.match;
 
     // Verify matching and compute total cost using ORIGINAL costs (in work orientation)
     double total = 0.0;

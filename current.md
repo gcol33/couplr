@@ -318,14 +318,39 @@ row, `unmatched` gains a unit on each side, `info$total_distance` falls from
 
 This is user-visible too, so it joins the NEWS entry owed at the next release.
 
+## Bug 9 is closed: the message moved, the type stayed
+
+`cpp_tests` already asserts the split the exception type makes, one section per
+solver: `DimensionException` for `n > m`, `InfeasibleException` for a valid shape
+whose admissible edges still admit no perfect matching. So the type was right and
+the `Infeasible:` prefix was the half that had to go.
+
+The type does not reach R. Every Rcpp wrapper catches `lap::LapException` and
+re-raises `e.what()`, so a caller sees `Rcpp::exception` either way and the
+message is what carries the condition. It now reports the shape, the way
+`bottleneck_assignment()`'s R guard already did: `solver requires nrow <= ncol;
+got 3 rows and 2 columns`.
+
+The literal was in 16 places, not the ten the note said, all testing `n > m`
+under three spellings of the operands. All 16 are
+`lap::require_rows_fit_cols(n, m)` now, defined once in `src/core/lap_error.h`,
+which is also the only place the message exists.
+`cpp_tests/tests/test_lap_error.cpp` pins the type and the exact string.
+
+B0 never held this either, and could not: the exported surface transposes an
+`n > m` problem or stops in R first, so the message reaches R only through the
+internal `couplr:::lap_solve_*` wrappers. Second blind spot in the instrument
+this week, after the forbidden edge. No baseline cases added, because the string
+lives in one place and one `cpp_tests` case asserts it.
+
+Suite after: 0 failed, 0 warnings, 3 skipped, 6614 passed in R, and 69257
+assertions over 251 cases in `cpp_tests/`. B0: 1542 cases, 0 differ.
+
 ## Next action
 
-One thing still moves a value B0 holds: bug 9, the exception type and message
-that disagree. Not csflow's line: the same literal under `LAP_THROW_DIMENSION`
-is in ten solvers, so it is a package-wide decision about an R-visible message
-and its condition class.
+Nothing left that moves a value B0 holds.
 
-`dev_notes/phase2/findings.md` also leaves two interface questions open that no
+`dev_notes/phase2/findings.md` leaves two interface questions open that no
 deliverable covers: `map_assignment_duals()` reporting `ok = false` down two
 paths with different postconditions, and `R/trace_helpers_mcf.R` stating the
 same algorithm in R with its own potential-update rule, so a trace can show an

@@ -45,10 +45,7 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n_rows > n_cols) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    lap::require_rows_fit_cols(n_rows, n_cols);
 
     // Prepare working costs (negated if maximize, BIG for forbidden)
     CostMatrix work = prepare_for_solve(cost, maximize);

@@ -18,6 +18,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           flow/flow_expand.cpp \
           flow/flow_solve.cpp \
           flow/flow_compile.cpp \
+          flow/flow_assign.cpp \
           flow/flow_rcpp.cpp \
           solvers/greedy_matching.cpp \
           solvers/greedy_matching_rcpp.cpp \
@@ -83,6 +84,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           flow/flow_expand.o \
           flow/flow_solve.o \
           flow/flow_compile.o \
+          flow/flow_assign.o \
           flow/flow_rcpp.o \
           solvers/greedy_matching.o \
           solvers/greedy_matching_rcpp.o \

@@ -41,7 +41,9 @@ below \code{-tol}.
 \item \code{complementary_slackness} - logical; no arc above its lower bound
 prices above \code{tol}.
 \item \code{n_cs_violations}, \code{min_residual_reduced_cost}, \code{worst_arc} - the
-most violated arc, if any. \code{worst_arc} is 0 when there is none.
+smallest reduced cost over the residual graph and the arc attaining
+it, which is a violation when it falls below \code{-tol}. \code{worst_arc} is
+0 when no arc can either take or give up flow.
 \item \code{primal_objective}, \code{dual_objective}, \code{duality_gap} - numeric.
 \item \code{tolerance}.
 }

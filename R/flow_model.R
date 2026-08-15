@@ -255,7 +255,9 @@ print.couplr_flow_problem <- function(x, ...) {
 #'   \item `complementary_slackness` - logical; no arc above its lower bound
 #'         prices above `tol`.
 #'   \item `n_cs_violations`, `min_residual_reduced_cost`, `worst_arc` - the
-#'         most violated arc, if any. `worst_arc` is 0 when there is none.
+#'         smallest reduced cost over the residual graph and the arc attaining
+#'         it, which is a violation when it falls below `-tol`. `worst_arc` is
+#'         0 when no arc can either take or give up flow.
 #'   \item `primal_objective`, `dual_objective`, `duality_gap` - numeric.
 #'   \item `tolerance`.
 #' }

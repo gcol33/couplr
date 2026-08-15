@@ -1,0 +1,324 @@
+# The R side of the flow model: the door a problem comes through, the solve, and
+# the certificate.
+#
+# The C++ tests in cpp_tests/ own the solver and the certifier. What is checked
+# here is what only exists in R: that a malformed problem is named in R terms
+# before it reaches a solver that can only speak in node indices, that the three
+# steps stay separable, and that verify_flow() is a check rather than a report.
+# A certificate that passed on potentials it never looked at would prove nothing,
+# so every failing condition below is asserted to fail.
+
+# Two supply nodes shipping to two demand nodes. Node 1 has two units and node 2
+# has one; node 3 wants two and node 4 wants one. Its optimum is unique: both of
+# node 1's units go to node 3 and node 2's unit goes to node 4, for a cost of 3.
+flow_fixture <- function() {
+  list(
+    n_nodes = 4,
+    supply  = c(2, 1, -2, -1),
+    arcs = data.frame(
+      tail  = c(1, 1, 2, 2),
+      head  = c(3, 4, 3, 4),
+      lower = c(0, 0, 0, 0),
+      upper = c(2, 2, 2, 2),
+      cost  = c(1, 3, 2, 1)
+    )
+  )
+}
+
+FLOW_OPTIMUM <- c(2, 0, 0, 1)
+
+test_that("a problem is checked at the door, in the caller's terms", {
+  ok <- flow_fixture()
+
+  expect_error(couplr:::.flow_problem(0, numeric(0), ok$arcs), "at least one node")
+  expect_error(couplr:::.flow_problem(2.5, c(1, -1), ok$arcs), "whole number")
+  expect_error(couplr:::.flow_problem(4, c(1, -1), ok$arcs), "but the problem has 4 nodes")
+  expect_error(couplr:::.flow_problem(4, c(2, 1, -2, NA), ok$arcs), "finite whole numbers")
+  expect_error(couplr:::.flow_problem(4, c(2, 1, -2, 0), ok$arcs), "sum to zero")
+})
+
+test_that("an arc list is checked column by column", {
+  ok <- flow_fixture()
+  with_arcs <- function(f) {
+    arcs <- ok$arcs
+    couplr:::.flow_problem(ok$n_nodes, ok$supply, f(arcs))
+  }
+
+  expect_error(couplr:::.flow_problem(4, ok$supply, "not a frame"), "must be a data frame")
+  expect_error(with_arcs(function(a) a[, c("tail", "head")]), "missing the column")
+  expect_error(with_arcs(function(a) { a$tail[1] <- NA; a }), "carry NA")
+  expect_error(with_arcs(function(a) { a$head[1] <- 9L; a }), "node ids in 1:4")
+  expect_error(with_arcs(function(a) { a$lower[1] <- -1; a }), "none negative")
+  expect_error(with_arcs(function(a) { a$lower[1] <- 0.5; a }), "finite whole numbers")
+  expect_error(with_arcs(function(a) { a$upper[1] <- 1.5; a }), "whole numbers or Inf")
+  expect_error(with_arcs(function(a) { a$lower[1] <- 2; a$upper[1] <- 1; a }),
+               "none below")
+  # Forbidden is expressed by leaving the arc out. An Inf cost that reaches the
+  # residual search poisons every potential derived from it.
+  expect_error(with_arcs(function(a) { a$cost[1] <- Inf; a }), "omit an arc rather")
+  expect_error(with_arcs(function(a) { a$cost[1] <- NA_real_; a }), "must be finite")
+})
+
+test_that("the arcs arrive typed, and Inf is the only unbounded capacity", {
+  ok <- flow_fixture()
+  ok$arcs$upper[1] <- Inf
+  prob <- couplr:::.flow_problem(ok$n_nodes, ok$supply, ok$arcs)
+
+  expect_s3_class(prob, "couplr_flow_problem")
+  expect_identical(prob$n_nodes, 4L)
+  expect_type(prob$arcs$tail, "integer")
+  expect_type(prob$arcs$head, "integer")
+  expect_type(prob$arcs$upper, "double")
+  expect_identical(names(prob$arcs),
+                   c("tail", "head", "lower", "upper", "cost"))
+  expect_true(is.infinite(prob$arcs$upper[1]))
+})
+
+test_that("a problem can be given as a built object or as its three fields", {
+  ok <- flow_fixture()
+  built <- couplr:::.flow_problem(ok$n_nodes, ok$supply, ok$arcs)
+
+  expect_identical(couplr:::.as_flow_problem(built), built)
+  expect_equal(couplr:::.as_flow_problem(ok), built)
+  expect_error(couplr:::.as_flow_problem(list(n_nodes = 4)), "must be a flow problem")
+})
+
+test_that("the print method reports the shape of the network", {
+  prob <- couplr:::.as_flow_problem(flow_fixture())
+
+  expect_output(print(prob), "Flow problem")
+  expect_output(print(prob), "Nodes: 4")
+  expect_output(print(prob), "Arcs:  4")
+  expect_output(print(prob), "Flow to place: 3 units")
+  expect_output(expect_invisible(print(prob)), "Flow problem")
+})
+
+test_that("solving returns the flow, the potentials and a status from the vocabulary", {
+  solved <- couplr:::.flow_solve(flow_fixture())
+
+  expect_s3_class(solved, "flow_solve_result")
+  expect_identical(solved$status, "optimal")
+  expect_true(solved$status %in% solver_status_values())
+  expect_equal(solved$flow, FLOW_OPTIMUM)
+  expect_equal(solved$total_cost, 3)
+  expect_equal(solved$flow_sent, 3)
+  expect_equal(solved$flow_required, 3)
+
+  # Potentials are defined up to a constant per component, and the lowering
+  # needs one particular representative: the first node is the origin.
+  expect_length(solved$potential, 4)
+  expect_equal(solved$potential[1], 0)
+
+  # The problem travels with the answer, which is what lets the flow, the
+  # potentials and the network they belong to reach the certificate together.
+  expect_s3_class(solved$problem, "couplr_flow_problem")
+})
+
+test_that("potentials are omitted when they are not asked for", {
+  solved <- couplr:::.flow_solve(flow_fixture(), return_potentials = FALSE)
+
+  expect_length(solved$potential, 0)
+  expect_equal(solved$flow, FLOW_OPTIMUM)
+})
+
+test_that("a solve that cannot place every unit says so rather than reporting optimal", {
+  # Node 4 wants a unit and nothing reaches it.
+  stranded <- list(
+    n_nodes = 4,
+    supply  = c(2, 1, -2, -1),
+    arcs = data.frame(tail = c(1, 2), head = c(3, 3),
+                      lower = c(0, 0), upper = c(2, 2), cost = c(1, 1))
+  )
+  partial <- couplr:::.flow_solve(stranded)
+  expect_identical(partial$status, "partial")
+  expect_equal(partial$flow_sent, 2)
+  expect_equal(partial$flow_required, 3)
+
+  # An arc that carries nothing is not a route.
+  blocked <- list(
+    n_nodes = 2,
+    supply  = c(1, -1),
+    arcs = data.frame(tail = 1, head = 2, lower = 0, upper = 0, cost = 1)
+  )
+  expect_identical(couplr:::.flow_solve(blocked)$status, "infeasible")
+})
+
+test_that("stopping on the augmentation cap is not optimality", {
+  capped <- couplr:::.flow_solve(flow_fixture(), max_augmentations = 1)
+
+  expect_identical(capped$status, "iteration_limit")
+  expect_lt(capped$flow_sent, capped$flow_required)
+  expect_error(couplr:::.flow_solve(flow_fixture(), max_augmentations = -1),
+               "must not be negative")
+})
+
+test_that("a lower bound is met by the solver, not by the caller", {
+  # The cheap arc is 1 -> 3, but 1 -> 4 must carry a unit.
+  forced <- flow_fixture()
+  forced$arcs$lower[2] <- 1
+  solved <- couplr:::.flow_solve(forced)
+
+  expect_identical(solved$status, "optimal")
+  expect_equal(solved$flow[2], 1)
+  expect_true(verify_flow(solved)$certified_optimal)
+  # A unit is pushed off the cheapest route and node 3's second unit comes from
+  # node 2 instead: 3 on the forced arc, 1 from node 1 and 2 from node 2.
+  expect_equal(solved$total_cost, 6)
+})
+
+test_that("verify_flow certifies a solve result end to end", {
+  solved <- couplr:::.flow_solve(flow_fixture())
+  cert <- verify_flow(solved)
+
+  expect_s3_class(cert, "flow_certificate")
+  expect_true(cert$certified_optimal)
+  expect_true(cert$primal_feasible)
+  expect_true(cert$dual_feasible)
+  expect_true(cert$complementary_slackness)
+  expect_equal(cert$n_capacity_violations, 0)
+  expect_equal(cert$n_conservation_violations, 0)
+  expect_equal(cert$n_cs_violations, 0)
+  expect_equal(cert$primal_objective, 3)
+  expect_equal(cert$dual_objective, 3)
+  expect_equal(cert$duality_gap, 0)
+  expect_equal(cert$tolerance, 1e-9)
+  # worst_arc names the arc attaining the smallest reduced cost over the
+  # residual graph, which exists whenever any arc can still take flow. On an
+  # optimal flow that minimum is at the tolerance rather than below it, which
+  # is what dual_feasible above reads.
+  expect_equal(cert$min_residual_reduced_cost, 0)
+  expect_equal(cert$worst_arc, 1)
+})
+
+test_that("a flow and a problem certify without a solve result to carry them", {
+  cert <- verify_flow(FLOW_OPTIMUM, flow_fixture(), potential = c(0, 0, 1, 1))
+
+  expect_true(cert$certified_optimal)
+  expect_equal(cert$primal_objective, 3)
+})
+
+test_that("potentials that certify nothing fail the check rather than passing it", {
+  # The optimal flow, priced by potentials that are not optimal ones. Every arc
+  # prices at its own cost, so nothing is underpriced and dual feasibility
+  # holds, while the two arcs carrying flow price above zero and slackness does
+  # not.
+  cert <- verify_flow(FLOW_OPTIMUM, flow_fixture(), potential = c(0, 0, 0, 0))
+
+  expect_false(cert$certified_optimal)
+  expect_true(cert$primal_feasible)
+  expect_true(cert$dual_feasible)
+  expect_false(cert$complementary_slackness)
+  expect_equal(cert$n_cs_violations, 2)
+  expect_equal(cert$primal_objective, 3)
+  expect_equal(cert$dual_objective, 0)
+  expect_equal(cert$duality_gap, 3)
+})
+
+test_that("a dual violation names the arc that attains it, indexed from one", {
+  # Both demand nodes priced far above every arc's cost, so each arc that can
+  # still take flow prices below zero. Arc 4 is the worst at 1 - 10.
+  cert <- verify_flow(FLOW_OPTIMUM, flow_fixture(), potential = c(0, 0, 10, 10))
+
+  expect_false(cert$certified_optimal)
+  expect_false(cert$dual_feasible)
+  expect_equal(cert$min_residual_reduced_cost, -9)
+  expect_equal(cert$worst_arc, 4)
+})
+
+test_that("a flow outside its bounds fails primal feasibility and reports no objective", {
+  cert <- verify_flow(c(3, 0, 0, 1), flow_fixture(), potential = c(0, 0, 1, 1))
+
+  expect_false(cert$certified_optimal)
+  expect_false(cert$primal_feasible)
+  expect_equal(cert$n_capacity_violations, 1)
+  # A cost summed over a vector that is not a flow invites comparison with the
+  # dual bound while corresponding to no feasible solution.
+  expect_true(is.na(cert$primal_objective))
+  expect_true(is.na(cert$duality_gap))
+})
+
+test_that("a flow that does not conserve is not a flow", {
+  cert <- verify_flow(c(1, 0, 0, 1), flow_fixture(), potential = c(0, 0, 1, 1))
+
+  expect_false(cert$primal_feasible)
+  expect_equal(cert$n_capacity_violations, 0)
+  # Node 1 sends one unit short and node 3 receives one short.
+  expect_equal(cert$n_conservation_violations, 2)
+  expect_equal(cert$max_conservation_error, 1)
+})
+
+test_that("a fractional flow is not rounded into one that certifies", {
+  cert <- verify_flow(c(1.5, 0.5, 0, 1), flow_fixture(), potential = c(0, 0, 1, 1))
+
+  expect_false(cert$certified_optimal)
+  expect_false(cert$primal_feasible)
+  expect_true(is.na(cert$primal_objective))
+})
+
+test_that("optimal potentials certify an optimal flow the solver did not return", {
+  # Every arc costs the same, so both perfect matchings cost 2 and the solver
+  # returns one of them. Optimal potentials are shared by all optimal solutions
+  # of a linear program, so they certify the other one too.
+  tied <- list(
+    n_nodes = 4,
+    supply  = c(1, 1, -1, -1),
+    arcs = data.frame(tail = c(1, 1, 2, 2), head = c(3, 4, 3, 4),
+                      lower = 0, upper = 1, cost = 1)
+  )
+  solved <- couplr:::.flow_solve(tied)
+  expect_equal(solved$total_cost, 2)
+
+  other <- 1 - solved$flow
+  expect_equal(sum(other), 2)
+  expect_true(verify_flow(other, tied, potential = solved$potential)$certified_optimal)
+})
+
+test_that("verify_flow solves for potentials when it is given none", {
+  cert <- verify_flow(FLOW_OPTIMUM, flow_fixture())
+
+  expect_true(cert$certified_optimal)
+  expect_equal(cert$dual_objective, 3)
+})
+
+test_that("the check refuses what it cannot certify", {
+  prob <- flow_fixture()
+
+  expect_error(verify_flow(FLOW_OPTIMUM), "`problem` is required")
+  expect_error(verify_flow(c(2, 0, 1), prob),
+               "3 flow values but the problem has 4 arcs")
+  expect_error(verify_flow(FLOW_OPTIMUM, prob, potential = c(0, 0, 1)),
+               "has length 3 but the problem has 4 nodes")
+  expect_error(verify_flow(FLOW_OPTIMUM, prob, tol = -1), "non-negative")
+  expect_error(verify_flow(FLOW_OPTIMUM, prob, tol = c(1e-9, 1e-9)), "single non-negative")
+  expect_error(verify_flow("two units", prob), "numeric vector of arc flows")
+  expect_error(verify_flow(list(potential = c(0, 0, 1, 1)), prob),
+               "numeric vector of arc flows")
+})
+
+test_that("the certificate prints its conditions and its conclusion", {
+  cert <- verify_flow(couplr:::.flow_solve(flow_fixture()))
+
+  expect_output(print(cert), "Flow certificate")
+  expect_output(print(cert), "primal_feasible          TRUE")
+  expect_output(print(cert), "certified_optimal        TRUE")
+  expect_output(print(cert), "duality_gap")
+  expect_output(expect_invisible(print(cert)), "Flow certificate")
+
+  # The worst arc is reported only when there is a dual violation to attribute.
+  bad <- verify_flow(FLOW_OPTIMUM, flow_fixture(), potential = c(0, 0, 10, 10))
+  expect_output(print(bad), "worst reduced cost")
+  expect_output(print(bad), "certified_optimal        FALSE")
+})
+
+test_that("full_match carries the certificate of the flow it actually solved", {
+  set.seed(4)
+  left <- data.frame(id = 1:4, x = rnorm(4))
+  right <- data.frame(id = 5:14, x = rnorm(10))
+
+  result <- full_match(left, right, vars = "x")
+
+  expect_s3_class(result$certificate, "flow_certificate")
+  expect_true(result$certificate$certified_optimal)
+  expect_true(result$certificate$primal_feasible)
+  expect_equal(result$certificate$duality_gap, 0, tolerance = 1e-9)
+})

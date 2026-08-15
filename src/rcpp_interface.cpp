@@ -31,6 +31,10 @@ Rcpp::IntegerVector sinkhorn_round_impl(Rcpp::NumericMatrix P);
 Rcpp::List solve_ramshaw_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_push_relabel_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_duals_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List solve_jv_duals_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                    std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                    double max_distance, Rcpp::List calipers,
+                                    Rcpp::CharacterVector var_names, bool maximize);
 Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
@@ -342,6 +346,17 @@ Rcpp::List lap_solve_push_relabel(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List lap_solve_jv_duals(Rcpp::NumericMatrix cost, bool maximize) {
   return solve_jv_duals_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat,
+                                       Rcpp::NumericMatrix right_mat,
+                                       std::string metric,
+                                       Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                       double max_distance, Rcpp::List calipers,
+                                       Rcpp::CharacterVector var_names, bool maximize) {
+  return solve_jv_duals_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
+                                  calipers, var_names, maximize);
 }
 
 // [[Rcpp::export]]

@@ -233,3 +233,99 @@ test_that("assignment_duals sensitivity analysis example", {
     }
   }
 })
+
+# ==============================================================================
+# certify = TRUE, and the lazy dual entry point
+# ==============================================================================
+
+test_that("certify = TRUE attaches a certificate the duals prove", {
+  set.seed(1)
+  cost <- matrix(runif(120), 6, 20)
+
+  plain <- assignment_duals(cost)
+  certified <- assignment_duals(cost, certify = TRUE)
+
+  expect_null(plain$certificate)
+  expect_s3_class(certified$certificate, "assignment_certificate")
+  expect_true(certified$certificate$certified_optimal)
+  expect_equal(certified$certificate$duality_gap, 0, tolerance = 1e-9)
+
+  # The certificate is the only added field.
+  expect_identical(unclass(certified)[names(plain)], unclass(plain))
+})
+
+test_that("certify = TRUE covers the square and transposed orientations", {
+  set.seed(2)
+
+  square <- assignment_duals(matrix(runif(100), 10, 10), certify = TRUE)
+  expect_true(square$certificate$certified_optimal)
+  expect_false(square$certificate$transposed)
+
+  tall <- assignment_duals(matrix(runif(120), 20, 6), certify = TRUE)
+  expect_true(tall$certificate$certified_optimal)
+  expect_true(tall$certificate$transposed)
+
+  maxi <- assignment_duals(matrix(runif(120), 6, 20), maximize = TRUE,
+                           certify = TRUE)
+  expect_true(maxi$certificate$certified_optimal)
+})
+
+test_that("certify rejects a non-flag", {
+  cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), nrow = 3, byrow = TRUE)
+  expect_error(assignment_duals(cost, certify = NA), "`certify` must be")
+  expect_error(assignment_duals(cost, certify = c(TRUE, TRUE)), "`certify` must be")
+})
+
+test_that("assignment_duals solves a lazy specification without materializing it", {
+  set.seed(42)
+  left  <- data.frame(id = 1:8,  x = rnorm(8),  y = rnorm(8))
+  right <- data.frame(id = 9:20, x = rnorm(12), y = rnorm(12))
+
+  spec  <- build_cost_matrix(left, right, vars = c("x", "y"), memory_mode = "lazy")
+  dense <- compute_distance_matrix(as.matrix(left[, c("x", "y")]),
+                                   as.matrix(right[, c("x", "y")]),
+                                   distance = "euclidean")
+
+  lazy_duals  <- assignment_duals(spec,  certify = TRUE)
+  dense_duals <- assignment_duals(dense, certify = TRUE)
+
+  expect_identical(lazy_duals$match, dense_duals$match)
+  expect_equal(lazy_duals$total_cost, dense_duals$total_cost, tolerance = 1e-9)
+  expect_equal(lazy_duals$u, dense_duals$u, tolerance = 1e-9)
+  expect_equal(lazy_duals$v, dense_duals$v, tolerance = 1e-9)
+  expect_true(lazy_duals$certificate$certified_optimal)
+})
+
+test_that("the lazy dual path transposes when there are more left units than right", {
+  set.seed(7)
+  left  <- data.frame(id = 1:12,  x = rnorm(12), y = rnorm(12))
+  right <- data.frame(id = 13:20, x = rnorm(8),  y = rnorm(8))
+
+  spec  <- build_cost_matrix(left, right, vars = c("x", "y"), memory_mode = "lazy")
+  dense <- compute_distance_matrix(as.matrix(left[, c("x", "y")]),
+                                   as.matrix(right[, c("x", "y")]),
+                                   distance = "euclidean")
+
+  lazy_duals  <- assignment_duals(spec,  certify = TRUE)
+  dense_duals <- assignment_duals(dense, certify = TRUE)
+
+  expect_identical(lazy_duals$match, dense_duals$match)
+  expect_equal(lazy_duals$total_cost, dense_duals$total_cost, tolerance = 1e-9)
+  expect_true(lazy_duals$certificate$certified_optimal)
+  expect_true(lazy_duals$certificate$transposed)
+})
+
+test_that("verify_assignment derives duals for a lazy specification", {
+  set.seed(11)
+  left  <- data.frame(id = 1:6,  x = rnorm(6),  y = rnorm(6))
+  right <- data.frame(id = 7:20, x = rnorm(14), y = rnorm(14))
+  spec  <- build_cost_matrix(left, right, vars = c("x", "y"), memory_mode = "lazy")
+
+  res <- assignment(spec)
+  expect_true(verify_assignment(res, spec)$certified_optimal)
+
+  # A matching that is not optimal fails the same check.
+  scrambled <- res
+  scrambled$match <- rev(res$match)
+  expect_false(verify_assignment(scrambled, spec)$certified_optimal)
+})

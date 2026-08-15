@@ -63,6 +63,7 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_push_relabel_rcpp.cpp \
           solvers/solve_jv_duals.cpp \
           solvers/solve_jv_duals_rcpp.cpp \
+          solvers/solve_jv_duals_lazy_rcpp.cpp \
           solvers/orlin_ahuja/orlin_solve.cpp \
           solvers/orlin_ahuja/orlin_solve_rcpp.cpp \
           solvers/network_simplex/solve_network_simplex.cpp \
@@ -127,6 +128,7 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_push_relabel_rcpp.o \
           solvers/solve_jv_duals.o \
           solvers/solve_jv_duals_rcpp.o \
+          solvers/solve_jv_duals_lazy_rcpp.o \
           solvers/orlin_ahuja/orlin_solve.o \
           solvers/orlin_ahuja/orlin_solve_rcpp.o \
           solvers/network_simplex/solve_network_simplex.o \

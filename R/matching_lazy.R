@@ -122,3 +122,17 @@ lazy_cost_spec_inv_cov <- function(spec) {
   }
   inv_cov
 }
+
+#' Calipers of a lazy cost spec, keyed by variable name
+#'
+#' The C++ lazy cost source takes its calipers as a named list of thresholds,
+#' while the spec stores them as records carrying an index into `spec$vars`.
+#'
+#' @return Named list of numeric thresholds, one per caliper.
+#' @keywords internal
+lazy_cost_spec_calipers <- function(spec) {
+  stats::setNames(
+    lapply(spec$calipers, function(cal) cal$threshold),
+    vapply(spec$calipers, function(cal) spec$vars[[cal$var_index]], character(1))
+  )
+}

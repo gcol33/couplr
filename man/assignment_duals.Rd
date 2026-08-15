@@ -4,13 +4,20 @@
 \alias{assignment_duals}
 \title{Solve assignment problem and return dual variables}
 \usage{
-assignment_duals(cost, maximize = FALSE)
+assignment_duals(cost, maximize = FALSE, certify = FALSE)
 }
 \arguments{
 \item{cost}{Numeric matrix; rows = tasks, columns = agents. \code{NA} or \code{Inf}
-entries are treated as forbidden assignments.}
+entries are treated as forbidden assignments. A lazy cost specification
+from \code{\link[=compute_distances]{compute_distances()}} is also accepted, and is solved without
+materializing the matrix.}
 
 \item{maximize}{Logical; if \code{TRUE}, maximizes the total cost instead of minimizing.}
+
+\item{certify}{Logical; if \code{TRUE}, the duals are checked against \code{cost} with
+\code{\link[=verify_assignment]{verify_assignment()}} and the resulting \code{assignment_certificate} is
+attached as \code{certificate}. The check is one pass over the admissible pairs
+and reuses the duals computed here, so it costs no second solve.}
 }
 \value{
 A list with class \code{"assignment_duals_result"} containing:
@@ -20,6 +27,8 @@ A list with class \code{"assignment_duals_result"} containing:
 \item \code{u} - numeric vector of row dual variables (length n)
 \item \code{v} - numeric vector of column dual variables (length m)
 \item \code{status} - character, e.g. "optimal"
+\item \code{certificate} - an \code{assignment_certificate}, present only under
+\code{certify = TRUE}
 }
 }
 \description{
@@ -67,5 +76,6 @@ print(round(reduced_cost, 2))
 
 }
 \seealso{
-\code{\link[=assignment]{assignment()}} for standard assignment without duals
+\code{\link[=assignment]{assignment()}} for standard assignment without duals,
+\code{\link[=verify_assignment]{verify_assignment()}} for the check \code{certify = TRUE} runs
 }

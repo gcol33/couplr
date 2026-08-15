@@ -1,86 +1,21 @@
 // src/solvers/solve_jv.cpp
 // Pure C++ Jonker-Volgenant LAP solver - NO Rcpp dependencies.
-// Thin wrapper that prepares the matrix and delegates to detail::jv_core().
+// The solve is solve_jv_duals(): detail::jv_core() produces the potentials
+// whether or not anyone asks for them, so the two entry points are one body
+// and this one drops the duals on the way out.
 
 #include "solve_jv.h"
-#include "jv_core.h"
-#include "../core/lap_error.h"
-#include "../core/lap_utils.h"
-#include <cmath>
+#include "solve_jv_duals.h"
 #include <utility>
 
 namespace lap {
 
 LapResult solve_jv(const CostMatrix& cost, bool maximize) {
-    const int n = static_cast<int>(cost.nrow);
-    const int m = static_cast<int>(cost.ncol);
-
-    if (n == 0) {
-        return LapResult({}, 0.0, "optimal");
-    }
-    lap::require_rows_fit_cols(n, m);
-
-    CostMatrix work = prepare_for_solve(cost, maximize);
-    ensure_each_row_has_option(work.mask, n, m);
-
-    detail::JvCoreOpts opts;
-    opts.use_warm_start = true;  // LAPJV pre-stages: column reduction + ARR
-    auto core = detail::jv_core(work, opts);
-
-    double total = 0.0;
-    for (int i = 0; i < n; ++i) {
-        int j = core.assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
-    }
-
-    return LapResult(std::move(core.assignment), total, "optimal");
+    return std::move(solve_jv_duals(cost, maximize).solution);
 }
 
 LapResult solve_jv(const LazyCostMatrix& cost) {
-    const int n = static_cast<int>(cost.nrow);
-    const int m = static_cast<int>(cost.ncol);
-
-    if (n == 0) {
-        return LapResult({}, 0.0, "optimal");
-    }
-    lap::require_rows_fit_cols(n, m);
-
-    // No prepare_for_solve() step: the LazyCostMatrix is already "prepared"
-    // (forbidden -> BIG via at(), negated if maximize) at construction.
-    ensure_each_row_has_option(cost);
-
-    detail::JvCoreOpts opts;
-    opts.use_warm_start = true;  // inert for LazyCostMatrix (see jv_core.cpp)
-    auto core = detail::jv_core(cost, opts);
-
-    double total = 0.0;
-    for (int i = 0; i < n; ++i) {
-        int j = core.assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (cost.is_negated()) c = -c;  // report using original (unnegated) costs
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
-    }
-
-    return LapResult(std::move(core.assignment), total, "optimal");
+    return std::move(solve_jv_duals(cost).solution);
 }
 
 }  // namespace lap

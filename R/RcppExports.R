@@ -133,6 +133,10 @@ lap_solve_jv_duals <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_jv_duals`, cost, maximize)
 }
 
+cpp_lap_solve_jv_duals_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize) {
+    .Call(`_couplr_cpp_lap_solve_jv_duals_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize)
+}
+
 lap_solve_network_simplex <- function(cost) {
     .Call(`_couplr_lap_solve_network_simplex`, cost)
 }

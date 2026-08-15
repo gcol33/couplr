@@ -165,34 +165,35 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
 }
 
 .certify_lazy <- function(cost, match_vec, duals, maximize, tol) {
-  if (is.null(duals)) {
-    stop("A lazy cost specification carries no dual path, so duals cannot be ",
-         "derived here. Supply `duals`, or verify against a dense cost matrix.",
-         call. = FALSE)
-  }
   n <- cost$n_left
   m <- cost$n_right
-  if (n > m) {
-    stop("Certifying a lazy cost specification requires n_left <= n_right; ",
-         "transpose the specification first.", call. = FALSE)
-  }
   if (length(match_vec) != n) {
     stop("`match` has length ", length(match_vec), " but the specification has ",
          n, " left units.", call. = FALSE)
   }
-  .certify_check_dual_lengths(duals, n, m)
+
+  # Same normalization as the dense path, for the same reason: the sign and
+  # slackness conditions attach to the long side, so put it on the columns.
+  transposed <- n > m
+  if (transposed) {
+    match_vec <- .certify_invert_match(match_vec, m)
+    cost <- transpose_lazy_cost_spec(cost)
+    if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
+  }
+
+  if (is.null(duals)) {
+    duals <- .certify_solve_duals(cost, maximize)
+  }
+  .certify_check_dual_lengths(duals, cost$n_left, cost$n_right)
 
   inv_cov <- lazy_cost_spec_inv_cov(cost)
-  caliper_list <- stats::setNames(
-    lapply(cost$calipers, function(cal) cal$threshold),
-    vapply(cost$calipers, function(cal) cost$vars[[cal$var_index]], character(1))
-  )
+  caliper_list <- lazy_cost_spec_calipers(cost)
   report <- lap_certify_lazy(cost$left_mat, cost$right_mat, cost$distance,
                              inv_cov, cost$max_distance, caliper_list,
                              cost$vars, as.integer(match_vec),
                              as.numeric(duals$u), as.numeric(duals$v),
                              maximize, tol)
-  .new_assignment_certificate(report, transposed = FALSE, tol = tol)
+  .new_assignment_certificate(report, transposed = transposed, tol = tol)
 }
 
 .certify_extract_match <- function(x) {

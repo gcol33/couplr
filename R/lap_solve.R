@@ -41,7 +41,10 @@
 #'   **Advanced solvers:**
 #'   \itemize{
 #'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
-#'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)
+#'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
+#'       slackness O(n^3 log C). Its optimality bound holds for a matching that
+#'       saturates both sides, so a rectangular problem is padded to square with
+#'       zero-cost dummies and costs `max(n, m)` on both sides.
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Cost-scaling network flow
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
@@ -334,10 +337,7 @@ assignment <- function(cost, maximize = FALSE,
   }
 
   inv_cov <- lazy_cost_spec_inv_cov(work)
-  caliper_list <- stats::setNames(
-    lapply(work$calipers, function(cal) cal$threshold),
-    vapply(work$calipers, function(cal) work$vars[[cal$var_index]], character(1))
-  )
+  caliper_list <- lazy_cost_spec_calipers(work)
 
   res_raw <- if (identical(method, "jv")) {
     cpp_lap_solve_jv_lazy(work$left_mat, work$right_mat, work$distance,
@@ -1103,8 +1103,14 @@ sinkhorn_to_assignment <- function(result) {
 #' optimality certificate and enable sensitivity analysis.
 #'
 #' @param cost Numeric matrix; rows = tasks, columns = agents. `NA` or `Inf`
-#'   entries are treated as forbidden assignments.
+#'   entries are treated as forbidden assignments. A lazy cost specification
+#'   from [compute_distances()] is also accepted, and is solved without
+#'   materializing the matrix.
 #' @param maximize Logical; if `TRUE`, maximizes the total cost instead of minimizing.
+#' @param certify Logical; if `TRUE`, the duals are checked against `cost` with
+#'   [verify_assignment()] and the resulting `assignment_certificate` is
+#'   attached as `certificate`. The check is one pass over the admissible pairs
+#'   and reuses the duals computed here, so it costs no second solve.
 #'
 #' @return A list with class `"assignment_duals_result"` containing:
 #'   \itemize{
@@ -1113,6 +1119,8 @@ sinkhorn_to_assignment <- function(result) {
 #'     \item `u` - numeric vector of row dual variables (length n)
 #'     \item `v` - numeric vector of column dual variables (length m)
 #'     \item `status` - character, e.g. "optimal"
+#'     \item `certificate` - an `assignment_certificate`, present only under
+#'           `certify = TRUE`
 #'   }
 #'
 #' @details
@@ -1154,10 +1162,56 @@ sinkhorn_to_assignment <- function(result) {
 #' reduced_cost <- cost - reduced
 #' print(round(reduced_cost, 2))
 #'
-#' @seealso [assignment()] for standard assignment without duals
+#' @seealso [assignment()] for standard assignment without duals,
+#'   [verify_assignment()] for the check `certify = TRUE` runs
 #' @importFrom utils head
 #' @export
-assignment_duals <- function(cost, maximize = FALSE) {
+assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
+  if (!is.logical(certify) || length(certify) != 1L || is.na(certify)) {
+    stop("`certify` must be TRUE or FALSE.", call. = FALSE)
+  }
+
+  out <- if (is_lazy_cost_spec(cost)) {
+    .assignment_duals_lazy(cost, maximize)
+  } else {
+    .assignment_duals_dense(cost, maximize)
+  }
+  class(out) <- "assignment_duals_result"
+
+  if (certify) {
+    # verify_assignment() reads the duals off `out` rather than solving again,
+    # which is what makes the check an added pass and not an added solve.
+    out$certificate <- verify_assignment(out, cost, maximize = maximize)
+  }
+  out
+}
+
+# Both dual paths solve on the orientation with at least as many columns as
+# rows, so both read their solver's answer back the same way: on a transposed
+# problem the match inverts into one column per original row and u and v swap
+# sides. `n` and `m` are the caller's dimensions, before any transpose.
+.duals_result <- function(res_raw, n, m, transposed) {
+  match_out <- as.integer(res_raw$match)
+  u_out <- as.numeric(res_raw$u)
+  v_out <- as.numeric(res_raw$v)
+
+  if (transposed) {
+    match_out <- .certify_invert_match(match_out, n)
+    swap <- u_out
+    u_out <- v_out
+    v_out <- swap
+  }
+
+  list(
+    match = match_out,
+    total_cost = as.numeric(res_raw$total_cost),
+    u = u_out,
+    v = v_out,
+    status = .compute_solve_status(match_out, min(n, m), "jv")
+  )
+}
+
+.assignment_duals_dense <- function(cost, maximize) {
   cost <- as.matrix(cost)
   if (!is.numeric(cost)) {
     stop("`cost` must be a numeric matrix, got ", typeof(cost))
@@ -1171,52 +1225,33 @@ assignment_duals <- function(cost, maximize = FALSE) {
     stop("Cost matrix must have at least one row and one column.")
   }
 
-  # Read before the transpose below swaps n and m.
-  n_required <- min(n, m)
+  transposed <- n > m
+  work <- if (transposed) t(cost) else cost
 
-  # Auto-transpose if rows > cols
-  transposed <- FALSE
-  work <- cost
-  if (n > m) {
-    work <- t(cost)
-    transposed <- TRUE
-    tmp <- n; n <- m; m <- tmp
+  .duals_result(lap_solve_jv_duals(work, maximize), n, m, transposed)
+}
+
+# The dual entry point for a cost source that computes its cells on demand.
+# Same solver and same result shape as the dense path; what it avoids is
+# materializing the matrix, which is the whole premise of the lazy path.
+.assignment_duals_lazy <- function(cost, maximize) {
+  n <- cost$n_left
+  m <- cost$n_right
+  if (n == 0 || m == 0) {
+    stop("Cost matrix must have at least one row and one column.")
   }
 
-  # Call JV with duals
+  transposed <- n > m
+  work <- if (transposed) transpose_lazy_cost_spec(cost) else cost
 
-  res_raw <- lap_solve_jv_duals(work, maximize)
+  res_raw <- cpp_lap_solve_jv_duals_lazy(work$left_mat, work$right_mat,
+                                         work$distance,
+                                         lazy_cost_spec_inv_cov(work),
+                                         work$max_distance,
+                                         lazy_cost_spec_calipers(work),
+                                         work$vars, maximize)
 
-  match_out <- as.integer(res_raw$match)
-  u_out <- as.numeric(res_raw$u)
-  v_out <- as.numeric(res_raw$v)
-
-  if (transposed) {
-    # Map back: work was m0 x n0, match_work is length m0
-    n0 <- ncol(work)
-    m0 <- nrow(work)
-    inv <- integer(n0)
-    inv[] <- 0L
-    for (i in seq_len(m0)) {
-      j <- match_out[i]
-      if (j > 0L) inv[j] <- i
-    }
-    match_out <- inv
-    # Swap u and v for transposed case
-    tmp_u <- u_out
-    u_out <- v_out
-    v_out <- tmp_u
-  }
-
-  out <- list(
-    match = match_out,
-    total_cost = as.numeric(res_raw$total_cost),
-    u = u_out,
-    v = v_out,
-    status = .compute_solve_status(match_out, n_required, "jv")
-  )
-  class(out) <- "assignment_duals_result"
-  out
+  .duals_result(res_raw, n, m, transposed)
 }
 
 #' @export

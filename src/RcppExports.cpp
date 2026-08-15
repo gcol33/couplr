@@ -453,6 +453,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_lap_solve_jv_duals_lazy
+Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
+RcppExport SEXP _couplr_cpp_lap_solve_jv_duals_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lap_solve_jv_duals_lazy(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_solve_network_simplex
 Rcpp::List lap_solve_network_simplex(Rcpp::NumericMatrix cost);
 RcppExport SEXP _couplr_lap_solve_network_simplex(SEXP costSEXP) {
@@ -839,6 +857,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_ramshaw_tarjan", (DL_FUNC) &_couplr_lap_solve_ramshaw_tarjan, 2},
     {"_couplr_lap_solve_push_relabel", (DL_FUNC) &_couplr_lap_solve_push_relabel, 2},
     {"_couplr_lap_solve_jv_duals", (DL_FUNC) &_couplr_lap_solve_jv_duals, 2},
+    {"_couplr_cpp_lap_solve_jv_duals_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_duals_lazy, 8},
     {"_couplr_lap_solve_network_simplex", (DL_FUNC) &_couplr_lap_solve_network_simplex, 1},
     {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 11},
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},

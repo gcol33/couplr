@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../core/lap_types.h"
+#include "../core/lap_lazy_types.h"
 
 namespace lap {
 
@@ -28,5 +29,15 @@ namespace lap {
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
 DualResult solve_jv_duals(const CostMatrix& cost, bool maximize = false);
+
+// The same solve over a cost source that computes its cells on demand, so a
+// lazy problem can be certified without materializing the matrix the
+// certificate is a statement about. The duals come back in the orientation of
+// the specification and on the original (unnegated) cost scale, which is what
+// lap::certify_assignment() reads.
+//
+// `maximize` is not a parameter here: a LazyCostMatrix is negated at
+// construction, and it reports that through is_negated().
+DualResult solve_jv_duals(const LazyCostMatrix& cost);
 
 }  // namespace lap

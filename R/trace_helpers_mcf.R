@@ -169,14 +169,41 @@ mcf_extract_matching_strict <- function(mcf) {
 #' (e.g. h initialised via Bellman-Ford from the source).
 #'
 #' Sign-convention note: under this formula, after running Dijkstra with
-#' reduced costs and updating h_new(v) = h(v) + dist(v), every residual
-#' edge's new reduced cost equals old_rc + dist(from) - dist(to), which is
-#' nonnegative by Dijkstra's relaxation - i.e. feasibility is preserved.
+#' reduced costs and shifting h by the distance labels (mcf_update_potentials),
+#' every residual edge's new reduced cost equals old_rc + shift(from) -
+#' shift(to), which is nonnegative - i.e. feasibility is preserved.
 #'
 #' @keywords internal
 #' @noRd
 residual_reduced_cost <- function(cost, h_from, h_to) {
   cost + h_from - h_to
+}
+
+#' Shift node potentials by a Dijkstra distance vector
+#'
+#' Reached nodes take their distance label. Unreached ones take the largest
+#' label the search produced, which is what keeps the reduced cost non-negative
+#' on every residual edge rather than only on the ones the search could walk.
+#'
+#' No residual edge leaves a reached node for an unreached one, or the head
+#' would have been labelled. Residual edges in the other direction do exist,
+#' and on those the new reduced cost is old_rc + shift(tail) - dist(head);
+#' leaving an unreached tail alone drives that below zero as soon as the head's
+#' label is positive, which is exactly a column no admissible pair can reach
+#' still holding a residual edge into the sink. Shifting every unreached node by
+#' the maximum label makes shift(tail) >= dist(head) for every such edge, so
+#' none of them can go negative, and it leaves every reached node's potential
+#' untouched, so the path the next search finds is the same one.
+#'
+#' This is the rule src/flow/flow_solve.cpp applies, and the trace states the
+#' same algorithm the solver states.
+#'
+#' @keywords internal
+#' @noRd
+mcf_update_potentials <- function(h, dist) {
+  reached <- is.finite(dist)
+  shift <- if (any(reached)) max(dist[reached], 0) else 0
+  h + ifelse(reached, dist, shift)
 }
 
 #' Dijkstra on the residual graph with Johnson potentials

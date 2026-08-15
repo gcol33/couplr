@@ -132,9 +132,10 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
                              sigma = NULL,
                              memory_mode = "auto") {
 
-  # Force-capture internal function for parallel workers (future serializes
+  # Force-capture internal functions for parallel workers (future serializes
   # closures but may not resolve package-internal names on workers)
   couples_single_fn <- .couples_single
+  block_summary_row_fn <- .block_summary_row
 
   # Function to match a single block
   match_one_block <- function(block) {
@@ -164,12 +165,14 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
         ),
         unmatched_left = block_left_ids,
         unmatched_right = block_right_ids,
-        summary = tibble::tibble(
-          block_id = as.character(block),
+        solver = character(0),
+        summary = block_summary_row_fn(
+          block_id = block,
           n_left = nrow(left_block),
           n_right = nrow(right_block),
-          n_matched = 0L,
-          mean_distance = NA_real_
+          pairs = tibble::tibble(distance = numeric(0)),
+          n_unmatched_left = length(block_left_ids),
+          n_unmatched_right = length(block_right_ids)
         )
       ))
     }
@@ -194,24 +197,19 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       block_result$pairs$block_id <- as.character(block)
     }
 
-    # Create summary
-    summary <- tibble::tibble(
-      block_id = as.character(block),
-      n_left = nrow(left_block),
-      n_right = nrow(right_block),
-      n_matched = nrow(block_result$pairs),
-      mean_distance = if (nrow(block_result$pairs) > 0) {
-        mean(block_result$pairs$distance)
-      } else {
-        NA_real_
-      }
-    )
-
     list(
       pairs = block_result$pairs,
       unmatched_left = block_result$unmatched$left,
       unmatched_right = block_result$unmatched$right,
-      summary = summary
+      solver = block_result$info$solver,
+      summary = block_summary_row_fn(
+        block_id = block,
+        n_left = nrow(left_block),
+        n_right = nrow(right_block),
+        pairs = block_result$pairs,
+        n_unmatched_left = length(block_result$unmatched$left),
+        n_unmatched_right = length(block_result$unmatched$right)
+      )
     )
   }
 
@@ -227,6 +225,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
   all_unmatched_left <- unlist(lapply(block_results, function(x) x$unmatched_left))
   all_unmatched_right <- unlist(lapply(block_results, function(x) x$unmatched_right))
   all_summaries <- dplyr::bind_rows(lapply(block_results, function(x) x$summary))
+  all_solvers <- unlist(lapply(block_results, function(x) x$solver))
 
   # Handle empty results
   if (nrow(all_pairs) == 0) {
@@ -244,7 +243,8 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       left = as.character(all_unmatched_left),
       right = as.character(all_unmatched_right)
     ),
-    block_summary = all_summaries
+    block_summary = all_summaries,
+    solvers = as.character(all_solvers)
   )
 }
 

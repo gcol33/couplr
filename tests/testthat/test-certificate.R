@@ -305,6 +305,90 @@ test_that("status survives return_unmatched and return_diagnostics being off", {
   expect_null(m$info$solver)
 })
 
+test_that("a k:1 match short of its requested pairs is partial", {
+  # Four left units ask for two partners each, and five controls exist, so three
+  # of the eight requested pairs cannot be placed. Every left unit still holds a
+  # partner, which is what a status derived from unmatched units alone reads as
+  # a complete matching.
+  left  <- data.frame(id = paste0("L", 1:4), x = c(1, 2, 3, 4))
+  right <- data.frame(id = paste0("R", 1:5), x = c(1.1, 2.1, 3.1, 4.1, 2.5))
+
+  m <- match_couples(left, right, vars = "x", ratio = 2, check_costs = FALSE)
+
+  expect_identical(m$status, "partial")
+  expect_lt(nrow(m$pairs), nrow(left) * 2L)
+  expect_length(m$unmatched$left, 0L)
+})
+
+# Block "a" is Hall-deficient and its admissible costs are far enough apart that
+# the sentinel cannot order matchings by cardinality in double precision, so it
+# takes the greedy fallback; block "b" solves normally.
+hall_deficient_blocks <- function() {
+  list(
+    left = data.frame(id = c("L1", "L2", "L3", "M1", "M2"),
+                      x = c(0, 0, 1, 5, 6),
+                      y = c(0, 1e15, 0, 0, 0),
+                      blk = c("a", "a", "a", "b", "b")),
+    right = data.frame(id = c("R1", "R2", "R3", "S1", "S2"),
+                       x = c(0, 1, 1, 5.1, 6.1),
+                       y = c(0, 0, 1e15, 0, 0),
+                       blk = c("a", "a", "a", "b", "b"))
+  )
+}
+
+test_that("a blocked match reports the method that ran, not the one requested", {
+  d <- hall_deficient_blocks()
+
+  blocked <- suppressWarnings(match_couples(
+    d$left, d$right, vars = c("x", "y"), calipers = list(x = 0.5),
+    block_id = "blk", return_diagnostics = TRUE, check_costs = FALSE
+  ))
+
+  # The same fallback reached without blocking, which is the contract the
+  # blocked path has to meet: both report the fallback, not the request.
+  unblocked <- suppressWarnings(match_couples(
+    d$left[d$left$blk == "a", ], d$right[d$right$blk == "a", ],
+    vars = c("x", "y"), calipers = list(x = 0.5),
+    return_diagnostics = TRUE, check_costs = FALSE
+  ))
+
+  expect_true("greedy_sorted" %in% blocked$info$solver)
+  expect_false("auto" %in% blocked$info$solver)
+  expect_identical(blocked$status, "heuristic")
+  expect_identical(blocked$status, unblocked$status)
+})
+
+test_that("the two blocked branches return the same info", {
+  d <- hall_deficient_blocks()
+  args <- list(
+    d$left, d$right, vars = c("x", "y"), calipers = list(x = 0.5),
+    block_id = "blk", return_diagnostics = TRUE, check_costs = FALSE
+  )
+
+  seq_m <- suppressWarnings(do.call(match_couples, c(args, parallel = FALSE)))
+  par_m <- suppressWarnings(do.call(match_couples, c(args, parallel = TRUE)))
+
+  expect_identical(names(seq_m$info), names(par_m$info))
+  expect_identical(seq_m$info$solver, par_m$info$solver)
+  expect_identical(seq_m$info$block_summary, par_m$info$block_summary)
+  expect_identical(seq_m$status, par_m$status)
+})
+
+test_that("every block gets a summary row, including one with nothing to match", {
+  # Block "b" has a left unit and no right unit, so it runs no solve.
+  left  <- data.frame(id = c("L1", "L2", "M1"), x = c(1, 2, 9),
+                      blk = c("a", "a", "b"))
+  right <- data.frame(id = c("R1", "R2"), x = c(1.1, 2.1),
+                      blk = c("a", "a"))
+
+  m <- match_couples(left, right, vars = "x", block_id = "blk",
+                     return_diagnostics = TRUE, check_costs = FALSE)
+
+  expect_equal(nrow(m$info$block_summary), 2L)
+  expect_equal(m$info$block_summary$n_matched, c(2L, 0L))
+  expect_equal(m$info$block_summary$n_unmatched_left, c(0L, 1L))
+})
+
 # ---------------------------------------------------------------------------
 # Dispatch transparency
 # ---------------------------------------------------------------------------

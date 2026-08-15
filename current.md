@@ -260,23 +260,43 @@ Open, and confirmed open on GitHub:
   launched over an in-flight build fails with `cannot remove earlier
   installation, is it in use?`.
 
+## The derived status fixes are in
+
+The B0 re-capture they were queued behind ran first, on `37ebfa6`, and the
+compare that preceded it reported the 16 `full_match/*` cases B6 explains and
+nothing else, so the instrument was replaced from a state that had been read.
+Each bug was then re-read in the working tree, because B7 and B8 had moved every
+line number `dev_notes/phase2/findings.md` recorded for them. All three were
+still there.
+
+- **Status is derived from placed pairs against requested pairs**, the left unit
+  count times the ratio, instead of from unmatched left units. A k:1 design
+  places pairs while `unmatched` counts units, so a unit holding one of its two
+  requested partners made the whole match report `"optimal"`. The rule reduces
+  to the old one at ratio 1 and covers the with-replacement design, which had
+  the same defect.
+- **The blocked path builds its `info` and its `block_summary` rows in one
+  place**, `.blocked_info()` and `.block_summary_row()`, called by the
+  sequential and the parallel branch alike. They used to build their own and
+  disagreed on the field set, the column set, the column order, and whether a
+  block with nothing to match got a row. `info$solver` is now one entry per
+  block that ran a solve rather than the method that was requested, which is
+  what carries a block's greedy fallback out to the status.
+
+B0 after: 1537 cases, 6 differing, all `match_couples/*blocked*`, and the
+field-by-field check names only the intended fields. `hall_deficient/blocked/auto`
+moves from `partial`/`auto` to `heuristic`/`greedy_sorted`, which is what the
+same data reports unblocked. Suite after: 0 failed, 0 warnings, 3 skipped, 6594
+passed. The baseline is re-captured on the fixed behaviour.
+
+`block_summary`'s columns and `info`'s field set are user-visible, so both owe a
+NEWS entry at the next release; this repo writes NEWS at release rather than per
+commit.
+
 ## Next action
 
-**The derived status fixes.** The re-capture they were queued behind is done:
-2026-08-15, on `37ebfa6`, 1537 cases, nothing nondeterministic on the two-pass
-screen, and `--compare` against it now reports 0 differ, 0 missing, 0 added. The
-compare that preceded the capture reported the 16 `full_match/*` cases B6
-explains and nothing else, so the instrument was replaced from a state that had
-been read rather than an assumed one.
+Two things still move a value B0 holds:
 
-Three things change a value B0 holds and can now be judged on it:
-
-- the derived status bugs 1 to 3 in `dev_notes/phase2/findings.md`: a blocked
-  match reporting `partial` where the same data unblocked reports `heuristic`,
-  the parallel and sequential blocked branches returning different `info` with
-  no `solver` on the parallel side, and a k:1 solve reporting `"optimal"` after
-  placing a fraction of the requested pairs, because `n_matched` counts pairs
-  while `unmatched` counts units;
 - bug 9, the exception type and message that disagree. Not csflow's line: the
   same literal under `LAP_THROW_DIMENSION` is in ten solvers, so it is a
   package-wide decision about an R-visible message and its condition class;
@@ -295,6 +315,9 @@ Two things phase 1 leaves on the table, both cheap and both feeding phase 3:
   check. Wiring `certify = TRUE` there is an afternoon.
 - The lazy path has no dual entry point, so lazy solves get
   `certificate = NULL`. Section C needs one anyway.
+
+Then phase 3, roadmap sections C and D, which is the centerpiece of the 1.6
+line.
 
 ## Working tree
 

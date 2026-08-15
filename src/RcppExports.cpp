@@ -464,19 +464,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// lap_solve_full_matching
-Rcpp::List lap_solve_full_matching(Rcpp::NumericMatrix cost, int min_controls, int max_controls_val);
-RcppExport SEXP _couplr_lap_solve_full_matching(SEXP costSEXP, SEXP min_controlsSEXP, SEXP max_controls_valSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
-    Rcpp::traits::input_parameter< int >::type min_controls(min_controlsSEXP);
-    Rcpp::traits::input_parameter< int >::type max_controls_val(max_controls_valSEXP);
-    rcpp_result_gen = Rcpp::wrap(lap_solve_full_matching(cost, min_controls, max_controls_val));
-    return rcpp_result_gen;
-END_RCPP
-}
 // lap_flow_solve
 Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply, Rcpp::IntegerVector tail, Rcpp::IntegerVector head, Rcpp::NumericVector lower, Rcpp::NumericVector upper, Rcpp::NumericVector cost, double tol, double relax_eps, double max_augmentations, bool return_potentials);
 RcppExport SEXP _couplr_lap_flow_solve(SEXP n_nodesSEXP, SEXP supplySEXP, SEXP tailSEXP, SEXP headSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP costSEXP, SEXP tolSEXP, SEXP relax_epsSEXP, SEXP max_augmentationsSEXP, SEXP return_potentialsSEXP) {
@@ -839,7 +826,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_push_relabel", (DL_FUNC) &_couplr_lap_solve_push_relabel, 2},
     {"_couplr_lap_solve_jv_duals", (DL_FUNC) &_couplr_lap_solve_jv_duals, 2},
     {"_couplr_lap_solve_network_simplex", (DL_FUNC) &_couplr_lap_solve_network_simplex, 1},
-    {"_couplr_lap_solve_full_matching", (DL_FUNC) &_couplr_lap_solve_full_matching, 3},
     {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 11},
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
     {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},

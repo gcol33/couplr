@@ -137,10 +137,6 @@ lap_solve_network_simplex <- function(cost) {
     .Call(`_couplr_lap_solve_network_simplex`, cost)
 }
 
-lap_solve_full_matching <- function(cost, min_controls, max_controls_val) {
-    .Call(`_couplr_lap_solve_full_matching`, cost, min_controls, max_controls_val)
-}
-
 lap_flow_solve <- function(n_nodes, supply, tail, head, lower, upper, cost, tol = 1e-12, relax_eps = 1e-18, max_augmentations = 0.0, return_potentials = TRUE) {
     .Call(`_couplr_lap_flow_solve`, n_nodes, supply, tail, head, lower, upper, cost, tol, relax_eps, max_augmentations, return_potentials)
 }

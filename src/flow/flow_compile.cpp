@@ -385,45 +385,74 @@ CompiledBlocked compile_blocked(const std::vector<Stratum>&            strata,
     return out;
 }
 
-bool is_unit_capacity_assignment(const FlowProblem& prob) {
-    // After expansion the block arcs are in `arcs` and the arc test below can no
-    // longer separate a column's sink arc from a pair arc. Lowering is decided
-    // before the arc list is paid for, which is the point of it.
-    if (prob.expanded) return false;
-    if (prob.blocks.size() != 1) return false;
+double ShapeOracle::at(int64_t, int64_t) const {
+    LAP_THROW("a shape carries no costs; compile against the cost source to read one");
+}
+
+bool ShapeOracle::allowed(int64_t, int64_t) const {
+    LAP_THROW("a shape carries no costs; compile against the cost source to read one");
+}
+
+namespace {
+
+// The layout both routing predicates read: one block of pair arcs a row uses at
+// most once, sitting where the node convention puts it, with nothing above the
+// column block. A category or stratum node there would carry a constraint no
+// cost matrix expresses and no per-row choice respects.
+//
+// After expansion the block arcs are in `arcs` and the arc scans below can no
+// longer separate a column's sink arc from a pair arc. Routing is decided
+// before the arc list is paid for, which is the point of it.
+const BipartiteBlock* single_pair_block(const FlowProblem& prob) {
+    if (prob.expanded) return nullptr;
+    if (prob.blocks.size() != 1) return nullptr;
 
     const BipartiteBlock& blk = prob.blocks.front();
-    if (blk.costs == nullptr) return false;
-    if (blk.lower != 0 || blk.upper != 1) return false;
+    if (blk.costs == nullptr) return nullptr;
+    if (blk.lower != 0 || blk.upper != 1) return nullptr;
 
     const int64_t nr = blk.costs->nrow();
     const int64_t nc = blk.costs->ncol();
-    if (nr < 0 || nc < 0) return false;
-    if (blk.row_base != FLOW_FIRST_ROW) return false;
-    if (static_cast<int64_t>(blk.col_base) != FLOW_FIRST_ROW + nr) return false;
+    if (nr < 0 || nc < 0) return nullptr;
+    if (blk.row_base != FLOW_FIRST_ROW) return nullptr;
+    if (static_cast<int64_t>(blk.col_base) != FLOW_FIRST_ROW + nr) return nullptr;
+    if (static_cast<int64_t>(prob.n_nodes) != FLOW_FIRST_ROW + nr + nc) return nullptr;
+    if (static_cast<int64_t>(prob.supply.size()) != prob.n_nodes) return nullptr;
+    return &blk;
+}
 
-    // Nothing above the column block: a category or stratum node would carry a
-    // constraint the cost matrix cannot express.
-    if (static_cast<int64_t>(prob.n_nodes) != FLOW_FIRST_ROW + nr + nc) return false;
-    if (static_cast<int64_t>(prob.supply.size()) != prob.n_nodes) return false;
+// Total flow the rows inject, or -1 when something other than the rows meters
+// it: flow held at the source, supply on a column, a sink absorbing a different
+// amount, or a row carrying other than `per_row` when a fixed amount is asked
+// for. Pass -1 for `per_row` to accept any fixed non-negative amount.
+int64_t rows_carry_the_flow(const FlowProblem& prob, const BipartiteBlock& blk,
+                            int64_t nr, int64_t nc, int64_t per_row) {
+    if (prob.supply[static_cast<std::size_t>(FLOW_SOURCE)] != 0) return -1;
 
-    // Supply 1 on every row is what says every row must be matched, and an
-    // empty source is what says nothing else meters the flow.
-    if (prob.supply[static_cast<std::size_t>(FLOW_SOURCE)] != 0) return false;
-    if (prob.supply[static_cast<std::size_t>(FLOW_SINK)] != -nr) return false;
+    int64_t total = 0;
     for (int64_t i = 0; i < nr; ++i) {
-        if (prob.supply[static_cast<std::size_t>(blk.row_base) +
-                        static_cast<std::size_t>(i)] != 1) return false;
+        const int64_t s = prob.supply[static_cast<std::size_t>(blk.row_base) +
+                                      static_cast<std::size_t>(i)];
+        if (s < 0) return -1;
+        if (per_row >= 0 && s != per_row) return -1;
+        total += s;
     }
+    if (prob.supply[static_cast<std::size_t>(FLOW_SINK)] != -total) return -1;
     for (int64_t j = 0; j < nc; ++j) {
         if (prob.supply[static_cast<std::size_t>(blk.col_base) +
-                        static_cast<std::size_t>(j)] != 0) return false;
+                        static_cast<std::size_t>(j)] != 0) return -1;
     }
+    return total;
+}
 
-    // Exactly one unit-capacity arc per column and no other explicit arc. Unit
-    // capacity here is what forbids a column being reused, which the pair arcs'
-    // own capacity does not say.
+// Exactly one free arc per column and no other explicit arc, each admitting
+// between `min_upper` and `max_upper` units. What a column admits is the whole
+// difference between the two designs, and the pair arcs' own capacity does not
+// state it.
+bool columns_admit(const FlowProblem& prob, const BipartiteBlock& blk, int64_t nc,
+                   int64_t min_upper, int64_t max_upper) {
     if (static_cast<int64_t>(prob.arcs.size()) != nc) return false;
+
     std::vector<bool> reaches_sink(static_cast<std::size_t>(nc), false);
     for (const FlowArc& arc : prob.arcs) {
         if (arc.head != FLOW_SINK) return false;
@@ -431,11 +460,42 @@ bool is_unit_capacity_assignment(const FlowProblem& prob) {
         if (j < 0 || j >= nc) return false;
         if (reaches_sink[static_cast<std::size_t>(j)]) return false;
         reaches_sink[static_cast<std::size_t>(j)] = true;
-        if (arc.lower != 0 || arc.upper != 1) return false;
+        if (arc.lower != 0) return false;
+        if (arc.upper < min_upper || arc.upper > max_upper) return false;
         if (arc.cost != 0.0) return false;
     }
-
     return true;
+}
+
+}  // namespace
+
+bool is_unit_capacity_assignment(const FlowProblem& prob) {
+    const BipartiteBlock* blk = single_pair_block(prob);
+    if (blk == nullptr) return false;
+
+    const int64_t nr = blk->costs->nrow();
+    const int64_t nc = blk->costs->ncol();
+
+    // Supply 1 on every row is what says every row must be matched, and an
+    // empty source is what says nothing else meters the flow.
+    if (rows_carry_the_flow(prob, *blk, nr, nc, 1) != nr) return false;
+
+    // Unit capacity on the column arcs is what forbids a column being reused.
+    return columns_admit(prob, *blk, nc, 1, 1);
+}
+
+bool is_row_separable(const FlowProblem& prob) {
+    const BipartiteBlock* blk = single_pair_block(prob);
+    if (blk == nullptr) return false;
+
+    const int64_t nr = blk->costs->nrow();
+    const int64_t nc = blk->costs->ncol();
+
+    if (rows_carry_the_flow(prob, *blk, nr, nc, -1) < 0) return false;
+
+    // A row sends a column at most one unit, so a column admitting nr of them
+    // admits every row at once and no set of rows can exhaust it.
+    return columns_admit(prob, *blk, nc, nr, FLOW_INF_CAP);
 }
 
 LoweredAssignment lower_to_assignment(const FlowProblem& prob) {

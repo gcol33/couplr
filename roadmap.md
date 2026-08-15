@@ -601,7 +601,7 @@ result at roughly week 8.
 |---|---|---|---|
 | 0 | 1 | Pricing-bound probe, feasibility report, go/no-go | **DONE, GO** |
 | 1 | 2 | A: certification layer, real status values, `verify_assignment()`, LEMON oracle, `explain_dispatch()` (#28) | **DONE** |
-| 2 | 3-4 | B: flow model, design compiler, node potentials from the flow solver | **B0-B6 and B8 done**; B7 and B9's R tests open |
+| 2 | 3-4 | B: flow model, design compiler, node potentials from the flow solver | **B0-B8 done**; B9's R tests open |
 | 3 | 5-8 | C: restricted master, pricing loop, metric-tree pricing, infeasibility certificate. D: warm starts and `match_path()` | |
 | 4 | 9-12 | E: auction-initialized relaxation, partial augment-relabel, online selection. I: benchmark grid | |
 | 5 | 13-16 | F: fine balance in the flow engine. G: vectra-backed batched source. H: `design_summary()` (#29) | |

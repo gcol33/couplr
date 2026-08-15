@@ -104,10 +104,10 @@ positive. When rows and columns are equal in number, every assignment uses every
 column and `v` is unrestricted. Jonker-Volgenant returns free-sign duals on a
 square problem and they are correct.
 
-## Phase 2 is partly done: one internal flow model
+## Phase 2 is nearly done: one internal flow model
 
-Roadmap section B, spec in `dev_notes/phase2/design.md`, nine deliverables B0
-to B9. Six of them are in.
+Roadmap section B, spec in `dev_notes/phase2/design.md`, ten deliverables B0 to
+B9. Nine of them are in.
 
 **B0 to B6 landed as `e25fcb4`.** `FlowProblem` is the representation every
 design compiles into, `solve_min_cost_flow()` returns node potentials for all of
@@ -139,12 +139,33 @@ identical to 17 digits, table in `dev_notes/phase2/findings.md`. The likely
 source is that the shared solver allocates its search vectors once instead of
 once per augmentation.
 
-**B7 and B9's R half are open.** `match_couples()` does not compile its designs
-yet -- `R/matching_core.R` has no flow reference -- so roadmap section B's first
-condition, that every existing design routes through `FlowProblem`, is not met.
-There is no `tests/testthat/test-flow-model.R` either: the flow model is covered
-by 246 Catch2 cases in `cpp_tests/` and through `full_match()`, and by nothing
-at the R level, while `verify_flow()` is exported.
+**B7 landed on 2026-08-15.** `match_couples()`'s three designs are named to the
+compilers and routed on what the compiled network is: 1:1 and k:1 lower to the
+assignment `R/lap_solve.R` already solves, matching with replacement compiles to
+a network whose columns cannot bind and is solved one row at a time. The
+branches that used to decide it, `if (replace)` and `if (ratio > 1L)`, are gone,
+and so is `.couples_ratio()` -- the k:1 path was the 1:1 path with a
+hand-written `rep(seq_len(n), each = ratio)` in front of it, and that
+replication is now the compiler's row map.
+
+Only the shape crosses to C++. Which network a design compiles to follows from
+the row and column counts, so the costs stay in the matrix `matching_core.R`
+built and the lowered problem is that matrix read through the maps, which is
+what keeps the lazy 1:1 path -- whose premise is that the matrix is never
+materialized -- reachable. `is_row_separable()` joins the lowering predicate:
+the replacement design's solve relies on it, and each design's route is checked
+against the compiled network rather than assumed.
+
+B0 is the judge and it is unmoved: 1537 cases, the same 16 `full_match/*`
+differing on the `potentials` and `certificate` B6 added, and every
+`match_couples/*` case identical. Suite after: 0 failed, 0 warnings, 3 skipped
+in R, and 69252 assertions over 249 cases in `cpp_tests/`.
+
+**B9's R half is open.** There is no `tests/testthat/test-flow-model.R`: the
+flow model is covered by 249 Catch2 cases in `cpp_tests/`, through
+`full_match()`, and now through `test-flow-design.R`'s cover of the compiled
+`match_couples()` designs, while `verify_flow()` is exported and has no
+testthat coverage of its own.
 
 ## The suite runs warning-free, and stays that way on purpose
 
@@ -223,11 +244,9 @@ Open, and confirmed open on GitHub:
 
 ## Next action
 
-**Finish phase 2: B7, then B9's R half.** B7 is the one that decides whether
-section B's acceptance conditions are met, because it is the deliverable that
-puts `match_couples()`'s designs through the compiler. B9's R tests are the
-cheaper of the two and close a real gap: an exported `verify_flow()` with no
-testthat coverage.
+**Finish phase 2: B9's R half.** It closes a real gap, an exported
+`verify_flow()` with no testthat coverage, and it is the last thing standing
+between phase 2 and done.
 
 Then the baseline re-capture, which three findings are waiting on: the derived
 status bugs 1 to 3 in `dev_notes/phase2/findings.md`, and bug 9's

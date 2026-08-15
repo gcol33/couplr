@@ -998,3 +998,142 @@ TEST_CASE("compiled strata solve independently in one problem",
     REQUIRE(res.flow_sent == 4);
     REQUIRE(res.total_cost == Approx(1.0 + 2.0 + 3.0 + 4.0));
 }
+
+TEST_CASE("is_row_separable - true exactly where the columns cannot bind",
+          "[flow][compile][separable]") {
+    auto cost = make_cost({
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12}
+    });
+    lap::SourceOracle<lap::CostMatrix> oracle(cost);
+
+    SECTION("replacement separates, at every ratio it admits") {
+        for (int64_t ratio : {int64_t{1}, int64_t{2}, int64_t{4}}) {
+            lap::CompiledDesign design =
+                lap::compile_with_replacement(oracle, ratio, NO_CATEGORIES);
+            REQUIRE(design.problem.arcs[0].upper == 3);
+            REQUIRE(lap::is_row_separable(design.problem));
+        }
+    }
+
+    SECTION("1:1 does not separate: three rows compete for one column each") {
+        lap::CompiledDesign design = lap::compile_one_to_one(oracle, NO_CATEGORIES);
+        REQUIRE_FALSE(lap::is_row_separable(design.problem));
+    }
+
+    SECTION("k:1 does not separate") {
+        lap::CompiledDesign design = lap::compile_fixed_ratio(oracle, 2, NO_CATEGORIES);
+        REQUIRE_FALSE(lap::is_row_separable(design.problem));
+    }
+
+    SECTION("a design metering its flow at the source does not separate") {
+        lap::CompiledDesign variable =
+            lap::compile_variable_ratio(oracle, 1, 2, NO_CATEGORIES);
+        REQUIRE_FALSE(lap::is_row_separable(variable.problem));
+
+        lap::CompiledDesign subset = lap::compile_k_cardinality(oracle, 2, NO_CATEGORIES);
+        REQUIRE_FALSE(lap::is_row_separable(subset.problem));
+
+        lap::CompiledFullMatch full =
+            lap::compile_full_matching(oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
+        REQUIRE_FALSE(lap::is_row_separable(full.design.problem));
+    }
+
+    SECTION("one column short of every row is one column that can bind") {
+        lap::CompiledDesign design =
+            lap::compile_with_replacement(oracle, 2, NO_CATEGORIES);
+        design.problem.arcs[1].upper = 2;
+        REQUIRE_FALSE(lap::is_row_separable(design.problem));
+    }
+
+    SECTION("an expanded problem does not separate") {
+        lap::CompiledDesign design =
+            lap::compile_with_replacement(oracle, 2, NO_CATEGORIES);
+        design.problem.expanded = true;
+        REQUIRE_FALSE(lap::is_row_separable(design.problem));
+    }
+
+    SECTION("a single row separates under either design, having nothing to "
+            "compete with") {
+        lap::CostMatrix one_row(1, 4);
+        lap::SourceOracle<lap::CostMatrix> one_row_oracle(one_row);
+        lap::CompiledDesign design =
+            lap::compile_one_to_one(one_row_oracle, NO_CATEGORIES);
+        REQUIRE(lap::is_row_separable(design.problem));
+        REQUIRE(lap::is_unit_capacity_assignment(design.problem));
+    }
+}
+
+TEST_CASE("the replacement optimum is each row's own cheapest columns",
+          "[flow][compile][separable][solve]") {
+    // Both rows want the same two columns, and both get them: a column carries
+    // one unit from every row, so the second row pays no more than the first.
+    auto cost = make_cost({
+        {1, 2, 50},
+        {3, 4, 60}
+    });
+    lap::SourceOracle<lap::CostMatrix> oracle(cost);
+
+    lap::CompiledDesign design = lap::compile_with_replacement(oracle, 2, NO_CATEGORIES);
+    REQUIRE(lap::is_row_separable(design.problem));
+    REQUIRE(design.flow_required == 4);
+
+    lap::FlowResult res = lap::solve_min_cost_flow(design.problem);
+    REQUIRE(res.status == "optimal");
+    REQUIRE(res.flow_sent == 4);
+    REQUIRE(res.total_cost == Approx(1.0 + 2.0 + 3.0 + 4.0));
+}
+
+TEST_CASE("ShapeOracle - compiles the network the costs would have",
+          "[flow][compile][shape]") {
+    lap::CostMatrix cost(3, 4);
+    lap::SourceOracle<lap::CostMatrix> priced(cost);
+    lap::ShapeOracle shape(3, 4);
+
+    SECTION("reading a cell throws rather than answering") {
+        REQUIRE_THROWS_AS(shape.at(0, 0), lap::LapException);
+        REQUIRE_THROWS_AS(shape.allowed(0, 0), lap::LapException);
+        REQUIRE(shape.nrow() == 3);
+        REQUIRE(shape.ncol() == 4);
+    }
+
+    SECTION("every couples design compiles to the same network either way") {
+        lap::CompiledDesign a = lap::compile_one_to_one(priced, NO_CATEGORIES);
+        lap::CompiledDesign b = lap::compile_one_to_one(shape, NO_CATEGORIES);
+        REQUIRE(b.problem.n_nodes == a.problem.n_nodes);
+        REQUIRE(b.problem.supply == a.problem.supply);
+        REQUIRE(b.problem.arcs.size() == a.problem.arcs.size());
+        REQUIRE(b.row_unit == a.row_unit);
+        REQUIRE(b.col_unit == a.col_unit);
+        REQUIRE(b.flow_required == a.flow_required);
+        REQUIRE(lap::is_unit_capacity_assignment(b.problem));
+
+        lap::CompiledDesign ka = lap::compile_fixed_ratio(priced, 2, NO_CATEGORIES);
+        lap::CompiledDesign kb = lap::compile_fixed_ratio(shape, 2, NO_CATEGORIES);
+        REQUIRE(kb.problem.n_nodes == ka.problem.n_nodes);
+        REQUIRE(kb.problem.supply == ka.problem.supply);
+        REQUIRE(kb.row_unit == ka.row_unit);
+        REQUIRE(kb.flow_required == ka.flow_required);
+        REQUIRE(lap::is_unit_capacity_assignment(kb.problem));
+
+        lap::CompiledDesign ra = lap::compile_with_replacement(priced, 2, NO_CATEGORIES);
+        lap::CompiledDesign rb = lap::compile_with_replacement(shape, 2, NO_CATEGORIES);
+        REQUIRE(rb.problem.n_nodes == ra.problem.n_nodes);
+        REQUIRE(rb.problem.supply == ra.problem.supply);
+        REQUIRE(rb.flow_required == ra.flow_required);
+        REQUIRE(lap::is_row_separable(rb.problem));
+    }
+
+    SECTION("the k:1 replica map is the shape's, not the costs'") {
+        lap::CompiledDesign design = lap::compile_fixed_ratio(shape, 3, NO_CATEGORIES);
+        REQUIRE(design.row_unit.size() == 9);
+        REQUIRE(design.row_unit == std::vector<int32_t>({0, 0, 0, 1, 1, 1, 2, 2, 2}));
+        REQUIRE(design.col_unit == std::vector<int32_t>({0, 1, 2, 3}));
+    }
+
+    SECTION("a shape cannot be expanded") {
+        lap::CompiledDesign design = lap::compile_one_to_one(shape, NO_CATEGORIES);
+        REQUIRE_THROWS_AS(lap::expand_blocks(design.problem), lap::LapException);
+    }
+}

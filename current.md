@@ -8,9 +8,9 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, tag `v1.6.0` exists, and `main` is level with `origin/main`. The
-phase 1 certification layer went in as `7b3dd6e` and is no longer sitting in the
-working tree.
+`9c8fbe3`, and tag `v1.6.0` exists. `main` is nine commits ahead of
+`origin/main`; see "Working tree" at the end. The phase 1 certification layer
+went in as `7b3dd6e` and is no longer sitting in the working tree.
 
 **Nothing is staged for CRAN.** `cran-comments.md` still describes 1.5.5 and
 opens "This release supersedes 1.5.3, the version currently on CRAN"; it has not
@@ -221,15 +221,30 @@ Closed by the 1.6 work:
   reported 4-15%.
 - **#20** full_match. Fixed: the guard now tests actual flow against required
   flow, and the R layer reads the status it was discarding.
+- **#31** `gabow_tarjan` suboptimal on rectangular problems. Closed against
+  `7b2f84f`; see the section above for the cause and what else it turned up.
+
+Filed by this work, all three cleanly separable and none of them blocking
+phase 3:
+
+- **#34** the animations restate the solver instead of reading it. The two
+  divergences found on 2026-08-15 are fixed, but `trace_helpers_mcf.R` is still
+  a second implementation of the SSP core and can drift again. The chunk: the
+  flow model emits per-step state and the traces read it. `trace_cycle_cancel`,
+  `trace_csa` and `trace_gabow_tarjan` are out of scope -- different algorithms,
+  not an SSP step stream.
+- **#33** `gabow_tarjan` squares a rectangular instance, so `n << m` is not
+  runnable at its own shape. Either a measured size guard pointing at jv, or a
+  formulation that keeps the rectangular shape by treating the identical dummy
+  rows as one node. Not urgent: the method is opt-in and `"auto"` sends
+  `m >= 3n` to `sap`.
+- **#32** `push_relabel` is successive shortest paths with Johnson potentials,
+  not Goldberg-Tarjan push-relabel. Three places in the repo already say so,
+  including the message the animation shows the user. Same shape as #30:
+  implement it, or rename and describe what is there.
 
 Open, and confirmed open on GitHub:
 
-- **#31** **`gabow_tarjan` is suboptimal on wide problems.** Found by the
-  certification layer on its first randomized sweep. 179 of 200 random `m >= n`
-  problems came back worse than jv, worst excess 121.9; all 200 square problems
-  were fine. A 3 x 6 counterexample returns 20 against a brute-forced optimum
-  of 8. The suite could not have caught it: the one rectangular test asserts
-  `n_matched == 4` and nothing about cost.
 - **#30** `cardinality_match()` is a balance-pruning heuristic under
   Zubizarreta's name. Needs a decision, implement or rename.
 - **#29** `as_matchit()` labels every non-subclass design `estimand = "ATT"`.
@@ -346,31 +361,128 @@ lives in one place and one `cpp_tests` case asserts it.
 Suite after: 0 failed, 0 warnings, 3 skipped, 6614 passed in R, and 69257
 assertions over 251 cases in `cpp_tests/`. B0: 1542 cases, 0 differ.
 
+## The two interface questions are answered
+
+Both are closed in the code rather than in a note, and
+`dev_notes/phase2/findings.md` records each where it was raised.
+
+**`map_assignment_duals()` says which way it failed.** `AssignmentMapStatus` has
+three values and each documents what it leaves behind: `Ok` and
+`NotAnAssignment` populate `match`, `u` and `v`, `StructuralMismatch` returns
+before anything is read and leaves them empty. That last distinction is the one
+a `bool` could not carry, and it is what a caller checking `ok` and continuing
+would have indexed into. `ok()` is a method over `status`, not a second field.
+
+**The trace shifts potentials the way the solver does.** The divergence was
+real and it was in two places, not one. At each augmentation the solver shifts
+unreached nodes by the largest distance label and the trace shifted only what
+Dijkstra had labelled; and the Bellman-Ford initialization,
+`ifelse(is.finite(bf$dist), bf$dist, 0)`, had the same defect one step earlier,
+so the very first search started dual infeasible. Both were invisible because
+`mcf_dijkstra()`'s `max(rc, 0)` clamp -- there for floating-point drift -- was
+absorbing a real infeasibility. The rule is `mcf_update_potentials()` now,
+called at both points.
+
+The trace layer keeps existing: animating a solver needs per-step state a solver
+has no reason to produce. What does not keep existing is the drift, and #34
+tracks removing the second implementation by having the flow model emit that
+state.
+
+## The two phase-1 leftovers are in
+
+**`assignment_duals(certify = TRUE)`** runs the check and attaches an
+`assignment_certificate`. `verify_assignment()` reads the duals off the result
+instead of solving again, so it costs one pass over the admissible pairs.
+Default is `FALSE`, so nothing about the returned fields changes unless it is
+asked for.
+
+**The lazy cost source has a dual entry point.** `detail::jv_core` was already
+instantiated for `LazyCostMatrix` and already producing `u` and `v`, so what was
+missing was a way out: `lap::solve_jv_duals(const LazyCostMatrix&)` and the Rcpp
+wrapper beside the dense one. `assignment_duals()` takes a `lazy_cost_spec` and
+returns duals identical to the dense path's to the last bit; `.certify_lazy()`
+derives its own instead of refusing, and transposes an `n_left > n_right`
+specification rather than erroring. This is what section C's pricing oracle
+needs, so it is phase 3 groundwork and not only a leftover.
+
+`solve_jv()` and `solve_jv_duals()` were the same twenty-line body three times
+over. One templated body now, and `solve_jv()` is `solve_jv_duals()` with the
+potentials dropped.
+
+## #31 is fixed, and it was not an implementation bug
+
+Gabow-Tarjan's 1-optimality bound compares the matching found against an optimal
+one through the duals, and the column terms cancel only when both use every
+column. A rectangular instance breaks that, so the `n`-slack the `(n+1)` scaling
+relies on never applies. The code was correct for what it proves; the instance
+was outside it.
+
+`solve_gabow_tarjan_inner()` squares the instance with zero-cost dummies before
+the first scale, so the matching carried across scales and the duals with it
+live on a problem the bound covers. `scale_match()`'s own `n > m` padding is
+gone: it padded per scale, on `cost_prime`, which is the same argument failing
+one level down.
+
+**Proving it before touching the test turned up a second bug.** On the tall side
+`row_match` came back holding the padding column's index. Measured against the
+code before the fix -- `git stash` on the one file, rebuild, run -- a 4 x 3
+instance returned `match = 4 1 3 2`, column 4 in a three-column matrix, at cost
+24 against an optimum of 15. `test-gabow_tarjan_solver.R`'s `n_matched == 4` was
+pinning that phantom. The test asserts cardinality, in-range and
+claimed-once columns, and cost now.
+
+B0 moved on 34 of 1542 cases, all `gabow_tarjan` and all rectangular. Every
+minimization fell and every maximization rose; the six `constant` cases changed
+only which optimum they name. Re-captured, and `--compare` is clean against it.
+
+`cert_known_suboptimal()` is empty, so the certification sweep covers
+`gabow_tarjan` on every shape again.
+
+Suite after: 0 failed, 0 errors, 0 warnings, 3 skipped, 6700 passed in R, and
+69265 assertions over 251 cases in `cpp_tests/`.
+
 ## Next action
 
-Nothing left that moves a value B0 holds.
+Phase 3, roadmap sections C and D, which is the centerpiece of the 1.6 line.
+Nothing is queued in front of it: the interface questions are answered, the
+phase-1 leftovers are in, and the three follow-ups this work surfaced are filed
+rather than half-done.
 
-`dev_notes/phase2/findings.md` leaves two interface questions open that no
-deliverable covers: `map_assignment_duals()` reporting `ok = false` down two
-paths with different postconditions, and `R/trace_helpers_mcf.R` stating the
-same algorithm in R with its own potential-update rule, so a trace can show an
-augmenting path the solver would not take.
-
-Two things phase 1 leaves on the table, both cheap and both feeding phase 3:
-
-- `assignment_duals()` computes a certificate's inputs and does not run the
-  check. Wiring `certify = TRUE` there is an afternoon.
-- The lazy path has no dual entry point, so lazy solves get
-  `certificate = NULL`. Section C needs one anyway.
-
-Then phase 3, roadmap sections C and D, which is the centerpiece of the 1.6
-line.
+Section C's restricted master is the new solver work, and it is where to start.
+The pricing oracle's two prerequisites are both in the tree now: the lazy dual
+entry point above, and `scan_reduced_costs()` from phase 1.
 
 ## Working tree
 
-Clean apart from what this note is committed with. `dev_notes/` stays gitignored;
-`roadmap.md` and `current.md` are tracked but `.Rbuildignore`d, so they stay out
-of the tarball.
+Clean apart from what this note is committed with.
+
+**`origin/main` is at `37ebfa6`, nine commits behind local `main`.** Five are
+this session's -- `8585ba5`, `e351f2c`, `66ecc9a`, `7b2f84f` and this note --
+and four predate it: `d345dea`, `a5aa182`, `fd5d00d`, `46460a5`. So the gap is
+not new, and the push is larger than one session's work.
+
+#31 is closed on GitHub against `7b2f84f`, which is not on the remote yet, so
+the push is the one thing outstanding.
+
+```
+GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
+```
+
+`dev_notes/` stays gitignored; `roadmap.md` and `current.md` are tracked but
+`.Rbuildignore`d, so they stay out of the tarball.
+
+## What the next release owes NEWS
+
+This repo writes NEWS at release rather than per commit. Owed so far, all
+user-visible:
+
+- `block_summary`'s columns and `info`'s field set, from the derived-status
+  fixes.
+- Every reader dropping a forbidden pair, from the `drop_forbidden` removal.
+- `gabow_tarjan` returning the optimum on rectangular problems, and reporting
+  an unmatched row as unmatched rather than as a padding column (#31).
+- `assignment_duals()` gaining `certify` and accepting a lazy cost
+  specification; `verify_assignment()` no longer requiring `duals` for one.
 
 ## File map
 
@@ -380,7 +492,7 @@ of the tarball.
 |---|---|
 | `design.md` | The spec phase 1 implements, with the LP and the four conditions |
 | `findings.md` | Everything found that is outside phase 1's scope, and every deviation from the design |
-| `repro_gabow_tarjan_rectangular.R` | #31, brute-forced |
+| `repro_gabow_tarjan_rectangular.R` | #31, brute-forced. Reports 0 worse now; kept as the regression check |
 | `repro_20.R` | #20 end to end through the public API |
 
 `dev_notes/phase2/`

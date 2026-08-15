@@ -59,7 +59,12 @@
 // The search itself is Dijkstra with reinsertion: a node whose label improves
 // after it was already popped goes back on the queue. That is what makes the
 // first search correct when the arc costs straddle zero, which they do whenever
-// a cost matrix has negative entries.
+// a cost matrix has negative entries. Reinsertion is also what makes the search
+// depend on cbar >= 0 for termination rather than only for its answer, so the
+// two places that invariant can be lost are handled where they arise: rounding
+// is read as rounding once the invariant is supposed to hold, and a queue that
+// outlives the bound on how often labels can improve reports the cycle it is
+// circling.
 #include "flow_solve.h"
 
 #include "../core/lap_certify.h"
@@ -151,6 +156,15 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     // ---- starting point: potentials, then a flow consistent with them ----
 
     std::vector<double> pi(static_cast<std::size_t>(N), 0.0);
+
+    // Whether cbar >= 0 is already supposed to hold on every residual arc. A
+    // cold start does not have it: the arc set may price edges below zero, and
+    // the reinserting search below is what makes that case correct. Every
+    // later search does have it, and so does a warm start that passed the
+    // slackness repair, which is what lets the search read a reduced cost a few
+    // ulps below zero as the rounding it is.
+    bool residual_nonneg = false;
+
     bool warm = !prob.warm_potential.empty() || !prob.warm_flow.empty();
     if (!prob.warm_potential.empty()) {
         for (int32_t v = 0; v < n_nodes; ++v) {
@@ -206,6 +220,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                     f[static_cast<std::size_t>(a)] = arc.upper;
                 }
             }
+            residual_nonneg = true;
         } else {
             std::fill(pi.begin(), pi.end(), 0.0);
             for (int64_t a = 0; a < n_arcs; ++a) {
@@ -307,6 +322,19 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     std::vector<int32_t> pe(static_cast<std::size_t>(N));
     using Entry = std::pair<double, int32_t>;
 
+    // A node goes back on the queue whenever its label improves, so the number
+    // of pops is bounded only by how often that can happen: once per node when
+    // every reduced cost is non-negative, and at most once per node per
+    // residual arc when the first search has to work with costs that straddle
+    // zero. Past that bound the labels are descending around a cycle the
+    // residual graph prices below zero, and the search would circle it until it
+    // ran out of memory rather than ever emptying the queue.
+    int64_t n_res_arcs = 0;
+    for (int32_t v = 0; v < N; ++v) {
+        n_res_arcs += static_cast<int64_t>(g[static_cast<std::size_t>(v)].size());
+    }
+    const int64_t max_pops = static_cast<int64_t>(N) * (n_res_arcs + 1);
+
     bool no_path = false;
     while (out.flow_sent < out.flow_required &&
            out.n_augmentations < max_augmentations) {
@@ -318,7 +346,12 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         dist[static_cast<std::size_t>(SS)] = 0.0;
         pq.emplace(0.0, SS);
 
+        int64_t pops = 0;
         while (!pq.empty()) {
+            if (++pops > max_pops) {
+                LAP_THROW("FlowProblem: the residual graph carries a "
+                          "negative-cost cycle, so no shortest path exists");
+            }
             const Entry cur = pq.top();
             pq.pop();
             const double dcur = cur.first;
@@ -329,8 +362,16 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             for (int32_t ei = 0; ei < static_cast<int32_t>(adj.size()); ++ei) {
                 const ResArc& e = adj[static_cast<std::size_t>(ei)];
                 if (e.cap <= 0) continue;
-                const double rc = e.cost + pi[static_cast<std::size_t>(u)] -
-                                  pi[static_cast<std::size_t>(e.to)];
+                double rc = e.cost + pi[static_cast<std::size_t>(u)] -
+                            pi[static_cast<std::size_t>(e.to)];
+                // The two directions of one arc are priced by expressions that
+                // are negatives of each other in exact arithmetic and not in
+                // floating point, so both can round a few ulps below zero at
+                // once. That pair is a cycle of negative reduced cost, and the
+                // search would keep going round it lowering labels. Where the
+                // invariant says the price cannot be negative, rounding is the
+                // only thing that could have made it so.
+                if (residual_nonneg && rc < 0.0) rc = 0.0;
                 const double nd = dcur + rc;
                 if (nd + opts.relax_eps < dist[static_cast<std::size_t>(e.to)]) {
                     dist[static_cast<std::size_t>(e.to)] = nd;
@@ -403,6 +444,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
 
         out.flow_sent += aug;
         ++out.n_augmentations;
+        residual_nonneg = true;
     }
 
     // ---- read the answer back ----

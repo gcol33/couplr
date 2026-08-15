@@ -26,6 +26,25 @@ test_that("ssp errors when a row is entirely forbidden", {
   expect_error(assignment(M, method = "sap"), "Infeasible")
 })
 
+test_that("ssp terminates when tied costs price a residual arc pair below zero", {
+  # A padded caliper problem, cut down to the four rows and seven columns that
+  # reproduce it. Both directions of one arc round a few ulps below zero at the
+  # same time, which is a cycle of negative reduced cost for the search to
+  # circle. The values are exact: rounding them changes what the search finds.
+  s <- 53.545017732743361
+  M <- matrix(s, 4, 7)
+  M[1, 2] <- 1.2751063165128582
+  M[3, 2] <- 0.93851628210106453
+  M[4, 2] <- 0.87495344339692427
+  M[3, 7] <- 1.0984672308296912
+  M[4, 7] <- 1.0349043921255510
+
+  s_res <- assignment(M, method = "sap")
+  expect_equal(s_res$status, "optimal")
+  expect_equal(s_res$total_cost, assignment(M, method = "jv")$total_cost,
+               tolerance = 1e-12)
+})
+
 test_that("maximize works with ssp", {
   set.seed(3)
   n <- 6; m <- 10

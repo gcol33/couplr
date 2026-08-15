@@ -58,6 +58,28 @@
 
 ## Bug fixes
 
+* **The min-cost flow search no longer runs forever on a cost matrix with many
+  tied entries.** Successive shortest paths terminates because it keeps the
+  reduced cost of every residual arc at or above zero. The two directions of one
+  arc are priced by expressions that are negatives of each other in exact
+  arithmetic and not in floating point, so both can round a few ulps below zero
+  at once, and that pair is a cycle of negative reduced cost for the search to
+  circle. Ties make it reachable: a large block of equal costs prices a large
+  part of the residual graph at zero, where a rounding error in either direction
+  decides a comparison.
+
+  It was reached from `match_couples()` with default arguments. A caliper
+  problem with no complete matching is re-solved with forbidden entries at a
+  finite sentinel, and a matrix that is mostly one sentinel value is exactly the
+  tied input; `method = "auto"` sends a wide one to `"sap"`, which is the flow
+  solver in assignment orientation. A 4 x 7 instance is enough to reproduce it.
+
+  Where the invariant says a reduced cost cannot be negative, the search now
+  reads a negative one as the rounding it is, which leaves the cold first search
+  (whose costs may genuinely straddle zero) untouched. A search that outlives
+  the bound on how often labels can improve now reports the negative-cost cycle
+  it is circling instead of growing its queue until memory runs out.
+
 * **`status` is computed from what the solver terminated on, instead of being
   a literal.** The generic solve paths assigned `status = "optimal"`
   unconditionally, so the field asserted optimality no matter how the solver

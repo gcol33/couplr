@@ -229,6 +229,105 @@ Rcpp::List flow_certify_impl(int n_nodes,
     return certificate_to_r(lap::certify_flow(prob, f, pi, tol));
 }
 
+// The designs match_couples() offers, compiled and routed. The caller names the
+// design and states its shape; what comes back is how that design has to be
+// solved and the maps that carry a solved answer back to the caller's units.
+//
+// Only the shape crosses. Which network a design compiles to, and which unit
+// each of its nodes stands for, follow from the row and column counts alone, so
+// the prices stay in the caller's matrix and the lowered problem is solved from
+// there.
+//
+// Each design names the structural property its solve relies on, and the
+// compiled network is checked against that property here rather than assumed to
+// have it. A design that compiled to something else is an error and not a
+// route: a network solved as a problem it is not is a wrong answer that
+// validates and solves.
+Rcpp::List flow_compile_couples_impl(std::string design,
+                                     double      n_rows,
+                                     double      n_cols,
+                                     double      ratio) {
+    const int64_t nr = count_from_r(n_rows, "the row count");
+    const int64_t nc = count_from_r(n_cols, "the column count");
+    const int64_t k  = count_from_r(ratio, "ratio");
+    if (nr < 0 || nc < 0) {
+        Rcpp::stop("flow model: a design cannot have a negative number of units");
+    }
+
+    const lap::ShapeOracle                     shape(nr, nc);
+    const std::vector<lap::CategoryConstraint> no_categories;
+
+    lap::CompiledDesign compiled;
+    std::string         route;
+    if (design == "one_to_one") {
+        compiled = lap::compile_one_to_one(shape, no_categories);
+        route    = "assignment";
+    } else if (design == "fixed_ratio") {
+        compiled = lap::compile_fixed_ratio(shape, k, no_categories);
+        route    = "assignment";
+    } else if (design == "with_replacement") {
+        compiled = lap::compile_with_replacement(shape, k, no_categories);
+        route    = "separable";
+    } else {
+        Rcpp::stop("flow model: there is no compiler for the design '%s'", design);
+    }
+
+    std::vector<int32_t> row_unit;
+    std::vector<int32_t> col_unit;
+    if (route == "assignment") {
+        const lap::LoweredAssignment lowered = lap::lower_to_assignment(compiled);
+        if (!lowered.valid) {
+            Rcpp::stop("flow model: the '%s' design did not compile to an assignment",
+                       design);
+        }
+        row_unit = lowered.row_unit;
+        col_unit = lowered.col_unit;
+    } else {
+        if (!lap::is_row_separable(compiled.problem)) {
+            Rcpp::stop("flow model: the '%s' design did not compile to a network its "
+                       "rows can be solved apart in",
+                       design);
+        }
+        row_unit = compiled.row_unit;
+        col_unit = compiled.col_unit;
+    }
+
+    // A map that is not the identity is a design that reshaped its input, and
+    // the cost matrix the lowered problem is solved from is the caller's read
+    // through the maps rather than the caller's matrix itself.
+    bool reshaped = row_unit.size() != static_cast<std::size_t>(nr) ||
+                    col_unit.size() != static_cast<std::size_t>(nc);
+
+    Rcpp::IntegerVector rows(static_cast<R_xlen_t>(row_unit.size()));
+    for (std::size_t e = 0; e < row_unit.size(); ++e) {
+        if (row_unit[e] != static_cast<int32_t>(e)) reshaped = true;
+        rows[static_cast<R_xlen_t>(e)] = row_unit[e] + 1;
+    }
+    Rcpp::IntegerVector cols(static_cast<R_xlen_t>(col_unit.size()));
+    for (std::size_t e = 0; e < col_unit.size(); ++e) {
+        if (col_unit[e] != static_cast<int32_t>(e)) reshaped = true;
+        cols[static_cast<R_xlen_t>(e)] = col_unit[e] + 1;
+    }
+
+    // What one row carries. The assignment designs put one unit on a row node;
+    // matching with replacement puts the row's whole quota there, which is the
+    // number of columns that row takes.
+    const int64_t per_row =
+        (compiled.n_rows > 0)
+            ? compiled.problem.supply[static_cast<std::size_t>(compiled.row_base)]
+            : 0;
+
+    return Rcpp::List::create(
+        Rcpp::Named("design") = design,
+        Rcpp::Named("route") = route,
+        Rcpp::Named("reshaped") = reshaped,
+        Rcpp::Named("per_row") = count_to_r(per_row),
+        Rcpp::Named("flow_required") = count_to_r(compiled.flow_required),
+        Rcpp::Named("n_nodes") = static_cast<int>(compiled.problem.n_nodes),
+        Rcpp::Named("row_unit") = rows,
+        Rcpp::Named("col_unit") = cols);
+}
+
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls,
                                         double max_controls) {

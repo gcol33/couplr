@@ -518,6 +518,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_flow_compile_couples
+Rcpp::List lap_flow_compile_couples(std::string design, double n_rows, double n_cols, double ratio);
+RcppExport SEXP _couplr_lap_flow_compile_couples(SEXP designSEXP, SEXP n_rowsSEXP, SEXP n_colsSEXP, SEXP ratioSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type design(designSEXP);
+    Rcpp::traits::input_parameter< double >::type n_rows(n_rowsSEXP);
+    Rcpp::traits::input_parameter< double >::type n_cols(n_colsSEXP);
+    Rcpp::traits::input_parameter< double >::type ratio(ratioSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_compile_couples(design, n_rows, n_cols, ratio));
+    return rcpp_result_gen;
+END_RCPP
+}
 // greedy_matching
 Rcpp::List greedy_matching(Rcpp::NumericMatrix cost_matrix, bool maximize, std::string strategy);
 RcppExport SEXP _couplr_greedy_matching(SEXP cost_matrixSEXP, SEXP maximizeSEXP, SEXP strategySEXP) {
@@ -829,6 +843,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 11},
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
     {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},
+    {"_couplr_lap_flow_compile_couples", (DL_FUNC) &_couplr_lap_flow_compile_couples, 4},
     {"_couplr_greedy_matching", (DL_FUNC) &_couplr_greedy_matching, 3},
     {"_couplr_analyze_color_overlap_cpp", (DL_FUNC) &_couplr_analyze_color_overlap_cpp, 5},
     {"_couplr_compute_pixel_cost_cpp", (DL_FUNC) &_couplr_compute_pixel_cost_cpp, 6},

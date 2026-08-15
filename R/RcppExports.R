@@ -149,6 +149,10 @@ lap_flow_compile_full_match <- function(cost, min_controls, max_controls) {
     .Call(`_couplr_lap_flow_compile_full_match`, cost, min_controls, max_controls)
 }
 
+lap_flow_compile_couples <- function(design, n_rows, n_cols, ratio = 1.0) {
+    .Call(`_couplr_lap_flow_compile_couples`, design, n_rows, n_cols, ratio)
+}
+
 greedy_matching <- function(cost_matrix, maximize = FALSE, strategy = "row_best") {
     .Call(`_couplr_greedy_matching`, cost_matrix, maximize, strategy)
 }

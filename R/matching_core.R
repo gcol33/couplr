@@ -162,6 +162,105 @@
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
 }
 
+# ==============================================================================
+# The compiled design
+# ==============================================================================
+# match_couples() offers three designs and none of them is written out as a
+# network here. The design is named to the compilers in src/flow/flow_compile.h,
+# which build it, check the structural property its solve relies on, and return
+# the maps saying which of the caller's units each node stands for:
+#
+#   design       network                            solved as
+#   --------------------------------------------------------------------------
+#   1:1          one unit per row, a column          the assignment problem
+#                admits one row                      R/lap_solve.R solves
+#   k:1          the same, rows replicated k times   the same, read back
+#                                                    through the replica map
+#   replacement  k units per row, a column admits    each row's own k cheapest
+#                every row                           columns
+#
+# Only the shape is compiled. Costs stay in the matrix this file built and the
+# lowered problem is that matrix read through the maps, which is what keeps a
+# lazy cost source reachable on the 1:1 path, where the maps are the identity
+# and the matrix is passed to the solver untouched.
+.couples_design <- function(n_rows, n_cols, replace = FALSE, ratio = 1L) {
+  design <- if (isTRUE(replace)) {
+    "with_replacement"
+  } else if (ratio > 1L) {
+    "fixed_ratio"
+  } else {
+    "one_to_one"
+  }
+
+  plan <- lap_flow_compile_couples(design, n_rows, n_cols, ratio)
+  plan$row_unit <- as.integer(plan$row_unit)
+  plan$col_unit <- as.integer(plan$col_unit)
+  plan
+}
+
+# The matrix the compiled design is solved from: the caller's costs read through
+# the design's maps. A design that did not reshape its input is solved from the
+# matrix itself, which for a lazy cost spec is the only form it has.
+.couples_costs <- function(cost_matrix, plan) {
+  if (!isTRUE(plan$reshaped)) {
+    return(cost_matrix)
+  }
+  cost_matrix[plan$row_unit, plan$col_unit, drop = FALSE]
+}
+
+# Read a solved assignment back as pairs in the caller's units. The solver
+# answered in node offsets of the compiled design, and the maps turn each one
+# into the left or right unit it stands for: the identity on the 1:1 design,
+# replica e back to row e / k on the k:1 one.
+#
+# `drop_forbidden` drops a pair whose distance is at or above BIG_COST, which is
+# a pair the constraints forbid and the solver returned because a complete
+# matching demanded one. The k:1 design drops such a pair and the 1:1 design
+# keeps it.
+.couples_pairs <- function(solved, plan, cost_matrix, left, right,
+                           left_ids, right_ids, vars, drop_forbidden) {
+  matched_rows <- plan$row_unit[solved$matched_rows]
+  matched_cols <- plan$col_unit[solved$matched_cols]
+
+  if (length(matched_rows) == 0L) {
+    return(list(
+      pairs = tibble::tibble(
+        left_id = character(0),
+        right_id = character(0),
+        distance = numeric(0)
+      ),
+      matched_rows = integer(0),
+      matched_cols = integer(0)
+    ))
+  }
+
+  distances <- if (is_lazy_cost_spec(cost_matrix)) {
+    lazy_pair_distances(cost_matrix, matched_rows, matched_cols)
+  } else {
+    cost_matrix[cbind(matched_rows, matched_cols)]
+  }
+
+  if (drop_forbidden) {
+    valid <- distances < BIG_COST
+    matched_rows <- matched_rows[valid]
+    matched_cols <- matched_cols[valid]
+    distances <- distances[valid]
+  }
+
+  pairs <- tibble::tibble(
+    left_id = left_ids[matched_rows],
+    right_id = right_ids[matched_cols],
+    distance = distances
+  )
+
+  for (v in vars) {
+    pairs[[paste0(".", v, "_diff")]] <- left[[v]][matched_rows] -
+      right[[v]][matched_cols]
+  }
+
+  list(pairs = pairs, matched_rows = matched_rows, matched_cols = matched_cols)
+}
+
 #' Shared single matching implementation
 #'
 #' Core logic for both optimal (LAP) and greedy matching without blocking.
@@ -222,69 +321,53 @@
     ))
   }
 
-  # --- Replacement matching ---
-  if (replace) {
+  # --- The design, compiled ---
+  plan <- .couples_design(nrow(cost_matrix), ncol(cost_matrix),
+                          replace = replace, ratio = ratio)
+
+  # --- Replacement matching, one row at a time ---
+  if (identical(plan$route, "separable")) {
     if (is_lazy_cost_spec(cost_matrix)) {
       stop("replace = TRUE does not support memory_mode = \"lazy\" yet; ",
            "use memory_mode = \"dense\".", call. = FALSE)
     }
     return(.couples_replace(
-      cost_matrix, left, right, left_ids, right_ids, vars, ratio
+      cost_matrix, left, right, left_ids, right_ids, vars, ratio, plan
     ))
   }
 
-  # --- k:1 matching (ratio > 1, without replacement) ---
-  if (ratio > 1L) {
-    if (is_lazy_cost_spec(cost_matrix)) {
-      stop("ratio > 1 does not support memory_mode = \"lazy\" yet; ",
-           "use memory_mode = \"dense\".", call. = FALSE)
-    }
-    return(.couples_ratio(
-      cost_matrix, left, right, left_ids, right_ids, vars, ratio,
-      solver_fn, solver_params
-    ))
+  # --- 1:1 and k:1 matching, as the assignment the design lowers to ---
+  if (isTRUE(plan$reshaped) && is_lazy_cost_spec(cost_matrix)) {
+    stop("ratio > 1 does not support memory_mode = \"lazy\" yet; ",
+         "use memory_mode = \"dense\".", call. = FALSE)
   }
 
-  # --- Standard 1:1 matching ---
   # Drop rows/cols with no allowed edges so the LAP solver sees a feasible
   # submatrix; the dropped indices return as unmatched. Without this filter
   # the C++ solvers raise "Infeasible: row N has no allowed edges" instead
   # of producing the partial matching the caller expects with max_distance
   # / calipers constraints.
-  solved <- .solve_with_partial_feasibility(cost_matrix, solver_fn, solver_params)
+  solved <- .solve_with_partial_feasibility(.couples_costs(cost_matrix, plan),
+                                            solver_fn, solver_params)
   solver_result <- solved$result
-  matched_rows <- solved$matched_rows  # 1-based indices into original cost_matrix rows
-  matched_cols <- solved$matched_cols  # 1-based indices into original cost_matrix cols
 
-  if (length(matched_rows) == 0L) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    distances <- if (is_lazy_cost_spec(cost_matrix)) {
-      lazy_pair_distances(cost_matrix, matched_rows, matched_cols)
-    } else {
-      cost_matrix[cbind(matched_rows, matched_cols)]
-    }
+  read <- .couples_pairs(
+    solved, plan, cost_matrix, left, right, left_ids, right_ids, vars,
+    drop_forbidden = identical(plan$design, "fixed_ratio")
+  )
+  pairs <- read$pairs
 
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[matched_cols],
-      distance = distances
-    )
+  unmatched_left <- setdiff(seq_len(nrow(left)), read$matched_rows)
+  unmatched_right <- setdiff(seq_len(nrow(right)), read$matched_cols)
 
-    # Add variable differences
-    for (v in vars) {
-      left_vals <- left[[v]][matched_rows]
-      right_vals <- right[[v]][matched_cols]
-      pairs[[paste0(".", v, "_diff")]] <- left_vals - right_vals
-    }
+  info <- list(
+    solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
+    n_matched = nrow(pairs),
+    total_distance = sum(pairs$distance, na.rm = TRUE)
+  )
+  if (identical(plan$design, "fixed_ratio")) {
+    info$ratio <- ratio
   }
-
-  unmatched_left <- setdiff(seq_len(nrow(left)), matched_rows)
-  unmatched_right <- setdiff(seq_len(nrow(right)), matched_cols)
 
   list(
     pairs = pairs,
@@ -292,28 +375,27 @@
       left = left_ids[unmatched_left],
       right = right_ids[unmatched_right]
     ),
-    info = list(
-      solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE)
-    )
+    info = info
   )
 }
 
 #' Replacement matching: each left picks its best right independently
 #'
+#' The compiled design gives every column capacity for every row, so the rows
+#' never compete and the optimum of the whole network is each row's own cheapest
+#' columns. `plan$per_row` is how many of them a row takes: the requested ratio,
+#' or the column count when there are fewer columns than that.
+#'
 #' @return List with pairs tibble, unmatched list, and info list.
 #' @keywords internal
 .couples_replace <- function(cost_matrix, left, right,
-                             left_ids, right_ids, vars, ratio = 1L) {
+                             left_ids, right_ids, vars, ratio = 1L, plan) {
   n_left <- nrow(cost_matrix)
-  n_right <- ncol(cost_matrix)
+  k <- plan$per_row
   all_pairs <- list()
 
   for (i in seq_len(n_left)) {
     row_costs <- cost_matrix[i, ]
-    # Find the k best right units
-    k <- min(ratio, n_right)
     ordered_cols <- order(row_costs)[seq_len(k)]
     ordered_dists <- row_costs[ordered_cols]
 
@@ -360,84 +442,6 @@
       n_matched = nrow(pairs),
       total_distance = sum(pairs$distance, na.rm = TRUE),
       replace = TRUE,
-      ratio = ratio
-    )
-  )
-}
-
-#' k:1 matching via cost matrix expansion
-#'
-#' Replicates left-side rows k times so each left unit can match up to k
-#' different right units. Solves as standard LAP, then maps expanded rows
-#' back to original left indices.
-#'
-#' @return List with pairs tibble, unmatched list, and info list.
-#' @keywords internal
-.couples_ratio <- function(cost_matrix, left, right,
-                           left_ids, right_ids, vars, ratio,
-                           solver_fn, solver_params) {
-  n_left <- nrow(cost_matrix)
-  n_right <- ncol(cost_matrix)
-
-  # Expand: replicate each left row `ratio` times
-  row_map <- rep(seq_len(n_left), each = ratio)
-  expanded_cost <- cost_matrix[row_map, , drop = FALSE]
-
-  # Solve the expanded problem, pruning all-forbidden rows/cols and falling back
-  # to greedy on infeasibility, exactly as the 1:1 path does. Solving directly
-  # would hard-error when constraints forbid every edge of some left unit.
-  solved <- .solve_with_partial_feasibility(expanded_cost, solver_fn,
-                                            solver_params)
-  solver_result <- solved$result
-  matched_exp_rows <- solved$matched_rows
-
-  if (length(matched_exp_rows) == 0) {
-    pairs <- tibble::tibble(
-      left_id = character(0), right_id = character(0), distance = numeric(0)
-    )
-    original_rows <- integer(0)
-    matched_cols <- integer(0)
-  } else {
-    original_rows <- row_map[matched_exp_rows]
-    matched_cols <- solved$matched_cols
-
-    # Get distances from original cost matrix
-    distances <- vapply(seq_along(matched_exp_rows), function(i) {
-      cost_matrix[original_rows[i], matched_cols[i]]
-    }, numeric(1))
-
-    # Filter out BIG_COST
-    valid <- distances < BIG_COST
-    original_rows <- original_rows[valid]
-    matched_cols <- matched_cols[valid]
-    distances <- distances[valid]
-
-    pairs <- tibble::tibble(
-      left_id = left_ids[original_rows],
-      right_id = right_ids[matched_cols],
-      distance = distances
-    )
-
-    for (v in vars) {
-      pairs[[paste0(".", v, "_diff")]] <- left[[v]][original_rows] -
-        right[[v]][matched_cols]
-    }
-  }
-
-  # Unmatched
-  unmatched_left <- setdiff(seq_len(n_left), unique(original_rows))
-  unmatched_right <- setdiff(seq_len(n_right), unique(matched_cols))
-
-  list(
-    pairs = pairs,
-    unmatched = list(
-      left = left_ids[unmatched_left],
-      right = right_ids[unmatched_right]
-    ),
-    info = list(
-      solver = if (!is.null(solver_result)) solver_result$method_used else NA_character_,
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE),
       ratio = ratio
     )
   )
@@ -530,34 +534,25 @@
     ))
   }
 
+  # A precomputed distance object is the 1:1 design reached through another
+  # door, so it compiles to the same network and is solved through the same
+  # maps. Distances are reported alone here: no variable goes to .couples_pairs
+  # and no difference column is written.
+  plan <- .couples_design(nrow(cost_matrix), ncol(cost_matrix))
+
   # Solve with row/col filtering (see .solve_with_partial_feasibility)
-  solved <- .solve_with_partial_feasibility(cost_matrix, solver_fn, solver_params)
+  solved <- .solve_with_partial_feasibility(.couples_costs(cost_matrix, plan),
+                                            solver_fn, solver_params)
   solver_result <- solved$result
-  matched_rows <- solved$matched_rows
-  matched_cols <- solved$matched_cols
 
-  if (length(matched_rows) == 0L) {
-    pairs <- tibble::tibble(
-      left_id = character(0),
-      right_id = character(0),
-      distance = numeric(0)
-    )
-  } else {
-    distances <- if (is_lazy_cost_spec(cost_matrix)) {
-      lazy_pair_distances(cost_matrix, matched_rows, matched_cols)
-    } else {
-      cost_matrix[cbind(matched_rows, matched_cols)]
-    }
+  read <- .couples_pairs(
+    solved, plan, cost_matrix, left, right, left_ids, right_ids,
+    vars = character(0), drop_forbidden = FALSE
+  )
+  pairs <- read$pairs
 
-    pairs <- tibble::tibble(
-      left_id = left_ids[matched_rows],
-      right_id = right_ids[matched_cols],
-      distance = distances
-    )
-  }
-
-  unmatched_left <- setdiff(seq_along(left_ids), matched_rows)
-  unmatched_right <- setdiff(seq_along(right_ids), matched_cols)
+  unmatched_left <- setdiff(seq_along(left_ids), read$matched_rows)
+  unmatched_right <- setdiff(seq_along(right_ids), read$matched_cols)
 
   info <- c(
     list(

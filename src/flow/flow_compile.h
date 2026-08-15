@@ -107,6 +107,27 @@ private:
     const CostOracle& base_;
 };
 
+// A design's shape, with no costs behind it. Which network a design compiles
+// to, and which of the caller's units each node stands for, are decided by the
+// row and column counts alone, so a caller that only needs the routing decision
+// and the index maps can state the shape and keep its prices where they are.
+//
+// Reading a cell throws. A problem built on this source can be lowered or
+// tested for separability; expanding one would ask for prices it does not hold.
+class ShapeOracle final : public CostOracle {
+public:
+    ShapeOracle(int64_t nrow, int64_t ncol) : nrow_(nrow), ncol_(ncol) {}
+
+    double  at(int64_t i, int64_t j) const override;
+    bool    allowed(int64_t i, int64_t j) const override;
+    int64_t nrow() const override { return nrow_; }
+    int64_t ncol() const override { return ncol_; }
+
+private:
+    int64_t nrow_;
+    int64_t ncol_;
+};
+
 // A compiled design: the problem, where its row and column blocks sit, and
 // which of the caller's units each node stands for.
 //
@@ -273,6 +294,20 @@ struct LoweredAssignment {
 // expansion, and taking it after has already paid for the arc list it exists to
 // avoid.
 bool is_unit_capacity_assignment(const FlowProblem& prob);
+
+// True when no column can be made to compete: one block of pair arcs a row uses
+// at most once, every row carrying a fixed amount of its own, and a column
+// admitting a unit from every row. The columns then bind nothing, so the
+// cheapest way to place a row's flow is that row's own cheapest columns and the
+// problem decomposes into one independent choice per row.
+//
+// This is matching with replacement, and the column capacity is what separates
+// it from an assignment: the same pair arcs under a unit column capacity are a
+// problem in which the rows compete for columns and no per-row choice solves.
+//
+// False on an expanded problem, for the reason lowering is: routing is decided
+// before the arc list is paid for.
+bool is_row_separable(const FlowProblem& prob);
 
 // The lowered form, or a LoweredAssignment with valid = false when the problem
 // is not one. The FlowProblem overload knows only the block's own row and

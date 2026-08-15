@@ -11,13 +11,17 @@
   left_ids,
   right_ids,
   vars,
-  ratio = 1L
+  ratio = 1L,
+  plan
 )
 }
 \value{
 List with pairs tibble, unmatched list, and info list.
 }
 \description{
-Replacement matching: each left picks its best right independently
+The compiled design gives every column capacity for every row, so the rows
+never compete and the optimum of the whole network is each row's own cheapest
+columns. \code{plan$per_row} is how many of them a row takes: the requested ratio,
+or the column count when there are fewer columns than that.
 }
 \keyword{internal}

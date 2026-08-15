@@ -80,6 +80,8 @@ Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::NumericVector potential, double tol);
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls, double max_controls);
+Rcpp::List flow_compile_couples_impl(std::string design, double n_rows,
+                                     double n_cols, double ratio);
 
 // =======================
 // Pixel morphing core (implemented in morph_pixel_level.cpp)
@@ -376,6 +378,12 @@ Rcpp::List lap_flow_certify(int n_nodes, Rcpp::NumericVector supply,
 Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
                                        double min_controls, double max_controls) {
   return flow_compile_full_match_impl(cost, min_controls, max_controls);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_compile_couples(std::string design, double n_rows,
+                                    double n_cols, double ratio = 1.0) {
+  return flow_compile_couples_impl(design, n_rows, n_cols, ratio);
 }
 
 // =======================

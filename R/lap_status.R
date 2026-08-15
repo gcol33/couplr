@@ -101,22 +101,32 @@ solver_status_values <- function() {
 
 # Derive the status of a matching produced by match_couples().
 #
-# `solver` is info$solver, which carries the method the C++ layer actually ran.
-# That is the only record that the constrained path fell back to greedy: the
-# caller asked for an optimal method, the admissible graph admitted no complete
-# matching and the cost range was too wide to pad exactly, and method_used comes
-# back "greedy_sorted". A warning already says so; this puts it on the object.
-.matching_status <- function(solver, greedy, n_pairs, n_unmatched_left) {
+# `solver` is info$solver, which carries the method the C++ layer actually ran,
+# one entry per solve: a scalar for a single match, one per block for a blocked
+# one. That is the only record that the constrained path fell back to greedy:
+# the caller asked for an optimal method, the admissible graph admitted no
+# complete matching and the cost range was too wide to pad exactly, and
+# method_used comes back "greedy_sorted". A warning already says so; this puts
+# it on the object. One block falling back is enough to make the whole matching
+# heuristic, because the pairs that block contributed are not the optimal ones.
+#
+# `n_requested` is how many pairs the design asked for: the left unit count
+# times the requested ratio. Deriving the shortfall from unmatched left units
+# instead reports a k:1 match optimal as soon as every unit holds one partner,
+# however many of its requested partners are missing, because n_matched counts
+# pairs while unmatched counts units.
+.matching_status <- function(solver, greedy, n_pairs, n_requested) {
   if (isTRUE(greedy)) {
     return("heuristic")
   }
-  if (!is.null(solver) && !is.na(solver) && startsWith(solver, "greedy")) {
+  solver <- solver[!is.na(solver)]
+  if (length(solver) > 0L && any(startsWith(solver, "greedy"))) {
     return("heuristic")
   }
   if (n_pairs == 0L) {
     return("infeasible")
   }
-  if (n_unmatched_left > 0L) {
+  if (n_pairs < n_requested) {
     return("partial")
   }
   "optimal"

@@ -585,10 +585,10 @@
   # Before the truncation below removes info$solver and return_unmatched removes
   # the unmatched ids, both of which the status is read from.
   result$status <- .matching_status(
-    solver           = result$info$solver,
-    greedy           = identical(method_label, "greedy"),
-    n_pairs          = nrow(result$pairs),
-    n_unmatched_left = length(result$unmatched$left)
+    solver      = result$info$solver,
+    greedy      = identical(method_label, "greedy"),
+    n_pairs     = nrow(result$pairs),
+    n_requested = length(left_ids)
   )
 
   if (!return_unmatched) {
@@ -600,6 +600,59 @@
   }
 
   structure(result, class = c("matching_result", "couplr_result"))
+}
+
+# One block's row of the summary, and the whole blocked matching's info. Both
+# branches of .couples_blocked() build theirs here, because they used to build
+# their own: the two disagreed on which fields were present, on their order, and
+# on whether a block with nothing to match got a row at all.
+#
+# Every block gets a row, matched or not, so nrow(block_summary) is the block
+# count on both branches.
+.block_summary_row <- function(block_id, n_left, n_right, pairs,
+                               n_unmatched_left, n_unmatched_right) {
+  tibble::tibble(
+    block_id = as.character(block_id),
+    n_left = as.integer(n_left),
+    n_right = as.integer(n_right),
+    n_matched = nrow(pairs),
+    total_distance = sum(pairs$distance, na.rm = TRUE),
+    mean_distance = if (nrow(pairs) > 0L) {
+      mean(pairs$distance, na.rm = TRUE)
+    } else {
+      NA_real_
+    },
+    n_unmatched_left = as.integer(n_unmatched_left),
+    n_unmatched_right = as.integer(n_unmatched_right)
+  )
+}
+
+.empty_block_summary <- function() {
+  tibble::tibble(
+    block_id = character(0),
+    n_left = integer(0),
+    n_right = integer(0),
+    n_matched = integer(0),
+    total_distance = numeric(0),
+    mean_distance = numeric(0),
+    n_unmatched_left = integer(0),
+    n_unmatched_right = integer(0)
+  )
+}
+
+# `solvers` is one method per block that ran a solve, which is what carries a
+# block's greedy fallback out to the status. Reporting the requested method
+# here instead reports every block as having run it, including the one that
+# did not.
+.blocked_info <- function(pairs, n_blocks, block_summary, solvers) {
+  list(
+    solver = if (length(solvers) > 0L) unique(solvers) else NA_character_,
+    blocked = TRUE,
+    n_blocks = n_blocks,
+    n_matched = nrow(pairs),
+    total_distance = sum(pairs$distance, na.rm = TRUE),
+    block_summary = block_summary
+  )
 }
 
 #' Shared blocked matching implementation
@@ -645,27 +698,11 @@
       result$pairs <- dplyr::select(result$pairs, "block_id", dplyr::everything())
     }
 
-    # Add additional summary statistics
-    if (nrow(result$block_summary) > 0) {
-      result$block_summary <- dplyr::mutate(
-        result$block_summary,
-        n_pairs = .data$n_matched,
-        total_distance = .data$n_matched * .data$mean_distance,
-        n_unmatched_left = .data$n_left - .data$n_matched,
-        n_unmatched_right = .data$n_right - .data$n_matched
-      )
-    }
-
     return(list(
       pairs = result$pairs,
       unmatched = result$unmatched,
-      info = list(
-        n_matched = nrow(result$pairs),
-        total_distance = sum(result$pairs$distance, na.rm = TRUE),
-        blocked = TRUE,
-        n_blocks = length(blocks),
-        block_summary = result$block_summary
-      )
+      info = .blocked_info(result$pairs, length(blocks),
+                           result$block_summary, result$solvers)
     ))
   }
 
@@ -674,13 +711,17 @@
   all_unmatched_left <- character(0)
   all_unmatched_right <- character(0)
   block_summaries <- list()
+  solvers <- character(0)
 
   for (block in blocks) {
     left_block <- left[left[[block_col]] == block, ]
     right_block <- right[right[[block_col]] == block, ]
 
     if (nrow(left_block) == 0 || nrow(right_block) == 0) {
-      # Skip blocks with no units on one side
+      # A block with nothing on one side runs no solve, so it contributes no
+      # solver; its units are unmatched and it still gets a summary row.
+      block_left_ids <- character(0)
+      block_right_ids <- character(0)
       if (nrow(left_block) > 0) {
         block_left_ids <- left_ids[left[[block_col]] == block]
         all_unmatched_left <- c(all_unmatched_left, block_left_ids)
@@ -689,6 +730,14 @@
         block_right_ids <- right_ids[right[[block_col]] == block]
         all_unmatched_right <- c(all_unmatched_right, block_right_ids)
       }
+      block_summaries[[length(block_summaries) + 1]] <- .block_summary_row(
+        block_id = block,
+        n_left = nrow(left_block),
+        n_right = nrow(right_block),
+        pairs = tibble::tibble(distance = numeric(0)),
+        n_unmatched_left = length(block_left_ids),
+        n_unmatched_right = length(block_right_ids)
+      )
       next
     }
 
@@ -717,12 +766,14 @@
     all_unmatched_left <- c(all_unmatched_left, block_result$unmatched$left)
     all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
 
+    solvers <- c(solvers, block_result$info$solver)
+
     # Block summary
-    block_summaries[[length(block_summaries) + 1]] <- tibble::tibble(
+    block_summaries[[length(block_summaries) + 1]] <- .block_summary_row(
       block_id = block,
-      n_pairs = nrow(block_result$pairs),
-      total_distance = sum(block_result$pairs$distance, na.rm = TRUE),
-      mean_distance = mean(block_result$pairs$distance, na.rm = TRUE),
+      n_left = nrow(left_block),
+      n_right = nrow(right_block),
+      pairs = block_result$pairs,
       n_unmatched_left = length(block_result$unmatched$left),
       n_unmatched_right = length(block_result$unmatched$right)
     )
@@ -745,14 +796,7 @@
   block_summary_df <- if (length(block_summaries) > 0) {
     dplyr::bind_rows(block_summaries)
   } else {
-    tibble::tibble(
-      block_id = character(0),
-      n_pairs = integer(0),
-      total_distance = numeric(0),
-      mean_distance = numeric(0),
-      n_unmatched_left = integer(0),
-      n_unmatched_right = integer(0)
-    )
+    .empty_block_summary()
   }
 
   list(
@@ -761,13 +805,7 @@
       left = all_unmatched_left,
       right = all_unmatched_right
     ),
-    info = list(
-      solver = solver_params$method,
-      n_blocks = length(blocks),
-      n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE),
-      block_summary = block_summary_df
-    )
+    info = .blocked_info(pairs, length(blocks), block_summary_df, solvers)
   )
 }
 
@@ -1021,15 +1059,17 @@ match_couples <- function(left, right = NULL,
   if (replace) result$info$replace <- TRUE
   if (ratio > 1L) result$info$ratio <- ratio
 
-  # Computed here because both inputs are about to go: info$solver is dropped by
-  # the truncation below and unmatched by return_unmatched = FALSE. Status sits
-  # at the top level for the same reason -- inside info it would not survive a
-  # default call.
+  # Computed here because info$solver is about to go: the truncation below drops
+  # it. Status sits at the top level for the same reason -- inside info it would
+  # not survive a default call.
+  #
+  # A design asks for `ratio` partners per left unit, so that product is what a
+  # complete matching places, on the k:1 and with-replacement designs alike.
   result$status <- .matching_status(
-    solver           = result$info$solver,
-    greedy           = greedy,
-    n_pairs          = nrow(result$pairs),
-    n_unmatched_left = length(result$unmatched$left)
+    solver      = result$info$solver,
+    greedy      = greedy,
+    n_pairs     = nrow(result$pairs),
+    n_requested = nrow(left) * ratio
   )
 
   if (!return_unmatched) {

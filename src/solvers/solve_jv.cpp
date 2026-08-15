@@ -18,9 +18,7 @@ LapResult solve_jv(const CostMatrix& cost, bool maximize) {
     if (n == 0) {
         return LapResult({}, 0.0, "optimal");
     }
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    lap::require_rows_fit_cols(n, m);
 
     CostMatrix work = prepare_for_solve(cost, maximize);
     ensure_each_row_has_option(work.mask, n, m);
@@ -55,9 +53,7 @@ LapResult solve_jv(const LazyCostMatrix& cost) {
     if (n == 0) {
         return LapResult({}, 0.0, "optimal");
     }
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    lap::require_rows_fit_cols(n, m);
 
     // No prepare_for_solve() step: the LazyCostMatrix is already "prepared"
     // (forbidden -> BIG via at(), negated if maximize) at construction.

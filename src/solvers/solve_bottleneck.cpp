@@ -108,10 +108,7 @@ LapResult solve_bottleneck(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    lap::require_rows_fit_cols(n, m);
 
     // Collect all unique finite costs
     std::vector<double> unique_costs;

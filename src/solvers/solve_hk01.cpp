@@ -177,10 +177,7 @@ LapResult solve_hk01(const CostMatrix& cost, bool maximize) {
         return LapResult({}, 0.0, "optimal");
     }
 
-    // Dimension check
-    if (n > m) {
-        LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
-    }
+    lap::require_rows_fit_cols(n, m);
 
     // Prepare working costs. For maximize, flip finite allowed costs via
     // c' = cmax - c rather than negating: this keeps a {0,1} palette as {0,1}

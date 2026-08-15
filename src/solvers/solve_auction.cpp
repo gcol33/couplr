@@ -182,7 +182,7 @@ static LapResult auction_core(const CostMatrix& cost, bool maximize,
     const int m0 = static_cast<int>(cost.ncol);
 
     if (n0 == 0) return LapResult({}, 0.0, "optimal");
-    if (n0 > m0) LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    lap::require_rows_fit_cols(n0, m0);
     if (alpha <= 1.0) alpha = 7.0;
 
     // Pad rectangular problems to square with dummy rows (see file header).
@@ -248,7 +248,7 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
     const int64_t m0 = cost.ncol;
 
     if (n0 == 0) return LapResult({}, 0.0, "optimal");
-    if (n0 > m0) LAP_THROW_DIMENSION("Infeasible: number of rows greater than number of columns");
+    lap::require_rows_fit_cols(n0, m0);
     if (alpha <= 1.0) alpha = 7.0;
 
     const bool needs_padding = (n0 < m0);

@@ -1,8 +1,9 @@
 # couplr: current state
 
-Updated 2026-08-10. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-15. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
-`dev_notes/phase1/` for the certification layer's design, findings and repros.
+`dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
+the flow model's design, findings and repros.
 
 ## Where things stand
 
@@ -103,6 +104,48 @@ positive. When rows and columns are equal in number, every assignment uses every
 column and `v` is unrestricted. Jonker-Volgenant returns free-sign duals on a
 square problem and they are correct.
 
+## Phase 2 is partly done: one internal flow model
+
+Roadmap section B, spec in `dev_notes/phase2/design.md`, nine deliverables B0
+to B9. Six of them are in.
+
+**B0 to B6 landed as `e25fcb4`.** `FlowProblem` is the representation every
+design compiles into, `solve_min_cost_flow()` returns node potentials for all of
+them, `certify_flow()` checks a flow against the bounded-variable LP dual, one
+compiler per design, and `full_match()` is compiled and solved there, returning
+`potentials` and a `certificate` beside its groups. A compiled problem that is
+the assignment problem `R/lap_solve.R` already solves lowers back to a cost
+matrix and goes to the existing switch, so no solver was added.
+
+**B8 landed as five commits on 2026-08-15.** The duplicated min-cost flow cores
+are gone: csflow, ssp, push_relabel and cycle_cancel's feasible-flow phase all
+call `solve_assignment_flow()` in `src/flow/flow_assign.h`, and
+`solve_full_matching.cpp` was deleted rather than migrated, because B6 had left
+it without a caller. Each solver keeps its own cost preparation, its own status
+words and its own relaxation predicate, which travels in `FlowOptions.relax_eps`
+and is a different value in all three of csflow, ssp and push_relabel.
+
+Every migration was judged by B0 alone and none of them moved it. Four of the
+six solver defects `dev_notes/phase2/findings.md` records are answered by the
+deletion or by the collapse; the self-loop `add_edge` is fixed in the one copy
+that survives. Suite after: 0 failed, 0 errors, 3 skipped in R, and 69208
+assertions over 246 cases in `cpp_tests/`.
+
+**It is also faster, which was not the expectation.** Compiling and expanding a
+`FlowProblem` walks the arc set one more time than building a residual graph
+directly did, and `sap` is on the auto path, so the migration was measured
+rather than assumed: 1.1x to 2.1x faster across three shapes, every cost
+identical to 17 digits, table in `dev_notes/phase2/findings.md`. The likely
+source is that the shared solver allocates its search vectors once instead of
+once per augmentation.
+
+**B7 and B9's R half are open.** `match_couples()` does not compile its designs
+yet -- `R/matching_core.R` has no flow reference -- so roadmap section B's first
+condition, that every existing design routes through `FlowProblem`, is not met.
+There is no `tests/testthat/test-flow-model.R` either: the flow model is covered
+by 246 Catch2 cases in `cpp_tests/` and through `full_match()`, and by nothing
+at the R level, while `verify_flow()` is exported.
+
 ## The suite runs warning-free, and stays that way on purpose
 
 The 28 warnings the suite used to emit were couplr's own diagnostics firing
@@ -180,10 +223,16 @@ Open, and confirmed open on GitHub:
 
 ## Next action
 
-**Phase 2: one internal flow model** (`roadmap.md` section B). Three to four
-weeks. It gates the full-matching claim, because full and variable-ratio
-matching need node potentials from a general min-cost-flow solver and
-`solve_jv_duals` only covers the one-to-one prototype.
+**Finish phase 2: B7, then B9's R half.** B7 is the one that decides whether
+section B's acceptance conditions are met, because it is the deliverable that
+puts `match_couples()`'s designs through the compiler. B9's R tests are the
+cheaper of the two and close a real gap: an exported `verify_flow()` with no
+testthat coverage.
+
+Then the baseline re-capture, which three findings are waiting on: the derived
+status bugs 1 to 3 in `dev_notes/phase2/findings.md`, and bug 9's
+exception-and-message mismatch across ten solvers. Each changes a value B0
+holds, which is why they were queued rather than folded into a migration.
 
 Two things phase 1 leaves on the table, both cheap and both feeding phase 3:
 
@@ -208,6 +257,16 @@ of the tarball.
 | `findings.md` | Everything found that is outside phase 1's scope, and every deviation from the design |
 | `repro_gabow_tarjan_rectangular.R` | #31, brute-forced |
 | `repro_20.R` | #20 end to end through the public API |
+
+`dev_notes/phase2/`
+
+| File | What |
+|---|---|
+| `design.md` | The spec phase 2 implements, B0 through B9 |
+| `findings.md` | Everything outside phase 2's scope, every deviation from the spec, and where B8 left each solver defect |
+| `baseline.R`, `baseline.rds` | B0, the equivalence baseline. `--capture` and `--compare`; `--compare` exits non-zero on any difference |
+| `baseline_additive_check.R` | Compares every case on the fields the baseline holds instead of stopping at the first difference, which is what separates an added field from a changed value |
+| `b8_timing.R` | What routing four solvers through the flow model costs in wall time |
 
 `dev_notes/pricing-probe/`
 

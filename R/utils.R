@@ -1,5 +1,4 @@
 utils::globalVariables(c(".data", "solution_id", "total_cost",
-                        "lap_solve_full_matching",
                         "lap_certify_dense", "lap_certify_lazy",
                         "lap_scan_reduced_costs",
                         "lap_hall_witness_dense", "lap_hall_witness_lazy",

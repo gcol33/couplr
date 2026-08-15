@@ -29,8 +29,6 @@ SOURCES = RcppExports.cpp rcpp_interface.cpp \
           solvers/solve_bruteforce_rcpp.cpp \
           solvers/solve_csflow.cpp \
           solvers/solve_csflow_rcpp.cpp \
-          solvers/solve_full_matching.cpp \
-          solvers/solve_full_matching_rcpp.cpp \
           solvers/solve_cycle_cancel.cpp \
           solvers/solve_cycle_cancel_rcpp.cpp \
           solvers/solve_hk01.cpp \
@@ -95,8 +93,6 @@ OBJECTS = RcppExports.o rcpp_interface.o \
           solvers/solve_bruteforce_rcpp.o \
           solvers/solve_csflow.o \
           solvers/solve_csflow_rcpp.o \
-          solvers/solve_full_matching.o \
-          solvers/solve_full_matching_rcpp.o \
           solvers/solve_cycle_cancel.o \
           solvers/solve_cycle_cancel_rcpp.o \
           solvers/solve_hk01.o \

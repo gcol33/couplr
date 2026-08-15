@@ -242,3 +242,76 @@ test_that("calipers work end-to-end via match_couples", {
   # Middle pair should be excluded (y diff = 5 > 2)
   expect_equal(nrow(result$pairs), 2)
 })
+
+test_that(".is_valid_cost reads NA, Inf and BIG_COST alike", {
+  cost <- c(0, 1, NA, Inf, -Inf, couplr:::BIG_COST, couplr:::BIG_COST / 2)
+  expect_equal(
+    couplr:::.is_valid_cost(cost),
+    c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE)
+  )
+})
+
+# A cost at or above BIG_COST is finite, so a solver prices it as an ordinary
+# expensive edge and returns it when a complete matching demands one. Manhattan,
+# because a euclidean distance that large squares to Inf before it gets there.
+forbidden_edge_data <- function(design) {
+  big <- 1e308
+  switch(
+    design,
+    # L1 and L2 both reach only R1, so one of them has to take a forbidden column.
+    one_to_one = list(
+      left = data.frame(id = paste0("L", 1:3), x = c(0, 0, big)),
+      right = data.frame(id = paste0("R", 1:3), x = c(0.1, big, big))
+    ),
+    # L1 reaches only R1 and asks for two partners, so its second one is forbidden.
+    ratio2 = list(
+      left = data.frame(id = c("L1", "L2"), x = c(0, big)),
+      right = data.frame(id = paste0("R", 1:4), x = c(0.1, big, big, big))
+    ),
+    stop("unknown design: ", design)
+  )
+}
+
+test_that("a pair the optimum was forced onto a forbidden edge is not reported", {
+  d <- forbidden_edge_data("one_to_one")
+
+  result <- match_couples(d$left, d$right, vars = "x", distance = "manhattan",
+                          check_costs = FALSE)
+
+  expect_true(all(result$pairs$distance < couplr:::BIG_COST))
+  expect_equal(nrow(result$pairs), 2L)
+  expect_equal(sum(result$pairs$distance), 0.1)
+  expect_true("L3" %in% result$pairs$left_id)
+  expect_length(result$unmatched$left, 1L)
+  expect_length(result$unmatched$right, 1L)
+  expect_equal(result$status, "partial")
+})
+
+test_that("the k:1 and with-replacement designs drop it too", {
+  d <- forbidden_edge_data("ratio2")
+
+  ratio <- match_couples(d$left, d$right, vars = "x", distance = "manhattan",
+                         ratio = 2, check_costs = FALSE)
+  replaced <- match_couples(d$left, d$right, vars = "x", distance = "manhattan",
+                            ratio = 2, replace = TRUE, check_costs = FALSE)
+
+  for (result in list(ratio, replaced)) {
+    expect_true(all(result$pairs$distance < couplr:::BIG_COST))
+    expect_equal(nrow(result$pairs), 3L)
+    expect_equal(sum(result$pairs$distance), 0.1)
+    expect_equal(result$status, "partial")
+  }
+})
+
+test_that("a precomputed distance object drops it on the same fixture", {
+  d <- forbidden_edge_data("one_to_one")
+  dist_obj <- compute_distances(d$left, d$right, vars = "x",
+                                distance = "manhattan")
+
+  result <- match_couples(dist_obj, check_costs = FALSE)
+
+  expect_true(all(result$pairs$distance < couplr:::BIG_COST))
+  expect_equal(nrow(result$pairs), 2L)
+  expect_equal(sum(result$pairs$distance), 0.1)
+  expect_equal(result$status, "partial")
+})

@@ -9,6 +9,13 @@
 #' @keywords internal
 BIG_COST <- .Machine$double.xmax / 2
 
+# The admissibility test every path shares: a cost stands for an allowed pair
+# when it is finite and below the forbidden marker. `NA`, `Inf` and a cost at or
+# above `BIG_COST` all say the same thing, which is that there is no edge there.
+.is_valid_cost <- function(cost) {
+  is.finite(cost) & cost < BIG_COST
+}
+
 #' Apply maximum distance constraint
 #'
 #' @return Modified cost matrix with forbidden pairs marked.
@@ -161,7 +168,7 @@ has_valid_pairs <- function(cost_matrix) {
     # already catch and translate into the same "no valid pairs" outcome.
     return(TRUE)
   }
-  any(is.finite(cost_matrix) & cost_matrix < BIG_COST)
+  any(.is_valid_cost(cost_matrix))
 }
 
 #' Count valid pairs in cost matrix
@@ -169,5 +176,5 @@ has_valid_pairs <- function(cost_matrix) {
 #' @return Integer count of valid (non-forbidden) pairs.
 #' @keywords internal
 count_valid_pairs <- function(cost_matrix) {
-  sum(is.finite(cost_matrix) & cost_matrix < BIG_COST)
+  sum(.is_valid_cost(cost_matrix))
 }

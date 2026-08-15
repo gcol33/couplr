@@ -293,15 +293,37 @@ passed. The baseline is re-captured on the fixed behaviour.
 NEWS entry at the next release; this repo writes NEWS at release rather than per
 commit.
 
+## Every reader drops a forbidden pair now
+
+`drop_forbidden` is gone. The 1:1 and precomputed-distance readers reported a
+pair whose cost is at or above `BIG_COST`, the k:1 and with-replacement readers
+dropped one; all four drop, and the two units come back unmatched. The rest of
+the package already read that cost as no edge, in `has_valid_pairs()`,
+`count_valid_pairs()` and the row/col pruner, so reporting one put a pair in the
+result at a price the same cost calls no pair at all, and `status` read
+`optimal` off a matching that placed it.
+
+The predicate was open-coded in five places with two spellings, two of them
+missing the `is.finite()` half, which an `NA` distance could reach. It is
+`.is_valid_cost()` in `R/matching_constraints.R` now and the five call sites
+share it.
+
+B0 could not see any of this: no case in the grid forced the optimum onto a
+forbidden edge, so the re-captured 1537 reported 0 differ against the fix. Five
+`match_couples/forbidden_edge/*` cases close that gap, one per reader, and the
+baseline stands at 1542. Measured against the code before the fix, `one_to_one`
+and `from_distance` differ and the other three are identical: `pairs` loses its
+row, `unmatched` gains a unit on each side, `info$total_distance` falls from
+`1e+308` to `0.1`, and `status` moves from `optimal` to `partial`.
+
+This is user-visible too, so it joins the NEWS entry owed at the next release.
+
 ## Next action
 
-Two things still move a value B0 holds:
-
-- bug 9, the exception type and message that disagree. Not csflow's line: the
-  same literal under `LAP_THROW_DIMENSION` is in ten solvers, so it is a
-  package-wide decision about an R-visible message and its condition class;
-- `drop_forbidden` on the 1:1 path, which reports a pair priced at half
-  `.Machine$double.xmax` where the k:1 path drops it.
+One thing still moves a value B0 holds: bug 9, the exception type and message
+that disagree. Not csflow's line: the same literal under `LAP_THROW_DIMENSION`
+is in ten solvers, so it is a package-wide decision about an R-visible message
+and its condition class.
 
 `dev_notes/phase2/findings.md` also leaves two interface questions open that no
 deliverable covers: `map_assignment_duals()` reporting `ok = false` down two

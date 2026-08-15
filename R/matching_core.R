@@ -46,7 +46,7 @@
     return(.solve_lazy_with_partial_feasibility(cost_matrix, solver_fn, solver_params))
   }
 
-  feasible <- is.finite(cost_matrix) & cost_matrix < BIG_COST
+  feasible <- .is_valid_cost(cost_matrix)
   row_ok <- rowSums(feasible) > 0L
   col_ok <- colSums(feasible) > 0L
 
@@ -213,12 +213,12 @@
 # into the left or right unit it stands for: the identity on the 1:1 design,
 # replica e back to row e / k on the k:1 one.
 #
-# `drop_forbidden` drops a pair whose distance is at or above BIG_COST, which is
-# a pair the constraints forbid and the solver returned because a complete
-# matching demanded one. The k:1 design drops such a pair and the 1:1 design
-# keeps it.
+# A pair the solver returned on a forbidden edge is dropped here, and its two
+# units come back unmatched. The solver returns one when a complete matching
+# demands it and pruning has left the forbidden entry in the matrix; reporting it
+# would put a pair in the result at a price the same cost says is no pair at all.
 .couples_pairs <- function(solved, plan, cost_matrix, left, right,
-                           left_ids, right_ids, vars, drop_forbidden) {
+                           left_ids, right_ids, vars) {
   matched_rows <- plan$row_unit[solved$matched_rows]
   matched_cols <- plan$col_unit[solved$matched_cols]
 
@@ -240,12 +240,10 @@
     cost_matrix[cbind(matched_rows, matched_cols)]
   }
 
-  if (drop_forbidden) {
-    valid <- distances < BIG_COST
-    matched_rows <- matched_rows[valid]
-    matched_cols <- matched_cols[valid]
-    distances <- distances[valid]
-  }
+  valid <- .is_valid_cost(distances)
+  matched_rows <- matched_rows[valid]
+  matched_cols <- matched_cols[valid]
+  distances <- distances[valid]
 
   pairs <- tibble::tibble(
     left_id = left_ids[matched_rows],
@@ -352,8 +350,7 @@
   solver_result <- solved$result
 
   read <- .couples_pairs(
-    solved, plan, cost_matrix, left, right, left_ids, right_ids, vars,
-    drop_forbidden = identical(plan$design, "fixed_ratio")
+    solved, plan, cost_matrix, left, right, left_ids, right_ids, vars
   )
   pairs <- read$pairs
 
@@ -399,8 +396,7 @@
     ordered_cols <- order(row_costs)[seq_len(k)]
     ordered_dists <- row_costs[ordered_cols]
 
-    # Keep only valid (< BIG_COST)
-    valid <- ordered_dists < BIG_COST
+    valid <- .is_valid_cost(ordered_dists)
     if (any(valid)) {
       cols <- ordered_cols[valid]
       dists <- ordered_dists[valid]
@@ -547,7 +543,7 @@
 
   read <- .couples_pairs(
     solved, plan, cost_matrix, left, right, left_ids, right_ids,
-    vars = character(0), drop_forbidden = FALSE
+    vars = character(0)
   )
   pairs <- read$pairs
 

@@ -262,10 +262,32 @@ Open, and confirmed open on GitHub:
 
 ## Next action
 
-**The baseline re-capture**, which three findings are waiting on: the derived
-status bugs 1 to 3 in `dev_notes/phase2/findings.md`, and bug 9's
-exception-and-message mismatch across ten solvers. Each changes a value B0
-holds, which is why they were queued rather than folded into a migration.
+**The derived status fixes.** The re-capture they were queued behind is done:
+2026-08-15, on `37ebfa6`, 1537 cases, nothing nondeterministic on the two-pass
+screen, and `--compare` against it now reports 0 differ, 0 missing, 0 added. The
+compare that preceded the capture reported the 16 `full_match/*` cases B6
+explains and nothing else, so the instrument was replaced from a state that had
+been read rather than an assumed one.
+
+Three things change a value B0 holds and can now be judged on it:
+
+- the derived status bugs 1 to 3 in `dev_notes/phase2/findings.md`: a blocked
+  match reporting `partial` where the same data unblocked reports `heuristic`,
+  the parallel and sequential blocked branches returning different `info` with
+  no `solver` on the parallel side, and a k:1 solve reporting `"optimal"` after
+  placing a fraction of the requested pairs, because `n_matched` counts pairs
+  while `unmatched` counts units;
+- bug 9, the exception type and message that disagree. Not csflow's line: the
+  same literal under `LAP_THROW_DIMENSION` is in ten solvers, so it is a
+  package-wide decision about an R-visible message and its condition class;
+- `drop_forbidden` on the 1:1 path, which reports a pair priced at half
+  `.Machine$double.xmax` where the k:1 path drops it.
+
+`dev_notes/phase2/findings.md` also leaves two interface questions open that no
+deliverable covers: `map_assignment_duals()` reporting `ok = false` down two
+paths with different postconditions, and `R/trace_helpers_mcf.R` stating the
+same algorithm in R with its own potential-update rule, so a trace can show an
+augmenting path the solver would not take.
 
 Two things phase 1 leaves on the table, both cheap and both feeding phase 3:
 

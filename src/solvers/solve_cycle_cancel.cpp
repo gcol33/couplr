@@ -27,10 +27,13 @@ struct Edge {
 // Returns the index of the forward arc inside adj[u], so a flow found
 // elsewhere can be pushed through it without searching for it again.
 int add_edge(std::vector<std::vector<Edge>>& adj, int u, int v, int cap, double cost) {
+    // The reverse index is read after the forward arc is in place, so that a
+    // self-loop gets two distinct slots rather than two arcs pointing at one.
     int fwd_idx = adj[u].size();
+    adj[u].push_back({v, cap, cost, -1});
     int rev_idx = adj[v].size();
-    adj[u].push_back({v, cap, cost, rev_idx});
     adj[v].push_back({u, 0, -cost, fwd_idx});
+    adj[u][fwd_idx].rev = rev_idx;
     return fwd_idx;
 }
 

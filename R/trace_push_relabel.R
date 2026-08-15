@@ -16,9 +16,7 @@
 # which is the algorithm the literature actually means by "push-relabel for
 # min-cost flow".
 #
-# A followup PR could either rename src/solvers/solve_push_relabel.cpp to
-# something accurate (e.g. solve_ssp_potentials.cpp) or implement actual
-# push-relabel - either way this trace would be revised to match.
+# Tracked as gcol33/couplr#32.
 # ==============================================================================
 
 #' @keywords internal

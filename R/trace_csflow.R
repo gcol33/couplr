@@ -11,7 +11,7 @@
 # with Johnson potentials: maintain node potentials h such that every
 # residual edge has non-negative reduced cost c' = c - h[u] + h[v]. Find the
 # shortest source->sink path under reduced costs with Dijkstra, push one
-# unit of flow, then update h by adding the dist vector.
+# unit of flow, then shift h by the dist vector (mcf_update_potentials()).
 #
 # Algorithmic outline:
 #
@@ -23,7 +23,8 @@
 #      a. Dijkstra on residual graph from source using reduced costs.
 #      b. Walk back from sink to recover the augmenting path.
 #      c. Push 1 unit of flow along the path.
-#      d. h[v] += dist[v] for all reachable v.
+#      d. Shift h by dist: reached nodes by their label, unreached ones by
+#         the largest label, which keeps every residual reduced cost >= 0.
 #   4. Recover the row->col matching from saturated row->col edges.
 # ==============================================================================
 
@@ -41,8 +42,11 @@ trace_csflow <- function(cost, maximize = FALSE, ...) {
   g <- mcf$graph
 
   # Initial potentials via Bellman-Ford (handles negative edges from maximize).
+  # Shifted by the same rule the augmentations use: a column no admissible pair
+  # can reach is unreachable here too, and it still holds a residual edge into
+  # the sink, so leaving it at zero starts the search dual-infeasible.
   bf <- mcf_bellman_ford(g, mcf$source)
-  h <- ifelse(is.finite(bf$dist), bf$dist, 0)
+  h <- mcf_update_potentials(numeric(g$n_nodes), bf$dist)
 
   frames <- list()
   step <- 0L
@@ -129,15 +133,12 @@ trace_csflow <- function(cost, maximize = FALSE, ...) {
     delta <- mcf_path_bottleneck(g, aug_edges)
     mcf_push_path(g, aug_edges, delta)
 
-    # Update potentials: h[v] += dist[v] for all reachable v.
-    for (v in seq_along(h)) {
-      if (is.finite(dj$dist[v])) h[v] <- h[v] + dj$dist[v]
-    }
+    h <- mcf_update_potentials(h, dj$dist)
 
     emit(
       "augment",
       sprintf(
-        "Pushed %d unit of flow along the path; updated h by adding dist. Current matching size: %d.",
+        "Pushed %d unit of flow along the path; shifted h by dist. Current matching size: %d.",
         delta, sum(mcf_extract_matching(mcf) > 0L)
       ),
       path = path_rc

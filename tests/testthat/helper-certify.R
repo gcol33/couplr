@@ -87,9 +87,7 @@ cert_problem <- function(n, m, kind = "continuous", sparsity = 0,
 # "everything certifies" sweep and asserts separately that they still fail, so
 # an entry has to be deleted when the bug is fixed instead of quietly masking it.
 cert_known_suboptimal <- function() {
-  list(
-    list(method = "gabow_tarjan", shape = "wide", issue = "gcol33/couplr#31")
-  )
+  list()
 }
 
 cert_shape <- function(n, m) if (m > n) "wide" else "square"

@@ -50,6 +50,7 @@ set(CPP_IMPL_SOURCES
     ${SRC_DIR}/flow/flow_expand.cpp
     ${SRC_DIR}/flow/flow_solve.cpp
     ${SRC_DIR}/flow/flow_compile.cpp
+    ${SRC_DIR}/flow/flow_assign.cpp
 
     # Solvers
     ${SRC_DIR}/solvers/jv_core.cpp
@@ -107,6 +108,7 @@ set(TEST_SOURCES
     tests/test_flow_model.cpp
     tests/test_flow_compile.cpp
     tests/test_flow_certify.cpp
+    tests/test_flow_assign.cpp
 )
 
 # Main test executable

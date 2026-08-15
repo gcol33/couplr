@@ -441,28 +441,56 @@ only which optimum they name. Re-captured, and `--compare` is clean against it.
 Suite after: 0 failed, 0 errors, 0 warnings, 3 skipped, 6700 passed in R, and
 69265 assertions over 251 cases in `cpp_tests/`.
 
+## C0 is in, and it found a hang in the flow search
+
+`dev_notes/phase3/differential.R` is the phase 3 instrument. It runs one
+matching problem through two paths in the same session and compares the answers
+to each other, which is what B0 cannot do: B0 compares HEAD against a snapshot
+of HEAD, and the restricted master reaches its optimum through a different arc
+set in a different order, so it names a different optimum whenever the optimum
+is not unique and B0 would call that a regression.
+
+Condition 1 is asserted as equal total cost at 17 digits, a structurally valid
+matching, and a certificate reporting optimal; the match vector is compared only
+where the optimum is proven unique. The proof is by edge exclusion, not by the
+downward perturbation `design.md` proposed, which can never fail --
+`dev_notes/phase3/findings.md` has the argument. Cost is scored against a cost
+matrix the harness rebuilds itself, so a path that solves correctly and reports
+the total wrongly fails here.
+
+`--self-check` runs the grid with `lazy` as the candidate, which calibrates the
+comparator against a path already in the tree. 38 cases in 2.4 s: 26 pass, 0
+fail, 7 known, 5 skipped. `KNOWN_DIFFERENCES` carries the seven, each with the
+code that decides it, and fails if a listed difference stops reproducing.
+
+Its first full run found a hang, fixed in `ed1ae7f`. `solve_min_cost_flow()`
+never returned on a 40 x 134 sentinel-padded matrix and grew to about 16 GB. The
+reinserting Dijkstra depends on `cbar >= 0` for termination, and the two
+directions of one arc are priced by expressions that are negatives of each other
+in exact arithmetic and not in floating point, so both can round below zero at
+once. Measured worst violation: one to two ulps. Ties are what make it
+reachable, and a sentinel-padded matrix is mostly one value. A 4 x 7 instance
+reproduces it and is now in `tests/testthat/test-assignment-ssp.R`.
+
+This is squarely phase 3's business rather than beside it: sections C and D are
+`solve_min_cost_flow()` on a partially expanded problem, warm started, and a
+warm start is one of the two places the invariant is not free.
+
 ## Next action
 
-Phase 3, roadmap sections C and D, which is the centerpiece of the 1.6 line.
-Nothing is queued in front of it: the interface questions are answered, the
-phase-1 leftovers are in, and the three follow-ups this work surfaced are filed
-rather than half-done.
+Phase 3, section C1: the touched-list reset in `solve_min_cost_flow()`,
+replacing the three `std::fill`s at the top of each search. C0 is done and is
+the instrument the rest of section C is judged by.
 
-Section C's restricted master is the new solver work, and it is where to start.
-The pricing oracle's two prerequisites are both in the tree now: the lazy dual
-entry point above, and `scan_reduced_costs()` from phase 1.
+Section C's restricted master is the new solver work. The pricing oracle's two
+prerequisites are both in the tree: the lazy dual entry point above, and
+`scan_reduced_costs()` from phase 1.
 
 ## Working tree
 
 Clean apart from what this note is committed with.
 
-**`origin/main` is at `37ebfa6`, nine commits behind local `main`.** Five are
-this session's -- `8585ba5`, `e351f2c`, `66ecc9a`, `7b2f84f` and this note --
-and four predate it: `d345dea`, `a5aa182`, `fd5d00d`, `46460a5`. So the gap is
-not new, and the push is larger than one session's work.
-
-#31 is closed on GitHub against `7b2f84f`, which is not on the remote yet, so
-the push is the one thing outstanding.
+`origin/main` is at `25a56dd`. Local `main` is one commit ahead, `ed1ae7f`.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main

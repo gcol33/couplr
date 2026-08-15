@@ -410,7 +410,7 @@ TEST_CASE("Assignment duals from a flow - one row, two columns",
     const lap::AssignmentDuals duals = lap::map_assignment_duals(
         solved.design.problem, solved.layout, solved.result.flow,
         solved.result.potential, lap::AssignmentEquality::Rows);
-    REQUIRE(duals.ok);
+    REQUIRE(duals.ok());
     REQUIRE(duals.match.size() == 1);
     REQUIRE(duals.match[0] == 0);
     REQUIRE(duals.u[0] + duals.v[0] == Approx(5.0));
@@ -444,7 +444,7 @@ TEST_CASE("Assignment duals from a flow - forbidden pairs",
     const lap::AssignmentDuals duals = lap::map_assignment_duals(
         solved.design.problem, solved.layout, solved.result.flow,
         solved.result.potential, lap::AssignmentEquality::Rows);
-    REQUIRE(duals.ok);
+    REQUIRE(duals.ok());
     REQUIRE(duals.match[0] == 0);
     REQUIRE(duals.match[1] == 2);
 
@@ -522,7 +522,7 @@ TEST_CASE("Assignment duals from a flow - randomized square and wide",
                 const lap::AssignmentDuals duals = lap::map_assignment_duals(
                     solved.design.problem, solved.layout, solved.result.flow,
                     solved.result.potential, lap::AssignmentEquality::Rows);
-                REQUIRE(duals.ok);
+                REQUIRE(duals.ok());
 
                 const lap::CertificateReport rep = lap::certify_assignment(
                     cost, duals.match, duals.u, duals.v, TOL);
@@ -599,7 +599,7 @@ TEST_CASE("Assignment duals from a flow - randomized tall, both routes",
                     const lap::AssignmentDuals duals = lap::map_assignment_duals(
                         solved.design.problem, solved.layout, solved.result.flow,
                         solved.result.potential, lap::AssignmentEquality::Rows);
-                    REQUIRE(duals.ok);
+                    REQUIRE(duals.ok());
 
                     const lap::CertificateReport rep = lap::certify_assignment(
                         flipped, duals.match, duals.u, duals.v, TOL);
@@ -618,7 +618,7 @@ TEST_CASE("Assignment duals from a flow - randomized tall, both routes",
                     const lap::AssignmentDuals duals = lap::map_assignment_duals(
                         solved.design.problem, solved.layout, solved.result.flow,
                         solved.result.potential, lap::AssignmentEquality::Columns);
-                    REQUIRE(duals.ok);
+                    REQUIRE(duals.ok());
                     REQUIRE(static_cast<int64_t>(duals.match.size()) == shape.nc);
                     REQUIRE(static_cast<int64_t>(duals.u.size()) == shape.nc);
                     REQUIRE(static_cast<int64_t>(duals.v.size()) == shape.nr);
@@ -661,7 +661,10 @@ TEST_CASE("Assignment duals from a flow - a flow that is not an assignment is re
         const lap::AssignmentDuals duals = lap::map_assignment_duals(
             solved.design.problem, solved.layout, flow, solved.result.potential,
             lap::AssignmentEquality::Rows);
-        REQUIRE_FALSE(duals.ok);
+        REQUIRE(duals.status == lap::AssignmentMapStatus::NotAnAssignment);
+        REQUIRE(duals.match.size() == 4);
+        REQUIRE(duals.u.size() == 4);
+        REQUIRE(duals.v.size() == 6);
     }
 
     SECTION("a block arc carrying more than one unit") {
@@ -672,14 +675,19 @@ TEST_CASE("Assignment duals from a flow - a flow that is not an assignment is re
         const lap::AssignmentDuals duals = lap::map_assignment_duals(
             solved.design.problem, solved.layout, flow, solved.result.potential,
             lap::AssignmentEquality::Rows);
-        REQUIRE_FALSE(duals.ok);
+        REQUIRE(duals.status == lap::AssignmentMapStatus::NotAnAssignment);
+        REQUIRE(duals.match.size() == 4);
+        REQUIRE(duals.u.size() == 4);
+        REQUIRE(duals.v.size() == 6);
     }
 
     SECTION("a structural mismatch") {
         const lap::AssignmentDuals duals = lap::map_assignment_duals(
             solved.design.problem, solved.layout, solved.result.flow, {0.0, 0.0},
             lap::AssignmentEquality::Rows);
-        REQUIRE_FALSE(duals.ok);
+        REQUIRE(duals.status == lap::AssignmentMapStatus::StructuralMismatch);
         REQUIRE(duals.match.empty());
+        REQUIRE(duals.u.empty());
+        REQUIRE(duals.v.empty());
     }
 }

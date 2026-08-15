@@ -405,7 +405,7 @@ TEST_CASE("Hand-computed 2x2 assignment, optimum and potentials",
     REQUIRE(res.total_cost == Approx(5.0));
 
     const lap::AssignmentDuals duals = flow_duals(prob, res);
-    REQUIRE(duals.ok);
+    REQUIRE(duals.ok());
     REQUIRE(duals.match[0] == 0);
     REQUIRE(duals.match[1] == 1);
 
@@ -609,7 +609,7 @@ TEST_CASE("Flow potentials certify the assignment they came from",
             REQUIRE(res.potential[0] == Approx(0.0));
 
             const lap::AssignmentDuals duals = flow_duals(prob, res);
-            REQUIRE(duals.ok);
+            REQUIRE(duals.ok());
 
             const lap::CertificateReport rep_out =
                 lap::certify_assignment(c, duals.match, duals.u, duals.v, 1e-9);
@@ -675,7 +675,7 @@ TEST_CASE("Reduced costs stay consistent on arcs the search never reached",
         REQUIRE(res.total_cost == Approx(7.0));
 
         const lap::AssignmentDuals duals = flow_duals(prob, res);
-        REQUIRE(duals.ok);
+        REQUIRE(duals.ok());
         REQUIRE(duals.match[0] == 0);
         REQUIRE(duals.match[1] == 2);
 
@@ -705,7 +705,7 @@ TEST_CASE("Reduced costs stay consistent on arcs the search never reached",
             require_reduced_costs_consistent(prob, res, 1e-9);
 
             const lap::AssignmentDuals duals = flow_duals(prob, res);
-            REQUIRE(duals.ok);
+            REQUIRE(duals.ok());
             REQUIRE(lap::certify_assignment(c, duals.match, duals.u, duals.v, 1e-9)
                         .certified_optimal);
         }
@@ -785,7 +785,7 @@ TEST_CASE("Flow potentials certify a sparse wide assignment",
     REQUIRE(res.status == "optimal");
 
     const lap::AssignmentDuals duals = flow_duals(prob, res);
-    REQUIRE(duals.ok);
+    REQUIRE(duals.ok());
 
     const lap::CertificateReport rep =
         lap::certify_assignment(c, duals.match, duals.u, duals.v, 1e-9);

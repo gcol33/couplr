@@ -443,24 +443,48 @@ inline AssignmentLayout layout_of(const FlowProblem& prob, int64_t block = 0) {
     return layout;
 }
 
+// How far map_assignment_duals() got. The two failures differ in what they
+// leave behind, so a caller that only asks "did it work" and carries on cannot
+// tell an empty result from a populated one.
+enum class AssignmentMapStatus {
+    // `match`, `u` and `v` are populated and the block flow is a unit
+    // assignment.
+    Ok,
+    // The problem, the layout, the flow and the potentials do not describe each
+    // other: unexpanded problem, wrong vector length, a block or node index out
+    // of range, or a block arc naming a row or column outside the layout.
+    // Nothing was read, so `match`, `u` and `v` are empty.
+    StructuralMismatch,
+    // Everything lined up and the block flow was read, but it is not a unit
+    // assignment: an arc carries more than one unit, or a row or column is
+    // claimed twice. `match`, `u` and `v` are populated, `match` holding the
+    // pairs that were unambiguous and -1 elsewhere.
+    NotAnAssignment
+};
+
 // A solved flow read back as an assignment plus a pair of assignment duals, in
 // the orientation lap::certify_assignment() expects: `match` and `u` are indexed
 // by the side carrying the equality, `v` by the side carrying the inequality.
 // The caller supplies the cost source in the same orientation, transposed when
 // the equality is on the columns.
 struct AssignmentDuals {
-    bool ok = false;              // false when the flow is not a unit assignment
+    AssignmentMapStatus status = AssignmentMapStatus::StructuralMismatch;
     std::vector<int>    match;    // per equality-side unit, -1 unmatched
     std::vector<double> u;        // per equality-side unit
     std::vector<double> v;        // per inequality-side unit
+
+    // The three vectors are safe to index exactly when this is true.
+    bool ok() const { return status == AssignmentMapStatus::Ok; }
 };
 
 // Map a solved unit-capacity bipartite flow back to (match, u, v).
 //
-// `ok` is false when the flow is not an assignment - a block arc carrying more
-// than one unit, or a row or column claimed twice - because the map's arithmetic
-// then describes something the assignment LP has no primal for. It is also false
-// on a structural mismatch, on the same terms as certify_flow().
+// A flow that is not an assignment - a block arc carrying more than one unit,
+// or a row or column claimed twice - is refused, because the map's arithmetic
+// then describes something the assignment LP has no primal for. So is a
+// structural mismatch, on the same terms as certify_flow(). The two are
+// different values of `status` rather than one `ok == false`, because only the
+// second leaves the vectors empty.
 //
 // The duals are exact when the matched block arcs are tight, which is the state
 // a shortest-path solver terminates in. When they are not, the map still returns
@@ -544,7 +568,8 @@ inline AssignmentDuals map_assignment_duals(const FlowProblem& prob,
         out.v = row_drop;
         for (double& vi : out.v) vi = std::min(vi, 0.0);
     }
-    out.ok = is_assignment;
+    out.status = is_assignment ? AssignmentMapStatus::Ok
+                               : AssignmentMapStatus::NotAnAssignment;
     return out;
 }
 

@@ -834,7 +834,7 @@ for still applies to the rest of what those two sections claim.
 
 Clean apart from what this note is committed with.
 
-`origin/main` and local `main` are both at `ccafc1b`.
+Local `main` is at `fc500f7`, C8. `origin/main` is at `42217f3` and one behind.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main

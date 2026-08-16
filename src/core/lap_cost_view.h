@@ -6,6 +6,8 @@
 // cost = dummy_cost (already sign-adjusted for maximize by the caller).
 #pragma once
 
+#include "lap_cost_source.h"
+
 #include <cstdint>
 
 namespace lap {
@@ -29,6 +31,17 @@ public:
 
     bool allowed(int64_t i, int64_t j) const {
         return (i < n0_) ? base_.allowed(i, j) : true;
+    }
+
+    // Forwarded so that padding a source does not cost it its one-evaluation
+    // path. A dummy row is admissible at its dummy cost with nothing to
+    // evaluate; a real row is whatever the base says, asked once.
+    bool admissible(int64_t i, int64_t j, double& cost) const {
+        if (i >= n0_) {
+            cost = dummy_cost_;
+            return true;
+        }
+        return cost_if_allowed(base_, i, j, cost);
     }
 
     bool empty() const { return nrow == 0 || ncol == 0; }

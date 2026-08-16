@@ -34,7 +34,14 @@
 // assignment of a given cardinality exists is a property of the admissibility
 // graph and not of the objective, so at() is never called and a maximize flag
 // would have no effect here.
+//
+// Every neighbourhood is walked through for_each_allowed(), so a source that
+// names where its pairs are -- the restricted arc set a pricing loop solves
+// over -- is matched at the cost of its edges, and a source that does not keeps
+// the grid scan in the same column order.
 #pragma once
+
+#include "lap_neighbours.h"
 
 #include <cstdint>
 #include <limits>
@@ -109,8 +116,7 @@ struct HopcroftKarp {
             if (dist[static_cast<size_t>(i)] >= dist[static_cast<size_t>(n)]) continue;
             const int64_t next_layer = dist[static_cast<size_t>(i)] + 1;
 
-            for (int64_t j = 0; j < m; ++j) {
-                if (!src.allowed(i, j)) continue;
+            for_each_allowed(src, i, [&](int64_t j) {
                 const int64_t k = match_col[static_cast<size_t>(j)];
                 if (k < 0) {
                     if (dist[static_cast<size_t>(n)] == INF) {
@@ -120,7 +126,8 @@ struct HopcroftKarp {
                     dist[static_cast<size_t>(k)] = next_layer;
                     q.push(k);
                 }
-            }
+                return true;
+            });
         }
 
         return dist[static_cast<size_t>(n)] != INF;
@@ -135,18 +142,21 @@ struct HopcroftKarp {
         if (dist[static_cast<size_t>(i)] == INF) return false;
         const int64_t next_layer = dist[static_cast<size_t>(i)] + 1;
 
-        for (int64_t j = 0; j < m; ++j) {
-            if (!src.allowed(i, j)) continue;
+        bool augmented = false;
+        for_each_allowed(src, i, [&](int64_t j) {
             const int64_t k = match_col[static_cast<size_t>(j)];
             const int64_t layer = (k < 0) ? dist[static_cast<size_t>(n)]
                                           : dist[static_cast<size_t>(k)];
-            if (layer != next_layer) continue;
+            if (layer != next_layer) return true;
             if (k < 0 || dfs(k)) {
                 match_row[static_cast<size_t>(i)] = j;
                 match_col[static_cast<size_t>(j)] = i;
-                return true;
+                augmented = true;
+                return false;
             }
-        }
+            return true;
+        });
+        if (augmented) return true;
 
         dist[static_cast<size_t>(i)] = INF;
         return false;
@@ -192,17 +202,17 @@ void koenig_reachable(const Source& src,
         stack.pop_back();
         const int64_t skip = match_row[static_cast<size_t>(i)];
 
-        for (int64_t j = 0; j < m; ++j) {
-            if (j == skip) continue;
-            if (in_cols[static_cast<size_t>(j)]) continue;
-            if (!src.allowed(i, j)) continue;
+        for_each_allowed(src, i, [&](int64_t j) {
+            if (j == skip) return true;
+            if (in_cols[static_cast<size_t>(j)]) return true;
             in_cols[static_cast<size_t>(j)] = 1;
             const int64_t k = match_col[static_cast<size_t>(j)];
             if (k >= 0 && !in_rows[static_cast<size_t>(k)]) {
                 in_rows[static_cast<size_t>(k)] = 1;
                 stack.push_back(k);
             }
-        }
+            return true;
+        });
     }
 }
 
@@ -226,15 +236,18 @@ bool verify_witness(const Source& src,
         is_neighbour[static_cast<size_t>(j)] = 1;
     }
 
-    for (size_t t = 0; t < rows.size(); ++t) {
+    bool inside = true;
+    for (size_t t = 0; t < rows.size() && inside; ++t) {
         const int64_t i = rows[t];
         if (i < 0 || i >= n) return false;
-        for (int64_t j = 0; j < m; ++j) {
-            if (src.allowed(i, j) && !is_neighbour[static_cast<size_t>(j)]) return false;
-        }
+        for_each_allowed(src, i, [&](int64_t j) {
+            if (is_neighbour[static_cast<size_t>(j)]) return true;
+            inside = false;
+            return false;
+        });
     }
 
-    return true;
+    return inside;
 }
 
 }  // namespace hall_detail

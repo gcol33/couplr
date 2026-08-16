@@ -8,9 +8,9 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` is nine commits ahead of
-`origin/main`; see "Working tree" at the end. The phase 1 certification layer
-went in as `7b3dd6e` and is no longer sitting in the working tree.
+`9c8fbe3`, and tag `v1.6.0` exists. `main` and `origin/main` are both at
+`ccafc1b`; see "Working tree" at the end. The phase 1 certification layer went in
+as `7b3dd6e` and is no longer sitting in the working tree.
 
 **Nothing is staged for CRAN.** `cran-comments.md` still describes 1.5.5 and
 opens "This release supersedes 1.5.3, the version currently on CRAN"; it has not
@@ -679,15 +679,57 @@ failed, 0 warnings, 3 skipped, 6702 passed, unchanged; B0 1542 cases with the
 same 6 clamp differences and nothing new; C0 26 pass, 0 fail, 7 known, 5 skipped,
 unchanged, and running in 1.1 s against the 2.4 s on record.
 
+## C5 is in, and the witness had to learn where the pairs are
+
+`src/flow/flow_feasibility.h`. One round is: match over the restricted arc set,
+and if that is row-perfect the block is feasible. Otherwise Hall's witness names
+the deficient rows S and the columns N(S) they reach, one scan of the full source
+over those rows keeps each of them the `width` cheapest admissible columns
+outside N(S), and finding none of those anywhere is the infeasibility
+certificate, re-checked against the full source before it is reported. The
+prototype's doubling ladder is gone.
+
+Three things measuring or reading changed:
+
+- **The witness walks edges now.** Phase 1's `hall_witness()` reads every column
+  of a row once per search phase, so asking it about a restricted arc set costs
+  the grid the restriction exists to avoid. `for_each_allowed()` in
+  `src/core/lap_neighbours.h` lets a source name an ascending superset of a
+  row's admissible columns; `lap_hall.h`'s four column loops go through it, and
+  a source that names nothing keeps the grid scan in the same column order.
+  Measured on the same graph both ways: 142x at 250 x 1,250, 600x at
+  1,000 x 5,000, same matching cardinality.
+- **The re-seed takes columns outside N(S) only.** A matching of S is bounded by
+  |N(S)| however many arcs into N(S) are added, so those are the only columns
+  that can move the deficiency. It also collapses the section's steps 2 and 3
+  into one scan: the scan looking for columns to seed with is the scan that
+  establishes there are none.
+- **The rebuild C3 parked costs 0.3% of a round.** C3 left the measurement for
+  when C5 existed. At 2,000 x 10,000 the round is 0.0645 s, of which the witness
+  is 0.0006 and the `add_pairs()` rebuild is 0.0002; the scan over the full
+  source is the rest, at the same per-pair cost as a C4 pricing round. There is
+  no second insertion path to write.
+
+`src/flow/flow_topk.h` holds the one flat per-row heap the pricer and the
+re-seed both keep their k smallest keys in.
+
+Judged by: `cpp_tests` 77215 assertions over 285 cases, up from 76265 over 274;
+R suite 0 failed, 0 warnings, 3 skipped, 6702 passed, unchanged; B0 1542 cases
+with the same 6 clamp differences and nothing new; C0 26 pass, 0 fail, 7 known,
+5 skipped in 1.1 s, unchanged.
+
 ## Next action
 
-Phase 3, section C5: feasibility as its own phase. The master comes back short of
-the required flow, `src/core/lap_hall.h` names the deficient rows and their
-neighbourhood, and only those rows are re-seeded. When their neighbourhood does
-not grow under a scan over the full source restricted to them, the answer is
-infeasible with a certificate rather than a wider ladder.
+Phase 3, section C8: the outer loop. `src/flow/flow_pricing.cpp`, templated on
+the source, holding the seven steps the roadmap states -- solve the restricted
+master, map its potentials to duals, price the omitted pairs, add the violators,
+repeat until nothing prices below `-tol`, with C5's round taking over whenever
+the master comes back short of the required flow. It owns the `FlowProblem`, the
+candidate set and the oracle, none of which have an R representation, and it
+records per round what the trace layer and `edges_evaluated` are computed from.
 
-C4's caller is C8, so C5 and C8 are what turn the pricer into a loop.
+C4 and C5 both have their caller there and nowhere else, so C8 is what turns two
+measured pieces into a loop.
 
 C6, C7 and C9 read arc counts as if they predicted work, which is the reasoning
 C1 was turned down for and C4's blocking a second time. Each needs its own
@@ -697,7 +739,7 @@ measurement before it is built.
 
 Clean apart from what this note is committed with.
 
-`origin/main` and local `main` are both at `bf2767b`.
+`origin/main` and local `main` are both at `ccafc1b`.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -757,6 +799,8 @@ user-visible:
 | `c4_timing.log` | The current numbers from it |
 | `c4_blocking_ab.log` | The column-blocking A/B that turned the blocking down |
 | `c4_maxdist_before.log` | The same harness against `lap_lazy_types.h` at HEAD, which is the before column for the one-question change |
+| `c5_timing.cpp` | What a feasibility round costs, split into the witness, the scan and the candidate-set rebuild, and the same witness walked over a graph's edges against over its grid |
+| `c5_timing.log` | The current numbers from it |
 
 `dev_notes/pricing-probe/`
 

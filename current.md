@@ -718,22 +718,117 @@ R suite 0 failed, 0 warnings, 3 skipped, 6702 passed, unchanged; B0 1542 cases
 with the same 6 clamp differences and nothing new; C0 26 pass, 0 fail, 7 known,
 5 skipped in 1.1 s, unchanged.
 
+## C8 is in, and the loop closes
+
+`src/flow/flow_implicit.h`. `solve_implicit_assignment(src, prob, cand, opts)`
+takes a compiled one-block assignment and the candidate set it may use, and runs
+the roadmap's seven steps: expand the block over the candidates, solve the
+restricted master, read its potentials as assignment duals, price the pairs the
+master omits, add the ones that price below `-tol`, warm start, repeat until
+none does. A master that comes back short of its required flow hands over to
+C5's round instead, and an infeasible answer carries Hall's witness. C2 through
+C5 each had their caller here and nowhere else.
+
+Measured against the same source solved dense, pinned to one core, Euclidean at
+p = 8 with `width` and `keep_per_row` at 5:
+
+| shape | rounds | candidate pairs | of possible | loop | dense | speedup |
+|---|---|---|---|---|---|---|
+| 200 x 2,000 | 2 | 1,000 | 0.250% | 0.017 s | 0.363 s | 21.7x |
+| 500 x 5,000 | 2 | 2,500 | 0.100% | 0.109 s | 4.867 s | 44.7x |
+| 1,000 x 20,000 | 2 | 5,000 | 0.025% | 0.557 s | not run | |
+
+Equal cost to 17 digits on both shapes the dense solve can run. Two rounds on
+all three, because the seed the feasibility phase lays down is already optimal
+and the pricing round proves it rather than repairing it.
+
+### A warm-started master's duals are not the assignment's
+
+The first run returned the dense solve's answer to the last digit and a
+certificate reporting `dual_feasible = false`, at
+`min_reduced_cost = -0.086` and `max_matched_slack = 0.086` -- the same number
+twice, so the pair pricing below zero was a matched one.
+
+The flow model gives a block arc the upper bound of one unit that the row's own
+supply already implies, and min-cost flow optimality reads that bound: an arc at
+its upper bound is optimal priced at or below zero. The assignment LP has no
+such bound, and asks `u_i + v_j <= c_ij` on every admissible pair, matched pairs
+included. Cold, the question does not arise -- a matched arc entered the flow on
+a shortest path at reduced cost zero, and a row node is reachable in the
+residual graph only through the column it is matched to, so it stays tight. A
+warm start reaches the other state on purpose: the slackness repair pushes a
+newly added arc, chosen by the pricer precisely because it prices below zero,
+straight to its upper bound.
+
+`tighten_matched_duals()` sets `u_i := c_i,match(i) - v_match(i)`, one cost read
+per row. A matched arc prices at or below zero, so this only lowers `u_i`, and
+lowering `u_i` raises every reduced cost in row i: a feasible dual point stays
+feasible, the matched pairs become tight, and the dual objective meets the
+primal. It is the row-side twin of the `v_j <= 0` clamp `map_assignment_duals()`
+already applies for the sink arc's bound, and it stays in the loop rather than
+moving beside the clamp, because only a warm start reaches the state it
+addresses. `ImplicitRound::matched_slack` records the condition per round, and
+`cpp_tests` asserts it is above tolerance on a warm-started run and at rounding
+on a master solved in one round over every pair.
+
+### The certificate is two scans, and neither is a sweep of the grid
+
+Termination is C4's pricing round, which is the scan over the omitted pairs. The
+other half is the pairs the master holds, and that walk costs the candidate set:
+`CandidateGraph` gained `at()` and `admissible()` so the restricted problem is a
+cost source, and `scan_reduced_costs()` reads a row through
+`for_each_admissible()`, the cost-carrying twin of C5's `for_each_allowed()` and
+built on the same range-or-grid dispatch. `certify_assignment()` gained an
+overload taking a scan the caller already holds, and `merge_scans()` reads two
+scans over disjoint pairs as one over their union, so the conclusion stays in
+one body.
+
+### What the loop does not save is the distances
+
+`edges_evaluated` comes to exactly 2.00x the grid on all three Euclidean shapes:
+the feasibility scan reads every pair once to seed, the pricing round reads every
+omitted pair once to prove there is nothing left, and the certificate's walk of
+the candidate set is the rest. A dense solve reads each pair once. What edge
+generation saves at these shapes is the solve and the arcs, not the arithmetic.
+
+So the surface's `edges_evaluated: 0.0031` is not something C4's block pricing
+delivers, and nothing in C2 through C5 was going to. That is the number C6's
+tree and C7's bound have to move, and it is the measurement they were told to
+wait for.
+
+### An infeasible caliper is answered with a witness where dense says partial
+
+A `max_distance` of 2.0 on 8 standard normal covariates leaves six of 500 rows
+with no admissible column. The loop returns `infeasible` with |S| = 6,
+|N(S)| = 0 and the witness re-checked against the full source; the dense solve
+returns `partial` with 494 of 500 units and a total cost for a matching of a
+different size. They agree on the deficiency and one of them says why.
+
+Judged by: `cpp_tests` 77865 assertions over 298 cases, up from 77215 over 285,
+with forty random shapes run from an empty candidate set and asserted against
+the dense solve of the same source; R suite 0 failed, 0 warnings, 3 skipped,
+6702 passed, unchanged; B0 1542 cases with the same 6 clamp differences and
+nothing new; C0 38 cases with the same 7 known differences, exit 0.
+
 ## Next action
 
-Phase 3, section C8: the outer loop. `src/flow/flow_pricing.cpp`, templated on
-the source, holding the seven steps the roadmap states -- solve the restricted
-master, map its potentials to duals, price the omitted pairs, add the violators,
-repeat until nothing prices below `-tol`, with C5's round taking over whenever
-the master comes back short of the required flow. It owns the `FlowProblem`, the
-candidate set and the oracle, none of which have an R representation, and it
-records per round what the trace layer and `edges_evaluated` are computed from.
+Phase 3, section C9: the public surface. `"implicit"` is a fourth value in
+`resolve_memory_mode()`'s vocabulary rather than a new argument, `certify = TRUE`
+is its default, and `"auto"` does not select it until a dispatch rule with
+measurements behind it exists.
 
-C4 and C5 both have their caller there and nowhere else, so C8 is what turns two
-measured pieces into a loop.
+It is the next thing rather than C6 because the loop currently has no caller
+outside `cpp_tests`. C0 compares two paths in one session, which is how the
+roadmap's condition 1 is answered on the shapes the package actually runs, and
+it cannot see a path that R cannot reach. Forty random shapes against the dense
+solve is what `cpp_tests` can say; the differential harness at scale is what the
+section is done by.
 
-C6, C7 and C9 read arc counts as if they predicted work, which is the reasoning
-C1 was turned down for and C4's blocking a second time. Each needs its own
-measurement before it is built.
+C6 and C7 now have the measurement they were told to wait for, and it is not an
+arc count: `edges_evaluated` is 2.00x the grid on every Euclidean shape the loop
+was run on, because the feasibility scan and the pricing round each read every
+pair once. The tree's job is that number, and the reasoning C1 was turned down
+for still applies to the rest of what those two sections claim.
 
 ## Working tree
 
@@ -801,6 +896,8 @@ user-visible:
 | `c4_maxdist_before.log` | The same harness against `lap_lazy_types.h` at HEAD, which is the before column for the one-question change |
 | `c5_timing.cpp` | What a feasibility round costs, split into the witness, the scan and the candidate-set rebuild, and the same witness walked over a graph's edges against over its grid |
 | `c5_timing.log` | The current numbers from it |
+| `c8_trace.cpp` | The loop end to end: the per-round table, what the candidate set retains, what a cost was computed for, and the same source solved dense beside it |
+| `c8_trace.log` | The current numbers from it |
 
 `dev_notes/pricing-probe/`
 

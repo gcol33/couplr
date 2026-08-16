@@ -110,6 +110,7 @@ set(TEST_SOURCES
     tests/test_flow_candidates.cpp
     tests/test_flow_pricing.cpp
     tests/test_flow_feasibility.cpp
+    tests/test_flow_implicit.cpp
     tests/test_flow_compile.cpp
     tests/test_flow_certify.cpp
     tests/test_flow_assign.cpp

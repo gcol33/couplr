@@ -476,21 +476,136 @@ This is squarely phase 3's business rather than beside it: sections C and D are
 `solve_min_cost_flow()` on a partially expanded problem, warm started, and a
 warm start is one of the two places the invariant is not free.
 
+## C1 was measured and turned down
+
+The touched-list reset was written, checked, measured and dropped.
+`src/flow/flow_solve.cpp` is unchanged. It is 8% to 19% slower on all four
+shapes it was run on, and the two reasons matter more than the change did.
+
+The premise was that clearing `dist`, `pv` and `pe` in full costs
+O(augmentations * n_nodes) whatever the arc set holds, so on a restricted master
+holding a fraction of a percent of its pairs the clearing would dominate. A
+restricted arc set does not give a small labelled set. The search drains its
+queue instead of stopping when the auxiliary sink is popped, so it labels
+everything the residual graph reaches from the auxiliary source: 83.6% of the
+nodes on a candidate-set problem carrying 0.08% of its pairs, 99.9% on the two
+complete ones. The list the reset walks is the array it replaced, and walking it
+is scattered writes where `std::fill` was three linear passes.
+
+The prize was also small enough to have settled it first, which is the part
+worth carrying forward. Three fills of 12,003 entries over 2,000 augmentations
+is 7.2e7 writes, one to two percent of a 3.36 s solve. No change to the clearing
+can return more than that.
+
+An early exit at the sink does not recover it either. At the moment the sink
+first tops the queue the labelled set is already complete on all three shapes,
+so an early exit changes what is popped, not what is labelled. It would save
+about a quarter of the pops, which is heap work and its own measurement.
+
+What phase 3 keeps is the instrument. `dev_notes/phase3/c1_timing.R` runs two
+families -- `b8_timing.R`'s three complete shapes through `assignment()`, and a
+candidate-set flow problem built directly, which is the first thing in this
+phase to put the restricted master's shape through the shared solver --
+and `c1_ab.sh` runs a working-tree `flow_solve.cpp` against HEAD's on installed
+builds. `dev_notes/phase3/findings.md` holds the tables; `design.md` is
+corrected in place.
+
+Suite after: 0 failed, 0 errors, 0 warnings, 3 skipped, 6702 passed.
+
+## B0 has carried six differences since ed1ae7f
+
+Found while establishing C1's control, and unrelated to it. `baseline.R
+--compare` reports 6 differ at HEAD with a clean tree. Bisected: with
+`src/flow/flow_solve.cpp` at `25a56dd` and everything else at HEAD, B0 is 0
+differ, so the six are the clamp's.
+
+All six are `full_match/*`, all in `value$potentials`, all one ulp. No match
+vector, cost or status field moved, which is what the clamp should do: it
+changes the arithmetic that produces the duals, and the duals are not unique.
+The baseline was captured at `46460a53` and never re-captured.
+
+Left as it is, because it is a decision about the instrument rather than a
+repair: re-capturing makes B0 clean and gives up the record that the clamp moved
+these six, and the alternative is a documented known-difference list of the kind
+`differential.R` already carries. Until it is settled, 6 is the number that
+means nothing changed.
+
+## C2 is in, and C3's object came with it
+
+A block can be expanded over a candidate set instead of over its whole grid, and
+a block that is already expanded can be grown. That is the whole of section C2,
+and it is what the restricted master was missing: the engine, the warm start and
+the warm-start repair were all already there.
+
+- `expand_block_subset()` emits arcs for the candidate pairs only, through the
+  same two gates the full expansion uses, and records each arc's `(i, j)` the
+  same way, so `flow_assign.cpp`, `map_assignment_duals()` and the Rcpp reader
+  work unchanged on a restricted problem.
+- `add_block_arcs()` grows an expanded block and moves `warm_flow` in step, each
+  new arc entering at its lower bound. No new repair logic: an arc the incumbent
+  potentials price below zero is pushed to its upper bound by the slackness pass
+  already in `solve_min_cost_flow()`, and the augmentation loop repairs the
+  conservation that breaks.
+- `expand_blocks()` resumes from the blocks already expanded rather than
+  clearing. Left as it was, subset-expanding one block and handing the problem
+  to the solver would have cleared the ranges and re-expanded everything in
+  full, with the subset arcs orphaned in the arc array -- wrong quietly rather
+  than loudly.
+
+The signature `expand_block_subset(prob, block, const CandidateSet&)` is C2's
+own, so C3's object is in too: `src/flow/flow_candidates.h`, a per-row sorted
+CSR with `contains()`, `add_pairs()` and the `edges_evaluated` counter. What C3
+still owes is callers -- nothing prices yet, and section D has nothing to sweep.
+
+Two things the spec said that measuring or reading changed:
+
+- **The per-row `add_sorted(i, cols)` is one bulk `add_pairs(pairs)`.** A CSR
+  insert shifts everything behind it, so a per-row insert repeated over one
+  pricing round's rows is O(nrow * n_arcs), which is 50,000 rows against 1.8M
+  arcs at the largest phase 0 shape. One rebuild pass is
+  O(nrow + n_arcs + k log k), which is what `probe_csr_add` did.
+- **Added arcs land at the end of their block, not at the end of the arc
+  array.** Every reader maps arc `first_arc + k` to `rc[k]`, so appending behind
+  a later block's arcs would break that mapping for both blocks. Later blocks'
+  ranges move up instead, and `warm_flow` is inserted at the same offset. For
+  the single-block problem section C runs, the two positions are the same.
+
+**A candidate is not an arc.** A pair the cost source forbids stays in the
+candidate set and gets no arc, which is what stops a pricer offering the same
+forbidden pair every round, and it means `cand.n_arcs()` bounds a block's arc
+count rather than equalling it. Both cpp_tests cases that add pairs assert the
+gap.
+
+The correctness claim is asserted where it can be: a restricted master's answer
+equals the dense solve on the same costs with every non-candidate forbidden, and
+a candidate set grown to the whole grid on a warm start reaches the cold dense
+optimum, match vector included. That is condition 1 in miniature, on the shapes
+`differential.R` will run at scale.
+
+Suite after: 0 failed, 0 warnings, 3 skipped, 6702 passed in R, and 74413
+assertions over 262 cases in `cpp_tests/`, up from 69265 over 251. B0: 1542
+cases, 6 differ, and the six are the clamp's -- the same `full_match/*`
+potentials, to the same ulp, as before this work.
+
 ## Next action
 
-Phase 3, section C1: the touched-list reset in `solve_min_cost_flow()`,
-replacing the three `std::fill`s at the top of each search. C0 is done and is
-the instrument the rest of section C is judged by.
+Phase 3, section C4: `price_block()` in `src/flow/flow_pricing.h`, the pricing
+loop that works for any cost function and is the oracle C6's tree is tested
+against. `scan_reduced_costs()` gives it the scan; what it adds is the `keep`
+most negative per row and skipping what the candidate set already holds.
 
 Section C's restricted master is the new solver work. The pricing oracle's two
 prerequisites are both in the tree: the lazy dual entry point above, and
 `scan_reduced_costs()` from phase 1.
 
+C6, C7 and C9 read arc counts as if they predicted work, which is the reasoning
+C1 was turned down for. Each needs its own measurement before it is built.
+
 ## Working tree
 
 Clean apart from what this note is committed with.
 
-`origin/main` is at `25a56dd`. Local `main` is one commit ahead, `ed1ae7f`.
+`origin/main` is at `25a56dd`. Local `main` is two commits ahead, `ba2cbfa`.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -532,6 +647,16 @@ user-visible:
 | `baseline.R`, `baseline.rds` | B0, the equivalence baseline. `--capture` and `--compare`; `--compare` exits non-zero on any difference |
 | `baseline_additive_check.R` | Compares every case on the fields the baseline holds instead of stopping at the first difference, which is what separates an added field from a changed value |
 | `b8_timing.R` | What routing four solvers through the flow model costs in wall time |
+
+`dev_notes/phase3/`
+
+| File | What |
+|---|---|
+| `design.md` | The spec phase 3 implements, C0 through D, corrected in place where findings disagree |
+| `findings.md` | Everything outside phase 3's scope, every deviation from the spec, and the measurements that turned C1 down |
+| `differential.R` | C0. Runs one problem through two paths in the same session and compares them to each other. `--self-check` calibrates the comparator against `lazy` |
+| `c1_timing.R` | Two families: `b8_timing.R`'s complete shapes through `assignment()`, and a candidate-set flow problem built directly, which is the restricted master's shape |
+| `c1_ab.sh` | Runs `c1_timing.R` against installed builds of a working-tree `flow_solve.cpp` and HEAD's |
 
 `dev_notes/pricing-probe/`
 

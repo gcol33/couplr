@@ -54,11 +54,15 @@
 
 namespace lap {
 
-// The admissibility graph a restricted master actually solves over: the pairs
-// the candidate set holds, less the ones the cost source forbids. It names its
-// rows' columns, so a matching over it costs the candidates rather than the
-// grid; a candidate the source forbids is in the range and fails allowed(),
-// which is the superset for_each_allowed() is written for.
+// The restricted problem as a cost source: the pairs the candidate set holds,
+// less the ones the cost source forbids, priced by the source itself. It names
+// its rows' columns, so a matching or a scan over it costs the candidates
+// rather than the grid; a candidate the source forbids is in the range and
+// fails allowed(), which is the superset for_each_allowed() is written for.
+//
+// It is the same problem a restricted master solves, which is what makes it
+// both the graph Hall's witness is asked about and the source a certificate
+// over the master's own pairs is taken against.
 template <class Source>
 struct CandidateGraph {
     const Source*       src  = nullptr;
@@ -72,6 +76,14 @@ struct CandidateGraph {
     bool allowed(int64_t i, int64_t j) const {
         return cand->contains(i, j) && src->allowed(i, j);
     }
+    double at(int64_t i, int64_t j) const { return src->at(i, j); }
+
+    // Membership first, so a pair outside the set never reaches the source and
+    // a computing source is not asked for a cost this graph does not carry.
+    bool admissible(int64_t i, int64_t j, double& cost) const {
+        return cand->contains(i, j) && cost_if_allowed(*src, i, j, cost);
+    }
+
     const int32_t* allowed_begin(int64_t i) const { return cand->row_begin(i); }
     const int32_t* allowed_end(int64_t i) const { return cand->row_end(i); }
 };

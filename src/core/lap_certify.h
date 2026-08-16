@@ -41,6 +41,7 @@
 #pragma once
 
 #include "lap_cost_source.h"
+#include "lap_neighbours.h"
 
 #include <vector>
 #include <limits>
@@ -147,15 +148,14 @@ ReducedCostScan scan_reduced_costs(const Source& src,
     if (static_cast<int64_t>(u.size()) != nrow) return out;
     if (static_cast<int64_t>(v.size()) != ncol) return out;
 
+    // Forbidden arcs carry BIG, not Inf: reading one unguarded drags the
+    // minimum to +1e100 and the argmin with it. for_each_admissible() is that
+    // guard and the cost read as one question, so a source that computes its
+    // costs answers it once, and a source naming where its pairs are is walked
+    // over them rather than over its grid.
     for (int64_t i = 0; i < nrow; ++i) {
         const double ui = u[static_cast<std::size_t>(i)];
-        for (int64_t j = 0; j < ncol; ++j) {
-            // Forbidden arcs carry BIG, not Inf: reading one without this
-            // guard drags the minimum to +1e100 and the argmin with it. The
-            // guard and the read are one question, so a source that computes
-            // its costs answers it once.
-            double c = 0.0;
-            if (!cost_if_allowed(src, i, j, c)) continue;
+        for_each_admissible(src, i, [&](int64_t j, double c) {
             const double cbar = c - ui - v[static_cast<std::size_t>(j)];
             ++out.n_admissible;
             if (cbar < out.min_reduced_cost) {
@@ -164,9 +164,35 @@ ReducedCostScan scan_reduced_costs(const Source& src,
                 out.arg_j = j;
             }
             if (cbar < -tol) ++out.n_violations;
-        }
+            return true;
+        });
     }
 
+    return out;
+}
+
+// Two scans over disjoint sets of pairs, read as one scan over their union.
+//
+// This is what lets a scan be assembled from the passes that can afford it
+// rather than from one sweep of the grid: an edge-generation loop knows the
+// minimum over the pairs its master holds and the minimum over the pairs it
+// omits, and their union is every admissible pair of the complete problem.
+//
+// Ties keep the earlier argmin in (i, j) order, which is the one a single
+// ascending scan of the same pairs would have reported.
+inline ReducedCostScan merge_scans(const ReducedCostScan& a, const ReducedCostScan& b) {
+    ReducedCostScan out;
+    out.n_admissible = a.n_admissible + b.n_admissible;
+    out.n_violations = a.n_violations + b.n_violations;
+
+    const bool b_wins = b.min_reduced_cost < a.min_reduced_cost ||
+                        (b.min_reduced_cost == a.min_reduced_cost && a.arg_i < 0) ||
+                        (b.min_reduced_cost == a.min_reduced_cost && b.arg_i >= 0 &&
+                         (b.arg_i < a.arg_i || (b.arg_i == a.arg_i && b.arg_j < a.arg_j)));
+    const ReducedCostScan& best = b_wins ? b : a;
+    out.min_reduced_cost = best.min_reduced_cost;
+    out.arg_i = best.arg_i;
+    out.arg_j = best.arg_j;
     return out;
 }
 
@@ -191,12 +217,19 @@ ReducedCostScan scan_reduced_costs(const Source& src,
 //
 // Returns a report with primal_feasible = false on an empty problem or on any
 // length mismatch, rather than reading out of bounds.
+namespace detail {
+
+// `supplied` is the reduced-cost scan when the caller already has one and null
+// when the certificate has to take it itself. Everything else about the check
+// is the same either way, so it is one body: a second copy of the conclusion
+// would be free to drift from this one, and the conclusion is the whole point.
 template <class Source>
-CertificateReport certify_assignment(const Source& src,
-                                     const std::vector<int>& match,
-                                     const std::vector<double>& u,
-                                     const std::vector<double>& v,
-                                     double tol) {
+CertificateReport certify_assignment_impl(const Source& src,
+                                          const std::vector<int>& match,
+                                          const std::vector<double>& u,
+                                          const std::vector<double>& v,
+                                          double tol,
+                                          const ReducedCostScan* supplied) {
     CertificateReport rep;
     rep.tolerance = tol;
 
@@ -245,7 +278,9 @@ CertificateReport certify_assignment(const Source& src,
     }
 
     // ---- dual feasibility ----
-    const ReducedCostScan scan = scan_reduced_costs(src, u, v, tol);
+    const ReducedCostScan scan = (supplied != nullptr)
+        ? *supplied
+        : scan_reduced_costs(src, u, v, tol);
     rep.min_reduced_cost = scan.min_reduced_cost;
     rep.worst_i = scan.arg_i;
     rep.worst_j = scan.arg_j;
@@ -314,6 +349,37 @@ CertificateReport certify_assignment(const Source& src,
                             (std::abs(rep.duality_gap) <= tol_gap);
 
     return rep;
+}
+
+}  // namespace detail
+
+template <class Source>
+CertificateReport certify_assignment(const Source& src,
+                                     const std::vector<int>& match,
+                                     const std::vector<double>& u,
+                                     const std::vector<double>& v,
+                                     double tol) {
+    return detail::certify_assignment_impl(src, match, u, v, tol, nullptr);
+}
+
+// The same certificate against a scan the caller already holds.
+//
+// The scan is the only part of the check that costs a pass over the pairs; the
+// rest is O(nrow + ncol) over the matching and the duals. A caller that reached
+// the minimum some other way -- an edge-generation loop proves it in two halves,
+// one over the pairs its master holds and one over the pairs it omits -- has
+// the expensive half already and would otherwise pay for it twice.
+//
+// The scan has to cover every admissible pair of `src`. One that covers fewer
+// certifies a smaller problem than the one named here.
+template <class Source>
+CertificateReport certify_assignment(const Source& src,
+                                     const std::vector<int>& match,
+                                     const std::vector<double>& u,
+                                     const std::vector<double>& v,
+                                     double tol,
+                                     const ReducedCostScan& scan) {
+    return detail::certify_assignment_impl(src, match, u, v, tol, &scan);
 }
 
 }  // namespace lap

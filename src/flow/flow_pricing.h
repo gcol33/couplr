@@ -73,6 +73,12 @@ struct BlockPricing {
 
     double  min_reduced_cost = std::numeric_limits<double>::infinity();
 
+    // The pair min_reduced_cost was taken at, -1 when no omitted pair is
+    // admissible. Ties keep the first in (i, j) order, so the pair named is the
+    // one an ascending scan of the same pairs would have named.
+    int64_t arg_i = -1;
+    int64_t arg_j = -1;
+
     // Omitted admissible pairs with cbar < -tol. Zero is the termination test.
     int64_t n_violators = 0;
 
@@ -131,6 +137,7 @@ BlockPricing price_block(const Source& src,
         const int64_t  rn = cand.row_size(i);
         const double ui = u[static_cast<std::size_t>(i)];
         double rmin = std::numeric_limits<double>::infinity();
+        int64_t rmin_j = -1;
 
         // The row's candidates are ascending and j advances by one, so the
         // membership test is a single cursor rather than a binary search per
@@ -151,7 +158,10 @@ BlockPricing price_block(const Source& src,
             if (!cost_if_allowed(src, i, j, c)) continue;
             ++out.n_evaluated;
             const double cbar = c - ui - v[static_cast<std::size_t>(j)];
-            if (cbar < rmin) rmin = cbar;
+            if (cbar < rmin) {
+                rmin = cbar;
+                rmin_j = j;
+            }
             if (cbar < -tol) {
                 ++out.n_violators;
                 keep.offer(i, cbar, static_cast<int32_t>(j));
@@ -159,7 +169,11 @@ BlockPricing price_block(const Source& src,
         }
 
         out.row_min[static_cast<std::size_t>(i)] = rmin;
-        if (rmin < out.min_reduced_cost) out.min_reduced_cost = rmin;
+        if (rmin < out.min_reduced_cost) {
+            out.min_reduced_cost = rmin;
+            out.arg_i = i;
+            out.arg_j = rmin_j;
+        }
     }
 
     keep.emit([&out](int32_t i, int32_t j, double cbar) {

@@ -23,6 +23,8 @@
 // loop rewritten in these terms walks a dense source exactly as it did before.
 #pragma once
 
+#include "lap_cost_source.h"
+
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -41,6 +43,24 @@ struct has_allowed_range<
            decltype(std::declval<const T&>().allowed_end(std::declval<int64_t>()))>>
     : std::true_type {};
 
+// The columns row i's admissible set can lie in, ascending: the named range
+// where the source has one, the whole row where it has not. The admissibility
+// test is the caller's, because a caller that also wants the cost has to ask
+// both questions at once and one that does not must not be charged for a cost.
+template <class Source, class Fn>
+inline void for_each_column(const Source& src, int64_t i, Fn&& fn) {
+    if constexpr (has_allowed_range<Source>::value) {
+        const int32_t* const end = src.allowed_end(i);
+        for (const int32_t* p = src.allowed_begin(i); p != end; ++p) {
+            if (!fn(static_cast<int64_t>(*p))) return;
+        }
+    } else {
+        for (int64_t j = 0; j < src.ncol; ++j) {
+            if (!fn(j)) return;
+        }
+    }
+}
+
 }  // namespace detail
 
 // Call `fn(j)` for each admissible column of row i, ascending. `fn` returns
@@ -48,19 +68,23 @@ struct has_allowed_range<
 // rather than finishing the row.
 template <class Source, class Fn>
 inline void for_each_allowed(const Source& src, int64_t i, Fn&& fn) {
-    if constexpr (detail::has_allowed_range<Source>::value) {
-        const int32_t* const end = src.allowed_end(i);
-        for (const int32_t* p = src.allowed_begin(i); p != end; ++p) {
-            const int64_t j = static_cast<int64_t>(*p);
-            if (!src.allowed(i, j)) continue;
-            if (!fn(j)) return;
-        }
-    } else {
-        for (int64_t j = 0; j < src.ncol; ++j) {
-            if (!src.allowed(i, j)) continue;
-            if (!fn(j)) return;
-        }
-    }
+    detail::for_each_column(src, i, [&](int64_t j) {
+        if (!src.allowed(i, j)) return true;
+        return static_cast<bool>(fn(j));
+    });
+}
+
+// Call `fn(j, cost)` for each admissible column of row i, ascending, with the
+// pair read once through cost_if_allowed(). This is the loop for a caller that
+// wants the cost of every pair it visits: asking allowed() and then at()
+// separately costs a computing source three evaluations of the same distance.
+template <class Source, class Fn>
+inline void for_each_admissible(const Source& src, int64_t i, Fn&& fn) {
+    detail::for_each_column(src, i, [&](int64_t j) {
+        double c = 0.0;
+        if (!cost_if_allowed(src, i, j, c)) return true;
+        return static_cast<bool>(fn(j, c));
+    });
 }
 
 }  // namespace lap

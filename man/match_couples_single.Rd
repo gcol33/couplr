@@ -21,7 +21,8 @@ match_couples_single(
   replace = FALSE,
   ratio = 1L,
   sigma = NULL,
-  memory_mode = "auto"
+  memory_mode = "auto",
+  certify = NULL
 )
 }
 \value{

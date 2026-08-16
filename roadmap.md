@@ -347,23 +347,33 @@ phase 0, and nothing here should be built before that answer exists.
 **Public surface.**
 
 ```r
-full_match(
-  treatment,
-  covariates,
-  ratio       = c(1, 5),
+result <- match_couples(
+  left, right,
+  vars        = vars,
   memory_mode = "implicit",
   certify     = TRUE
 )
 
 result$certificate
-#> optimal:          TRUE
-#> primal_feasible:  TRUE
-#> dual_feasible:    TRUE
-#> duality_gap:      0
+#> certified_optimal:       TRUE
+#> primal_feasible:         TRUE
+#> dual_feasible:           TRUE
+#> complementary_slackness: TRUE
+#> duality_gap:             0
+
+result$search
 #> candidate_edges:  1842231
 #> possible_edges:   8400000000
-#> edges_evaluated:  0.0031
+#> edges_evaluated:  16800000000
+#> n_rounds:         2
 ```
+
+The front door is `match_couples()`, not `full_match()`: the loop's scope is the
+unit-capacity assignment, and a full match's column nodes carry capacities above
+one, so a column dual is not the assignment dual the pricer reads.
+`assignment()` takes the mode too. The pair counts are `search` rather than
+certificate fields, because a certificate's field set is the one
+`verify_assignment()` defines.
 
 **Done when:** edge generation returns a certified-optimal solution identical
 to the dense solve on every problem small enough to run both, and

@@ -173,6 +173,14 @@ CostMatrix negate_costs(const CostMatrix& cost) {
     return result;
 }
 
+void forbid_sentinel_costs(CostMatrix& cost) {
+    for (int64_t i = 0; i < cost.nrow; ++i) {
+        for (int64_t j = 0; j < cost.ncol; ++j) {
+            if (cost.allowed(i, j) && cost.at(i, j) >= BIG) cost.forbid(i, j);
+        }
+    }
+}
+
 CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize) {
     CostMatrix result = maximize ? negate_costs(cost) : cost;
 

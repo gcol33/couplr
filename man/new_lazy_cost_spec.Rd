@@ -4,12 +4,22 @@
 \alias{new_lazy_cost_spec}
 \title{Construct a lazy cost specification}
 \usage{
-new_lazy_cost_spec(left_mat, right_mat, distance, sigma, weights, vars)
+new_lazy_cost_spec(
+  left_mat,
+  right_mat,
+  distance,
+  sigma,
+  weights,
+  vars,
+  mode = c("lazy", "implicit")
+)
 }
 \value{
 An object of class "lazy_cost_spec".
 }
 \description{
-Construct a lazy cost specification
+\code{mode} is the memory mode that resolved to this specification: \code{"lazy"},
+solved over every pair, or \code{"implicit"}, solved by generating the pairs the
+answer turns out to need.
 }
 \keyword{internal}

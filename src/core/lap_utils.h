@@ -110,6 +110,15 @@ double compute_total_cost(const CostMatrix& original_cost,
 // Negate costs for maximization (returns new matrix)
 CostMatrix negate_costs(const CostMatrix& cost);
 
+// Mark every cell priced at or above the forbidden sentinel as forbidden.
+//
+// A matrix that has been through prepare_for_solve() carries BIG in the cells
+// its mask calls forbidden, and R draws the same line (is.finite(x) & x <
+// BIG_COST, in R/matching_constraints.R), so a cost that large says there is no
+// edge there whatever the mask says. Run on the matrix before any negation, or
+// the sentinel is no longer the largest value in it.
+void forbid_sentinel_costs(CostMatrix& cost);
+
 // Prepare cost matrix for solving (handles maximization, padding for rectangular)
 // Returns: prepared CostMatrix (negated if maximize, padded if needed)
 CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize);

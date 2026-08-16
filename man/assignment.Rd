@@ -14,6 +14,7 @@ assignment(
   auction_eps = NULL,
   eps = NULL,
   memory_mode = "auto",
+  certify = NULL,
   cardinality = c("complete", "maximum", "fixed"),
   n_matches = NULL,
   unmatched_penalty = NULL
@@ -93,13 +94,26 @@ If \code{NULL}, an internal default (e.g., \code{1e-9}) is used.}
 \item{eps}{Deprecated. Use \code{auction_eps}. If provided and \code{auction_eps} is \code{NULL},
 its value is used for \code{auction_eps}.}
 
-\item{memory_mode}{One of "auto" (default), "dense", or "lazy". \code{cost} is
-already a materialized matrix by the time it reaches \code{assignment()}, so
-"auto" here is diagnostic only: it warns if the matrix is large relative
-to free system RAM (nothing else can be done post-hoc once the matrix
-already exists -- build it via \code{compute_distances(memory_mode = ...)}
-instead to avoid materializing it in the first place). No lazy solver
-exists yet, so \code{memory_mode = "lazy"} currently always errors.}
+\item{memory_mode}{One of "auto" (default), "dense", "lazy" or "implicit".
+\code{cost} is already a materialized matrix by the time it reaches
+\code{assignment()}, so "auto" here is diagnostic only: it warns if the matrix
+is large relative to free system RAM (nothing else can be done post-hoc
+once the matrix already exists -- build it via
+\code{compute_distances(memory_mode = ...)} instead to avoid materializing it in
+the first place). \code{"lazy"} and \code{"implicit"} describe how a cost source is
+read rather than how a matrix is stored, so they apply to a lazy cost
+specification; \code{"implicit"} also accepts a matrix, where it solves the same
+problem by generating the pairs it needs and saves nothing, which is what
+makes it a check on the complete solve rather than a faster one.}
+
+\item{certify}{Logical; whether to attach a checked \code{assignment_certificate}
+as \code{certificate}. \code{NULL}, the default, takes the path's own answer: \code{TRUE}
+under \code{memory_mode = "implicit"}, where the certificate is what
+distinguishes the answer from an approximate one and the loop has already
+done most of the scan, and \code{FALSE} elsewhere, where the duals are not among
+the things the solve returns and the check costs the solve
+\code{\link[=verify_assignment]{verify_assignment()}} runs to get them. A solve that did not reach a
+complete optimal matching has nothing to certify and gets no certificate.}
 
 \item{cardinality}{How many pairs to produce.
 \itemize{
@@ -137,7 +151,15 @@ it is not a checked proof. Use \code{\link[=verify_assignment]{verify_assignment
 \item \code{dispatch} — list recording how \code{method} was chosen: the rule that
 fired under \code{"auto"}, the condition that triggered it, and whether
 the method was named explicitly. See \code{\link[=explain_dispatch]{explain_dispatch()}}.
+\item \code{certificate} — an \code{assignment_certificate}, present when one was
+checked. See \code{certify}.
 }
+Under \code{memory_mode = "implicit"} the result also carries \code{u} and \code{v}, the
+duals the last restricted master produced, and \code{search}: the pairs the
+candidate set ended up holding (\code{candidate_edges}) out of \code{possible_edges},
+the pairs a cost was computed for (\code{edges_evaluated}), the round count, and
+\code{rounds}, one row per round of what the master held, what priced out and what
+each step cost.
 }
 \description{
 Solve the linear assignment problem (minimum- or maximum-cost matching)

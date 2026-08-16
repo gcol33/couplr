@@ -208,13 +208,15 @@ apply_weights <- function(mat, weights) {
 #'
 #' This is the main entry point for distance computation.
 #'
-#' @param memory_mode One of "auto" (default), "dense", or "lazy". "auto"
-#'   warns (or, when the caller supports it, switches) when the dense matrix
-#'   would consume a large fraction of free system RAM. `memory_mode =
+#' @param memory_mode One of "auto" (default), "dense", "lazy" or "implicit".
+#'   "auto" warns (or, when the caller supports it, switches) when the dense
+#'   matrix would consume a large fraction of free system RAM. `memory_mode =
 #'   "lazy"` returns a `lazy_cost_spec` instead of a matrix when the calling
 #'   path and distance metric support it (built-in metrics via `assignment()`
 #'   with `method = "jv"`/`"auction"`); otherwise it errors clearly rather
-#'   than silently falling back to dense.
+#'   than silently falling back to dense. `memory_mode = "implicit"` returns
+#'   the same specification marked for the edge-generation loop, which solves
+#'   it without building the pair set at all.
 #' @param caller_supports_lazy Whether the calling code path can actually
 #'   consume a `lazy_cost_spec` result. Defaults to `TRUE`; callers whose
 #'   downstream solve path has not been made lazy-aware (e.g. `full_match()`,
@@ -222,11 +224,16 @@ apply_weights <- function(mat, weights) {
 #'   `memory_mode = "auto"` never promotes to lazy for them, and an explicit
 #'   `memory_mode = "lazy"` request errors clearly instead of returning a
 #'   `lazy_cost_spec` the caller cannot use.
+#' @param caller_supports_implicit Whether the calling path's design is the one
+#'   the edge-generation loop solves. Defaults to whatever the caller says
+#'   about lazy, since the loop reads the same specification; a path that
+#'   consumes a spec but compiles to another network passes `FALSE`.
 #' @return Numeric matrix of distances with optional scaling/weights applied.
 #' @keywords internal
 build_cost_matrix <- function(left, right, vars, distance = "euclidean",
                                weights = NULL, scale = FALSE, sigma = NULL,
-                               memory_mode = "auto", caller_supports_lazy = TRUE) {
+                               memory_mode = "auto", caller_supports_lazy = TRUE,
+                               caller_supports_implicit = caller_supports_lazy) {
   # Extract variable matrices
   left_mat <- extract_matching_vars(left, vars)
   right_mat <- extract_matching_vars(right, vars)
@@ -239,16 +246,17 @@ build_cost_matrix <- function(left, right, vars, distance = "euclidean",
   # a later `memory_mode = "lazy"` request against a custom function is a
   # hard, explicit error, not a silent dense fallback.
   distance_is_function <- is.function(distance)
-  if (distance_is_function && identical(memory_mode, "lazy")) {
-    stop("memory_mode = \"lazy\" requires a built-in distance metric; ",
-         "custom distance functions cannot be evaluated lazily at scale ",
-         "(R call overhead per pair is prohibitive). Use memory_mode = \"dense\".",
-         call. = FALSE)
+  if (distance_is_function && memory_mode %in% c("lazy", "implicit")) {
+    stop("memory_mode = \"", memory_mode, "\" requires a built-in distance ",
+         "metric; custom distance functions cannot be evaluated one pair at a ",
+         "time at scale (R call overhead per pair is prohibitive). Use ",
+         "memory_mode = \"dense\".", call. = FALSE)
   }
 
   resolved <- resolve_memory_mode(
     nrow(left_mat), nrow(right_mat), memory_mode,
-    solver_supports_lazy = !distance_is_function && caller_supports_lazy
+    solver_supports_lazy = !distance_is_function && caller_supports_lazy,
+    solver_supports_implicit = !distance_is_function && caller_supports_implicit
   )
 
   # Validate and normalize weights
@@ -268,8 +276,9 @@ build_cost_matrix <- function(left, right, vars, distance = "euclidean",
   left_mat <- apply_weights(left_mat, weights)
   right_mat <- apply_weights(right_mat, weights)
 
-  if (identical(resolved, "lazy")) {
-    return(new_lazy_cost_spec(left_mat, right_mat, distance, sigma, weights, vars))
+  if (resolved %in% c("lazy", "implicit")) {
+    return(new_lazy_cost_spec(left_mat, right_mat, distance, sigma, weights, vars,
+                              mode = resolved))
   }
 
   # Compute distance matrix

@@ -26,7 +26,8 @@ match_couples(
   ratio = 1L,
   check_costs = TRUE,
   sigma = NULL,
-  memory_mode = "auto"
+  memory_mode = "auto",
+  certify = NULL
 )
 }
 \arguments{
@@ -98,16 +99,28 @@ and provide helpful warnings before matching (default: TRUE)}
 (default), the pooled sample covariance is used. Only relevant when
 \code{distance = "mahalanobis"}.}
 
-\item{memory_mode}{One of "auto" (default), "dense", or "lazy". "auto"
-warns (or, when \code{method} is \code{"jv"}/\code{"auction"} with a built-in distance
-metric, switches) when the dense cost matrix would consume a large
+\item{memory_mode}{One of "auto" (default), "dense", "lazy" or "implicit".
+"auto" warns (or, when \code{method} is \code{"jv"}/\code{"auction"} with a built-in
+distance metric, switches) when the dense cost matrix would consume a large
 fraction of free system RAM. "lazy" computes each pairwise distance from
 the underlying feature data as the solver needs it, instead of
 allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, and not yet for
 \code{replace = TRUE}, \code{ratio > 1}, \code{method = "greedy"}, or custom distance
 functions (blocking via \code{block_id} is the other option that reduces
-memory, by solving smaller sub-problems). "dense" skips the RAM check
-entirely.}
+memory, by solving smaller sub-problems). "implicit" states the problem
+over every pair and solves it over a fraction of them, generating the pairs
+the answer turns out to need and proving that the ones it never generated
+could not have improved it; same requirements as "lazy", and 1:1 only.
+"auto" never selects it: the loop wins at scale and loses on small
+problems, and no measured rule for the crossover exists yet. "dense" skips
+the RAM check entirely.}
+
+\item{certify}{Logical; whether the result carries a checked
+\code{assignment_certificate} as \code{certificate}. Applies to
+\code{memory_mode = "implicit"}, where it defaults to \code{TRUE}: the certificate is
+what separates the answer from an approximate one. On the other paths the
+matching is certified after the fact with \code{\link[=verify_assignment]{verify_assignment()}}, against
+the cost matrix it was solved from.}
 }
 \value{
 A list with class "matching_result" containing:
@@ -122,6 +135,13 @@ optimal method, \code{"partial"} when constraints left some unmatched,
 or because the constrained path fell back to it, and \code{"infeasible"} when
 nothing could be matched.
 }
+
+Under \code{memory_mode = "implicit"} it also carries \code{certificate}, the checked
+proof of optimality (see \code{\link[=verify_assignment]{verify_assignment()}}), and \code{search}: the pairs
+the loop generated out of the pairs the problem states, the pairs a cost
+was computed for, and one row per round of what each round did. An
+infeasible answer carries \code{witness} instead, naming the units that could
+not be matched and the partners they have between them.
 }
 \description{
 Performs one-to-one matching between two datasets. Supports blocking,

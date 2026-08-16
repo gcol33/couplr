@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-15. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-16. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
 the flow model's design, findings and repros.
@@ -587,25 +587,117 @@ assertions over 262 cases in `cpp_tests/`, up from 69265 over 251. B0: 1542
 cases, 6 differ, and the six are the clamp's -- the same `full_match/*`
 potentials, to the same ulp, as before this work.
 
+## C4 is in, and the blocking it was specced with is not
+
+`src/flow/flow_pricing.h`. `price_block(src, u, v, cand, keep_per_row, tol)`
+walks every pair the candidate set omits and returns the `keep_per_row` most
+negative reduced costs per row, the per-row minimum, and the counts
+`edges_evaluated` is computed from. It is the pricer that works for any cost
+function, and it is the oracle every pruned result in C6 and C7 gets asserted
+against. Templated on the concrete source, not reached through `CostOracle`: the
+master pays one virtual call per arc at expansion time and can afford it, this
+loop runs over every omitted pair and cannot.
+
+Only omitted pairs are priced. A candidate pair that became an arc is priced at
+or above zero by the master's own optimality, and a candidate pair the source
+forbids is not admissible, so neither can be a violator.
+
+Three things measuring or reading changed:
+
+- **The column blocking is gone.** The spec wanted the scan blocked column-wise
+  to keep memory near-linear; a source is read one pair at a time, so nothing is
+  stored in either order. Rewritten as a traffic argument and measured at five
+  widths on four shapes, the widths are equal to the millisecond. The scan is
+  row-outer and the width argument is gone. This is C1's shape a second time.
+- **A dimension mismatch throws.** `scan_reduced_costs()` returns an empty scan
+  on one, which is right for a checker. An empty pricing result reads as
+  "nothing prices below zero", which is C8's signal to stop and call the answer
+  optimal, so here it throws.
+- **`row_min` is returned per row.** A tree that drops one row's violators is
+  invisible in a global minimum, so the per-row vector is what C7 is held to.
+
+The correctness claim is asserted against an independent implementation: thirty
+random shapes with coarse costs so ties are common, a random fraction of pairs
+forbidden and a random fraction already candidates, compared against the obvious
+double loop with a `std::set` per row and no heap. Each row's kept reduced costs
+are asserted to be that row's smallest, which survives a tie without naming which
+of the tied columns was kept.
+
+`cpp_tests`: 76265 assertions over 274 cases, up from 74413 over 262. B0 and the
+R suite are untouched -- nothing outside the new header changed, and it has no
+caller until C8.
+
+### An unpinned timing on this machine is worth nothing
+
+The same call on the same data in the same process times at 0.088 s or 0.183 s
+depending on nothing the code does. Under `SetThreadAffinityMask` to one core and
+`HIGH_PRIORITY_CLASS` every number above reproduces to the millisecond. C1's
+numbers came from separate installed builds through `c1_ab.sh` with two runs
+agreeing to a hundredth, so this is not a statement about them; it is a statement
+about what D3's twenty-caliper measurement has to do.
+
+## A pair is one question now, and a lazy solve reads it once
+
+`src/core/lap_cost_source.h`. Not a phase 3 section -- it is the fix for what C4
+measured, and it touches a type every solver reads.
+
+`LazyCostMatrix::at()` called `allowed()`, and `allowed()` computes a distance
+whenever `max_distance` is finite, so a caller asking `allowed()` then `at()`
+computed the distance three times per admitted pair. That is `price_block()`,
+`scan_reduced_costs()` since phase 1, `make_block_arc()`, all four `jv_core()`
+loops and the lazy auction's dummy-cost scan.
+
+- `LazyCostMatrix::admissible(i, j, cost)` runs the calipers, takes one distance
+  and answers both questions. `at()` is composed from the same two private
+  helpers rather than routed through it -- an out-parameter and a bool cost 12%
+  on an unconstrained source, and `at()` alone is what the auction's bidding loop
+  and the JV augmentation read through. `allowed()` still computes no distance
+  when `max_distance` is infinite, so `hall_witness()` and `build_allowed()` are
+  not charged for a cost they never read.
+- `cost_if_allowed(src, i, j, cost)` is the one call a templated caller makes. A
+  source opts in by exposing `admissible()`; everything else falls back to the
+  two-call form the concept already guarantees. `PaddedCostView` forwards it and
+  `CostOracle` carries it as a virtual with the fallback as its default body, so
+  a padded or decorated lazy source keeps the path and an expansion makes half
+  the virtual calls.
+
+Worth, pinned, best of five, 2,000 x 10,000 at p = 8: a pricing round on a
+`max_distance` problem goes 0.167 s to 0.121 s, and 0.088 s to 0.076 s
+unconstrained. Reading a pair with `at()` alone is halved on a `max_distance`
+source, 0.126 s to 0.064 s, which is the number that reaches the shipped lazy
+solvers with none of them edited.
+
+The 2x first read off the caliper comparison was not the right ceiling. A caliper
+on one variable evaluates a distance only for the fifth of pairs it admits;
+`max_distance` has to measure every pair to know which those are. What was
+recoverable was the duplication, and that is the 1.38x above. Closing the rest is
+C6's tree, which prunes subtrees out of the scan rather than making a pair
+cheaper.
+
+Judged by: `cpp_tests` 76265 assertions over 274 cases unchanged; R suite 0
+failed, 0 warnings, 3 skipped, 6702 passed, unchanged; B0 1542 cases with the
+same 6 clamp differences and nothing new; C0 26 pass, 0 fail, 7 known, 5 skipped,
+unchanged, and running in 1.1 s against the 2.4 s on record.
+
 ## Next action
 
-Phase 3, section C4: `price_block()` in `src/flow/flow_pricing.h`, the pricing
-loop that works for any cost function and is the oracle C6's tree is tested
-against. `scan_reduced_costs()` gives it the scan; what it adds is the `keep`
-most negative per row and skipping what the candidate set already holds.
+Phase 3, section C5: feasibility as its own phase. The master comes back short of
+the required flow, `src/core/lap_hall.h` names the deficient rows and their
+neighbourhood, and only those rows are re-seeded. When their neighbourhood does
+not grow under a scan over the full source restricted to them, the answer is
+infeasible with a certificate rather than a wider ladder.
 
-Section C's restricted master is the new solver work. The pricing oracle's two
-prerequisites are both in the tree: the lazy dual entry point above, and
-`scan_reduced_costs()` from phase 1.
+C4's caller is C8, so C5 and C8 are what turn the pricer into a loop.
 
 C6, C7 and C9 read arc counts as if they predicted work, which is the reasoning
-C1 was turned down for. Each needs its own measurement before it is built.
+C1 was turned down for and C4's blocking a second time. Each needs its own
+measurement before it is built.
 
 ## Working tree
 
 Clean apart from what this note is committed with.
 
-`origin/main` is at `25a56dd`. Local `main` is two commits ahead, `ba2cbfa`.
+`origin/main` and local `main` are both at `bf2767b`.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -626,6 +718,10 @@ user-visible:
   an unmatched row as unmatched rather than as a padding column (#31).
 - `assignment_duals()` gaining `certify` and accepting a lazy cost
   specification; `verify_assignment()` no longer requiring `duals` for one.
+- A lazy solve under `max_distance` evaluating each distance once instead of
+  three times. Reading a pair is halved; on the shapes measured a whole pricing
+  pass is 1.38x. Affects every `memory_mode = "lazy"` path and certification
+  over a lazy source.
 
 ## File map
 
@@ -653,10 +749,14 @@ user-visible:
 | File | What |
 |---|---|
 | `design.md` | The spec phase 3 implements, C0 through D, corrected in place where findings disagree |
-| `findings.md` | Everything outside phase 3's scope, every deviation from the spec, and the measurements that turned C1 down |
+| `findings.md` | Everything outside phase 3's scope, every deviation from the spec, and the measurements that turned C1 and C4's blocking down |
 | `differential.R` | C0. Runs one problem through two paths in the same session and compares them to each other. `--self-check` calibrates the comparator against `lazy` |
 | `c1_timing.R` | Two families: `b8_timing.R`'s complete shapes through `assignment()`, and a candidate-set flow problem built directly, which is the restricted master's shape |
 | `c1_ab.sh` | Runs `c1_timing.R` against installed builds of a working-tree `flow_solve.cpp` and HEAD's |
+| `c4_timing.cpp` | What one pricing round costs, what the violator heap and a `max_distance` caliper cost inside it, and what each of the three ways of reading a pair costs. Pins to one core, which is what makes a timing on this machine repeatable |
+| `c4_timing.log` | The current numbers from it |
+| `c4_blocking_ab.log` | The column-blocking A/B that turned the blocking down |
+| `c4_maxdist_before.log` | The same harness against `lap_lazy_types.h` at HEAD, which is the before column for the one-question change |
 
 `dev_notes/pricing-probe/`
 

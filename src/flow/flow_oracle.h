@@ -23,6 +23,8 @@
 // type.
 #pragma once
 
+#include "../core/lap_cost_source.h"
+
 #include <cstdint>
 
 namespace lap {
@@ -35,6 +37,18 @@ public:
     virtual bool    allowed(int64_t i, int64_t j) const = 0;
     virtual int64_t nrow() const = 0;
     virtual int64_t ncol() const = 0;
+
+    // Both questions for one virtual call, and for one evaluation where the
+    // source behind the erasure can give both at once. Expansion reads every
+    // pair of a block, so a source whose admissibility test is a distance --
+    // LazyCostMatrix under a finite max_distance -- is the difference between
+    // one distance a pair and three. The default is the two-call form the
+    // concept guarantees; an oracle that can do better overrides it.
+    virtual bool admissible(int64_t i, int64_t j, double& cost) const {
+        if (!allowed(i, j)) return false;
+        cost = at(i, j);
+        return true;
+    }
 };
 
 // Adapter for any type satisfying the cost-source concept. Holds a reference,
@@ -49,6 +63,10 @@ public:
     bool    allowed(int64_t i, int64_t j) const override { return src_.allowed(i, j); }
     int64_t nrow() const override { return src_.nrow; }
     int64_t ncol() const override { return src_.ncol; }
+
+    bool admissible(int64_t i, int64_t j, double& cost) const override {
+        return cost_if_allowed(src_, i, j, cost);
+    }
 
 private:
     const Source& src_;

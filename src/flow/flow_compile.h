@@ -86,6 +86,10 @@ public:
     int64_t nrow() const override { return base_.nrow() * times_; }
     int64_t ncol() const override { return base_.ncol(); }
 
+    bool admissible(int64_t i, int64_t j, double& cost) const override {
+        return base_.admissible(i / times_, j, cost);
+    }
+
 private:
     const CostOracle& base_;
     int64_t           times_;
@@ -102,6 +106,10 @@ public:
     bool    allowed(int64_t i, int64_t j) const override { return base_.allowed(j, i); }
     int64_t nrow() const override { return base_.ncol(); }
     int64_t ncol() const override { return base_.nrow(); }
+
+    bool admissible(int64_t i, int64_t j, double& cost) const override {
+        return base_.admissible(j, i, cost);
+    }
 
 private:
     const CostOracle& base_;

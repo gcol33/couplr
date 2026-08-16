@@ -40,6 +40,8 @@
 // poisons a minimum or a sum beyond recovery.
 #pragma once
 
+#include "lap_cost_source.h"
+
 #include <vector>
 #include <limits>
 #include <cmath>
@@ -149,9 +151,12 @@ ReducedCostScan scan_reduced_costs(const Source& src,
         const double ui = u[static_cast<std::size_t>(i)];
         for (int64_t j = 0; j < ncol; ++j) {
             // Forbidden arcs carry BIG, not Inf: reading one without this
-            // guard drags the minimum to +1e100 and the argmin with it.
-            if (!src.allowed(i, j)) continue;
-            const double cbar = src.at(i, j) - ui - v[static_cast<std::size_t>(j)];
+            // guard drags the minimum to +1e100 and the argmin with it. The
+            // guard and the read are one question, so a source that computes
+            // its costs answers it once.
+            double c = 0.0;
+            if (!cost_if_allowed(src, i, j, c)) continue;
+            const double cbar = c - ui - v[static_cast<std::size_t>(j)];
             ++out.n_admissible;
             if (cbar < out.min_reduced_cost) {
                 out.min_reduced_cost = cbar;
@@ -272,8 +277,9 @@ CertificateReport certify_assignment(const Source& src,
         // A forbidden matched arc is already counted in n_forbidden_matched
         // and has made the primal infeasible; its at() is BIG, so folding it
         // into the slack would report 1e100 instead of the real worst arc.
-        if (!src.allowed(i, j)) continue;
-        const double slack = std::abs(src.at(i, j) -
+        double c = 0.0;
+        if (!cost_if_allowed(src, i, j, c)) continue;
+        const double slack = std::abs(c -
                                       u[static_cast<std::size_t>(i)] -
                                       v[static_cast<std::size_t>(j)]);
         if (slack > max_matched_slack) max_matched_slack = slack;

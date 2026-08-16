@@ -275,14 +275,13 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
 
     // Rectangular: find the dummy cost (largest allowed |cost|) via one pass
     // over the real rows -- mirrors the dense padding loop's dummy_cost scan,
-    // expressed via at()/allowed() instead of raw array access.
+    // expressed via cost_if_allowed() instead of raw array access.
     double dummy_cost = 0.0;
     for (int64_t i = 0; i < n0; ++i) {
         for (int64_t j = 0; j < m0; ++j) {
-            if (cost.allowed(i, j)) {
-                double c = cost.at(i, j);
-                if (std::isfinite(c)) dummy_cost = std::max(dummy_cost, std::abs(c));
-            }
+            double c = 0.0;
+            if (!cost_if_allowed(cost, i, j, c)) continue;
+            if (std::isfinite(c)) dummy_cost = std::max(dummy_cost, std::abs(c));
         }
     }
     dummy_cost = (dummy_cost + 1.0) * static_cast<double>(m0) * 10.0;

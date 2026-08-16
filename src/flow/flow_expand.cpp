@@ -41,14 +41,15 @@ std::string arc_label(std::size_t a) {
 }
 
 // The two gates every block arc passes, and the only place they are written.
-// allowed(i, j) is the source's own admissibility mask, and forbidden cells
-// read as lap::BIG rather than Inf, so a cell can be admissible and still carry
-// a cost the residual search cannot use. Returns false where the pair gets no
-// arc, which is what makes a candidate set and an arc set different objects.
+// admissible(i, j, c) is the source's own admissibility mask and the cost
+// behind it, asked together; forbidden cells read as lap::BIG rather than Inf,
+// so a cell can be admissible and still carry a cost the residual search cannot
+// use. Returns false where the pair gets no arc, which is what makes a
+// candidate set and an arc set different objects.
 bool make_block_arc(const BipartiteBlock& blk, int64_t i, int64_t j, FlowArc& out) {
     const CostOracle& src = *blk.costs;
-    if (!src.allowed(i, j)) return false;
-    const double c = src.at(i, j);
+    double c = 0.0;
+    if (!src.admissible(i, j, c)) return false;
     if (!std::isfinite(c)) return false;
     out = FlowArc(static_cast<int32_t>(blk.row_base + i),
                   static_cast<int32_t>(blk.col_base + j),

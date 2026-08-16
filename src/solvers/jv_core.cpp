@@ -16,6 +16,7 @@
 
 #include "jv_core.h"
 #include "../core/lap_types.h"
+#include "../core/lap_cost_source.h"
 #include "../core/lap_cost_source_traits.h"
 #include <vector>
 #include <limits>
@@ -94,8 +95,8 @@ JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts) {
             double mn = INF;
             int imin = -1;
             for (int i = 0; i < n; ++i) {
-                if (!work.allowed(i, j)) continue;
-                double c = work.at(i, j);
+                double c = 0.0;
+                if (!cost_if_allowed(work, i, j, c)) continue;
                 if (c < mn) {
                     mn = c;
                     imin = i;
@@ -135,8 +136,9 @@ JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts) {
                 double mn = INF;
                 for (int j = 0; j < m; ++j) {
                     if (j == j1) continue;
-                    if (!work.allowed(i, j)) continue;
-                    double h = work.at(i, j) - v[j + 1];
+                    double c = 0.0;
+                    if (!cost_if_allowed(work, i, j, c)) continue;
+                    double h = c - v[j + 1];
                     if (h < mn) mn = h;
                 }
                 if (std::isfinite(mn)) {
@@ -163,8 +165,9 @@ JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts) {
                 double usubmin = INF;
                 int j1 = -1, j2 = -1;
                 for (int j = 0; j < m; ++j) {
-                    if (!work.allowed(i, j)) continue;
-                    double h = work.at(i, j) - v[j + 1];
+                    double c = 0.0;
+                    if (!cost_if_allowed(work, i, j, c)) continue;
+                    double h = c - v[j + 1];
                     if (h < usubmin) {
                         if (h >= umin) {
                             usubmin = h;
@@ -218,8 +221,9 @@ JvCoreResult jv_core(const CostSourceT& work, const JvCoreOpts& opts) {
         // v[j] was only ever decreased and c[i,j] - v[j] >= 0 by invariant.
         for (int i = 0; i < n; ++i) {
             int j = rowsol[i];
-            if (j >= 0 && colsol[j] == i && work.allowed(i, j)) {
-                u[i + 1] = work.at(i, j) - v[j + 1];
+            double c = 0.0;
+            if (j >= 0 && colsol[j] == i && cost_if_allowed(work, i, j, c)) {
+                u[i + 1] = c - v[j + 1];
             }
         }
 

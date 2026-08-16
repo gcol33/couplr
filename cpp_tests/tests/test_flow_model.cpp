@@ -7,6 +7,7 @@
 #include "core/lap_certify.h"
 #include "core/lap_error.h"
 #include "core/lap_types.h"
+#include "flow/flow_candidates.h"
 #include "flow/flow_certify.h"
 #include "flow/flow_oracle.h"
 #include "flow/flow_problem.h"
@@ -103,6 +104,104 @@ lap::CostMatrix random_cost(int64_t nr, int64_t nc, uint32_t seed) {
         for (int64_t j = 0; j < nc; ++j) c.at(i, j) = unif(rng);
     }
     return c;
+}
+
+// Two independent assignments sharing the auxiliary source and sink. The point
+// of two blocks is that block 1's arcs sit behind block 0's, so growing block 0
+// has to move them.
+lap::FlowProblem make_two_assignments(int64_t nr_a, int64_t nc_a,
+                                      const lap::CostOracle* a,
+                                      int64_t nr_b, int64_t nc_b,
+                                      const lap::CostOracle* b) {
+    const int32_t row_a = lap::FLOW_FIRST_ROW;
+    const int32_t col_a = static_cast<int32_t>(row_a + nr_a);
+    const int32_t row_b = static_cast<int32_t>(col_a + nc_a);
+    const int32_t col_b = static_cast<int32_t>(row_b + nr_b);
+
+    lap::FlowProblem prob;
+    prob.n_nodes = static_cast<int32_t>(col_b + nc_b);
+    prob.supply.assign(static_cast<std::size_t>(prob.n_nodes), 0);
+    prob.supply[static_cast<std::size_t>(lap::FLOW_SOURCE)] = nr_a + nr_b;
+    prob.supply[static_cast<std::size_t>(lap::FLOW_SINK)]   = -(nr_a + nr_b);
+
+    for (int64_t i = 0; i < nr_a; ++i) {
+        prob.arcs.emplace_back(lap::FLOW_SOURCE, static_cast<int32_t>(row_a + i), 0, 1, 0.0);
+    }
+    for (int64_t j = 0; j < nc_a; ++j) {
+        prob.arcs.emplace_back(static_cast<int32_t>(col_a + j), lap::FLOW_SINK, 0, 1, 0.0);
+    }
+    for (int64_t i = 0; i < nr_b; ++i) {
+        prob.arcs.emplace_back(lap::FLOW_SOURCE, static_cast<int32_t>(row_b + i), 0, 1, 0.0);
+    }
+    for (int64_t j = 0; j < nc_b; ++j) {
+        prob.arcs.emplace_back(static_cast<int32_t>(col_b + j), lap::FLOW_SINK, 0, 1, 0.0);
+    }
+
+    lap::BipartiteBlock blk;
+    blk.lower = 0;
+    blk.upper = 1;
+
+    blk.row_base = row_a;
+    blk.col_base = col_a;
+    blk.costs    = a;
+    prob.blocks.push_back(blk);
+
+    blk.row_base = row_b;
+    blk.col_base = col_b;
+    blk.costs    = b;
+    prob.blocks.push_back(blk);
+
+    return prob;
+}
+
+// The mapping every reader of a solved flow relies on: block b's arc
+// first_arc + k is the pair rc[k], priced by the block's own cost source.
+void require_block_aligned(const lap::FlowProblem& prob, std::size_t b,
+                           const lap::CostMatrix& c) {
+    const lap::BlockArcRange& range  = prob.block_arcs[b];
+    const lap::BipartiteBlock& blk   = prob.blocks[b];
+    REQUIRE(static_cast<int64_t>(range.rc.size()) == range.n_arcs);
+    REQUIRE(range.first_arc >= 0);
+    REQUIRE(range.first_arc + range.n_arcs <= static_cast<int64_t>(prob.arcs.size()));
+
+    for (int64_t k = 0; k < range.n_arcs; ++k) {
+        const auto rc = range.rc[static_cast<std::size_t>(k)];
+        const lap::FlowArc& arc =
+            prob.arcs[static_cast<std::size_t>(range.first_arc + k)];
+        INFO("block " << b << " arc " << k << " pair (" << rc.first << ", "
+             << rc.second << ")");
+        REQUIRE(c.allowed(rc.first, rc.second));
+        REQUIRE(arc.tail == blk.row_base + rc.first);
+        REQUIRE(arc.head == blk.col_base + rc.second);
+        REQUIRE(arc.cost == Approx(c.at(rc.first, rc.second)));
+    }
+
+    std::vector<std::pair<int32_t, int32_t>> seen = range.rc;
+    std::sort(seen.begin(), seen.end());
+    REQUIRE(std::adjacent_find(seen.begin(), seen.end()) == seen.end());
+}
+
+// The dense problem the restricted master is solving: the same costs with every
+// pair outside the candidate set forbidden.
+lap::CostMatrix restricted_to(const lap::CostMatrix& c, const lap::CandidateSet& cand) {
+    lap::CostMatrix r = c;
+    for (int64_t i = 0; i < c.nrow; ++i) {
+        for (int64_t j = 0; j < c.ncol; ++j) {
+            if (!cand.contains(i, j)) r.forbid(i, j);
+        }
+    }
+    return r;
+}
+
+std::vector<lap::CandidateSet::Pair> every_pair(int64_t nr, int64_t nc) {
+    std::vector<lap::CandidateSet::Pair> all;
+    all.reserve(static_cast<std::size_t>(nr * nc));
+    for (int64_t i = 0; i < nr; ++i) {
+        for (int64_t j = 0; j < nc; ++j) {
+            all.emplace_back(static_cast<int32_t>(i), static_cast<int32_t>(j));
+        }
+    }
+    return all;
 }
 
 lap::CostMatrix transpose_of(const lap::CostMatrix& c) {
@@ -381,6 +480,278 @@ TEST_CASE("Block expansion refuses to allocate past its budget", "[flow][expand]
     prob.blocks.push_back(blk);
 
     REQUIRE_THROWS_AS(lap::expand_blocks(prob), lap::DimensionException);
+}
+
+// ---------------------------------------------------------------------------
+// expansion over a candidate set, and arcs added afterwards
+// ---------------------------------------------------------------------------
+
+TEST_CASE("Subset expansion emits the candidate pairs and nothing else",
+          "[flow][expand][subset]") {
+    lap::CostMatrix c = make_cost({
+        {1.0, 2.0, 3.0, 4.0},
+        {5.0, 6.0, 7.0, 8.0},
+        {9.0, 10.0, 11.0, 12.0}
+    });
+    c.forbid(1, 1);
+    lap::SourceOracle<lap::CostMatrix> oracle(c);
+
+    // (1, 1) is a candidate the source forbids, which is what separates the two
+    // objects: it is in the set and it gets no arc.
+    lap::CandidateSet cand(3, 4);
+    cand.add_pairs({{0, 3}, {0, 0}, {1, 1}, {1, 2}, {2, 0}});
+    REQUIRE(cand.n_arcs() == 5);
+
+    lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+    const std::size_t n_structural = prob.arcs.size();
+
+    lap::expand_block_subset(prob, 0, cand);
+
+    REQUIRE(prob.expanded);
+    REQUIRE(prob.block_arcs.size() == 1u);
+    REQUIRE(prob.block_arcs[0].first_arc == static_cast<int64_t>(n_structural));
+    REQUIRE(prob.block_arcs[0].n_arcs == 4);
+    REQUIRE(prob.arcs.size() == n_structural + 4u);
+    require_block_aligned(prob, 0, c);
+
+    // Row-major, ascending within a row, which is the order the full expansion
+    // emits too.
+    const std::vector<std::pair<int32_t, int32_t>> expected = {
+        {0, 0}, {0, 3}, {1, 2}, {2, 0}
+    };
+    REQUIRE(prob.block_arcs[0].rc == expected);
+}
+
+TEST_CASE("A restricted master solves the problem its arcs describe",
+          "[flow][expand][subset]") {
+    const lap::CostMatrix c = random_cost(6, 8, 4242u);
+
+    lap::CandidateSet cand(6, 8);
+    std::vector<lap::CandidateSet::Pair> seed;
+    for (int32_t i = 0; i < 6; ++i) {
+        seed.emplace_back(i, i);
+        seed.emplace_back(i, (i + 3) % 8);
+        seed.emplace_back(i, (i + 5) % 8);
+    }
+    cand.add_pairs(seed);
+
+    lap::SourceOracle<lap::CostMatrix> oracle(c);
+    lap::FlowProblem prob = make_assignment(6, 8, &oracle, 6);
+    lap::expand_block_subset(prob, 0, cand);
+    const lap::FlowResult res = lap::solve_min_cost_flow(prob);
+    REQUIRE(res.status == "optimal");
+
+    // The same problem written out densely: every pair outside the candidate
+    // set forbidden, expanded in full.
+    const lap::CostMatrix r = restricted_to(c, cand);
+    lap::SourceOracle<lap::CostMatrix> r_oracle(r);
+    lap::FlowProblem dense = make_assignment(6, 8, &r_oracle, 6);
+    const lap::FlowResult dense_res = lap::solve_min_cost_flow(dense);
+    REQUIRE(dense_res.status == "optimal");
+
+    REQUIRE(prob.block_arcs[0].n_arcs == dense.block_arcs[0].n_arcs);
+    REQUIRE(res.total_cost == Approx(dense_res.total_cost).margin(1e-12));
+    REQUIRE(matching_of(prob, res, 6) == matching_of(dense, dense_res, 6));
+
+    const lap::AssignmentDuals duals = flow_duals(prob, res);
+    REQUIRE(duals.ok());
+    const lap::CertificateReport rep =
+        lap::certify_assignment(r, duals.match, duals.u, duals.v, 1e-9);
+    REQUIRE(rep.certified_optimal);
+}
+
+TEST_CASE("Growing the candidate set to the whole grid reaches the dense optimum",
+          "[flow][expand][subset][warm]") {
+    lap::CostMatrix c = random_cost(7, 10, 777u);
+    c.forbid(2, 5);
+    lap::SourceOracle<lap::CostMatrix> oracle(c);
+
+    lap::CandidateSet cand(7, 10);
+    std::vector<lap::CandidateSet::Pair> seed;
+    for (int32_t i = 0; i < 7; ++i) {
+        seed.emplace_back(i, i);
+        seed.emplace_back(i, (i + 4) % 10);
+    }
+    cand.add_pairs(seed);
+
+    lap::FlowProblem prob = make_assignment(7, 10, &oracle, 7);
+    lap::expand_block_subset(prob, 0, cand);
+    const lap::FlowResult first = lap::solve_min_cost_flow(prob);
+    REQUIRE(first.status == "optimal");
+    require_block_aligned(prob, 0, c);
+
+    // Warm start from the restricted optimum, then price in every remaining
+    // pair at once.
+    prob.warm_flow      = first.flow;
+    prob.warm_potential = first.potential;
+
+    const std::vector<lap::CandidateSet::Pair> fresh = cand.add_pairs(every_pair(7, 10));
+    REQUIRE(static_cast<int64_t>(fresh.size()) == 70 - 14);
+
+    const int64_t added = lap::add_block_arcs(prob, 0, fresh);
+    // Every fresh pair became an arc except the one the source forbids.
+    REQUIRE(added == static_cast<int64_t>(fresh.size()) - 1);
+    REQUIRE(prob.warm_flow.size() == prob.arcs.size());
+    REQUIRE(prob.block_arcs[0].n_arcs == 69);
+    require_block_aligned(prob, 0, c);
+
+    const lap::FlowResult grown = lap::solve_min_cost_flow(prob);
+    REQUIRE(grown.status == "optimal");
+
+    lap::FlowProblem cold_prob = make_assignment(7, 10, &oracle, 7);
+    const lap::FlowResult cold = lap::solve_min_cost_flow(cold_prob);
+    REQUIRE(cold.status == "optimal");
+
+    REQUIRE(grown.total_cost == Approx(cold.total_cost).margin(1e-12));
+    REQUIRE(matching_of(prob, grown, 7) == matching_of(cold_prob, cold, 7));
+    // The restricted optimum is over a subset of the arcs, so it cannot be
+    // cheaper, and on this instance it is strictly worse.
+    REQUIRE(first.total_cost > cold.total_cost);
+}
+
+TEST_CASE("Arcs added to one block move the blocks behind it",
+          "[flow][expand][subset]") {
+    const lap::CostMatrix a = random_cost(4, 5, 8080u);
+    const lap::CostMatrix b = random_cost(3, 4, 8081u);
+    lap::SourceOracle<lap::CostMatrix> a_oracle(a);
+    lap::SourceOracle<lap::CostMatrix> b_oracle(b);
+
+    lap::CandidateSet a_cand(4, 5);
+    for (int32_t i = 0; i < 4; ++i) a_cand.add_pairs({{i, i}, {i, (i + 2) % 5}});
+    lap::CandidateSet b_cand(3, 4);
+    for (int32_t i = 0; i < 3; ++i) b_cand.add_pairs({{i, i}, {i, (i + 1) % 4}});
+
+    lap::FlowProblem prob = make_two_assignments(4, 5, &a_oracle, 3, 4, &b_oracle);
+    lap::expand_block_subset(prob, 0, a_cand);
+    REQUIRE_FALSE(prob.expanded);  // block 1 is still implicit
+    lap::expand_block_subset(prob, 1, b_cand);
+    REQUIRE(prob.expanded);
+
+    const int64_t b_first_before = prob.block_arcs[1].first_arc;
+    const int64_t b_count        = prob.block_arcs[1].n_arcs;
+    const std::vector<std::pair<int32_t, int32_t>> b_rc_before = prob.block_arcs[1].rc;
+
+    const lap::FlowResult before = lap::solve_min_cost_flow(prob);
+    REQUIRE(before.status == "optimal");
+    prob.warm_flow      = before.flow;
+    prob.warm_potential = before.potential;
+
+    const std::vector<lap::CandidateSet::Pair> fresh =
+        a_cand.add_pairs(every_pair(4, 5));
+    const int64_t added = lap::add_block_arcs(prob, 0, fresh);
+    REQUIRE(added == static_cast<int64_t>(fresh.size()));
+
+    REQUIRE(prob.warm_flow.size() == prob.arcs.size());
+    REQUIRE(prob.block_arcs[1].first_arc == b_first_before + added);
+    REQUIRE(prob.block_arcs[1].n_arcs == b_count);
+    REQUIRE(prob.block_arcs[1].rc == b_rc_before);
+    require_block_aligned(prob, 0, a);
+    require_block_aligned(prob, 1, b);
+
+    const lap::FlowResult grown = lap::solve_min_cost_flow(prob);
+    REQUIRE(grown.status == "optimal");
+
+    // Block 0 now holds every pair and block 1 still holds its candidates, so
+    // the answer is the two problems solved separately.
+    lap::FlowProblem a_full = make_assignment(4, 5, &a_oracle, 4);
+    const lap::FlowResult a_res = lap::solve_min_cost_flow(a_full);
+    const lap::CostMatrix b_restricted = restricted_to(b, b_cand);
+    lap::SourceOracle<lap::CostMatrix> b_r_oracle(b_restricted);
+    lap::FlowProblem b_full = make_assignment(3, 4, &b_r_oracle, 3);
+    const lap::FlowResult b_res = lap::solve_min_cost_flow(b_full);
+
+    REQUIRE(grown.total_cost ==
+            Approx(a_res.total_cost + b_res.total_cost).margin(1e-12));
+}
+
+TEST_CASE("A block grows once its arcs are in, and not before",
+          "[flow][expand][subset]") {
+    const lap::CostMatrix c = random_cost(3, 4, 1234u);
+    lap::SourceOracle<lap::CostMatrix> oracle(c);
+    lap::CandidateSet cand(3, 4);
+    cand.add_pairs({{0, 0}, {1, 1}, {2, 2}});
+
+    SECTION("adding arcs before the expansion is refused") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        REQUIRE_THROWS_AS(lap::add_block_arcs(prob, 0, {{0, 1}}),
+                          lap::DimensionException);
+    }
+
+    SECTION("a second subset expansion of the same block is refused") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        lap::expand_block_subset(prob, 0, cand);
+        REQUIRE_THROWS_AS(lap::expand_block_subset(prob, 0, cand),
+                          lap::DimensionException);
+    }
+
+    SECTION("blocks expand in index order") {
+        const lap::CostMatrix other = random_cost(3, 4, 1235u);
+        lap::SourceOracle<lap::CostMatrix> other_oracle(other);
+        lap::FlowProblem prob =
+            make_two_assignments(3, 4, &oracle, 3, 4, &other_oracle);
+        REQUIRE_THROWS_AS(lap::expand_block_subset(prob, 1, cand),
+                          lap::DimensionException);
+    }
+
+    SECTION("a candidate set of the wrong shape is refused") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        lap::CandidateSet wrong(3, 5);
+        REQUIRE_THROWS_AS(lap::expand_block_subset(prob, 0, wrong),
+                          lap::DimensionException);
+    }
+
+    SECTION("a pair outside the block is refused") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        lap::expand_block_subset(prob, 0, cand);
+        REQUIRE_THROWS_AS(lap::add_block_arcs(prob, 0, {{3, 0}}),
+                          lap::DimensionException);
+        REQUIRE_THROWS_AS(lap::add_block_arcs(prob, 0, {{0, 4}}),
+                          lap::DimensionException);
+        REQUIRE_THROWS_AS(lap::add_block_arcs(prob, 1, {{0, 0}}),
+                          lap::DimensionException);
+    }
+
+    SECTION("a warm start that is already stale is named as stale") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        lap::expand_block_subset(prob, 0, cand);
+        prob.warm_flow.assign(prob.arcs.size() - 1u, 0);
+        REQUIRE_THROWS_AS(lap::add_block_arcs(prob, 0, {{0, 1}}),
+                          lap::DimensionException);
+    }
+
+    SECTION("a cold problem gains arcs without gaining a warm flow") {
+        lap::FlowProblem prob = make_assignment(3, 4, &oracle, 3);
+        lap::expand_block_subset(prob, 0, cand);
+        REQUIRE(lap::add_block_arcs(prob, 0, {{0, 1}, {2, 3}}) == 2);
+        REQUIRE(prob.warm_flow.empty());
+        REQUIRE(prob.block_arcs[0].n_arcs == 5);
+        require_block_aligned(prob, 0, c);
+    }
+}
+
+TEST_CASE("A partly expanded problem finishes its remaining blocks in full",
+          "[flow][expand][subset]") {
+    const lap::CostMatrix a = random_cost(4, 5, 606u);
+    const lap::CostMatrix b = random_cost(3, 4, 607u);
+    lap::SourceOracle<lap::CostMatrix> a_oracle(a);
+    lap::SourceOracle<lap::CostMatrix> b_oracle(b);
+
+    lap::CandidateSet a_cand(4, 5);
+    for (int32_t i = 0; i < 4; ++i) a_cand.add_pairs({{i, i}, {i, (i + 2) % 5}});
+
+    lap::FlowProblem prob = make_two_assignments(4, 5, &a_oracle, 3, 4, &b_oracle);
+    lap::expand_block_subset(prob, 0, a_cand);
+    const int64_t a_count = prob.block_arcs[0].n_arcs;
+
+    // The solver expands what is left, and leaves the restricted block alone.
+    const lap::FlowResult res = lap::solve_min_cost_flow(prob);
+    REQUIRE(res.status == "optimal");
+    REQUIRE(prob.expanded);
+    REQUIRE(prob.block_arcs.size() == 2u);
+    REQUIRE(prob.block_arcs[0].n_arcs == a_count);
+    REQUIRE(prob.block_arcs[1].n_arcs == 12);
+    require_block_aligned(prob, 0, a);
+    require_block_aligned(prob, 1, b);
 }
 
 // ---------------------------------------------------------------------------

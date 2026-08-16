@@ -8,6 +8,8 @@
 #include "lap_lazy_types.h"
 #include "lap_cost_view.h"
 #include "lap_error.h"
+#include "lap_rcpp_convert.h"
+#include "lap_utils.h"
 #include "lap_utils_rcpp.h"
 
 // Compile-time smoke test: force the template body to be instantiated for
@@ -30,7 +32,7 @@ static Rcpp::IntegerVector indices_to_one_based(const std::vector<int64_t>& idx)
     return out;
 }
 
-static Rcpp::List witness_to_rcpp(const lap::DeficiencySet& witness) {
+Rcpp::List hall_witness_to_list(const lap::DeficiencySet& witness) {
     Rcpp::IntegerVector matching(static_cast<R_xlen_t>(witness.matching.size()));
     for (size_t i = 0; i < witness.matching.size(); ++i) {
         matching[static_cast<R_xlen_t>(i)] =
@@ -52,19 +54,12 @@ Rcpp::List hall_witness_dense_impl(Rcpp::NumericMatrix cost) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
 
-        // rcpp_to_cost_matrix forbids NA and infinite entries. prepare_for_solve
-        // writes lap::BIG into every cell the mask calls forbidden, so a cost at
-        // or above that sentinel is indistinguishable from a forbidden one; R's
-        // own admissibility test (is.finite(x) & x < BIG_COST, with BIG_COST =
-        // .Machine$double.xmax / 2) draws the same line. Forbid those cells here
-        // so the witness reads the graph R reads.
-        for (int64_t i = 0; i < cm.nrow; ++i) {
-            for (int64_t j = 0; j < cm.ncol; ++j) {
-                if (cm.allowed(i, j) && cm.at(i, j) >= lap::BIG) cm.forbid(i, j);
-            }
-        }
+        // rcpp_to_cost_matrix forbids NA and infinite entries; a cell already
+        // carrying the sentinel is forbidden too, so the witness reads the
+        // graph R reads.
+        lap::forbid_sentinel_costs(cm);
 
-        return witness_to_rcpp(lap::hall_witness(cm));
+        return hall_witness_to_list(lap::hall_witness(cm));
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
@@ -95,7 +90,7 @@ Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMat
         lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
             left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars, false);
 
-        return witness_to_rcpp(lap::hall_witness(cm));
+        return hall_witness_to_list(lap::hall_witness(cm));
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());

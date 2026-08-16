@@ -134,10 +134,12 @@
 # source exists to avoid, so neither is available here.
 .solve_lazy_with_partial_feasibility <- function(cost_matrix, solver_fn,
                                                  solver_params = list()) {
+  mode <- lazy_cost_spec_mode(cost_matrix)
+
   if (identical(solver_fn, greedy_matching)) {
-    stop("method = \"greedy\" does not support memory_mode = \"lazy\" yet; ",
-         "use an optimal method (\"jv\"/\"auction\") or memory_mode = \"dense\".",
-         call. = FALSE)
+    stop("method = \"greedy\" does not support memory_mode = \"", mode,
+         "\" yet; use an optimal method (\"jv\"/\"auction\") or ",
+         "memory_mode = \"dense\".", call. = FALSE)
   }
 
   res <- tryCatch(
@@ -146,13 +148,27 @@
   )
 
   if (inherits(res, "error")) {
-    warning("memory_mode = \"lazy\" found no feasible full matching under the current ",
-            "constraints (", conditionMessage(res), "). Recovering the partial ",
-            "matching needs the materialized cost matrix that lazy mode exists to ",
-            "avoid, so all units are reported unmatched. Use memory_mode = ",
-            "\"dense\" for the maximum-cardinality minimum-cost partial matching, ",
-            "or relax max_distance/calipers.", call. = FALSE)
+    warning("memory_mode = \"", mode, "\" found no feasible full matching under ",
+            "the current constraints (", conditionMessage(res), "). Recovering ",
+            "the partial matching needs the materialized cost matrix that this ",
+            "mode exists to avoid, so all units are reported unmatched. Use ",
+            "memory_mode = \"dense\" for the maximum-cardinality minimum-cost ",
+            "partial matching, or relax max_distance/calipers.", call. = FALSE)
     return(list(result = NULL, matched_rows = integer(0), matched_cols = integer(0)))
+  }
+
+  # The implicit path answers infeasibility with Hall's witness instead of an
+  # exception: the rows that could not be matched, the columns they can reach,
+  # and the check that no arc set over this source does better. The outcome is
+  # the same one the error branch above reports, and the reason is the witness.
+  if (identical(res$status, "infeasible")) {
+    warning("memory_mode = \"", mode, "\" found no complete matching under the ",
+            "current constraints: ", .witness_reason(res$witness),
+            " Recovering the partial matching needs the materialized cost ",
+            "matrix this mode exists to avoid, so all units are reported ",
+            "unmatched. Use memory_mode = \"dense\" for the ",
+            "maximum-cardinality minimum-cost partial matching, or relax ",
+            "max_distance/calipers.", call. = FALSE)
   }
 
   match_vec <- as.integer(res$match)
@@ -326,8 +342,9 @@
   # --- Replacement matching, one row at a time ---
   if (identical(plan$route, "separable")) {
     if (is_lazy_cost_spec(cost_matrix)) {
-      stop("replace = TRUE does not support memory_mode = \"lazy\" yet; ",
-           "use memory_mode = \"dense\".", call. = FALSE)
+      stop("replace = TRUE does not support memory_mode = \"",
+           lazy_cost_spec_mode(cost_matrix), "\" yet; use ",
+           "memory_mode = \"dense\".", call. = FALSE)
     }
     return(.couples_replace(
       cost_matrix, left, right, left_ids, right_ids, vars, ratio, plan
@@ -336,8 +353,9 @@
 
   # --- 1:1 and k:1 matching, as the assignment the design lowers to ---
   if (isTRUE(plan$reshaped) && is_lazy_cost_spec(cost_matrix)) {
-    stop("ratio > 1 does not support memory_mode = \"lazy\" yet; ",
-         "use memory_mode = \"dense\".", call. = FALSE)
+    stop("ratio > 1 does not support memory_mode = \"",
+         lazy_cost_spec_mode(cost_matrix), "\" yet; use ",
+         "memory_mode = \"dense\".", call. = FALSE)
   }
 
   # Drop rows/cols with no allowed edges so the LAP solver sees a feasible
@@ -366,7 +384,7 @@
     info$ratio <- ratio
   }
 
-  list(
+  out <- list(
     pairs = pairs,
     unmatched = list(
       left = left_ids[unmatched_left],
@@ -374,6 +392,29 @@
     ),
     info = info
   )
+
+  # The proof and the search record sit at the top level, beside `status`, for
+  # the reason `status` does: return_diagnostics = FALSE truncates `info` to
+  # three fields, and a certificate that survives only a diagnostic call is not
+  # one a caller can rely on.
+  .carry_solve_evidence(out, solver_result)
+}
+
+# Move what a solve proved about itself onto the matching it produced.
+.carry_solve_evidence <- function(out, solver_result) {
+  if (is.null(solver_result)) {
+    return(out)
+  }
+  if (!is.null(solver_result$certificate)) {
+    out$certificate <- solver_result$certificate
+  }
+  if (!is.null(solver_result$search)) {
+    out$search <- solver_result$search
+  }
+  if (!is.null(solver_result$witness)) {
+    out$witness <- solver_result$witness
+  }
+  out
 }
 
 #' Replacement matching: each left picks its best right independently
@@ -863,17 +904,29 @@
 #' @param sigma Optional covariance matrix for Mahalanobis distance. If NULL
 #'   (default), the pooled sample covariance is used. Only relevant when
 #'   \code{distance = "mahalanobis"}.
-#' @param memory_mode One of "auto" (default), "dense", or "lazy". "auto"
-#'   warns (or, when `method` is `"jv"`/`"auction"` with a built-in distance
-#'   metric, switches) when the dense cost matrix would consume a large
+#' @param memory_mode One of "auto" (default), "dense", "lazy" or "implicit".
+#'   "auto" warns (or, when `method` is `"jv"`/`"auction"` with a built-in
+#'   distance metric, switches) when the dense cost matrix would consume a large
 #'   fraction of free system RAM. "lazy" computes each pairwise distance from
 #'   the underlying feature data as the solver needs it, instead of
 #'   allocating the full n_left x n_right matrix; supported for `method =
 #'   "jv"`/`"auction"` with a built-in distance metric, and not yet for
 #'   `replace = TRUE`, `ratio > 1`, `method = "greedy"`, or custom distance
 #'   functions (blocking via `block_id` is the other option that reduces
-#'   memory, by solving smaller sub-problems). "dense" skips the RAM check
-#'   entirely.
+#'   memory, by solving smaller sub-problems). "implicit" states the problem
+#'   over every pair and solves it over a fraction of them, generating the pairs
+#'   the answer turns out to need and proving that the ones it never generated
+#'   could not have improved it; same requirements as "lazy", and 1:1 only. It
+#'   is slower than "lazy" on every shape measured so far, and the time goes to
+#'   the restricted solve rather than to the pair scan, so what it buys today is
+#'   the certificate over the complete problem rather than speed. "auto" never
+#'   selects it. "dense" skips the RAM check entirely.
+#' @param certify Logical; whether the result carries a checked
+#'   `assignment_certificate` as `certificate`. Applies to
+#'   `memory_mode = "implicit"`, where it defaults to `TRUE`: the certificate is
+#'   what separates the answer from an approximate one. On the other paths the
+#'   matching is certified after the fact with [verify_assignment()], against
+#'   the cost matrix it was solved from.
 #'
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
@@ -885,6 +938,13 @@
 #'     `"heuristic"` when a greedy method ran, either because it was asked for
 #'     or because the constrained path fell back to it, and `"infeasible"` when
 #'     nothing could be matched.
+#'
+#'   Under `memory_mode = "implicit"` it also carries `certificate`, the checked
+#'   proof of optimality (see [verify_assignment()]), and `search`: the pairs
+#'   the loop generated out of the pairs the problem states, the pairs a cost
+#'   was computed for, and one row per round of what each round did. An
+#'   infeasible answer carries `witness` instead, naming the units that could
+#'   not be matched and the partners they have between them.
 #'
 #' @examples
 #' # Basic matching
@@ -929,10 +989,19 @@ match_couples <- function(left, right = NULL,
                           ratio = 1L,
                           check_costs = TRUE,
                           sigma = NULL,
-                          memory_mode = "auto") {
+                          memory_mode = "auto",
+                          certify = NULL) {
 
   strategy <- match.arg(strategy)
   greedy <- identical(method, "greedy")
+  implicit <- identical(memory_mode, "implicit")
+
+  if (!is.null(certify) && !implicit) {
+    stop("`certify` applies to memory_mode = \"implicit\", where the ",
+         "certificate comes out of the solve. Elsewhere, certify a matching ",
+         "with verify_assignment() against the cost matrix it was solved ",
+         "from.", call. = FALSE)
+  }
 
   # Validate replace and ratio
   if (!is.logical(replace) || length(replace) != 1) {
@@ -1007,6 +1076,17 @@ match_couples <- function(left, right = NULL,
   # Detect blocking
   block_info <- detect_blocking(left, right, block_id, ignore_blocks)
 
+  if (block_info$use_blocking && implicit) {
+    # Each block is its own solve and would carry its own certificate, and a
+    # certificate per block is not a certificate for the matching. Blocking is
+    # also the other answer to the memory the loop addresses, so the two are
+    # alternatives rather than a combination.
+    stop("memory_mode = \"implicit\" is not supported with blocking: each ",
+         "block is a separate solve, and one certificate per block is not a ",
+         "proof about the matching. Drop block_id, or use ",
+         "ignore_blocks = TRUE.", call. = FALSE)
+  }
+
   if (block_info$use_blocking) {
     # Setup parallel processing if requested
     parallel_state <- setup_parallel(parallel)
@@ -1032,7 +1112,7 @@ match_couples <- function(left, right = NULL,
       method = method, strategy = strategy,
       check_costs = check_costs,
       replace = replace, ratio = ratio,
-      sigma = sigma, memory_mode = memory_mode
+      sigma = sigma, memory_mode = memory_mode, certify = certify
     )
   }
 
@@ -1135,14 +1215,21 @@ match_couples_single <- function(left, right, left_ids, right_ids,
                                  check_costs = TRUE,
                                  replace = FALSE, ratio = 1L,
                                  sigma = NULL,
-                                 memory_mode = "auto") {
+                                 memory_mode = "auto",
+                                 certify = NULL) {
   greedy <- identical(method, "greedy")
   .couples_single(
     left, right, left_ids, right_ids,
     vars, distance, weights, scale,
     max_distance, calipers,
     solver_fn = if (greedy) greedy_matching else assignment,
-    solver_params = if (greedy) list(strategy = strategy) else list(method = method),
+    solver_params = if (greedy) {
+      list(strategy = strategy)
+    } else if (is.null(certify)) {
+      list(method = method)
+    } else {
+      list(method = method, certify = certify)
+    },
     check_costs = if (greedy) FALSE else check_costs,
     strict_no_pairs = !greedy,
     replace = replace, ratio = ratio,
@@ -1264,6 +1351,18 @@ print.matching_result <- function(x, ...) {
   cat("Total distance:", sprintf("%.4f", x$info$total_distance), "\n")
   if (!is.null(x$status)) {
     cat("Status:", x$status, "\n")
+  }
+  if (!is.null(x$certificate)) {
+    cat("Certified optimal:", x$certificate$certified_optimal, "\n")
+  }
+  if (!is.null(x$search)) {
+    cat(sprintf("Pairs generated: %s of %s (%.4g%%), %s rounds\n",
+                format(x$search$candidate_edges, big.mark = ",",
+                       scientific = FALSE),
+                format(x$search$possible_edges, big.mark = ",",
+                       scientific = FALSE),
+                100 * x$search$candidate_edges / x$search$possible_edges,
+                x$search$n_rounds))
   }
 
   if (nrow(x$pairs) > 0) {

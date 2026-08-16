@@ -1,17 +1,29 @@
 # ==============================================================================
-# Matching Lazy - lazy_cost_spec S3 class for memory_mode = "lazy"
+# Matching Lazy - lazy_cost_spec S3 class for memory_mode = "lazy"/"implicit"
 # ==============================================================================
 # When build_cost_matrix() resolves to lazy mode, it returns a lazy_cost_spec
 # instead of a dense matrix: a lightweight list holding the (already scaled/
 # weighted) feature matrices and enough metadata to build a
 # lap::LazyCostMatrix in C++ on demand, without ever materializing an
 # n_left x n_right matrix in R.
+#
+# The same object states the complete implicit problem the edge-generation loop
+# solves, so `mode` records which of the two the caller asked for and travels
+# with the spec to the solve. Threading it as a separate argument instead would
+# mean every function between build_cost_matrix() and assignment() carrying a
+# field of the object it already holds.
 
 #' Construct a lazy cost specification
 #'
+#' `mode` is the memory mode that resolved to this specification: `"lazy"`,
+#' solved over every pair, or `"implicit"`, solved by generating the pairs the
+#' answer turns out to need.
+#'
 #' @return An object of class "lazy_cost_spec".
 #' @keywords internal
-new_lazy_cost_spec <- function(left_mat, right_mat, distance, sigma, weights, vars) {
+new_lazy_cost_spec <- function(left_mat, right_mat, distance, sigma, weights, vars,
+                               mode = c("lazy", "implicit")) {
+  mode <- match.arg(mode)
   structure(
     list(
       left_mat = left_mat,
@@ -23,7 +35,8 @@ new_lazy_cost_spec <- function(left_mat, right_mat, distance, sigma, weights, va
       n_left = nrow(left_mat),
       n_right = nrow(right_mat),
       max_distance = Inf,
-      calipers = list()
+      calipers = list(),
+      mode = mode
     ),
     class = "lazy_cost_spec"
   )
@@ -31,6 +44,18 @@ new_lazy_cost_spec <- function(left_mat, right_mat, distance, sigma, weights, va
 
 #' @keywords internal
 is_lazy_cost_spec <- function(x) inherits(x, "lazy_cost_spec")
+
+#' The memory mode a lazy cost specification was built for
+#'
+#' A spec built before `mode` existed, or by hand, is a lazy one: solving every
+#' pair is what the class has always meant.
+#'
+#' @return "lazy" or "implicit".
+#' @keywords internal
+lazy_cost_spec_mode <- function(spec) {
+  mode <- spec$mode
+  if (is.null(mode)) "lazy" else mode
+}
 
 #' @export
 dim.lazy_cost_spec <- function(x) c(x$n_left, x$n_right)

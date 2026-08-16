@@ -103,8 +103,10 @@
 #'   dense cost matrix would consume a large fraction of free system RAM.
 #'   `full_match()` uses a different (min-cost-flow) solver backend than
 #'   `match_couples()`/`assignment()`, so `memory_mode = "lazy"` is not
-#'   available here yet and errors if requested; "dense" skips the RAM check
-#'   entirely.
+#'   available here yet and errors if requested. `memory_mode = "implicit"`
+#'   errors for a further reason: a full matching's column nodes carry
+#'   capacities above one, so a column dual is not the assignment dual the
+#'   pricing loop reads. "dense" skips the RAM check entirely.
 #'
 #' @return An S3 object of class \code{c("full_matching_result", "couplr_result")}
 #'   containing:

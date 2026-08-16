@@ -536,6 +536,42 @@ TEST_CASE("Two scans over disjoint pairs read as one scan over both",
     REQUIRE(lap::merge_scans(early, tied).arg_i == 1);
 }
 
+TEST_CASE("Without the certificate the loop answers the same and scans less",
+          "[flow][implicit][certificate]") {
+    std::mt19937 rng(6161u);
+    const int64_t nr = 15;
+    const int64_t nc = 60;
+    const lap::CostMatrix c = random_cost(nr, nc, rng);
+    lap::SourceOracle<lap::CostMatrix> oracle(c);
+
+    auto run = [&](bool certify) {
+        lap::CompiledDesign design = lap::compile_one_to_one(oracle, {});
+        lap::CandidateSet cand(nr, nc);
+        lap::ImplicitOptions opts;
+        opts.certify = certify;
+        return lap::solve_implicit_assignment(c, design.problem, cand, opts);
+    };
+
+    const lap::ImplicitResult proven = run(true);
+    const lap::ImplicitResult bare = run(false);
+
+    REQUIRE(proven.status == "optimal");
+    REQUIRE(bare.status == proven.status);
+    REQUIRE(bare.match == proven.match);
+    REQUIRE(bare.total_cost == Approx(proven.total_cost).margin(1e-12));
+    REQUIRE(bare.candidate_edges == proven.candidate_edges);
+
+    // The pricing round is what stops the loop and runs either way. What the
+    // certificate adds is the walk of the pairs the master holds, so the answer
+    // is the same and the scan is shorter by the candidate set.
+    REQUIRE(proven.certified);
+    REQUIRE(proven.certificate.certified_optimal);
+    REQUIRE_FALSE(bare.certified);
+    REQUIRE(bare.certificate.n_rows == 0);
+    REQUIRE(bare.edges_evaluated < proven.edges_evaluated);
+    REQUIRE(proven.edges_evaluated - bare.edges_evaluated <= proven.candidate_edges);
+}
+
 // ---------------------------------------------------------------------------
 // the shape the loop takes
 // ---------------------------------------------------------------------------

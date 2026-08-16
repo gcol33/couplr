@@ -151,22 +151,28 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #'
 #' @param n,m Problem dimensions (left/right unit counts).
 #' @param memory_mode One of "auto" (probe RAM and decide), "dense" (always,
-#'   skip probing entirely), or "lazy" (always, error if unsupported here).
+#'   skip probing entirely), "lazy" (always, error if unsupported here), or
+#'   "implicit" (always, error if unsupported here).
 #' @param solver_supports_lazy Whether a lazy path actually exists for the
 #'   caller's chosen solver/distance combination (`TRUE` only for `method =
 #'   "jv"`/`"auction"` with a built-in distance metric, on a caller whose
 #'   solve path consumes a `lazy_cost_spec`; see R/matching_lazy.R).
+#' @param solver_supports_implicit Whether the caller's design is the one the
+#'   edge-generation loop solves: a 1:1 matching over a built-in distance
+#'   metric, whose network is one unit-capacity bipartite block.
 #' @param ram_fraction Fraction of available RAM the dense matrix may consume
 #'   before "auto" switches away from dense.
 #' @param fallback_threshold_mb Fixed threshold used when available RAM can't be
 #'   determined (mirrors the warn+fallback precedent in
 #'   `R/morph_utils.R`'s `matrix_size > 1e8` cell guard).
 #'
-#' @return "dense" or "lazy".
+#' @return "dense", "lazy" or "implicit".
 #' @keywords internal
 resolve_memory_mode <- function(n, m,
-                                memory_mode = c("auto", "dense", "lazy"),
+                                memory_mode = c("auto", "dense", "lazy",
+                                                "implicit"),
                                 solver_supports_lazy = FALSE,
+                                solver_supports_implicit = FALSE,
                                 ram_fraction = 0.5,
                                 fallback_threshold_mb = 4000) {
   memory_mode <- match.arg(memory_mode)
@@ -183,7 +189,25 @@ resolve_memory_mode <- function(n, m,
     return("lazy")
   }
 
-  # memory_mode == "auto"
+  if (identical(memory_mode, "implicit")) {
+    if (!solver_supports_implicit) {
+      stop("memory_mode = \"implicit\" is not supported for this method/path ",
+           "yet: the edge-generation loop solves a 1:1 matching over a ",
+           "built-in distance metric, whose network is one bipartite block ",
+           "carrying one unit per left unit.", call. = FALSE)
+    }
+    return("implicit")
+  }
+
+  # memory_mode == "auto".
+  #
+  # "auto" never resolves to "implicit". The loop wins by a factor that moves
+  # with problem size and covariate dimension at once, and it loses below
+  # roughly n = 10,000, where a complete solve already costs hundredths of a
+  # second. A rule that has to know a crossover surface in two variables,
+  # measured on one machine, is a rule that sends someone's small problem the
+  # slow way. It is opt-in until a rule with measurements behind it exists,
+  # which is the convention gabow_tarjan is already opt-in under.
   n_cells <- as.numeric(n) * as.numeric(m)
   if (n_cells < COUPLR_MEMORY_PROBE_THRESHOLD_CELLS) {
     return("dense")

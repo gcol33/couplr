@@ -157,6 +157,14 @@ lap_flow_compile_couples <- function(design, n_rows, n_cols, ratio = 1.0) {
     .Call(`_couplr_lap_flow_compile_couples`, design, n_rows, n_cols, ratio)
 }
 
+lap_implicit_dense <- function(cost, maximize = FALSE, keep_per_row = 5.0, width = 5.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
+    .Call(`_couplr_lap_implicit_dense`, cost, maximize, keep_per_row, width, tol, max_rounds, certify)
+}
+
+lap_implicit_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, maximize = FALSE, keep_per_row = 5.0, width = 5.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
+    .Call(`_couplr_lap_implicit_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, maximize, keep_per_row, width, tol, max_rounds, certify)
+}
+
 greedy_matching <- function(cost_matrix, maximize = FALSE, strategy = "row_best") {
     .Call(`_couplr_greedy_matching`, cost_matrix, maximize, strategy)
 }

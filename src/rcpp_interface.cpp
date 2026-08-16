@@ -87,6 +87,19 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
 Rcpp::List flow_compile_couples_impl(std::string design, double n_rows,
                                      double n_cols, double ratio);
 
+// Forward decls for the edge-generation loop (implemented in
+// flow/flow_implicit_rcpp.cpp)
+Rcpp::List implicit_dense_impl(Rcpp::NumericMatrix cost, bool maximize,
+                               double keep_per_row, double width, double tol,
+                               double max_rounds, bool certify);
+Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                              std::string distance,
+                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                              double max_distance, Rcpp::List calipers,
+                              Rcpp::CharacterVector vars, bool maximize,
+                              double keep_per_row, double width, double tol,
+                              double max_rounds, bool certify);
+
 // =======================
 // Pixel morphing core (implemented in morph_pixel_level.cpp)
 // =======================
@@ -399,6 +412,37 @@ Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
 Rcpp::List lap_flow_compile_couples(std::string design, double n_rows,
                                     double n_cols, double ratio = 1.0) {
   return flow_compile_couples_impl(design, n_rows, n_cols, ratio);
+}
+
+// =======================
+// Edge generation exports
+// =======================
+// The assignment over a complete implicit graph, solved by generating the pairs
+// it turns out to need. The caller states the cost source and the search knobs;
+// the loop keeps the problem, the candidate set and every round on the C++ side
+// and crosses once.
+
+// [[Rcpp::export]]
+Rcpp::List lap_implicit_dense(Rcpp::NumericMatrix cost, bool maximize = false,
+                              double keep_per_row = 5.0, double width = 5.0,
+                              double tol = 1e-9, double max_rounds = 60.0,
+                              bool certify = true) {
+  return implicit_dense_impl(cost, maximize, keep_per_row, width, tol, max_rounds,
+                             certify);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                             std::string distance,
+                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                             double max_distance, Rcpp::List calipers,
+                             Rcpp::CharacterVector vars, bool maximize = false,
+                             double keep_per_row = 5.0, double width = 5.0,
+                             double tol = 1e-9, double max_rounds = 60.0,
+                             bool certify = true) {
+  return implicit_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
+                            calipers, vars, maximize, keep_per_row, width, tol,
+                            max_rounds, certify);
 }
 
 // =======================

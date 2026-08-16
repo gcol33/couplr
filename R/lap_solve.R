@@ -77,13 +77,28 @@
 #'   If `NULL`, an internal default (e.g., `1e-9`) is used.
 #' @param eps Deprecated. Use `auction_eps`. If provided and `auction_eps` is `NULL`,
 #'   its value is used for `auction_eps`.
-#' @param memory_mode One of "auto" (default), "dense", or "lazy". `cost` is
-#'   already a materialized matrix by the time it reaches `assignment()`, so
-#'   "auto" here is diagnostic only: it warns if the matrix is large relative
-#'   to free system RAM (nothing else can be done post-hoc once the matrix
-#'   already exists -- build it via `compute_distances(memory_mode = ...)`
-#'   instead to avoid materializing it in the first place). No lazy solver
-#'   exists yet, so `memory_mode = "lazy"` currently always errors.
+#' @param memory_mode One of "auto" (default), "dense", "lazy" or "implicit".
+#'   `cost` is already a materialized matrix by the time it reaches
+#'   `assignment()`, so "auto" here is diagnostic only: it warns if the matrix
+#'   is large relative to free system RAM (nothing else can be done post-hoc
+#'   once the matrix already exists -- build it via
+#'   `compute_distances(memory_mode = ...)` instead to avoid materializing it in
+#'   the first place). `"lazy"` and `"implicit"` describe how a cost source is
+#'   read rather than how a matrix is stored, so they apply to a lazy cost
+#'   specification; `"implicit"` also accepts a matrix, where it solves the same
+#'   problem by generating the pairs it needs and saves nothing, which is what
+#'   makes it a check on the complete solve rather than a faster one.
+#'   `"implicit"` is slower than `"lazy"` on every shape measured so far, and
+#'   the time goes to the restricted solve rather than to the pair scan, so what
+#'   it buys today is the certificate over the complete problem.
+#' @param certify Logical; whether to attach a checked `assignment_certificate`
+#'   as `certificate`. `NULL`, the default, takes the path's own answer: `TRUE`
+#'   under `memory_mode = "implicit"`, where the certificate is what
+#'   distinguishes the answer from an approximate one and the loop has already
+#'   done most of the scan, and `FALSE` elsewhere, where the duals are not among
+#'   the things the solve returns and the check costs the solve
+#'   [verify_assignment()] runs to get them. A solve that did not reach a
+#'   complete optimal matching has nothing to certify and gets no certificate.
 #' @param cardinality How many pairs to produce.
 #'   \itemize{
 #'     \item `"complete"` (default) — every row is matched; an input admitting
@@ -117,7 +132,15 @@
 #'   \item `dispatch` — list recording how `method` was chosen: the rule that
 #'         fired under `"auto"`, the condition that triggered it, and whether
 #'         the method was named explicitly. See [explain_dispatch()].
+#'   \item `certificate` — an `assignment_certificate`, present when one was
+#'         checked. See `certify`.
 #' }
+#' Under `memory_mode = "implicit"` the result also carries `u` and `v`, the
+#' duals the last restricted master produced, and `search`: the pairs the
+#' candidate set ended up holding (`candidate_edges`) out of `possible_edges`,
+#' the pairs a cost was computed for (`edges_evaluated`), the round count, and
+#' `rounds`, one row per round of what the master held, what priced out and what
+#' each step cost.
 #'
 #' @details
 #' `method = "auto"` selects an algorithm based on problem size/shape and data
@@ -152,6 +175,7 @@ assignment <- function(cost, maximize = FALSE,
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
                                   "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
                        auction_eps = NULL, eps = NULL, memory_mode = "auto",
+                       certify = NULL,
                        cardinality = c("complete", "maximum", "fixed"),
                        n_matches = NULL, unmatched_penalty = NULL
                        # , auction_schedule = c("alpha7","pow2","halves"),  # optional (see below)
@@ -165,11 +189,21 @@ assignment <- function(cost, maximize = FALSE,
            call. = FALSE)
     }
     if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
-    return(.assignment_lazy(cost, maximize = maximize, method = method,
-                            auction_eps = auction_eps))
+
+    mode <- .resolve_spec_mode(memory_mode, cost)
+    do_certify <- .resolve_certify(certify, mode)
+    out <- if (identical(mode, "implicit")) {
+      .assignment_implicit(cost, maximize = maximize, certify = do_certify,
+                           method = method)
+    } else {
+      .assignment_lazy(cost, maximize = maximize, method = method,
+                       auction_eps = auction_eps)
+    }
+    return(.attach_certificate(out, cost, maximize, do_certify))
   }
 
   method <- match.arg(method)
+  do_certify <- .resolve_certify(certify, memory_mode)
 
   # Back-compat: eps → auction_eps
   if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
@@ -183,6 +217,22 @@ assignment <- function(cost, maximize = FALSE,
   # This ensures empty logical matrices get "empty" error not "must be numeric"
   if (n == 0 || m == 0) {
     stop("Cost matrix must have at least one row and one column.")
+  }
+
+  # Edge generation over a materialized matrix solves the same problem the
+  # switch below solves, by generating the pairs it turns out to need. It saves
+  # nothing here -- the matrix already exists -- and it is what lets one path's
+  # answer be held against the other's on the same numbers.
+  if (identical(memory_mode, "implicit")) {
+    if (!identical(cardinality, c("complete", "maximum", "fixed")) &&
+        !identical(cardinality, "complete")) {
+      stop("cardinality = \"", cardinality[1], "\" is not supported under ",
+           "memory_mode = \"implicit\"; the loop matches every row.",
+           call. = FALSE)
+    }
+    out <- .assignment_implicit(cost, maximize = maximize, certify = do_certify,
+                                method = method)
+    return(.attach_certificate(out, cost, maximize, do_certify))
   }
 
   # Diagnostic-only: `cost` is already materialized by this point, so "auto"
@@ -289,6 +339,26 @@ assignment <- function(cost, maximize = FALSE,
   out$cardinality <- card$cardinality
   out$n_matched   <- sum(match_out > 0L)
   out$unmatched   <- which(match_out == 0L)
+  .attach_certificate(out, cost, maximize, do_certify)
+}
+
+# Attach a checked certificate to a solve result that does not carry one.
+#
+# The implicit path certifies as part of terminating, so there is nothing to add
+# there. Every other path proves nothing about its answer beyond the status it
+# terminated on, and the duals it would be checked against are not among the
+# things it returns, so the check costs the solve verify_assignment() runs plus
+# one pass over the admissible pairs. A solve that did not reach a complete
+# optimal matching has nothing to certify and gets no certificate; `status` is
+# what says so.
+.attach_certificate <- function(out, cost, maximize, certify) {
+  if (!isTRUE(certify) || !is.null(out$certificate)) {
+    return(out)
+  }
+  if (!identical(out$status, "optimal")) {
+    return(out)
+  }
+  out$certificate <- verify_assignment(out, cost, maximize = maximize)
   out
 }
 
@@ -611,6 +681,7 @@ print.lap_solve_result <- function(x, ...) {
   # warn about an uninitialised column.
   status <- NULL
   certificate <- NULL
+  search <- NULL
 
   # Check if this is a tibble (from lap_solve) or a plain list (from assignment)
   if (inherits(x, "tbl_df") || inherits(x, "data.frame")) {
@@ -634,6 +705,7 @@ print.lap_solve_result <- function(x, ...) {
     method_used <- x$method_used
     status <- x$status
     certificate <- x$certificate
+    search <- x$search
   }
 
   cat("\nTotal cost:", total_cost, "\n")
@@ -645,6 +717,13 @@ print.lap_solve_result <- function(x, ...) {
   }
   if (!is.null(certificate)) {
     cat("Certified optimal:", certificate$certified_optimal, "\n")
+  }
+  if (!is.null(search)) {
+    cat(sprintf("Pairs generated: %s of %s (%.4g%%), %s rounds\n",
+                format(search$candidate_edges, big.mark = ",", scientific = FALSE),
+                format(search$possible_edges, big.mark = ",", scientific = FALSE),
+                100 * search$candidate_edges / search$possible_edges,
+                search$n_rounds))
   }
 
   invisible(x)

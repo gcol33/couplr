@@ -80,6 +80,13 @@ struct ImplicitOptions {
     // worth looking at rather than a problem that needs more rounds.
     int64_t max_rounds = 60;
 
+    // Whether to assemble the certificate on termination. The pricing round is
+    // run either way -- it is what stops the loop -- so what this buys is the
+    // other half of the scan, over the pairs the master holds, and the
+    // conclusion drawn from the two together. Off, the answer carries the
+    // status the master terminated on and no proof.
+    bool certify = true;
+
     // Handed to every master solve. return_potentials is forced on: the duals
     // are what the next round prices with.
     FlowOptions flow;
@@ -427,15 +434,17 @@ ImplicitResult solve_implicit_assignment(const Source& src,
             // feasible for every pair of the complete problem. The certificate
             // is that scan and a scan over the master's own pairs, which costs
             // the candidates rather than the grid.
-            const ReducedCostScan held = scan_reduced_costs(
-                CandidateGraph<Source>(src, cand), duals.u, duals.v, opts.tol);
-            cand.note_evaluated(held.n_admissible);
-            rec.n_evaluated += held.n_admissible;
+            if (opts.certify) {
+                const ReducedCostScan held = scan_reduced_costs(
+                    CandidateGraph<Source>(src, cand), duals.u, duals.v, opts.tol);
+                cand.note_evaluated(held.n_admissible);
+                rec.n_evaluated += held.n_admissible;
 
-            out.certificate = certify_assignment(
-                src, duals.match, duals.u, duals.v, opts.tol,
-                merge_scans(held, implicit_detail::omitted_scan(priced)));
-            out.certified = out.certificate.certified_optimal;
+                out.certificate = certify_assignment(
+                    src, duals.match, duals.u, duals.v, opts.tol,
+                    merge_scans(held, implicit_detail::omitted_scan(priced)));
+                out.certified = out.certificate.certified_optimal;
+            }
             out.status = master.status;
             out.match = duals.match;
             out.u = duals.u;

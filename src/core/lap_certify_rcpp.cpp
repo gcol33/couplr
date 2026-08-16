@@ -19,6 +19,8 @@
 #include "lap_lazy_types.h"
 #include "lap_cost_view.h"
 #include "lap_error.h"
+#include "lap_rcpp_convert.h"
+#include "lap_utils.h"
 #include "lap_utils_rcpp.h"
 
 namespace {
@@ -62,7 +64,67 @@ private:
     R_xlen_t k_;
 };
 
-Rcpp::List report_to_list(const lap::CertificateReport& rep) {
+Rcpp::List scan_to_list(const lap::ReducedCostScan& scan) {
+    ListBuilder out(5);
+
+    out.add_number("min_reduced_cost", scan.min_reduced_cost);
+    // 0-based argmin, -1 for none, handed to R as 1-based with 0 for none.
+    out.add_count("arg_i", scan.arg_i >= 0 ? scan.arg_i + 1 : 0);
+    out.add_count("arg_j", scan.arg_j >= 0 ? scan.arg_j + 1 : 0);
+    out.add_count("n_violations", scan.n_violations);
+    out.add_count("n_admissible", scan.n_admissible);
+
+    return out.finish();
+}
+
+// Build a dense lap::CostMatrix from an R matrix, as a solver would read it.
+//
+// A cell is admissible when it is finite and below lap::BIG. Finiteness is the
+// rule rcpp_to_cost_matrix() applies (NA, NaN and +/-Inf are forbidden, which
+// is also what prepare_cost_matrix_impl() marks); the sentinel clause is
+// forbid_sentinel_costs(), which catches a matrix that has already been through
+// prepare_for_solve() and mirrors R's own feasibility rule
+// `is.finite(cost) & cost < BIG_COST` in matching_constraints.R. It runs before
+// the negation, where the sentinel is still the largest value in the matrix.
+//
+// prepare_for_solve() then stores forbidden cells as BIG rather than as the
+// incoming NA or Inf, so a caller reaching past allowed() meets the package's
+// internal sentinel instead of a NaN.
+lap::CostMatrix cost_matrix_for_certify(const Rcpp::NumericMatrix& cost, bool negate) {
+    lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
+    lap::forbid_sentinel_costs(cm);
+    return lap::prepare_for_solve(cm, negate);
+}
+
+// 1-based R match vector (0 = unmatched) to the 0-based convention of
+// lap::LapResult::assignment (-1 = unmatched). NA is treated as unmatched, the
+// same way compute_total_cost() treats it. A negative entry is left negative
+// and out of range so that certify_assignment() reports it in n_out_of_range
+// instead of silently reading it as unmatched.
+std::vector<int> match_to_zero_based(const Rcpp::IntegerVector& match) {
+    std::vector<int> out(static_cast<std::size_t>(match.size()));
+    for (R_xlen_t i = 0; i < match.size(); ++i) {
+        const int m = match[i];
+        if (Rcpp::IntegerVector::is_na(m) || m == 0) {
+            out[static_cast<std::size_t>(i)] = -1;
+        } else {
+            out[static_cast<std::size_t>(i)] = m - 1;
+        }
+    }
+    return out;
+}
+
+std::vector<double> duals_to_internal(const Rcpp::NumericVector& x, bool negate) {
+    std::vector<double> out(static_cast<std::size_t>(x.size()));
+    for (R_xlen_t k = 0; k < x.size(); ++k) {
+        out[static_cast<std::size_t>(k)] = negate ? -x[k] : x[k];
+    }
+    return out;
+}
+
+}  // namespace
+
+Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
     ListBuilder out(22);
 
     out.add_flag("primal_feasible", rep.primal_feasible);
@@ -95,88 +157,15 @@ Rcpp::List report_to_list(const lap::CertificateReport& rep) {
     return out.finish();
 }
 
-Rcpp::List scan_to_list(const lap::ReducedCostScan& scan) {
-    ListBuilder out(5);
-
-    out.add_number("min_reduced_cost", scan.min_reduced_cost);
-    // 0-based argmin, -1 for none, handed to R as 1-based with 0 for none.
-    out.add_count("arg_i", scan.arg_i >= 0 ? scan.arg_i + 1 : 0);
-    out.add_count("arg_j", scan.arg_j >= 0 ? scan.arg_j + 1 : 0);
-    out.add_count("n_violations", scan.n_violations);
-    out.add_count("n_admissible", scan.n_admissible);
-
-    return out.finish();
-}
-
-// Build a dense lap::CostMatrix from an R matrix.
-//
-// A cell is admissible when it is finite and below lap::BIG. Finiteness is the
-// rule rcpp_to_cost_matrix() applies (NA, NaN and +/-Inf are forbidden, which
-// is also what prepare_cost_matrix_impl() marks); the BIG clause additionally
-// catches a matrix that has already been through prepare_for_solve(), which
-// writes 1e100 into forbidden cells, and mirrors R's own feasibility rule
-// `is.finite(cost) & cost < BIG_COST` in matching_core.R.
-//
-// Forbidden cells are stored as BIG rather than as the incoming NA or Inf, so
-// that a caller reaching past allowed() still meets the package's internal
-// sentinel instead of a NaN.
-lap::CostMatrix cost_matrix_for_certify(const Rcpp::NumericMatrix& cost, bool negate) {
-    const int64_t n = static_cast<int64_t>(cost.nrow());
-    const int64_t m = static_cast<int64_t>(cost.ncol());
-
-    lap::CostMatrix cm(n, m);
-    const double* src = cost.begin();  // R matrices are column-major
-
-    for (int64_t i = 0; i < n; ++i) {
-        for (int64_t j = 0; j < m; ++j) {
-            const double x = src[static_cast<std::size_t>(j * n + i)];
-            const bool ok = (R_finite(x) != 0) && (x < lap::BIG);
-            const std::size_t k = static_cast<std::size_t>(lap::flat_index(i, j, m));
-            cm.mask[k] = ok ? 1 : 0;
-            cm.data[k] = ok ? (negate ? -x : x) : lap::BIG;
-        }
-    }
-
-    return cm;
-}
-
-// 1-based R match vector (0 = unmatched) to the 0-based convention of
-// lap::LapResult::assignment (-1 = unmatched). NA is treated as unmatched, the
-// same way compute_total_cost() treats it. A negative entry is left negative
-// and out of range so that certify_assignment() reports it in n_out_of_range
-// instead of silently reading it as unmatched.
-std::vector<int> match_to_zero_based(const Rcpp::IntegerVector& match) {
-    std::vector<int> out(static_cast<std::size_t>(match.size()));
-    for (R_xlen_t i = 0; i < match.size(); ++i) {
-        const int m = match[i];
-        if (Rcpp::IntegerVector::is_na(m) || m == 0) {
-            out[static_cast<std::size_t>(i)] = -1;
-        } else {
-            out[static_cast<std::size_t>(i)] = m - 1;
-        }
-    }
-    return out;
-}
-
-std::vector<double> duals_to_internal(const Rcpp::NumericVector& x, bool negate) {
-    std::vector<double> out(static_cast<std::size_t>(x.size()));
-    for (R_xlen_t k = 0; k < x.size(); ++k) {
-        out[static_cast<std::size_t>(k)] = negate ? -x[k] : x[k];
-    }
-    return out;
-}
-
 // The three fields carrying the cost unit go back in the caller's sign; the
 // duals were negated on the way in, so a maximize instance was certified
 // against -c and reports -objective.
-void restore_sign(lap::CertificateReport& rep, bool maximize) {
+void restore_certificate_sign(lap::CertificateReport& rep, bool maximize) {
     if (!maximize) return;
     rep.primal_objective = -rep.primal_objective;
     rep.dual_objective = -rep.dual_objective;
     rep.duality_gap = -rep.duality_gap;
 }
-
-}  // namespace
 
 Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
                               Rcpp::NumericVector u, Rcpp::NumericVector v,
@@ -188,9 +177,9 @@ Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector matc
         const std::vector<double> v0 = duals_to_internal(v, maximize);
 
         lap::CertificateReport rep = lap::certify_assignment(cm, m0, u0, v0, tol);
-        restore_sign(rep, maximize);
+        restore_certificate_sign(rep, maximize);
 
-        return report_to_list(rep);
+        return certificate_report_to_list(rep);
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
@@ -228,9 +217,9 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
         const std::vector<double> v0 = duals_to_internal(v, maximize);
 
         lap::CertificateReport rep = lap::certify_assignment(cm, m0, u0, v0, tol);
-        restore_sign(rep, maximize);
+        restore_certificate_sign(rep, maximize);
 
-        return report_to_list(rep);
+        return certificate_report_to_list(rep);
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());

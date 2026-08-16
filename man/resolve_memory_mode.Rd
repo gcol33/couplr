@@ -7,8 +7,9 @@
 resolve_memory_mode(
   n,
   m,
-  memory_mode = c("auto", "dense", "lazy"),
+  memory_mode = c("auto", "dense", "lazy", "implicit"),
   solver_supports_lazy = FALSE,
+  solver_supports_implicit = FALSE,
   ram_fraction = 0.5,
   fallback_threshold_mb = 4000
 )
@@ -17,11 +18,16 @@ resolve_memory_mode(
 \item{n, m}{Problem dimensions (left/right unit counts).}
 
 \item{memory_mode}{One of "auto" (probe RAM and decide), "dense" (always,
-skip probing entirely), or "lazy" (always, error if unsupported here).}
+skip probing entirely), "lazy" (always, error if unsupported here), or
+"implicit" (always, error if unsupported here).}
 
 \item{solver_supports_lazy}{Whether a lazy path actually exists for the
 caller's chosen solver/distance combination (\code{TRUE} only for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, on a caller whose
 solve path consumes a \code{lazy_cost_spec}; see R/matching_lazy.R).}
+
+\item{solver_supports_implicit}{Whether the caller's design is the one the
+edge-generation loop solves: a 1:1 matching over a built-in distance
+metric, whose network is one unit-capacity bipartite block.}
 
 \item{ram_fraction}{Fraction of available RAM the dense matrix may consume
 before "auto" switches away from dense.}
@@ -31,7 +37,7 @@ determined (mirrors the warn+fallback precedent in
 \code{R/morph_utils.R}'s \code{matrix_size > 1e8} cell guard).}
 }
 \value{
-"dense" or "lazy".
+"dense", "lazy" or "implicit".
 }
 \description{
 Resolve a requested memory_mode to a concrete decision

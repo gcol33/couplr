@@ -128,8 +128,43 @@ void validate(const FlowProblem& prob);
 // lap::DimensionException rather than allocating past FLOW_MAX_EXPANDED_ARCS,
 // because the failure mode of the alternative is a machine in swap rather than
 // an error a caller can act on.
+//
+// Blocks are expanded in index order and a block already carrying a
+// BlockArcRange is left alone, so a problem whose first blocks were expanded
+// over a candidate set finishes here with the rest expanded in full.
 constexpr int64_t FLOW_MAX_EXPANDED_ARCS = static_cast<int64_t>(1) << 31;
 
 void expand_blocks(FlowProblem& prob);
+
+class CandidateSet;
+
+// Expand one block over a candidate set instead of over its whole grid. The
+// same two gates apply, so a candidate pair the source forbids gets no arc, and
+// the (i, j) behind each emitted arc is recorded exactly as the full expansion
+// records it: every reader of a solved flow works unchanged.
+//
+// Blocks expand in index order, so `block` must be the next unexpanded one, and
+// the problem is expanded once the last block has been done. Throws
+// lap::DimensionException on an out-of-order block, on a problem already
+// expanded, and on a candidate set whose shape is not the block's.
+void expand_block_subset(FlowProblem& prob, int32_t block, const CandidateSet& cand);
+
+// Add arcs for `new_pairs` to a block of an already expanded problem, skipping
+// any the source forbids, and return how many arcs that came to.
+//
+// The arcs land at the end of the block's own range rather than at the end of
+// the arc array, so a block's arcs stay contiguous and stay aligned with its
+// rc entries; later blocks' ranges move up by the number added. When warm_flow
+// is present it moves in step, each new arc entering at its lower bound, which
+// is the whole warm-start contract: an arc the incumbent potentials price below
+// zero is pushed to its upper bound by the solver's slackness repair, and the
+// augmentation loop repairs the conservation that breaks.
+//
+// Membership is the candidate set's question, not this function's. Offering a
+// pair the block already carries produces a second arc for it, priced the same
+// and free to carry flow of its own, so a block whose columns admit more than
+// one unit can place the pair twice.
+int64_t add_block_arcs(FlowProblem& prob, int32_t block,
+                       const std::vector<std::pair<int32_t, int32_t>>& new_pairs);
 
 }  // namespace lap

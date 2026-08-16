@@ -42,8 +42,8 @@
 #include "../core/lap_cost_source.h"
 #include "../core/lap_error.h"
 #include "flow_candidates.h"
+#include "flow_topk.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -83,67 +83,6 @@ struct BlockPricing {
     // reports, and it is the quantity a tree pricer drives down.
     int64_t n_evaluated = 0;
 };
-
-namespace detail {
-
-// The `keep` most negative reduced costs per row, held as one flat max-heap
-// per row inside a single allocation. A vector of heaps would allocate once
-// per row, and a pricing round touches every row.
-class RowViolators {
-public:
-    RowViolators(int64_t nrow, int keep)
-        : keep_(keep > 0 ? keep : 0)
-        , count_(static_cast<std::size_t>(nrow > 0 ? nrow : 0), 0) {
-        if (keep_ > 0 && nrow > 0) {
-            heap_.resize(static_cast<std::size_t>(nrow) * static_cast<std::size_t>(keep_));
-        }
-    }
-
-    void offer(int64_t i, double cbar, int32_t j) {
-        if (keep_ == 0) return;
-        const std::ptrdiff_t off =
-            static_cast<std::ptrdiff_t>(i) * static_cast<std::ptrdiff_t>(keep_);
-        const auto beg = heap_.begin() + off;
-        int32_t& n = count_[static_cast<std::size_t>(i)];
-        if (n < keep_) {
-            beg[n] = Entry(cbar, j);
-            ++n;
-            std::push_heap(beg, beg + n);
-        } else if (cbar < beg->first) {
-            std::pop_heap(beg, beg + n);
-            beg[n - 1] = Entry(cbar, j);
-            std::push_heap(beg, beg + n);
-        }
-    }
-
-    // Append every row's kept pairs, rows ascending and columns ascending
-    // within a row. Reorders the heaps, so it runs once at the end.
-    void emit(std::vector<PricedPair>& out) {
-        if (keep_ == 0) return;
-        for (std::size_t i = 0; i < count_.size(); ++i) {
-            const int32_t n = count_[i];
-            if (n == 0) continue;
-            const auto beg = heap_.begin() +
-                static_cast<std::ptrdiff_t>(i) * static_cast<std::ptrdiff_t>(keep_);
-            std::sort(beg, beg + n, [](const Entry& a, const Entry& b) {
-                return a.second < b.second;
-            });
-            for (int32_t t = 0; t < n; ++t) {
-                out.push_back(PricedPair{static_cast<int32_t>(i), beg[t].second,
-                                         beg[t].first});
-            }
-        }
-    }
-
-private:
-    using Entry = std::pair<double, int32_t>;  // max-heap on cbar
-
-    int32_t keep_ = 0;
-    std::vector<Entry> heap_;
-    std::vector<int32_t> count_;
-};
-
-}  // namespace detail
 
 // Price every pair the candidate set omits, against duals `u` (length
 // src.nrow) and `v` (length src.ncol).
@@ -185,7 +124,7 @@ BlockPricing price_block(const Source& src,
                        std::numeric_limits<double>::infinity());
     if (nrow <= 0 || ncol <= 0) return out;
 
-    detail::RowViolators keep(nrow, keep_per_row);
+    detail::RowTopK keep(nrow, keep_per_row);
 
     for (int64_t i = 0; i < nrow; ++i) {
         const int32_t* rb = cand.row_begin(i);
@@ -223,7 +162,9 @@ BlockPricing price_block(const Source& src,
         if (rmin < out.min_reduced_cost) out.min_reduced_cost = rmin;
     }
 
-    keep.emit(out.violators);
+    keep.emit([&out](int32_t i, int32_t j, double cbar) {
+        out.violators.push_back(PricedPair{i, j, cbar});
+    });
     cand.note_evaluated(out.n_evaluated);
     return out;
 }

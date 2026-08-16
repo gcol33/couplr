@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-16. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-17. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
 the flow model's design, findings and repros.
@@ -8,9 +8,10 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` and `origin/main` are both at
-`ccafc1b`; see "Working tree" at the end. The phase 1 certification layer went in
-as `7b3dd6e` and is no longer sitting in the working tree.
+`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `19c23db` and `origin/main` is
+three behind at `42217f3`; see "Working tree" at the end. The phase 1
+certification layer went in as `7b3dd6e` and is no longer sitting in the working
+tree.
 
 **Nothing is staged for CRAN.** `cran-comments.md` still describes 1.5.5 and
 opens "This release supersedes 1.5.3, the version currently on CRAN"; it has not
@@ -810,31 +811,130 @@ the dense solve of the same source; R suite 0 failed, 0 warnings, 3 skipped,
 6702 passed, unchanged; B0 1542 cases with the same 6 clamp differences and
 nothing new; C0 38 cases with the same 7 known differences, exit 0.
 
+## C9 is in, and the loop has a front door
+
+`memory_mode = "implicit"` on `assignment()` and `match_couples()`.
+`resolve_memory_mode()` has a fourth value, not a new argument, and `"auto"`
+never resolves to it. Phase 0 measured a crossover surface in two variables and
+this section's own measurement, below, found no shape where the loop wins, so
+there is nothing to dispatch on. Opt-in is the same convention `gabow_tarjan` is
+opt-in under.
+
+The mode travels on the object rather than as an argument.
+`build_cost_matrix()` resolves `"lazy"` and `"implicit"` to the same
+`lazy_cost_spec` -- one object states a complete problem either way -- and
+records which asked for it. Everything between `match_couples()` and
+`assignment()` therefore keeps working unchanged, and `assignment()` reads the
+mode off the specification in its hands instead of off an argument that could
+disagree with it.
+
+- `lap_implicit_lazy()` and `lap_implicit_dense()` are the two entry points,
+  one templated body behind them. The lazy one is the shape the memory saving
+  is for; the dense one saves nothing and is what lets the loop's answer be held
+  against a complete solve of the same numbers, forbidden pairs included.
+- `certify` is one argument whose default is the path's: `TRUE` under
+  `"implicit"`, `FALSE` elsewhere. `FALSE` skips the scan over the pairs the
+  master holds, which is the half of the certificate the loop does not already
+  have; the pricing round runs either way, because it is what stops the loop.
+- The result carries `certificate`, the duals `u` and `v`, and `search`: the
+  pairs generated out of the pairs the problem states, the pairs a cost was
+  computed for, and one row per round. They sit at the top level, beside
+  `status`, because `return_diagnostics = FALSE` truncates `info`.
+- An infeasible answer reaches `match_couples()` as a warning carrying Hall's
+  witness -- which units could not be matched, how few partners they have
+  between them, re-checked against every pair -- where the lazy path has an
+  exception and the dense path a partial matching.
+
+**The declines are as much of the surface as the acceptances.** Blocking,
+`ratio > 1`, `replace = TRUE`, `method = "greedy"`, a custom distance function,
+a named solver, a cardinality other than `"complete"` and `full_match()` each
+say what the mode is and why they are not it. `full_match()`'s reason is open
+question 3: its column nodes carry capacities above one, so a column dual is not
+the assignment dual the pricer reads.
+
+Three things reading or measuring changed, in `dev_notes/phase3/findings.md`:
+the front door is `match_couples()` rather than the `full_match()` design.md
+wrote the example as; the pair counts are `search` rather than certificate
+fields, because a certificate's field set is the one `verify_assignment()`
+defines; and the search knobs stay off the front doors until one of them has a
+measured rule behind it.
+
+Judged by: R suite 0 failed, 0 warnings, 3 skipped, of which
+`test-implicit.R` is 122 passing expectations over 26 cases; `cpp_tests` 77876
+assertions over 299 cases,
+up from 77865 over 298; B0 1542 cases with the same 6 clamp differences and
+nothing new; C0 38 cases against the implicit path -- 26 pass, 0 fail, 7 known,
+5 skipped, exit 0 -- which is the profile the lazy self-check has, and the
+self-check itself unchanged.
+
+## C9's measurement: the loop is slower through the front door, and the master is why
+
+`dev_notes/phase3/c9_timing.R`: the same `match_couples()` call on the same data
+under `memory_mode = "lazy"` and under `"implicit"`, 8 covariates, Euclidean, on
+the installed build.
+
+| shape | lazy | implicit | ratio | rounds | candidate pairs | evaluated / grid |
+|---|---|---|---|---|---|---|
+| 2,000 x 20,000 | 0.20 s | 1.95 s | 0.10x | 2 | 0.0250% | 2.000 |
+| 4,000 x 40,000 | 1.24 s | 13.64 s | 0.09x | 2 | 0.0125% | 2.000 |
+| 3,334 x 6,666 | 0.39 s | 5.89 s | 0.07x | 3 | 0.0751% | 2.999 |
+| 6,667 x 13,333 | 1.49 s | 24.64 s | 0.06x | 3 | 0.0376% | 3.000 |
+| 16,667 x 33,333 | 9.06 s | 183.28 s | 0.05x | 3 | 0.0150% | 3.000 |
+| 5,000 x 5,000 | 23.80 s | 314.10 s | 0.08x | 11 | 0.7002% | 9.119 |
+
+Equal cost at 17 digits and certified optimal on every one. That is condition 1
+answered above the sizes C0 reaches. The speed is the other way round: the loop
+is 6x to 20x slower than the lazy solve at every shape, including the paper's
+own 1:2 split at n_total = 50,000, which is the row phase 0's head-to-head
+reported 6.96x on.
+
+**The scans are not the cost; the restricted master is.** From
+`dev_notes/phase3/c9_rounds.R`, which reads the split out of `search$rounds`, at
+6,667 x 13,333: the whole of the pricing and feasibility work over 2.7e8 pairs
+is 1.8 s of a 24.5 s call, at 4.5 to 8.1 ns a pair, which is what
+`c4_timing.cpp` measured pinned. The master is 22.7 s of it, and it is one cold
+solve: round 2 solves the seeded restricted problem in 22.5 s over 33,335 arcs,
+round 3 warm starts from it and re-solves in 0.179 s. For scale, `assignment()`
+solves the complete 8.9e7-pair problem over the same lazy source in 1.49 s.
+
+Two other R jobs held a core each throughout, so the seconds are not a
+quiet-machine measurement; both sides of each row ran back to back under the
+same load, and contention does not produce a ratio of 20.
+
 ## Next action
 
-Phase 3, section C9: the public surface. `"implicit"` is a fourth value in
-`resolve_memory_mode()`'s vocabulary rather than a new argument, `certify = TRUE`
-is its default, and `"auto"` does not select it until a dispatch rule with
-measurements behind it exists.
+**The restricted master, before C6 and C7.** C6's tree and C7's bound prune the
+scans, and the scans are 7.5% of the call at the paper's shape: removing them
+entirely takes 24.5 s to 22.7 s and the loop still loses by 15x. That is the
+measurement those two sections were told to wait for, and it says their target
+is not the one that matters.
 
-It is the next thing rather than C6 because the loop currently has no caller
-outside `cpp_tests`. C0 compares two paths in one session, which is how the
-roadmap's condition 1 is answered on the shapes the package actually runs, and
-it cannot see a path that R cannot reach. Forty random shapes against the dense
-solve is what `cpp_tests` can say; the differential harness at scale is what the
-section is done by.
+What matters is the cold solve of the seeded master. C1 looked inside it at the
+clearing and correctly dropped a 1-2% prize; it also recorded the fact that
+explains this one, that every search labels 83.6% to 99.9% of the nodes because
+the queue is drained rather than stopped at the sink. Jonker-Volgenant does not
+pay that: column reduction and augmenting row reduction place most rows before
+any shortest-path search runs. The question is whether the restricted master can
+be initialized the same way, over its arc set, and what that leaves.
 
-C6 and C7 now have the measurement they were told to wait for, and it is not an
-arc count: `edges_evaluated` is 2.00x the grid on every Euclidean shape the loop
-was run on, because the feasibility scan and the pricing round each read every
-pair once. The tree's job is that number, and the reasoning C1 was turned down
-for still applies to the rest of what those two sections claim.
+Phase 0's prototype is the existence proof that the loop can be cheap on this
+shape -- 14.99 s against lazy JV's 104.33 s -- and its master was a sparse
+warm-startable SSP written for the problem. Which part of it made the difference
+is a reading of `dev_notes/pricing-probe/probe_core.cpp`, not another
+measurement.
+
+C6 and C7 have the measurement they were told to wait for, and it is not an arc
+count: `edges_evaluated` is 2.00x the grid on every Euclidean shape the loop was
+run on, because the feasibility scan and the pricing round each read every pair
+once. The tree's job is that number, and the reasoning C1 was turned down for
+still applies to the rest of what those two sections claim.
 
 ## Working tree
 
 Clean apart from what this note is committed with.
 
-Local `main` is at `fc500f7`, C8. `origin/main` is at `42217f3` and one behind.
+Local `main` is at `19c23db`, C9. `origin/main` is at `42217f3` and three
+behind.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -859,6 +959,10 @@ user-visible:
   three times. Reading a pair is halved; on the shapes measured a whole pricing
   pass is 1.38x. Affects every `memory_mode = "lazy"` path and certification
   over a lazy source.
+- `memory_mode = "implicit"` on `assignment()` and `match_couples()`, and the
+  `certify` argument beside it. A 1:1 matching solved by generating the pairs
+  it needs, with a checked certificate for the complete problem; `"auto"` does
+  not select it.
 
 ## File map
 
@@ -898,6 +1002,10 @@ user-visible:
 | `c5_timing.log` | The current numbers from it |
 | `c8_trace.cpp` | The loop end to end: the per-round table, what the candidate set retains, what a cost was computed for, and the same source solved dense beside it |
 | `c8_trace.log` | The current numbers from it |
+| `c9_timing.R` | C9's measurement: `match_couples()` under `lazy` against under `implicit`, at shapes the dense path cannot run. Runs against the installed build, because `load_all()`'s is compiled `-O0` |
+| `c9_timing.log` | The current numbers from it |
+| `c9_rounds.R` | Where the loop's wall time goes, per round, out of the record the loop keeps for itself |
+| `c9_rounds.log` | The current numbers from it |
 
 `dev_notes/pricing-probe/`
 

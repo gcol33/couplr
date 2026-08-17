@@ -448,18 +448,41 @@ TEST_CASE("Assignment duals from a flow - forbidden pairs",
     REQUIRE(duals.match[0] == 0);
     REQUIRE(duals.match[1] == 2);
 
-    // Column 1 is unmatched and priced above the sink, so its multiplier is
-    // zero while the raw potential difference is not.
-    const double raw_col1 =
-        solved.result.potential[static_cast<std::size_t>(solved.layout.col_base + 1)] -
-        solved.result.potential[static_cast<std::size_t>(solved.layout.sink_node)];
-    REQUIRE(raw_col1 > TOL);
     REQUIRE(duals.v[1] == Approx(0.0));
 
     const lap::CertificateReport rep =
         lap::certify_assignment(cost, duals.match, duals.u, duals.v, TOL);
     REQUIRE(rep.certified_optimal);
     REQUIRE(rep.primal_objective == Approx(7.0));
+
+    // Nothing enters column 1 and its sink arc carries no flow, so pricing it
+    // above the sink leaves the flow certificate intact and is a dual the
+    // mapping has to be able to read. Its multiplier is zero there while the
+    // potential difference is not, which is the case v_j = min(b_j, 0) exists
+    // for, and reading the difference instead would put v_1 = 1 into a dual the
+    // assignment LP bounds above by zero.
+    std::vector<double> raised = solved.result.potential;
+    const std::size_t col1 =
+        static_cast<std::size_t>(solved.layout.col_base + 1);
+    const std::size_t sink =
+        static_cast<std::size_t>(solved.layout.sink_node);
+    raised[col1] = raised[sink] + 1.0;
+    REQUIRE(raised[col1] - raised[sink] > TOL);
+    REQUIRE(lap::certify_flow(solved.design.problem, solved.result.flow,
+                              raised, TOL).certified_optimal);
+
+    const lap::AssignmentDuals raised_duals = lap::map_assignment_duals(
+        solved.design.problem, solved.layout, solved.result.flow,
+        raised, lap::AssignmentEquality::Rows);
+    REQUIRE(raised_duals.ok());
+    REQUIRE(raised_duals.match[0] == 0);
+    REQUIRE(raised_duals.match[1] == 2);
+    REQUIRE(raised_duals.v[1] == Approx(0.0));
+
+    const lap::CertificateReport raised_rep = lap::certify_assignment(
+        cost, raised_duals.match, raised_duals.u, raised_duals.v, TOL);
+    REQUIRE(raised_rep.certified_optimal);
+    REQUIRE(raised_rep.primal_objective == Approx(7.0));
 }
 
 TEST_CASE("Flow certificate - an arc out of an idle node still has to price",

@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `19c23db` and `origin/main` is
-three behind at `42217f3`; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `e5fb1e5` and `origin/main` is
+four behind at `42217f3`; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -901,39 +901,83 @@ Two other R jobs held a core each throughout, so the seconds are not a
 quiet-machine measurement; both sides of each row ran back to back under the
 same load, and contention does not produce a ratio of 20.
 
+## C10 is in: the master's search starts at one node
+
+The reading of `dev_notes/pricing-probe/probe_core.cpp` found one difference.
+`ssp_augment_row()` seeds its queue with one row's arcs and stops at the first
+unmatched column it settles. `solve_min_cost_flow()` opened with a zero-cost arc
+from an auxiliary source to every unmatched row, because a 1:1 design carries
+supply 1 on every row node, so each search settled all of them at distance 0,
+relaxed the whole candidate set, and drained its queue. One pass over the arcs
+per unit of flow.
+
+C10 draws one node with `d(v) > 0`, runs Dijkstra from it, stops at the first
+node with `d(v) < 0` settled, and updates potentials by
+`pi[v] += min(dist[v], dist[t])`. The auxiliary source and sink are gone.
+
+| shape | lazy | implicit, C9 | implicit, C10 | C9 ratio | C10 ratio |
+|---|---|---|---|---|---|
+| 2,000 x 20,000 | 0.22 s | 1.95 s | 0.38 s | 0.10x | 0.58x |
+| 4,000 x 40,000 | 0.81 s | 13.64 s | 1.84 s | 0.09x | 0.44x |
+| 3,334 x 6,666 | 0.39 s | 5.89 s | 0.64 s | 0.07x | 0.61x |
+| 6,667 x 13,333 | 1.48 s | 24.64 s | 2.53 s | 0.06x | 0.58x |
+| 16,667 x 33,333 | 9.06 s | 183.28 s | 15.75 s | 0.05x | 0.58x |
+| 5,000 x 5,000 | 21.70 s | 314.10 s | 3.15 s | 0.08x | **6.89x** |
+
+Equal cost at 17 digits and certified optimal on every shape, as under C9. The
+square shape is the one the loop was built for and it goes from 12.5x slower
+than the lazy solve to 6.89x faster; the rectangular shapes go from 10x-20x
+slower to 1.7x slower.
+
+The master is no longer the call. At 6,667 x 13,333 it is 0.163 s where C9
+measured 22.674 s, and on the square shape 1.144 s where C9 measured 313.048 s.
+The square case's round 3 -- 159.5 s over 68,670 arcs, coming back short of its
+required flow -- is 0.318 s.
+
+Every design reads the same solver, and `c1_ab.sh` says what B8's one-solver
+structure was worth: dense 400 x 600 `sap` 0.27 s to 0.01 s, `csflow` 0.37 s to
+0.00 s, `push_relabel` 0.48 s to 0.01 s; the sparse candidate-set family 3.23 s
+to 0.00 s at 2,000 x 10,000 and 13.98 s to 0.05 s at 4,000 x 20,000, every cost
+identical at 17 digits across the two builds. The rows at 0.00 and 0.01 are at
+the timer's resolution and bound the ratio from below.
+
+Judged by B0 (1,542 cases; `total_cost`, `status`, `cardinality` and `n_matched`
+byte-identical, 87 match vectors and 13 potential vectors moved, all on tie-heavy
+inputs, which is the contract `FlowOptions::relax_eps` already carries), C0
+against the implicit path (26 pass, 0 fail, 7 known, 5 skipped), the R suite
+(6,824 passing, 3 skipped) and `cpp_tests` (299 cases, 77,853 assertions).
+
 ## Next action
 
-**The restricted master, before C6 and C7.** C6's tree and C7's bound prune the
-scans, and the scans are 7.5% of the call at the paper's shape: removing them
-entirely takes 24.5 s to 22.7 s and the loop still loses by 15x. That is the
-measurement those two sections were told to wait for, and it says their target
-is not the one that matters.
+**C6 and C7, and now the measurement points at them.** C9 closed by saying their
+target was not the one that mattered, and C10 reversed that: the scan is 1.105 s
+of a 1.280 s call at the paper's shape, 86%, where under C9 it was 7.5%.
 
-What matters is the cold solve of the seeded master. C1 looked inside it at the
-clearing and correctly dropped a 1-2% prize; it also recorded the fact that
-explains this one, that every search labels 83.6% to 99.9% of the nodes because
-the queue is drained rather than stopped at the sink. Jonker-Volgenant does not
-pay that: column reduction and augmenting row reduction place most rows before
-any shortest-path search runs. The question is whether the restricted master can
-be initialized the same way, over its arc set, and what that leaves.
+The 1.7x still owed on the rectangular shapes is one number. `evaluated_x_grid`
+is 2.00x to 3.00x on every Euclidean shape, because the feasibility scan and the
+pricing round each read every pair once per round, against one flat pass for the
+lazy JV, and both read a pair at the same 4 ns. That ratio is the whole of the
+remaining gap, and the tree's job is to remove it.
 
-Phase 0's prototype is the existence proof that the loop can be cheap on this
-shape -- 14.99 s against lazy JV's 104.33 s -- and its master was a sparse
-warm-startable SSP written for the problem. Which part of it made the difference
-is a reading of `dev_notes/pricing-probe/probe_core.cpp`, not another
-measurement.
+The other half of the master's constant was left alone deliberately.
+`vector<vector<ResArc>>` is one allocation per node and a cache miss per pop, and
+a CSR residual graph answers it; measuring that against a search that still
+fanned out from every row would have attributed neither. It is now measurable and
+is worth revisiting after C6.
 
-C6 and C7 have the measurement they were told to wait for, and it is not an arc
-count: `edges_evaluated` is 2.00x the grid on every Euclidean shape the loop was
-run on, because the feasibility scan and the pricing round each read every pair
-once. The tree's job is that number, and the reasoning C1 was turned down for
-still applies to the rest of what those two sections claim.
+C1's touched-list reset is worth revisiting for the same reason. It lost to
+`std::fill` because 83.6% of nodes were labelled per augmentation, which is what
+a search from every row does; a single-source search labels far fewer, and the
+three O(n_nodes) fills per augmentation are no longer a rounding error against
+the search they clear for.
 
 ## Working tree
 
-Clean apart from what this note is committed with.
+C10 is in the tree and uncommitted: `src/flow/flow_solve.cpp` and the one
+`cpp_tests/tests/test_flow_certify.cpp` fixture it moved. Everything else is
+clean apart from what this note is committed with.
 
-Local `main` is at `19c23db`, C9. `origin/main` is at `42217f3` and three
+Local `main` is at `e5fb1e5`, C9's note. `origin/main` is at `42217f3` and four
 behind.
 
 ```
@@ -963,6 +1007,12 @@ user-visible:
   `certify` argument beside it. A 1:1 matching solved by generating the pairs
   it needs, with a checked certificate for the complete problem; `"auto"` does
   not select it.
+- The flow solver searching from one node with an excess rather than from a
+  super-source over all of them. Every design compiled to the flow model gets
+  it: dense `sap`, `csflow`, `push_relabel` and `cycle_cancel`, `full_match()`,
+  the blocked and k:1 designs, and the implicit loop. Two orders of magnitude on
+  the shapes measured, and a different matching among equally optimal ones on a
+  cost matrix with ties.
 
 ## File map
 

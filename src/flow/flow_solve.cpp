@@ -24,21 +24,30 @@
 // constant sum_a cost(a) * lower(a), which is why the total cost is summed from
 // f = lower + g at the end rather than accumulated per augmentation.
 //
-// The residual d(v) is a b-flow, not a max-flow, so one more step turns it into
-// something successive shortest paths can run on. Add an auxiliary source SS
-// and an auxiliary sink TT outside the problem's own node range:
+// The residual d(v) is a b-flow: some nodes carry an excess to place and others
+// a deficit to fill. Because sum_v supply(v) = 0 and every lower bound
+// contributes -lower at its tail and +lower at its head, sum_v d(v) = 0, so the
+// two sides balance and the excess side sums to flow_required.
 //
-//     SS -> v   capacity  d(v), cost 0, for every v with d(v) > 0
-//     v  -> TT  capacity -d(v), cost 0, for every v with d(v) < 0
+// Successive shortest paths moves that b-flow one path at a time: take a node s
+// with d(s) > 0, find a shortest residual path from it to any node t with
+// d(t) < 0, and push what the two balances and the path allow. A feasible g
+// exists exactly when every excess can be delivered, so "a lower bound cannot be
+// met" is not a separate condition to test; it is the shortfall that leaves
+// flow_sent below flow_required, and the status distinguishes the two by how
+// much was placed.
 //
-// Because sum_v supply(v) = 0 and every lower bound contributes -lower at its
-// tail and +lower at its head, sum_v d(v) = 0, so the capacity out of SS equals
-// the capacity into TT. Call it flow_required. A feasible g exists exactly when
-// a maximum flow from SS to TT saturates it: saturating means every node's
-// balance is met, and any shortfall means no assignment of g meets them all.
-// So "a lower bound cannot be met" is not a separate condition to test; it is
-// the same shortfall that leaves flow_sent below flow_required, and the status
-// distinguishes the two by how much was placed.
+// The search starts at one excess node rather than at a super-source over all of
+// them. A super-source settles every excess node at distance zero and therefore
+// relaxes the whole arc set on every augmentation, which costs one pass over the
+// arcs per unit of flow whatever the arc set holds. A single source reaches only
+// the alternating tree that one node can grow.
+//
+// A source that reaches no deficit node is blocked for good, which is what lets
+// the loop skip it and still place a maximum flow. Every arc leaving its
+// reachable set R(s) is saturated, and a later path from another source that
+// entered R(s) would have to leave it again to finish, so nothing that happens
+// afterwards changes what s can reach.
 //
 // ---------------------------------------------------------------------------
 // Reduced costs and the search
@@ -47,24 +56,29 @@
 //     cbar(a) = cost(a) + pi[tail(a)] - pi[head(a)]
 //
 // Successive shortest paths keeps the invariant cbar(a) >= 0 on every residual
-// arc. Augmenting along a shortest path and then adding the distance labels to
-// the potentials restores it, and the arcs on that path come out at cbar == 0.
+// arc. A search that stops at the first deficit node t restores it by adding
+// min(dist[v], dist[t]) to every potential. An arc between two nodes at or past
+// dist[t] is left alone; an arc out of a node settled before t is covered by the
+// relaxation that gave its head a label; an arc into a node settled before t
+// gains dist[t] - dist[v] > 0. The arcs on the augmenting path come out at
+// cbar == 0.
 //
-// A cold start has pi == 0, so the invariant asks that no directed cycle of the
-// arc set has negative total cost. Every design compiler builds a layered
-// source -> rows -> columns -> sink network, which is acyclic, so this holds by
-// construction; the augmenting-path walk counts its steps and reports a cycle
-// rather than looping forever if it ever does not.
+// That clamp is also why the invariant has to hold before the first search
+// rather than from the first update onwards: an arc between two nodes the search
+// never reached keeps whatever cbar it had. So a cold start computes potentials
+// that give it. Relaxing pi[head] against pi[tail] + cost over the arc set until
+// nothing moves is the shortest distance from a virtual root joined to every
+// node at zero, which is the invariant written out; with every cost non-negative
+// the first pass changes nothing and leaves pi == 0, and no arc set can keep
+// moving for more than n_nodes passes unless it prices some cycle below zero.
 //
-// The search itself is Dijkstra with reinsertion: a node whose label improves
-// after it was already popped goes back on the queue. That is what makes the
-// first search correct when the arc costs straddle zero, which they do whenever
-// a cost matrix has negative entries. Reinsertion is also what makes the search
-// depend on cbar >= 0 for termination rather than only for its answer, so the
-// two places that invariant can be lost are handled where they arise: rounding
-// is read as rounding once the invariant is supposed to hold, and a queue that
-// outlives the bound on how often labels can improve reports the cycle it is
-// circling.
+// The search is then plain Dijkstra: with cbar >= 0 a settled node is final, so
+// the first deficit node to reach the top of the queue is the nearest one and
+// the search stops there rather than draining the queue. The two directions of
+// one arc are priced by expressions that are negatives of each other in exact
+// arithmetic and not in floating point, so both can round a few ulps below zero
+// at once. Where the invariant says the price cannot be negative, rounding is
+// the only thing that could have made it so, and it is read as rounding.
 #include "flow_solve.h"
 
 #include "../core/lap_certify.h"
@@ -149,20 +163,17 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         return out;
     }
 
-    const int32_t SS = n_nodes;
-    const int32_t TT = n_nodes + 1;
-    const int32_t N  = n_nodes + 2;
+    const int32_t N = n_nodes;
 
     // ---- starting point: potentials, then a flow consistent with them ----
 
     std::vector<double> pi(static_cast<std::size_t>(N), 0.0);
 
-    // Whether cbar >= 0 is already supposed to hold on every residual arc. A
-    // cold start does not have it: the arc set may price edges below zero, and
-    // the reinserting search below is what makes that case correct. Every
-    // later search does have it, and so does a warm start that passed the
-    // slackness repair, which is what lets the search read a reduced cost a few
-    // ulps below zero as the rounding it is.
+    // Whether cbar >= 0 already holds on every residual arc. A warm start that
+    // passed the slackness repair has it, which is what lets the search read a
+    // reduced cost a few ulps below zero as the rounding it is. Anything else is
+    // given it below, before the first search, because the potential update a
+    // search makes cannot repair an arc that search never reached.
     bool residual_nonneg = false;
 
     bool warm = !prob.warm_potential.empty() || !prob.warm_flow.empty();
@@ -230,6 +241,32 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         }
     }
 
+    if (!residual_nonneg) {
+        // f sits at the lower bound on every arc here, so the residual graph
+        // carries forward arcs only, and only where the bounds leave room.
+        // Relaxing until nothing moves is a shortest distance from a virtual
+        // root joined to every node at zero, which is cbar >= 0 written out.
+        bool moved = true;
+        int32_t passes = 0;
+        while (moved) {
+            if (++passes > n_nodes) {
+                LAP_THROW("FlowProblem: the residual graph carries a "
+                          "negative-cost cycle, so no shortest path exists");
+            }
+            moved = false;
+            for (int64_t a = 0; a < n_arcs; ++a) {
+                const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
+                if (arc.upper <= arc.lower) continue;
+                const double cand =
+                    pi[static_cast<std::size_t>(arc.tail)] + arc.cost;
+                if (cand + opts.tol < pi[static_cast<std::size_t>(arc.head)]) {
+                    pi[static_cast<std::size_t>(arc.head)] = cand;
+                    moved = true;
+                }
+            }
+        }
+    }
+
     // ---- node balances the starting flow leaves unmet ----
     //
     // Written against f rather than against lower alone, so the cold case is
@@ -271,19 +308,10 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         return iu;
     };
 
-    // Auxiliary arcs first and in node order, then the problem's own arcs in the
-    // order the compiler emitted them. Arcs are scanned in insertion order
-    // inside each adjacency list, so this ordering is what decides which of
-    // several equally-cheap shortest paths the search finds.
-    for (int32_t v = 0; v < n_nodes; ++v) {
-        const int64_t dv = d[static_cast<std::size_t>(v)];
-        if (dv > 0) {
-            add_arc(SS, v, dv, 0, 0.0);
-        } else if (dv < 0) {
-            add_arc(v, TT, -dv, 0, 0.0);
-        }
-    }
-
+    // The problem's own arcs, in the order the compiler emitted them. Arcs are
+    // scanned in insertion order inside each adjacency list, so this ordering is
+    // what decides which of several equally-cheap shortest paths the search
+    // finds.
     std::vector<int32_t> arc_slot(static_cast<std::size_t>(n_arcs), -1);
     for (int64_t a = 0; a < n_arcs; ++a) {
         const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
@@ -291,24 +319,6 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         arc_slot[static_cast<std::size_t>(a)] =
             add_arc(arc.tail, arc.head,
                     (arc.upper - arc.lower) - placed, placed, arc.cost);
-    }
-
-    // The auxiliary nodes sit outside the caller's potential vector, and their
-    // arcs are the only ones whose reduced cost the caller cannot control. Price
-    // SS above every node it feeds and TT below every node that feeds it, and
-    // those arcs enter the search non-negative, which is what the successive
-    // shortest path invariant needs before the first search. Cold potentials are
-    // all zero and both anchors land on zero with them.
-    {
-        double hi = -std::numeric_limits<double>::infinity();
-        double lo = std::numeric_limits<double>::infinity();
-        for (int32_t v = 0; v < n_nodes; ++v) {
-            const int64_t dv = d[static_cast<std::size_t>(v)];
-            if (dv > 0) hi = std::max(hi, pi[static_cast<std::size_t>(v)]);
-            if (dv < 0) lo = std::min(lo, pi[static_cast<std::size_t>(v)]);
-        }
-        pi[static_cast<std::size_t>(SS)] = std::isfinite(hi) ? hi : 0.0;
-        pi[static_cast<std::size_t>(TT)] = std::isfinite(lo) ? lo : 0.0;
     }
 
     // ---- successive shortest paths ----
@@ -320,32 +330,46 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     std::vector<double>  dist(static_cast<std::size_t>(N));
     std::vector<int32_t> pv(static_cast<std::size_t>(N));
     std::vector<int32_t> pe(static_cast<std::size_t>(N));
+
+    // A source that reached no deficit node, and that nothing done afterwards
+    // can bring back into play.
+    std::vector<char> blocked(static_cast<std::size_t>(N), 0);
     using Entry = std::pair<double, int32_t>;
 
-    // A node goes back on the queue whenever its label improves, so the number
-    // of pops is bounded only by how often that can happen: once per node when
-    // every reduced cost is non-negative, and at most once per node per
-    // residual arc when the first search has to work with costs that straddle
-    // zero. Past that bound the labels are descending around a cycle the
-    // residual graph prices below zero, and the search would circle it until it
-    // ran out of memory rather than ever emptying the queue.
+    // cbar >= 0 holds on every residual arc, so a settled node is final and a
+    // node is queued at most once per residual arc into it. Past that bound the
+    // invariant has been lost, and the search would circle whatever cycle the
+    // residual graph prices below zero rather than ever emptying the queue.
     int64_t n_res_arcs = 0;
     for (int32_t v = 0; v < N; ++v) {
         n_res_arcs += static_cast<int64_t>(g[static_cast<std::size_t>(v)].size());
     }
-    const int64_t max_pops = static_cast<int64_t>(N) * (n_res_arcs + 1);
+    const int64_t max_pops = n_res_arcs + static_cast<int64_t>(N) + 1;
 
     bool no_path = false;
+    int32_t src = 0;
     while (out.flow_sent < out.flow_required &&
            out.n_augmentations < max_augmentations) {
+        // An excess only falls and a deficit only rises, so a node this scan has
+        // passed cannot come back into play and the cursor never moves back.
+        while (src < N && (d[static_cast<std::size_t>(src)] <= 0 ||
+                           blocked[static_cast<std::size_t>(src)])) {
+            ++src;
+        }
+        if (src >= N) {
+            no_path = true;
+            break;
+        }
+
         std::fill(dist.begin(), dist.end(), INF);
         std::fill(pv.begin(), pv.end(), -1);
         std::fill(pe.begin(), pe.end(), -1);
 
         std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> pq;
-        dist[static_cast<std::size_t>(SS)] = 0.0;
-        pq.emplace(0.0, SS);
+        dist[static_cast<std::size_t>(src)] = 0.0;
+        pq.emplace(0.0, src);
 
+        int32_t dst = -1;
         int64_t pops = 0;
         while (!pq.empty()) {
             if (++pops > max_pops) {
@@ -357,6 +381,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             const double dcur = cur.first;
             const int32_t u = cur.second;
             if (dcur != dist[static_cast<std::size_t>(u)]) continue;
+            if (d[static_cast<std::size_t>(u)] < 0) { dst = u; break; }
 
             const std::vector<ResArc>& adj = g[static_cast<std::size_t>(u)];
             for (int32_t ei = 0; ei < static_cast<int32_t>(adj.size()); ++ei) {
@@ -371,7 +396,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                 // search would keep going round it lowering labels. Where the
                 // invariant says the price cannot be negative, rounding is the
                 // only thing that could have made it so.
-                if (residual_nonneg && rc < 0.0) rc = 0.0;
+                if (rc < 0.0) rc = 0.0;
                 const double nd = dcur + rc;
                 if (nd + opts.relax_eps < dist[static_cast<std::size_t>(e.to)]) {
                     dist[static_cast<std::size_t>(e.to)] = nd;
@@ -382,44 +407,32 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             }
         }
 
-        if (!std::isfinite(dist[static_cast<std::size_t>(TT)])) {
-            no_path = true;
-            break;
+        if (dst < 0) {
+            blocked[static_cast<std::size_t>(src)] = 1;
+            continue;
         }
 
-        // Reached nodes take their distance label. Unreached ones take the
-        // largest label the search produced, which is what keeps cbar >= 0 on
-        // every residual arc rather than only on the ones the search could
-        // walk.
-        //
-        // No residual arc leaves a reached node for an unreached one, or the
-        // head would have been labelled. Residual arcs in the other direction
-        // do exist, and on those cbar becomes cbar + shift[tail] - dist[head];
-        // leaving an unreached tail alone drives that below zero as soon as the
-        // head's label is positive, which is exactly a column no admissible
-        // pair can reach still holding a residual arc into the sink. Shifting
-        // every unreached node by the maximum label makes shift[tail] >=
-        // dist[head] for every such arc, so none of them can go negative, and
-        // it leaves every reached node's potential untouched, so the flow the
-        // next search finds is the same one.
-        double shift = 0.0;
+        // Nodes settled before the deficit node take their own label, which is
+        // final because a settled node's label is; every other node takes the
+        // deficit node's, which is what keeps cbar >= 0 on the arcs the search
+        // stopped short of.
+        const double reach = dist[static_cast<std::size_t>(dst)];
         for (int32_t v = 0; v < N; ++v) {
             const double dv = dist[static_cast<std::size_t>(v)];
-            if (std::isfinite(dv)) shift = std::max(shift, dv);
-        }
-        for (int32_t v = 0; v < N; ++v) {
-            const double dv = dist[static_cast<std::size_t>(v)];
-            pi[static_cast<std::size_t>(v)] += std::isfinite(dv) ? dv : shift;
+            pi[static_cast<std::size_t>(v)] += (dv < reach) ? dv : reach;
         }
 
-        int64_t aug = out.flow_required - out.flow_sent;
+        int64_t aug = d[static_cast<std::size_t>(src)];
+        if (-d[static_cast<std::size_t>(dst)] < aug) {
+            aug = -d[static_cast<std::size_t>(dst)];
+        }
         int32_t steps = 0;
-        for (int32_t v = TT; v != SS; ) {
+        for (int32_t v = dst; v != src; ) {
             const int32_t u = pv[static_cast<std::size_t>(v)];
             const int32_t ei = pe[static_cast<std::size_t>(v)];
             if (u < 0) {
-                LAP_THROW("FlowProblem: the augmenting path from the auxiliary "
-                          "sink has no predecessor at node " + std::to_string(v));
+                LAP_THROW("FlowProblem: the augmenting path from the deficit "
+                          "node has no predecessor at node " + std::to_string(v));
             }
             // A predecessor chain longer than the node count has closed a
             // cycle, which a shortest-path tree cannot contain unless the
@@ -433,7 +446,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             v = u;
         }
 
-        for (int32_t v = TT; v != SS; ) {
+        for (int32_t v = dst; v != src; ) {
             const int32_t u = pv[static_cast<std::size_t>(v)];
             const int32_t ei = pe[static_cast<std::size_t>(v)];
             ResArc& e = g[static_cast<std::size_t>(u)][static_cast<std::size_t>(ei)];
@@ -442,9 +455,10 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             v = u;
         }
 
+        d[static_cast<std::size_t>(src)] -= aug;
+        d[static_cast<std::size_t>(dst)] += aug;
         out.flow_sent += aug;
         ++out.n_augmentations;
-        residual_nonneg = true;
     }
 
     // ---- read the answer back ----

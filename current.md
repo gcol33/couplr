@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `e5fb1e5` and `origin/main` is
-four behind at `42217f3`; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `9161b42` and `origin/main` is
+six behind at `42217f3`; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -973,12 +973,9 @@ the search they clear for.
 
 ## Working tree
 
-C10 is in the tree and uncommitted: `src/flow/flow_solve.cpp` and the one
-`cpp_tests/tests/test_flow_certify.cpp` fixture it moved. Everything else is
-clean apart from what this note is committed with.
+Clean apart from what this note is committed with.
 
-Local `main` is at `e5fb1e5`, C9's note. `origin/main` is at `42217f3` and four
-behind.
+Local `main` is at `9161b42`, C10. `origin/main` is at `42217f3` and six behind.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main

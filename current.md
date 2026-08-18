@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-18. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-19. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
 the flow model's design, findings and repros.
@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `642d09f`, C6 and C7 and
-their notes; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `5efbd32` and nothing is
+unpushed; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -292,6 +292,16 @@ Open, and confirmed open on GitHub:
 - **`evaluated_x_grid` is the load-independent half of `c9_timing.R`'s output.**
   It counts work rather than time, so it reproduces exactly where the wall
   clock does not, and it is what a pruning change should be judged on first.
+- **Counting and timing perturb each other inside the master.** An extra
+  `O(n_nodes)` pass added to a probe to count labelled nodes moved the measured
+  share of the solve spent clearing from 56% to 96%, on the same build.
+  `c1_probe.cpp` therefore counts with no clocks in the build, and the wall
+  clock is answered separately by an A/B through `c11_timing.cpp`.
+- **B0 reports only the first differing field of a case**, so a case whose match
+  vector moved hides every field after it, cost included. A change that could
+  touch the answer is judged by `c1_fieldcheck.R`, which saves every captured
+  field under one build and compares it against another, not by B0's headline
+  count.
 
 ## The derived status fixes are in
 
@@ -1099,22 +1109,40 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-Clean apart from what this note is committed with.
+Clean apart from what this note is committed with, and `origin/main` is level
+with local at `5efbd32`, verified against the remote rather than against the
+tracking ref.
 
-`origin/main` was pushed to `642d09f` on 2026-08-18, so C6 and C7 and their
-measurement artefacts are on the remote. C11 sits on top of that.
+```
+642d09f  docs   the measurement keeps its harness, and the big shape does not time
+fd64fe4  perf   the residual graph is one array, and the predecessor was in it
+2145b82  docs   C11 is in, and the master is what it leaves behind
+76cbb5d  perf   the search clears what it labelled, and the shift cancels
+5efbd32  docs   C1 comes back, and the queue is what is left
+```
 
-Nothing is half-finished. The C++ suite, the R suite, B0 and C0 were all run
-against the tree as it stands, and `dev_notes/phase3/` holds the harnesses and
-the logs behind every number quoted above. The installed build matches the
-committed source, so a timing run needs no reinstall.
+Nothing is half-finished. The C++ suite, the R suite, B0, C0 and the field-level
+comparison were all run against the tree as it stands, and the installed build
+was reinstalled from a cleared object tree at `5efbd32`, so a timing run needs no
+reinstall.
+
+`dev_notes/` stays gitignored, which means the phase-3 harnesses and logs exist
+on this machine only and a fresh clone gets none of them. `roadmap.md` and
+`current.md` are tracked but `.Rbuildignore`d, so they stay out of the tarball.
+
+To push from here:
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
 ```
 
-`dev_notes/` stays gitignored; `roadmap.md` and `current.md` are tracked but
-`.Rbuildignore`d, so they stay out of the tarball.
+Two things about running the gates, both learned the hard way here. Every
+install for a timing comparison starts from `rm -f src/*.o src/*/*.o src/*.dll`,
+because `compile_dll()` leaves `-O0` objects and `R CMD INSTALL` reuses any
+object newer than its source. And the R suite takes about 150 s but has to be
+launched as a Scheduled Task rather than through the harness, which kills a job
+at the turn boundary; a launcher that writes its R body with
+`Set-Content -Encoding utf8` gives R a BOM and R refuses to parse it.
 
 ## What the next release owes NEWS
 

@@ -275,6 +275,15 @@ Open, and confirmed open on GitHub:
   `devtools::install()` first, and let exactly one install finish: a second one
   launched over an in-flight build fails with `cannot remove earlier
   installation, is it in use?`.
+- **16,667 x 33,333 does not time reliably through `c9_timing.R` on beast.** The
+  same installed build measured 8.11 s and 24.19 s on consecutive sweeps, and a
+  before column taken across covariate counts came back non-monotone in p. An
+  R-level run cannot pin itself to a core the way `c4_timing.cpp` does, and at
+  that shape the noise is larger than the effect being measured. 6,667 x 13,333
+  reproduced to the digit across two independent installs; read ratios there.
+- **`evaluated_x_grid` is the load-independent half of `c9_timing.R`'s output.**
+  It counts work rather than time, so it reproduces exactly where the wall
+  clock does not, and it is what a pruning change should be judged on first.
 
 ## The derived status fixes are in
 
@@ -1025,8 +1034,12 @@ the search they clear for.
 
 Clean apart from what this note is committed with.
 
-Local `main` is at `6580679`, C6 and C7. `origin/main` is at `a387d11` and one
-behind.
+Local `main` is at `6580679`, C6 and C7. `origin/main` is at `a387d11` and three
+behind: the code, this note, and the measurement artefacts committed with it.
+
+Nothing is half-finished. The C++ suite, the R suite, B0 and C0 were all run
+against the tree as it stands, and `dev_notes/phase3/` holds the harnesses and
+the logs behind every number quoted above.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -1104,6 +1117,10 @@ user-visible:
 | `c9_timing.log` | The current numbers from it |
 | `c9_rounds.R` | Where the loop's wall time goes, per round, out of the record the loop keeps for itself |
 | `c9_rounds.log` | The current numbers from it |
+| `c67_ab.sh` | C6/C7's front-door A/B: `c9_timing.R` against installed builds of the working tree and of HEAD-without-the-tree, both from a deleted object tree |
+| `c67_ab.log` | The current numbers from it, both metrics, three shapes |
+| `c67_dim.sh` | The same A/B swept over the covariate count, which is what `kBallTreeLinearVarLimit` was set from |
+| `c67_dim.log` | The current numbers from it. Read 6,667 x 13,333 only |
 
 `dev_notes/pricing-probe/`
 

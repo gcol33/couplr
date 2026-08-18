@@ -1048,22 +1048,54 @@ noise, at 1:1 it is over half, and 10,000 x 10,000 reads 5.968 s to 5.408 s.
 `dev_notes/phase3/c11_timing.log` holds both builds and both passes; the answer
 columns are printed beside the timings and agree throughout.
 
+## C1 was turned down on a premise C10 removed
+
+C1's touched-list reset lost because a restricted arc set did not give a small
+labelled set: a super-source search drained its queue and labelled 83.6% of the
+nodes on a candidate-set problem, 99.9% on the complete ones, so the list was
+the array and walking it was scattered writes against a linear `std::fill`.
+
+C10's search starts at one excess node and stops at the first deficit node.
+Counted on the loop's own candidate set, `dev_notes/phase3/c1_probe.cpp` reports
+7.3 labelled nodes per augmentation of 22,002 at 2,000 x 20,000, 9.7 of 20,002
+at 6,667 x 13,333, and 429 and 646 of 10,002 and 20,002 on the two 1:1 shapes:
+0.03% to 4.3% where C1 measured 83.6%.
+
+So `dist` and `pe` are held at their cleared value between augmentations and the
+next search clears only what the last one labelled. The potential update was
+never in C1's three fills and is the same shape; it is written as the difference
+from the deficit node's label, because adding that label to every node is a
+constant shift and a potential is only ever read as a difference here, in
+`cbar(a)` and in the gauge against `pi[0]`. Both cancel it, so nothing has to
+carry the omitted shift.
+
+Master seconds against `fd64fe4`: 0.027 s to 0.002 s at 2,000 x 20,000, 0.118 s
+to 0.035 s at 6,667 x 13,333, 0.800 s to 0.210 s at 16,667 x 33,333, and 2.706 s
+to 1.956 s at 10,000 x 10,000, where the whole loop reads 5.414 s to 4.710 s.
+
+Clearing the two arrays is bit-identical work. Dropping the shift is not, and
+`dev_notes/phase3/c1_fieldcheck.R` says exactly what it moved: the potentials by
+at most 2.5e-16 and the certificate figures computed from them by at most
+1.8e-15, over 1,542 cases whose matches and costs are identical to the byte and
+whose `certified_optimal` never changes. B0 against its stored baseline still
+reads 100 differing cases, with the set moved by one swap. The baseline was not
+regenerated.
+
 ## Next action
 
-**What the master still pays per augmentation, whatever it reached.**
-Two `O(n_nodes)` fills clear `dist` and `pe` before each search, and the
-potential update walks every node after it. All three are the search's own
-bookkeeping rather than the search, and all three are sized by the graph instead
-of by the alternating tree one source grew.
+**D1 through D3, the `match_path()` caliper and ratio sweep.** Phase 3's
+remaining spec item, and the last one before the paper's own benchmark is worth
+re-running end to end.
 
-C1 turned the touched list down when 83.6% of nodes were labelled per
-augmentation, which is what a search from every row does. A single-source search
-labels far fewer, so the ratio that decided it no longer holds, and the same
-list would now cover the potential update as well as the two fills. That is the
-one measurement to take next, and `dev_notes/phase3/c11_timing.cpp` is the
-harness for it: it reports the master alone, which is exactly what would move.
-
-After that, D1 through D3, the `match_path()` caliper and ratio sweep.
+Nothing in the master is left that is sized by the graph rather than by the work.
+Every `O(n_nodes)` pass per augmentation is gone, the residual graph is one
+array, and the arc set is bounded rather than read. What the master still costs
+is the Dijkstra itself, and the next thing that would move it is the queue: a
+`std::priority_queue` with lazy deletion against a bucket or radix structure over
+integer-scaled keys. C1's own lesson applies before any of that is written,
+which is to count first: `dev_notes/phase3/c1_probe.cpp` already reports pops
+per augmentation, at 3.1 to 352 against 7.3 to 646 labelled, so the queue is
+holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
@@ -1160,6 +1192,10 @@ user-visible:
 | `c11_timing.cpp` | What the restricted master costs on its own, summed out of the per-round record the loop keeps, with the answer columns printed beside it. Pins to one core |
 | `c11_ab.sh` | C11's A/B: the same harness built against a working-tree `flow_solve.cpp` and against HEAD's, with only that file stashed |
 | `c11_timing.log` | The current numbers from it, both builds, two passes each |
+| `c1_probe.cpp` | What a touched list could return, counted before one was written: labelled and settled nodes per augmentation on a cold restricted master. Needs the counter patch its header carries |
+| `c1_probe.log` | The current numbers from it |
+| `c1_fieldcheck.R` | Every field B0 captures, saved under one build and compared against another, so a cost change cannot hide behind a case's first differing field |
+| `c1_touched.log` | C1 revisited: the three-build timing table, the counts that decided it, and the field-level comparison of what the potential update moved |
 
 `dev_notes/pricing-probe/`
 

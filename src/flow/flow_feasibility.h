@@ -44,6 +44,7 @@
 #include "../core/lap_error.h"
 #include "../core/lap_hall.h"
 #include "flow_candidates.h"
+#include "flow_row_search.h"
 #include "flow_topk.h"
 
 #include <cstddef>
@@ -125,8 +126,13 @@ struct FeasibilityRound {
 // at least one -- a round that adds nothing hands the caller back the same
 // deficiency and the same round to run again -- so a non-positive width throws
 // rather than looping.
+//
+// `search` answers step 3 for the source it was built over, and a caller that
+// runs several rounds passes the same one so whatever structure it holds is
+// built once.
 template <class Source>
-FeasibilityRound feasibility_round(const Source& src, CandidateSet& cand, int width) {
+FeasibilityRound feasibility_round(const Source& src, CandidateSet& cand, int width,
+                                   RowSearch<Source>& search) {
     const int64_t nrow = src.nrow;
     const int64_t ncol = src.ncol;
 
@@ -160,17 +166,13 @@ FeasibilityRound feasibility_round(const Source& src, CandidateSet& cand, int wi
 
     // Cheapest first, which is the k-nearest seed the ladder was standing in
     // for, taken over the columns that can repair the deficiency.
+    RowScanWork work;
     for (std::size_t t = 0; t < rows.size(); ++t) {
-        const int64_t i = rows[t];
-        for (int64_t j = 0; j < ncol; ++j) {
-            if (in_cols[static_cast<std::size_t>(j)]) continue;
-            ++out.n_scanned;
-            double c = 0.0;
-            if (!cost_if_allowed(src, i, j, c)) continue;
-            ++out.n_evaluated;
-            keep.offer(static_cast<int64_t>(t), c, static_cast<int32_t>(j));
-        }
+        search.cheapest_outside(src, rows[t], in_cols, keep,
+                                static_cast<int64_t>(t), work);
     }
+    out.n_scanned = work.n_scanned;
+    out.n_evaluated = work.n_evaluated;
     cand.note_evaluated(out.n_evaluated);
 
     std::vector<CandidateSet::Pair> want;
@@ -192,6 +194,14 @@ FeasibilityRound feasibility_round(const Source& src, CandidateSet& cand, int wi
     out.added = cand.add_pairs(want);
     out.status = FeasibilityRound::Status::reseeded;
     return out;
+}
+
+// One round against a search built for this call alone, for a caller running a
+// single round.
+template <class Source>
+FeasibilityRound feasibility_round(const Source& src, CandidateSet& cand, int width) {
+    RowSearch<Source> search(src);
+    return feasibility_round(src, cand, width, search);
 }
 
 }  // namespace lap

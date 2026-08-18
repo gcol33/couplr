@@ -45,6 +45,7 @@
 #include "flow_feasibility.h"
 #include "flow_pricing.h"
 #include "flow_problem.h"
+#include "flow_row_search.h"
 #include "flow_solve.h"
 
 #include <algorithm>
@@ -319,8 +320,9 @@ void tighten_matched_duals(const Source& src, const std::vector<int>& match,
 //
 // `cand` carries whatever seed the caller has. An empty set is a valid start:
 // the first master places nothing, and the feasibility phase seeds every row
-// with its `width` cheapest admissible columns. That seed is a scan of the
-// whole source, which is the cost a metric tree exists to remove.
+// with its `width` cheapest admissible columns. That seed and the pricing both
+// go through one RowSearch built here, so a source carrying geometry answers
+// them from a bound over its columns rather than by reading all of them.
 template <class Source>
 ImplicitResult solve_implicit_assignment(const Source& src,
                                          FlowProblem& prob,
@@ -339,10 +341,13 @@ ImplicitResult solve_implicit_assignment(const Source& src,
 
     expand_block_subset(prob, 0, cand);
 
-    // The ladder, over the deficient rows alone. A feasibility round scans
-    // every column of every row it is called for whatever width it keeps, so a
-    // deficiency that survives a round is cheaper to attack wider than to
-    // attack again at the same width.
+    // Whatever the source can be asked about a row without reading it, built
+    // once and put both the seed's question and the pricer's.
+    RowSearch<Source> search(src);
+
+    // The ladder, over the deficient rows alone. A feasibility round costs the
+    // same per row whatever width it keeps, so a deficiency that survives a
+    // round is cheaper to attack wider than to attack again at the same width.
     int width = opts.width;
 
     bool decided = false;
@@ -374,7 +379,7 @@ ImplicitResult solve_implicit_assignment(const Source& src,
             rec.kind = ImplicitRound::Kind::reseeded;
 
             const Clock::time_point t_seed = Clock::now();
-            FeasibilityRound seeded = feasibility_round(src, cand, width);
+            FeasibilityRound seeded = feasibility_round(src, cand, width, search);
             rec.pricing_seconds = seconds_since(t_seed);
             rec.n_evaluated = seeded.n_evaluated;
 
@@ -423,7 +428,7 @@ ImplicitResult solve_implicit_assignment(const Source& src,
 
         const Clock::time_point t_price = Clock::now();
         const BlockPricing priced =
-            price_block(src, duals.u, duals.v, cand, opts.keep_per_row, opts.tol);
+            search.price(src, duals.u, duals.v, cand, opts.keep_per_row, opts.tol);
         rec.pricing_seconds  = seconds_since(t_price);
         rec.min_reduced_cost = priced.min_reduced_cost;
         rec.n_violators      = priced.n_violators;

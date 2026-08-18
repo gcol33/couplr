@@ -99,7 +99,7 @@ namespace lap {
 namespace {
 
 // One direction of a residual arc. `rev` is the index of the opposite direction
-// inside the adjacency list of `to`, so pushing flow is two array writes.
+// in the same array, so pushing flow is two array writes.
 struct ResArc {
     int32_t to   = -1;
     int32_t rev  = -1;
@@ -107,7 +107,26 @@ struct ResArc {
     double  cost = 0.0;
 };
 
-using Residual = std::vector<std::vector<ResArc>>;
+// The residual graph in compressed rows: every arc in one array, and the offset
+// each node's arcs begin at. A problem arc contributes one forward direction at
+// its tail and one reverse at its head, so both degrees are known before
+// anything is written and the arcs of a node land contiguously, which is how
+// the search reads them.
+struct Residual {
+    std::vector<int32_t> start;
+    std::vector<ResArc>  arcs;
+
+    int32_t begin_of(int32_t v) const {
+        return start[static_cast<std::size_t>(v)];
+    }
+    int32_t end_of(int32_t v) const {
+        return start[static_cast<std::size_t>(v) + 1];
+    }
+    ResArc& at(int32_t e) { return arcs[static_cast<std::size_t>(e)]; }
+    const ResArc& at(int32_t e) const {
+        return arcs[static_cast<std::size_t>(e)];
+    }
+};
 
 // int64 addition that reports overflow instead of wrapping, because the node
 // balances are sums of caller-supplied capacities and a wrapped balance turns
@@ -147,6 +166,16 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
 
     const int64_t n_arcs  = static_cast<int64_t>(prob.arcs.size());
     const int32_t n_nodes = prob.n_nodes;
+
+    // The residual graph holds two directions per arc and names each of them by
+    // a 32-bit index, which is what keeps a residual arc down to one cache
+    // line's worth. Beyond this the index is what would fail rather than the
+    // memory, so the bound is checked rather than trusted.
+    if (n_arcs > static_cast<int64_t>(std::numeric_limits<int32_t>::max()) / 2) {
+        LAP_THROW_DIMENSION("FlowProblem: " + std::to_string(n_arcs) +
+                            " expanded arcs is more than the residual graph "
+                            "can index");
+    }
 
     if (!prob.warm_flow.empty() &&
         static_cast<int64_t>(prob.warm_flow.size()) != n_arcs) {
@@ -295,30 +324,33 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
 
     // ---- residual graph ----
 
-    Residual g(static_cast<std::size_t>(N));
-    auto add_arc = [&g](int32_t u, int32_t v, int64_t cap_fwd, int64_t cap_rev,
-                        double cost) -> int32_t {
-        const std::size_t su = static_cast<std::size_t>(u);
-        const std::size_t sv = static_cast<std::size_t>(v);
-        const int32_t iu = static_cast<int32_t>(g[su].size());
-        g[su].push_back(ResArc{v, -1, cap_fwd, cost});
-        const int32_t iv = static_cast<int32_t>(g[sv].size());
-        g[sv].push_back(ResArc{u, iu, cap_rev, -cost});
-        g[su][static_cast<std::size_t>(iu)].rev = iv;
-        return iu;
-    };
+    Residual g;
+    g.start.assign(static_cast<std::size_t>(N) + 1, 0);
+    for (int64_t a = 0; a < n_arcs; ++a) {
+        const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
+        ++g.start[static_cast<std::size_t>(arc.tail) + 1];
+        ++g.start[static_cast<std::size_t>(arc.head) + 1];
+    }
+    for (int32_t v = 0; v < N; ++v) {
+        g.start[static_cast<std::size_t>(v) + 1] +=
+            g.start[static_cast<std::size_t>(v)];
+    }
+    g.arcs.assign(static_cast<std::size_t>(2 * n_arcs), ResArc{});
 
-    // The problem's own arcs, in the order the compiler emitted them. Arcs are
-    // scanned in insertion order inside each adjacency list, so this ordering is
-    // what decides which of several equally-cheap shortest paths the search
-    // finds.
+    // The problem's own arcs, in the order the compiler emitted them. A node's
+    // arcs are scanned in the order they were written, so this ordering is what
+    // decides which of several equally-cheap shortest paths the search finds.
+    std::vector<int32_t> cursor(g.start.begin(), g.start.end() - 1);
     std::vector<int32_t> arc_slot(static_cast<std::size_t>(n_arcs), -1);
     for (int64_t a = 0; a < n_arcs; ++a) {
         const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
         const int64_t placed = f[static_cast<std::size_t>(a)] - arc.lower;
-        arc_slot[static_cast<std::size_t>(a)] =
-            add_arc(arc.tail, arc.head,
-                    (arc.upper - arc.lower) - placed, placed, arc.cost);
+        const int32_t iu = cursor[static_cast<std::size_t>(arc.tail)]++;
+        const int32_t iv = cursor[static_cast<std::size_t>(arc.head)]++;
+        g.at(iu) = ResArc{arc.head, iv,
+                          (arc.upper - arc.lower) - placed, arc.cost};
+        g.at(iv) = ResArc{arc.tail, iu, placed, -arc.cost};
+        arc_slot[static_cast<std::size_t>(a)] = iu;
     }
 
     // ---- successive shortest paths ----
@@ -328,7 +360,9 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
 
     const double INF = std::numeric_limits<double>::infinity();
     std::vector<double>  dist(static_cast<std::size_t>(N));
-    std::vector<int32_t> pv(static_cast<std::size_t>(N));
+
+    // The arc a node was reached by. Its reverse names the node it was reached
+    // from, so the predecessor needs no array of its own.
     std::vector<int32_t> pe(static_cast<std::size_t>(N));
 
     // A source that reached no deficit node, and that nothing done afterwards
@@ -340,11 +374,8 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     // node is queued at most once per residual arc into it. Past that bound the
     // invariant has been lost, and the search would circle whatever cycle the
     // residual graph prices below zero rather than ever emptying the queue.
-    int64_t n_res_arcs = 0;
-    for (int32_t v = 0; v < N; ++v) {
-        n_res_arcs += static_cast<int64_t>(g[static_cast<std::size_t>(v)].size());
-    }
-    const int64_t max_pops = n_res_arcs + static_cast<int64_t>(N) + 1;
+    const int64_t max_pops =
+        static_cast<int64_t>(g.arcs.size()) + static_cast<int64_t>(N) + 1;
 
     bool no_path = false;
     int32_t src = 0;
@@ -362,7 +393,6 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         }
 
         std::fill(dist.begin(), dist.end(), INF);
-        std::fill(pv.begin(), pv.end(), -1);
         std::fill(pe.begin(), pe.end(), -1);
 
         std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> pq;
@@ -383,9 +413,10 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             if (dcur != dist[static_cast<std::size_t>(u)]) continue;
             if (d[static_cast<std::size_t>(u)] < 0) { dst = u; break; }
 
-            const std::vector<ResArc>& adj = g[static_cast<std::size_t>(u)];
-            for (int32_t ei = 0; ei < static_cast<int32_t>(adj.size()); ++ei) {
-                const ResArc& e = adj[static_cast<std::size_t>(ei)];
+            const int32_t lo = g.begin_of(u);
+            const int32_t hi = g.end_of(u);
+            for (int32_t ei = lo; ei < hi; ++ei) {
+                const ResArc& e = g.at(ei);
                 if (e.cap <= 0) continue;
                 double rc = e.cost + pi[static_cast<std::size_t>(u)] -
                             pi[static_cast<std::size_t>(e.to)];
@@ -400,7 +431,6 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                 const double nd = dcur + rc;
                 if (nd + opts.relax_eps < dist[static_cast<std::size_t>(e.to)]) {
                     dist[static_cast<std::size_t>(e.to)] = nd;
-                    pv[static_cast<std::size_t>(e.to)] = u;
                     pe[static_cast<std::size_t>(e.to)] = ei;
                     pq.emplace(nd, e.to);
                 }
@@ -428,9 +458,8 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         }
         int32_t steps = 0;
         for (int32_t v = dst; v != src; ) {
-            const int32_t u = pv[static_cast<std::size_t>(v)];
             const int32_t ei = pe[static_cast<std::size_t>(v)];
-            if (u < 0) {
+            if (ei < 0) {
                 LAP_THROW("FlowProblem: the augmenting path from the deficit "
                           "node has no predecessor at node " + std::to_string(v));
             }
@@ -441,18 +470,16 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                 LAP_THROW("FlowProblem: the residual graph carries a "
                           "negative-cost cycle, so no shortest path exists");
             }
-            aug = std::min(aug, g[static_cast<std::size_t>(u)]
-                                 [static_cast<std::size_t>(ei)].cap);
-            v = u;
+            const ResArc& e = g.at(ei);
+            aug = std::min(aug, e.cap);
+            v = g.at(e.rev).to;
         }
 
         for (int32_t v = dst; v != src; ) {
-            const int32_t u = pv[static_cast<std::size_t>(v)];
-            const int32_t ei = pe[static_cast<std::size_t>(v)];
-            ResArc& e = g[static_cast<std::size_t>(u)][static_cast<std::size_t>(ei)];
+            ResArc& e = g.at(pe[static_cast<std::size_t>(v)]);
             e.cap -= aug;
-            g[static_cast<std::size_t>(e.to)][static_cast<std::size_t>(e.rev)].cap += aug;
-            v = u;
+            g.at(e.rev).cap += aug;
+            v = g.at(e.rev).to;
         }
 
         d[static_cast<std::size_t>(src)] -= aug;
@@ -469,10 +496,8 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     detail::CompensatedSum total;
     for (int64_t a = 0; a < n_arcs; ++a) {
         const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
-        const ResArc& fwd = g[static_cast<std::size_t>(arc.tail)]
-                             [static_cast<std::size_t>(arc_slot[static_cast<std::size_t>(a)])];
-        const int64_t placed = g[static_cast<std::size_t>(fwd.to)]
-                                [static_cast<std::size_t>(fwd.rev)].cap;
+        const ResArc& fwd = g.at(arc_slot[static_cast<std::size_t>(a)]);
+        const int64_t placed = g.at(fwd.rev).cap;
         const int64_t fa = arc.lower + placed;
         out.flow[static_cast<std::size_t>(a)] = fa;
         total.add(arc.cost * static_cast<double>(fa));

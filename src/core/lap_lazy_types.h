@@ -112,6 +112,23 @@ public:
     // un-negated copy of the source.
     bool is_negated() const { return negate_; }
 
+    // The geometry behind the distance, for a caller that prunes pairs rather
+    // than evaluating them. A tree over the columns bounds a subtree from the
+    // coordinates, the metric and the covariance, and reading them from here
+    // is what keeps the distance itself written once, in raw_distance().
+    int64_t n_vars() const { return n_vars_; }
+    DistanceMetric metric() const { return metric_; }
+    double max_distance() const { return max_distance_; }
+    const std::vector<CaliperSpec>& calipers() const { return calipers_; }
+    const std::vector<double>& inv_cov() const { return inv_cov_; }
+
+    const double* left_row(int64_t i) const {
+        return &left_[static_cast<size_t>(i * n_vars_)];
+    }
+    const double* right_row(int64_t j) const {
+        return &right_[static_cast<size_t>(j * n_vars_)];
+    }
+
 private:
     bool passes_calipers(int64_t i, int64_t j) const {
         if (calipers_.empty()) return true;

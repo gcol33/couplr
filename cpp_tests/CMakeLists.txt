@@ -108,6 +108,9 @@ set(TEST_SOURCES
     tests/test_ground_truth.cpp
     tests/test_flow_model.cpp
     tests/test_flow_candidates.cpp
+    tests/test_flow_balltree.cpp
+    tests/test_flow_tree_pricing.cpp
+    tests/test_flow_tree_nearest.cpp
     tests/test_flow_pricing.cpp
     tests/test_flow_feasibility.cpp
     tests/test_flow_implicit.cpp

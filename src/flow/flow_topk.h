@@ -32,6 +32,10 @@ public:
         }
     }
 
+    // How many entries a row keeps, which is what a producer that selects
+    // before offering has to select.
+    int32_t capacity() const { return keep_; }
+
     void offer(int64_t i, double key, int32_t j) {
         if (keep_ == 0) return;
         const std::ptrdiff_t off =

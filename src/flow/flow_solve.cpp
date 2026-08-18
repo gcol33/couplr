@@ -359,11 +359,20 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     if (max_augmentations <= 0) max_augmentations = out.flow_required;
 
     const double INF = std::numeric_limits<double>::infinity();
-    std::vector<double>  dist(static_cast<std::size_t>(N));
+    // Both arrays are held at their cleared value between augmentations, so a
+    // search starts from a clean one without either having been walked.
+    std::vector<double>  dist(static_cast<std::size_t>(N), INF);
 
     // The arc a node was reached by. Its reverse names the node it was reached
     // from, so the predecessor needs no array of its own.
-    std::vector<int32_t> pe(static_cast<std::size_t>(N));
+    std::vector<int32_t> pe(static_cast<std::size_t>(N), -1);
+
+    // The nodes a search gave a finite label to, which are the only ones it
+    // wrote and therefore the only ones the next search has to clear. A search
+    // from one node reaches the alternating tree that node can grow, which on a
+    // restricted master is a small part of the graph: 7 to 646 nodes of 10,002
+    // to 22,002 on the four shapes counted by dev_notes/phase3/c1_probe.cpp.
+    std::vector<int32_t> touched;
 
     // A source that reached no deficit node, and that nothing done afterwards
     // can bring back into play.
@@ -392,11 +401,15 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             break;
         }
 
-        std::fill(dist.begin(), dist.end(), INF);
-        std::fill(pe.begin(), pe.end(), -1);
+        for (const int32_t v : touched) {
+            dist[static_cast<std::size_t>(v)] = INF;
+            pe[static_cast<std::size_t>(v)] = -1;
+        }
+        touched.clear();
 
         std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> pq;
         dist[static_cast<std::size_t>(src)] = 0.0;
+        touched.push_back(src);
         pq.emplace(0.0, src);
 
         int32_t dst = -1;
@@ -430,6 +443,9 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                 if (rc < 0.0) rc = 0.0;
                 const double nd = dcur + rc;
                 if (nd + opts.relax_eps < dist[static_cast<std::size_t>(e.to)]) {
+                    if (dist[static_cast<std::size_t>(e.to)] == INF) {
+                        touched.push_back(e.to);
+                    }
                     dist[static_cast<std::size_t>(e.to)] = nd;
                     pe[static_cast<std::size_t>(e.to)] = ei;
                     pq.emplace(nd, e.to);
@@ -446,10 +462,21 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         // final because a settled node's label is; every other node takes the
         // deficit node's, which is what keeps cbar >= 0 on the arcs the search
         // stopped short of.
+        //
+        // Written as the difference from that common label rather than as the
+        // label itself, because adding dist[t] to every node is a constant
+        // shift of the whole potential and a potential is only ever read as a
+        // difference: cbar(a) subtracts one from another, and the potentials
+        // returned are gauged against pi[0]. The shift cancels in both, so the
+        // only nodes with anything left to write are the ones the search
+        // labelled below dist[t], and they are a subset of the ones it labelled
+        // at all.
         const double reach = dist[static_cast<std::size_t>(dst)];
-        for (int32_t v = 0; v < N; ++v) {
+        for (const int32_t v : touched) {
             const double dv = dist[static_cast<std::size_t>(v)];
-            pi[static_cast<std::size_t>(v)] += (dv < reach) ? dv : reach;
+            if (dv < reach) {
+                pi[static_cast<std::size_t>(v)] += dv - reach;
+            }
         }
 
         int64_t aug = d[static_cast<std::size_t>(src)];

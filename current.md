@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `6580679` and `origin/main` is
-one behind at `a387d11`; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `642d09f`, C6 and C7 and
+their notes; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -208,6 +208,14 @@ Two conventions, and which one to reach for:
 
 `suppressWarnings()` is not used for this. It hides unrelated warnings too,
 which is how 28 accumulated without anyone noticing.
+
+One flake to know about before reading a red suite. `test-matching-parallel.R`
+runs `parallel_lapply()` through `future.apply`, and a `MultisessionFuture` on
+this box can come back `FutureInterrupt` when the machine is busy: the worker is
+killed rather than wrong, and the case it dies on squares the integers 1 to 5,
+so nothing in the package is implicated. Seen once on 2026-08-18, with the same
+file passing 30 of 30 three times in isolation and the suite clean on a re-run.
+Re-run before treating it as a finding.
 
 ## Issues
 
@@ -1012,34 +1020,62 @@ and after; the 100 differing cases are C10's documented state), C0 against the
 implicit path (26 pass, 0 fail, 7 known, 5 skipped) and the R suite (6,824
 passing, 3 skipped).
 
+## C11 is in: the residual graph is one array
+
+`vector<vector<ResArc>>` was one heap block per node, reached through a pointer,
+grown from nothing by `push_back`. A problem arc contributes exactly one forward
+direction at its tail and one reverse at its head, so every degree is countable
+in one pass before an arc is written; counting, prefix-summing and filling
+through a per-node cursor puts the whole graph in one array with a node's arcs
+contiguous.
+
+The order a node's arcs are written in decides which of several equally-cheap
+shortest paths the search finds, and therefore which of several optimal flows
+comes back. Filling in arc order with a cursor per node reproduces the order the
+interleaved `push_back` pairs produced, self-loops included, and B0 is the check
+on that.
+
+Naming an arc by its position inside its node's list meant `pe[v]` did not say
+where the arc came from, so a second array carried the predecessor node. In one
+array the reverse arc names it, so `pe` is the whole chain and `pv` is gone,
+which also takes the per-augmentation clearing from three `O(n_nodes)` fills to
+two.
+
+The master alone, pinned and summed over the loop's rounds, is 1.17x to 1.26x
+across every shape measured. What that is worth end to end follows the share the
+master holds: at 1:10 it is 3% to 9% of the loop and the change sits inside the
+noise, at 1:1 it is over half, and 10,000 x 10,000 reads 5.968 s to 5.408 s.
+`dev_notes/phase3/c11_timing.log` holds both builds and both passes; the answer
+columns are printed beside the timings and agree throughout.
+
 ## Next action
 
-**The master's other constant, now that the scan is not the call.**
-`evaluated_x_grid` was the whole of the remaining gap and is now 1.26x to 1.64x
-on the three-round shapes, down from 3.00x.
+**What the master still pays per augmentation, whatever it reached.**
+Two `O(n_nodes)` fills clear `dist` and `pe` before each search, and the
+potential update walks every node after it. All three are the search's own
+bookkeeping rather than the search, and all three are sized by the graph instead
+of by the alternating tree one source grew.
 
-The other half of the master's constant was left alone deliberately.
-`vector<vector<ResArc>>` is one allocation per node and a cache miss per pop, and
-a CSR residual graph answers it; measuring that against a search that still
-fanned out from every row would have attributed neither. It is now measurable and
-is worth revisiting after C6.
+C1 turned the touched list down when 83.6% of nodes were labelled per
+augmentation, which is what a search from every row does. A single-source search
+labels far fewer, so the ratio that decided it no longer holds, and the same
+list would now cover the potential update as well as the two fills. That is the
+one measurement to take next, and `dev_notes/phase3/c11_timing.cpp` is the
+harness for it: it reports the master alone, which is exactly what would move.
 
-C1's touched-list reset is worth revisiting for the same reason. It lost to
-`std::fill` because 83.6% of nodes were labelled per augmentation, which is what
-a search from every row does; a single-source search labels far fewer, and the
-three O(n_nodes) fills per augmentation are no longer a rounding error against
-the search they clear for.
+After that, D1 through D3, the `match_path()` caliper and ratio sweep.
 
 ## Working tree
 
 Clean apart from what this note is committed with.
 
-Local `main` is at `6580679`, C6 and C7. `origin/main` is at `a387d11` and three
-behind: the code, this note, and the measurement artefacts committed with it.
+`origin/main` was pushed to `642d09f` on 2026-08-18, so C6 and C7 and their
+measurement artefacts are on the remote. C11 sits on top of that.
 
 Nothing is half-finished. The C++ suite, the R suite, B0 and C0 were all run
 against the tree as it stands, and `dev_notes/phase3/` holds the harnesses and
-the logs behind every number quoted above.
+the logs behind every number quoted above. The installed build matches the
+committed source, so a timing run needs no reinstall.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main
@@ -1121,6 +1157,9 @@ user-visible:
 | `c67_ab.log` | The current numbers from it, both metrics, three shapes |
 | `c67_dim.sh` | The same A/B swept over the covariate count, which is what `kBallTreeLinearVarLimit` was set from |
 | `c67_dim.log` | The current numbers from it. Read 6,667 x 13,333 only |
+| `c11_timing.cpp` | What the restricted master costs on its own, summed out of the per-round record the loop keeps, with the answer columns printed beside it. Pins to one core |
+| `c11_ab.sh` | C11's A/B: the same harness built against a working-tree `flow_solve.cpp` and against HEAD's, with only that file stashed |
+| `c11_timing.log` | The current numbers from it, both builds, two passes each |
 
 `dev_notes/pricing-probe/`
 

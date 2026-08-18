@@ -1141,8 +1141,9 @@ install for a timing comparison starts from `rm -f src/*.o src/*/*.o src/*.dll`,
 because `compile_dll()` leaves `-O0` objects and `R CMD INSTALL` reuses any
 object newer than its source. And the R suite takes about 150 s but has to be
 launched as a Scheduled Task rather than through the harness, which kills a job
-at the turn boundary; a launcher that writes its R body with
-`Set-Content -Encoding utf8` gives R a BOM and R refuses to parse it.
+at the turn boundary; `dev_notes/phase3/run_rtests.ps1` is that launcher and its
+header carries the two traps, a BOM from `Set-Content -Encoding utf8` that R
+will not parse, and a `kill -0` waiter that cannot see a native Windows PID.
 
 ## What the next release owes NEWS
 
@@ -1224,6 +1225,7 @@ user-visible:
 | `c1_probe.log` | The current numbers from it |
 | `c1_fieldcheck.R` | Every field B0 captures, saved under one build and compared against another, so a cost change cannot hide behind a case's first differing field |
 | `c1_touched.log` | C1 revisited: the three-build timing table, the counts that decided it, and the field-level comparison of what the potential update moved |
+| `run_rtests.ps1`, `run_rtests_body.R` | The R suite launched as a Scheduled Task, which is what survives a turn boundary. Writes `rtests.log` and a `rtests.done` marker beside itself |
 
 `dev_notes/pricing-probe/`
 

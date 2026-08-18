@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-17. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-18. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
 the flow model's design, findings and repros.
@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `9161b42` and `origin/main` is
-six behind at `42217f3`; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `main` is at `6580679` and `origin/main` is
+one behind at `a387d11`; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -947,17 +947,67 @@ inputs, which is the contract `FlowOptions::relax_eps` already carries), C0
 against the implicit path (26 pass, 0 fail, 7 known, 5 skipped), the R suite
 (6,824 passing, 3 skipped) and `cpp_tests` (299 cases, 77,853 assertions).
 
+## C6 and C7 are in: the loop bounds a pair instead of reading it
+
+Landed as `6580679`. A ball tree over the control units, in whitened coordinates so a Mahalanobis
+distance is Euclidean inside it, plus an axis-aligned box per node in the
+original covariates because that is where a caliper's window is stated. One
+bound serves both of the loop's questions:
+
+    min_{j in S} cbar_ij  >=  cost_lo(i, S) - u_i - max_{j in S} v_j
+
+A subtree is entered when that falls below the larger of the row's best so far
+and `-tol`. The feasibility seed is the same descent with both duals at zero, so
+`RowSearch<Source>` holds one tree per solve and answers both from it; a source
+with no geometry keeps the scan, and a future one is a specialisation rather
+than a branch.
+
+The answer is the grid scan's answer, pair for pair. `RowTopK` admits on the key
+alone, so the kept set is decided by the order pairs arrive in, and both tree
+queries sort back into the ascending-column order `price_block()` offers in
+before they touch the heap.
+
+Through the front door, eight covariates, both builds installed from a deleted
+object tree in one session:
+
+| shape | metric | before | after | | evaluated_x_grid |
+|---|---|---|---|---|---|
+| 2,000 x 20,000 | mahalanobis | 1.99 s | 1.14 s | 1.75x | 2.000 -> 0.799 |
+| 6,667 x 13,333 | mahalanobis | 6.60 s | 4.88 s | 1.35x | 3.000 -> 1.639 |
+| 16,667 x 33,333 | mahalanobis | 41.92 s | 26.06 s | 1.61x | 3.000 -> 1.259 |
+| 2,000 x 20,000 | euclidean | 0.39 s | 0.44 s | 0.89x | 2.000 -> 0.797 |
+| 6,667 x 13,333 | euclidean | 1.31 s | 1.64 s | 0.80x | 3.000 -> 1.649 |
+| 16,667 x 33,333 | euclidean | 8.11 s | 8.76 s | 0.93x | 3.000 -> 1.265 |
+
+Equal cost at 17 digits and certified optimal on every row. At the paper's
+metric and shape the loop goes from 0.54x of the lazy solve to 0.87x.
+
+The two metrics prune identically and land in opposite places, because what a
+ball saves is distances and what a distance costs is not the same in the two. A
+Mahalanobis distance is quadratic in the covariate count and pays for the
+descent at every dimension measured; a Euclidean one is linear, and at eight
+covariates the bookkeeping costs more than 2.4x fewer evaluations save. So the
+dispatch carries `kBallTreeLinearVarLimit`, measured at 6,667 x 13,333: a
+linear-cost metric wins 2.55x at two covariates, 1.83x at four, is level at six
+and loses at eight. A pricing-only microbench had put that turn at eight, where
+the round alone times 1.1x; it does not carry the seed or the loop around it.
+
+16,667 x 33,333 does not time reliably on this machine and the threshold was not
+read off it: the same build measured 8.11 s in one sweep and 24.19 s in the
+next, and the before column is non-monotone in p. `dev_notes/phase3/findings.md`
+has the full section, including why a leaf cannot evaluate in whitened
+coordinates even though the tree has them cached.
+
+Judged by `cpp_tests` (320 cases, 134,062 assertions), B0 (byte-identical before
+and after; the 100 differing cases are C10's documented state), C0 against the
+implicit path (26 pass, 0 fail, 7 known, 5 skipped) and the R suite (6,824
+passing, 3 skipped).
+
 ## Next action
 
-**C6 and C7, and now the measurement points at them.** C9 closed by saying their
-target was not the one that mattered, and C10 reversed that: the scan is 1.105 s
-of a 1.280 s call at the paper's shape, 86%, where under C9 it was 7.5%.
-
-The 1.7x still owed on the rectangular shapes is one number. `evaluated_x_grid`
-is 2.00x to 3.00x on every Euclidean shape, because the feasibility scan and the
-pricing round each read every pair once per round, against one flat pass for the
-lazy JV, and both read a pair at the same 4 ns. That ratio is the whole of the
-remaining gap, and the tree's job is to remove it.
+**The master's other constant, now that the scan is not the call.**
+`evaluated_x_grid` was the whole of the remaining gap and is now 1.26x to 1.64x
+on the three-round shapes, down from 3.00x.
 
 The other half of the master's constant was left alone deliberately.
 `vector<vector<ResArc>>` is one allocation per node and a cache miss per pop, and
@@ -975,7 +1025,8 @@ the search they clear for.
 
 Clean apart from what this note is committed with.
 
-Local `main` is at `9161b42`, C10. `origin/main` is at `42217f3` and six behind.
+Local `main` is at `6580679`, C6 and C7. `origin/main` is at `a387d11` and one
+behind.
 
 ```
 GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_gcol33" git push origin main

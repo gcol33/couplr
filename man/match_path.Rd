@@ -38,7 +38,11 @@ match_path(
 \code{\link[=match_couples]{match_couples()}}.}
 
 \item{calipers}{Per-variable calipers held fixed across the path, as in
-\code{\link[=match_couples]{match_couples()}}.}
+\code{\link[=match_couples]{match_couples()}}.
+Balance is read on the caller's own variables rather than on the coordinates
+the solver worked in, so a scaled or weighted distance does not change the
+scale the balance is reported on. It is the same reading \code{\link[=balance_diagnostics]{balance_diagnostics()}}
+gives for a single matching, taken at every point of the sweep.}
 
 \item{certify}{Whether each point carries a checked certificate. \code{TRUE} by
 default: the certificate is what says a point's matching is the optimal one
@@ -49,15 +53,16 @@ knobs, shared with \code{memory_mode = "implicit"}. Each point converges on any
 of them.}
 }
 \value{
-An object of class \code{couplr_path}: \verb{$path}, one row per point, and the
-match vector, certificate, round record and Hall witness for each of them.
+An object of class \code{couplr_path}: \verb{$path}, one row per point,
+\verb{$balance}, one row per point per variable, and the match vector,
+certificate, round record and Hall witness for each of them.
 }
 \description{
 Solves the matching once for each value of one argument and returns what
-happened at each: how many units were matched, at what total distance, and
-the certificate saying the matching is optimal for that value. The points are
-solved as one sequence rather than one at a time, each starting from the
-matching the previous value found.
+happened at each: how many units were matched, at what total distance, how
+balanced the matched sample is, and the certificate saying the matching is
+optimal for that value. The points are solved as one sequence rather than one
+at a time, each starting from the matching the previous value found.
 }
 \details{
 \code{values} must ascend. Each point is solved from the point before it, which
@@ -72,5 +77,6 @@ right <- data.frame(id = 1:60, x = rnorm(60), y = rnorm(60))
 path <- match_path(left, right, vars = c("x", "y"),
                    vary = "max_distance", values = c(0.5, 1, 2, Inf))
 path$path
+path$balance
 
 }

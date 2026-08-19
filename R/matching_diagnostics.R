@@ -142,6 +142,33 @@ calculate_var_balance <- function(left_vals, right_vals, var_name,
 }
 
 
+#' Summarise a per-variable balance table
+#'
+#' The three headline numbers every balance object reports, read off the
+#' per-variable table each of them builds.
+#'
+#' @param var_stats A per-variable balance table, as
+#'   \code{calculate_var_balance()} rows bound together.
+#' @param n_vars How many variables the balance was asked about. This is the
+#'   number asked for rather than \code{nrow(var_stats)}, which is smaller when
+#'   a variable produced no statistics.
+#'
+#' @return List with \code{mean_abs_std_diff}, \code{max_abs_std_diff},
+#'   \code{pct_large_imbalance} and \code{n_vars}.
+#'
+#' @keywords internal
+.overall_balance <- function(var_stats, n_vars) {
+  abs_std_diffs <- abs(var_stats$std_diff)
+  list(
+    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
+    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else
+      max(abs_std_diffs, na.rm = TRUE),
+    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
+    n_vars = n_vars
+  )
+}
+
+
 #' Balance Diagnostics for Matched Pairs
 #'
 #' Computes comprehensive balance statistics comparing the distribution of
@@ -307,18 +334,7 @@ balance_diagnostics.matching_result <- function(result,
   # Convert to tibble (use bind_rows for robust column name preservation)
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
 
-  # Overall balance metrics
-  abs_std_diffs <- abs(var_stats$std_diff)
-  mean_abs_std_diff <- mean(abs_std_diffs, na.rm = TRUE)
-  max_abs_std_diff <- if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE)
-  pct_large_imbalance <- mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100
-
-  overall <- list(
-    mean_abs_std_diff = mean_abs_std_diff,
-    max_abs_std_diff = max_abs_std_diff,
-    pct_large_imbalance = pct_large_imbalance,
-    n_vars = length(vars)
-  )
+  overall <- .overall_balance(var_stats, length(vars))
 
   # Check for blocking
   has_blocks <- "block_id" %in% names(pairs)
@@ -436,14 +452,7 @@ balance_diagnostics.full_matching_result <- function(result,
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
-  abs_std_diffs <- abs(var_stats$std_diff)
-
-  overall <- list(
-    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
-    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
-    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
-    n_vars = length(vars)
-  )
+  overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
     var_stats = var_stats,
@@ -494,14 +503,7 @@ balance_diagnostics.cem_result <- function(result,
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
-  abs_std_diffs <- abs(var_stats$std_diff)
-
-  overall <- list(
-    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
-    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
-    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
-    n_vars = length(vars)
-  )
+  overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
     var_stats = var_stats,
@@ -566,14 +568,7 @@ balance_diagnostics.subclass_result <- function(result,
   var_stats_list <- var_stats_list[!sapply(var_stats_list, is.null)]
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
-  abs_std_diffs <- abs(var_stats$std_diff)
-
-  overall <- list(
-    mean_abs_std_diff = mean(abs_std_diffs, na.rm = TRUE),
-    max_abs_std_diff = if (all(is.na(abs_std_diffs))) NA_real_ else max(abs_std_diffs, na.rm = TRUE),
-    pct_large_imbalance = mean(abs_std_diffs > 0.25, na.rm = TRUE) * 100,
-    n_vars = length(vars)
-  )
+  overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
     var_stats = var_stats,

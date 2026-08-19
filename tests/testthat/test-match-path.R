@@ -210,3 +210,100 @@ test_that("the values and the knob are checked before anything is solved", {
     "`vary` must be one of"
   )
 })
+
+# A point's balance is the claim that the sweep is read for: what the matching
+# at this value did to the covariates. The assertion is that it is the package's
+# own balance for that matching, reached the other way round -- through the ids
+# and the merge `balance_diagnostics()` does -- rather than a second reading.
+
+as_path_point_result <- function(m, left, right, vars) {
+  rows <- which(m > 0L)
+  structure(
+    list(
+      pairs = tibble::tibble(
+        left_id  = left$id[rows],
+        right_id = right$id[m[rows]],
+        distance = NA_real_
+      ),
+      info = list(vars = vars, method = "path")
+    ),
+    class = c("matching_result", "couplr_result")
+  )
+}
+
+test_that("a point's balance is the balance of the matching it found", {
+  d <- path_data(20, 90, seed = 5113)
+  values <- c(1.2, 2, Inf)
+  path <- match_path(d$left, d$right, vars = d$vars, values = values)
+
+  expect_equal(nrow(path$balance), length(values) * length(d$vars))
+  expect_equal(path$balance$variable, rep(d$vars, times = length(values)))
+  expect_equal(path$balance$max_distance, rep(values, each = length(d$vars)))
+
+  for (k in seq_along(values)) {
+    bal <- balance_diagnostics(
+      as_path_point_result(path$match[[k]], d$left, d$right, d$vars),
+      d$left, d$right, vars = d$vars
+    )
+
+    expect_equal(path$path$mean_abs_std_diff[k], bal$overall$mean_abs_std_diff)
+    expect_equal(path$path$max_abs_std_diff[k], bal$overall$max_abs_std_diff)
+
+    point <- path$balance[path$balance$max_distance == values[k], ]
+    expect_equal(point$std_diff, bal$var_stats$std_diff)
+    expect_equal(point$var_ratio, bal$var_stats$var_ratio)
+    expect_equal(point$mean_diff, bal$var_stats$mean_diff)
+    expect_equal(point$n_left, rep(path$path$n_matched[k], length(d$vars)))
+  }
+})
+
+test_that("balance is read on the variables the caller passed", {
+  d <- path_data(20, 90, seed = 5114)
+  path <- match_path(d$left, d$right, vars = d$vars, values = c(2, Inf),
+                     weights = c(8, 1, 1))
+
+  m <- path$match[[1]]
+  rows <- which(m > 0L)
+  first <- path$balance[path$balance$max_distance == 2, ]
+
+  expect_equal(first$mean_left,
+               vapply(d$vars, function(v) mean(d$left[[v]][rows]), numeric(1)),
+               ignore_attr = TRUE)
+  expect_equal(first$mean_right,
+               vapply(d$vars, function(v) mean(d$right[[v]][m[rows]]),
+                      numeric(1)),
+               ignore_attr = TRUE)
+})
+
+test_that("a point too tight to match reports no balance", {
+  d <- path_data(30, 35, seed = 5106)
+  path <- match_path(d$left, d$right, vars = d$vars, values = c(0.05, Inf))
+
+  expect_equal(path$path$status[1], "infeasible")
+  expect_equal(path$path$n_matched[1], 0L)
+  expect_true(is.na(path$path$mean_abs_std_diff[1]))
+  expect_true(is.na(path$path$max_abs_std_diff[1]))
+
+  first <- path$balance[path$balance$max_distance == 0.05, ]
+  expect_equal(nrow(first), length(d$vars))
+  expect_true(all(is.na(first$std_diff)))
+
+  expect_false(is.na(path$path$mean_abs_std_diff[2]))
+})
+
+test_that("balance holds its orientation when the left side is longer", {
+  d <- path_data(70, 25, seed = 5115)
+  path <- match_path(d$left, d$right, vars = d$vars, values = c(2, Inf))
+  expect_true(path$transposed)
+
+  for (k in seq_len(nrow(path$path))) {
+    bal <- balance_diagnostics(
+      as_path_point_result(path$match[[k]], d$left, d$right, d$vars),
+      d$left, d$right, vars = d$vars
+    )
+    point <- path$balance[path$balance$max_distance == path$path$max_distance[k], ]
+    expect_equal(point$mean_left, bal$var_stats$mean_left)
+    expect_equal(point$mean_right, bal$var_stats$mean_right)
+    expect_equal(point$std_diff, bal$var_stats$std_diff)
+  }
+})

@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `413fede` and nothing is
-unpushed; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `ef82e4d` and the D2
+commit is unpushed; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -1091,17 +1091,58 @@ whose `certified_optimal` never changes. B0 against its stored baseline still
 reads 100 differing cases, with the set moved by one swap. The baseline was not
 regenerated.
 
+## D2 is in: a point reports what the matching did to the covariates
+
+Two columns join the point table, `mean_abs_std_diff` and `max_abs_std_diff`,
+and `$balance` holds the reading behind them: one row per point per variable,
+carrying the two means, the two standard deviations, the standardised
+difference, the variance ratio and the KS statistic. That is the shape a caller
+facets by variable and plots against the swept value, which is why it is one
+table with the value in a column instead of one table per point.
+
+Balance is read on the variables the caller passed, at the scale they arrived
+on, rather than on the coordinates the solver worked in. Scaling and weights are
+how the distance was built; a caller reading a point against the unmatched
+sample is reading on the original scale, and that is the choice
+`balance_diagnostics()` already makes for a single matching. `match_path()` now
+makes the same one.
+
+It makes it through the same code. The per-variable statistics are
+`calculate_var_balance()`'s, and the three headline numbers are
+`.overall_balance()`'s, which is new: the block computing them was written out
+four times across `balance_diagnostics()`'s methods for `matching_result`,
+`full_matching_result`, `cem_result` and `subclass_result`, and all four now
+call it. The path is the fifth caller. `n_vars` is a parameter because the
+subclass method filters variables that produced no statistics and still reports
+the number it was asked about.
+
+`tests/testthat/test-match-path.R` puts the claim the other way round. A point's
+match vector is rebuilt into a `matching_result`, `balance_diagnostics()` is
+asked about it, and its answer has to be the point's own columns to the digit.
+That route goes through the id merge rather than through row indices, so what
+the test compares is two readings of one matching rather than one reading twice.
+
+**The largest matched-set ratio is not in, and it is not deferred work.** The
+loop solves unit capacities on both sides, so a match vector holds one right
+unit per left unit and a matched set cannot hold two. The number would read 1 at
+every point of every path by the shape of the data structure rather than by
+measurement, which is a column that says nothing and a print line that says it
+once. It becomes a real reading when capacities rise, which is the ratio sweep D1
+declined and open question 3's neighbourhood.
+
+**For D3.** Balance is computed in R, after the C++ call returns, over every
+point. It costs a KS test per variable per point on the matched sample, so a
+20-point path at the paper's shape carries work an independent `match_couples()`
+solve does not. Timing `match_path()` against 20 cold solves on wall clock would
+charge the path for it. The per-point `seconds` the loop reports are the solve's
+own and do not include it; D3 should compare those.
+
 ## Next action
 
-**D2 and D3, what a path point reports and what a path costs.** D1 is in:
-`match_path()` sweeps `max_distance` ascending and each point is the loop
-resumed over the master the last point left behind. What a point reports today
-is the mechanism's own record -- status, matched count, total distance,
-certificate, rounds, pairs generated, seconds. D2 adds the reading a caller
-plots against: covariate balance and the largest matched-set ratio. D3 is the
-clock, 20 caliper values warm-started against 20 independent solves on the
-paper's benchmark shapes, and it is the last thing before the paper's own
-benchmark is worth re-running end to end.
+**D3, what a path costs.** 20 caliper values warm-started against 20 independent
+solves on the paper's benchmark shapes, reported in `findings.md` in the form
+`b8_timing.R` uses, and the last thing before the paper's own benchmark is worth
+re-running end to end.
 
 The honest expectation D3 was given before any of this was built still stands
 and now has a shape to it. `d1_path.R` reports each point's rounds beside the
@@ -1123,16 +1164,16 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-**D1 is in.** Clean apart from what this note is committed with. `origin/main`
-is level with local at `413fede`, verified against the remote rather than
-against the tracking ref, and the last five commits there are:
+**D2 is committed and unpushed.** `origin/main` is at `ef82e4d`, verified against
+the remote rather than against the tracking ref, and local is one commit ahead
+of it. What the remote holds, most recent last:
 
 ```
-76cbb5d  perf   the search clears what it labelled, and the shift cancels
 5efbd32  docs   C1 comes back, and the queue is what is left
 99cb9cb  docs   the note is level with the remote, and two ways to mis-measure
 57a9d02  docs   the gate harnesses keep what it took to run them
 413fede  feat   the loop is resumable, and a path is the loop again
+ef82e4d  docs   the note is level with the remote again
 ```
 
 `413fede` is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
@@ -1143,10 +1184,17 @@ entry points in `src/flow/flow_implicit.h`, `LazyCostMatrix::set_max_distance()`
 `man/assignment.Rd` and `man/match_couples.Rd` also move: their roxygen carried
 C9's measurement and the `.Rd` files had not been regenerated since.
 
-Nothing is half-finished. The C++ suite, the R suite, B0, C0 and `d1_path.R`
-were all run against the tree as it stands. The DLL in the tree is
-`compile_dll()`'s, which is compiled `-O0`; a timing run still needs an install
-from a cleared object tree.
+The commit on top of them is D2, and it is R alone: `.overall_balance()` and the four
+call sites it replaces in `R/matching_diagnostics.R`, the balance columns and
+`$balance` in `R/matching_path.R`, four tests in
+`tests/testthat/test-match-path.R`, and the regenerated `man/match_path.Rd` and
+`man/dot-overall_balance.Rd`. Nothing in `src/` moves, so the DLL in the tree is
+still the one D1 was tested against.
+
+Nothing is half-finished. The C++ suite, B0, C0 and `d1_path.R` were run against
+D1 and `src/` has not moved since. The R suite was run against the tree as it
+stands. The DLL in the tree is `compile_dll()`'s, which is compiled `-O0`; a
+timing run still needs an install from a cleared object tree.
 
 `dev_notes/` stays gitignored, which means the phase-3 harnesses and logs exist
 on this machine only and a fresh clone gets none of them. `roadmap.md` and
@@ -1190,8 +1238,10 @@ user-visible:
 - `match_path()`, a matching per value of one argument with the points solved as
   one sequence. `vary = "max_distance"` sweeps the distance cut, `values` must
   ascend, and every point carries the certificate saying its matching is the
-  optimal one at that value. Returns a `couplr_path`: a row per point, and the
-  match vector, certificate, round record and Hall witness beside it.
+  optimal one at that value. Returns a `couplr_path`: a row per point, with the
+  matched count, the total distance and the matched sample's balance on it, and
+  the per-variable balance table, match vector, certificate, round record and
+  Hall witness beside it.
 - The flow solver searching from one node with an excess rather than from a
   super-source over all of them. Every design compiled to the flow model gets
   it: dense `sap`, `csflow`, `push_relabel` and `cycle_cancel`, `full_match()`,

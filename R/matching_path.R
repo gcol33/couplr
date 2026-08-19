@@ -67,10 +67,10 @@
 #' Match across a range of one design choice
 #'
 #' Solves the matching once for each value of one argument and returns what
-#' happened at each: how many units were matched, at what total distance, and
-#' the certificate saying the matching is optimal for that value. The points are
-#' solved as one sequence rather than one at a time, each starting from the
-#' matching the previous value found.
+#' happened at each: how many units were matched, at what total distance, how
+#' balanced the matched sample is, and the certificate saying the matching is
+#' optimal for that value. The points are solved as one sequence rather than one
+#' at a time, each starting from the matching the previous value found.
 #'
 #' `values` must ascend. Each point is solved from the point before it, which
 #' works because a wider value only ever adds pairs to choose from; a descending
@@ -86,6 +86,11 @@
 #'   [match_couples()].
 #' @param calipers Per-variable calipers held fixed across the path, as in
 #'   [match_couples()].
+#' Balance is read on the caller's own variables rather than on the coordinates
+#' the solver worked in, so a scaled or weighted distance does not change the
+#' scale the balance is reported on. It is the same reading [balance_diagnostics()]
+#' gives for a single matching, taken at every point of the sweep.
+#'
 #' @param certify Whether each point carries a checked certificate. `TRUE` by
 #'   default: the certificate is what says a point's matching is the optimal one
 #'   for its value, which is the claim a path is read for.
@@ -93,8 +98,9 @@
 #'   knobs, shared with `memory_mode = "implicit"`. Each point converges on any
 #'   of them.
 #'
-#' @return An object of class `couplr_path`: `$path`, one row per point, and the
-#'   match vector, certificate, round record and Hall witness for each of them.
+#' @return An object of class `couplr_path`: `$path`, one row per point,
+#'   `$balance`, one row per point per variable, and the match vector,
+#'   certificate, round record and Hall witness for each of them.
 #'
 #' @examples
 #' set.seed(1)
@@ -103,6 +109,7 @@
 #' path <- match_path(left, right, vars = c("x", "y"),
 #'                    vary = "max_distance", values = c(0.5, 1, 2, Inf))
 #' path$path
+#' path$balance
 #'
 #' @export
 match_path <- function(left, right, vars,
@@ -191,14 +198,39 @@ match_path <- function(left, right, vars,
   )
 
   .new_couplr_path(raw, vary = vary, spec = spec, transposed = transposed,
-                   tol = tol, left_ids = left_ids, right_ids = right_ids)
+                   tol = tol, left_ids = left_ids, right_ids = right_ids,
+                   left = left, right = right, vars = vars)
+}
+
+# What a point's matching did to the covariates, one row per point per variable.
+#
+# The values read are the caller's own rather than the coordinates the solver
+# worked in: scaling and weights are how the distance was built, and a caller
+# comparing a point against the unmatched sample is comparing on the scale the
+# variables arrived on. That is the same choice `balance_diagnostics()` makes,
+# and the per-variable statistics come from the same function, so a point of a
+# path and a single matching are balanced the same way.
+.path_balance <- function(match_out, left, right, vars) {
+  lapply(match_out, function(m) {
+    rows <- which(!is.na(m) & m > 0L)
+    cols <- m[rows]
+
+    # A point that matched nothing still gets a row per variable, because a
+    # path is read as a sequence and a gap in it is part of the reading.
+    # `calculate_var_balance()` answers an empty sample with NA throughout.
+    tbl <- dplyr::bind_rows(lapply(vars, function(v) {
+      tibble::as_tibble(
+        calculate_var_balance(left[[v]][rows], right[[v]][cols], v))
+    }))
+    list(var_stats = tbl, overall = .overall_balance(tbl, length(vars)))
+  })
 }
 
 # Read the sweep back in the caller's orientation and vocabulary. A point's
 # answer is a matching over the caller's left units, its cost is a total
 # distance, and its proof is an assignment certificate.
 .new_couplr_path <- function(raw, vary, spec, transposed, tol,
-                             left_ids, right_ids) {
+                             left_ids, right_ids, left, right, vars) {
   n_points <- length(raw$match)
   n_left <- spec$n_left
 
@@ -227,23 +259,42 @@ match_path <- function(left, right, vars,
   total <- as.numeric(pts$total_cost)
   total[as.character(pts$status) != "optimal"] <- NA_real_
 
+  balance <- .path_balance(match_out, left, right, vars)
+
   path <- tibble::tibble(
-    value           = as.numeric(pts$value),
-    status          = as.character(pts$status),
-    n_matched       = as.integer(pts$n_matched),
-    total_distance  = total,
-    certified       = as.logical(pts$certified),
-    seconds         = as.numeric(pts$seconds),
-    n_rounds        = as.integer(pts$n_rounds),
-    candidate_edges = as.numeric(pts$candidate_edges),
-    pairs_added     = as.numeric(pts$pairs_added),
-    edges_evaluated = as.numeric(pts$edges_evaluated)
+    value             = as.numeric(pts$value),
+    status            = as.character(pts$status),
+    n_matched         = as.integer(pts$n_matched),
+    total_distance    = total,
+    mean_abs_std_diff = vapply(balance, function(b) b$overall$mean_abs_std_diff,
+                               numeric(1)),
+    max_abs_std_diff  = vapply(balance, function(b) b$overall$max_abs_std_diff,
+                               numeric(1)),
+    certified         = as.logical(pts$certified),
+    seconds           = as.numeric(pts$seconds),
+    n_rounds          = as.integer(pts$n_rounds),
+    candidate_edges   = as.numeric(pts$candidate_edges),
+    pairs_added       = as.numeric(pts$pairs_added),
+    edges_evaluated   = as.numeric(pts$edges_evaluated)
   )
   names(path)[1] <- vary
+
+  # The per-variable reading behind those two columns, as one table rather than
+  # one per point, because what it is read for is a variable's balance across
+  # the sweep.
+  balance_tbl <- dplyr::bind_rows(
+    lapply(seq_len(n_points), function(k) {
+      tbl <- balance[[k]]$var_stats
+      tbl$value <- as.numeric(pts$value)[k]
+      tbl[, c("value", setdiff(names(tbl), "value")), drop = FALSE]
+    })
+  )
+  names(balance_tbl)[1] <- vary
 
   structure(
     list(
       path        = path,
+      balance     = balance_tbl,
       vary        = vary,
       match       = match_out,
       certificate = certificate,

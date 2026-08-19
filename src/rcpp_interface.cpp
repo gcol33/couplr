@@ -100,6 +100,16 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
                               double keep_per_row, double width, double tol,
                               double max_rounds, bool certify);
 
+// Forward decl for the design path (implemented in flow/flow_path_rcpp.cpp)
+Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
+                                Rcpp::NumericMatrix right_mat,
+                                std::string distance,
+                                Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                Rcpp::NumericVector values, Rcpp::List calipers,
+                                Rcpp::CharacterVector vars, bool maximize,
+                                double keep_per_row, double width, double tol,
+                                double max_rounds, bool certify);
+
 // =======================
 // Pixel morphing core (implemented in morph_pixel_level.cpp)
 // =======================
@@ -443,6 +453,21 @@ Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
   return implicit_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
                             calipers, vars, maximize, keep_per_row, width, tol,
                             max_rounds, certify);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_match_path_lazy(Rcpp::NumericMatrix left_mat,
+                               Rcpp::NumericMatrix right_mat,
+                               std::string distance,
+                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                               Rcpp::NumericVector values, Rcpp::List calipers,
+                               Rcpp::CharacterVector vars, bool maximize = false,
+                               double keep_per_row = 5.0, double width = 5.0,
+                               double tol = 1e-9, double max_rounds = 60.0,
+                               bool certify = true) {
+  return match_path_lazy_impl(left_mat, right_mat, distance, inv_cov, values,
+                              calipers, vars, maximize, keep_per_row, width, tol,
+                              max_rounds, certify);
 }
 
 // =======================

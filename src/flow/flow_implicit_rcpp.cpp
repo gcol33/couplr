@@ -30,6 +30,7 @@
 #include "flow_candidates.h"
 #include "flow_compile.h"
 #include "flow_implicit.h"
+#include "flow_implicit_rcpp.h"
 #include "flow_oracle.h"
 #include "flow_problem.h"
 
@@ -39,12 +40,9 @@
 #include <string>
 #include <vector>
 
-namespace {
+// The pieces the design path reports too. Declared in flow_implicit_rcpp.h.
 
-// A knob arrives as a double because R has no 64-bit integer type, and it is a
-// count either way: a fractional one is a caller error rather than something to
-// round into the nearest legal search.
-int64_t knob_from_r(double v, const char* what) {
+int64_t implicit_knob_from_r(double v, const char* what) {
     if (ISNAN(v) || !R_finite(v)) {
         Rcpp::stop("edge generation: %s is not a finite number", what);
     }
@@ -54,28 +52,30 @@ int64_t knob_from_r(double v, const char* what) {
     return static_cast<int64_t>(v);
 }
 
-lap::ImplicitOptions options_from_r(double keep_per_row, double width, double tol,
-                                    double max_rounds, bool certify) {
+lap::ImplicitOptions implicit_options_from_r(double keep_per_row, double width,
+                                             double tol, double max_rounds,
+                                             bool certify) {
     lap::ImplicitOptions opts;
-    opts.keep_per_row = static_cast<int>(knob_from_r(keep_per_row, "keep_per_row"));
-    opts.width        = static_cast<int>(knob_from_r(width, "width"));
-    opts.max_rounds   = knob_from_r(max_rounds, "max_rounds");
-    opts.tol          = tol;
-    opts.certify      = certify;
+    opts.keep_per_row =
+        static_cast<int>(implicit_knob_from_r(keep_per_row, "keep_per_row"));
+    opts.width      = static_cast<int>(implicit_knob_from_r(width, "width"));
+    opts.max_rounds = implicit_knob_from_r(max_rounds, "max_rounds");
+    opts.tol        = tol;
+    opts.certify    = certify;
     return opts;
 }
 
-Rcpp::NumericVector duals_to_r(const std::vector<double>& x, bool maximize) {
-    Rcpp::NumericVector out(static_cast<R_xlen_t>(x.size()));
-    for (std::size_t k = 0; k < x.size(); ++k) {
-        out[static_cast<R_xlen_t>(k)] = maximize ? -x[k] : x[k];
+Rcpp::IntegerVector implicit_match_to_r(const std::vector<int>& match, int64_t nrow) {
+    Rcpp::IntegerVector out(static_cast<R_xlen_t>(nrow));
+    for (R_xlen_t i = 0; i < out.size(); ++i) out[i] = 0;
+    for (std::size_t i = 0; i < match.size(); ++i) {
+        out[static_cast<R_xlen_t>(i)] = (match[i] >= 0) ? (match[i] + 1) : 0;
     }
     return out;
 }
 
-// One row per round, as columns, which is the shape R reads as a data frame.
-// Every count crosses as a double for the same reason the certificate's do.
-Rcpp::List rounds_to_r(const std::vector<lap::ImplicitRound>& rounds, bool maximize) {
+Rcpp::List implicit_rounds_to_r(const std::vector<lap::ImplicitRound>& rounds,
+                                bool maximize) {
     const R_xlen_t n = static_cast<R_xlen_t>(rounds.size());
 
     Rcpp::NumericVector   round(n), candidate_pairs(n), block_arcs(n);
@@ -125,16 +125,18 @@ Rcpp::List rounds_to_r(const std::vector<lap::ImplicitRound>& rounds, bool maxim
         Rcpp::Named("matched_slack") = matched_slack);
 }
 
-Rcpp::List result_to_r(const lap::ImplicitResult& res, int64_t nrow, bool maximize) {
-    // Every row gets an entry whatever the loop decided, so a caller reads the
-    // match vector the same way on an answer and on a refusal. The loop leaves
-    // it empty when no master ever reached a matching.
-    Rcpp::IntegerVector match(static_cast<R_xlen_t>(nrow));
-    for (R_xlen_t i = 0; i < match.size(); ++i) match[i] = 0;
-    for (std::size_t i = 0; i < res.match.size(); ++i) {
-        match[static_cast<R_xlen_t>(i)] =
-            (res.match[i] >= 0) ? (res.match[i] + 1) : 0;
+namespace {
+
+Rcpp::NumericVector duals_to_r(const std::vector<double>& x, bool maximize) {
+    Rcpp::NumericVector out(static_cast<R_xlen_t>(x.size()));
+    for (std::size_t k = 0; k < x.size(); ++k) {
+        out[static_cast<R_xlen_t>(k)] = maximize ? -x[k] : x[k];
     }
+    return out;
+}
+
+Rcpp::List result_to_r(const lap::ImplicitResult& res, int64_t nrow, bool maximize) {
+    const Rcpp::IntegerVector match = implicit_match_to_r(res.match, nrow);
 
     // A defaulted report has no rows, and a real one always has at least one,
     // so this is the question "was a certificate assembled" without a second
@@ -163,7 +165,7 @@ Rcpp::List result_to_r(const lap::ImplicitResult& res, int64_t nrow, bool maximi
         Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
         Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),
         Rcpp::Named("n_rounds") = static_cast<double>(res.rounds.size()),
-        Rcpp::Named("rounds") = rounds_to_r(res.rounds, maximize),
+        Rcpp::Named("rounds") = implicit_rounds_to_r(res.rounds, maximize),
         Rcpp::Named("witness") = witness,
         Rcpp::Named("witness_certified") = res.witness_certified);
 }
@@ -203,8 +205,8 @@ Rcpp::List implicit_dense_impl(Rcpp::NumericMatrix cost, bool maximize,
         lap::forbid_sentinel_costs(cm);
         const lap::CostMatrix work = lap::prepare_for_solve(cm, maximize);
 
-        return run_implicit(work, options_from_r(keep_per_row, width, tol,
-                                                 max_rounds, certify),
+        return run_implicit(work, implicit_options_from_r(keep_per_row, width, tol,
+                                                          max_rounds, certify),
                             maximize);
 
     } catch (const lap::LapException& e) {
@@ -238,8 +240,8 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
             left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers,
             vars, maximize);
 
-        return run_implicit(cm, options_from_r(keep_per_row, width, tol,
-                                               max_rounds, certify),
+        return run_implicit(cm, implicit_options_from_r(keep_per_row, width, tol,
+                                                        max_rounds, certify),
                             maximize);
 
     } catch (const lap::LapException& e) {

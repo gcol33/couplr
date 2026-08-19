@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `5efbd32` and nothing is
-unpushed; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `57a9d02` and the D1
+commit is unpushed; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -1093,9 +1093,23 @@ regenerated.
 
 ## Next action
 
-**D1 through D3, the `match_path()` caliper and ratio sweep.** Phase 3's
-remaining spec item, and the last one before the paper's own benchmark is worth
-re-running end to end.
+**D2 and D3, what a path point reports and what a path costs.** D1 is in:
+`match_path()` sweeps `max_distance` ascending and each point is the loop
+resumed over the master the last point left behind. What a point reports today
+is the mechanism's own record -- status, matched count, total distance,
+certificate, rounds, pairs generated, seconds. D2 adds the reading a caller
+plots against: covariate balance and the largest matched-set ratio. D3 is the
+clock, 20 caliper values warm-started against 20 independent solves on the
+paper's benchmark shapes, and it is the last thing before the paper's own
+benchmark is worth re-running end to end.
+
+The honest expectation D3 was given before any of this was built still stands
+and now has a shape to it. `d1_path.R` reports each point's rounds beside the
+rounds a cold solve at the same value takes: on ten of twelve cases the last
+point converges in one round against two or three from cold. One round is a
+master solve plus one pricing pass over the whole source, and the pricing pass
+is what dominates at eight covariates, so the ratio will be nearer 1 than the
+round counts suggest.
 
 Nothing in the master is left that is sized by the graph rather than by the work.
 Every `O(n_nodes)` pass per augmentation is gone, the residual graph is one
@@ -1109,22 +1123,31 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-Clean apart from what this note is committed with, and `origin/main` is level
-with local at `5efbd32`, verified against the remote rather than against the
-tracking ref.
+**D1 is committed and unpushed.** Clean apart from what this note is committed
+with. `origin/main` is at `57a9d02`, verified against the remote rather than
+against the tracking ref, and local is one commit ahead of it. What the remote
+holds, most recent last:
 
 ```
-642d09f  docs   the measurement keeps its harness, and the big shape does not time
-fd64fe4  perf   the residual graph is one array, and the predecessor was in it
 2145b82  docs   C11 is in, and the master is what it leaves behind
 76cbb5d  perf   the search clears what it labelled, and the shift cancels
 5efbd32  docs   C1 comes back, and the queue is what is left
+99cb9cb  docs   the note is level with the remote, and two ways to mis-measure
+57a9d02  docs   the gate harnesses keep what it took to run them
 ```
 
-Nothing is half-finished. The C++ suite, the R suite, B0, C0 and the field-level
-comparison were all run against the tree as it stands, and the installed build
-was reinstalled from a cleared object tree at `5efbd32`, so a timing run needs no
-reinstall.
+The commit on top of them is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
+`src/flow/flow_path_rcpp.cpp`, `src/flow/flow_implicit_rcpp.h`, the resumable
+entry points in `src/flow/flow_implicit.h`, `LazyCostMatrix::set_max_distance()`,
+`tests/testthat/test-match-path.R`, `cpp_tests/tests/test_flow_path.cpp`, the two
+`Makevars`, the regenerated `RcppExports`, `NAMESPACE`, `man/` and `_pkgdown.yml`.
+`man/assignment.Rd` and `man/match_couples.Rd` also move: their roxygen carried
+C9's measurement and the `.Rd` files had not been regenerated since.
+
+Nothing is half-finished. The C++ suite, the R suite, B0, C0 and `d1_path.R`
+were all run against the tree as it stands. The DLL in the tree is
+`compile_dll()`'s, which is compiled `-O0`; a timing run still needs an install
+from a cleared object tree.
 
 `dev_notes/` stays gitignored, which means the phase-3 harnesses and logs exist
 on this machine only and a fresh clone gets none of them. `roadmap.md` and
@@ -1165,6 +1188,11 @@ user-visible:
   `certify` argument beside it. A 1:1 matching solved by generating the pairs
   it needs, with a checked certificate for the complete problem; `"auto"` does
   not select it.
+- `match_path()`, a matching per value of one argument with the points solved as
+  one sequence. `vary = "max_distance"` sweeps the distance cut, `values` must
+  ascend, and every point carries the certificate saying its matching is the
+  optimal one at that value. Returns a `couplr_path`: a row per point, and the
+  match vector, certificate, round record and Hall witness beside it.
 - The flow solver searching from one node with an excess rather than from a
   super-source over all of them. Every design compiled to the flow model gets
   it: dense `sap`, `csflow`, `push_relabel` and `cycle_cancel`, `full_match()`,
@@ -1225,6 +1253,8 @@ user-visible:
 | `c1_probe.log` | The current numbers from it |
 | `c1_fieldcheck.R` | Every field B0 captures, saved under one build and compared against another, so a cost change cannot hide behind a case's first differing field |
 | `c1_touched.log` | C1 revisited: the three-build timing table, the counts that decided it, and the field-level comparison of what the potential update moved |
+| `d1_path.R` | D1. Every point of a path against an independent solve at the same value and against a complete solve, all three scored against the point's own constrained cost matrix. Exits non-zero on any difference |
+| `d1_smoke.R` | The same comparison on one case, for a quick look at a path and at what a descending sweep is told |
 | `run_rtests.ps1`, `run_rtests_body.R` | The R suite launched as a Scheduled Task, which is what survives a turn boundary. Writes `rtests.log` and a `rtests.done` marker beside itself |
 
 `dev_notes/pricing-probe/`

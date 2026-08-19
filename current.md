@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `57a9d02` and the D1
-commit is unpushed; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `413fede` and nothing is
+unpushed; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -1123,20 +1123,19 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-**D1 is committed and unpushed.** Clean apart from what this note is committed
-with. `origin/main` is at `57a9d02`, verified against the remote rather than
-against the tracking ref, and local is one commit ahead of it. What the remote
-holds, most recent last:
+**D1 is in.** Clean apart from what this note is committed with. `origin/main`
+is level with local at `413fede`, verified against the remote rather than
+against the tracking ref, and the last five commits there are:
 
 ```
-2145b82  docs   C11 is in, and the master is what it leaves behind
 76cbb5d  perf   the search clears what it labelled, and the shift cancels
 5efbd32  docs   C1 comes back, and the queue is what is left
 99cb9cb  docs   the note is level with the remote, and two ways to mis-measure
 57a9d02  docs   the gate harnesses keep what it took to run them
+413fede  feat   the loop is resumable, and a path is the loop again
 ```
 
-The commit on top of them is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
+`413fede` is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
 `src/flow/flow_path_rcpp.cpp`, `src/flow/flow_implicit_rcpp.h`, the resumable
 entry points in `src/flow/flow_implicit.h`, `LazyCostMatrix::set_max_distance()`,
 `tests/testthat/test-match-path.R`, `cpp_tests/tests/test_flow_path.cpp`, the two

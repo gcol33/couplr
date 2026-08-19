@@ -110,10 +110,11 @@ functions (blocking via \code{block_id} is the other option that reduces
 memory, by solving smaller sub-problems). "implicit" states the problem
 over every pair and solves it over a fraction of them, generating the pairs
 the answer turns out to need and proving that the ones it never generated
-could not have improved it; same requirements as "lazy", and 1:1 only.
-"auto" never selects it: the loop wins at scale and loses on small
-problems, and no measured rule for the crossover exists yet. "dense" skips
-the RAM check entirely.}
+could not have improved it; same requirements as "lazy", and 1:1 only. It
+is slower than "lazy" on every shape measured so far, and the time goes to
+the restricted solve rather than to the pair scan, so what it buys today is
+the certificate over the complete problem rather than speed. "auto" never
+selects it. "dense" skips the RAM check entirely.}
 
 \item{certify}{Logical; whether the result carries a checked
 \code{assignment_certificate} as \code{certificate}. Applies to

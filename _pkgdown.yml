@@ -88,6 +88,7 @@ reference:
   desc: High-level matching for observational studies
   contents:
   - match_couples
+  - match_path
   - matchmaker
   - ps_match
   - cardinality_match
@@ -152,6 +153,7 @@ reference:
   - print.lap_solve_batch_result
   - print.lap_solve_kbest_result
   - print.matching_result
+  - print.couplr_path
   - print.matchmaker_result
   - print.balance_diagnostics
   - print.distance_object

@@ -205,7 +205,8 @@ double matched_slack(const Source& src, const std::vector<int>& match,
 
 template <class Source>
 void require_shape(const Source& src, const FlowProblem& prob,
-                   const CandidateSet& cand, const ImplicitOptions& opts) {
+                   const CandidateSet& cand, const ImplicitOptions& opts,
+                   bool expect_expanded) {
     if (src.nrow <= 0 || src.ncol <= 0) {
         LAP_THROW_DIMENSION("solve_implicit_assignment: source is " +
                             std::to_string(src.nrow) + " x " + std::to_string(src.ncol) +
@@ -231,7 +232,16 @@ void require_shape(const Source& src, const FlowProblem& prob,
                             std::to_string(blk.lower) + ", " + std::to_string(blk.upper) +
                             "], and an assignment's pairs carry at most one unit");
     }
-    if (prob.expanded) {
+    // A problem that has never been expanded holds no arcs, so the candidate
+    // set is what its arc set is about to be. One that has holds the last
+    // master a path point left behind, and the candidate set is what that
+    // master was solved over. Which of the two a caller has is the difference
+    // between starting and continuing, and it is not something to infer.
+    if (expect_expanded && !prob.expanded) {
+        LAP_THROW_DIMENSION("continue_implicit_assignment: the problem is not "
+                            "expanded, so there is no master to continue from");
+    }
+    if (!expect_expanded && prob.expanded) {
         LAP_THROW_DIMENSION("solve_implicit_assignment: the problem is already "
                             "expanded, so its arc set is not the candidate set's");
     }
@@ -308,42 +318,33 @@ void tighten_matched_duals(const Source& src, const std::vector<int>& match,
     }
 }
 
-// Solve the assignment over the complete implicit problem `src` describes, by
-// growing `cand` until the pairs it holds carry an optimal solution for all of
-// them.
+namespace implicit_detail {
+
+// The rounds themselves, over a problem whose arcs are already the ones the
+// candidate set names. Both entry points below run this body; what separates
+// them is whether those arcs were placed by this call or left behind by the
+// last one.
 //
-// `prob` is a compiled, unexpanded problem holding one unit-capacity bipartite
-// block backed by `src`, with one unit of supply per row. It is expanded over
-// the candidate set here, and it is left holding the last master solved -- its
-// arcs, its flow and its potentials -- so a caller can read the solution back
-// through the block's own (i, j) metadata.
-//
-// `cand` carries whatever seed the caller has. An empty set is a valid start:
-// the first master places nothing, and the feasibility phase seeds every row
-// with its `width` cheapest admissible columns. That seed and the pricing both
-// go through one RowSearch built here, so a source carrying geometry answers
-// them from a bound over its columns rather than by reading all of them.
+// `search` is whatever the source can be asked about a row without reading it,
+// and it is a parameter rather than a local because it depends on the columns'
+// geometry alone. A path over caliper values moves the cut and leaves the
+// geometry where it is, so one structure serves every point.
 template <class Source>
-ImplicitResult solve_implicit_assignment(const Source& src,
-                                         FlowProblem& prob,
-                                         CandidateSet& cand,
-                                         const ImplicitOptions& opts = ImplicitOptions()) {
-    using implicit_detail::Clock;
-    using implicit_detail::seconds_since;
-
-    implicit_detail::require_shape(src, prob, cand, opts);
-
+ImplicitResult run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
+                          RowSearch<Source>& search, const ImplicitOptions& opts) {
     ImplicitResult out;
     out.possible_edges = src.nrow * src.ncol;
 
     FlowOptions flow_opts = opts.flow;
     flow_opts.return_potentials = true;
 
-    expand_block_subset(prob, 0, cand);
-
-    // Whatever the source can be asked about a row without reading it, built
-    // once and put both the seed's question and the pricer's.
-    RowSearch<Source> search(src);
+    // Every exit leaves the problem holding the master it stopped on. That is
+    // what makes the loop resumable: a caller with a further question about the
+    // same arcs -- the next point of a path -- puts it warm rather than cold.
+    const auto carry = [&prob](const FlowResult& master) {
+        prob.warm_flow      = master.flow;
+        prob.warm_potential = master.potential;
+    };
 
     // The ladder, over the deficient rows alone. A feasibility round costs the
     // same per row whatever width it keeps, so a deficiency that survives a
@@ -371,6 +372,7 @@ ImplicitResult solve_implicit_assignment(const Source& src,
             rec.kind = ImplicitRound::Kind::priced;
             out.rounds.push_back(rec);
             out.status = master.status;
+            carry(master);
             decided = true;
             break;
         }
@@ -382,6 +384,8 @@ ImplicitResult solve_implicit_assignment(const Source& src,
             FeasibilityRound seeded = feasibility_round(src, cand, width, search);
             rec.pricing_seconds = seconds_since(t_seed);
             rec.n_evaluated = seeded.n_evaluated;
+
+            carry(master);
 
             if (seeded.status == FeasibilityRound::Status::infeasible) {
                 out.rounds.push_back(rec);
@@ -402,8 +406,6 @@ ImplicitResult solve_implicit_assignment(const Source& src,
                           " units over an arc set Hall's condition calls feasible");
             }
 
-            prob.warm_flow      = master.flow;
-            prob.warm_potential = master.potential;
             rec.pairs_added = static_cast<int64_t>(seeded.added.size());
             rec.arcs_added  = add_block_arcs(prob, 0, seeded.added);
             out.rounds.push_back(rec);
@@ -422,8 +424,7 @@ ImplicitResult solve_implicit_assignment(const Source& src,
                       "flow over unit-capacity arcs and the flow does not read "
                       "back as an assignment");
         }
-        rec.matched_slack =
-            implicit_detail::matched_slack(src, duals.match, duals.u, duals.v);
+        rec.matched_slack = matched_slack(src, duals.match, duals.u, duals.v);
         tighten_matched_duals(src, duals.match, duals.u, duals.v);
 
         const Clock::time_point t_price = Clock::now();
@@ -433,6 +434,8 @@ ImplicitResult solve_implicit_assignment(const Source& src,
         rec.min_reduced_cost = priced.min_reduced_cost;
         rec.n_violators      = priced.n_violators;
         rec.n_evaluated      = priced.n_evaluated;
+
+        carry(master);
 
         if (priced.n_violators == 0) {
             // Nothing the master omits prices below -tol, so the duals are
@@ -447,7 +450,7 @@ ImplicitResult solve_implicit_assignment(const Source& src,
 
                 out.certificate = certify_assignment(
                     src, duals.match, duals.u, duals.v, opts.tol,
-                    merge_scans(held, implicit_detail::omitted_scan(priced)));
+                    merge_scans(held, omitted_scan(priced)));
                 out.certified = out.certificate.certified_optimal;
             }
             out.status = master.status;
@@ -460,8 +463,6 @@ ImplicitResult solve_implicit_assignment(const Source& src,
             break;
         }
 
-        prob.warm_flow      = master.flow;
-        prob.warm_potential = master.potential;
         const std::vector<CandidateSet::Pair> added =
             cand.add_pairs(violator_pairs(priced.violators));
         rec.pairs_added = static_cast<int64_t>(added.size());
@@ -474,6 +475,64 @@ ImplicitResult solve_implicit_assignment(const Source& src,
     out.candidate_edges = cand.n_arcs();
     out.edges_evaluated = cand.edges_evaluated();
     return out;
+}
+
+}  // namespace implicit_detail
+
+// Solve the assignment over the complete implicit problem `src` describes, by
+// growing `cand` until the pairs it holds carry an optimal solution for all of
+// them.
+//
+// `prob` is a compiled, unexpanded problem holding one unit-capacity bipartite
+// block backed by `src`, with one unit of supply per row. It is expanded over
+// the candidate set here, and it is left holding the last master solved -- its
+// arcs, its flow and its potentials -- so a caller can read the solution back
+// through the block's own (i, j) metadata, and a caller with a further question
+// about the same arcs can put it warm.
+//
+// `cand` carries whatever seed the caller has. An empty set is a valid start:
+// the first master places nothing, and the feasibility phase seeds every row
+// with its `width` cheapest admissible columns. That seed and the pricing both
+// go through one RowSearch, so a source carrying geometry answers them from a
+// bound over its columns rather than by reading all of them.
+template <class Source>
+ImplicitResult start_implicit_assignment(const Source& src, FlowProblem& prob,
+                                         CandidateSet& cand,
+                                         RowSearch<Source>& search,
+                                         const ImplicitOptions& opts = ImplicitOptions()) {
+    implicit_detail::require_shape(src, prob, cand, opts, /*expect_expanded=*/false);
+    expand_block_subset(prob, 0, cand);
+    return implicit_detail::run_rounds(src, prob, cand, search, opts);
+}
+
+// Put the same question to a problem a previous call already answered: its
+// arcs, its flow and its potentials, against a source that has since admitted
+// pairs it did not admit before.
+//
+// This is a path's step. A wider caliper leaves every arc in place, every
+// capacity where it was and every cost already reported unchanged, so the
+// incumbent flow stays feasible and the only thing the widening can have broken
+// is dual feasibility on the pairs it admitted. Those are exactly what a pricing
+// round looks at, which is why a path point is the loop again rather than a
+// second mechanism.
+template <class Source>
+ImplicitResult continue_implicit_assignment(const Source& src, FlowProblem& prob,
+                                            CandidateSet& cand,
+                                            RowSearch<Source>& search,
+                                            const ImplicitOptions& opts = ImplicitOptions()) {
+    implicit_detail::require_shape(src, prob, cand, opts, /*expect_expanded=*/true);
+    return implicit_detail::run_rounds(src, prob, cand, search, opts);
+}
+
+// One problem, one answer, and the row structure built here because nothing
+// outside the call has a use for it.
+template <class Source>
+ImplicitResult solve_implicit_assignment(const Source& src,
+                                         FlowProblem& prob,
+                                         CandidateSet& cand,
+                                         const ImplicitOptions& opts = ImplicitOptions()) {
+    RowSearch<Source> search(src);
+    return start_implicit_assignment(src, prob, cand, search, opts);
 }
 
 }  // namespace lap

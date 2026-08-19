@@ -165,6 +165,10 @@ lap_implicit_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distan
     .Call(`_couplr_lap_implicit_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, maximize, keep_per_row, width, tol, max_rounds, certify)
 }
 
+lap_match_path_lazy <- function(left_mat, right_mat, distance, inv_cov, values, calipers, vars, maximize = FALSE, keep_per_row = 5.0, width = 5.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
+    .Call(`_couplr_lap_match_path_lazy`, left_mat, right_mat, distance, inv_cov, values, calipers, vars, maximize, keep_per_row, width, tol, max_rounds, certify)
+}
+
 greedy_matching <- function(cost_matrix, maximize = FALSE, strategy = "row_best") {
     .Call(`_couplr_greedy_matching`, cost_matrix, maximize, strategy)
 }

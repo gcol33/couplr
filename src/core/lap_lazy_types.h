@@ -122,6 +122,15 @@ public:
     const std::vector<CaliperSpec>& calipers() const { return calipers_; }
     const std::vector<double>& inv_cov() const { return inv_cov_; }
 
+    // Move the distance cut without moving the coordinates. A path over caliper
+    // values states one problem per value, and the values differ in this field
+    // alone: the geometry, the metric and the calipers are the same, so a tree
+    // built over the columns and a flow placed over the pairs both stay valid
+    // across a move. Widening admits pairs and leaves every cost already
+    // reported unchanged; narrowing withdraws pairs a flow may be standing on,
+    // and the caller that sweeps is the one that knows which it is doing.
+    void set_max_distance(double d) { max_distance_ = d; }
+
     const double* left_row(int64_t i) const {
         return &left_[static_cast<size_t>(i * n_vars_)];
     }

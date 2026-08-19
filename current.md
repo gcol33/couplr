@@ -664,6 +664,17 @@ numbers came from separate installed builds through `c1_ab.sh` with two runs
 agreeing to a hundredth, so this is not a statement about them; it is a statement
 about what D3's twenty-caliper measurement has to do.
 
+D3 did it, and cost two runs learning that saying so is not the same as doing
+it. `bin\Rscript.exe` is a stub that re-execs `bin\x64\Rscript.exe`: a mask set
+on the stub reaches the worker by inheritance and a priority class does not, so
+the process doing the work ran at `Normal` while the launcher sat at `High`.
+And a second launch beside a live one puts two workers on the one processor the
+mask pins them to, writing one log and one results file between them, which is
+how a 6,667 x 13,333 cold sweep came in at 1,710 s against the 787 s it takes
+alone. `d3_pinned.ps1` launches the worker directly, refuses to start beside a
+live run of itself, and writes the mask and class it actually got to
+`d3_timing.pin`. A pinning claim is worth what it is read back from.
+
 ## A pair is one question now, and a lazy solve reads it once
 
 `src/core/lap_cost_source.h`. Not a phase 3 section -- it is the fix for what C4
@@ -1130,27 +1141,39 @@ measurement, which is a column that says nothing and a print line that says it
 once. It becomes a real reading when capacities rise, which is the ratio sweep D1
 declined and open question 3's neighbourhood.
 
-**For D3.** Balance is computed in R, after the C++ call returns, over every
-point. It costs a KS test per variable per point on the matched sample, so a
-20-point path at the paper's shape carries work an independent `match_couples()`
-solve does not. Timing `match_path()` against 20 cold solves on wall clock would
-charge the path for it. The per-point `seconds` the loop reports are the solve's
-own and do not include it; D3 should compare those.
+**For D3, and it is what D3 did.** Balance is computed in R, after the C++ call
+returns, over every point. It costs a KS test per variable per point on the
+matched sample, so a 20-point path at the paper's shape carries work an
+independent `match_couples()` solve does not. Timing `match_path()` against 20
+cold solves on wall clock would charge the path for it. The per-point `seconds`
+the loop reports are the solve's own and do not include it, and those are what
+the table compares. Wall clock is reported beside them and agrees to within 0.4%
+at every shape above 167 x 333.
 
 ## Next action
 
-**D3, what a path costs.** 20 caliper values warm-started against 20 independent
-solves on the paper's benchmark shapes, reported in `findings.md` in the form
-`b8_timing.R` uses, and the last thing before the paper's own benchmark is worth
-re-running end to end.
+**D3 is in: 2.83x, 2.61x, 3.71x, 4.54x** over 20 calipers at 167 x 333,
+667 x 1,333, 1,667 x 3,333 and 6,667 x 13,333, against 20 independent solves at
+the same values. 80 points, all optimal, every status and matched count equal to
+the independent solve's, worst relative total gap 0. `findings.md`,
+"D3: a sweep costs what its rounds cost, and a warm point is one round".
 
-The honest expectation D3 was given before any of this was built still stands
-and now has a shape to it. `d1_path.R` reports each point's rounds beside the
-rounds a cold solve at the same value takes: on ten of twelve cases the last
-point converges in one round against two or three from cold. One round is a
-master solve plus one pricing pass over the whole source, and the pricing pass
-is what dominates at eight covariates, so the ratio will be nearer 1 than the
-round counts suggest.
+The expectation D3 was given had the mechanism right and the conclusion
+backwards. A round costs within 9% the same whether its point was warm started
+or solved from cold, so rounds are fungible and the ratio is the round ratio:
+23, 25, 23 and 24 warm rounds against 60, 60, 80 and 100. A warm point that adds
+no arc converges in one round at every shape. Pricing dominating is what makes
+rounds fungible, so it argues for the round counts rather than against them.
+
+Two things the table does not say on its own. The first point of a path has
+nothing to resume from and times as the cold solve it is, 22% of the warm sweep
+at the largest shape. And on this data recipe the window between the tightest
+feasible caliper and the largest distance the unconstrained optimum uses is two
+points of twenty at n = 500 and n = 2,000 and empty at n = 5,000 and n = 20,000,
+so most of what was timed is re-certifying an answer that is already final.
+
+**The paper's own benchmark is worth re-running end to end.** That is what D3
+was the last thing before.
 
 Nothing in the master is left that is sized by the graph rather than by the work.
 Every `O(n_nodes)` pass per augmentation is gone, the residual graph is one
@@ -1164,16 +1187,18 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-**D2 is in.** Clean apart from what this note is committed with. `origin/main`
-is level with local at `0fa7938`, verified against the remote rather than
-against the tracking ref, and the last five commits there are:
+**D3 is in, and it is a measurement rather than code.** Clean apart from what
+this note is committed with; `d3_timing.R`, `d3_pinned.ps1` and their outputs
+live under `dev_notes/`, which is not tracked. `origin/main` is level with local
+at `9e68054`, verified against the remote rather than against the tracking ref,
+and the last five commits there are:
 
 ```
-99cb9cb  docs   the note is level with the remote, and two ways to mis-measure
-57a9d02  docs   the gate harnesses keep what it took to run them
-413fede  feat   the loop is resumable, and a path is the loop again
-ef82e4d  docs   the note is level with the remote again
+9e68054  docs   the note is level with the remote, and D2 is in
 0fa7938  feat   a path point carries its balance, and one summariser serves them all
+ef82e4d  docs   the note is level with the remote again
+413fede  feat   the loop is resumable, and a path is the loop again
+57a9d02  docs   the gate harnesses keep what it took to run them
 ```
 
 `413fede` is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
@@ -1304,6 +1329,9 @@ user-visible:
 | `c1_touched.log` | C1 revisited: the three-build timing table, the counts that decided it, and the field-level comparison of what the potential update moved |
 | `d1_path.R` | D1. Every point of a path against an independent solve at the same value and against a complete solve, all three scored against the point's own constrained cost matrix. Exits non-zero on any difference |
 | `d1_smoke.R` | The same comparison on one case, for a quick look at a path and at what a descending sweep is told |
+| `d3_timing.R` | D3. Twenty calipers warm-started against twenty independent solves at the paper's shapes, compared on per-point seconds. Builds its own grid from the data: the tight end is the tightest caliper the problem is feasible under, found by bisection, the wide end is the median distance between a treated unit and a control. Resumes from its own RDS and exits non-zero on any disagreement between the two sides |
+| `d3_timing.rds`, `d3_points.rds` | The current numbers from it, per shape and per point |
+| `d3_pinned.ps1` | D3's run, pinned to one processor at HIGH and detached as a Scheduled Task. Refuses to start beside a live run of itself. Writes `d3_timing.log`, a `d3_timing.pin` record of the mask and class the worker actually got, and a `d3_timing.done` marker |
 | `run_rtests.ps1`, `run_rtests_body.R` | The R suite launched as a Scheduled Task, which is what survives a turn boundary. Writes `rtests.log` and a `rtests.done` marker beside itself |
 
 `dev_notes/pricing-probe/`

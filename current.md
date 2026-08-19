@@ -8,8 +8,8 @@ the flow model's design, findings and repros.
 ## Where things stand
 
 **1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `ef82e4d` and the D2
-commit is unpushed; see "Working tree" at the end. The phase 1
+`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `0fa7938` and nothing is
+unpushed; see "Working tree" at the end. The phase 1
 certification layer went in as `7b3dd6e` and is no longer sitting in the working
 tree.
 
@@ -1164,16 +1164,16 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-**D2 is committed and unpushed.** `origin/main` is at `ef82e4d`, verified against
-the remote rather than against the tracking ref, and local is one commit ahead
-of it. What the remote holds, most recent last:
+**D2 is in.** Clean apart from what this note is committed with. `origin/main`
+is level with local at `0fa7938`, verified against the remote rather than
+against the tracking ref, and the last five commits there are:
 
 ```
-5efbd32  docs   C1 comes back, and the queue is what is left
 99cb9cb  docs   the note is level with the remote, and two ways to mis-measure
 57a9d02  docs   the gate harnesses keep what it took to run them
 413fede  feat   the loop is resumable, and a path is the loop again
 ef82e4d  docs   the note is level with the remote again
+0fa7938  feat   a path point carries its balance, and one summariser serves them all
 ```
 
 `413fede` is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
@@ -1184,7 +1184,7 @@ entry points in `src/flow/flow_implicit.h`, `LazyCostMatrix::set_max_distance()`
 `man/assignment.Rd` and `man/match_couples.Rd` also move: their roxygen carried
 C9's measurement and the `.Rd` files had not been regenerated since.
 
-The commit on top of them is D2, and it is R alone: `.overall_balance()` and the four
+`0fa7938` is D2, and it is R alone: `.overall_balance()` and the four
 call sites it replaces in `R/matching_diagnostics.R`, the balance columns and
 `$balance` in `R/matching_path.R`, four tests in
 `tests/testthat/test-match-path.R`, and the regenerated `man/match_path.Rd` and

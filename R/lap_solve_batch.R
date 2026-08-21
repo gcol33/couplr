@@ -94,6 +94,10 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
     stop("`x` must be a list of matrices, 3D array, or grouped data frame")
   }
   
+  # The sentinel is applied at the door, so a list or a 3D array masks the
+  # same way lap_solve() does on a single matrix.
+  matrices <- lapply(matrices, mask_forbidden, forbidden = forbidden)
+  
   n_problems <- length(matrices)
   
   # Check for empty input

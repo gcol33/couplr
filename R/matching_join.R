@@ -158,19 +158,17 @@ join_matched.matching_result <- function(result,
   # Prepare right dataset for joining
   right_join_data <- right[, c(right_id, right_vars), drop = FALSE]
 
-  # Convert ID types in matched to match the original data types
-  # This handles cases where LAP solvers return character IDs but original data has numeric IDs
-  matched$left_id <- type.convert(as.character(matched$left_id), as.is = TRUE)
-  matched$right_id <- type.convert(as.character(matched$right_id), as.is = TRUE)
-
-  # Ensure types match exactly (convert to same type as original data)
-  if (!identical(class(matched$left_id), class(left_join_data[[left_id]]))) {
-    matched$left_id <- methods::as(matched$left_id, class(left_join_data[[left_id]])[1])
-  }
-
-  if (!identical(class(matched$right_id), class(right_join_data[[right_id]]))) {
-    matched$right_id <- methods::as(matched$right_id, class(right_join_data[[right_id]])[1])
-  }
+  # The join key is the id as a string on both sides. `pairs$left_id` already
+  # holds as.character() of the original column (extract_ids()), so coercing
+  # the join table's key the same way is lossless in both directions and
+  # matches whatever the column held: zero-padded codes, decimal-looking
+  # strings and factor levels all survive the round trip unchanged.
+  left_key <- left_join_data[[left_id]]
+  right_key <- right_join_data[[right_id]]
+  matched$left_id <- as.character(matched$left_id)
+  matched$right_id <- as.character(matched$right_id)
+  left_join_data[[left_id]] <- as.character(left_key)
+  right_join_data[[right_id]] <- as.character(right_key)
 
   # Identify overlapping variable names (excluding IDs)
   overlap <- intersect(left_vars, right_vars)
@@ -222,6 +220,12 @@ join_matched.matching_result <- function(result,
     right_join_data,
     by = stats::setNames(right_id, "right_id")
   )
+
+  # The join ran on strings, so an id that only looks numeric keyed correctly.
+  # Report it back in the type the caller's own column holds by reading the
+  # value out of that column rather than parsing the string.
+  matched$left_id <- left_key[match(matched$left_id, as.character(left_key))]
+  matched$right_id <- right_key[match(matched$right_id, as.character(right_key))]
 
   # Remove distance if not requested
   if (!include_distance && "distance" %in% names(matched)) {
@@ -321,22 +325,13 @@ join_matched.subclass_result <- function(result, data = NULL, ...) {
 #' )
 #'
 #' result <- match_couples(left, right, vars = "age")
-#' couplr::augment(result, left, right)
+#' augment(result, left, right)
 #'
-#' @export
+#' @importFrom generics augment
+#' @exportS3Method generics::augment
 augment.matching_result <- function(x, left, right, ...) {
   join_matched(x, left, right, ...)
 }
 
-#' Generic Augment Function
-#'
-#' S3 generic for augmenting model results with original data.
-#'
-#' @param x An object to augment
-#' @param ... Additional arguments passed to methods
-#'
-#' @return Augmented data (depends on method)
 #' @export
-augment <- function(x, ...) {
-  UseMethod("augment")
-}
+generics::augment

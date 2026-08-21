@@ -92,7 +92,58 @@ bool is_feasible(const CostMatrix& cost);
 bool is_valid_matching(const CostMatrix& cost, const std::vector<int>& match);
 
 // Check if a perfect matching exists using augmenting paths
-// More thorough than is_feasible() - actually tries to find a matching
+// More thorough than is_feasible() - actually tries to find a matching.
+//
+// Generic over the cost source, so a lazy source answers the same question as
+// a dense one. Header-only for the same reason build_allowed() is: the source
+// type is not known here.
+namespace detail {
+// DFS for an augmenting path from row `u` over the allowed-edge adjacency.
+inline bool dfs_augment(int u, const std::vector<std::vector<int>>& adj,
+                        std::vector<int>& match_v, std::vector<bool>& visited) {
+    for (int v : adj[static_cast<size_t>(u)]) {
+        if (visited[static_cast<size_t>(v)]) continue;
+        visited[static_cast<size_t>(v)] = true;
+        if (match_v[static_cast<size_t>(v)] < 0 ||
+            dfs_augment(match_v[static_cast<size_t>(v)], adj, match_v, visited)) {
+            match_v[static_cast<size_t>(v)] = u;
+            return true;
+        }
+    }
+    return false;
+}
+}  // namespace detail
+
+template <typename CostSourceT>
+bool has_valid_matching_view(const CostSourceT& cost) {
+    // DFS-augmenting-path feasibility check: already O(n*m) with per-row DFS
+    // overhead, impractical well before n/m individually approach INT_MAX, so
+    // truncation here is intentional.
+    const int n = static_cast<int>(cost.nrow);
+    const int m = static_cast<int>(cost.ncol);
+
+    if (n == 0) return true;
+    if (n > m) return false;
+
+    std::vector<std::vector<int>> adj(static_cast<size_t>(n));
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (cost.allowed(i, j) && std::isfinite(cost.at(i, j))) {
+                adj[static_cast<size_t>(i)].push_back(j);
+            }
+        }
+        if (adj[static_cast<size_t>(i)].empty()) return false;
+    }
+
+    std::vector<int> match_v(static_cast<size_t>(m), -1);
+    int matched = 0;
+    for (int u = 0; u < n; ++u) {
+        std::vector<bool> visited(static_cast<size_t>(m), false);
+        if (detail::dfs_augment(u, adj, match_v, visited)) ++matched;
+    }
+    return matched == n;
+}
+
 bool has_valid_matching(const CostMatrix& cost);
 
 // Compute total cost from a cost matrix and assignment

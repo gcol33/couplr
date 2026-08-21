@@ -167,6 +167,34 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
     return AuctionCoreResult<CostSourceT>{std::move(a_of_i), iter};
 }
 
+// Run the bidding core and name a guard trip correctly.
+//
+// The iteration guard fires on two different inputs: one whose allowed edges
+// admit no perfect matching, where rows displace each other forever over a
+// column set too small for all of them, and one that is feasible and merely
+// slow. ensure_each_row_has_option() does not separate them -- every row can
+// have an option and Hall's condition still fail, which is what
+// [[1, Inf], [1, Inf]] is -- so the matching is checked here, on the path
+// that already failed. A run that converged pays nothing for this.
+template <typename CostSourceT, typename OriginalT>
+static AuctionCoreResult<CostSourceT> run_auction_core(const CostSourceT& work,
+                                                       const OriginalT& original,
+                                                       bool gauss_seidel,
+                                                       double initial_epsilon_factor,
+                                                       double alpha,
+                                                       double final_epsilon) {
+    try {
+        return auction_core_impl(work, gauss_seidel, initial_epsilon_factor,
+                                 alpha, final_epsilon);
+    } catch (const ConvergenceException&) {
+        if (!has_valid_matching_view(original)) {
+            LAP_THROW_INFEASIBLE("Could not find full matching: the allowed "
+                                 "edges admit no complete assignment");
+        }
+        throw;
+    }
+}
+
 // Shared epsilon-scaling forward-auction core (dense CostMatrix).
 //   initial_epsilon_factor : multiplies the starting epsilon
 //   alpha                  : epsilon reduction factor per phase (> 1)
@@ -219,8 +247,8 @@ static LapResult auction_core(const CostMatrix& cost, bool maximize,
     // Prepare working costs (negated if maximize, forbidden excluded via mask).
     CostMatrix work = prepare_for_solve(base, maximize);
 
-    auto core = auction_core_impl(work, gauss_seidel, initial_epsilon_factor,
-                                  alpha, final_epsilon);
+    auto core = run_auction_core(work, cost, gauss_seidel,
+                                 initial_epsilon_factor, alpha, final_epsilon);
     if (out_bids != nullptr) *out_bids = core.iter;
 
     // Verify the ORIGINAL rows and total on the ORIGINAL costs.
@@ -254,8 +282,8 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
     const bool needs_padding = (n0 < m0);
 
     if (!needs_padding) {
-        auto core = auction_core_impl(cost, gauss_seidel, initial_epsilon_factor,
-                                      alpha, final_epsilon);
+        auto core = run_auction_core(cost, cost, gauss_seidel,
+                                     initial_epsilon_factor, alpha, final_epsilon);
         if (out_bids != nullptr) *out_bids = core.iter;
 
         std::vector<int> assignment(static_cast<size_t>(n0), -1);
@@ -291,8 +319,8 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
     if (cost.is_negated()) dummy_cost = -dummy_cost;
 
     PaddedCostView<LazyCostMatrix> padded(cost, n0, dummy_cost);
-    auto core = auction_core_impl(padded, gauss_seidel, initial_epsilon_factor,
-                                  alpha, final_epsilon);
+    auto core = run_auction_core(padded, cost, gauss_seidel,
+                                 initial_epsilon_factor, alpha, final_epsilon);
     if (out_bids != nullptr) *out_bids = core.iter;
 
     std::vector<int> assignment(static_cast<size_t>(n0), -1);

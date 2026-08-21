@@ -846,8 +846,3 @@ plot.balance_diagnostics <- function(x,
 
   invisible(x)
 }
-
-# Helper for NULL coalescing
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}

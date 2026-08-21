@@ -245,6 +245,7 @@ cem_match <- function(left, right, vars,
     vars = vars,
     grouping = grouping
   )
+  info <- c(info, design_estimand(n_left, info$n_matched_left))
 
   result <- list(
     matched = matched_tbl,

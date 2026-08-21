@@ -8,6 +8,8 @@ match_path(
   left,
   right,
   vars,
+  left_id = NULL,
+  right_id = NULL,
   vary = "max_distance",
   values,
   distance = "euclidean",
@@ -27,6 +29,10 @@ match_path(
 \item{left, right}{Data frames to match. Both are required.}
 
 \item{vars}{Character vector of matching variables, present in both.}
+
+\item{left_id, right_id}{Name of the column holding the unit identifier, or
+NULL (default) to use a column called \code{id}, then meaningful row names,
+then synthesized ids with a warning. See \code{\link[=match_couples]{match_couples()}}.}
 
 \item{vary}{The argument to sweep. \code{"max_distance"} sweeps the distance cut.}
 

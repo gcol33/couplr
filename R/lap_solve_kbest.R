@@ -63,7 +63,7 @@ lap_solve_kbest <- function(x, k = 3, source = NULL, target = NULL, cost = NULL,
   }
   
   # Handle matrix input
-  cost_matrix <- as.matrix(x)
+  cost_matrix <- mask_forbidden(as.matrix(x), forbidden)
   
   # Call the underlying k-best function
   result <- kbest_assignment(cost_matrix, k = k, maximize = maximize,
@@ -113,24 +113,10 @@ lap_solve_kbest_df <- function(df, k, source_col, target_col, cost_col,
     error = function(e) stop("For data frame input, must specify `source`, `target`, and `cost` columns", call. = FALSE)
   )
   
-  # Get unique indices
-  unique_sources <- sort(unique(source_vals))
-  unique_targets <- sort(unique(target_vals))
-  
-  # Create mapping to 1-based indices
-  source_map <- stats::setNames(seq_along(unique_sources), unique_sources)
-  target_map <- stats::setNames(seq_along(unique_targets), unique_targets)
-  
-  # Build cost matrix
-  n_sources <- length(unique_sources)
-  n_targets <- length(unique_targets)
-  cost_matrix <- matrix(forbidden, nrow = n_sources, ncol = n_targets)
-  
-  for (i in seq_len(nrow(df))) {
-    row_idx <- source_map[as.character(source_vals[i])]
-    col_idx <- target_map[as.character(target_vals[i])]
-    cost_matrix[row_idx, col_idx] <- cost_vals[i]
-  }
+  built <- long_to_cost_matrix(source_vals, target_vals, cost_vals, forbidden)
+  cost_matrix <- built$cost_matrix
+  unique_sources <- built$sources
+  unique_targets <- built$targets
   
   # Solve
   result <- kbest_assignment(cost_matrix, k = k, maximize = maximize,

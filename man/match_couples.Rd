@@ -8,6 +8,8 @@ match_couples(
   left,
   right = NULL,
   vars = NULL,
+  left_id = NULL,
+  right_id = NULL,
   distance = "euclidean",
   weights = NULL,
   scale = FALSE,
@@ -36,6 +38,15 @@ match_couples(
 \item{right}{Data frame of "right" units (e.g., control, controls)}
 
 \item{vars}{Variable names to use for distance computation}
+
+\item{left_id, right_id}{Name of the column holding the unit identifier, or
+NULL (default) to use a column called \code{id}, then meaningful row names,
+then synthesized ids \verb{left_1 ... left_n} / \verb{right_1 ... right_m} with a
+warning. The values of this column are what \code{pairs$left_id} and
+\code{pairs$right_id} carry, and what \code{\link[=join_matched]{join_matched()}}, \code{\link[=match_data]{match_data()}},
+\code{\link[=balance_diagnostics]{balance_diagnostics()}}, \code{\link[=sensitivity_analysis]{sensitivity_analysis()}} and \code{\link[=as_matchit]{as_matchit()}} join
+on, so the same column name is passed to those verbs. Ids read from the
+data must be unique.}
 
 \item{distance}{Distance metric: "euclidean", "manhattan", "mahalanobis",
 or a custom function}

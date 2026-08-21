@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <cctype>
+#include "../core/kbest_partition.h"
 #include "../core/lap_internal.h"
 #include "../core/lap_utils_rcpp.h"
 
@@ -85,19 +86,6 @@ solve_one_with_auto_transpose(NumericMatrix M,
   return {match_out, cost_final};
 }
 
-// Node for PQ
-struct LawNode {
-  std::vector<int> match;  // 1-based, length n
-  double cost;             // possibly negated for maximize
-  int nexti;               // next branching position (1..n+1)
-  LawNode(std::vector<int> m, double c, int nx) : match(std::move(m)), cost(c), nexti(nx) {}
-};
-
-// Min-heap on cost
-struct NodeGreater {
-  bool operator()(const LawNode& a, const LawNode& b) const { return a.cost > b.cost; }
-};
-
 } // namespace
 
 // ---- Non-exported implementation ----
@@ -111,71 +99,19 @@ Rcpp::List solve_kbest_lawler_impl(NumericMatrix cost,
   const int n = cost.nrow(), m = cost.ncol();
   if (n == 0 || m == 0) return List::create();
 
-  // Best solution
-  auto best = solve_one_with_auto_transpose(cost, method_base, maximize);
-  std::vector<int> pi0 = best.first;   // perfect matching (no zeros)
-  double c0 = best.second;
+  KBestOracle solve_one = [&](NumericMatrix M) {
+    return solve_one_with_auto_transpose(M, method_base, maximize);
+  };
 
-  // Dedup
-  std::unordered_set<std::string> seen;
-  seen.reserve(1024);
-  seen.insert(match_to_key(pi0));
+  std::vector<KBestSolution> found = kbest_by_partition(cost, k, solve_one);
 
-  // Output vector of Lists
   std::vector<Rcpp::List> out;
-  out.reserve(k);
-
-  // Negate back for output if maximizing
-  out.push_back(Rcpp::List::create(_["match"] = IntegerVector(pi0.begin(), pi0.end()),
-                                   _["total_cost"] = maximize ? -c0 : c0));
-
-  // PQ of child subproblems
-  std::priority_queue<LawNode, std::vector<LawNode>, NodeGreater> pq;
-
-  // Seed S_1 branches
-  for (int i = 1; i <= n; ++i) {
-    if (pi0[i - 1] == 0) continue;  // skip unmatched rows
-    std::vector<int> force_cols(pi0.begin(), pi0.begin() + (i - 1));
-    NumericMatrix Mi = apply_constraints(cost, force_cols, i, pi0[i - 1]);
-
-    // Check if a valid matching exists before calling solver
-    if (!has_valid_matching(Mi)) continue;
-
-    // Solve - guaranteed not to throw since we verified feasibility
-    std::pair<std::vector<int>, double> child = solve_one_with_auto_transpose(Mi, method_base, maximize);
-
-    std::string key = match_to_key(child.first);
-    if (seen.insert(key).second) {
-      pq.emplace(child.first, child.second, i + 1);
-    }
-  }
-
-  // Main enumeration
-  while ((int)out.size() < k && !pq.empty()) {
-    LawNode node = pq.top(); pq.pop();
-
+  out.reserve(found.size());
+  for (const KBestSolution& s : found) {
     out.push_back(Rcpp::List::create(
-      _["match"] = IntegerVector(node.match.begin(), node.match.end()),
-      _["total_cost"] = maximize ? -node.cost : node.cost
+      _["match"] = IntegerVector(s.match.begin(), s.match.end()),
+      _["total_cost"] = maximize ? -s.order_cost : s.order_cost
     ));
-
-    // Branch from node.nexti .. n
-    for (int i = node.nexti; i <= n; ++i) {
-      if (node.match[i - 1] == 0) continue;  // skip unmatched rows
-      std::vector<int> force_cols(node.match.begin(), node.match.begin() + (i - 1));
-      NumericMatrix Mi = apply_constraints(cost, force_cols, i, node.match[i - 1]);
-
-      // Check if a valid matching exists before calling solver
-      if (!has_valid_matching(Mi)) continue;
-
-      // Solve - guaranteed not to throw since we verified feasibility
-      std::pair<std::vector<int>, double> child = solve_one_with_auto_transpose(Mi, method_base, maximize);
-
-      std::string key = match_to_key(child.first);
-      if (seen.insert(key).second) {
-        pq.emplace(child.first, child.second, i + 1);
-      }
-    }
   }
 
   return Rcpp::wrap(out);

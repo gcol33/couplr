@@ -46,10 +46,10 @@
 #'       saturates both sides, so a rectangular problem is padded to square with
 #'       zero-cost dummies and costs `max(n, m)` on both sides.
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
-#'     \item `"csflow"` — Cost-scaling network flow
+#'     \item `"csflow"` — Successive shortest paths with 'Johnson' potentials
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
 #'     \item `"orlin"` — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
-#'     \item `"push_relabel"` — 'Push-relabel' max-flow based solver
+#'     \item `"push_relabel"` — 'Goldberg-Tarjan' cost-scaling push-relabel
 #'     \item `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 #'   }
 #'
@@ -535,11 +535,7 @@ lap_solve <- function(x, source = NULL, target = NULL, cost = NULL,
   # Handle matrix input
   cost_matrix <- as.matrix(x)
 
-  # Honor a non-NA `forbidden` sentinel by masking matching cells as forbidden.
-  # (NA/Inf cells are already treated as forbidden by assignment().)
-  if (!is.na(forbidden)) {
-    cost_matrix[cost_matrix == forbidden] <- Inf
-  }
+  cost_matrix <- mask_forbidden(cost_matrix, forbidden)
 
   # Call the underlying assignment function
   result <- assignment(cost_matrix, maximize = maximize, method = method)
@@ -587,24 +583,10 @@ lap_solve_df <- function(df, source_col, target_col, cost_col,
     error = function(e) stop("For data frame input, must specify `source`, `target`, and `cost` columns", call. = FALSE)
   )
   
-  # Get unique indices
-  unique_sources <- sort(unique(source_vals))
-  unique_targets <- sort(unique(target_vals))
-  
-  # Create mapping to 1-based indices
-  source_map <- stats::setNames(seq_along(unique_sources), unique_sources)
-  target_map <- stats::setNames(seq_along(unique_targets), unique_targets)
-  
-  # Build cost matrix
-  n_sources <- length(unique_sources)
-  n_targets <- length(unique_targets)
-  cost_matrix <- matrix(forbidden, nrow = n_sources, ncol = n_targets)
-  
-  for (i in seq_len(nrow(df))) {
-    row_idx <- source_map[as.character(source_vals[i])]
-    col_idx <- target_map[as.character(target_vals[i])]
-    cost_matrix[row_idx, col_idx] <- cost_vals[i]
-  }
+  built <- long_to_cost_matrix(source_vals, target_vals, cost_vals, forbidden)
+  cost_matrix <- built$cost_matrix
+  unique_sources <- built$sources
+  unique_targets <- built$targets
   
   # Solve
   result <- assignment(cost_matrix, maximize = maximize, method = method)

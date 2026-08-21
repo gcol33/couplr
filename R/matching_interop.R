@@ -16,6 +16,14 @@
 #'   default formula is constructed from \code{result$info$vars}.
 #' @param left_id Name of ID column in left (default: \code{"id"})
 #' @param right_id Name of ID column in right (default: \code{"id"})
+#' @param estimand Target estimand stamped on the matchit object: one of
+#'   \code{"ATT"}, \code{"ATC"} or \code{"ATE"}. \code{NULL} (default) reads it
+#'   from the design, which every couplr front door records as
+#'   \code{info$estimand}. MatchIt and marginaleffects read this field to pick
+#'   the target population and the weighting of the effect estimate, so give it
+#'   explicitly whenever the design does not determine it -- in particular when
+#'   \code{left} holds the controls, which makes the design's left-focal
+#'   weighting an ATC.
 #' @param ... Additional arguments (ignored)
 #'
 #' @return An S3 object of class \code{"matchit"} with fields:
@@ -42,7 +50,10 @@
 as_matchit <- function(result, left, right,
                        formula = NULL,
                        left_id = "id", right_id = "id",
+                       estimand = NULL,
                        ...) {
+
+  estimand <- .resolve_estimand(result, estimand)
 
   # Get match_data for weights and subclass
   md <- match_data(result, left, right, left_id = left_id,
@@ -134,11 +145,45 @@ as_matchit <- function(result, left, right,
       ),
       nn = NULL,
       method = method_label,
-      estimand = result$info$estimand %||% "ATT",
+      estimand = estimand,
       formula = formula
     ),
     class = "matchit"
   )
+}
+
+# The estimand a matchit object is labelled with. It comes from the design,
+# which every front door records in info$estimand, and a caller can override it
+# -- the design knows how it weights, not which side of the caller's data holds
+# the treated units. There is no default: a guessed estimand propagates into the
+# reported causal quantity rather than failing loudly.
+.resolve_estimand <- function(result, estimand) {
+  if (!is.null(estimand)) {
+    estimand <- toupper(as.character(estimand))
+    if (length(estimand) != 1L || !estimand %in% c("ATT", "ATE", "ATC")) {
+      stop("estimand must be one of 'ATT', 'ATE', 'ATC'", call. = FALSE)
+    }
+    return(estimand)
+  }
+
+  est <- result$info$estimand
+  if (is.null(est) || is.na(est)) {
+    stop("This result carries no estimand, so there is nothing to label the ",
+         "matchit object with. MatchIt and marginaleffects read that field to ",
+         "choose the target population, so pass estimand = \"ATT\", \"ATC\" ",
+         "or \"ATE\".", call. = FALSE)
+  }
+
+  dropped <- result$info$focal_discarded
+  if (!is.null(dropped) && !is.na(dropped) && dropped > 0L) {
+    warning(sprintf(
+      paste0("The design did not retain %d of the focal (left) units, so ",
+             "estimand = \"%s\" refers to the matched focal subset rather ",
+             "than to all of them."),
+      dropped, est), call. = FALSE)
+  }
+
+  est
 }
 
 
@@ -155,7 +200,8 @@ as_matchit <- function(result, left, right,
 #' @param left Data frame of left (treated) units
 #' @param right Data frame of right (control) units
 #' @param data Data frame used for subclassification (for subclass_result only)
-#' @param ... Additional arguments passed to \code{cobalt::bal.tab()}
+#' @param ... Additional arguments. Arguments named in [as_matchit()]'s
+#'   signature go to the conversion; the rest go to \code{cobalt::bal.tab()}.
 #'
 #' @return A cobalt balance table object
 #'
@@ -165,40 +211,47 @@ as_matchit <- function(result, left, right,
 #' \code{bal.tab.matchit()} method. The \pkg{cobalt} package must be
 #' installed but is not required for couplr to function.
 #'
-#' @export
+#' @name bal.tab.matching_result
+NULL
+
+# One conversion for the three pair-shaped result classes. `...` carries
+# arguments for two different functions, so it is split by whose formals name
+# them: as_matchit() gets its own, cobalt::bal.tab() gets the rest. Forwarding
+# the whole of `...` to both hands each function the other's arguments.
+.bal_tab_via_matchit <- function(x, left, right, ...) {
+  if (!requireNamespace("cobalt", quietly = TRUE)) {
+    stop("Package 'cobalt' is required for bal.tab(). Install with: install.packages('cobalt')",
+         call. = FALSE)
+  }
+  dots <- list(...)
+  own <- setdiff(names(formals(as_matchit)), c("result", "left", "right", "..."))
+  to_matchit <- dots[intersect(names(dots), own)]
+  to_cobalt <- dots[setdiff(names(dots), own)]
+
+  mi <- do.call(as_matchit, c(list(x, left, right), to_matchit))
+  do.call(cobalt::bal.tab, c(list(mi), to_cobalt))
+}
+
+#' @rdname bal.tab.matching_result
+#' @exportS3Method cobalt::bal.tab
 bal.tab.matching_result <- function(x, left, right, ...) {
-  if (!requireNamespace("cobalt", quietly = TRUE)) {
-    stop("Package 'cobalt' is required for bal.tab(). Install with: install.packages('cobalt')",
-         call. = FALSE)
-  }
-  mi <- as_matchit(x, left, right, ...)
-  cobalt::bal.tab(mi, ...)
+  .bal_tab_via_matchit(x, left, right, ...)
 }
 
 #' @rdname bal.tab.matching_result
-#' @export
+#' @exportS3Method cobalt::bal.tab
 bal.tab.full_matching_result <- function(x, left, right, ...) {
-  if (!requireNamespace("cobalt", quietly = TRUE)) {
-    stop("Package 'cobalt' is required for bal.tab(). Install with: install.packages('cobalt')",
-         call. = FALSE)
-  }
-  mi <- as_matchit(x, left, right, ...)
-  cobalt::bal.tab(mi, ...)
+  .bal_tab_via_matchit(x, left, right, ...)
 }
 
 #' @rdname bal.tab.matching_result
-#' @export
+#' @exportS3Method cobalt::bal.tab
 bal.tab.cem_result <- function(x, left, right, ...) {
-  if (!requireNamespace("cobalt", quietly = TRUE)) {
-    stop("Package 'cobalt' is required for bal.tab(). Install with: install.packages('cobalt')",
-         call. = FALSE)
-  }
-  mi <- as_matchit(x, left, right, ...)
-  cobalt::bal.tab(mi, ...)
+  .bal_tab_via_matchit(x, left, right, ...)
 }
 
 #' @rdname bal.tab.matching_result
-#' @export
+#' @exportS3Method cobalt::bal.tab
 bal.tab.subclass_result <- function(x, data = NULL, ...) {
   if (!requireNamespace("cobalt", quietly = TRUE)) {
     stop("Package 'cobalt' is required for bal.tab(). Install with: install.packages('cobalt')",
@@ -207,10 +260,4 @@ bal.tab.subclass_result <- function(x, data = NULL, ...) {
   md <- match_data(x, data = data)
   treat_var <- if ("treatment" %in% names(md)) "treatment" else x$info$treatment
   cobalt::bal.tab(md, treat = treat_var, weights = "weights", ...)
-}
-
-
-# NULL coalescing (safe re-definition if not already available)
-if (!exists("%||%", mode = "function")) {
-  `%||%` <- function(x, y) if (is.null(x)) y else x
 }

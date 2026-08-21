@@ -86,6 +86,8 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls, double max_controls);
 Rcpp::List flow_compile_couples_impl(std::string design, double n_rows,
                                      double n_cols, double ratio);
+Rcpp::List flow_trace_assignment_impl(Rcpp::NumericMatrix cost, bool maximize);
+Rcpp::List flow_trace_push_relabel_impl(Rcpp::NumericMatrix cost, bool maximize);
 
 // Forward decls for the edge-generation loop (implemented in
 // flow/flow_implicit_rcpp.cpp)
@@ -422,6 +424,18 @@ Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
 Rcpp::List lap_flow_compile_couples(std::string design, double n_rows,
                                     double n_cols, double ratio = 1.0) {
   return flow_compile_couples_impl(design, n_rows, n_cols, ratio);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_trace_assignment(Rcpp::NumericMatrix cost,
+                                     bool maximize = false) {
+  return flow_trace_assignment_impl(cost, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_trace_push_relabel(Rcpp::NumericMatrix cost,
+                                       bool maximize = false) {
+  return flow_trace_push_relabel_impl(cost, maximize);
 }
 
 // =======================

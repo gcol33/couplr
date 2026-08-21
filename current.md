@@ -233,40 +233,60 @@ Closed by the 1.6 work:
 - **#31** `gabow_tarjan` suboptimal on rectangular problems. Closed against
   `7b2f84f`; see the section above for the cause and what else it turned up.
 
-Filed by this work, all three cleanly separable and none of them blocking
-phase 3:
+Closed by the 1.6.1 sweep:
 
-- **#34** the animations restate the solver instead of reading it. The two
-  divergences found on 2026-08-15 are fixed, but `trace_helpers_mcf.R` is still
-  a second implementation of the SSP core and can drift again. The chunk: the
-  flow model emits per-step state and the traces read it. `trace_cycle_cancel`,
-  `trace_csa` and `trace_gabow_tarjan` are out of scope -- different algorithms,
-  not an SSP step stream.
-- **#33** `gabow_tarjan` squares a rectangular instance, so `n << m` is not
-  runnable at its own shape. Either a measured size guard pointing at jv, or a
-  formulation that keeps the rectangular shape by treating the identical dummy
-  rows as one node. Not urgent: the method is opt-in and `"auto"` sends
-  `m >= 3n` to `sap`.
-- **#32** `push_relabel` is successive shortest paths with Johnson potentials,
-  not Goldberg-Tarjan push-relabel. Three places in the repo already say so,
-  including the message the animation shows the user. Same shape as #30:
-  implement it, or rename and describe what is there.
+- **#17** `match_data` scrambled weights and subclasses for full matching and
+  CEM. Every reader now joins on the id column instead of trusting row order,
+  and `match_data.matching_result` emits one row per pair with the weight the
+  pair carries.
+- **#18** the auction reports an infeasible instance as one, instead of as a
+  convergence failure.
+- **#21** `forbidden` reaches the `.couples_single` greedy path; `mask_forbidden()`
+  is the one place it is applied.
+- **#22** one k-best partitioning engine serves Murty and Lawler. Both had their
+  own and both dropped solutions: a child's own children have to re-enter at the
+  branch row carrying the parent's forbidden set. Checked against exhaustive
+  enumeration, both backends, both directions, ties and forbidden edges.
+- **#24** the matching layer joins by key throughout, including
+  `.pair_var_diffs` and the cardinality pruning loop.
+- **#25** the interpreted cost-matrix loops are vectorised. Euclidean sums one
+  dimension at a time rather than through the Gram identity, which the
+  1e15-coordinate blocked fixture had shown losing most of the mantissa.
+- **#26** the code-quality sweep: the duplication is extracted, the dead code
+  and the meta comments are gone, and the four status/metadata items are fixed.
+- **#27** `CHANGELOG.md` is deleted in favour of `NEWS.md`, `cran-comments.md`
+  describes the release it ships with, `.onUnload()` is restored, the malformed
+  `.Rbuildignore` line is gone, and the `matching_result` S3 methods have their
+  own file.
+- **#29** `as_matchit()` reads the estimand the design recorded.
+- **#32** `method = "push_relabel"` runs Goldberg-Tarjan cost-scaling
+  push-relabel, on the compiled `FlowProblem` beside the shortest-path solver.
+- **#34** `solve_min_cost_flow()` emits per-step state and `trace_csflow()`
+  renders it; the R residual-graph Dijkstra, Bellman-Ford and potential update
+  are gone. `solve_min_cost_flow_push_relabel()` does the same per phase.
+- **#35**, **#36**, **#37**, **#38**, **#39** the id contract: ids are checked
+  for uniqueness at extraction, `left_id`/`right_id` thread through, a
+  synthesised id warns and names the argument that fixes it, and the interop
+  verbs are S3 methods on the generics that own them.
 
 Open, and confirmed open on GitHub:
 
 - **#30** `cardinality_match()` is a balance-pruning heuristic under
-  Zubizarreta's name. Needs a decision, implement or rename.
-- **#29** `as_matchit()` labels every non-subclass design `estimand = "ATT"`.
-  Roadmap section H.
-- **#27** stale CHANGELOG and cran-comments. Still true, and now one version
-  further behind.
-- **#26** code-quality sweep, duplication across `match_couples`/`greedy_couples`.
-- **#25** vectorize the interpreted cost-matrix loops.
-- **#24** latent matching-layer bugs, `.pair_var_diffs` merge misalignment.
-- **#22** Murty k-best branching is not true partitioning and can drop solutions.
-- **#21** `forbidden` silently ignored on the `.couples_single` greedy path.
-- **#18** auction solvers have no global infeasibility detection.
-- **#17** `match_data` scrambles weights and subclasses for full matching + CEM.
+  Zubizarreta's name. The decision is to implement it: maximise matched
+  cardinality subject to balance, as an integer program. The route that needs no
+  MIP dependency is Lagrangian relaxation on the balance constraints -- each
+  subproblem is a cardinality-maximising assignment couplr already solves
+  exactly -- with subgradient ascent for the bound and branching on unit
+  inclusion where the bound does not close. Multi-week; its own session.
+- **#33** `gabow_tarjan` squares a rectangular instance, so `n << m` is not
+  runnable at its own shape. The decision is to keep the rectangular shape.
+  The `m - n` dummy rows are identical and zero-cost, so their scaled cost is
+  one value and their tight columns are one scan of `y_v`; keeping them as
+  separate unit-capacity nodes preserves the paper's `bn` bound while never
+  materialising their rows. Whether the forest search and the bucket structure
+  can be written against that representation is the open part. Multi-week; its
+  own session. Not urgent: the method is opt-in and `"auto"` sends `m >= 3n`
+  to `sap`.
 
 ## Facts that will bite anyone benchmarking
 

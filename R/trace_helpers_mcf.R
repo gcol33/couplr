@@ -1,21 +1,24 @@
 # ==============================================================================
-# Shared min-cost-flow infrastructure for trace functions
+# The min-cost-flow graph the cycle-cancelling trace runs on
 # ==============================================================================
-# Used by trace_csflow, trace_cycle_cancel, trace_push_relabel, trace_csa to
-# represent the standard LAP-as-min-cost-flow graph:
+# The standard LAP-as-min-cost-flow network:
 #
 #         source --(cap 1, cost 0)--> row_i --(cap 1, cost c[i,j])--> col_j
 #                                                                       |
 #                                                                       v
 #                                          col_j --(cap 1, cost 0)--> sink
 #
-# We use the classic forward+reverse edge pair representation: every edge is
-# stored alongside its residual reverse edge, with cap, cost, and a rev_idx
-# cross-pointer. Pushing flow on edge e decrements e$cap and increments
-# edges[[e$rev_idx]]$cap. Reverse-edge cost is the negation of the forward.
+# Every edge is stored alongside its residual reverse edge, with cap, cost, and
+# a rev_idx cross-pointer. Pushing flow on edge e decrements e$cap and
+# increments edges[[e$rev_idx]]$cap. Reverse-edge cost is the negation of the
+# forward. The graph lives in an environment so mutation is in place: an
+# algorithm grabs a graph, runs its inner loop, and reads back state without a
+# copy.
 #
-# The graph object lives in an environment so mutation is in-place; algorithms
-# can grab a graph, run their inner loop, and read back state without copy.
+# Klein's cycle cancelling is the one algorithm here the compiled solver does
+# not run, which is why it is written in R. The successive-shortest-paths trace
+# reads src/flow/flow_solve.cpp's own per-search record instead; see
+# R/trace_csflow.R.
 # ==============================================================================
 
 #' Construct an empty min-cost-flow graph
@@ -110,6 +113,39 @@ build_lap_mcf <- function(cost, maximize = FALSE) {
   )
 }
 
+#' Map an edge index back to the (row, col) cell it carries
+#'
+#' Returns a function of one edge index that gives `c(i, j)` for the row->col
+#' edge of cell (i, j), for that edge and for its residual twin, and NULL for
+#' the source and sink edges a trace does not show. The index is built once, so
+#' each lookup is a single subscript.
+#'
+#' @keywords internal
+#' @noRd
+mcf_edge_rowcol_lookup <- function(mcf) {
+  n <- mcf$n_orig; m <- mcf$m_orig
+  edges <- mcf$graph$edges
+  cell_of_edge <- integer(length(edges))
+
+  for (j in seq_len(m)) {
+    for (i in seq_len(n)) {
+      e_idx <- mcf$row_col_edge[i, j]
+      if (is.na(e_idx)) next
+      cell <- (j - 1L) * n + i
+      cell_of_edge[e_idx] <- cell
+      rev_idx <- edges[[e_idx]]$rev_idx
+      if (!is.null(rev_idx) && !is.na(rev_idx)) cell_of_edge[rev_idx] <- cell
+    }
+  }
+
+  function(e_idx) {
+    if (is.na(e_idx) || e_idx < 1L || e_idx > length(cell_of_edge)) return(NULL)
+    cell <- cell_of_edge[e_idx]
+    if (cell == 0L) return(NULL)
+    c((cell - 1L) %% n + 1L, (cell - 1L) %/% n + 1L)
+  }
+}
+
 #' Recover row->col matching from an MCF graph after solving
 #'
 #' For each row i, finds the unique col_j such that the (row_i -> col_j) edge
@@ -159,133 +195,6 @@ mcf_extract_matching_strict <- function(mcf) {
     base[base %in% bad_cols] <- 0L
   }
   base
-}
-
-#' Reduced cost of residual edge e under node potentials h
-#'
-#' For augmenting-path / Johnson-potentials algorithms. The classical
-#' reduced cost is cost + h(from) - h(to) (equivalently cost - h(to) + h(from))
-#' and is guaranteed non-negative on residual edges when h is feasible
-#' (e.g. h initialised via Bellman-Ford from the source).
-#'
-#' Sign-convention note: under this formula, after running Dijkstra with
-#' reduced costs and shifting h by the distance labels (mcf_update_potentials),
-#' every residual edge's new reduced cost equals old_rc + shift(from) -
-#' shift(to), which is nonnegative - i.e. feasibility is preserved.
-#'
-#' @keywords internal
-#' @noRd
-residual_reduced_cost <- function(cost, h_from, h_to) {
-  cost + h_from - h_to
-}
-
-#' Shift node potentials by a Dijkstra distance vector
-#'
-#' Reached nodes take their distance label. Unreached ones take the largest
-#' label the search produced, which is what keeps the reduced cost non-negative
-#' on every residual edge rather than only on the ones the search could walk.
-#'
-#' No residual edge leaves a reached node for an unreached one, or the head
-#' would have been labelled. Residual edges in the other direction do exist,
-#' and on those the new reduced cost is old_rc + shift(tail) - dist(head);
-#' leaving an unreached tail alone drives that below zero as soon as the head's
-#' label is positive, which is exactly a column no admissible pair can reach
-#' still holding a residual edge into the sink. Shifting every unreached node by
-#' the maximum label makes shift(tail) >= dist(head) for every such edge, so
-#' none of them can go negative, and it leaves every reached node's potential
-#' untouched, so the path the next search finds is the same one.
-#'
-#' This is the rule src/flow/flow_solve.cpp applies, and the trace states the
-#' same algorithm the solver states.
-#'
-#' @keywords internal
-#' @noRd
-mcf_update_potentials <- function(h, dist) {
-  reached <- is.finite(dist)
-  shift <- if (any(reached)) max(dist[reached], 0) else 0
-  h + ifelse(reached, dist, shift)
-}
-
-#' Dijkstra on the residual graph with Johnson potentials
-#'
-#' Inputs:
-#'   g       - mcf_graph environment
-#'   source  - source node (1-based)
-#'   h       - numeric vector of node potentials, length g$n_nodes
-#'
-#' Returns list(dist, prev_node, prev_edge), each of length g$n_nodes.
-#' Unreachable nodes have dist = Inf and prev_node = 0L.
-#'
-#' Caller is responsible for ensuring h is feasible (all residual reduced
-#' costs >= 0); for the very first augmentation, Bellman-Ford should be
-#' used to initialise h.
-#'
-#' @keywords internal
-#' @noRd
-mcf_dijkstra <- function(g, source, h) {
-  N <- g$n_nodes
-  dist      <- rep(Inf, N)
-  prev_node <- integer(N)
-  prev_edge <- integer(N)
-  visited   <- logical(N)
-  dist[source] <- 0
-  for (step in seq_len(N)) {
-    unvis <- which(!visited)
-    if (length(unvis) == 0L) break
-    u <- unvis[which.min(dist[unvis])]
-    if (!is.finite(dist[u])) break
-    visited[u] <- TRUE
-    for (e_idx in g$out_edges[[u]]) {
-      e <- g$edges[[e_idx]]
-      if (e$cap <= 0) next
-      rc <- residual_reduced_cost(e$cost, h[u], h[e$to])
-      # Defensive clamp: a tiny negative drift from FP error in h shouldn't
-      # poison Dijkstra. If h is actually infeasible the bug is upstream.
-      nd <- dist[u] + max(rc, 0)
-      if (nd < dist[e$to]) {
-        dist[e$to]      <- nd
-        prev_node[e$to] <- u
-        prev_edge[e$to] <- e_idx
-      }
-    }
-  }
-  list(dist = dist, prev_node = prev_node, prev_edge = prev_edge)
-}
-
-#' Bellman-Ford on the residual graph (for negative-cycle detection and
-#' for initial potentials in min-cost flow).
-#'
-#' Returns list(dist, prev_node, prev_edge, neg_cycle_node). neg_cycle_node
-#' is non-zero iff a negative cycle is reachable from the source - in which
-#' case prev_node lets you walk it.
-#'
-#' @keywords internal
-#' @noRd
-mcf_bellman_ford <- function(g, source) {
-  N <- g$n_nodes
-  dist <- rep(Inf, N); prev_node <- integer(N); prev_edge <- integer(N)
-  dist[source] <- 0
-  last_relaxed <- 0L
-  for (iter in seq_len(N)) {
-    last_relaxed <- 0L
-    for (u in seq_len(N)) {
-      if (!is.finite(dist[u])) next
-      for (e_idx in g$out_edges[[u]]) {
-        e <- g$edges[[e_idx]]
-        if (e$cap <= 0) next
-        nd <- dist[u] + e$cost
-        if (nd < dist[e$to] - 1e-12) {
-          dist[e$to]      <- nd
-          prev_node[e$to] <- u
-          prev_edge[e$to] <- e_idx
-          last_relaxed    <- e$to
-        }
-      }
-    }
-    if (last_relaxed == 0L) break
-  }
-  list(dist = dist, prev_node = prev_node, prev_edge = prev_edge,
-       neg_cycle_node = last_relaxed)
 }
 
 #' Find a negative-cost cycle in the residual graph, or NULL if none.

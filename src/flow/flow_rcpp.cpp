@@ -22,8 +22,10 @@
 #include "flow_compile.h"
 #include "flow_oracle.h"
 #include "flow_problem.h"
+#include "flow_push_relabel.h"
 #include "flow_solve.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -326,6 +328,236 @@ Rcpp::List flow_compile_couples_impl(std::string design,
         Rcpp::Named("n_nodes") = static_cast<int>(compiled.problem.n_nodes),
         Rcpp::Named("row_unit") = rows,
         Rcpp::Named("col_unit") = cols);
+}
+
+// The per-search record of an assignment solve, in the shape the trace layer
+// renders. Node ids come back 1-based; a row node is `source`/`sink` reported
+// as its own row or column index, so the R side never has to know the node
+// layout, and the path arcs come back as the (row, col) pairs they are.
+Rcpp::List flow_trace_assignment_impl(Rcpp::NumericMatrix cost, bool maximize) {
+    const int nr = cost.nrow();
+    const int nc = cost.ncol();
+
+    Rcpp::NumericMatrix work(nr, nc);
+    for (int j = 0; j < nc; ++j) {
+        for (int i = 0; i < nr; ++i) {
+            const double x = cost(i, j);
+            work(i, j) = maximize ? -x : x;
+        }
+    }
+
+    const RMatrixSource source(work);
+    lap::CompiledDesign design =
+        lap::compile_one_to_one(source, std::vector<lap::CategoryConstraint>());
+
+    lap::FlowTrace  trace;
+    lap::FlowOptions opts;
+    opts.trace = &trace;
+    lap::FlowResult res = lap::solve_min_cost_flow(design.problem, opts);
+
+    // Every pair arc of the one block the compiler emitted, keyed by arc index,
+    // so a path arc names the (row, col) it crosses.
+    const lap::BlockArcRange& block = design.problem.block_arcs[0];
+    std::vector<int32_t> arc_row(design.problem.arcs.size(), -1);
+    std::vector<int32_t> arc_col(design.problem.arcs.size(), -1);
+    for (int64_t k = 0; k < block.n_arcs; ++k) {
+        const std::pair<int32_t, int32_t>& rc =
+            block.rc[static_cast<std::size_t>(k)];
+        const std::size_t a = static_cast<std::size_t>(block.first_arc + k);
+        arc_row[a] = rc.first;
+        arc_col[a] = rc.second;
+    }
+
+    Rcpp::IntegerVector match(nr, NA_INTEGER);
+    for (int64_t k = 0; k < block.n_arcs; ++k) {
+        if (res.flow[static_cast<std::size_t>(block.first_arc + k)] <= 0) continue;
+        const std::pair<int32_t, int32_t>& rc =
+            block.rc[static_cast<std::size_t>(k)];
+        match[rc.first] = rc.second + 1;
+    }
+
+    const int32_t row_base = design.row_base;
+    const int32_t col_base = design.col_base;
+
+    // A node reported to R as the unit it stands for: a row index, a negative
+    // column index, or 0 for the source and the sink, which have no unit.
+    auto unit_of = [&](int32_t v) -> int {
+        if (v >= col_base && v < col_base + nc) return -(v - col_base + 1);
+        if (v >= row_base && v < row_base + nr) return v - row_base + 1;
+        return 0;
+    };
+
+    Rcpp::List steps(static_cast<R_xlen_t>(trace.steps.size()));
+    for (std::size_t s = 0; s < trace.steps.size(); ++s) {
+        const lap::FlowStep& st = trace.steps[s];
+
+        const R_xlen_t nl = static_cast<R_xlen_t>(st.labelled.size());
+        Rcpp::IntegerVector lab(nl);
+        Rcpp::NumericVector lab_d(nl);
+        Rcpp::IntegerVector t_row(nl);
+        Rcpp::IntegerVector t_col(nl);
+        for (R_xlen_t e = 0; e < nl; ++e) {
+            lab[e]   = unit_of(st.labelled[static_cast<std::size_t>(e)]);
+            lab_d[e] = st.dist[static_cast<std::size_t>(e)];
+            const int64_t pa = st.pred_arcs[static_cast<std::size_t>(e)];
+            if (pa < 0 || arc_row[static_cast<std::size_t>(pa)] < 0) {
+                t_row[e] = NA_INTEGER;
+                t_col[e] = NA_INTEGER;
+            } else {
+                t_row[e] = arc_row[static_cast<std::size_t>(pa)] + 1;
+                t_col[e] = arc_col[static_cast<std::size_t>(pa)] + 1;
+            }
+        }
+
+        const R_xlen_t np = static_cast<R_xlen_t>(st.path_arcs.size());
+        Rcpp::IntegerVector p_row(np);
+        Rcpp::IntegerVector p_col(np);
+        Rcpp::LogicalVector p_fwd(np);
+        int free_col = 0;
+        for (R_xlen_t e = 0; e < np; ++e) {
+            const std::size_t a =
+                static_cast<std::size_t>(st.path_arcs[static_cast<std::size_t>(e)]);
+            p_row[e] = (arc_row[a] < 0) ? NA_INTEGER : arc_row[a] + 1;
+            p_col[e] = (arc_col[a] < 0) ? NA_INTEGER : arc_col[a] + 1;
+            p_fwd[e] = st.path_forward[static_cast<std::size_t>(e)] != 0;
+            if (arc_col[a] >= 0) free_col = arc_col[a] + 1;
+        }
+
+        Rcpp::NumericVector pot(static_cast<R_xlen_t>(st.potential.size()));
+        for (R_xlen_t v = 0; v < pot.size(); ++v) {
+            pot[v] = st.potential[static_cast<std::size_t>(v)];
+        }
+
+        steps[static_cast<R_xlen_t>(s)] = Rcpp::List::create(
+            Rcpp::Named("source")    = unit_of(st.source),
+            Rcpp::Named("sink")      = (st.sink < 0) ? 0 : unit_of(st.sink),
+            Rcpp::Named("reached")   = (st.sink >= 0),
+            Rcpp::Named("reach")     = st.reach,
+            Rcpp::Named("units")     = static_cast<double>(st.units),
+            Rcpp::Named("free_col")  = free_col,
+            Rcpp::Named("labelled")  = lab,
+            Rcpp::Named("dist")      = lab_d,
+            Rcpp::Named("tree_row")  = t_row,
+            Rcpp::Named("tree_col")  = t_col,
+            Rcpp::Named("potential") = pot,
+            Rcpp::Named("path_row")  = p_row,
+            Rcpp::Named("path_col")  = p_col,
+            Rcpp::Named("path_forward") = p_fwd);
+    }
+
+    Rcpp::NumericVector pot0(static_cast<R_xlen_t>(trace.potential_initial.size()));
+    for (R_xlen_t v = 0; v < pot0.size(); ++v) {
+        pot0[v] = trace.potential_initial[static_cast<std::size_t>(v)];
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("n_rows")    = nr,
+        Rcpp::Named("n_cols")    = nc,
+        Rcpp::Named("row_base")  = static_cast<int>(row_base) + 1,
+        Rcpp::Named("col_base")  = static_cast<int>(col_base) + 1,
+        Rcpp::Named("potential_initial") = pot0,
+        Rcpp::Named("steps")     = steps,
+        Rcpp::Named("match")     = match,
+        Rcpp::Named("status")    = res.status,
+        Rcpp::Named("total_cost") = maximize ? -res.total_cost : res.total_cost);
+}
+
+// The per-phase record of a push-relabel assignment solve, in the shape the
+// trace layer renders. Duals come back in LAP form: the reduced cost of a pair
+// is c(i, j) - u[i] - v[j], which the node potentials give as u[i] = -pi[row_i]
+// and v[j] = pi[col_j].
+Rcpp::List flow_trace_push_relabel_impl(Rcpp::NumericMatrix cost, bool maximize) {
+    const int nr = cost.nrow();
+    const int nc = cost.ncol();
+
+    // The scaling bound is an integer bound, so the same preparation the solver
+    // does is done here: negate for a maximizing run, then scale the finite
+    // costs to integers.
+    double max_abs = 0.0;
+    bool all_integer = true;
+    for (int j = 0; j < nc; ++j) {
+        for (int i = 0; i < nr; ++i) {
+            const double x = cost(i, j);
+            if (!std::isfinite(x)) continue;
+            max_abs = std::max(max_abs, std::abs(x));
+            if (all_integer && std::abs(x - std::round(x)) > 1e-9) {
+                all_integer = false;
+            }
+        }
+    }
+    const double scale = (!all_integer && max_abs > 0.0) ? 1e6 / max_abs : 1.0;
+
+    Rcpp::NumericMatrix work(nr, nc);
+    for (int j = 0; j < nc; ++j) {
+        for (int i = 0; i < nr; ++i) {
+            const double x = cost(i, j);
+            if (!std::isfinite(x)) { work(i, j) = x; continue; }
+            work(i, j) = std::round((maximize ? -x : x) * scale);
+        }
+    }
+
+    const RMatrixSource source(work);
+    lap::CompiledDesign design =
+        lap::compile_one_to_one(source, std::vector<lap::CategoryConstraint>());
+
+    lap::PRTrace    trace;
+    lap::FlowOptions opts;
+    lap::FlowResult  res =
+        lap::solve_min_cost_flow_push_relabel(design.problem, opts, &trace);
+
+    const lap::BlockArcRange& block = design.problem.block_arcs[0];
+    const int32_t row_base = design.row_base;
+    const int32_t col_base = design.col_base;
+
+    // The matching a phase's flow stands for, read off the block's own arcs.
+    auto match_of = [&](const std::vector<int64_t>& flow) {
+        Rcpp::IntegerVector out(nr, NA_INTEGER);
+        for (int64_t k = 0; k < block.n_arcs; ++k) {
+            if (flow[static_cast<std::size_t>(block.first_arc + k)] <= 0) continue;
+            const std::pair<int32_t, int32_t>& rc =
+                block.rc[static_cast<std::size_t>(k)];
+            out[rc.first] = rc.second + 1;
+        }
+        return out;
+    };
+
+    // Node potentials to LAP duals, undoing the scaling so the numbers are on
+    // the caller's cost scale.
+    auto duals_of = [&](const std::vector<double>& pot) {
+        Rcpp::NumericVector u(nr), v(nc);
+        for (int i = 0; i < nr; ++i) {
+            u[i] = -pot[static_cast<std::size_t>(row_base + i)] / scale;
+        }
+        for (int j = 0; j < nc; ++j) {
+            v[j] = pot[static_cast<std::size_t>(col_base + j)] / scale;
+        }
+        return Rcpp::List::create(Rcpp::Named("u") = u, Rcpp::Named("v") = v);
+    };
+
+    Rcpp::List phases(static_cast<R_xlen_t>(trace.phases.size()));
+    for (std::size_t s = 0; s < trace.phases.size(); ++s) {
+        const lap::PRPhase& ph = trace.phases[s];
+        const Rcpp::List d = duals_of(ph.potential);
+        phases[static_cast<R_xlen_t>(s)] = Rcpp::List::create(
+            Rcpp::Named("eps")         = ph.eps / scale,
+            Rcpp::Named("n_saturated") = static_cast<double>(ph.n_saturated),
+            Rcpp::Named("n_pushes")    = static_cast<double>(ph.n_pushes),
+            Rcpp::Named("n_relabels")  = static_cast<double>(ph.n_relabels),
+            Rcpp::Named("dual_u")      = d["u"],
+            Rcpp::Named("dual_v")      = d["v"],
+            Rcpp::Named("match")       = match_of(ph.flow));
+    }
+
+    const double eps_start =
+        trace.phases.empty() ? 0.0 : trace.eps_start / scale;
+
+    return Rcpp::List::create(
+        Rcpp::Named("n_rows")    = nr,
+        Rcpp::Named("n_cols")    = nc,
+        Rcpp::Named("eps_start") = eps_start,
+        Rcpp::Named("phases")    = phases,
+        Rcpp::Named("match")     = match_of(res.flow),
+        Rcpp::Named("status")    = res.status);
 }
 
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,

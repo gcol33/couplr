@@ -1,31 +1,23 @@
 # ==============================================================================
-# Reference Cost-Scaling Flow (successive shortest paths with Johnson
-# potentials) with frame-by-frame trace
+# Successive shortest paths with Johnson potentials, frame by frame
 # ==============================================================================
-# Mirrors src/solvers/solve_csflow.cpp. Solves LAP as a unit-capacity min-cost
-# max-flow on the standard bipartite graph
+# The algorithm runs in src/flow/flow_solve.cpp and this file renders what it
+# did. solve_min_cost_flow() writes one record per search -- the distance
+# labels, the shortest-path tree, the potentials after the shift, the path and
+# the units moved -- and every frame here is built from that record. The state
+# an animation needs is state the search already computes; restating the search
+# in R would be a second implementation of it, and the two would drift.
 #
-#         source --> rows --> cols --> sink
+# The network is the standard one: rows carry a unit of supply, a pair arc goes
+# from a row to each column its cost is finite on, and a column arc carries the
+# unit to the sink. A search starts at a row still holding its unit, reaches the
+# sink through admissible reduced costs, and the shift after it keeps every
+# residual reduced cost non-negative -- including on the columns the search
+# stopped short of, which is why unreached nodes take the largest label.
 #
-# using the Edmonds-Karp / Tomizawa 1971 successive-shortest-paths method
-# with Johnson potentials: maintain node potentials h such that every
-# residual edge has non-negative reduced cost c' = c - h[u] + h[v]. Find the
-# shortest source->sink path under reduced costs with Dijkstra, push one
-# unit of flow, then shift h by the dist vector (mcf_update_potentials()).
-#
-# Algorithmic outline:
-#
-#   1. Build the LAP-as-MCF graph (n + m + 2 nodes; row->col edges only
-#      where c[i,j] is finite).
-#   2. Initialise potentials h via Bellman-Ford from source - this handles
-#      negative edge costs that arise under maximize (cost is negated).
-#   3. Repeat n times:
-#      a. Dijkstra on residual graph from source using reduced costs.
-#      b. Walk back from sink to recover the augmenting path.
-#      c. Push 1 unit of flow along the path.
-#      d. Shift h by dist: reached nodes by their label, unreached ones by
-#         the largest label, which keeps every residual reduced cost >= 0.
-#   4. Recover the row->col matching from saturated row->col edges.
+# Duals are reported in the LAP convention, c[i,j] - u[i] - v[j] >= 0, which the
+# node potentials give as u[i] = -pi[row_i] and v[j] = pi[col_j]. Under
+# `maximize` the costs are negated first, so the duals are the negated problem's.
 # ==============================================================================
 
 #' @keywords internal
@@ -38,51 +30,40 @@ trace_csflow <- function(cost, maximize = FALSE, ...) {
     stop("trace_csflow: requires nrow <= ncol; got ", n, " x ", m, ".", call. = FALSE)
   }
 
-  mcf <- build_lap_mcf(cost_orig, maximize = maximize)
-  g <- mcf$graph
+  run <- lap_flow_trace_assignment(cost_orig, maximize = maximize)
 
-  # Initial potentials via Bellman-Ford (handles negative edges from maximize).
-  # Shifted by the same rule the augmentations use: a column no admissible pair
-  # can reach is unreachable here too, and it still holds a residual edge into
-  # the sink, so leaving it at zero starts the search dual-infeasible.
-  bf <- mcf_bellman_ford(g, mcf$source)
-  h <- mcf_update_potentials(numeric(g$n_nodes), bf$dist)
+  matching_row <- integer(n)
+  matching_col <- integer(m)
+
+  # Node potentials to LAP duals. run$row_base and run$col_base are 1-based
+  # indices into the potential vector.
+  ext_duals <- function(pot) {
+    list(
+      u = -pot[run$row_base + seq_len(n) - 1L],
+      v = pot[run$col_base + seq_len(m) - 1L]
+    )
+  }
+
+  # The pair arcs of a step, as (row, col) pairs. A step's labelled nodes carry
+  # the arc each was reached by, and the ones reached through a column arc or
+  # from the start have no pair to show.
+  pair_edges <- function(rows, cols) {
+    keep <- which(!is.na(rows) & !is.na(cols))
+    lapply(keep, function(e) c(rows[e], cols[e]))
+  }
 
   frames <- list()
   step <- 0L
 
-  # External dual_u and dual_v from node potentials. For each row i, dual_u[i]
-  # is h[row_node(i)] - h[source] (= the "row potential" from MCF perspective).
-  # For each col j, dual_v[j] is h[sink] - h[col_node(j)].
-  ext_duals <- function() {
-    u <- numeric(n); v <- numeric(m)
-    for (i in seq_len(n)) u[i] <- h[mcf$row_node(i)] - h[mcf$source]
-    for (j in seq_len(m)) v[j] <- h[mcf$sink] - h[mcf$col_node(j)]
-    list(u = u, v = v)
-  }
-
-  # Helper: translate an edge index into a user-visible (row, col) pair, or
-  # NULL if it's not a row->col edge (source/sink edges aren't shown).
-  edge_to_rowcol <- function(e_idx) {
-    for (i in seq_len(n)) {
-      for (j in seq_len(m)) {
-        ee <- mcf$row_col_edge[i, j]
-        if (!is.na(ee) && (ee == e_idx || g$edges[[ee]]$rev_idx == e_idx)) {
-          return(c(i, j))
-        }
-      }
-    }
-    NULL
-  }
-
-  emit <- function(phase, description, active_edges = list(), path = list()) {
+  emit <- function(phase, description, pot,
+                   active_edges = list(), path = list()) {
     step <<- step + 1L
-    d <- ext_duals()
+    d <- ext_duals(pot)
     frames[[length(frames) + 1L]] <<- make_frame(
       step         = step,
       phase        = phase,
       description  = description,
-      matching     = mcf_extract_matching(mcf),
+      matching     = matching_row,
       dual_u       = d$u,
       dual_v       = d$v,
       active_edges = active_edges,
@@ -90,67 +71,101 @@ trace_csflow <- function(cost, maximize = FALSE, ...) {
     )
   }
 
+  n_pairs <- sum(is.finite(cost_orig))
   emit(
     "init",
     sprintf(
       paste0(
-        "Built LAP-as-MCF graph: %d source-edges, %d row-col edges (only finite costs), ",
-        "%d col-sink edges. Initialised potentials h via Bellman-Ford so every residual ",
-        "edge has reduced cost = c - h[u] + h[v] >= 0."
+        "Built the flow network: %d rows each holding one unit, %d pair arcs ",
+        "(only finite costs), %d column arcs into the sink. Potentials start ",
+        "so that every residual arc has reduced cost c - h[u] + h[v] >= 0."
       ),
-      n, sum(!is.na(mcf$row_col_edge)), m
-    )
+      n, n_pairs, m
+    ),
+    run$potential_initial
   )
 
-  # Main SSP loop: one unit of flow per iteration.
-  for (iter in seq_len(n)) {
-    dj <- mcf_dijkstra(g, mcf$source, h)
-    if (!is.finite(dj$dist[mcf$sink])) {
-      stop("trace_csflow: infeasible (no source->sink path found).", call. = FALSE)
+  n_aug <- 0L
+  for (st in run$steps) {
+    tree <- pair_edges(st$tree_row, st$tree_col)
+    path <- pair_edges(st$path_row, st$path_col)
+
+    if (!isTRUE(st$reached)) {
+      emit(
+        "dijkstra",
+        sprintf(
+          paste0(
+            "Search from row %d reached %d node(s) and no free column among ",
+            "them, so row %d has no augmenting path and stays unmatched."
+          ),
+          st$source, length(st$labelled), st$source
+        ),
+        st$potential,
+        active_edges = tree
+      )
+      next
     }
 
-    aug_edges <- mcf_walk_back(dj$prev_node, dj$prev_edge,
-                               source = mcf$source, sink = mcf$sink)
-    # Convert to user-visible (row, col) path: drop source-edge and sink-edge,
-    # keep only the row->col edge in the middle.
-    path_rc <- list()
-    for (e_idx in aug_edges) {
-      rc <- edge_to_rowcol(e_idx)
-      if (!is.null(rc)) path_rc[[length(path_rc) + 1L]] <- rc
-    }
-
+    n_aug <- n_aug + 1L
     emit(
       "dijkstra",
       sprintf(
-        "Augmentation %d/%d: Dijkstra found shortest source->sink path of reduced length %.4g.",
-        iter, n, dj$dist[mcf$sink]
+        paste0(
+          "Augmentation %d: shortest path from row %d to free column %d has ",
+          "reduced length %.4g. The tree shown is every pair arc the search ",
+          "settled on the way."
+        ),
+        n_aug, st$source, st$free_col, st$reach
       ),
-      path = path_rc
+      st$potential,
+      active_edges = tree,
+      path = path
     )
 
-    # Push one unit of flow along the path. For unit-capacity LAP this is
-    # always exactly 1.
-    delta <- mcf_path_bottleneck(g, aug_edges)
-    mcf_push_path(g, aug_edges, delta)
-
-    h <- mcf_update_potentials(h, dj$dist)
+    # Flip the matching along the path. A pair arc taken forward gives its row
+    # that column; one taken backward is the row giving the column up, and the
+    # next forward arc on the path is where it goes instead.
+    for (e in seq_along(st$path_row)) {
+      i <- st$path_row[e]
+      j <- st$path_col[e]
+      if (is.na(i) || is.na(j)) next
+      if (isTRUE(st$path_forward[e])) {
+        matching_row[i] <- j
+        matching_col[j] <- i
+      } else {
+        if (identical(matching_row[i], j)) matching_row[i] <- 0L
+        if (identical(matching_col[j], i)) matching_col[j] <- 0L
+      }
+    }
 
     emit(
       "augment",
       sprintf(
-        "Pushed %d unit of flow along the path; shifted h by dist. Current matching size: %d.",
-        delta, sum(mcf_extract_matching(mcf) > 0L)
+        paste0(
+          "Pushed %g unit of flow along the path and shifted the potentials by ",
+          "the distance labels. Matched so far: %d."
+        ),
+        st$units, sum(matching_row > 0L)
       ),
-      path = path_rc
+      st$potential,
+      path = path
     )
   }
 
-  matching_final <- mcf_extract_matching(mcf)
-  total <- matching_total_cost(cost_orig, matching_final)
+  matching_row <- ifelse(is.na(run$match), 0L, run$match)
+  total <- matching_total_cost(cost_orig, matching_row)
+
+  final_pot <- if (length(run$steps) > 0L) {
+    run$steps[[length(run$steps)]]$potential
+  } else {
+    run$potential_initial
+  }
 
   emit(
     "final",
-    sprintf("All %d units of flow shipped. Total cost: %.6g.", n, total)
+    sprintf("All %d units of flow shipped. Total cost: %.6g.",
+            sum(matching_row > 0L), total),
+    final_pot
   )
 
   list(
@@ -162,13 +177,13 @@ trace_csflow <- function(cost, maximize = FALSE, ...) {
       maximize    = maximize,
       total_cost  = total,
       description = paste0(
-        "Cost-scaling flow / successive shortest paths (Tomizawa 1971, Edmonds-Karp 1972). ",
-        "Formulates LAP as a unit-capacity min-cost max-flow problem on the bipartite ",
-        "graph source -> rows -> cols -> sink. Bellman-Ford supplies initial node ",
-        "potentials so reduced costs are non-negative; then n Dijkstra augmentations ",
-        "each push one unit of flow along the shortest reduced-cost path. Potentials are ",
-        "updated additively after each augmentation - the Johnson trick keeps Dijkstra ",
-        "valid even though raw edge costs may be negative."
+        "Successive shortest paths with Johnson potentials (Tomizawa 1971, ",
+        "Edmonds-Karp 1972). The assignment is a unit-capacity min-cost flow on ",
+        "the bipartite network rows -> columns -> sink. Each augmentation runs ",
+        "Dijkstra on reduced costs, pushes one unit along the shortest path, and ",
+        "shifts the potentials by the distance labels, which keeps every residual ",
+        "reduced cost non-negative even where the raw costs are negative. The ",
+        "frames are read from the compiled solver's own per-search record."
       )
     ),
     frames = frames

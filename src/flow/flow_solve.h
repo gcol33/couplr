@@ -46,6 +46,47 @@ struct FlowResult {
     int64_t n_augmentations = 0;
 };
 
+// One search of the augmentation loop, as the search itself saw it. This is
+// the state an animation needs and a solver has no other reason to produce, so
+// it is written only when a caller asks for it.
+//
+// `labelled` names the nodes the search gave a finite distance, and `dist` is
+// their labels in the same order. `potential` is the whole potential vector
+// after the shift that search made, which is what a frame has to show: the
+// shift is what keeps the reduced cost of an arc the search stopped short of
+// from going negative.
+//
+// `pred_arcs[i]` is the arc labelled node i was reached by, -1 for the node
+// the search started from, which together with `labelled` is the shortest-path
+// tree as it stood when the search stopped.
+//
+// `path_arcs` are indices into `prob.arcs`, ordered from `source` to `sink`,
+// and `path_forward[i]` says whether the augmentation pushed along that arc or
+// pushed flow back off it. A search that reached no deficit node reports
+// `sink = -1`, `units = 0` and an empty path; it still carries its labels,
+// because what it failed to reach is the interesting part.
+struct FlowStep {
+    int32_t source = -1;
+    int32_t sink   = -1;
+    double  reach  = 0.0;
+    int64_t units  = 0;
+
+    std::vector<int32_t> labelled;
+    std::vector<double>  dist;
+    std::vector<int64_t> pred_arcs;
+    std::vector<char>    pred_forward;
+    std::vector<double>  potential;
+    std::vector<int64_t> path_arcs;
+    std::vector<char>    path_forward;
+};
+
+// The per-search record of one solve. `potential_initial` is the potential the
+// first search started from, so a renderer has a frame to open on.
+struct FlowTrace {
+    std::vector<double>   potential_initial;
+    std::vector<FlowStep> steps;
+};
+
 struct FlowOptions {
     // Zero threshold for the complementary-slackness repair a warm start needs.
     double tol = 1e-12;
@@ -64,6 +105,10 @@ struct FlowOptions {
     int64_t max_augmentations = 0;
 
     bool return_potentials = true;
+
+    // Where to write the per-search record. Null asks for none, and costs the
+    // solve nothing beyond one null check per augmentation.
+    FlowTrace* trace = nullptr;
 };
 
 // Solve `prob`, expanding its blocks in place if that has not happened yet.

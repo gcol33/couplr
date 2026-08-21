@@ -1,3 +1,82 @@
+# couplr 1.6.1
+
+## New features
+
+* **`method = "push_relabel"` runs cost-scaling push-relabel.** The method value
+  named an algorithm the solver did not run: what was dispatched was successive
+  shortest paths with Johnson potentials, the same search as `method = "csflow"`,
+  and three places in the repo said so (#32). It is now Goldberg-Tarjan's
+  successive approximation (1990): a sequence of eps-optimal flows, each phase
+  dividing eps, saturating the arcs the smaller eps no longer admits, and
+  clearing the resulting excess with two local operations. A push moves excess
+  along an arc of negative reduced cost; a relabel lowers the price of a node
+  that holds excess and has no such arc, by exactly the amount that gives it one.
+  Below `eps = 1/(n + 1)` an eps-optimal flow on integer costs is optimal, which
+  is what ends the scaling; real costs are scaled to integers first, because
+  without that the bound says nothing.
+
+  The solver lands on the compiled `FlowProblem`, beside the existing
+  shortest-path one, so every design the flow model compiles can reach it and
+  the two solvers read the same network.
+
+* **The min-cost flow solver can emit its per-step state, and the animation
+  reads it** (#34). `solve_min_cost_flow()` takes an optional step sink and
+  records, per augmentation, the distance labels, the shortest-path tree, the
+  potentials after the shift, the path and the units moved. `trace_csflow()` is
+  now a renderer over that record rather than a second implementation of the
+  search in R, and the R residual-graph Dijkstra, Bellman-Ford and
+  potential-update it used are gone. `solve_min_cost_flow_push_relabel()` has
+  the same arrangement, per scaling phase.
+
+  Two divergences between the two implementations had been found on 2026-08-15,
+  both in the potential update, both masked by a defensive clamp. Reading the
+  solver's own state is what removes the class.
+
+## Improvements
+
+* Euclidean and squared-Euclidean distances are summed one dimension at a time
+  rather than through the Gram-matrix identity. The identity folds the same sum
+  into one BLAS call, but subtracting two large nearly equal terms costs most of
+  the mantissa whenever the coordinates are large next to the distance between
+  them, and a blocked match on coordinates of order 1e15 returned different
+  totals from its own parallel branch.
+
+* `summary()` reports the share of focal units that kept a partner. It divided
+  the pair count by the smaller side, which exceeds 1 under `ratio > 1` or
+  `replace = TRUE`, where a unit holds several pairs.
+
+* `print()` on a sensitivity result reports the largest Gamma actually tested
+  below the critical one, instead of assuming the Gamma grid steps by 0.25.
+
+* The many-forbidden-pairs warning counts the finite pairs instead of
+  extrapolating the first row's count across every row.
+
+## Internals
+
+* One k-best partitioning engine serves both the Murty and the Lawler backend.
+  Both had their own, and both dropped solutions: a child's subspace forces the
+  prefix and forbids one column at the branch row, so the child's own children
+  have to re-enter at that row carrying the forbidden set rather than start past
+  it. An exhaustive differential test against brute force covers both backends,
+  minimizing and maximizing, ties and forbidden edges.
+
+* The auction reports an infeasible instance as one, instead of as a
+  convergence failure (#18).
+
+* The three shortest-augmenting-path traces share the tree construction and the
+  dual lift; the two min-cost-flow traces share the edge lookup, which is now an
+  index rather than a scan; and the two auto-transposing traces share the
+  orientation helpers.
+
+* Removed: eight morph helpers reachable only from their own tests, the stub
+  trace registry (every name it covered has a real trace), a declared-never-
+  defined C++ solver entry point, an exported-never-called Gabow-Tarjan path
+  search, and the network-simplex thread arrays, which were maintained and never
+  read.
+
+* `CHANGELOG.md` is gone; `NEWS.md` is the changelog. The `matching_result` S3
+  methods moved to `R/matching_methods.R`. `.onUnload()` unloads the DLL.
+
 # couplr 1.6.0
 
 ## New features

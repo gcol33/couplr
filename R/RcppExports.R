@@ -157,6 +157,14 @@ lap_flow_compile_couples <- function(design, n_rows, n_cols, ratio = 1.0) {
     .Call(`_couplr_lap_flow_compile_couples`, design, n_rows, n_cols, ratio)
 }
 
+lap_flow_trace_assignment <- function(cost, maximize = FALSE) {
+    .Call(`_couplr_lap_flow_trace_assignment`, cost, maximize)
+}
+
+lap_flow_trace_push_relabel <- function(cost, maximize = FALSE) {
+    .Call(`_couplr_lap_flow_trace_push_relabel`, cost, maximize)
+}
+
 lap_implicit_dense <- function(cost, maximize = FALSE, keep_per_row = 5.0, width = 5.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
     .Call(`_couplr_lap_implicit_dense`, cost, maximize, keep_per_row, width, tol, max_rounds, certify)
 }

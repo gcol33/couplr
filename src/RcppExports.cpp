@@ -550,6 +550,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_flow_trace_assignment
+Rcpp::List lap_flow_trace_assignment(Rcpp::NumericMatrix cost, bool maximize);
+RcppExport SEXP _couplr_lap_flow_trace_assignment(SEXP costSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_trace_assignment(cost, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_flow_trace_push_relabel
+Rcpp::List lap_flow_trace_push_relabel(Rcpp::NumericMatrix cost, bool maximize);
+RcppExport SEXP _couplr_lap_flow_trace_push_relabel(SEXP costSEXP, SEXP maximizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_flow_trace_push_relabel(cost, maximize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_implicit_dense
 Rcpp::List lap_implicit_dense(Rcpp::NumericMatrix cost, bool maximize, double keep_per_row, double width, double tol, double max_rounds, bool certify);
 RcppExport SEXP _couplr_lap_implicit_dense(SEXP costSEXP, SEXP maximizeSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
@@ -926,6 +950,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
     {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},
     {"_couplr_lap_flow_compile_couples", (DL_FUNC) &_couplr_lap_flow_compile_couples, 4},
+    {"_couplr_lap_flow_trace_assignment", (DL_FUNC) &_couplr_lap_flow_trace_assignment, 2},
+    {"_couplr_lap_flow_trace_push_relabel", (DL_FUNC) &_couplr_lap_flow_trace_push_relabel, 2},
     {"_couplr_lap_implicit_dense", (DL_FUNC) &_couplr_lap_implicit_dense, 7},
     {"_couplr_lap_implicit_lazy", (DL_FUNC) &_couplr_lap_implicit_lazy, 13},
     {"_couplr_lap_match_path_lazy", (DL_FUNC) &_couplr_lap_match_path_lazy, 13},

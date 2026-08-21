@@ -342,6 +342,18 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
     // decides which of several equally-cheap shortest paths the search finds.
     std::vector<int32_t> cursor(g.start.begin(), g.start.end() - 1);
     std::vector<int32_t> arc_slot(static_cast<std::size_t>(n_arcs), -1);
+
+    // The inverse of arc_slot, for a trace that has to report a residual arc as
+    // the problem arc it came from and the direction it was taken in. Built
+    // only when a trace was asked for, because it is two more arrays the size
+    // of the residual graph.
+    std::vector<int64_t> slot_arc;
+    std::vector<char>    slot_forward;
+    if (opts.trace != nullptr) {
+        slot_arc.assign(static_cast<std::size_t>(2 * n_arcs), -1);
+        slot_forward.assign(static_cast<std::size_t>(2 * n_arcs), 0);
+    }
+
     for (int64_t a = 0; a < n_arcs; ++a) {
         const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
         const int64_t placed = f[static_cast<std::size_t>(a)] - arc.lower;
@@ -351,7 +363,43 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                           (arc.upper - arc.lower) - placed, arc.cost};
         g.at(iv) = ResArc{arc.tail, iu, placed, -arc.cost};
         arc_slot[static_cast<std::size_t>(a)] = iu;
+        if (opts.trace != nullptr) {
+            slot_arc[static_cast<std::size_t>(iu)] = a;
+            slot_arc[static_cast<std::size_t>(iv)] = a;
+            slot_forward[static_cast<std::size_t>(iu)] = 1;
+            slot_forward[static_cast<std::size_t>(iv)] = 0;
+        }
     }
+
+    if (opts.trace != nullptr) {
+        opts.trace->potential_initial.assign(pi.begin(), pi.end());
+        opts.trace->steps.clear();
+    }
+
+    // The labels and the tree a search ended on, which both kinds of step
+    // record identically.
+    auto record_search = [&](FlowStep& step, const std::vector<int32_t>& seen,
+                             const std::vector<double>& label,
+                             const std::vector<int32_t>& reached_by,
+                             const std::vector<double>& pot) {
+        step.labelled = seen;
+        step.dist.reserve(seen.size());
+        step.pred_arcs.reserve(seen.size());
+        step.pred_forward.reserve(seen.size());
+        for (const int32_t v : seen) {
+            step.dist.push_back(label[static_cast<std::size_t>(v)]);
+            const int32_t ei = reached_by[static_cast<std::size_t>(v)];
+            if (ei < 0) {
+                step.pred_arcs.push_back(-1);
+                step.pred_forward.push_back(0);
+            } else {
+                step.pred_arcs.push_back(slot_arc[static_cast<std::size_t>(ei)]);
+                step.pred_forward.push_back(
+                    slot_forward[static_cast<std::size_t>(ei)]);
+            }
+        }
+        step.potential.assign(pot.begin(), pot.end());
+    };
 
     // ---- successive shortest paths ----
 
@@ -454,6 +502,12 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         }
 
         if (dst < 0) {
+            if (opts.trace != nullptr) {
+                FlowStep step;
+                step.source = src;
+                record_search(step, touched, dist, pe, pi);
+                opts.trace->steps.push_back(std::move(step));
+            }
             blocked[static_cast<std::size_t>(src)] = 1;
             continue;
         }
@@ -507,6 +561,29 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             e.cap -= aug;
             g.at(e.rev).cap += aug;
             v = g.at(e.rev).to;
+        }
+
+        if (opts.trace != nullptr) {
+            FlowStep step;
+            step.source = src;
+            step.sink   = dst;
+            step.reach  = reach;
+            step.units  = aug;
+            record_search(step, touched, dist, pe, pi);
+
+            // Walked from the sink, so the path comes out reversed and is
+            // turned round to read from source to sink.
+            for (int32_t v = dst; v != src; ) {
+                const int32_t ei = pe[static_cast<std::size_t>(v)];
+                step.path_arcs.push_back(slot_arc[static_cast<std::size_t>(ei)]);
+                step.path_forward.push_back(
+                    slot_forward[static_cast<std::size_t>(ei)]);
+                v = g.at(g.at(ei).rev).to;
+            }
+            std::reverse(step.path_arcs.begin(), step.path_arcs.end());
+            std::reverse(step.path_forward.begin(), step.path_forward.end());
+
+            opts.trace->steps.push_back(std::move(step));
         }
 
         d[static_cast<std::size_t>(src)] -= aug;

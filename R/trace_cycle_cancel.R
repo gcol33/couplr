@@ -43,19 +43,7 @@ trace_cycle_cancel <- function(cost, maximize = FALSE, ...) {
   frames <- list()
   step <- 0L
 
-  # Translate an edge index into a user-visible (row, col) pair, or NULL if
-  # it's a source/sink edge that we don't show.
-  edge_to_rowcol <- function(e_idx) {
-    for (i in seq_len(n)) {
-      for (j in seq_len(m)) {
-        ee <- mcf$row_col_edge[i, j]
-        if (!is.na(ee) && (ee == e_idx || g$edges[[ee]]$rev_idx == e_idx)) {
-          return(c(i, j))
-        }
-      }
-    }
-    NULL
-  }
+  edge_to_rowcol <- mcf_edge_rowcol_lookup(mcf)
 
   current_cost <- function() {
     total <- 0

@@ -35,7 +35,7 @@
 # The second half is not optional. A verifier checking only dual feasibility and
 # tightness on matched arcs certifies a solution whose dual bound equals the
 # true optimum while its primal cost sits above it, because a freed column
-# carries v_j < 0. See gcol33/couplr#28.
+# carries v_j < 0.
 # ==============================================================================
 
 #' Verify that an assignment is optimal

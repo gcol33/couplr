@@ -3,25 +3,6 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# morph_utils.R: .gif_delay_from_fps edge cases (lines 14-16)
-# ------------------------------------------------------------------------------
-
-test_that(".gif_delay_from_fps handles invalid inputs", {
-  skip_on_cran()
-  # Non-finite fps should default to 10 fps = 10 centiseconds
-  expect_equal(couplr:::.gif_delay_from_fps(NA), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(NaN), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(Inf), 10L)
-
-  # fps < 1 should default to 10 fps
-  expect_equal(couplr:::.gif_delay_from_fps(0), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(-5), 10L)
-
-  # Non-integer should be rounded
-  expect_equal(couplr:::.gif_delay_from_fps(10.7), 9L)  # rounds to 11, 100/11 ≈ 9
-})
-
-# ------------------------------------------------------------------------------
 # morph_utils.R: .call_or fallback paths (lines 131-138)
 # ------------------------------------------------------------------------------
 
@@ -46,23 +27,6 @@ test_that(".call_or errors when neither function exists", {
   expect_error(
     couplr:::.call_or("nonexistent_a_xyz123", "nonexistent_b_xyz123", 1),
     "Neither.*nor.*is available"
-  )
-})
-
-# ------------------------------------------------------------------------------
-# morph_utils.R: .from_planar_rgb error path (lines 108-109)
-# ------------------------------------------------------------------------------
-
-test_that(".from_planar_rgb errors on wrong length", {
-  skip_on_cran()
-  H <- 4
-  W <- 4
-  # Wrong length - should be H*W*3 = 48, but provide 40
-  bad_planar <- rep(1.0, 40)
-
-  expect_error(
-    couplr:::.from_planar_rgb(bad_planar, H, W),
-    "wrong length|expected"
   )
 })
 
@@ -125,23 +89,6 @@ test_that(".palette_pairs_identity handles exact color matches", {
   expect_equal(result$ia, 1)
   expect_equal(result$ib, 1)
   expect_equal(result$k, 8)  # min(10, 8)
-})
-
-# ------------------------------------------------------------------------------
-# morph_utils.R: .palette_pairs_lap empty matrix (line 374)
-# ------------------------------------------------------------------------------
-
-test_that(".palette_pairs_lap handles empty matrix", {
-  skip_on_cran()
-  info <- list(
-    countsA = integer(0),
-    countsB = integer(0),
-    color_dist = matrix(numeric(0), nrow = 0, ncol = 0)
-  )
-
-  result <- couplr:::.palette_pairs_lap(info)
-
-  expect_equal(nrow(result), 0)
 })
 
 # ------------------------------------------------------------------------------

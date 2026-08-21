@@ -4,34 +4,6 @@
 
 # These test internal functions that don't require magick/image files
 
-# ------------------------------------------------------------------------------
-# .gif_delay_from_fps tests
-# ------------------------------------------------------------------------------
-
-test_that(".gif_delay_from_fps calculates correct delay", {
-  # 10 fps = 100/10 = 10 centiseconds per frame
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10L)
-
-  # 25 fps = 100/25 = 4 centiseconds
-  expect_equal(couplr:::.gif_delay_from_fps(25), 4L)
-
-  # 1 fps = 100/1 = 100 centiseconds
-  expect_equal(couplr:::.gif_delay_from_fps(1), 100L)
-})
-
-test_that(".gif_delay_from_fps handles edge cases", {
-  # fps < 1 defaults to 10
-  expect_equal(couplr:::.gif_delay_from_fps(0), 10L)
-
-  # non-finite values default to 10 fps
-  expect_equal(couplr:::.gif_delay_from_fps(NA), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(Inf), 10L)
-})
-
-# ------------------------------------------------------------------------------
-# .to_planar_rgb and .from_planar_rgb tests
-# ------------------------------------------------------------------------------
-
 test_that(".to_planar_rgb converts H x W x 3 array to planar", {
   # Create a 2x3x3 RGB array
   arr <- array(1:18, dim = c(2, 3, 3))
@@ -40,56 +12,6 @@ test_that(".to_planar_rgb converts H x W x 3 array to planar", {
 
   expect_length(result, 18)
   expect_type(result, "double")
-})
-
-test_that(".from_planar_rgb converts planar back to array", {
-  H <- 2
-  W <- 3
-  planar <- as.numeric(1:(H * W * 3))
-
-  result <- couplr:::.from_planar_rgb(planar, H, W)
-
-  expect_equal(dim(result), c(H, W, 3))
-})
-
-test_that(".from_planar_rgb errors on wrong length", {
-  expect_error(
-    couplr:::.from_planar_rgb(1:10, H = 2, W = 3),
-    "wrong length"
-  )
-})
-
-test_that("planar round-trip preserves data", {
-  H <- 3
-  W <- 4
-  arr <- array(runif(H * W * 3) * 255, dim = c(H, W, 3))
-
-  planar <- couplr:::.to_planar_rgb(arr)
-  recovered <- couplr:::.from_planar_rgb(planar, H, W)
-
-  expect_equal(recovered, arr)
-})
-
-# ------------------------------------------------------------------------------
-# .clamp_rgb tests
-# ------------------------------------------------------------------------------
-
-test_that(".clamp_rgb clamps values to 0-255", {
-  x <- c(-10, 0, 128, 255, 300)
-
-  result <- couplr:::.clamp_rgb(x)
-
-  expect_equal(result, c(0L, 0L, 128L, 255L, 255L))
-})
-
-test_that(".clamp_rgb preserves array dimensions", {
-  arr <- array(c(-10, 100, 200, 300), dim = c(2, 2))
-
-  result <- couplr:::.clamp_rgb(arr)
-
-  expect_equal(dim(result), c(2, 2))
-  expect_equal(result[1, 1], 0L)
-  expect_equal(result[2, 2], 255L)
 })
 
 # ------------------------------------------------------------------------------

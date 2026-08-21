@@ -65,7 +65,7 @@ trace_jv <- function(cost, maximize = FALSE, ...) {
                    active_edges = list(), path = list(),
                    show_duals = TRUE) {
     step <<- step + 1L
-    frames[[length(frames) + 1L]] <<- list(
+    frames[[length(frames) + 1L]] <<- make_frame(
       step         = step,
       phase        = phase,
       description  = description,
@@ -321,11 +321,9 @@ trace_jv <- function(cost, maximize = FALSE, ...) {
       for (j in seq_len(m)) {
         if (used[j]) next
         cur <- cost_work[i0, j] - u[i0] - v[j]
-        # Distance to j via i0 is (delta - reduced_cost_into_i0) + reduced_cost_out
-        # In LAPJV form, we just track the running "incremental" relaxation:
-        new_minv <- delta + (cur - 0)   # the (-0) is for clarity; see below
-        # Actually we have to subtract u[i0]/v properly. The C++ keeps minv
-        # values "relative to the running offset"; replicate that here.
+        # minv[] holds distances relative to the running offset delta, so the
+        # distance to j through i0 is delta plus the reduced cost of (i0, j).
+        new_minv <- delta + cur
         if (new_minv < minv[j]) {
           minv[j] <- new_minv
           way[j] <- j0
@@ -397,7 +395,7 @@ trace_jv <- function(cost, maximize = FALSE, ...) {
   )
 
   list(
-    meta = list(
+    meta = make_meta(
       algorithm   = "jv",
       n_rows      = n,
       n_cols      = m,

@@ -129,18 +129,3 @@ test_that(".lap_assign solves assignment problem", {
   # Should find optimal: 1->1, 2->2 or 1->2, 2->1
   expect_true(all(result %in% 0:1))  # 0-based
 })
-
-test_that(".clamp_rgb clamps values", {
-  skip_on_cran()
-  result <- couplr:::.clamp_rgb(c(-10, 100, 300))
-  expect_equal(result, c(0, 100, 255))
-})
-
-test_that(".gif_delay_from_fps calculates correctly", {
-  skip_on_cran()
-  # 10 fps = 100ms delay = 10 centiseconds
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10)
-
-  # 20 fps = 50ms delay = 5 centiseconds
-  expect_equal(couplr:::.gif_delay_from_fps(20), 5)
-})

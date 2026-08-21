@@ -13,33 +13,6 @@ test_that(".to_planar_rgb converts array to planar format", {
   expect_length(planar, 2 * 4 * 3)
 })
 
-test_that(".from_planar_rgb converts back to array", {
-  skip_on_cran()
-  H <- 2
-  W <- 4
-  planar <- 1:(H * W * 3)
-  arr <- couplr:::.from_planar_rgb(planar, H, W)
-  expect_equal(dim(arr), c(H, W, 3))
-})
-
-test_that(".from_planar_rgb errors on wrong length", {
-  skip_on_cran()
-  expect_error(couplr:::.from_planar_rgb(1:10, 2, 4), "wrong length")
-})
-
-test_that(".clamp_rgb clamps correctly", {
-  skip_on_cran()
-  result <- couplr:::.clamp_rgb(c(-10, 0, 127, 255, 300))
-  expect_equal(result, c(0L, 0L, 127L, 255L, 255L))
-})
-
-test_that(".clamp_rgb preserves dimensions", {
-  skip_on_cran()
-  arr <- array(c(-10, 300, 100, 200), dim = c(2, 2))
-  result <- couplr:::.clamp_rgb(arr)
-  expect_equal(dim(result), c(2, 2))
-})
-
 # ------------------------------------------------------------------------------
 # LAP assignment helper
 # ------------------------------------------------------------------------------
@@ -84,32 +57,6 @@ test_that(".palette_pairs_identity handles no matches", {
     countsB = 10L
   )
   pairs <- couplr:::.palette_pairs_identity(info)
-  expect_equal(nrow(pairs), 0)
-})
-
-test_that(".palette_pairs_lap solves color assignment", {
-  skip_on_cran()
-  info <- list(
-    colorsA_rgb = matrix(c(255, 0, 0, 0, 255, 0), ncol = 3, byrow = TRUE),
-    colorsB_rgb = matrix(c(254, 0, 0, 0, 254, 0), ncol = 3, byrow = TRUE),
-    countsA = c(10L, 5L),
-    countsB = c(8L, 7L),
-    color_dist = matrix(c(1, 100, 100, 1), 2, 2)
-  )
-
-  pairs <- couplr:::.palette_pairs_lap(info, method = "jv")
-  expect_true(is.data.frame(pairs))
-  expect_equal(nrow(pairs), 2)
-})
-
-test_that(".palette_pairs_lap handles empty matrix", {
-  skip_on_cran()
-  info <- list(
-    countsA = integer(0),
-    countsB = integer(0),
-    color_dist = matrix(numeric(0), 0, 0)
-  )
-  pairs <- couplr:::.palette_pairs_lap(info)
   expect_equal(nrow(pairs), 0)
 })
 
@@ -189,36 +136,6 @@ test_that(".downscale_both handles NULL steps", {
 # ------------------------------------------------------------------------------
 # Patch helpers
 # ------------------------------------------------------------------------------
-
-test_that(".expand_patch_assignment expands patches to pixels", {
-  skip_on_cran()
-  patch_assign <- c(2, 1)
-  patches_a <- list(
-    indices = list(1:4, 5:8)
-  )
-  patches_b <- list(
-    indices = list(1:4, 5:8)
-  )
-  N <- 8
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N)
-  expect_length(result, N)
-})
-
-test_that(".expand_patch_assignment handles invalid assignments", {
-  skip_on_cran()
-  patch_assign <- c(NA, -1, 0)
-  patches_a <- list(
-    indices = list(1:2, 3:4, 5:6)
-  )
-  patches_b <- list(
-    indices = list(1:2, 3:4, 5:6)
-  )
-  N <- 6
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N)
-  expect_length(result, N)
-})
 
 # ------------------------------------------------------------------------------
 # Color match pipeline

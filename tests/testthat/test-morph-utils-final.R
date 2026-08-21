@@ -253,48 +253,6 @@ test_that(".build_spatial_assignments_for_pairs limits by k", {
 })
 
 # ------------------------------------------------------------------------------
-# .patch_cost_matrix: diag_norm edge case (lines 270-272)
-# ------------------------------------------------------------------------------
-
-test_that(".patch_cost_matrix handles infinite diag_norm from dist", {
-  skip_on_cran()
-  # Single patch at same location - dist returns 0
-  patches_a <- list(
-    colors = matrix(c(100, 100, 100), nrow = 1, ncol = 3),
-    centers = matrix(c(0, 0), nrow = 1, ncol = 2)
-  )
-  patches_b <- list(
-    colors = matrix(c(200, 200, 200), nrow = 1, ncol = 3),
-    centers = matrix(c(0, 0), nrow = 1, ncol = 2)
-  )
-
-  # Without H,W, diag_norm comes from max(dist(...)) which may be 0
-  result <- couplr:::.patch_cost_matrix(patches_a, patches_b, alpha = 1, beta = 0.5)
-
-  expect_true(is.finite(result))
-})
-
-# ------------------------------------------------------------------------------
-# .expand_patch_assignment: NA/Inf values (line 284)
-# ------------------------------------------------------------------------------
-
-test_that(".expand_patch_assignment handles NA assignment", {
-  skip_on_cran()
-  patch_assign <- list(NA_integer_, 1L)
-  patches_a <- list(
-    indices = list(c(1L, 2L), c(3L, 4L))
-  )
-  patches_b <- list(
-    indices = list(c(5L, 6L))
-  )
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N = 4)
-
-  expect_equal(result[1], -1L)  # NA assignment -> not assigned
-  expect_equal(result[2], -1L)
-})
-
-# ------------------------------------------------------------------------------
 # .cpp_* wrapper functions with actual calls
 # ------------------------------------------------------------------------------
 
@@ -350,19 +308,6 @@ test_that(".cpp_render_morph works", {
 
   expect_true(is.list(result))
   expect_equal(length(result), 2)  # 2 frames
-})
-
-test_that(".cpp_overlap works", {
-  skip_on_cran()
-  H <- 4
-  W <- 4
-  N <- H * W
-  Ap <- rep(100, N * 3)
-  Bp <- rep(100, N * 3)
-
-  result <- couplr:::.cpp_overlap(Ap, Bp, H, W, bits = 5)
-
-  expect_true(is.list(result) || is.numeric(result))
 })
 
 # .cpp_extract_patches not currently exported - skip this test

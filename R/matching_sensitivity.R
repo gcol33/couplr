@@ -242,10 +242,14 @@ print.sensitivity_analysis <- function(x, ...) {
   cat("\n* significant at alpha = 0.05\n")
 
   if (is.finite(x$critical_gamma)) {
-    cat(sprintf(
-      "\nInsensitive to hidden bias up to Gamma = %.2f\n",
-      x$critical_gamma - 0.25  # Last significant gamma
-    ))
+    below <- x$results$gamma[x$results$gamma < x$critical_gamma]
+    if (length(below) > 0) {
+      cat(sprintf(
+        "\nInsensitive to hidden bias up to Gamma = %.2f\n", max(below)
+      ))
+    } else {
+      cat("\nThe effect is already non-significant at the smallest Gamma tested\n")
+    }
     cat(sprintf(
       "To explain away the effect, hidden bias would need Gamma >= %.2f\n",
       x$critical_gamma

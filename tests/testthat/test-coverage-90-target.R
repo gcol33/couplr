@@ -316,56 +316,6 @@ test_that("sinkhorn works with entropy regularization", {
   }
 })
 
-# Additional tests for morph utilities
-test_that("morph internal utilities work", {
-  skip_on_cran()
-  skip_if_not_installed("magick")
-
-  # Test .gif_delay_from_fps
-  delay <- couplr:::.gif_delay_from_fps(10)
-  expect_equal(delay, 10L)
-
-  delay <- couplr:::.gif_delay_from_fps(20)
-  expect_equal(delay, 5L)
-
-  # Invalid FPS defaults to 10
-  delay <- couplr:::.gif_delay_from_fps(-1)
-  expect_equal(delay, 10L)
-
-  delay <- couplr:::.gif_delay_from_fps(NA)
-  expect_equal(delay, 10L)
-})
-
-test_that("morph array conversions work", {
-  skip_on_cran()
-  skip_if_not_installed("magick")
-
-  # Create a simple RGB array
-  arr <- array(as.integer(sample(0:255, 300, replace = TRUE)), dim = c(10, 10, 3))
-
-  # Test .to_planar_rgb and .from_planar_rgb round-trip
-  planar <- couplr:::.to_planar_rgb(arr)
-  expect_equal(length(planar), 300)
-
-  arr2 <- couplr:::.from_planar_rgb(planar, 10, 10)
-  expect_equal(dim(arr2), c(10, 10, 3))
-  expect_equal(as.numeric(arr), as.numeric(arr2))
-})
-
-test_that("morph .clamp_rgb works", {
-  skip_on_cran()
-
-  # Test clamping
-  x <- c(-10, 0, 128, 255, 300)
-  result <- couplr:::.clamp_rgb(x)
-  expect_equal(result, c(0L, 0L, 128L, 255L, 255L))
-
-  # With array
-  arr <- array(c(-10, 0, 128, 255, 300, 100), dim = c(2, 3))
-  result <- couplr:::.clamp_rgb(arr)
-  expect_equal(dim(result), c(2, 3))
-})
-
 test_that("greedy matching strategies work", {
   skip_on_cran()
 

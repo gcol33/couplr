@@ -1,50 +1,60 @@
-## Release notes (1.5.5)
+## Release notes (1.6.0)
 
-This release supersedes 1.5.3, the version currently on CRAN. It collects the
-performance work in 1.5.5 and the macOS memory-detection fixes in 1.5.4, which
-was tagged but not submitted.
+This release supersedes 1.5.5, the version currently on CRAN.
 
-### Performance (1.5.5)
+### New features
 
-`method = "auto"` selects a solver from three data-dependent facts: whether any
-entry is `NaN`, whether the finite entries are constant or binary, and what
-fraction of entries are non-finite. These were read with `any(is.nan())`,
-`range(finite = TRUE)` and `mean(is.na() | is.infinite())`, each of which
-allocates a temporary the size of the cost matrix, so selecting a solver cost
-several full-size allocations and several passes before any solving began. A
-single C++ pass now returns all of them without allocating. The probe is 7 to
-18 times faster than the code it replaces, measured from `n = 10` to
-`n = 5000`, and the gap between `method = "auto"` and naming the solver it
-selects falls from as much as 2x to a few percent.
+* `verify_assignment()` checks an assignment against the optimality conditions
+  and reports which of them hold: primal feasibility, dual feasibility, and
+  complementary slackness on both matched arcs and unmatched columns.
+  `certified_optimal` is `TRUE` only when every one of them holds. Dual
+  feasibility is tested over every admissible pair, so duals that certify
+  nothing fail the check rather than pass it.
 
-Dispatch decisions are unchanged. The new probe reproduces the previous solver
-choice on every case tested, including all-`Inf`, exactly-half-sparse,
-constant, binary-with-`NA` and integer inputs; `tests/testthat/test-dispatch-probe.R`
-covers these along with the `NaN` rejection that runs for every method.
+* `assignment()` gained a `cardinality` argument, with `"maximum"` and
+  `"fixed"` alongside the previous behaviour, now named `"complete"`. All
+  three are solved exactly by the same solver: dummy columns are appended,
+  priced so that the solver's own optimum is the requested objective.
 
-Integer cost matrices are read as `INTSXP` in place during selection rather
-than coerced, so an integer matrix no longer pays for a full double copy on the
-way to the dispatcher.
+* `explain_dispatch()` reports which solver `method = "auto"` selects and why,
+  without solving. The dispatch rules moved out of the branch chain in
+  `assignment()` into one ordered table that both the dispatch and the report
+  read. Dispatch decisions themselves are unchanged.
 
-### Bug fixes (1.5.4)
+* `solver_status_values()` gives the closed set of values `status` can take. A
+  status outside the set is now an error at the point a result is constructed.
+  `match_couples()` and `full_match()` results carry a `status` from the same
+  vocabulary.
 
-* `memory_mode = "auto"` under-read available memory on Apple Silicon.
-  `get_free_ram_mb()` converted `vm_stat`'s page counts with a hardcoded
-  4096-byte page, but Apple Silicon pages are 16384 bytes, so every M-series
-  Mac saw a quarter of the memory it had (7.7 GB reported against 41.7 GB
-  available on a 64 GB M4 Pro). The page size is now read from `vm_stat`'s own
-  header, with `sysctl hw.pagesize` as a fallback.
-* The macOS memory figure now counts inactive and speculative pages, which are
-  reclaimed on demand, matching the `MemAvailable` semantics the Linux branch
-  already used.
+### Bug fixes
+
+* The min-cost flow search no longer runs forever on a cost matrix with many
+  tied entries. The two directions of one residual arc are priced by
+  expressions that are negatives of each other in exact arithmetic and not in
+  floating point, so both could round below zero at once and form a
+  negative-reduced-cost cycle for the search to circle. It was reachable from
+  `match_couples()` with default arguments.
+
+* `status` is computed from what the solver terminated on instead of being
+  assigned as a literal. `network_simplex` now reports `"iteration_limit"`
+  when the pivot cap ends the loop with an improving arc still available, and
+  decides infeasibility from Hall's condition before the loop rather than from
+  unmatched rows after it. `full_match()` no longer reports `"optimal"` for
+  results that are not, and every unit now appears in exactly one of `groups`
+  and `unmatched`.
+
+* Constrained matching is optimal instead of greedy. When calipers,
+  `max_distance` or explicit forbidden pairs left the admissible graph without
+  a complete matching, `match_couples()` returned a greedy matching while still
+  reporting the optimal solver that had been asked for. It now reaches the
+  lexicographic optimum -- most admissible pairs first, then least total
+  distance -- by replacing forbidden entries with a finite sentinel and
+  dropping the pairs that come back on one.
 
 ### Documentation
 
-* `?assignment` listed `"line_metric"` among the `method` values, but it was
-  never accepted by `match.arg()`; one-dimensional problems are solved by
-  `lap_solve_line_metric()`, and the documentation now points there.
-* The five `"auto"` selection rules are stated in `?assignment` rather than
-  only summarised as "automatic selection".
+* `?assignment`, `?verify_assignment` and `?explain_dispatch` state the
+  dispatch rules and the certificate's conditions rather than summarising them.
 
 ## R CMD check results
 

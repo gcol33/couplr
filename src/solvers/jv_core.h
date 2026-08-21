@@ -12,8 +12,9 @@ namespace lap {
 namespace detail {
 
 struct JvCoreOpts {
-    // Reserved for LAPJV pre-stages (column reduction + augmenting row reduction).
-    // Currently unused; off by default. Will be wired up when warm-start lands.
+    // Run the LAPJV pre-stages (column reduction + augmenting row reduction)
+    // before the shortest-path phase. solve_jv enables them; solve_hungarian
+    // asks for the plain augmenting-path solve and leaves them off.
     bool use_warm_start = false;
 };
 

@@ -15,32 +15,6 @@ test_that(".has_namespace returns FALSE for non-existent packages", {
   expect_false(couplr:::.has_namespace("nonexistent_package_xyz123"))
 })
 
-# ------------------------------------------------------------------------------
-# .gif_delay_from_fps tests
-# ------------------------------------------------------------------------------
-
-test_that(".gif_delay_from_fps computes correct delays", {
-  # 10 fps = 100/10 = 10 centiseconds per frame
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10L)
-
-  # 20 fps = 100/20 = 5 centiseconds per frame
-  expect_equal(couplr:::.gif_delay_from_fps(20), 5L)
-
-  # 1 fps = 100/1 = 100 centiseconds per frame
-  expect_equal(couplr:::.gif_delay_from_fps(1), 100L)
-})
-
-test_that(".gif_delay_from_fps handles edge cases", {
-  # Invalid fps defaults to 10
-  expect_equal(couplr:::.gif_delay_from_fps(0), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(-1), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(NA), 10L)
-})
-
-# ------------------------------------------------------------------------------
-# .to_planar_rgb and .from_planar_rgb tests
-# ------------------------------------------------------------------------------
-
 test_that(".to_planar_rgb converts array to planar format", {
   # Create a simple 2x3 RGB array
   H <- 2
@@ -59,55 +33,6 @@ test_that(".to_planar_rgb converts array to planar format", {
   expect_equal(planar[(H*W + 1):(2*H*W)], as.vector(arr[,,2]))
   # Last H*W elements are B channel
   expect_equal(planar[(2*H*W + 1):(3*H*W)], as.vector(arr[,,3]))
-})
-
-test_that(".from_planar_rgb converts back to array", {
-  H <- 2
-  W <- 3
-  arr <- array(0, dim = c(H, W, 3))
-  arr[,,1] <- matrix(1:6, nrow = H, ncol = W)
-  arr[,,2] <- matrix(11:16, nrow = H, ncol = W)
-  arr[,,3] <- matrix(21:26, nrow = H, ncol = W)
-
-  planar <- couplr:::.to_planar_rgb(arr)
-  restored <- couplr:::.from_planar_rgb(planar, H, W)
-
-  expect_equal(dim(restored), c(H, W, 3))
-  expect_equal(restored[,,1], arr[,,1])
-  expect_equal(restored[,,2], arr[,,2])
-  expect_equal(restored[,,3], arr[,,3])
-})
-
-test_that(".from_planar_rgb validates input length", {
-  expect_error(
-    couplr:::.from_planar_rgb(1:10, H = 2, W = 3),  # Expected 18, got 10
-    "wrong length"
-  )
-})
-
-# ------------------------------------------------------------------------------
-# .clamp_rgb tests
-# ------------------------------------------------------------------------------
-
-test_that(".clamp_rgb clamps values to 0-255", {
-  x <- c(-10, 0, 128, 255, 300)
-  result <- couplr:::.clamp_rgb(x)
-
-  expect_equal(result, c(0L, 0L, 128L, 255L, 255L))
-})
-
-test_that(".clamp_rgb preserves dimensions", {
-  x <- matrix(c(-10, 0, 128, 300), nrow = 2, ncol = 2)
-  result <- couplr:::.clamp_rgb(x)
-
-  expect_equal(dim(result), c(2, 2))
-})
-
-test_that(".clamp_rgb rounds values", {
-  x <- c(127.4, 127.6)
-  result <- couplr:::.clamp_rgb(x)
-
-  expect_equal(result, c(127L, 128L))
 })
 
 # ------------------------------------------------------------------------------

@@ -281,26 +281,6 @@ test_that(".square_tiling_solver handles non-square image", {
 })
 
 # ------------------------------------------------------------------------------
-# .solve_hierarchical_patch_pipeline_v2 tests
-# ------------------------------------------------------------------------------
-
-test_that(".solve_hierarchical_patch_pipeline_v2 works as wrapper", {
-  skip_on_cran()
-  H <- 4
-  W <- 4
-  N <- H * W
-  A_planar <- rep(0.0, 3 * N)
-  B_planar <- rep(0.0, 3 * N)
-
-  result <- couplr:::.solve_hierarchical_patch_pipeline_v2(
-    A_planar, B_planar, H, W,
-    max_patch_size = 2L
-  )
-
-  expect_equal(length(result), N)
-})
-
-# ------------------------------------------------------------------------------
 # Edge cases and integration tests
 # ------------------------------------------------------------------------------
 

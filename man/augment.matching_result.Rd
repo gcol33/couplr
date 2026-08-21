@@ -45,6 +45,6 @@ right <- data.frame(
 )
 
 result <- match_couples(left, right, vars = "age")
-couplr::augment(result, left, right)
+augment(result, left, right)
 
 }

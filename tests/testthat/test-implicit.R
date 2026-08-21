@@ -218,9 +218,10 @@ test_that("the certificate and the search record survive a default call", {
   loop <- match_couples(left, right, vars = c("x", "y", "z"),
                         memory_mode = "implicit", check_costs = FALSE)
 
-  # return_diagnostics is FALSE by default and truncates info to three fields,
-  # which is why neither of these lives there.
-  expect_named(loop$info, c("method", "n_matched", "total_distance"))
+  # return_diagnostics is FALSE by default and truncates info to the solver
+  # summary plus the design fields, which is why neither of these lives there.
+  expect_named(loop$info, c("method", "n_matched", "total_distance",
+                            "estimand", "focal", "focal_discarded"))
   expect_s3_class(loop$certificate, "assignment_certificate")
   expect_true(loop$certificate$certified_optimal)
   expect_equal(loop$search$possible_edges, 25 * 120)

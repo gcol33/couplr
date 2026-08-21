@@ -115,7 +115,11 @@ test_that("match_couples return_diagnostics works", {
   result_nodiag <- match_couples(left, right, vars = "x", return_diagnostics = FALSE)
 
   expect_true(length(names(result_diag$info)) >= 3)
-  expect_equal(length(names(result_nodiag$info)), 3)  # Only method, n_matched, total_distance
+  # The truncated info is the three reporting fields plus what as_matchit()
+  # needs to label the design.
+  expect_setequal(names(result_nodiag$info),
+                  c("method", "n_matched", "total_distance",
+                    "estimand", "focal", "focal_discarded"))
 })
 
 test_that("match_couples require_full_matching errors on unmatched", {
@@ -506,6 +510,8 @@ test_that("greedy matching with return_diagnostics = FALSE", {
   result <- match_couples(left, right, vars = "x", return_diagnostics = FALSE, method = "greedy")
 
   # Should have minimal info
-  expect_true(length(names(result$info)) <= 5)
+  expect_setequal(names(result$info),
+                  c("method", "strategy", "n_matched", "total_distance",
+                    "estimand", "focal", "focal_discarded"))
   expect_true("n_matched" %in% names(result$info))
 })

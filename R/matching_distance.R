@@ -2,6 +2,27 @@
 # Matching Distance - Distance computation and scaling
 # ==============================================================================
 
+# Metrics that reduce over dimensions one at a time: each dimension's
+# n_left x n_right table of absolute differences comes from outer(), and
+# `combine` folds it into the running total (`+` for Manhattan, pmax for
+# Chebyshev, `acc + d^2` for squared Euclidean).
+.per_dim_reduce <- function(left_mat, right_mat, combine) {
+  acc <- matrix(0, nrow = nrow(left_mat), ncol = nrow(right_mat))
+  for (k in seq_len(ncol(left_mat))) {
+    acc <- combine(acc, abs(outer(left_mat[, k], right_mat[, k], `-`)))
+  }
+  acc
+}
+
+# Summing (L_ik - R_jk)^2 over dimensions holds every digit the coordinates
+# carry. The Gram-matrix identity ||L||^2 + ||R||^2 - 2 L.R would fold the same
+# sum into one BLAS call, but subtracting two large nearly equal terms costs
+# most of the mantissa whenever the coordinates are large next to the distance
+# between them.
+.squared_euclidean <- function(left_mat, right_mat) {
+  .per_dim_reduce(left_mat, right_mat, function(acc, d) acc + d^2)
+}
+
 #' Compute pairwise distance matrix
 #'
 #' @param left_mat Numeric matrix of left units (rows = units, cols = variables).
@@ -41,37 +62,13 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
   dist_matrix <- matrix(0, nrow = n_left, ncol = n_right)
 
   if (distance %in% c("euclidean", "l2")) {
-    # Euclidean distance: sqrt(sum((x - y)^2))
-    for (i in seq_len(n_left)) {
-      for (j in seq_len(n_right)) {
-        diff <- left_mat[i, ] - right_mat[j, ]
-        dist_matrix[i, j] <- sqrt(sum(diff^2))
-      }
-    }
+    dist_matrix <- sqrt(.squared_euclidean(left_mat, right_mat))
   } else if (distance %in% c("manhattan", "l1", "cityblock")) {
-    # Manhattan distance: sum(|x - y|)
-    for (i in seq_len(n_left)) {
-      for (j in seq_len(n_right)) {
-        diff <- abs(left_mat[i, ] - right_mat[j, ])
-        dist_matrix[i, j] <- sum(diff)
-      }
-    }
+    dist_matrix <- .per_dim_reduce(left_mat, right_mat, `+`)
   } else if (distance %in% c("squared_euclidean", "sqeuclidean", "sq")) {
-    # Squared Euclidean distance: sum((x - y)^2)
-    for (i in seq_len(n_left)) {
-      for (j in seq_len(n_right)) {
-        diff <- left_mat[i, ] - right_mat[j, ]
-        dist_matrix[i, j] <- sum(diff^2)
-      }
-    }
+    dist_matrix <- .squared_euclidean(left_mat, right_mat)
   } else if (distance %in% c("chebyshev", "chebychev", "maximum", "max")) {
-    # Chebyshev distance: max(|x - y|)
-    for (i in seq_len(n_left)) {
-      for (j in seq_len(n_right)) {
-        diff <- abs(left_mat[i, ] - right_mat[j, ])
-        dist_matrix[i, j] <- max(diff)
-      }
-    }
+    dist_matrix <- .per_dim_reduce(left_mat, right_mat, pmax)
   } else if (distance %in% c("mahalanobis", "maha")) {
     # Mahalanobis distance: sqrt((x-y)' * Sigma^-1 * (x-y))
     if (!is.null(sigma)) {

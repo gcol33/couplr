@@ -8,14 +8,6 @@
 #' @noRd
 .has_namespace <- function(pkg) requireNamespace(pkg, quietly = TRUE)
 
-#' GIF delay (centiseconds) from FPS
-#' @noRd
-.gif_delay_from_fps <- function(fps) {
-  fps <- suppressWarnings(as.integer(round(fps)))
-  if (!is.finite(fps) || fps < 1L) fps <- 10L
-  as.integer(round(100 / fps))  # ImageMagick expects centiseconds/frame
-}
-
 # -------------------------------------------------------------------
 # Image <-> array conversions
 # -------------------------------------------------------------------
@@ -70,29 +62,6 @@
   planar
 }
 
-#' Convert planar RGB vector (RRR...GGG...BBB...) back to H x W x 3 array
-#' @noRd
-.from_planar_rgb <- function(planar, H, W) {
-  HW <- as.integer(H) * as.integer(W)
-  if (!is.numeric(planar) || length(planar) != HW * 3L) {
-    stop("planar data has wrong length; expected ", HW * 3L)
-  }
-  arr <- array(0, dim = c(as.integer(H), as.integer(W), 3L))
-  arr[,,1] <- matrix(planar[1:HW], nrow = H, ncol = W, byrow = FALSE)
-  arr[,,2] <- matrix(planar[(HW + 1):(2 * HW)], nrow = H, ncol = W, byrow = FALSE)
-  arr[,,3] <- matrix(planar[(2 * HW + 1):(3 * HW)], nrow = H, ncol = W, byrow = FALSE)
-  arr
-}
-
-#' Clamp RGB values to 0-255
-#' @noRd
-.clamp_rgb <- function(x) {
-  d <- dim(x); x <- suppressWarnings(as.integer(round(x)))
-  x[x < 0L] <- 0L; x[x > 255L] <- 255L
-  if (!is.null(d)) dim(x) <- d
-  x
-}
-
 # -------------------------------------------------------------------
 # C++ glue (robust wrappers: prefer new _symbols; fallback to *cpp names)
 # -------------------------------------------------------------------
@@ -119,6 +88,19 @@
            as.integer(idxA), as.integer(idxB), as.integer(H), as.integer(W))
 }
 
+# RGB distance between two pixel sets, on the 0-1 scale the color walk prices
+# in: one n_a x n_b table per channel, summed, rooted. This is the color walk's
+# hot path and both of its call sites build the same matrix.
+#' @noRd
+.rgb_cost_matrix <- function(A_rgb, idxA, B_rgb, idxB) {
+  d2 <- matrix(0, nrow = length(idxA), ncol = length(idxB))
+  for (ch in 1:3) {
+    d <- outer(A_rgb[idxA, ch], B_rgb[idxB, ch], `-`) / 255
+    d2 <- d2 + d * d
+  }
+  sqrt(d2)
+}
+
 #' @noRd
 .cpp_compute_pixel_cost <- function(Ap, Bp, H, W, alpha, beta) {
   .call_or("_compute_pixel_cost", "compute_pixel_cost_cpp",
@@ -141,12 +123,6 @@
 .cpp_render_morph <- function(Ap, Bp, asg0, H, W, nF) {
   .call_or("_morph_pixel_level_impl", "morph_pixel_level_cpp",
            Ap, Bp, as.integer(asg0), as.integer(H), as.integer(W), as.integer(nF))
-}
-
-#' @noRd
-.cpp_overlap <- function(Ap, Bp, H, W, bits) {
-  .call_or("_analyze_color_overlap", "analyze_color_overlap_cpp",
-           Ap, Bp, as.integer(H), as.integer(W), as.integer(bits))
 }
 
 # -------------------------------------------------------------------
@@ -218,40 +194,6 @@
 # -------------------------------------------------------------------
 # Patch helpers
 # -------------------------------------------------------------------
-
-#' Compute cost matrix between two sets of patches (color+spatial)
-#' @noRd
-.patch_cost_matrix <- function(patches_a, patches_b, alpha = 1, beta = 0.1, H = NULL, W = NULL) {
-  Ca <- as.matrix(patches_a$colors) / 255
-  Cb <- as.matrix(patches_b$colors) / 255
-  Sa <- as.matrix(patches_a$centers)
-  Sb <- as.matrix(patches_b$centers)
-  Cc <- as.matrix(stats::dist(rbind(Ca, Cb)))[seq_len(nrow(Ca)), nrow(Ca) + seq_len(nrow(Cb))]
-  if (!is.null(H) && !is.null(W)) {
-    diag_norm <- sqrt(H^2 + W^2)
-  } else {
-    # approximate from patch centers
-    diag_norm <- max(dist(rbind(Sa, Sb)))
-    if (!is.finite(diag_norm) || diag_norm <= 0) diag_norm <- 1
-  }
-  Cs <- as.matrix(stats::dist(rbind(Sa, Sb)))[seq_len(nrow(Sa)), nrow(Sa) + seq_len(nrow(Sb))] / diag_norm
-  alpha * Cc + beta * Cs
-}
-
-#' Expand patch assignment to pixel assignment (simple spatial truncation)
-#' @noRd
-.expand_patch_assignment <- function(patch_assign, patches_a, patches_b, N) {
-  out <- rep(-1L, N)
-  for (i in seq_along(patch_assign)) {
-    j <- patch_assign[[i]]
-    if (!is.finite(j) || j < 1L) next
-    ia <- patches_a$indices[[i]]
-    ib <- patches_b$indices[[j]]
-    take <- min(length(ia), length(ib))
-    if (take > 0L) out[ia[seq_len(take)]] <- ib[seq_len(take)]
-  }
-  out
-}
 
 # -------------------------------------------------------------------
 # Exact / Patch solves (R orchestrates LAP; C++ only builds costs)
@@ -327,16 +269,6 @@
   data.frame(ia = ia_vec, ib = ib_vec, k = k_vec)
 }
 
-# Palette LAP on color distance
-.palette_pairs_lap <- function(info, method = "jv", maximize = FALSE) {
-  cA <- as.integer(info$countsA); cB <- as.integer(info$countsB)
-  M  <- info$color_dist
-  if (nrow(M) == 0L || ncol(M) == 0L) return(data.frame(ia = integer(), ib = integer(), k = integer()))
-  perm <- .lap_assign(M, method = method, maximize = maximize) + 1L
-  ia <- seq_len(nrow(M)); ib <- as.integer(perm); k <- pmin(cA[ia], cB[ib])
-  data.frame(ia = ia, ib = ib, k = as.integer(k))
-}
-
 # Color walk: process A colors in fixed order, match to nearest free B pixels by pure color distance
 .solve_color_walk_pipeline <- function(A_planar, B_planar, H, W, quantize_bits = 5,
                                        method = "jv", maximize = FALSE) {
@@ -382,19 +314,7 @@
       match <- .lap_assign(Csp, method = method, maximize = FALSE)
     } else {
       # Normal color-based matching
-      C_color <- matrix(0, nrow = nA, ncol = nB)
-      
-      for (i in seq_len(nA)) {
-        a_idx <- idxA[i]
-        for (j in seq_len(nB)) {
-          b_idx <- idxB_free[j]
-          dr <- (A_rgb[a_idx, 1] - B_rgb[b_idx, 1]) / 255.0
-          dg <- (A_rgb[a_idx, 2] - B_rgb[b_idx, 2]) / 255.0
-          db <- (A_rgb[a_idx, 3] - B_rgb[b_idx, 3]) / 255.0
-          C_color[i, j] <- sqrt(dr*dr + dg*dg + db*db)
-        }
-      }
-      
+      C_color <- .rgb_cost_matrix(A_rgb, idxA, B_rgb, idxB_free)
       match <- .lap_assign(C_color, method = method, maximize = FALSE)
     }
     
@@ -416,19 +336,7 @@
     idxB_free <- which(freeB)
     nA <- length(remainA)
     nB <- length(idxB_free)
-    C_color <- matrix(0, nrow = nA, ncol = nB)
-    
-    for (i in seq_len(nA)) {
-      a_idx <- remainA[i]
-      for (j in seq_len(nB)) {
-        b_idx <- idxB_free[j]
-        dr <- (A_rgb[a_idx, 1] - B_rgb[b_idx, 1]) / 255.0
-        dg <- (A_rgb[a_idx, 2] - B_rgb[b_idx, 2]) / 255.0
-        db <- (A_rgb[a_idx, 3] - B_rgb[b_idx, 3]) / 255.0
-        C_color[i, j] <- sqrt(dr*dr + dg*dg + db*db)
-      }
-    }
-    
+    C_color <- .rgb_cost_matrix(A_rgb, remainA, B_rgb, idxB_free)
     match <- .lap_assign(C_color, method = method, maximize = FALSE)
     for (i in seq_along(remainA)) {
       assignment[remainA[i]] <- idxB_free[match[i] + 1L]
@@ -453,6 +361,4 @@
   if (fill_identity_for_unmatched) assign <- .fill_unassigned_identity(assign)
   assign
 }
-
-# small infix helper
-`%||%` <- function(a, b) if (!is.null(a)) a else b
+

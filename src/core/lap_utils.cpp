@@ -90,54 +90,8 @@ bool is_valid_matching(const CostMatrix& cost, const std::vector<int>& match) {
     return true;
 }
 
-// Helper for has_valid_matching: DFS to find augmenting path
-static bool dfs_augment(int u, const std::vector<std::vector<int>>& adj,
-                        std::vector<int>& match_v, std::vector<bool>& visited) {
-    for (int v : adj[u]) {
-        if (visited[v]) continue;
-        visited[v] = true;
-        if (match_v[v] < 0 || dfs_augment(match_v[v], adj, match_v, visited)) {
-            match_v[v] = u;
-            return true;
-        }
-    }
-    return false;
-}
-
 bool has_valid_matching(const CostMatrix& cost) {
-    // DFS-augmenting-path feasibility check: already O(n*m) with per-row DFS
-    // overhead, impractical well before n/m individually approach INT_MAX, so
-    // truncation here is intentional (unlike the flat-index sites above, which
-    // overflow at a realistic ~46,341-square scale).
-    const int n = static_cast<int>(cost.nrow);
-    const int m = static_cast<int>(cost.ncol);
-
-    if (n == 0) return true;
-    if (n > m) return false;
-
-    // Build adjacency list (only allowed/finite edges)
-    std::vector<std::vector<int>> adj(n);
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < m; ++j) {
-            if (cost.allowed(i, j) && std::isfinite(cost.at(i, j))) {
-                adj[i].push_back(j);
-            }
-        }
-        if (adj[i].empty()) return false;
-    }
-
-    // Find maximum matching
-    std::vector<int> match_v(m, -1);
-    int matched = 0;
-
-    for (int u = 0; u < n; ++u) {
-        std::vector<bool> visited(m, false);
-        if (dfs_augment(u, adj, match_v, visited)) {
-            ++matched;
-        }
-    }
-
-    return matched == n;
+    return has_valid_matching_view(cost);
 }
 
 double compute_total_cost(const CostMatrix& cost, const std::vector<int>& match) {

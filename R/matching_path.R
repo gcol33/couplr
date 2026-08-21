@@ -94,6 +94,9 @@
 #' @param certify Whether each point carries a checked certificate. `TRUE` by
 #'   default: the certificate is what says a point's matching is the optimal one
 #'   for its value, which is the claim a path is read for.
+#' @param left_id,right_id Name of the column holding the unit identifier, or
+#'   NULL (default) to use a column called `id`, then meaningful row names,
+#'   then synthesized ids with a warning. See [match_couples()].
 #' @param keep_per_row,width,tol,max_rounds The edge-generation loop's search
 #'   knobs, shared with `memory_mode = "implicit"`. Each point converges on any
 #'   of them.
@@ -113,6 +116,8 @@
 #'
 #' @export
 match_path <- function(left, right, vars,
+                       left_id = NULL,
+                       right_id = NULL,
                        vary = "max_distance",
                        values,
                        distance = "euclidean",
@@ -172,8 +177,8 @@ match_path <- function(left, right, vars,
   weights <- validate_weights(weights, vars)
   calipers <- validate_calipers(calipers, vars)
 
-  left_ids <- extract_ids(left, "left")
-  right_ids <- extract_ids(right, "right")
+  left_ids <- extract_ids(left, "left", left_id, warn_synthetic = TRUE)
+  right_ids <- extract_ids(right, "right", right_id, warn_synthetic = TRUE)
 
   # The path states its problem the way the loop does: one specification of the
   # complete problem, and the pairs generated from it. The knob the path sweeps

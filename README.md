@@ -87,7 +87,7 @@ Check covariate balance before and after matching, and probe how sensitive a con
 to unmeasured confounding:
 
 ```r
-bal <- balance_diagnostics(result)      # standardized differences, variance ratios, KS tests
+bal <- balance_diagnostics(result, treated, control)   # standardized differences, variance ratios, KS tests
 bal
 autoplot(bal)                           # love plot of standardized differences
 
@@ -102,8 +102,8 @@ tables and `marginaleffects` estimates run against it without rewiring the analy
 frame, and `autoplot()` methods cover matching results, balance, and sensitivity.
 
 ```r
-m  <- as_matchit(result)
-md <- match_data(result)
+m  <- as_matchit(result, treated, control)
+md <- match_data(result, treated, control)
 ```
 
 ## The assignment backend

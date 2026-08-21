@@ -141,27 +141,30 @@ cardinality_match <- function(left, right, vars,
   result$info$pruning_iterations <- iter
   result$info$pairs_removed <- original_n - nrow(pairs)
   result$info$max_std_diff_target <- max_std_diff
+  # Pruning discards focal units, so what the design identifies moves with it.
+  result$info[c("estimand", "focal", "focal_discarded")] <-
+    design_estimand(nrow(left), dplyr::n_distinct(pairs$left_id))
 
   result
+}
+
+# Row positions of a pairs column's ids in the side it came from, in `pairs`
+# row order. Both readers below need the values pair by pair, and merge()
+# sorts by its key, so the left values would arrive ordered by left_id and the
+# right values by right_id -- two orders, neither of them the pairs'.
+.pair_side_index <- function(ids, df, id_col) {
+  match(as.character(ids), as.character(df[[id_col]]))
 }
 
 #' Compute standardized differences for current pairs
 #' @keywords internal
 .compute_pair_balance <- function(pairs, left, right, vars,
                                   left_id_col, right_id_col) {
-  # Merge matched left values
-  left_matched <- merge(
-    data.frame(left_id = pairs$left_id, stringsAsFactors = FALSE),
-    left, by.x = "left_id", by.y = left_id_col, all.x = TRUE
-  )
-
-  right_matched <- merge(
-    data.frame(right_id = pairs$right_id, stringsAsFactors = FALSE),
-    right, by.x = "right_id", by.y = right_id_col, all.x = TRUE
-  )
+  li <- .pair_side_index(pairs$left_id, left, left_id_col)
+  ri <- .pair_side_index(pairs$right_id, right, right_id_col)
 
   std_diffs <- vapply(vars, function(v) {
-    standardized_difference(left_matched[[v]], right_matched[[v]])
+    standardized_difference(left[[v]][li], right[[v]][ri])
   }, numeric(1))
 
   list(std_diffs = std_diffs)
@@ -177,18 +180,8 @@ cardinality_match <- function(left, right, vars,
     return(pairs[[diff_col]])
   }
 
-  # Otherwise compute from original data
-  left_vals <- merge(
-    data.frame(left_id = pairs$left_id, stringsAsFactors = FALSE),
-    left[, c(left_id_col, var), drop = FALSE],
-    by.x = "left_id", by.y = left_id_col, all.x = TRUE
-  )[[var]]
+  li <- .pair_side_index(pairs$left_id, left, left_id_col)
+  ri <- .pair_side_index(pairs$right_id, right, right_id_col)
 
-  right_vals <- merge(
-    data.frame(right_id = pairs$right_id, stringsAsFactors = FALSE),
-    right[, c(right_id_col, var), drop = FALSE],
-    by.x = "right_id", by.y = right_id_col, all.x = TRUE
-  )[[var]]
-
-  left_vals - right_vals
+  left[[var]][li] - right[[var]][ri]
 }

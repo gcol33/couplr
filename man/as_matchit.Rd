@@ -11,6 +11,7 @@ as_matchit(
   formula = NULL,
   left_id = "id",
   right_id = "id",
+  estimand = NULL,
   ...
 )
 }
@@ -28,6 +29,15 @@ default formula is constructed from \code{result$info$vars}.}
 \item{left_id}{Name of ID column in left (default: \code{"id"})}
 
 \item{right_id}{Name of ID column in right (default: \code{"id"})}
+
+\item{estimand}{Target estimand stamped on the matchit object: one of
+\code{"ATT"}, \code{"ATC"} or \code{"ATE"}. \code{NULL} (default) reads it
+from the design, which every couplr front door records as
+\code{info$estimand}. MatchIt and marginaleffects read this field to pick
+the target population and the weighting of the effect estimate, so give it
+explicitly whenever the design does not determine it -- in particular when
+\code{left} holds the controls, which makes the design's left-focal
+weighting an ATC.}
 
 \item{...}{Additional arguments (ignored)}
 }

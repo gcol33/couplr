@@ -7,13 +7,13 @@
 \alias{bal.tab.subclass_result}
 \title{Balance Table for Matching Results (cobalt integration)}
 \usage{
-bal.tab.matching_result(x, left, right, ...)
+\method{bal.tab}{matching_result}(x, left, right, ...)
 
-bal.tab.full_matching_result(x, left, right, ...)
+\method{bal.tab}{full_matching_result}(x, left, right, ...)
 
-bal.tab.cem_result(x, left, right, ...)
+\method{bal.tab}{cem_result}(x, left, right, ...)
 
-bal.tab.subclass_result(x, data = NULL, ...)
+\method{bal.tab}{subclass_result}(x, data = NULL, ...)
 }
 \arguments{
 \item{x}{A couplr result object}
@@ -22,7 +22,8 @@ bal.tab.subclass_result(x, data = NULL, ...)
 
 \item{right}{Data frame of right (control) units}
 
-\item{...}{Additional arguments passed to \code{cobalt::bal.tab()}}
+\item{...}{Additional arguments. Arguments named in \code{\link[=as_matchit]{as_matchit()}}'s
+signature go to the conversion; the rest go to \code{cobalt::bal.tab()}.}
 
 \item{data}{Data frame used for subclassification (for subclass_result only)}
 }

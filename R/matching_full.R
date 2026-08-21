@@ -466,6 +466,7 @@ full_match <- function(left, right, vars,
     distance_metric = if (is.function(distance)) "custom" else distance,
     vars = vars
   )
+  info <- c(info, design_estimand(n_left, info$n_matched_left))
 
   result <- list(
     groups = groups_tbl,

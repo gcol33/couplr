@@ -155,3 +155,47 @@ as_assignment_matrix <- function(x, n_sources = NULL, n_targets = NULL) {
 #' @noRd
 #' @keywords internal
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+#' Apply the `forbidden` sentinel to a cost matrix
+#'
+#' Every front door that documents a `forbidden` argument masks with this one,
+#' so `lap_solve()`, `lap_solve_batch()` and `lap_solve_kbest()` read the same
+#' sentinel the same way. NA and Inf cells are forbidden to the solvers
+#' already, so `forbidden = NA` is the identity.
+#'
+#' @return The cost matrix with sentinel cells replaced by `Inf`.
+#' @keywords internal
+mask_forbidden <- function(cost_matrix, forbidden = NA) {
+  if (length(forbidden) != 1L || is.na(forbidden)) {
+    return(cost_matrix)
+  }
+  cost_matrix[cost_matrix == forbidden] <- Inf
+  cost_matrix
+}
+
+#' Build a cost matrix from source / target / cost columns
+#'
+#' The long-format door of `lap_solve()` and `lap_solve_kbest()`. Cells no row
+#' names are `forbidden`, which is what makes an absent pair an absent edge
+#' rather than a zero-cost one.
+#'
+#' @return List with the matrix and the source / target level vectors its row
+#'   and column indices stand for.
+#' @keywords internal
+long_to_cost_matrix <- function(source_vals, target_vals, cost_vals,
+                                forbidden = NA) {
+  unique_sources <- sort(unique(source_vals))
+  unique_targets <- sort(unique(target_vals))
+
+  row_idx <- match(source_vals, unique_sources)
+  col_idx <- match(target_vals, unique_targets)
+
+  cost_matrix <- matrix(forbidden,
+                        nrow = length(unique_sources),
+                        ncol = length(unique_targets))
+  cost_matrix[cbind(row_idx, col_idx)] <- cost_vals
+
+  list(cost_matrix = cost_matrix,
+       sources = unique_sources,
+       targets = unique_targets)
+}

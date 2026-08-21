@@ -53,22 +53,103 @@ validate_matching_inputs <- function(left, right, vars = NULL) {
 
 #' Extract and standardize IDs from data frames
 #'
+#' The id a matching carries is the key every downstream verb joins on, so it
+#' is resolved once, here, and the same resolution answers `match_couples()`
+#' and `join_matched()`. `id_col` names the column to read; with no name given
+#' a column called `id` is used, then meaningful row names, then ids
+#' synthesized from `prefix`.
+#'
+#' Ids read from the data must be unique: a repeated value makes every
+#' id-keyed join downstream many-to-many, which expands rows and attaches one
+#' unit's covariates to another unit's pair. Synthesized ids are unique by
+#' construction and are not checked.
+#'
+#' @param df Data frame to read ids from.
+#' @param prefix Prefix for synthesized ids, also the side name used in
+#'   messages ("left" / "right").
+#' @param id_col Name of the id column, or NULL to resolve one.
+#' @param warn_synthetic If TRUE, warn when ids are synthesized because no id
+#'   column was named or found.
 #' @return Character vector of IDs.
 #' @keywords internal
-extract_ids <- function(df, prefix = "id") {
-  # If there's an 'id' column, use it
-  if ("id" %in% names(df)) {
-    return(as.character(df$id))
+extract_ids <- function(df, prefix = "id", id_col = NULL,
+                        warn_synthetic = FALSE) {
+  side <- prefix
+
+  # A named column is used as given; a missing one is an error rather than a
+  # silent fall-through to synthesized ids that would join to nothing.
+  if (!is.null(id_col)) {
+    if (!id_col %in% names(df)) {
+      stop(sprintf("id column '%s' not found in %s", id_col, side),
+           call. = FALSE)
+    }
+    return(check_unique_ids(as.character(df[[id_col]]), id_col, side))
   }
 
-  # Otherwise, use row names if they're meaningful
+  if ("id" %in% names(df)) {
+    return(check_unique_ids(as.character(df$id), "id", side))
+  }
+
   rn <- rownames(df)
   if (!is.null(rn) && !all(rn == as.character(seq_len(nrow(df))))) {
-    return(rn)
+    return(check_unique_ids(rn, "row names", side))
   }
 
-  # Last resort: create sequential IDs
+  if (warn_synthetic) {
+    warning(sprintf(
+      paste0("No id column found in %s, so ids %s_1 ... %s_%d were used. ",
+             "Downstream verbs (join_matched(), match_data(), ",
+             "balance_diagnostics()) join on these values, so pass ",
+             "%s_id = \"<column>\" to key the matching on your own ",
+             "identifier."),
+      side, prefix, prefix, nrow(df), side), call. = FALSE)
+  }
+
   paste0(prefix, "_", seq_len(nrow(df)))
+}
+
+#' Error on repeated id values
+#'
+#' @return The ids, invisibly unchanged, when they are unique.
+#' @keywords internal
+check_unique_ids <- function(ids, id_col, side) {
+  dup <- unique(ids[duplicated(ids)])
+  if (length(dup) > 0L) {
+    shown <- paste(utils::head(dup, 5L), collapse = ", ")
+    if (length(dup) > 5L) {
+      shown <- paste0(shown, ", ... (", length(dup), " values in total)")
+    }
+    stop(sprintf(
+      paste0("Duplicate IDs found in %s dataset: column '%s' repeats %s. ",
+             "Matching keys pairs on this column, so repeated values pair ",
+             "the wrong units downstream."),
+      side, id_col, shown), call. = FALSE)
+  }
+  ids
+}
+
+#' What the design identifies
+#'
+#' Every matching design in the package weights the left side at 1 and the
+#' right side to reproduce the left distribution within a pair, group or
+#' stratum, so what it targets is the effect on the left population: the ATT,
+#' in the orientation the matching layer is written in, where `left` holds the
+#' treated units.
+#'
+#' `focal_discarded` is how many left units the design did not retain.
+#' Calipers, `max_distance` and coarsened strata all drop focal units, and the
+#' estimate then speaks about the retained ones rather than about the whole
+#' treated group, which is what [as_matchit()] reports when it hands the
+#' estimand to MatchIt and marginaleffects.
+#'
+#' @return Named list of fields to merge into a result's `info`.
+#' @keywords internal
+design_estimand <- function(n_left, n_left_matched) {
+  list(
+    estimand = "ATT",
+    focal = "left",
+    focal_discarded = as.integer(n_left - n_left_matched)
+  )
 }
 
 #' Extract matching variables from data frame

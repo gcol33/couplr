@@ -60,10 +60,10 @@ slackness O(n^3 log C). Its optimality bound holds for a matching that
 saturates both sides, so a rectangular problem is padded to square with
 zero-cost dummies and costs \code{max(n, m)} on both sides.
 \item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
-\item \code{"csflow"} — Cost-scaling network flow
+\item \code{"csflow"} — Successive shortest paths with 'Johnson' potentials
 \item \code{"network_simplex"} — 'Network simplex' with spanning tree representation
 \item \code{"orlin"} — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
-\item \code{"push_relabel"} — 'Push-relabel' max-flow based solver
+\item \code{"push_relabel"} — 'Goldberg-Tarjan' cost-scaling push-relabel
 \item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 }
 

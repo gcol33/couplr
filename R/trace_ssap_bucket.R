@@ -51,7 +51,7 @@ trace_ssap_bucket <- function(cost, maximize = FALSE, ...) {
   # src/solvers/solve_ssap_bucket.cpp. The tolerance is fixed in scaled units,
   # not proportional to the scale: a proportional tolerance grows to exceed half
   # a quantum at large scales, at which point every real reads as integral and
-  # the optimum can flip via silent rounding (gcol33/couplr#19). When no bounded
+  # the optimum can flip via silent rounding. When no bounded
   # power of ten is exact, or the scaled magnitudes exceed the bucket solver's
   # integer range, refuse rather than round -- exactly as the production solver.
   INF_INT <- 1e9

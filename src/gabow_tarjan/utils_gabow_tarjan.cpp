@@ -1315,7 +1315,7 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
     // through the duals, and the column terms cancel only when both matchings
     // use every column. On a square instance they do. On a rectangular one they
     // pay for different column sets, the bound does not hold, and the matching
-    // that comes back can be far from optimal (gcol33/couplr#31).
+    // that comes back can be far from optimal.
     //
     // Squaring the instance with zero-cost dummies restores it. A dummy may take
     // any partner for nothing, so a minimum-cost perfect matching on the square

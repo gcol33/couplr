@@ -265,7 +265,7 @@ test_that("Gabow-Tarjan handles rectangular matrices (4x3)", {
   expect_equal(res$total_cost, assignment(cost, method = "jv")$total_cost)
 })
 
-test_that("Gabow-Tarjan is optimal on wide problems (gcol33/couplr#31)", {
+test_that("Gabow-Tarjan is optimal on wide problems", {
   # The 1-optimality bound holds for a matching that saturates both sides, so
   # a rectangular instance has to be padded to square. It was not, and 179 of
   # 200 random wide problems came back worse than jv.

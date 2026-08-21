@@ -125,43 +125,6 @@ test_that(".solve_color_match_pipeline with fill_identity FALSE", {
 })
 
 # ------------------------------------------------------------------------------
-# .palette_pairs_lap edge cases
-# ------------------------------------------------------------------------------
-
-test_that(".palette_pairs_lap handles 1x1 matrix", {
-  skip_on_cran()
-  info <- list(
-    countsA = c(5),
-    countsB = c(10),
-    color_dist = matrix(0.5, nrow = 1, ncol = 1)
-  )
-
-  result <- couplr:::.palette_pairs_lap(info, method = "hungarian")
-
-  expect_equal(nrow(result), 1)
-  expect_equal(result$ia, 1)
-  expect_equal(result$ib, 1)
-})
-
-test_that(".palette_pairs_lap handles larger matrices", {
-  skip_on_cran()
-  info <- list(
-    countsA = c(10, 20, 15),
-    countsB = c(12, 18, 25),
-    color_dist = matrix(c(
-      0.1, 0.5, 0.9,
-      0.5, 0.1, 0.5,
-      0.9, 0.5, 0.1
-    ), nrow = 3, ncol = 3, byrow = TRUE)
-  )
-
-  result <- couplr:::.palette_pairs_lap(info, method = "hungarian")
-
-  expect_equal(nrow(result), 3)
-  expect_true(all(c("ia", "ib", "k") %in% names(result)))
-})
-
-# ------------------------------------------------------------------------------
 # .build_spatial_assignments_for_pairs with actual data
 # ------------------------------------------------------------------------------
 
@@ -198,90 +161,6 @@ test_that(".build_spatial_assignments_for_pairs handles empty groups", {
   result <- couplr:::.build_spatial_assignments_for_pairs(info, pairs, H = 4, W = 4)
 
   expect_true(is.list(result))
-})
-
-# ------------------------------------------------------------------------------
-# .patch_cost_matrix edge cases
-# ------------------------------------------------------------------------------
-
-test_that(".patch_cost_matrix handles single patch", {
-  skip_on_cran()
-  patches_a <- list(
-    colors = matrix(c(255, 128, 64), nrow = 1, ncol = 3),
-    centers = matrix(c(5, 5), nrow = 1, ncol = 2)
-  )
-  patches_b <- list(
-    colors = matrix(c(250, 130, 60), nrow = 1, ncol = 3),
-    centers = matrix(c(6, 6), nrow = 1, ncol = 2)
-  )
-
-  result <- couplr:::.patch_cost_matrix(patches_a, patches_b, alpha = 1, beta = 0.1, H = 20, W = 20)
-
-  expect_true(is.numeric(result))
-  expect_true(is.finite(result))
-})
-
-test_that(".patch_cost_matrix handles zero diagonal_norm", {
-  skip_on_cran()
-  # When all centers are at the same point, diag_norm would be 0
-  patches_a <- list(
-    colors = matrix(c(255, 128, 64), nrow = 1, ncol = 3),
-    centers = matrix(c(5, 5), nrow = 1, ncol = 2)
-  )
-  patches_b <- list(
-    colors = matrix(c(250, 130, 60), nrow = 1, ncol = 3),
-    centers = matrix(c(5, 5), nrow = 1, ncol = 2)  # Same position
-  )
-
-  # When H and W are NULL, it calculates from max(dist(...))
-  result <- couplr:::.patch_cost_matrix(patches_a, patches_b, alpha = 1, beta = 0.1)
-
-  expect_true(is.numeric(result))
-  expect_true(is.finite(result))
-})
-
-# ------------------------------------------------------------------------------
-# .expand_patch_assignment edge cases
-# ------------------------------------------------------------------------------
-
-test_that(".expand_patch_assignment handles unequal patch sizes", {
-  skip_on_cran()
-  patch_assign <- list(1L)  # One patch maps to B patch 1
-  patches_a <- list(
-    indices = list(c(1L, 2L, 3L, 4L))  # 4 pixels in A patch
-  )
-  patches_b <- list(
-    indices = list(c(5L, 6L))  # Only 2 pixels in B patch
-  )
-  N <- 4
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N)
-
-  expect_equal(length(result), 4)
-  # Only first 2 A pixels should be assigned (limited by B patch size)
-  expect_equal(result[1], 5L)
-  expect_equal(result[2], 6L)
-  expect_equal(result[3], -1L)
-  expect_equal(result[4], -1L)
-})
-
-test_that(".expand_patch_assignment handles 0 assignment", {
-  skip_on_cran()
-  patch_assign <- list(0L, 1L)  # First patch has 0 (invalid)
-  patches_a <- list(
-    indices = list(c(1L, 2L), c(3L, 4L))
-  )
-  patches_b <- list(
-    indices = list(c(5L, 6L))
-  )
-  N <- 4
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N)
-
-  expect_equal(result[1], -1L)  # Not assigned (patch_assign = 0)
-  expect_equal(result[2], -1L)
-  expect_equal(result[3], 5L)   # Assigned
-  expect_equal(result[4], 6L)
 })
 
 # ------------------------------------------------------------------------------

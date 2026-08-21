@@ -52,10 +52,7 @@ inline void build_assignment_network(NSState& state,
     state.parent.resize(state.num_nodes, NO_NODE);
     state.parent_arc.resize(state.num_nodes, NO_ARC);
     state.arc_to_parent_up.resize(state.num_nodes, false);
-    state.thread.resize(state.num_nodes);
-    state.rev_thread.resize(state.num_nodes);
     state.depth.resize(state.num_nodes, 0);
-    state.subtree_size.resize(state.num_nodes, 1);
     state.potential.resize(state.num_nodes, 0.0);
 
     int arc_idx = 0;

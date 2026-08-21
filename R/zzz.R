@@ -48,6 +48,6 @@ prepare_cost_matrix <- function(cost, maximize = FALSE) {
 #   # Package initialization code here if needed
 # }
 
-# .onUnload <- function(libpath) {
-#   library.dynam.unload("couplr", libpath)
-# }
+.onUnload <- function(libpath) {
+  library.dynam.unload("couplr", libpath)
+}

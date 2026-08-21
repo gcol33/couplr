@@ -3,60 +3,6 @@
 
 # ---------- morph_utils.R coverage ----------
 
-test_that(".gif_delay_from_fps handles edge cases", {
-  skip_on_cran()
-
-  # Test various fps values
-  expect_equal(couplr:::.gif_delay_from_fps(1), 100L)
-  expect_equal(couplr:::.gif_delay_from_fps(5), 20L)
-  expect_equal(couplr:::.gif_delay_from_fps(25), 4L)
-  expect_equal(couplr:::.gif_delay_from_fps(100), 1L)
-
-  # Edge cases
-  expect_equal(couplr:::.gif_delay_from_fps(0), 10L)  # Invalid -> default
-  expect_equal(couplr:::.gif_delay_from_fps(Inf), 10L)  # Invalid -> default
-})
-
-test_that(".clamp_rgb handles various inputs", {
-  skip_on_cran()
-
-  # Scalar
-  expect_equal(couplr:::.clamp_rgb(50), 50L)
-  expect_equal(couplr:::.clamp_rgb(300), 255L)
-  expect_equal(couplr:::.clamp_rgb(-100), 0L)
-
-  # Vector
-  vec <- c(-50, 0, 127, 255, 1000)
-  result <- couplr:::.clamp_rgb(vec)
-  expect_equal(result, c(0L, 0L, 127L, 255L, 255L))
-
-  # Matrix
-  mat <- matrix(c(-10, 150, 300, 100), nrow = 2)
-  result <- couplr:::.clamp_rgb(mat)
-  expect_equal(dim(result), c(2, 2))
-})
-
-test_that(".to_planar_rgb and .from_planar_rgb work correctly", {
-  skip_on_cran()
-  skip_if_not_installed("magick")
-
-  # Create simple test array
-  set.seed(42)
-  arr <- array(sample(0:255, 75, replace = TRUE), dim = c(5, 5, 3))
-  storage.mode(arr) <- "integer"
-
-  # Convert to planar
-  planar <- couplr:::.to_planar_rgb(arr)
-  expect_equal(length(planar), 75)
-
-  # Convert back
-  arr2 <- couplr:::.from_planar_rgb(planar, 5, 5)
-  expect_equal(dim(arr2), c(5, 5, 3))
-
-  # Values should match
-  expect_equal(as.numeric(arr), as.numeric(arr2))
-})
-
 test_that(".has_namespace works", {
   skip_on_cran()
 

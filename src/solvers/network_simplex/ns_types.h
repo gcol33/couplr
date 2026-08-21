@@ -76,15 +76,12 @@ struct NSState {
     std::vector<int> arc_flow;     // Current flow (0 or 1)
     std::vector<int> arc_state;    // STATE_LOWER, STATE_TREE, or STATE_UPPER
 
-    // Spanning tree representation (threaded)
+    // Spanning tree representation
     // All arrays indexed by node (0..num_nodes-1)
     std::vector<int> parent;       // Parent node in tree (-1 for root)
     std::vector<int> parent_arc;   // Arc connecting to parent (-1 for root)
     std::vector<bool> arc_to_parent_up;  // True if arc points toward parent
-    std::vector<int> thread;       // Next node in DFS preorder
-    std::vector<int> rev_thread;   // Previous node in DFS preorder
     std::vector<int> depth;        // Depth in tree (root = 0)
-    std::vector<int> subtree_size; // Number of nodes in subtree
 
     // Dual variables
     std::vector<double> potential; // Node potentials pi[i]

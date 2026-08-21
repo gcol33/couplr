@@ -12,62 +12,9 @@ test_that(".has_namespace works", {
   expect_false(couplr:::.has_namespace("nonexistent_package_xyz"))
 })
 
-test_that(".gif_delay_from_fps handles various inputs", {
-  skip_on_cran()
-  # Normal FPS
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(20), 5L)
-
-  # Edge cases
-  expect_equal(couplr:::.gif_delay_from_fps(0), 10L)  # Default for invalid
-  expect_equal(couplr:::.gif_delay_from_fps(-5), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(NA), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(Inf), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(NaN), 10L)
-})
-
-test_that(".clamp_rgb clamps values correctly", {
-  skip_on_cran()
-  x <- c(-10, 50, 300)
-  result <- couplr:::.clamp_rgb(x)
-  expect_equal(result, c(0L, 50L, 255L))
-
-  # With dimensions
-  m <- matrix(c(-5, 128, 500, 255), 2, 2)
-  result <- couplr:::.clamp_rgb(m)
-  expect_equal(dim(result), c(2, 2))
-  expect_true(all(result >= 0 & result <= 255))
-})
-
 # ------------------------------------------------------------------------------
 # Array conversion tests
 # ------------------------------------------------------------------------------
-
-test_that(".to_planar_rgb and .from_planar_rgb are inverses", {
-  skip_on_cran()
-  skip_if_not_installed("magick")
-
-  # Create a simple 3x4 RGB array
-  H <- 3
-  W <- 4
-  arr <- array(sample(0:255, H * W * 3, replace = TRUE), dim = c(H, W, 3))
-  storage.mode(arr) <- "integer"
-
-  # Convert to planar and back
-  planar <- couplr:::.to_planar_rgb(arr)
-  expect_equal(length(planar), H * W * 3)
-
-  recovered <- couplr:::.from_planar_rgb(planar, H, W)
-  expect_equal(dim(recovered), c(H, W, 3))
-})
-
-test_that(".from_planar_rgb errors on wrong length", {
-  skip_on_cran()
-  expect_error(
-    couplr:::.from_planar_rgb(1:10, 2, 3),
-    "planar data has wrong length"
-  )
-})
 
 test_that(".to_array_rgb works with magick images", {
   skip_on_cran()

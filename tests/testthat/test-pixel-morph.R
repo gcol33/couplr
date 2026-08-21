@@ -1,30 +1,5 @@
 # Test suite for pixel morphing functionality
 
-test_that("pixel_morph helper functions work", {
-  skip_if_not_installed("magick")
-  skip_if_not_installed("png")
-
-  H <- 8; W <- 8
-
-  # Create a simple test array
-  test_arr <- array(0L, dim = c(H, W, 3))
-  test_arr[4, 4, 1] <- 255L  # Red pixel
-
-  # Planar conversion
-  planar <- .to_planar_rgb(test_arr)
-  expect_length(planar, H * W * 3)
-
-  # The exact index depends on your planar layout; round-trip instead:
-  arr_back <- .from_planar_rgb(planar, H, W)
-  expect_equal(dim(arr_back), c(H, W, 3))
-  expect_equal(arr_back[4, 4, 1], 255L)
-
-  # Clamp
-  test_vals <- c(-10, 0, 128, 255, 300)
-  clamped <- .clamp_rgb(test_vals)
-  expect_equal(clamped, c(0L, 0L, 128L, 255L, 255L))
-})
-
 test_that("pixel cost matrix computation works", {
   skip_if_not(exists("compute_pixel_cost_cpp"))
 

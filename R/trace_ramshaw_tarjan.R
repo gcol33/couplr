@@ -39,9 +39,10 @@ trace_ramshaw_tarjan <- function(cost, maximize = FALSE, ...) {
   n_orig <- v_in$n; m_orig <- v_in$m
 
   # --- Auto-transpose so the internal matrix has n <= m -------------------
-  transposed <- n_orig > m_orig
-  cost_int <- if (transposed) t(cost_orig) else cost_orig
-  n <- nrow(cost_int); m <- ncol(cost_int)
+  orient <- trace_orient_wide(cost_orig, n_orig, m_orig)
+  transposed <- orient$transposed
+  cost_int <- orient$cost
+  n <- orient$n; m <- orient$m
 
   prep <- prepare_cost_work(cost_int, maximize)
   W <- prep$cost_work
@@ -57,16 +58,7 @@ trace_ramshaw_tarjan <- function(cost, maximize = FALSE, ...) {
 
   # External matching: always reported in original orientation, length n_orig.
   external_matching <- function() {
-    out <- integer(n_orig)
-    if (!transposed) {
-      for (i in seq_len(n)) out[i] <- row_to_col[i]
-    } else {
-      for (i in seq_len(n)) {
-        j <- row_to_col[i]
-        if (j > 0L) out[j] <- i
-      }
-    }
-    out
+    trace_external_matching(row_to_col, n_orig, transposed)
   }
 
   # External dual vectors (only meaningful in original orientation when the
@@ -96,9 +88,7 @@ trace_ramshaw_tarjan <- function(cost, maximize = FALSE, ...) {
   }
 
   # Map an internal (row, col) edge back to original-orientation (row, col).
-  ext_edge <- function(i_int, j_int) {
-    if (transposed) c(j_int, i_int) else c(i_int, j_int)
-  }
+  ext_edge <- function(i_int, j_int) trace_ext_edge(i_int, j_int, transposed)
 
   init_desc <- if (transposed) {
     sprintf(
@@ -161,12 +151,7 @@ trace_ramshaw_tarjan <- function(cost, maximize = FALSE, ...) {
       }
       col_visited[j_min] <- TRUE
 
-      tree <- list()
-      for (j in seq_len(m)) {
-        if (col_visited[j] && prev_row[j] > 0L) {
-          tree[[length(tree) + 1L]] <- ext_edge(prev_row[j], j)
-        }
-      }
+      tree <- sp_tree_edges(prev_row, col_visited, ext_edge)
 
       if (col_to_row[j_min] == 0L) {
         end_col <- j_min
@@ -234,13 +219,10 @@ trace_ramshaw_tarjan <- function(cost, maximize = FALSE, ...) {
 
     # --- Dual update --------------------------------------------------------
     delta <- dist[end_col]
-    u[start_row] <- u[start_row] + delta
-    for (j in seq_len(m)) {
-      if (col_visited[j]) v[j] <- v[j] - (delta - dist[j])
-    }
-    for (ir in scanned_rows) {
-      u[ir] <- u[ir] + (delta - row_entry_d[ir])
-    }
+    lifted <- sp_dual_lift(u, v, dist, col_visited, delta, scanned_rows,
+                           row_entry_d, start_row)
+    u <- lifted$u
+    v <- lifted$v
 
     emit(
       "dual_update",

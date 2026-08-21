@@ -259,53 +259,6 @@ inline int initialize_spanning_tree_greedy(NSState& state) {
         // Unmatched cols stay at STATE_LOWER with flow = 0
     }
 
-    // Build thread order (DFS preorder from source)
-    std::vector<int> thread_order;
-    std::vector<bool> visited(state.num_nodes, false);
-    std::vector<int> stack;
-    stack.push_back(source);
-
-    while (!stack.empty()) {
-        int curr = stack.back();
-        stack.pop_back();
-        if (visited[curr]) continue;
-        visited[curr] = true;
-        thread_order.push_back(curr);
-
-        // Find children (nodes whose parent is curr)
-        std::vector<int> children;
-        for (int node = 0; node < state.num_nodes; ++node) {
-            if (state.parent[node] == curr) {
-                children.push_back(node);
-            }
-        }
-        // Push in reverse order for correct DFS order
-        for (int i = static_cast<int>(children.size()) - 1; i >= 0; --i) {
-            stack.push_back(children[i]);
-        }
-    }
-
-    // Build thread and rev_thread arrays (circular)
-    for (size_t i = 0; i < thread_order.size(); ++i) {
-        int curr = thread_order[i];
-        int next = thread_order[(i + 1) % thread_order.size()];
-        state.thread[curr] = next;
-        state.rev_thread[next] = curr;
-    }
-
-    // Compute subtree sizes (bottom-up)
-    for (int i = 0; i < state.num_nodes; ++i) {
-        state.subtree_size[i] = 1;
-    }
-
-    for (int i = static_cast<int>(thread_order.size()) - 1; i >= 0; --i) {
-        int node = thread_order[i];
-        int par = state.parent[node];
-        if (par != NO_NODE) {
-            state.subtree_size[par] += state.subtree_size[node];
-        }
-    }
-
     return n;
 }
 

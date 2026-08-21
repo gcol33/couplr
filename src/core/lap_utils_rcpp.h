@@ -139,11 +139,3 @@ Rcpp::List run_base_solver_by_name(
     const Rcpp::NumericMatrix& cost,
     bool maximize,
     const std::string& method);
-
-// Non-throwing version: returns true on success, false on failure
-// On success, result contains the solution; on failure, result is empty
-bool try_run_base_solver(
-    const Rcpp::NumericMatrix& cost,
-    bool maximize,
-    const std::string& method,
-    Rcpp::List& result);

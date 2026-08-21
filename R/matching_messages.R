@@ -378,9 +378,7 @@ check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = 
 
   # Check for too many forbidden pairs
   if (warn && pct_forbidden > 50) {
-    n_left <- nrow(cost_matrix)
-    n_valid_per_left <- sum(is.finite(cost_matrix[1, ]))  # Example from first row
-    warn_many_forbidden(pct_forbidden, n_valid_per_left * n_left, n_left)
+    warn_many_forbidden(pct_forbidden, n_finite, nrow(cost_matrix))
   }
 
   list(

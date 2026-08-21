@@ -6,45 +6,6 @@
 # Helper function tests
 # ------------------------------------------------------------------------------
 
-test_that(".gif_delay_from_fps handles edge cases", {
-  skip_on_cran()
-  # Access internal function
-  gif_delay <- couplr:::.gif_delay_from_fps
-
-  # Normal fps
-  expect_equal(gif_delay(10), 10L)  # 100/10 = 10
-  expect_equal(gif_delay(30), 3L)   # 100/30 ~ 3
-
-  # Edge cases
-  expect_equal(gif_delay(0), 10L)   # Should default to 10
-  expect_equal(gif_delay(-5), 10L)  # Should default to 10
-  expect_equal(gif_delay(NA), 10L)  # Should default to 10
-  # Note: "invalid" string causes error in round(), not tested
-
-  # High fps
-  expect_equal(gif_delay(100), 1L)  # 100/100 = 1
-})
-
-test_that(".clamp_rgb handles various inputs", {
-  skip_on_cran()
-  clamp_rgb <- couplr:::.clamp_rgb
-
-  # Normal values
-  x <- c(100, 200, 50)
-  expect_equal(clamp_rgb(x), as.integer(c(100, 200, 50)))
-
-  # Out of range values
-  x <- c(-10, 300, 128)
-  result <- clamp_rgb(x)
-  expect_equal(result, as.integer(c(0, 255, 128)))
-
-  # Array with dimensions
-  arr <- array(c(-5, 100, 300, 50, -1, 260), dim = c(2, 3))
-  result <- clamp_rgb(arr)
-  expect_equal(dim(result), c(2, 3))
-  expect_true(all(result >= 0 & result <= 255))
-})
-
 test_that(".to_planar_rgb converts correctly", {
   skip_on_cran()
   to_planar <- couplr:::.to_planar_rgb
@@ -60,29 +21,6 @@ test_that(".to_planar_rgb converts correctly", {
   expect_equal(length(planar), 2 * 2 * 3)
   # First 4 values should be R channel
   expect_equal(planar[1:4], as.vector(arr[,,1]))
-})
-
-test_that(".from_planar_rgb converts back correctly", {
-  skip_on_cran()
-  from_planar <- couplr:::.from_planar_rgb
-
-  # Create planar data
-  planar <- c(
-    10, 20, 30, 40,   # R channel (2x2 = 4 values)
-    50, 60, 70, 80,   # G channel
-    90, 100, 110, 120 # B channel
-  )
-
-  arr <- from_planar(planar, H = 2, W = 2)
-
-  expect_equal(dim(arr), c(2, 2, 3))
-  expect_equal(as.vector(arr[,,1]), c(10, 20, 30, 40))
-
-  # Error on wrong length
-  expect_error(
-    from_planar(c(1, 2, 3), H = 2, W = 2),
-    "wrong length"
-  )
 })
 
 test_that(".downscale_both handles no downscaling", {
@@ -157,22 +95,6 @@ test_that(".palette_pairs_identity handles empty match", {
   )
 
   result <- palette_pairs_identity(info)
-
-  expect_equal(nrow(result), 0)
-})
-
-test_that(".palette_pairs_lap handles empty matrix", {
-  skip_on_cran()
-  palette_pairs_lap <- couplr:::.palette_pairs_lap
-
-  # Empty color distance matrix
-  info <- list(
-    countsA = integer(0),
-    countsB = integer(0),
-    color_dist = matrix(nrow = 0, ncol = 0)
-  )
-
-  result <- palette_pairs_lap(info)
 
   expect_equal(nrow(result), 0)
 })

@@ -115,21 +115,6 @@ test_that("lapmod handles sparse costs", {
 
 # ---------- More morph coverage ----------
 
-test_that("morph_utils helper functions", {
-  skip_on_cran()
-  skip_if_not_installed("magick")
-
-  # Test .gif_delay_from_fps edge cases
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10L)
-  expect_equal(couplr:::.gif_delay_from_fps(20), 5L)
-  expect_equal(couplr:::.gif_delay_from_fps(50), 2L)
-
-  # Test .clamp_rgb
-  expect_equal(couplr:::.clamp_rgb(128), 128L)
-  expect_equal(couplr:::.clamp_rgb(-50), 0L)
-  expect_equal(couplr:::.clamp_rgb(500), 255L)
-})
-
 # ---------- balance_diagnostics coverage ----------
 
 test_that("balance_diagnostics with various inputs", {

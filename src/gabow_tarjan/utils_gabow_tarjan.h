@@ -62,13 +62,6 @@ void augment_along_path(const std::vector<std::pair<int,int>>& edges,
 // Module D: Maximal set of augmenting paths on equality graph
 // ============================================================================
 
-std::vector<std::pair<int,int>>
-find_one_augmenting_path_eq(const std::vector<std::vector<int>>& eq_graph,
-                            const MatchVec& row_match,
-                            const MatchVec& col_match,
-                            const std::vector<bool>& banned_row,
-                            const std::vector<bool>& banned_col);
-
 std::vector<std::vector<std::pair<int,int>>>
 find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
                               const MatchVec& row_match,

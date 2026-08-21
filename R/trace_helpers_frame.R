@@ -9,6 +9,52 @@
 # one trace frame, called from each trace's local emit().
 # ==============================================================================
 
+#' Orient a cost matrix so the internal solve has at least as many columns as
+#' rows
+#'
+#' Traces that need n <= m solve a transposed copy and report in the caller's
+#' orientation. Returns the matrix to solve on, its dimensions, and whether it
+#' was transposed.
+#'
+#' @keywords internal
+#' @noRd
+trace_orient_wide <- function(cost, n_orig, m_orig) {
+  transposed <- n_orig > m_orig
+  cost_int <- if (transposed) t(cost) else cost
+  list(transposed = transposed, cost = cost_int,
+       n = nrow(cost_int), m = ncol(cost_int))
+}
+
+#' Report an internal matching in the caller's orientation
+#'
+#' `row_to_col` is over the internal rows. When the solve ran transposed, entry
+#' i names the original column that the original row `row_to_col[i]` takes, so
+#' the vector is inverted back to length `n_orig`.
+#'
+#' @keywords internal
+#' @noRd
+trace_external_matching <- function(row_to_col, n_orig, transposed) {
+  out <- integer(n_orig)
+  if (!transposed) {
+    n <- min(length(row_to_col), n_orig)
+    if (n > 0L) out[seq_len(n)] <- row_to_col[seq_len(n)]
+  } else {
+    for (i in seq_along(row_to_col)) {
+      j <- row_to_col[i]
+      if (j > 0L) out[j] <- i
+    }
+  }
+  out
+}
+
+#' Report an internal (row, col) edge in the caller's orientation
+#'
+#' @keywords internal
+#' @noRd
+trace_ext_edge <- function(i_int, j_int, transposed) {
+  if (transposed) c(j_int, i_int) else c(i_int, j_int)
+}
+
 #' Construct a single trace frame
 #'
 #' Returns a list with the canonical fields consumed by lap_animate's

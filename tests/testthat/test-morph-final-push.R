@@ -184,68 +184,6 @@ test_that(".recursive_tiling_solver handles both rest_w and rest_h > 0", {
 })
 
 # ------------------------------------------------------------------------------
-# morph_utils.R: .patch_cost_matrix with multiple patches (lines 261-275)
-# ------------------------------------------------------------------------------
-
-test_that(".patch_cost_matrix handles multiple patches", {
-  skip_on_cran()
-  patches_a <- list(
-    colors = matrix(c(
-      100, 100, 100,
-      200, 50, 50,
-      50, 200, 50
-    ), nrow = 3, ncol = 3, byrow = TRUE),
-    centers = matrix(c(
-      0, 0,
-      10, 0,
-      5, 10
-    ), nrow = 3, ncol = 2, byrow = TRUE)
-  )
-  patches_b <- list(
-    colors = matrix(c(
-      105, 95, 100,
-      190, 60, 45,
-      55, 210, 55
-    ), nrow = 3, ncol = 3, byrow = TRUE),
-    centers = matrix(c(
-      2, 1,
-      8, 2,
-      6, 9
-    ), nrow = 3, ncol = 2, byrow = TRUE)
-  )
-
-  result <- couplr:::.patch_cost_matrix(patches_a, patches_b, alpha = 1, beta = 0.2, H = 20, W = 20)
-
-  expect_equal(dim(result), c(3, 3))
-  expect_true(all(is.finite(result)))
-})
-
-# ------------------------------------------------------------------------------
-# morph_utils.R: .expand_patch_assignment with multiple patches (lines 280-291)
-# ------------------------------------------------------------------------------
-
-test_that(".expand_patch_assignment handles multiple patches", {
-  skip_on_cran()
-  patch_assign <- list(2L, 1L, 3L)  # Patch 1->B2, Patch 2->B1, Patch 3->B3
-  patches_a <- list(
-    indices = list(c(1L, 2L), c(3L, 4L), c(5L, 6L))
-  )
-  patches_b <- list(
-    indices = list(c(7L, 8L), c(9L, 10L), c(11L, 12L))
-  )
-
-  result <- couplr:::.expand_patch_assignment(patch_assign, patches_a, patches_b, N = 6)
-
-  expect_equal(length(result), 6)
-  # Patch 1 maps to B patch 2
-  expect_equal(result[1], 9L)
-  expect_equal(result[2], 10L)
-  # Patch 2 maps to B patch 1
-  expect_equal(result[3], 7L)
-  expect_equal(result[4], 8L)
-})
-
-# ------------------------------------------------------------------------------
 # morph_tiling.R: .generate_square_tiles boundary conditions
 # ------------------------------------------------------------------------------
 

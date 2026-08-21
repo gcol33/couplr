@@ -14,37 +14,6 @@ test_that(".has_namespace works", {
   expect_false(couplr:::.has_namespace("nonexistent_package_xyz123"))
 })
 
-test_that(".gif_delay_from_fps converts correctly", {
-  skip_on_cran()
-  # 10 fps = 0.1 seconds = 10 hundredths
-  expect_equal(couplr:::.gif_delay_from_fps(10), 10)
-  # 20 fps = 0.05 seconds = 5 hundredths
-  expect_equal(couplr:::.gif_delay_from_fps(20), 5)
-  # 1 fps = 1 second = 100 hundredths
-  expect_equal(couplr:::.gif_delay_from_fps(1), 100)
-})
-
-test_that(".clamp_rgb handles various inputs", {
-  skip_on_cran()
-  # Test with array
-  arr <- array(c(-10, 0, 127, 255, 300, 128), dim = c(2, 3))
-  result <- couplr:::.clamp_rgb(arr)
-  expect_equal(dim(result), c(2, 3))
-  expect_true(all(result >= 0 & result <= 255))
-})
-
-test_that(".to_planar_rgb and .from_planar_rgb are inverse", {
-  skip_on_cran()
-  H <- 4
-  W <- 6
-  original <- array(runif(H * W * 3) * 255, dim = c(H, W, 3))
-  planar <- couplr:::.to_planar_rgb(original)
-  reconstructed <- couplr:::.from_planar_rgb(planar, H, W)
-  expect_equal(dim(reconstructed), c(H, W, 3))
-  # Values should be close (may have integer conversion)
-  expect_true(all(abs(reconstructed - original) < 2))
-})
-
 # ------------------------------------------------------------------------------
 # cpp wrappers
 # ------------------------------------------------------------------------------

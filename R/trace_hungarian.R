@@ -43,16 +43,6 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
   frames <- list()
   step <- 0L
 
-  sp_tree_edges <- function(pred_vec, scanned_vec) {
-    out <- list()
-    for (j in seq_len(m)) {
-      if (scanned_vec[j] && pred_vec[j] > 0L) {
-        out[[length(out) + 1L]] <- c(pred_vec[j], j)
-      }
-    }
-    out
-  }
-
   emit <- function(phase, description,
                    active_edges = list(), path = list()) {
     step <<- step + 1L
@@ -88,7 +78,7 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
     pred     <- integer(m)
     scanned  <- logical(m)
     row_dist <- numeric(n)        # row entry-distance; 0 for the root row k
-    scanned_rows <- k
+    scanned_rows <- integer(0)
 
     i <- k
     delta <- 0
@@ -169,12 +159,9 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
     )
 
     # --- Dual update ---------------------------------------------------
-    for (j in seq_len(m)) {
-      if (scanned[j]) v[j] <- v[j] + dist[j] - delta
-    }
-    for (ir in scanned_rows) {
-      u[ir] <- u[ir] + (delta - row_dist[ir])
-    }
+    lifted <- sp_dual_lift(u, v, dist, scanned, delta, scanned_rows, row_dist, k)
+    u <- lifted$u
+    v <- lifted$v
 
     emit(
       "dual_update",
@@ -234,6 +221,4 @@ trace_hungarian <- function(cost, maximize = FALSE, ...) {
   )
 }
 
-# Register at source time. The stub registration in R/trace_stub.R is guarded
-# by an existence check, so this overrides the stub regardless of file ordering.
 register_trace("hungarian", trace_hungarian)

@@ -2,6 +2,37 @@
 
 ## New features
 
+* **`memory_mode = "implicit"` solves an assignment by generating the pairs it
+  needs.** Available on `assignment()` and `match_couples()`, with `certify`
+  beside it. Every row starts with its nearest admissible partners, that sparse
+  problem is solved by the flow model, and the pairs left out are priced against
+  the duals it returns: a pair enters on a negative reduced cost, and the loop
+  repeats until none prices in. The duals then certify the sparse solution
+  optimal for the complete problem, so the answer is the one a dense solve
+  returns on every problem small enough to run both, reached without holding the
+  complete problem. The result carries `u` and `v`, the certificate, and
+  `search`: `candidate_edges`, `possible_edges`, `edges_evaluated`, `n_rounds`
+  and a per-round record. An arc set admitting no complete matching comes back
+  with Hall's witness, which says which units are short of partners.
+  `memory_mode = "auto"` does not select it.
+
+* **`match_path()` solves a matching per value of one argument as one sequence.**
+  `vary = "max_distance"` sweeps the distance cut over `values`, which must
+  ascend: each point resumes from the matching the point before it found, and
+  raising the cut admits pairs while leaving that matching feasible, so a point
+  costs a round of the edge-generation loop where an independent call costs a
+  solve from cold. Over 20 values this is 2.83x, 2.61x, 3.71x and 4.54x against
+  20 independent solves at 167 x 333, 667 x 1,333, 1,667 x 3,333 and
+  6,667 x 13,333, with all 80 points optimal and every status and matched count
+  equal to the independent solve's. A descending sweep withdraws pairs the
+  matching may be standing on, so it is refused and told why.
+
+  Returns a `couplr_path`: `$path`, a row per point carrying the matched count,
+  the total distance and the matched sample's balance, and `$balance`, a row per
+  point per variable, with the match vector, certificate, round record and Hall
+  witness for each point beside them. `certify = TRUE` by default, and a point's
+  certificate is what says its matching is the optimal one at that value.
+
 * **`method = "push_relabel"` runs cost-scaling push-relabel.** The method value
   named an algorithm the solver did not run: what was dispatched was successive
   shortest paths with Johnson potentials, the same search as `method = "csflow"`,
@@ -65,7 +96,107 @@
   point, so the pairs a match with no `id` column produces are keyed on the
   values the rest of the package joins them by.
 
+* **`assignment_duals()` gained `certify`, and reads a lazy cost
+  specification.** It was computing a certificate's inputs without running the
+  check. Under `certify = TRUE` it runs it and attaches the certificate, and
+  `verify_assignment()` reads the duals off the result rather than solving
+  again, so the option costs one pass over the admissible pairs. The default is
+  `FALSE`, and the returned fields are unchanged without it.
+
+  The lazy path could produce no duals at all, so certifying a lazy solve meant
+  materializing the matrix that path exists to avoid. It takes a
+  `lazy_cost_spec` now and returns the duals the dense path returns, a
+  specification with more rows than columns is transposed rather than refused,
+  and `verify_assignment()` no longer requires `duals` for one.
+
 ## Improvements
+
+* The flow solver searches from one node holding an excess rather than from a
+  super-source over all of them. Every design the flow model compiles gets it:
+  dense `sap`, `csflow`, `push_relabel` and `cycle_cancel`, `full_match()`, the
+  blocked and k:1 designs, and the implicit loop. Two orders of magnitude on the
+  shapes measured. On a cost matrix with ties this can return a different
+  matching among the equally optimal ones.
+
+* A lazy solve under `max_distance` evaluates each distance once where it
+  evaluated it three times. Reading a pair is halved, and a whole pricing pass
+  is 1.38x on the shapes measured. Affects every `memory_mode = "lazy"` path and
+  every certification over a lazy source.
+
+* `method = "gabow_tarjan"` returns the optimum on rectangular problems, which
+  1.6.0 carried as a known issue (#31, #33). The 1-optimality bound cancels its
+  column terms only when both matchings cover every column, so a rectangular
+  instance has to be completed, and it was completed by padding to
+  `max(n, m)` square. The padding rows are copies of one node, so they are
+  carried as a single row holding as many partners as there are dummies, which
+  covers every column the same way and solves the instance at its own n by m
+  shape: at n = 100, m = 100,000 the padded instance needed 80 GB for the cost
+  matrix alone, and the collapsed one runs in 31 s at 221 MB and agrees with
+  `jv` exactly. An unmatched row is reported as unmatched rather than as a
+  padding column, and the multiplier separating the optimum from a 1-optimal
+  matching falls from `max(n, m) + 1` to `2 * min(n, m) + 1`.
+
+* `method = "gabow_tarjan"` takes its integer scale from the range the sentinel
+  leaves. The conversion from doubles placed the largest magnitude at 1e6, so
+  the quantum was the matrix maximum over 1e6, and it swamped the edges an
+  optimum uses whenever those were far smaller than that maximum: a square 100
+  by 100 instance of costs in [0, 1] carrying one entry at 1e5 came back 54
+  percent above the optimum while reporting that it was optimal. Above a maximum
+  of 1e6 no scaling was applied at all, so costs in [2e6, 2e6 + 1] lost every
+  fractional part, and the shift counted a positive offset against the sentinel:
+  at 1e14 + [0, 100] every finite cost read as forbidden, and a 10 by 10
+  instance came back 442 high. The scale now satisfies
+  `K * (hi - lo) <= BIG_INT / 8`, the shift is the low end of the range, and
+  representability is checked in doubles before `llround()`, which had been
+  running on the raw value and was undefined past `LLONG_MAX`.
+
+* Every reader drops a pair the optimum was forced onto a forbidden edge. A cost
+  at or above `BIG_COST` is what the rest of the package reads as no edge, and
+  the 1:1 and precomputed-distance readers reported such a pair anyway, priced
+  at 1e+308, with `status` then reading "optimal" off a matching that placed it.
+  All four readers drop it now, and the two units come back unmatched. The
+  predicate was open-coded in five places in two spellings, two of them missing
+  the `is.finite()` half, which an NA distance could reach; the five call sites
+  share one function.
+
+* A matching's status is derived from what the design asked for. It came from
+  unmatched left units, and a k:1 design places pairs while unmatched counts
+  units, so a unit holding one of its two requested partners made the match
+  report "optimal". Placed pairs are compared against requested pairs, the left
+  unit count times the ratio, which reduces to the old rule at ratio 1 and
+  covers the with-replacement design.
+
+  The blocked path built its `info` twice, once per branch, and the copies
+  disagreed on the requested-versus-actual method, on which fields exist, and on
+  their order. Both branches build through one path now. `info$solver` is one
+  entry per block that ran a solve, so a block's greedy fallback reaches the
+  status and a blocked Hall-deficient match reports heuristic/greedy_sorted,
+  which is what the same data reports unblocked. `block_summary` gains `n_left`,
+  `n_right` and `n_matched` on the sequential branch, and loses `n_pairs`, that
+  branch's own name for `n_matched`.
+
+* Every reader in the matching layer joins on the id column. Columns were
+  attached by row order in five places, and two of them scrambled what they
+  attached: `match_data()` built weights and subclasses from a merge whose row
+  order it then assumed, and the per-pair variable differences behind the
+  cardinality prune did the same (#17, #24).
+
+  That made the id contract worth stating. A duplicated id is rejected at
+  extraction rather than left to pair the wrong units downstream (#35),
+  `match_couples()` takes `left_id` and `right_id` where it had hardcoded the
+  column name (#38), and a synthesised id warns and names the argument that
+  sets one. `join_matched()` no longer re-parses the join key with
+  `type.convert()`, so numeric-looking character ids join (#36).
+  `match_data.matching_result()` emits one row per pair with the weight that
+  pair carries, so `ratio > 1` and replacement come out with the shape MatchIt
+  expects.
+
+* The design's estimand is recorded, and `as_matchit()` reads it instead of
+  labelling every non-subclass design `"ATT"` (#29). `augment()` is the
+  `generics::augment()` generic rather than a second one beside it, and the
+  `bal.tab` methods are registered on `cobalt::bal.tab()`, so they dispatch
+  (#39). `forbidden` reaches the greedy single path, which had been ignoring it
+  (#21).
 
 * `verify_flow()`'s per-arc tolerance scales with the numbers behind the reduced
   cost. `cbar(a)` is computed as `cost(a) + pi(tail(a)) - pi(head(a))`, so its

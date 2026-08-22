@@ -464,3 +464,82 @@ test_that("a time limit is checked in the caller's terms", {
   expect_error(couplr:::.flow_solve(flow_fixture(), time_limit = c(1, 2)),
                "single non-negative")
 })
+
+# --- the tolerance the reduced costs are read against -------------------------
+#
+# cbar(a) is computed as cost(a) + pi(tail(a)) - pi(head(a)), so its last bits
+# are worth the largest of those three times the machine epsilon. The tolerance
+# it is compared against scales with them for that reason, and the tests below
+# are the two halves of that: rounding at the problem's own scale is not a
+# violation, and a violation at that scale still is one.
+
+test_that("the per-arc tolerance scales with the numbers behind the reduced cost", {
+  small <- couplr:::.flow_solve(flow_fixture())
+  expect_true(verify_flow(small)$certified_optimal)
+  # Costs and potentials of order 1 leave the scale at its floor.
+  expect_equal(verify_flow(small, tol = 1e-9)$dual_tolerance, 1e-9)
+
+  big <- flow_fixture()
+  big$arcs$cost <- big$arcs$cost * 1e7
+  solved <- couplr:::.flow_solve(big)
+  cert <- verify_flow(solved, tol = 1e-9)
+
+  expect_true(cert$certified_optimal)
+  expect_gt(cert$dual_tolerance, 1e-9)
+  expect_equal(cert$dual_tolerance,
+               1e-9 * max(1, abs(big$arcs$cost), abs(solved$potential)))
+})
+
+test_that("a violation at the problem's scale is named rather than absorbed", {
+  big <- flow_fixture()
+  big$arcs$cost <- big$arcs$cost * 1e7
+  solved <- couplr:::.flow_solve(big)
+  arc_tol <- 1e-9 * max(1, abs(big$arcs$cost), abs(solved$potential))
+
+  # An arc that can still take flow is what dual feasibility prices. Its head's
+  # potential is moved until the arc prices a thousand tolerances below zero,
+  # which is still eight orders of magnitude below the costs themselves.
+  a <- which(solved$flow < big$arcs$upper)[[1L]]
+  head_node <- big$arcs$head[[a]]
+  cbar <- big$arcs$cost[[a]] + solved$potential[[big$arcs$tail[[a]]]] -
+    solved$potential[[head_node]]
+  broken <- solved$potential
+  broken[[head_node]] <- broken[[head_node]] + cbar + 1000 * arc_tol
+
+  cert <- verify_flow(solved, potential = broken, tol = 1e-9)
+  expect_false(cert$certified_optimal)
+  expect_false(cert$dual_feasible)
+  expect_lt(cert$min_residual_reduced_cost, -cert$dual_tolerance)
+})
+
+test_that("a balance design large enough to round past 1e-9 still certifies", {
+  skip_on_cran()
+  # The lexicographic tier weights rank cardinality above balance above
+  # distance, so the potentials grow with the problem. At this size they reach
+  # the millions, where one unit in the last place is around 1e-9 and the
+  # reduced costs cannot be read against an absolute 1e-9.
+  set.seed(41L)
+  n <- 500L
+  left <- data.frame(g = sample.int(4L, n, TRUE),
+                     x = stats::rnorm(n, 0.6), y = stats::rnorm(n, 0.4))
+  right <- data.frame(g = sample.int(4L, n, TRUE),
+                      x = stats::rnorm(n, -0.6), y = stats::rnorm(n, -0.4))
+  cost <- abs(outer(left$x, right$x, "-")) + abs(outer(left$y, right$y, "-"))
+  cost[matrix(stats::runif(n * n) > 0.05, n, n)] <- Inf
+
+  built <- couplr:::.balance_flow_problem(
+    cost, couplr:::.refined_hierarchy(left, right, "g", exact = 1L))
+  solved <- couplr:::.flow_solve(built$problem)
+  cert <- verify_flow(solved, tol = 1e-9)
+
+  expect_identical(solved$status, "optimal")
+  expect_gt(max(abs(solved$potential)), 1e6)
+  expect_lt(cert$min_residual_reduced_cost, -1e-9)
+  expect_true(cert$certified_optimal)
+
+  report <- couplr:::.cardinality_solve(left, right, cost, refined = "g",
+                                        exact = 1L)
+  expect_identical(report$stopped_on, "optimality")
+  expect_identical(report$gap, 0L)
+  expect_true(report$certified)
+})

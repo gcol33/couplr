@@ -223,13 +223,22 @@ struct FlowCertificate {
     double  max_conservation_error = 0.0;   // largest |net out - net in - supply|
     double  primal_objective = std::numeric_limits<double>::quiet_NaN();
 
-    // dual: every arc that can still take flow must not price below -tol
+    // dual: every arc that can still take flow must not price below its own
+    // -tol(a), scaled as dual_tolerance describes
     bool    dual_feasible = false;
     double  min_residual_reduced_cost = std::numeric_limits<double>::infinity();
     int64_t worst_arc = -1;
 
+    // The widest per-arc tolerance any comparison was made against. A reduced
+    // cost is a sum of a cost and two potentials, so the resolution available
+    // to it is set by the largest of those three rather than by 1. Reported
+    // because a verdict reached at a tolerance the caller cannot see is not one
+    // the caller can weigh: a design whose potentials reach 1e15 is being
+    // certified to a quarter of a unit, and that is worth knowing.
+    double  dual_tolerance = 0.0;
+
     // complementary slackness: every arc carrying more than its lower bound must
-    // not price above tol
+    // not price above the same per-arc tolerance
     bool    complementary_slackness = false;
     int64_t n_cs_violations = 0;
 
@@ -246,11 +255,26 @@ struct FlowCertificate {
 // Four groups of conditions:
 //   1. primal feasibility  - lower(a) <= f(a) <= upper(a) on every arc, and net
 //      flow out of every node equal to its supply;
-//   2. dual feasibility    - f(a) < upper(a) implies cbar(a) >= -tol;
-//   3. complementary slackness - f(a) > lower(a) implies cbar(a) <= tol, so an
-//      arc strictly inside its bounds needs |cbar(a)| <= tol;
+//   2. dual feasibility    - f(a) < upper(a) implies cbar(a) >= -tol(a);
+//   3. complementary slackness - f(a) > lower(a) implies cbar(a) <= tol(a), so
+//      an arc strictly inside its bounds needs |cbar(a)| <= tol(a);
 //   4. objective equality  - primal against D(pi), within a magnitude-scaled
 //      tolerance.
+//
+// `tol` is relative, and every comparison in 2 and 3 is made against
+//
+//     tol(a) = tol * max(1, |cost(a)|, |pi(tail(a))|, |pi(head(a))|)
+//
+// for the reason condition 4 already scales its own. cbar(a) is computed as
+// cost(a) + pi(tail(a)) - pi(head(a)), so its last bits are worth the largest
+// of those three times eps, and a threshold below that asks a correct solution
+// to be more exact than the arithmetic that produced it. The lexicographic tier
+// weights a balance design compiles to put the potentials in the millions,
+// where one ulp is around 1e-9, so an exactly optimal flow failed an absolute
+// 1e-9 on rounding alone.
+//
+// The scale never falls below 1, so a problem whose costs and potentials are
+// all of order 1 is checked against tol itself.
 //
 // Conditions 2 and 3 are the two directions of the residual graph: 2 prices the
 // forward residual arc of a, 3 prices its reverse, whose reduced cost is
@@ -338,9 +362,17 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
     for (int64_t a = 0; a < n_arcs; ++a) {
         const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
         const int64_t f = flow[static_cast<std::size_t>(a)];
-        const double cbar = arc.cost +
-                            potential[static_cast<std::size_t>(arc.tail)] -
-                            potential[static_cast<std::size_t>(arc.head)];
+        const double pi_tail = potential[static_cast<std::size_t>(arc.tail)];
+        const double pi_head = potential[static_cast<std::size_t>(arc.head)];
+        const double cbar = arc.cost + pi_tail - pi_head;
+
+        // The resolution the three terms leave this difference. A non-finite
+        // term carries through to a non-finite tolerance, against which every
+        // comparison below fails, which is the answer a non-finite potential
+        // deserves.
+        const double tol_a = tol * std::max(std::max(1.0, std::abs(arc.cost)),
+                                            std::max(std::abs(pi_tail),
+                                                     std::abs(pi_head)));
 
         if (cbar > 0.0) {
             dual.add(static_cast<double>(arc.lower) * cbar);
@@ -354,9 +386,10 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
                 rep.min_residual_reduced_cost = cbar;
                 rep.worst_arc = a;
             }
+            if (tol_a > rep.dual_tolerance) rep.dual_tolerance = tol_a;
             // Negated so a non-finite potential fails rather than slipping
             // through a comparison that is false on NaN either way.
-            if (!(cbar >= -tol)) ++n_dual_violations;
+            if (!(cbar >= -tol_a)) ++n_dual_violations;
         }
         // Reverse residual: the arc carries more than it must, and the reverse
         // arc of the residual graph prices at -cbar.
@@ -365,7 +398,8 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
                 rep.min_residual_reduced_cost = -cbar;
                 rep.worst_arc = a;
             }
-            if (!(cbar <= tol)) ++rep.n_cs_violations;
+            if (tol_a > rep.dual_tolerance) rep.dual_tolerance = tol_a;
+            if (!(cbar <= tol_a)) ++rep.n_cs_violations;
         }
     }
     rep.dual_objective = dual.value();

@@ -263,11 +263,26 @@ print.couplr_flow_problem <- function(x, ...) {
 #'
 #' and, writing `cbar(a) = cost(a) + pi(tail(a)) - pi(head(a))` for the reduced
 #' cost under the potentials `pi`, the conditions checked are primal
-#' feasibility, `cbar(a) >= -tol` on every arc that can still take flow, and
-#' `cbar(a) <= tol` on every arc carrying more than its lower bound. Their
+#' feasibility, `cbar(a) >= -tol(a)` on every arc that can still take flow, and
+#' `cbar(a) <= tol(a)` on every arc carrying more than its lower bound. Their
 #' objective form is checked too: the duality gap is the sum of the slackness
 #' violations weighted by `|cbar|`, so it is where a violation too small to
 #' trip the per-arc tolerance still accumulates.
+#'
+#' `tol` is relative. Each arc is compared against
+#'
+#' \preformatted{
+#'   tol(a) = tol * max(1, |cost(a)|, |pi(tail(a))|, |pi(head(a))|)
+#' }
+#'
+#' because `cbar(a)` is computed from those three numbers, and its last bits are
+#' worth the largest of them times the machine epsilon. A design that stacks
+#' lexicographic tier weights, as `cardinality_match()` does to rank cardinality
+#' above balance above distance, reaches potentials in the millions, where one
+#' unit in the last place is around 1e-9 and an exactly optimal flow cannot meet
+#' an absolute 1e-9. The scale never falls below 1, so a problem whose costs and
+#' potentials are of order 1 is checked against `tol` itself. The widest
+#' tolerance any comparison used is reported as `dual_tolerance`.
 #'
 #' The check needs potentials. If `x` carries them, as a solve result does,
 #' they are used. Otherwise they are obtained by solving `problem`, which costs
@@ -285,10 +300,11 @@ print.couplr_flow_problem <- function(x, ...) {
 #'   node ids run from 1. Required unless `x` already carries one.
 #' @param potential Optional numeric vector of node potentials, one per node.
 #'   Overrides any potentials on `x`.
-#' @param tol Numeric tolerance for the feasibility and slackness comparisons.
-#'   The duality-gap comparison scales this by the magnitude of the objective,
-#'   since an absolute tolerance on a sum of many terms is not reachable in
-#'   double precision.
+#' @param tol Relative tolerance for the feasibility and slackness comparisons.
+#'   Each arc scales it by the largest of its cost and its two potentials, and
+#'   the duality-gap comparison scales it by the magnitude of the objective,
+#'   since a threshold below the resolution of the arithmetic that produced a
+#'   number is not one a correct answer can meet.
 #'
 #' @return An object of class `flow_certificate`, a list with elements:
 #' \itemize{
@@ -299,15 +315,17 @@ print.couplr_flow_problem <- function(x, ...) {
 #'   \item `n_capacity_violations`, `n_conservation_violations`,
 #'         `max_conservation_error` - what primal feasibility failed on.
 #'   \item `dual_feasible` - logical; no arc that can still take flow prices
-#'         below `-tol`.
+#'         below its own `-tol(a)`.
 #'   \item `complementary_slackness` - logical; no arc above its lower bound
-#'         prices above `tol`.
+#'         prices above its own `tol(a)`.
 #'   \item `n_cs_violations`, `min_residual_reduced_cost`, `worst_arc` - the
 #'         smallest reduced cost over the residual graph and the arc attaining
-#'         it, which is a violation when it falls below `-tol`. `worst_arc` is
-#'         0 when no arc can either take or give up flow.
+#'         it, which is a violation when it falls below that arc's `-tol(a)`.
+#'         `worst_arc` is 0 when no arc can either take or give up flow.
+#'   \item `dual_tolerance` - the widest `tol(a)` any comparison was made
+#'         against, so the verdict names the resolution it was reached at.
 #'   \item `primal_objective`, `dual_objective`, `duality_gap` - numeric.
-#'   \item `tolerance`.
+#'   \item `tolerance` - the relative `tol` as supplied.
 #' }
 #'
 #' @seealso [verify_assignment()], [solver_status_values()]
@@ -399,6 +417,7 @@ print.flow_certificate <- function(x, ...) {
   if (!isTRUE(x$dual_feasible) && x$worst_arc > 0) {
     cat(sprintf("  worst reduced cost %.3e at arc %.0f\n",
                 x$min_residual_reduced_cost, x$worst_arc))
+    cat(sprintf("  arc tolerance      %.3e\n", x$dual_tolerance))
   }
 
   invisible(x)

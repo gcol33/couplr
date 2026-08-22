@@ -20,10 +20,11 @@ node ids run from 1. Required unless \code{x} already carries one.}
 \item{potential}{Optional numeric vector of node potentials, one per node.
 Overrides any potentials on \code{x}.}
 
-\item{tol}{Numeric tolerance for the feasibility and slackness comparisons.
-The duality-gap comparison scales this by the magnitude of the objective,
-since an absolute tolerance on a sum of many terms is not reachable in
-double precision.}
+\item{tol}{Relative tolerance for the feasibility and slackness comparisons.
+Each arc scales it by the largest of its cost and its two potentials, and
+the duality-gap comparison scales it by the magnitude of the objective,
+since a threshold below the resolution of the arithmetic that produced a
+number is not one a correct answer can meet.}
 
 \item{...}{Ignored.}
 }
@@ -37,15 +38,17 @@ node's net flow equal to its supply.
 \item \code{n_capacity_violations}, \code{n_conservation_violations},
 \code{max_conservation_error} - what primal feasibility failed on.
 \item \code{dual_feasible} - logical; no arc that can still take flow prices
-below \code{-tol}.
+below its own \code{-tol(a)}.
 \item \code{complementary_slackness} - logical; no arc above its lower bound
-prices above \code{tol}.
+prices above its own \code{tol(a)}.
 \item \code{n_cs_violations}, \code{min_residual_reduced_cost}, \code{worst_arc} - the
 smallest reduced cost over the residual graph and the arc attaining
-it, which is a violation when it falls below \code{-tol}. \code{worst_arc} is
-0 when no arc can either take or give up flow.
+it, which is a violation when it falls below that arc's \code{-tol(a)}.
+\code{worst_arc} is 0 when no arc can either take or give up flow.
+\item \code{dual_tolerance} - the widest \code{tol(a)} any comparison was made
+against, so the verdict names the resolution it was reached at.
 \item \code{primal_objective}, \code{dual_objective}, \code{duality_gap} - numeric.
-\item \code{tolerance}.
+\item \code{tolerance} - the relative \code{tol} as supplied.
 }
 
 Invisibly returns \code{x}.
@@ -68,11 +71,26 @@ The problem is
 
 and, writing \code{cbar(a) = cost(a) + pi(tail(a)) - pi(head(a))} for the reduced
 cost under the potentials \code{pi}, the conditions checked are primal
-feasibility, \code{cbar(a) >= -tol} on every arc that can still take flow, and
-\code{cbar(a) <= tol} on every arc carrying more than its lower bound. Their
+feasibility, \code{cbar(a) >= -tol(a)} on every arc that can still take flow, and
+\code{cbar(a) <= tol(a)} on every arc carrying more than its lower bound. Their
 objective form is checked too: the duality gap is the sum of the slackness
 violations weighted by \verb{|cbar|}, so it is where a violation too small to
 trip the per-arc tolerance still accumulates.
+
+\code{tol} is relative. Each arc is compared against
+
+\preformatted{
+  tol(a) = tol * max(1, |cost(a)|, |pi(tail(a))|, |pi(head(a))|)
+}
+
+because \code{cbar(a)} is computed from those three numbers, and its last bits are
+worth the largest of them times the machine epsilon. A design that stacks
+lexicographic tier weights, as \code{cardinality_match()} does to rank cardinality
+above balance above distance, reaches potentials in the millions, where one
+unit in the last place is around 1e-9 and an exactly optimal flow cannot meet
+an absolute 1e-9. The scale never falls below 1, so a problem whose costs and
+potentials are of order 1 is checked against \code{tol} itself. The widest
+tolerance any comparison used is reported as \code{dual_tolerance}.
 
 The check needs potentials. If \code{x} carries them, as a solve result does,
 they are used. Otherwise they are obtained by solving \code{problem}, which costs

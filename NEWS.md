@@ -67,6 +67,20 @@
 
 ## Improvements
 
+* `verify_flow()`'s per-arc tolerance scales with the numbers behind the reduced
+  cost. `cbar(a)` is computed as `cost(a) + pi(tail(a)) - pi(head(a))`, so its
+  last bits are worth the largest of those three times the machine epsilon, and
+  the comparison was made against an absolute `tol` of 1e-9. The lexicographic
+  tier weights a balance design compiles to put the potentials in the millions,
+  where one unit in the last place is around 1e-9, so an exactly optimal flow
+  failed its own certificate on rounding: at n = m = 500 the search settled with
+  a zero gap and still reported `certified = FALSE` (#43). Each arc is now
+  compared against `tol * max(1, |cost(a)|, |pi(tail(a))|, |pi(head(a))|)`, the
+  same reasoning the duality-gap check already applied to the objective, and the
+  widest tolerance any comparison used is reported as `dual_tolerance`. The
+  scale never falls below 1, so a problem of order 1 is checked against `tol`
+  itself.
+
 * `time_limit` reaches the flow solver. The cardinality search checked its
   budget between nodes, so a limit overshot by however long the solve in flight
   took, and nothing in the flow engine noticed a user interrupt either. The

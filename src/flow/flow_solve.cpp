@@ -146,12 +146,44 @@ int64_t add_or_throw(int64_t a, int64_t b, const char* what) {
     return out;
 }
 
+// What a starting flow leaves the augmentation loop to place: the node balances
+// it does not meet, counted on the excess side. Every augmentation moves at
+// least one unit, so this is what a starting point costs.
+//
+// A null `f` asks the question of the arc lower bounds, which is the cold
+// start.
+int64_t b_flow_required(const FlowProblem& prob, const std::vector<int64_t>* f) {
+    std::vector<int64_t> d(prob.supply.begin(), prob.supply.end());
+    const int64_t n_arcs = static_cast<int64_t>(prob.arcs.size());
+    for (int64_t a = 0; a < n_arcs; ++a) {
+        const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
+        const int64_t fa = (f == nullptr) ? arc.lower
+                                          : (*f)[static_cast<std::size_t>(a)];
+        int64_t& dt = d[static_cast<std::size_t>(arc.tail)];
+        int64_t& dh = d[static_cast<std::size_t>(arc.head)];
+        dt = add_or_throw(dt, -fa, "a node balance");
+        dh = add_or_throw(dh, fa, "a node balance");
+    }
+    int64_t need = 0;
+    for (const int64_t dv : d) {
+        if (dv > 0) need = add_or_throw(need, dv, "the required flow");
+    }
+    return need;
+}
+
 // "optimal" when the b-flow was met, and every weaker outcome names what stopped
 // the solver rather than what the caller hoped for. A shortfall means no
 // feasible flow exists at all; the split between "partial" and "infeasible" is
 // whether a maximum-cardinality-then-minimum-cost answer was produced or
 // nothing moved.
-std::string derive_status(int64_t flow_sent, int64_t flow_required, bool no_path) {
+//
+// An interrupted solve stopped before it had searched the paths that decide
+// between those three, so it is named for what it is rather than folded into
+// any of them: "partial" and "infeasible" both say a feasible flow does not
+// exist, and the interrupted solve knows nothing of the kind.
+std::string derive_status(int64_t flow_sent, int64_t flow_required, bool no_path,
+                          bool interrupted) {
+    if (interrupted)                return "interrupted";
     if (flow_sent == flow_required) return "optimal";
     if (!no_path)                   return "iteration_limit";
     if (flow_sent == 0)             return "infeasible";
@@ -185,10 +217,16 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                             " expanded arcs");
     }
 
+    // Set where the stop was noticed and read where the answer is assembled, so
+    // an interrupted solve leaves the same shape of result behind as any other:
+    // a flow inside every arc bound, potentials of the right length, and a
+    // status that says the b-flow was not finished.
+    bool interrupted = false;
+
     FlowResult out;
     out.flow.assign(static_cast<std::size_t>(n_arcs), 0);
     if (n_nodes <= 0) {
-        out.status = derive_status(0, 0, true);
+        out.status = derive_status(0, 0, true, false);
         return out;
     }
 
@@ -261,7 +299,40 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
                 }
             }
             residual_nonneg = true;
-        } else {
+        }
+
+        // Which of the two starting points is the cheaper one, asked of the
+        // number that decides it. Successive shortest paths moves the b-flow
+        // one path at a time, so what a start costs is the b-flow it leaves,
+        // and that is a sum over the arcs either way.
+        //
+        // The repair is what makes the question worth asking. An arc the
+        // potentials price at zero may sit anywhere, and a cost that moves by
+        // any amount at all decides every one of those arcs one way or the
+        // other; where a design ties many pairs -- rounded distances, a
+        // penalty tier shared by a whole category -- a repricing turns a large
+        // part of the arc array strictly attractive at once and the repair
+        // saturates all of it. The flow that comes out is slack-consistent and
+        // a long way from conserving, and every unit of that is an
+        // augmentation the cold start would not have paid for.
+        //
+        // Costing both and taking the smaller is one more pass over the arcs.
+        // It leaves the warm start free to win by as much as it can and bounds
+        // what it can lose by that one pass.
+        if (residual_nonneg &&
+            b_flow_required(prob, &f) > b_flow_required(prob, nullptr)) {
+            residual_nonneg = false;
+        }
+        if (!residual_nonneg) {
+            // Both halves go back, not just the flow. Relaxation reaches
+            // cbar >= 0 from any starting labels, so the potentials could be
+            // kept as its starting point; what that costs is the accuracy of
+            // the duals it settles on. A potential of the size these designs
+            // reach -- the penalty tier puts them in the millions -- carries
+            // its own rounding into every reduced cost derived from it, and
+            // the certificate reads those reduced costs against a tolerance
+            // the shortest-path sums from zero stay inside and the retained
+            // ones do not.
             std::fill(pi.begin(), pi.end(), 0.0);
             for (int64_t a = 0; a < n_arcs; ++a) {
                 f[static_cast<std::size_t>(a)] =
@@ -278,6 +349,13 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         bool moved = true;
         int32_t passes = 0;
         while (moved) {
+            // One pass reads every arc, so a check here is a fixed cost per
+            // O(n_arcs) of work and the relaxation is as responsive as the
+            // augmentation loop below.
+            if (opts.should_stop && opts.should_stop()) {
+                interrupted = true;
+                break;
+            }
             if (++passes > n_nodes) {
                 LAP_THROW("FlowProblem: the residual graph carries a "
                           "negative-cost cycle, so no shortest path exists");
@@ -435,9 +513,18 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         static_cast<int64_t>(g.arcs.size()) + static_cast<int64_t>(N) + 1;
 
     bool no_path = false;
+    int64_t since_check = 0;
+    const int64_t check_every = opts.check_every > 0 ? opts.check_every : 1;
     int32_t src = 0;
-    while (out.flow_sent < out.flow_required &&
+    while (!interrupted && out.flow_sent < out.flow_required &&
            out.n_augmentations < max_augmentations) {
+        if (opts.should_stop && ++since_check >= check_every) {
+            since_check = 0;
+            if (opts.should_stop()) {
+                interrupted = true;
+                break;
+            }
+        }
         // An excess only falls and a deficit only rises, so a node this scan has
         // passed cannot come back into play and the cursor never moves back.
         while (src < N && (d[static_cast<std::size_t>(src)] <= 0 ||
@@ -617,7 +704,8 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         }
     }
 
-    out.status = derive_status(out.flow_sent, out.flow_required, no_path);
+    out.status = derive_status(out.flow_sent, out.flow_required, no_path,
+                               interrupted);
     return out;
 }
 

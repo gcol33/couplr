@@ -67,6 +67,35 @@
 
 ## Improvements
 
+* `time_limit` reaches the flow solver. The cardinality search checked its
+  budget between nodes, so a limit overshot by however long the solve in flight
+  took, and nothing in the flow engine noticed a user interrupt either. The
+  solver now asks between augmentations, at a cadence that cost nothing
+  measurable on a 251,012-arc solve (median 1.080 s either way, over seven
+  runs). A solve that runs out comes back with the new status `"interrupted"`,
+  which `solver_status_values()` lists: its flow respects every arc bound and
+  falls short of what the balances asked for, so it is neither an answer nor
+  evidence that no answer exists. The node it belonged to goes back on the
+  frontier unopened, which is what keeps the reported bound valid for the whole
+  tree, and Ctrl+C raises an R interrupt condition from inside the solve rather
+  than at the end of it.
+
+* The flow solver takes a warm start from R. `FlowProblem` carried `warm_flow`
+  and `warm_potential` and nothing on the R side reached them, so every solve
+  the cardinality search made was cold, including the twenty per node that
+  differ only in one multiplier step. The search now carries a solve's flow and
+  potentials into the next one, and a node's into its children. On a
+  branch-and-bound child, which differs from its parent by one arc bound, this
+  is 6.9x at 5% density: 252 augmentations instead of 504.
+
+  Which of the two starting points a solve uses is decided rather than assumed.
+  Successive shortest paths pays for the b-flow its starting point leaves, so
+  both are costed and the cheaper is taken. The check earns its pass on the
+  designs that tie many pairs at one reduced cost: 71,156 of 251,012 arcs on a
+  dense 500-by-500 with distances rounded to three decimals, where a repricing
+  decides every tied arc at once and the previous flow stops being worth
+  keeping.
+
 * Euclidean and squared-Euclidean distances are summed one dimension at a time
   rather than through the Gram-matrix identity. The identity folds the same sum
   into one BLAS call, but subtracting two large nearly equal terms costs most of

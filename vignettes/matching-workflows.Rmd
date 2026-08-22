@@ -1665,6 +1665,8 @@ card_bb$cardinality$constraints
 
 How long the search runs depends on whether the moment bounds bind. When the distance-minimizing match already satisfies them, which happens with a loose bound or a control reservoir large enough that the closest partners are already balanced, the root node certifies and the call returns in milliseconds. When they bind, every node costs a flow solve, and although the root enters a feasible incumbent before the first node is opened, the bound above it closes slowly, so a call can spend its whole budget and still report a gap. Set `node_limit` and `time_limit` to a budget you are willing to spend, and read `stopped_on` and `gap` to see what the budget bought.
 
+`time_limit` reaches the flow solver, which checks it between augmentations, so the call returns on the budget rather than on the completion of the solve that was running when it ran out. The node that solve belonged to goes back on the frontier unopened, which is what keeps `bound` valid for the whole problem, and the incumbent stands.
+
 A pruning heuristic is reachable with `engine = "heuristic"`. It starts from a full match and deletes the pairs carrying the worst variable's imbalance, one variable per round, and reports `info$pruning_iterations` and `info$pairs_removed`. It computes no bound, so `best_possible` and `gap` come back `NA`:
 
 ```{r cardinality-heuristic}

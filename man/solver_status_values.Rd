@@ -24,6 +24,10 @@ epsilon. The result is within \code{n * epsilon} of optimal, which is a bound,
 not a proof of optimality.}
 \item{\code{"iteration_limit"}}{The solver stopped on an iteration cap rather
 than on optimality. The solution is feasible; its optimality is unproven.}
+\item{\code{"interrupted"}}{The solver stopped on a time budget or a user
+interrupt, part way through. What it had placed respects every capacity,
+and is short of what the problem asked it to place, so it is neither an
+answer nor evidence that no answer exists.}
 \item{\code{"heuristic"}}{Produced by a heuristic. Optimality is neither claimed
 nor checked.}
 }

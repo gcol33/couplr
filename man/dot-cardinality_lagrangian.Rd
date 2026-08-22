@@ -14,7 +14,9 @@
   incumbent = Inf,
   step0 = NULL,
   tol = 1e-09,
-  cost = NULL
+  cost = NULL,
+  warm = NULL,
+  deadline = Inf
 )
 }
 \arguments{
@@ -38,12 +40,20 @@ returns.}
 \item{tol}{Numeric tolerance for certification and for the row values.}
 
 \item{cost}{Optional distance matrix for the audit.}
+
+\item{warm}{Optional \code{list(flow, potential)} to start the first solve from.}
+
+\item{deadline}{Elapsed time, on \code{proc.time()}'s clock, past which a solve
+stops where it stands. \code{Inf} is no budget.}
 }
 \value{
 A list with \code{bound}, the multipliers that attained it, the relaxed
 solve at those multipliers, any moment-feasible solutions the ascent
-passed through, and \code{certified}, whether the bound it reports came out of
-a certified solve.
+passed through, \code{certified}, whether the bound it reports came out of a
+certified solve, and \code{warm}, the last complete solve's flow and potentials.
+A \code{status} of \code{"interrupted"} means a solve ran out of time; the bound and
+the solutions reported alongside it came from the steps that finished, and
+are as valid as any others.
 }
 \description{
 Solves the node's network at a sequence of multipliers, each step one
@@ -51,5 +61,13 @@ Solves the node's network at a sequence of multipliers, each step one
 relaxed optimum it reached. Multipliers move along the projected subgradient
 with step \code{t_0 / (1 + k)}, warm-started from whatever \code{lambda} is handed in,
 which is the parent's best set during a search.
+}
+\details{
+Consecutive steps solve one network. The topology, the arc bounds and every
+non-pair cost are the ones the previous step solved; only the pair costs
+moved, by one multiplier step, so the previous step's flow and potentials are
+a near-optimal starting point for this one and are carried across. \code{warm}
+gives the first step the same footing, from whichever solve the caller has
+to hand.
 }
 \keyword{internal}

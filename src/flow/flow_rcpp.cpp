@@ -26,9 +26,11 @@
 #include "flow_solve.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -131,6 +133,69 @@ lap::FlowProblem problem_from_r(int n_nodes,
     return prob;
 }
 
+// The stop test the solver is asked between augmentations. Two different
+// answers to two different questions: a user interrupt unwinds the solve and
+// reaches R as an interrupt condition, so a caller's tryCatch(interrupt = )
+// sees the same thing it would see from an interrupted R loop; a spent time
+// budget returns true, and the solve comes back with status "interrupted" and
+// the flow it had reached. Nothing about a budget is exceptional, so nothing
+// about it throws.
+//
+// The clock is steady rather than wall: a time budget measures work done, and a
+// system clock stepping backwards would hand a solve an unbounded one.
+class SolveDeadline {
+public:
+    explicit SolveDeadline(double seconds)
+        : seconds_(seconds), start_(std::chrono::steady_clock::now()) {}
+
+    bool operator()() {
+        Rcpp::checkUserInterrupt();
+        if (!R_FINITE(seconds_)) return false;
+        const std::chrono::duration<double> spent =
+            std::chrono::steady_clock::now() - start_;
+        return spent.count() >= seconds_;
+    }
+
+private:
+    double seconds_;
+    std::chrono::steady_clock::time_point start_;
+};
+
+// A warm start crosses as counts, on the same terms as a capacity: whole
+// numbers a double holds exactly. An empty vector is a cold start, which is
+// what the FlowProblem's own empty vector already means.
+std::vector<int64_t> warm_flow_from_r(const Rcpp::NumericVector& warm_flow,
+                                      R_xlen_t n_arcs) {
+    std::vector<int64_t> out;
+    if (warm_flow.size() == 0) return out;
+    if (warm_flow.size() != n_arcs) {
+        Rcpp::stop("flow model: warm_flow has %d entries for %d arcs",
+                   static_cast<int>(warm_flow.size()), static_cast<int>(n_arcs));
+    }
+    out.reserve(static_cast<std::size_t>(n_arcs));
+    for (R_xlen_t a = 0; a < n_arcs; ++a) {
+        out.push_back(count_from_r(warm_flow[a], "a warm flow"));
+    }
+    return out;
+}
+
+std::vector<double> warm_potential_from_r(const Rcpp::NumericVector& warm_potential,
+                                          int n_nodes) {
+    std::vector<double> out;
+    if (warm_potential.size() == 0) return out;
+    if (warm_potential.size() != n_nodes) {
+        Rcpp::stop("flow model: warm_potential has %d entries for %d nodes",
+                   static_cast<int>(warm_potential.size()), n_nodes);
+    }
+    for (R_xlen_t v = 0; v < warm_potential.size(); ++v) {
+        if (!R_FINITE(warm_potential[v])) {
+            Rcpp::stop("flow model: a warm potential is not finite");
+        }
+        out.push_back(warm_potential[v]);
+    }
+    return out;
+}
+
 Rcpp::List certificate_to_r(const lap::FlowCertificate& cert) {
     return Rcpp::List::create(
         Rcpp::Named("primal_feasible") = cert.primal_feasible,
@@ -160,18 +225,26 @@ Rcpp::List flow_solve_impl(int n_nodes,
                            Rcpp::NumericVector lower,
                            Rcpp::NumericVector upper,
                            Rcpp::NumericVector cost,
+                           Rcpp::NumericVector warm_flow,
+                           Rcpp::NumericVector warm_potential,
+                           double time_limit,
                            double tol,
                            double relax_eps,
                            double max_augmentations,
                            bool return_potentials) {
     lap::FlowProblem prob =
         problem_from_r(n_nodes, supply, tail, head, lower, upper, cost);
+    prob.warm_flow = warm_flow_from_r(warm_flow, tail.size());
+    prob.warm_potential = warm_potential_from_r(warm_potential, n_nodes);
 
     lap::FlowOptions opts;
     opts.tol = tol;
     opts.relax_eps = relax_eps;
     opts.max_augmentations = count_from_r(max_augmentations, "max_augmentations");
     opts.return_potentials = return_potentials;
+
+    SolveDeadline deadline(time_limit);
+    opts.should_stop = std::ref(deadline);
 
     const lap::FlowResult res = lap::solve_min_cost_flow(prob, opts);
 

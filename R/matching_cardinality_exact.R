@@ -132,6 +132,32 @@
   .flow_problem(problem$n_nodes, problem$supply, arcs)
 }
 
+# A previous solve's flow, made usable as a starting point for this one. The
+# network is the same one throughout a search, so a flow stays aligned to it;
+# what moves is an arc bound, and the arc a branching decision pinned is exactly
+# the one the previous flow can sit outside of. Clamping is what the starting
+# point is for: the solver repairs the conservation that breaks, and a flow
+# outside an arc bound is not a starting point it can repair from.
+.cardinality_warm_flow <- function(flow, problem) {
+  if (is.null(flow) || !length(flow)) {
+    return(NULL)
+  }
+  arcs <- problem$arcs
+  if (length(flow) != nrow(arcs)) {
+    return(NULL)
+  }
+  pmin(pmax(flow, arcs$lower), arcs$upper)
+}
+
+# Seconds left of a budget stated as an absolute elapsed time, which is what a
+# sequence of solves shares. Inf is no budget.
+.cardinality_remaining <- function(deadline) {
+  if (!is.finite(deadline)) {
+    return(Inf)
+  }
+  max(0, deadline - proc.time()[["elapsed"]])
+}
+
 # Pair-arc costs under the multipliers. The additive decomposition means one
 # vectorized pass per moment row over the admissible pairs, and no object of
 # size n by m is built.
@@ -179,14 +205,21 @@
 #' @param edits The node's arc-bound decisions.
 #' @param cost Optional distance matrix for the audit.
 #' @param tol Numeric tolerance for the certificate.
+#' @param warm Optional `list(flow, potential)` from an earlier solve of the
+#'   same network, used as the solver's starting point.
+#' @param time_limit Seconds this one solve may run.
 #'
 #' @return A list with the solve status, the flow and potentials, the
 #'   certificate, the audit, the matched set, the true objective `objective`
-#'   and the relaxed objective `relaxed` the multipliers price.
+#'   and the relaxed objective `relaxed` the multipliers price. A solve that ran
+#'   out of time comes back with status `"interrupted"`, its flow and
+#'   potentials, and nothing else: it proved neither an optimum nor the absence
+#'   of one, so certifying and auditing it would be work spent on a number no
+#'   caller may read.
 #' @keywords internal
 .cardinality_flow <- function(problem, index = NULL, coefs = NULL,
                               lambda = NULL, edits = NULL, cost = NULL,
-                              tol = 1e-9) {
+                              tol = 1e-9, warm = NULL, time_limit = Inf) {
   node <- .cardinality_as_node(problem, index)
   index <- node$index
   base <- .cardinality_edit_problem(node$problem, edits)
@@ -197,7 +230,25 @@
     solve_problem$arcs$cost <- arc_cost
   }
 
-  solved <- .flow_solve(solve_problem)
+  solved <- .flow_solve(solve_problem,
+                        warm_flow = .cardinality_warm_flow(warm$flow,
+                                                           solve_problem),
+                        warm_potential = warm$potential,
+                        time_limit = time_limit)
+  if (identical(solved$status, "interrupted")) {
+    return(list(status = "interrupted",
+                flow = as.numeric(solved$flow),
+                potential = as.numeric(solved$potential),
+                integral = FALSE,
+                certificate = NULL,
+                certified = FALSE,
+                audit = NULL,
+                audit_ok = FALSE,
+                read = NULL,
+                objective = NA_real_,
+                relaxed = NA_real_,
+                problem = base))
+  }
   flow <- as.numeric(solved$flow)
   certificate <- verify_flow(solved, tol = tol)
 
@@ -237,6 +288,13 @@
 #' with step `t_0 / (1 + k)`, warm-started from whatever `lambda` is handed in,
 #' which is the parent's best set during a search.
 #'
+#' Consecutive steps solve one network. The topology, the arc bounds and every
+#' non-pair cost are the ones the previous step solved; only the pair costs
+#' moved, by one multiplier step, so the previous step's flow and potentials are
+#' a near-optimal starting point for this one and are carried across. `warm`
+#' gives the first step the same footing, from whichever solve the caller has
+#' to hand.
+#'
 #' @param problem The node's network, or the pair `.balance_flow_problem()`
 #'   returns.
 #' @param coefs Moment coefficients, one per one-sided row.
@@ -248,16 +306,23 @@
 #' @param step0 An explicit `t_0`, overriding that scale.
 #' @param tol Numeric tolerance for certification and for the row values.
 #' @param cost Optional distance matrix for the audit.
+#' @param warm Optional `list(flow, potential)` to start the first solve from.
+#' @param deadline Elapsed time, on `proc.time()`'s clock, past which a solve
+#'   stops where it stands. `Inf` is no budget.
 #'
 #' @return A list with `bound`, the multipliers that attained it, the relaxed
 #'   solve at those multipliers, any moment-feasible solutions the ascent
-#'   passed through, and `certified`, whether the bound it reports came out of
-#'   a certified solve.
+#'   passed through, `certified`, whether the bound it reports came out of a
+#'   certified solve, and `warm`, the last complete solve's flow and potentials.
+#'   A `status` of `"interrupted"` means a solve ran out of time; the bound and
+#'   the solutions reported alongside it came from the steps that finished, and
+#'   are as valid as any others.
 #' @keywords internal
 .cardinality_lagrangian <- function(problem, coefs = NULL, lambda = NULL,
                                     steps = 20L, index = NULL, edits = NULL,
                                     incumbent = Inf, step0 = NULL,
-                                    tol = 1e-9, cost = NULL) {
+                                    tol = 1e-9, cost = NULL, warm = NULL,
+                                    deadline = Inf) {
   node <- .cardinality_as_node(problem, index)
   coefs <- .as_moment_coefficient_list(coefs)
   n_rows <- length(coefs)
@@ -288,16 +353,32 @@
   for (k in seq_len(steps)) {
     fl <- .cardinality_flow(node$problem, node$index, coefs = coefs,
                             lambda = lambda, edits = edits, cost = cost,
-                            tol = tol)
+                            tol = tol, warm = warm,
+                            time_limit = .cardinality_remaining(deadline))
     n_solves <- n_solves + 1L
+
+    if (identical(fl$status, "interrupted")) {
+      # The steps that finished stand: each one certified its own relaxed
+      # optimum against the network it was solved on, and none of that depends
+      # on the step that did not finish. What the caller loses is the rest of
+      # the ascent, and what it must not do is read this solve.
+      status <- "interrupted"
+      break
+    }
 
     if (.cardinality_no_flow(fl$status)) {
       # The node's forced arcs admit no flow meeting the budget, so it holds no
       # matched set.
       return(list(bound = Inf, lambda = lambda, relaxed = fl,
                   solutions = list(), certified = TRUE, status = "infeasible",
-                  n_solves = n_solves))
+                  n_solves = n_solves, warm = warm))
     }
+
+    # A finished solve of this network is the next one's starting point,
+    # whether or not it certified: the flow sits inside every arc bound and the
+    # potentials price the costs this step used, which is all a starting point
+    # has to be.
+    warm <- list(flow = fl$flow, potential = fl$potential)
 
     # Only a certified solve states a bound. An uncertified one still shows a
     # matched set to branch on, and still moves the multipliers, but nothing it
@@ -346,7 +427,7 @@
 
   list(bound = bound, lambda = best_lambda, relaxed = best_solve,
        solutions = solutions, certified = certified, status = status,
-       n_solves = n_solves)
+       n_solves = n_solves, warm = warm)
 }
 
 # The cardinality no feasible matched set can exceed, given a lower bound on the
@@ -516,8 +597,10 @@
 #' bound that is valid for the whole problem, never with an unproven claim of
 #' optimality.
 #'
-#' A single `.flow_solve()` is not interruptible, so `time_limit` is checked
-#' between nodes and is only as responsive as one solve of the network.
+#' `time_limit` reaches the solver. A solve that runs out of budget stops
+#' between augmentations and comes back saying so, and the node it belonged to
+#' goes back on the frontier unopened, so the bound the search reports still
+#' covers the whole tree.
 #'
 #' @param problem The network, or the pair `.balance_flow_problem()` returns.
 #' @param index The network's index, unless `problem` carries one.
@@ -561,8 +644,14 @@
   for (a in index$ranges$unit_left) {
     bare <- .cardinality_add_edit(bare, a, 0, 0)
   }
+  # The one solve the budget does not bound. Every stopping path returns a
+  # feasible incumbent, and this is the solve that makes one exist, so a budget
+  # that cut it short would buy responsiveness with the guarantee.
   empty <- .cardinality_flow(node0$problem, index, edits = bare, cost = cost,
                              tol = tol)
+
+  started <- proc.time()[["elapsed"]]
+  deadline <- if (is.finite(time_limit)) started + time_limit else Inf
 
   # A bound prunes nothing until something feasible is known, and the empty set
   # leaves every bound below it, so the root looks for a matched set worth
@@ -573,19 +662,27 @@
   # rows admit nothing there, the empty set stands.
   incumbent <- empty
   root_solves <- 0L
+  root_warm <- NULL
   if (length(coefs)) {
-    free <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol)
+    free <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol,
+                              time_limit = .cardinality_remaining(deadline))
     root_solves <- root_solves + 1L
-    if (!.cardinality_no_flow(free$status)) {
+    if (!identical(free$status, "interrupted") &&
+        !.cardinality_no_flow(free$status)) {
+      root_warm <- list(flow = free$flow, potential = free$potential)
       subset <- .cardinality_feasible_subset(index, free$read, coefs, tol)
       if (!is.null(subset)) {
         seed <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol,
                                   edits = .cardinality_pin_pairs(
-                                    index, subset$left, subset$right))
+                                    index, subset$left, subset$right),
+                                  warm = root_warm,
+                                  time_limit = .cardinality_remaining(deadline))
         root_solves <- root_solves + 1L
-        rows_hold <- all(.cardinality_violations(coefs, seed$read) <= tol)
-        if (rows_hold && seed$audit_ok && seed$integral &&
-            identical(seed$status, "optimal") &&
+        # The status is asked first, since an interrupted solve has no matched
+        # set to read the rows off.
+        if (identical(seed$status, "optimal") && seed$audit_ok &&
+            seed$integral &&
+            all(.cardinality_violations(coefs, seed$read) <= tol) &&
             seed$objective < incumbent$objective) {
           incumbent <- seed
         }
@@ -602,13 +699,23 @@
   env$stopped_on <- "optimality"
   env$active <- NULL
   env$prune_slack <- 0
-  env$frontier <- list(list(edits = .cardinality_no_edits(),
+  env$frontier <- list(list(id = 0L, edits = .cardinality_no_edits(),
                             lambda = numeric(length(coefs)),
                             bound = -Inf, depth = 0L,
                             fixed_units = integer(0),
                             fixed_pairs = integer(0)))
   env$root_bound <- -Inf
-  started <- proc.time()[["elapsed"]]
+  env$next_id <- 1L
+
+  # One warm start is kept, and only the two children of the node that produced
+  # it may use it. A flow is one number per arc, so keeping one per open node
+  # would grow with the frontier on the largest networks the search runs on,
+  # which is where a warm start is worth having in the first place. Children
+  # inherit their parent's bound and the deeper of two equal bounds is taken
+  # first, so the search descends and the node opened next is usually one of the
+  # two holding it.
+  env$warm <- root_warm
+  env$warm_ids <- 0L
 
   frontier_bound <- function() {
     open <- vapply(env$frontier, function(nd) nd$bound, numeric(1))
@@ -667,15 +774,39 @@
       env$frontier <- env$frontier[-pos]
       env$n_nodes <- env$n_nodes + 1L
 
+      warm <- if (env$active$id %in% env$warm_ids) env$warm else NULL
       dual <- .cardinality_lagrangian(node0$problem, coefs = coefs,
                                       lambda = env$active$lambda,
                                       steps = dual_steps, index = index,
                                       edits = env$active$edits,
                                       incumbent = env$best, tol = tol,
-                                      cost = cost)
+                                      cost = cost, warm = warm,
+                                      deadline = deadline)
       env$n_solves <- env$n_solves + dual$n_solves
       if (!dual$certified) {
         env$bound_certified <- FALSE
+      }
+
+      if (identical(dual$status, "interrupted")) {
+        # The budget ran out inside a solve. The node keeps whatever bound the
+        # ascent certified before that and goes back on the frontier unopened,
+        # which is what keeps the global bound a bound: a node dropped without
+        # being either pruned or branched would leave part of the tree
+        # unaccounted for and the number reported would cover less than it
+        # claims.
+        env$active$bound <- if (dual$certified && is.finite(dual$bound)) {
+          max(env$active$bound, dual$bound)
+        } else {
+          env$active$bound
+        }
+        if (env$n_nodes == 1L) {
+          env$root_bound <- env$active$bound
+        }
+        env$frontier <- c(env$frontier, list(env$active))
+        env$active <- NULL
+        env$bound_certified <- FALSE
+        env$stopped_on <- "time_limit"
+        break
       }
 
       for (sol in dual$solutions) {
@@ -724,11 +855,19 @@
         next
       }
       kids <- .cardinality_children(env$active, pick)
-      env$frontier <- c(env$frontier, lapply(kids, function(kid) {
+      kids <- lapply(kids, function(kid) {
         kid$bound <- node_bound
         kid$lambda <- dual$lambda
+        kid$id <- env$next_id
+        env$next_id <- env$next_id + 1L
         kid
-      }))
+      })
+      # A child differs from its parent by one arc bound, so the parent's flow
+      # is a starting point for it once that one arc is clamped back inside the
+      # bound the branch moved.
+      env$warm <- dual$warm
+      env$warm_ids <- vapply(kids, function(kid) kid$id, integer(1))
+      env$frontier <- c(env$frontier, kids)
       env$active <- NULL
     }
   }, interrupt = function(e) {

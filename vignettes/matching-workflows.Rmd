@@ -1628,25 +1628,61 @@ The function fits a logistic regression, transforms scores to the logit scale, a
 
 ### Cardinality Matching
 
-Standard matching minimizes total distance. Cardinality matching instead maximizes the number of matched pairs while enforcing strict balance constraints:
+Standard matching minimizes total distance. Cardinality matching instead maximizes the number of matched pairs subject to balance constraints, and reports how far the matched sample sits from the largest one those constraints admit.
+
+Fine balance on a categorical partition is representable in the matching network itself, so a call that states balance only that way is answered by a single min-cost flow solve, with a dual certificate, at polynomial cost. `max_std_diff` defaults to `Inf`, stating no moment constraint, so this is the route a call takes until a finite bound is asked for:
 
 ```{r cardinality-matching}
-# Maximize pairs subject to balance threshold
+# Maximize pairs subject to exact balance on the education distribution
 card_result <- cardinality_match(
   left = left_data,
   right = right_data,
   vars = c("age", "income"),
-  max_std_diff = 0.1,  # Excellent balance threshold
-  auto_scale = TRUE,
-  method = "hungarian"
+  fine = "education",
+  auto_scale = TRUE
 )
 
-cat("Pairs matched:", card_result$info$n_matched, "\n")
-cat("Pruning iterations:", card_result$info$pruning_iterations, "\n")
-cat("Pairs removed:", card_result$info$pairs_removed, "\n")
+card_result$cardinality
 ```
 
-This is useful when you need strict balance guarantees and are willing to sacrifice some sample size.
+Bounding the standardized difference of each matching variable adds constraints that cut across the network. Those are dualized and searched by branch and bound, which runs until the bound meets the incumbent or `node_limit` or `time_limit` runs out:
+
+```{r cardinality-moments}
+card_bb <- cardinality_match(
+  left = left_data[1:20, ],
+  right = right_data[1:80, ],
+  vars = c("age", "income"),
+  max_std_diff = 0.1,
+  node_limit = 10L,
+  scale = "standardize"
+)
+
+card_bb$cardinality
+card_bb$cardinality$constraints
+```
+
+`certified` is `TRUE` only when the search settled and the gap is zero. When it is not, `gap` and `gap_fraction` say how many matched units separate the answer from the bound, and `stopped_on` says what ended the search.
+
+How long the search runs depends on whether the moment bounds bind. When the distance-minimizing match already satisfies them, which happens with a loose bound or a control reservoir large enough that the closest partners are already balanced, the root node certifies and the call returns in milliseconds. When they bind, every node costs a flow solve, and although the root enters a feasible incumbent before the first node is opened, the bound above it closes slowly, so a call can spend its whole budget and still report a gap. Set `node_limit` and `time_limit` to a budget you are willing to spend, and read `stopped_on` and `gap` to see what the budget bought.
+
+A pruning heuristic is reachable with `engine = "heuristic"`. It starts from a full match and deletes the pairs carrying the worst variable's imbalance, one variable per round, and reports `info$pruning_iterations` and `info$pairs_removed`. It computes no bound, so `best_possible` and `gap` come back `NA`:
+
+```{r cardinality-heuristic}
+card_heur <- cardinality_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  max_std_diff = 0.1,
+  engine = "heuristic",
+  scale = "standardize"
+)
+
+cat("Pairs matched:", card_heur$info$n_matched, "\n")
+cat("Pruning iterations:", card_heur$info$pruning_iterations, "\n")
+cat("Pairs removed:", card_heur$info$pairs_removed, "\n")
+```
+
+Cardinality matching is useful when balance is a requirement rather than a diagnostic, and the question is how large a sample can meet it.
 
 ### Coarsened Exact Matching (CEM)
 

@@ -74,7 +74,7 @@ full_match(treated, control, vars = c("age", "income"), min_controls = 1, max_co
 cem_match(treated, control, vars = c("age", "income"))
 
 # balance-constrained cardinality matching
-cardinality_match(treated, control, vars = c("age", "income"), max_std_diff = 0.1)
+cardinality_match(treated, control, vars = c("age", "income"), fine = "site")
 
 # propensity subclassification and propensity matching, formula interface
 subclass_match(treated ~ age + income, data = df, n_subclasses = 5)

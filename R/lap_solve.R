@@ -43,8 +43,10 @@
 #'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
 #'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
 #'       slackness O(n^3 log C). Its optimality bound holds for a matching that
-#'       saturates both sides, so a rectangular problem is padded to square with
-#'       zero-cost dummies and costs `max(n, m)` on both sides.
+#'       saturates both sides, so a rectangular problem gains a dummy side of
+#'       zero cost. The dummies are copies of one node and are carried as a
+#'       single unit holding as many partners as there are dummies, so the
+#'       problem is solved at its own `n` by `m` shape.
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Successive shortest paths with 'Johnson' potentials
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation

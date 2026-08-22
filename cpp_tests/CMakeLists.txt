@@ -51,6 +51,7 @@ set(CPP_IMPL_SOURCES
     ${SRC_DIR}/flow/flow_solve.cpp
     ${SRC_DIR}/flow/flow_compile.cpp
     ${SRC_DIR}/flow/flow_assign.cpp
+    ${SRC_DIR}/flow/flow_push_relabel.cpp
 
     # Solvers
     ${SRC_DIR}/solvers/jv_core.cpp

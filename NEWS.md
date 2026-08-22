@@ -284,6 +284,8 @@
 * `CHANGELOG.md` is gone; `NEWS.md` is the changelog. The `matching_result` S3
   methods moved to `R/matching_methods.R`. `.onUnload()` unloads the DLL.
 
+* `methods` is dropped from Imports. Nothing in the package imports from it.
+
 # couplr 1.6.0
 
 ## New features

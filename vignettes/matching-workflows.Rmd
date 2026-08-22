@@ -549,7 +549,7 @@ results <- list()
 
 for (strat in strategies) {
   time <- system.time({
-    result <- match_couples(
+    greedy_result <- match_couples(
       test_left, test_right,
       vars = "x",
       strategy = strat
@@ -558,8 +558,8 @@ for (strat in strategies) {
 
   results[[strat]] <- list(
     time = time["elapsed"],
-    mean_dist = mean(result$pairs$distance),
-    total_dist = result$info$total_distance
+    mean_dist = mean(greedy_result$pairs$distance),
+    total_dist = greedy_result$info$total_distance
   )
 }
 

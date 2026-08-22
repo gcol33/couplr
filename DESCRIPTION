@@ -33,8 +33,7 @@ Imports:
     dplyr (>= 1.0.0),
     rlang (>= 0.4.0),
     generics (>= 0.1.0),
-    purrr (>= 0.3.0),
-    methods
+    purrr (>= 0.3.0)
 Suggests:
     testthat (>= 3.0.0),
     htmlwidgets,

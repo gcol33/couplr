@@ -207,6 +207,7 @@ Rcpp::List certificate_to_r(const lap::FlowCertificate& cert) {
         Rcpp::Named("primal_objective") = cert.primal_objective,
         Rcpp::Named("dual_feasible") = cert.dual_feasible,
         Rcpp::Named("min_residual_reduced_cost") = cert.min_residual_reduced_cost,
+        Rcpp::Named("dual_tolerance") = cert.dual_tolerance,
         Rcpp::Named("worst_arc") = static_cast<double>(cert.worst_arc),
         Rcpp::Named("complementary_slackness") = cert.complementary_slackness,
         Rcpp::Named("n_cs_violations") = static_cast<double>(cert.n_cs_violations),

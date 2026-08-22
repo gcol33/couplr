@@ -1,24 +1,34 @@
 # couplr: current state
 
-Updated 2026-08-19. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-22. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
-`dev_notes/phase1/` and `dev_notes/phase2/` for the certification layer's and
-the flow model's design, findings and repros.
+`dev_notes/phase1/`, `dev_notes/phase2/` and `dev_notes/phase3/` for the
+certification layer's, the flow model's and the edge-generation loop's design,
+findings and repros.
 
 ## Where things stand
 
-**1.6.0 is released on git.** `DESCRIPTION` reads 1.6.0, the release commit is
-`9c8fbe3`, and tag `v1.6.0` exists. `origin/main` is at `0fa7938` and nothing is
-unpushed; see "Working tree" at the end. The phase 1
-certification layer went in as `7b3dd6e` and is no longer sitting in the working
-tree.
+**Phases 0 through 3 are done.** Phase 0's probe returned GO, phase 1 is the
+certification layer, phase 2 is the one internal flow model, and phase 3 is the
+implicit edge-generation loop and the warm-started design path: C0 through C11
+and D1 through D3, all in. The next thing on `roadmap.md` is re-running the
+paper's own benchmark end to end, and after that phase 4, which is section E and
+section I. See "Next action" at the end.
 
-**Nothing is staged for CRAN.** `cran-comments.md` still describes 1.5.5 and
-opens "This release supersedes 1.5.3, the version currently on CRAN"; it has not
-been rewritten for 1.6.0. The 1.5.3-on-CRAN figure is carried from the earlier
-note and was not re-checked here, because cran.r-project.org was unreachable
-from this machine. Re-check before relying on it. Note also that 1.5.4 was
-tagged and never submitted, so tag history is not a record of what CRAN has.
+**1.6.0 is released on git**, at commit `9c8fbe3` with tag `v1.6.0`.
+`DESCRIPTION` reads 1.6.1, bumped in `2127151`, and 1.6.1 is unreleased and
+untagged. `NEWS.md`'s 1.6.1 section carries every user-visible change since the
+tag; see "What NEWS carries for 1.6.1" at the end.
+
+**Nothing is staged for CRAN.** `cran-comments.md` describes 1.6.0 while
+`DESCRIPTION` reads 1.6.1, and it opens "This release supersedes 1.5.5, the
+version currently on CRAN". That 1.5.5 figure is carried from an earlier note
+and was not re-checked here, because cran.r-project.org was unreachable from
+this machine. Re-check before relying on it. Note also that 1.5.4 was tagged and
+never submitted, so tag history is not a record of what CRAN has.
+
+**No issue is open.** Every issue #2 through #43 is closed; #30, #33, #41, #42
+and #43 closed on 2026-08-22. See "Issues".
 
 The JOSS submission (#10898) was rejected on 2026-08-08 on demonstrated research
 use, not on code quality: the pre-review called the test/CI/release practices
@@ -269,24 +279,38 @@ Closed by the 1.6.1 sweep:
   synthesised id warns and names the argument that fixes it, and the interop
   verbs are S3 methods on the generics that own them.
 
-Open, and confirmed open on GitHub:
+Closed on 2026-08-22:
 
-- **#30** `cardinality_match()` is a balance-pruning heuristic under
-  Zubizarreta's name. The decision is to implement it: maximise matched
-  cardinality subject to balance, as an integer program. The route that needs no
-  MIP dependency is Lagrangian relaxation on the balance constraints -- each
-  subproblem is a cardinality-maximising assignment couplr already solves
-  exactly -- with subgradient ascent for the bound and branching on unit
-  inclusion where the bound does not close. Multi-week; its own session.
-- **#33** `gabow_tarjan` squares a rectangular instance, so `n << m` is not
-  runnable at its own shape. The decision is to keep the rectangular shape.
-  The `m - n` dummy rows are identical and zero-cost, so their scaled cost is
-  one value and their tight columns are one scan of `y_v`; keeping them as
-  separate unit-capacity nodes preserves the paper's `bn` bound while never
-  materialising their rows. Whether the forest search and the bucket structure
-  can be written against that representation is the open part. Multi-week; its
-  own session. Not urgent: the method is opt-in and `"auto"` sends `m >= 3n`
-  to `sap`.
+- **#30** `cardinality_match()` maximises matched cardinality subject to balance
+  and reports how far the match sits from the best the constraints admit. Fine
+  and refined balance are represented in the matching network, so a call that
+  states balance through them alone reaches a single min-cost flow solve with a
+  dual certificate at polynomial cost; a finite `max_std_diff` or an explicit
+  `moments` is dualized and searched by branch and bound. `max_std_diff`
+  defaults to `Inf` now rather than `0.1`. The pruning loop stays as
+  `engine = "heuristic"` and reports its gap as `NA`, since it derives no bound.
+- **#33** `gabow_tarjan` solves a rectangular instance at its own shape. The
+  dummy side is one node holding as many partners as there are dummies, which
+  covers every column the way the padding did: at n = 100, m = 100,000 the
+  padded instance needed 80 GB for the cost matrix alone, the collapsed one runs
+  in 31 s at 221 MB, and it agrees with `jv` exactly. `9443538` follows it, and
+  is the integer scale: the quantum had been the matrix maximum over 1e6, which
+  swamps the edges an optimum uses when those are far smaller than the maximum.
+- **#41**, **#42** the flow solver takes a warm start from R and asks about its
+  budget between augmentations. Every solve the cardinality search made had been
+  cold, including the twenty per node differing in one multiplier step; a
+  branch-and-bound child is 6.9x at 5% density. Which starting point a solve
+  uses is costed rather than assumed. A solve that runs out of budget returns
+  the new status `"interrupted"` and its node goes back on the frontier
+  unopened, which is what keeps the reported bound valid.
+- **#43** `verify_flow()`'s per-arc tolerance scales with the numbers behind the
+  reduced cost. A balance design's lexicographic tier weights put the potentials
+  in the millions, where one unit in the last place is around 1e-9, so an
+  exactly optimal flow failed its own certificate on rounding against an
+  absolute `tol` of 1e-9.
+
+**Nothing is open.** `gh issue list --state open` returns empty as of
+2026-08-22, and every issue #2 through #43 is closed.
 
 ## Facts that will bite anyone benchmarking
 
@@ -1170,12 +1194,12 @@ the loop reports are the solve's own and do not include it, and those are what
 the table compares. Wall clock is reported beside them and agrees to within 0.4%
 at every shape above 167 x 333.
 
-## Next action
+## D3 is in: a sweep costs what its rounds cost
 
-**D3 is in: 2.83x, 2.61x, 3.71x, 4.54x** over 20 calipers at 167 x 333,
-667 x 1,333, 1,667 x 3,333 and 6,667 x 13,333, against 20 independent solves at
-the same values. 80 points, all optimal, every status and matched count equal to
-the independent solve's, worst relative total gap 0. `findings.md`,
+**2.83x, 2.61x, 3.71x, 4.54x** over 20 calipers at 167 x 333, 667 x 1,333,
+1,667 x 3,333 and 6,667 x 13,333, against 20 independent solves at the same
+values. 80 points, all optimal, every status and matched count equal to the
+independent solve's, worst relative total gap 0. `dev_notes/phase3/findings.md`,
 "D3: a sweep costs what its rounds cost, and a warm point is one round".
 
 The expectation D3 was given had the mechanism right and the conclusion
@@ -1192,8 +1216,30 @@ feasible caliper and the largest distance the unconstrained optimum uses is two
 points of twenty at n = 500 and n = 2,000 and empty at n = 5,000 and n = 20,000,
 so most of what was timed is re-certifying an answer that is already final.
 
-**The paper's own benchmark is worth re-running end to end.** That is what D3
-was the last thing before.
+## Next action
+
+**Phase 3 is done.** C0 through C11 and D1 through D3 are in, the loop has a
+front door, and the last three issues the phase left open closed on 2026-08-22.
+Nothing in `roadmap.md` phase 3 is outstanding.
+
+**Re-run the paper's own benchmark end to end.** Every phase-3 number so far
+comes from a harness under `dev_notes/phase3/`, which is gitignored and lives on
+this machine only: the D3 sweep ratios, the one-node search's two orders of
+magnitude, the implicit loop's round counts. None of it has been through
+`paper/bench_*.R` on the benchmark the paper reports. Until it has, there are
+phase numbers and no paper numbers, and `roadmap.md` puts the `paper/rjournal/`
+rewrite after phase 3 produces numbers rather than alongside generating them.
+
+Two conditions on that run. It belongs on the Mac mini, in `~/dev/couplr-bench`,
+which is where the paper's timings come from and is about 1.5x faster than beast
+single-threaded, so mixing machines within one table is not an option. And the
+bench scripts resume from their own CSVs, so a full re-run means moving
+`paper/benchmark-table.csv`, `paper/scaling-results.csv` and
+`paper/scaling-lazy-results.csv` aside first; left in place they are re-emitted
+rather than recomputed.
+
+After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
+section I, the benchmark grid.
 
 Nothing in the master is left that is sized by the graph rather than by the work.
 Every `O(n_nodes)` pass per augmentation is gone, the residual graph is one
@@ -1207,39 +1253,24 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-**D3 is in, and it is a measurement rather than code.** Clean apart from what
-this note is committed with; `d3_timing.R`, `d3_pinned.ps1` and their outputs
-live under `dev_notes/`, which is not tracked. `origin/main` is level with local
-at `9e68054`, verified against the remote rather than against the tracking ref,
-and the last five commits there are:
+Clean apart from what this note is committed with. `origin/main` and local are
+level at the docs commit this note ships in; the four commits before it are:
 
 ```
-9e68054  docs   the note is level with the remote, and D2 is in
-0fa7938  feat   a path point carries its balance, and one summariser serves them all
-ef82e4d  docs   the note is level with the remote again
-413fede  feat   the loop is resumable, and a path is the loop again
-57a9d02  docs   the gate harnesses keep what it took to run them
+1dd39ee  fix    the certificate reads a reduced cost at the resolution it has (#43)
+adcbf72  feat   the budget reaches the solver and a warm start reaches R (#41, #42)
+d963b61  feat   the match maximises cardinality under balance, and says how far it sits from the best (#30)
+9443538  fix    the integer costs use the range the sentinel leaves
 ```
 
-`413fede` is D1 whole: `R/matching_path.R`, `src/flow/flow_path.h`,
-`src/flow/flow_path_rcpp.cpp`, `src/flow/flow_implicit_rcpp.h`, the resumable
-entry points in `src/flow/flow_implicit.h`, `LazyCostMatrix::set_max_distance()`,
-`tests/testthat/test-match-path.R`, `cpp_tests/tests/test_flow_path.cpp`, the two
-`Makevars`, the regenerated `RcppExports`, `NAMESPACE`, `man/` and `_pkgdown.yml`.
-`man/assignment.Rd` and `man/match_couples.Rd` also move: their roxygen carried
-C9's measurement and the `.Rd` files had not been regenerated since.
-
-`0fa7938` is D2, and it is R alone: `.overall_balance()` and the four
-call sites it replaces in `R/matching_diagnostics.R`, the balance columns and
-`$balance` in `R/matching_path.R`, four tests in
-`tests/testthat/test-match-path.R`, and the regenerated `man/match_path.Rd` and
-`man/dot-overall_balance.Rd`. Nothing in `src/` moves, so the DLL in the tree is
-still the one D1 was tested against.
-
-Nothing is half-finished. The C++ suite, B0, C0 and `d1_path.R` were run against
-D1 and `src/` has not moved since. The R suite was run against the tree as it
-stands. The DLL in the tree is `compile_dll()`'s, which is compiled `-O0`; a
-timing run still needs an install from a cleared object tree.
+`d963b61` is #30 whole: `R/matching_balance_flow.R` is new and is the balance
+network, `R/matching_cardinality_exact.R` is new and is the branch-and-bound
+search, `R/matching_moments.R` is new and is the moment constraints, and
+`R/matching_cardinality.R` and `R/matching_cardinality_heuristic.R` split the
+front door from the pruning loop. `adcbf72` is #41 and #42 together, because the
+budget and the warm start are the same plumbing between the R search and the
+flow solver. `1dd39ee` is #43, which is `verify_flow()`'s per-arc tolerance
+alone.
 
 `dev_notes/` stays gitignored, which means the phase-3 harnesses and logs exist
 on this machine only and a fresh clone gets none of them. `roadmap.md` and
@@ -1260,39 +1291,22 @@ at the turn boundary; `dev_notes/phase3/run_rtests.ps1` is that launcher and its
 header carries the two traps, a BOM from `Set-Content -Encoding utf8` that R
 will not parse, and a `kill -0` waiter that cannot see a native Windows PID.
 
-## What the next release owes NEWS
+## What NEWS carries for 1.6.1
 
-This repo writes NEWS at release rather than per commit. Owed so far, all
-user-visible:
+Written, and no longer owed. This repo writes NEWS at release rather than per
+commit, and the 1.6.1 section now carries every user-visible change since the
+1.6.0 tag: `memory_mode = "implicit"` and `certify`, `match_path()`,
+`assignment_duals(certify = )` and lazy duals, `method = "push_relabel"`, the
+solver's per-step state behind `trace_csflow()`, `cardinality_match()` under
+`fine` and `refined` with its optimality gap, the one-node flow search, the
+halved lazy pair read, `gabow_tarjan` on rectangular problems and its integer
+scale, the forbidden-pair readers, the derived status and `block_summary`'s
+columns, the join-by-key sweep and the id contract, and the interop verbs
+dispatching on the generics that own them.
 
-- `block_summary`'s columns and `info`'s field set, from the derived-status
-  fixes.
-- Every reader dropping a forbidden pair, from the `drop_forbidden` removal.
-- `gabow_tarjan` returning the optimum on rectangular problems, and reporting
-  an unmatched row as unmatched rather than as a padding column (#31).
-- `assignment_duals()` gaining `certify` and accepting a lazy cost
-  specification; `verify_assignment()` no longer requiring `duals` for one.
-- A lazy solve under `max_distance` evaluating each distance once instead of
-  three times. Reading a pair is halved; on the shapes measured a whole pricing
-  pass is 1.38x. Affects every `memory_mode = "lazy"` path and certification
-  over a lazy source.
-- `memory_mode = "implicit"` on `assignment()` and `match_couples()`, and the
-  `certify` argument beside it. A 1:1 matching solved by generating the pairs
-  it needs, with a checked certificate for the complete problem; `"auto"` does
-  not select it.
-- `match_path()`, a matching per value of one argument with the points solved as
-  one sequence. `vary = "max_distance"` sweeps the distance cut, `values` must
-  ascend, and every point carries the certificate saying its matching is the
-  optimal one at that value. Returns a `couplr_path`: a row per point, with the
-  matched count, the total distance and the matched sample's balance on it, and
-  the per-variable balance table, match vector, certificate, round record and
-  Hall witness beside it.
-- The flow solver searching from one node with an excess rather than from a
-  super-source over all of them. Every design compiled to the flow model gets
-  it: dense `sap`, `csflow`, `push_relabel` and `cycle_cancel`, `full_match()`,
-  the blocked and k:1 designs, and the implicit loop. Two orders of magnitude on
-  the shapes measured, and a different matching among equally optimal ones on a
-  cost matrix with ties.
+What is still owed is `cran-comments.md`, which describes 1.6.0 while
+`DESCRIPTION` reads 1.6.1, and nothing is staged for CRAN. The 1.5.5-on-CRAN
+figure in it is carried from the earlier note and was not re-checked here.
 
 ## File map
 

@@ -16,14 +16,14 @@
 // #include <iostream>  // Removed for CRAN compliance (no std::cerr allowed)
 
 #ifdef COUPLR_GT_DEBUG
-#define DEBUG_ASSERT_FEASIBLE(cost, rm, cm, yu, yv, msg)                       \
+#define DEBUG_ASSERT_FEASIBLE(cost, cm, yu, yv, msg)                           \
     do {                                                                        \
-        if (!check_one_feasible((cost), (rm), (cm), (yu), (yv))) {              \
+        if (!check_one_feasible((cost), (cm), (yu), (yv))) {                    \
             LAP_ERROR(msg);                                                     \
         }                                                                       \
     } while (0)
 #else
-#define DEBUG_ASSERT_FEASIBLE(cost, rm, cm, yu, yv, msg) ((void)0)
+#define DEBUG_ASSERT_FEASIBLE(cost, cm, yu, yv, msg) ((void)0)
 #endif
 
 // ---------------------------------------------------------------------------
@@ -123,10 +123,10 @@ struct PrTimer {
 
 namespace {
 
-// O(n) check: is every row unmatched?
-bool gt_matching_is_empty(const MatchVec& row_match) {
-    for (int j : row_match) {
-        if (j != NIL) return false;
+// O(m) check: is every column unmatched?
+bool gt_matching_is_empty(const MatchVec& col_match) {
+    for (int i : col_match) {
+        if (i != NIL) return false;
     }
     return true;
 }
@@ -165,6 +165,18 @@ void gt_init_empty_duals(const CostMatrix& cost,
 }  // namespace
 
 // ============================================================================
+// Row capacity
+// ============================================================================
+
+std::vector<int> row_degrees(const MatchVec& col_match, int n_rows) {
+    std::vector<int> deg(n_rows > 0 ? static_cast<size_t>(n_rows) : 0, 0);
+    for (int i : col_match) {
+        if (i >= 0 && i < n_rows) ++deg[static_cast<size_t>(i)];
+    }
+    return deg;
+}
+
+// ============================================================================
 // Module A: Cost-length & 1-feasibility utilities
 // ============================================================================
 
@@ -201,14 +213,12 @@ bool is_eligible(long long c_ij, bool in_matching,
  * 2. For matched edges (i,j): y_u[i] + y_v[j] >= c(i,j)
  * 
  * @param cost Cost matrix (BIG_INT indicates forbidden edge)
- * @param row_match Matching from rows (row_match[i] = j or NIL)
  * @param col_match Matching from columns (col_match[j] = i or NIL)
  * @param y_u Dual variables for rows
  * @param y_v Dual variables for columns
  * @return true if all 1-feasibility conditions satisfied
  */
 bool check_one_feasible(const CostMatrix& cost,
-                        const MatchVec& row_match,
                         const MatchVec& col_match,
                         const DualVec& y_u,
                         const DualVec& y_v) {
@@ -225,7 +235,7 @@ bool check_one_feasible(const CostMatrix& cost,
             if (c_ij >= BIG_INT) continue;
             
             long long sum_duals = y_u[i] + y_v[j];
-            bool matched = (row_match[i] == j && col_match[j] == i);
+            bool matched = (col_match[j] == i);
             
             // Condition 1: y_u[i] + y_v[j] <= c(i,j) + 1
             if (sum_duals > c_ij + 1) {
@@ -253,14 +263,14 @@ bool check_one_feasible(const CostMatrix& cost,
  * meaning y_u[i] + y_v[j] == cl(i,j)
  * 
  * @param cost Cost matrix (BIG_INT indicates forbidden edge)
- * @param row_match Matching from rows (row_match[i] = j or NIL)
+ * @param col_match Matching from columns (col_match[j] = i or NIL)
  * @param y_u Dual variables for rows
  * @param y_v Dual variables for columns
  * @return eq_graph[i] = list of eligible column indices for row i
  */
 std::vector<std::vector<int>>
 build_equality_graph(const CostMatrix& cost,
-                     const MatchVec& row_match,
+                     const MatchVec& col_match,
                      const DualVec& y_u,
                      const DualVec& y_v)
 {
@@ -280,8 +290,8 @@ build_equality_graph(const CostMatrix& cost,
             if (c_ij >= BIG_INT) {
                 continue;
             }
-            
-            bool in_matching = (row_match[i] == j);
+
+            bool in_matching = (col_match[j] == i);
             if (is_eligible(c_ij, in_matching, y_u[i], y_v[j])) {
                 eq_graph[i].push_back(j);
             }
@@ -311,7 +321,7 @@ build_equality_graph(const CostMatrix& cost,
  *
  * @param eq_graph Existing equality graph to update (modified in place)
  * @param cost Cost matrix
- * @param row_match Current matching
+ * @param col_match Current matching, read from the column side
  * @param y_u Dual variables for rows
  * @param y_v Dual variables for columns
  * @param affected_rows Row indices whose y_u changed (or whose row_match
@@ -322,7 +332,7 @@ build_equality_graph(const CostMatrix& cost,
  */
 void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
                                         const CostMatrix& cost,
-                                        const MatchVec& row_match,
+                                        const MatchVec& col_match,
                                         const DualVec& y_u,
                                         const DualVec& y_v,
                                         const std::vector<int>& affected_rows,
@@ -348,7 +358,7 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
         for (int j = 0; j < m; ++j) {
             long long c_ij = cost[i][j];
             if (c_ij >= BIG_INT) continue;
-            bool in_matching = (row_match[i] == j);
+            bool in_matching = (col_match[j] == i);
             if (is_eligible(c_ij, in_matching, y_u[i], y_v[j])) {
                 adj_list.push_back(j);
             }
@@ -376,7 +386,7 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
                                if (c_ij >= BIG_INT) {
                                    return true;
                                }
-                               bool in_matching = (row_match[i] == j);
+                               bool in_matching = (col_match[j] == i);
                                return !is_eligible(c_ij, in_matching, y_u[i], y_v[j]);
                            }),
             adj_list.end());
@@ -400,16 +410,26 @@ void update_equality_graph_incremental(std::vector<std::vector<int>>& eq_graph,
  */
 void augment_along_path(const std::vector<std::pair<int,int>>& edges,
                         MatchVec& row_match,
-                        MatchVec& col_match)
+                        MatchVec& col_match,
+                        int last_row_cap)
 {
     // OPTIMIZED: Direct in-place flip - O(path_length) instead of O(n)
     // Paper (page 6): "Augmenting along P means M ← M ⊕ P"
     // This is just flipping matched/unmatched status along the path
+    //
+    // A column the path takes is released by whoever held it, which the
+    // overwrite of col_match does on its own. row_match follows for the
+    // ordinary rows; a capacitated row holds several columns and none of them
+    // would stand for the others, so it keeps NIL there.
+    const int cap_row = capacitated_row(static_cast<int>(row_match.size()),
+                                        last_row_cap);
 
     for (const auto& edge : edges) {
         int i = edge.first;
         int j = edge.second;
-        row_match[i] = j;
+        if (i != cap_row) {
+            row_match[i] = j;
+        }
         col_match[j] = i;
     }
 }
@@ -437,15 +457,20 @@ void augment_along_path(const std::vector<std::pair<int,int>>& edges,
  * loops Step 1 / Step 2 per scaling phase — the paper's O(sqrt(n)) HK round
  * count, modulo dual changes from Step 2 reshaping the eligibility graph.
  *
+ * A capacitated row starts as many paths as it has slots left, which is what
+ * its dummy copies would each have started in the padded square. It carries
+ * one BFS level for all of them, so it is a root while a slot is free and an
+ * interior vertex only once it is full.
+ *
  * @param eq_graph Equality graph (adjacency lists of eligible edges)
- * @param row_match Current matching from rows
  * @param col_match Current matching from columns
+ * @param last_row_cap Columns the last row may hold at once
  * @return List of paths, where each path is a list of edges
  */
 std::vector<std::vector<std::pair<int,int>>>
 find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
-                              const MatchVec& row_match,
-                              const MatchVec& col_match)
+                              const MatchVec& col_match,
+                              int last_row_cap)
 {
     const int n = static_cast<int>(eq_graph.size());
     const int m = static_cast<int>(col_match.size());
@@ -454,10 +479,15 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
     std::vector<int> row_level(n, INF_LEVEL);
     std::vector<int> col_level(m, INF_LEVEL);
 
+    std::vector<int> row_deg = row_degrees(col_match, n);
+    auto free_slots = [&](int i) {
+        return row_capacity(i, n, last_row_cap) - row_deg[i];
+    };
+
     // ---- Phase 1: BFS to assign levels. ------------------------------------
     std::queue<int> bfs_q;
     for (int i = 0; i < n; ++i) {
-        if (row_match[i] == NIL) {
+        if (free_slots(i) > 0) {
             row_level[i] = 0;
             bfs_q.push(i);
         }
@@ -503,12 +533,14 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
     std::vector<bool> visited_col(m, false);
     std::vector<size_t> next_edge(n, 0);
 
-    for (int root = 0; root < n; ++root) {
-        if (row_match[root] != NIL || row_level[root] != 0) continue;
-
+    // One descent from a free root. Returns true when it reached a free column
+    // and recorded the path. next_edge and the demotions persist across calls,
+    // which is what keeps the whole phase O(E).
+    auto descend_from = [&](int root) -> bool {
         std::vector<int> path_rows;
         std::vector<std::pair<int,int>> path_edges;
         path_rows.push_back(root);
+        bool found = false;
 
         while (!path_rows.empty()) {
             int i = path_rows.back();
@@ -529,6 +561,7 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
                     path_rows.clear();
                     path_edges.clear();
                     advanced = true;
+                    found = true;
                     break;
                 }
 
@@ -546,7 +579,10 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
                 path_edges.pop_back();
             }
 
-            if (advanced) continue;
+            if (advanced) {
+                if (found) break;
+                continue;
+            }
 
             // No further progress from row i. Demote it so later DFS roots
             // don't redescend through here.
@@ -554,6 +590,19 @@ find_maximal_augmenting_paths(const std::vector<std::vector<int>>& eq_graph,
             if (path_edges.empty()) break;
             path_edges.pop_back();
             path_rows.pop_back();
+        }
+
+        return found;
+    };
+
+    for (int root = 0; root < n; ++root) {
+        if (row_level[root] != 0) continue;
+
+        // A capacitated root stands for that many free copies of itself, and
+        // the copies would have been separate roots in the padded square.
+        for (int slot = free_slots(root); slot > 0; --slot) {
+            if (row_level[root] != 0) break;  // demoted by a failed descent
+            if (!descend_from(root)) break;
         }
     }
 
@@ -588,7 +637,8 @@ bool hungarian_search_cl(const CostMatrix& cost,
                          DualVec& y_u,
                          DualVec& y_v,
                          std::vector<int>* affected_rows_out,
-                         std::vector<int>* affected_cols_out)
+                         std::vector<int>* affected_cols_out,
+                         int last_row_cap)
 {
     PROF_TIMER(step2_ns);
     PROF_INC(step2_calls, 1);
@@ -598,10 +648,12 @@ bool hungarian_search_cl(const CostMatrix& cost,
     if (affected_rows_out) affected_rows_out->clear();
     if (affected_cols_out) affected_cols_out->clear();
 
+    const int cap_row = capacitated_row(n, last_row_cap);
+
     // Inline cost-length helper: cl(i, j) for a known cost[i][j] value.
     // Caller must have already checked c_ij < BIG_INT.
     auto cl_of = [&](int i, int j, long long c_ij) -> long long {
-        return (row_match[i] == j) ? c_ij : (c_ij + 1);
+        return (col_match[j] == i) ? c_ij : (c_ij + 1);
     };
 
     // Invariant: every matched edge entering Step 2 is tight, i.e. y_u[i] +
@@ -612,9 +664,9 @@ bool hungarian_search_cl(const CostMatrix& cost,
     // would have masked stale eq_graph entries on rows that PRE-STEPed but did
     // not enter S, breaking the Phase 2 incremental update).
 #ifdef COUPLR_GT_DEBUG
-    for (int i = 0; i < n; ++i) {
-        int j = row_match[i];
-        if (j == NIL || j < 0 || j >= m) continue;
+    for (int j = 0; j < m; ++j) {
+        int i = col_match[j];
+        if (i == NIL || i < 0 || i >= n) continue;
         long long c_ij = cost[i][j];
         if (c_ij >= BIG_INT) continue;
         if (y_u[i] + y_v[j] != c_ij) {
@@ -649,8 +701,14 @@ bool hungarian_search_cl(const CostMatrix& cost,
         int next;  // index in `entries` of prior push for same r, or -1
     };
 
-    const long long bucket_bound = std::max(1, 6 * n + 2);
-    std::vector<int> bucket_head(static_cast<size_t>(bucket_bound) + 1, -1);
+    // The bound scales with the size of a saturating matching, which is one
+    // edge per column, not one per row: a capacitated row carries as many
+    // edges as it has slots. The array holding the buckets grows to the
+    // largest r a search actually reaches, which on a wide instance is far
+    // short of the bound.
+    const long long bucket_bound = std::max(1, 6 * m + 2);
+    std::vector<int> bucket_head(
+        static_cast<size_t>(std::min<long long>(bucket_bound + 1, 1024)), -1);
     std::vector<BucketEdge> entries;
     // Reserve a starting capacity that holds a moderate Step 2 without
     // realloc. Anything larger grows by std::vector's normal doubling, which
@@ -671,6 +729,23 @@ bool hungarian_search_cl(const CostMatrix& cost,
     std::vector<long long> saved_y_v(m, 0);
     std::vector<long long> enter_A_u(n, 0);
     std::vector<long long> enter_A_v(m, 0);
+    std::vector<int> entered_by_col(n, NIL);
+
+    // Append to the arena; link the new entry as the new head of bucket r.
+    auto bucket_push = [&](long long r, int i, int j) {
+        if (r > bucket_bound) {
+            // Paper p.9: edges with r > bn are not entered into Q.
+            // Inequality (3) bounds Delta within one Hungarian search by
+            // bn, so any r > bn edge is unreachable in this search.
+            return;
+        }
+        if (r >= static_cast<long long>(bucket_head.size())) {
+            bucket_head.resize(static_cast<size_t>(r) + 1, -1);
+        }
+        int idx = static_cast<int>(entries.size());
+        entries.push_back({i, j, bucket_head[static_cast<size_t>(r)]});
+        bucket_head[static_cast<size_t>(r)] = idx;
+    };
 
     auto enqueue_edges_from_row = [&](int i) {
         PROF_TIMER(enqueue_ns);
@@ -688,17 +763,7 @@ bool hungarian_search_cl(const CostMatrix& cost,
             if (r < A) {
                 r = A;
             }
-            if (r > bucket_bound) {
-                // Paper p.9: edges with r > bn are not entered into Q.
-                // Inequality (3) bounds Delta within one Hungarian search by
-                // bn, so any r > bn edge is unreachable in this search.
-                continue;
-            }
-            // Phase 7: flat bucket array. Append to the arena; link the new
-            // entry as the new head of bucket r.
-            int idx = static_cast<int>(entries.size());
-            entries.push_back({i, j, bucket_head[static_cast<size_t>(r)]});
-            bucket_head[static_cast<size_t>(r)] = idx;
+            bucket_push(r, i, j);
             PROF_INC(step2_enqueue_edges, 1);
         }
     };
@@ -716,14 +781,18 @@ bool hungarian_search_cl(const CostMatrix& cost,
         }
     };
 
-    for (int i = 0; i < n; ++i) {
-        if (row_match[i] == NIL) {
-            has_free_root = true;
-            in_S[i] = true;
-            parent_row[i] = NIL;
-            saved_y_u[i] = y_u[i];
-            enter_A_u[i] = A;
-            enqueue_edges_from_row(i);
+    {
+        std::vector<int> row_deg = row_degrees(col_match, n);
+        for (int i = 0; i < n; ++i) {
+            if (row_deg[i] < row_capacity(i, n, last_row_cap)) {
+                has_free_root = true;
+                in_S[i] = true;
+                parent_row[i] = NIL;
+                entered_by_col[i] = NIL;
+                saved_y_u[i] = y_u[i];
+                enter_A_u[i] = A;
+                enqueue_edges_from_row(i);
+            }
         }
     }
 
@@ -731,14 +800,13 @@ bool hungarian_search_cl(const CostMatrix& cost,
         return false;
     }
 
-    const long long bucket_count = static_cast<long long>(bucket_head.size());
     while (true) {
         while (true) {
-            while (next_bucket < bucket_count &&
+            while (next_bucket < static_cast<long long>(bucket_head.size()) &&
                    bucket_head[static_cast<size_t>(next_bucket)] == -1) {
                 ++next_bucket;
             }
-            if (next_bucket >= bucket_count) {
+            if (next_bucket >= static_cast<long long>(bucket_head.size())) {
                 return false;
             }
 
@@ -762,14 +830,7 @@ bool hungarian_search_cl(const CostMatrix& cost,
             long long current_y_i = saved_y_u[i] + (A - enter_A_u[i]);
             long long reduced = ccl - current_y_i - y_v[j];
             if (reduced > 0) {
-                long long r = A + reduced;
-                if (r <= bucket_bound) {
-                    int idx = static_cast<int>(entries.size());
-                    entries.push_back({i, j,
-                                       bucket_head[static_cast<size_t>(r)]});
-                    bucket_head[static_cast<size_t>(r)] = idx;
-                }
-                // else: paper-bounded re-enqueue drop (see file-top comment).
+                bucket_push(A + reduced, i, j);
                 continue;
             }
 
@@ -793,12 +854,16 @@ bool hungarian_search_cl(const CostMatrix& cost,
                 int col = j;
                 int row = reached_by_row[col];
                 while (row != NIL) {
-                    int prev_col = row_match[row];
-                    row_match[row] = col;
+                    // The column that admitted this row into the forest is the
+                    // one it gives up; a root gave up nothing and ends the walk.
+                    int prev_col = entered_by_col[row];
+                    int prev_row = parent_row[row];
+                    if (row != cap_row) {
+                        row_match[row] = col;
+                    }
                     col_match[col] = row;
                     y_v[col] -= 1;
-                    int prev_row = parent_row[row];
-                    if (prev_row == NIL) {
+                    if (prev_col == NIL) {
                         break;
                     }
                     col = prev_col;
@@ -822,10 +887,15 @@ bool hungarian_search_cl(const CostMatrix& cost,
                 return true;
             }
 
+            // A capacitated row can be reached through several of its columns.
+            // It joins the forest through the first of them: it entered at the
+            // smallest A, so its edges are already in the buckets at the
+            // earliest r any later entry could give them.
             int next_row = col_match[j];
             if (next_row != NIL && !in_S[next_row]) {
                 in_S[next_row] = true;
                 parent_row[next_row] = i;
+                entered_by_col[next_row] = j;
                 saved_y_u[next_row] = y_u[next_row];
                 enter_A_u[next_row] = A;
                 enqueue_edges_from_row(next_row);
@@ -841,7 +911,8 @@ bool hungarian_step_one_feasible(const CostMatrix& cost,
                                  DualVec& y_u,
                                  DualVec& y_v,
                                  std::vector<int>* affected_rows_out,
-                                 std::vector<int>* affected_cols_out)
+                                 std::vector<int>* affected_cols_out,
+                                 int last_row_cap)
 {
     const int n = static_cast<int>(cost.size());
     if (n == 0) return false;
@@ -854,16 +925,17 @@ bool hungarian_step_one_feasible(const CostMatrix& cost,
     // once and is required for correctness when c contains values < -1. The
     // 20-iter dual-repair loop for non-empty matchings is gone — caller is
     // expected to deliver a 1-feasible state.
-    const bool was_empty = gt_matching_is_empty(row_match);
+    const bool was_empty = gt_matching_is_empty(col_match);
     if (was_empty) {
         gt_init_empty_duals(cost, y_u, y_v);
     }
 
-    DEBUG_ASSERT_FEASIBLE(cost, row_match, col_match, y_u, y_v,
+    DEBUG_ASSERT_FEASIBLE(cost, col_match, y_u, y_v,
         "1-feasibility violated entering hungarian_step_one_feasible");
 
     bool ok = hungarian_search_cl(cost, row_match, col_match, y_u, y_v,
-                                  affected_rows_out, affected_cols_out);
+                                  affected_rows_out, affected_cols_out,
+                                  last_row_cap);
 
     // gt_init_empty_duals rewrote every y_v, so the equality graph must be
     // rebuilt for every row regardless of which rows entered S. Signal this
@@ -882,16 +954,26 @@ bool hungarian_step_one_feasible(const CostMatrix& cost,
 // ============================================================================
 
 /**
- * Check if matching is perfect (all rows matched)
- * 
- * @param row_match Current matching from rows
- * @return true if all rows are matched
+ * Check if the matching saturates every row
+ *
+ * A row holds one column, or last_row_cap of them when it is the capacitated
+ * one; the matching is perfect once every row holds as many as it can.
+ *
+ * @param col_match Current matching from columns
+ * @param n_rows Rows in the instance
+ * @param last_row_cap Columns the last row may hold at once
+ * @return true if every row is saturated
  */
-bool is_perfect(const MatchVec& row_match) {
-    for (int j : row_match) {
-        if (j == NIL) return false;
+bool is_perfect(const MatchVec& col_match, int n_rows, int last_row_cap) {
+    // No augmenting step ever hands a row more columns than its capacity, so
+    // counting the matched columns says as much as checking each row.
+    const long long capacity =
+        static_cast<long long>(n_rows) + static_cast<long long>(last_row_cap) - 1;
+    long long matched = 0;
+    for (int i : col_match) {
+        if (i >= 0 && i < n_rows) ++matched;
     }
-    return true;
+    return matched >= capacity;
 }
 
 /**
@@ -921,7 +1003,8 @@ bool apply_step1(const CostMatrix& cost,
                 DualVec& y_u,
                 DualVec& y_v,
                 std::vector<std::vector<int>>* eq_graph,
-                std::vector<int>* affected_cols_out)
+                std::vector<int>* affected_cols_out,
+                int last_row_cap)
 {
     PROF_TIMER(step1_ns);
     PROF_INC(step1_calls, 1);
@@ -931,11 +1014,11 @@ bool apply_step1(const CostMatrix& cost,
 
     if (!eq_graph) {
         // No existing graph provided: build from scratch
-        local_eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
+        local_eq_graph = build_equality_graph(cost, col_match, y_u, y_v);
     }
 
     // 2. Find maximal set of vertex-disjoint augmenting paths
-    auto paths = find_maximal_augmenting_paths(graph_ref, row_match, col_match);
+    auto paths = find_maximal_augmenting_paths(graph_ref, col_match, last_row_cap);
 
     if (paths.empty()) {
         return false;
@@ -950,7 +1033,7 @@ bool apply_step1(const CostMatrix& cost,
 
     for (const auto& path : paths) {
         // Augment this path directly
-        augment_along_path(path, row_match, col_match);
+        augment_along_path(path, row_match, col_match, last_row_cap);
 
         // Mark columns as used
         for (const auto& e : path) {
@@ -1005,7 +1088,8 @@ void match_gt(const CostMatrix& cost,
              DualVec& y_u,
              DualVec& y_v,
              int max_iters,
-             bool check_feasible)
+             bool check_feasible,
+             int last_row_cap)
 {
     PROF_INC(match_gt_calls, 1);
     const int n = static_cast<int>(cost.size());
@@ -1032,11 +1116,20 @@ void match_gt(const CostMatrix& cost,
     // previous O(nm) check_one_feasible + discard/restart block has been
     // removed (Phase 1 of gt-speedup.md).
     // -------------------------------------------------------------------------
+    // A capacitated row holds its columns in col_match alone, so those entries
+    // are the ones kept; the rest are rebuilt from row_match.
+    const int cap_row = capacitated_row(n, last_row_cap);
     for (int j = 0; j < m; ++j) {
-        col_match[j] = NIL;
+        if (col_match[j] != cap_row) {
+            col_match[j] = NIL;
+        }
     }
 
     for (int i = 0; i < n; ++i) {
+        if (i == cap_row) {
+            row_match[i] = NIL;
+            continue;
+        }
         int j = row_match[i];
         if (j != NIL && j >= 0 && j < m) {
             if (col_match[j] != NIL) {
@@ -1053,14 +1146,14 @@ void match_gt(const CostMatrix& cost,
     // Empty-matching entry path: canonical 1-feasible dual init (O(nm) once,
     // required for correctness when c contains values < -1). For non-empty
     // matchings the caller must supply 1-feasible duals.
-    if (gt_matching_is_empty(row_match)) {
+    if (gt_matching_is_empty(col_match)) {
         gt_init_empty_duals(cost, y_u, y_v);
     }
 
-    DEBUG_ASSERT_FEASIBLE(cost, row_match, col_match, y_u, y_v,
+    DEBUG_ASSERT_FEASIBLE(cost, col_match, y_u, y_v,
         "1-feasibility violated entering match_gt");
 
-    if (is_perfect(row_match)) {
+    if (is_perfect(col_match, n, last_row_cap)) {
         return;
     }
 
@@ -1070,13 +1163,13 @@ void match_gt(const CostMatrix& cost,
     // y_u on rows that entered S and y_v on cols that entered T. The
     // post-Step-2 full O(nm) rebuild has been replaced (Phase 2 of
     // gt-speedup.md).
-    std::vector<std::vector<int>> eq_graph = build_equality_graph(cost, row_match, y_u, y_v);
+    std::vector<std::vector<int>> eq_graph = build_equality_graph(cost, col_match, y_u, y_v);
     std::vector<int> affected_rows;
     std::vector<int> affected_cols;
     const std::vector<int> no_affected_rows;
 
     int it = 0;
-    while (!is_perfect(row_match)) {
+    while (!is_perfect(col_match, n, last_row_cap)) {
         ++it;
         if (it > max_iters) {
             LAP_ERROR("match_gt exceeded max_iters");
@@ -1084,21 +1177,21 @@ void match_gt(const CostMatrix& cost,
 
         // Optional: Check 1-feasibility before Step 1 (debug only)
         if (check_feasible) {
-            if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {
+            if (!check_one_feasible(cost, col_match, y_u, y_v)) {
                 LAP_ERROR("1-feasibility violated before Step 1");
             }
         }
 
         // Step 1: maximal vertex-disjoint augmenting paths on eligible edges.
         bool found_paths = apply_step1(cost, row_match, col_match, y_u, y_v,
-                                       &eq_graph, &affected_cols);
+                                       &eq_graph, &affected_cols, last_row_cap);
 
         if (found_paths && !affected_cols.empty()) {
-            update_equality_graph_incremental(eq_graph, cost, row_match, y_u, y_v,
+            update_equality_graph_incremental(eq_graph, cost, col_match, y_u, y_v,
                                               no_affected_rows, affected_cols);
         }
 
-        if (is_perfect(row_match)) {
+        if (is_perfect(col_match, n, last_row_cap)) {
             break;
         }
 
@@ -1107,17 +1200,18 @@ void match_gt(const CostMatrix& cost,
         // forest's S/T as affected_rows/affected_cols for the eq-graph patch.
         if (!found_paths) {
             if (!hungarian_step_one_feasible(cost, row_match, col_match, y_u, y_v,
-                                             &affected_rows, &affected_cols)) {
+                                             &affected_rows, &affected_cols,
+                                             last_row_cap)) {
                 LAP_ERROR("No augmenting path in Step 2 (no perfect matching)");
             }
 
-            update_equality_graph_incremental(eq_graph, cost, row_match, y_u, y_v,
+            update_equality_graph_incremental(eq_graph, cost, col_match, y_u, y_v,
                                               affected_rows, affected_cols);
         }
 
         // Optional: Check 1-feasibility after Step 2 (debug only)
         if (check_feasible) {
-            if (!check_one_feasible(cost, row_match, col_match, y_u, y_v)) {
+            if (!check_one_feasible(cost, col_match, y_u, y_v)) {
                 LAP_ERROR("1-feasibility violated after Step 2");
             }
         }
@@ -1135,10 +1229,11 @@ void match_gt(const CostMatrix& cost,
  * runs match_gt on the transformed costs to obtain a 1-optimal matching
  * with local duals, then updates the global duals and matching.
  *
- * Requires a square cost matrix. 1-optimality is a statement about a matching
- * that saturates both sides, so the padding that makes a rectangular instance
- * square belongs to the whole bit-scaling run rather than to one scale of it;
- * solve_gabow_tarjan_inner() does it once, before the first scale.
+ * 1-optimality is a statement about a matching that saturates both sides, so
+ * the instance must be one every column can be matched in: the row capacities
+ * have to add up to the number of columns. solve_gabow_tarjan_inner() arranges
+ * that once, before the first scale, by giving the last row the capacity of
+ * the dummy side.
  *
  * Algorithm:
  * 1. Build c'(i,j) = c(i,j) - y_u[i] - y_v[j]
@@ -1158,15 +1253,19 @@ void scale_match(const CostMatrix& cost,
                 MatchVec& col_match,
                 DualVec& y_u,
                 DualVec& y_v,
-                bool enable_6n_prune) {
+                bool enable_6n_prune,
+                int last_row_cap) {
     PROF_INC(scale_match_calls, 1);
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
 
-    if (n != m) {
-        LAP_ERROR("scale_match requires a square cost matrix; got " +
-                  std::to_string(n) + " rows and " + std::to_string(m) +
-                  " columns");
+    const long long total_capacity =
+        static_cast<long long>(n) + static_cast<long long>(last_row_cap) - 1;
+    if (total_capacity != m) {
+        LAP_ERROR("scale_match requires an instance every column can be "
+                  "matched in; got " + std::to_string(n) + " rows of total "
+                  "capacity " + std::to_string(total_capacity) + " and " +
+                  std::to_string(m) + " columns");
     }
 
     // Ensure dual vectors are properly sized
@@ -1183,10 +1282,12 @@ void scale_match(const CostMatrix& cost,
     // 1. Build c'(i,j) = c(i,j) - y_u[i] - y_v[j]
     //    Forbidden edges (cost >= BIG_INT) remain BIG_INT
     //
-    //    Paper p.9 pruning heuristic: any edge with c'(i,j) >= 6n cannot be in
-    //    the optimum matching for this scale, provided scale_match's input
-    //    obeys the paper's entry conditions (every edge cost >= -1; a perfect
-    //    matching exists with cost <= 3n). The bit-scaling outer loop in
+    //    Paper p.9 pruning heuristic: any edge whose c'(i,j) exceeds the cost
+    //    of a whole saturating matching cannot be in the optimum matching for
+    //    this scale, provided scale_match's input obeys the paper's entry
+    //    conditions (every edge cost >= -1; a saturating matching exists at a
+    //    cost of at most 3 per edge, so at most 3m over its m edges, one for
+    //    each column). The bit-scaling outer loop in
     //    solve_gabow_tarjan_inner guarantees this -- between scales, Step 1's
     //    dual update yields y(v) + y(w) >= c(vw) - 3 on matched edges and the
     //    (n+1) scaling keeps cost values aligned. Standalone callers
@@ -1195,7 +1296,7 @@ void scale_match(const CostMatrix& cost,
     //    BIG_INT excludes them from build_equality_graph,
     //    update_equality_graph_incremental, and enqueue_edges_from_row
     //    (all already have BIG_INT skips).
-    const long long prune_threshold = 6LL * static_cast<long long>(n_work);
+    const long long prune_threshold = 6LL * static_cast<long long>(m_work);
     CostMatrix cost_prime(n_work, std::vector<long long>(m_work, BIG_INT));
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
@@ -1226,9 +1327,12 @@ void scale_match(const CostMatrix& cost,
     DualVec y_u_loc(n_work, 0);
     DualVec y_v_loc(m_work, 0);
 
+    // Every iteration of match_gt augments at least one path, and each path
+    // matches one more column, so the column count is the iteration ceiling.
     match_gt(cost_prime, row_loc, col_loc, y_u_loc, y_v_loc,
-             /*max_iters=*/1000,
-             /*check_feasible=*/false);
+             /*max_iters=*/m_work + 1,
+             /*check_feasible=*/false,
+             last_row_cap);
     
     // 3. Update global duals: y <- y + y'
     for (int i = 0; i < n; ++i) {
@@ -1265,91 +1369,49 @@ long long find_max_cost(const CostMatrix& cost) {
     return max_cost;
 }
 
+namespace {
+
 /**
- * Gabow-Tarjan bit-scaling algorithm for minimum cost perfect matching - CORRECTED
- * 
- * CRITICAL FIXES APPLIED:
- * 1. Multiply by (n+1) BEFORE bit-scaling (as per paper)
- * 2. Reuse matching across scales so each phase warm-starts from the previous one
- * 3. Maintain 1-feasibility strictly throughout
- * 
+ * Gabow-Tarjan bit-scaling loop over an instance every column can be matched in
+ *
+ * The row capacities add up to the number of columns: n - 1 ordinary rows of
+ * one column each and a last row of last_row_cap. Returns the minimum-cost
+ * saturating matching and its duals.
+ *
  * Algorithm:
  * 1. Shift costs to non-negative: c'(e) = c(e) - min_cost
- * 2. Scale by (n+1): ĉ(e) = (n+1) * c'(e)
- * 3. Determine number of bits k for ĉ_max
+ * 2. Scale by K = gap_bound + 1: c^(e) = K * c'(e)
+ * 3. Determine number of bits k for c^_max
  * 4. Build costs bit-by-bit from MSB to LSB
  * 5. At each scale s:
- *    a. Update costs: c(e) ← 2c(e) + (bit s of ĉ(e))
- *    b. Update duals: y(v) ← 2y(v) - 1
+ *    a. Update costs: c(e) <- 2c(e) + (bit s of c^(e))
+ *    b. Update duals: y(v) <- 2y(v) - 1
  *    c. Run scale_match from the current matching to get 1-optimal solution
  * 6. Adjust duals back for original costs
- * 
- * The (n+1) scaling is ESSENTIAL: it ensures that a 1-optimal matching for
- * the scaled costs is an optimal matching for the original costs.
- * 
- * @param cost Original cost matrix (BIG_INT for forbidden edges)
+ *
+ * The K scaling is what turns 1-optimality into optimality: a 1-optimal
+ * matching costs at most gap_bound more than the optimum, every scaled cost
+ * is a multiple of K, and a saturating matching spends the same number of
+ * edges either way, so a gap of one unit of the original cost would already
+ * exceed what 1-optimality allows.
+ *
+ * @param cost Cost matrix (BIG_INT for forbidden edges)
+ * @param last_row_cap Columns the last row holds at once
+ * @param gap_bound Largest cost a 1-optimal matching can be above the optimum
  * @param row_match Output: optimal matching from rows (0-based)
  * @param col_match Output: optimal matching from columns (0-based)
  * @param y_u Output: optimal dual variables for rows
  * @param y_v Output: optimal dual variables for columns
  */
-void solve_gabow_tarjan_inner(const CostMatrix& cost,
-                              MatchVec& row_match,
-                              MatchVec& col_match,
-                              DualVec& y_u,
-                              DualVec& y_v) {
-    PROF_RESET();
-    PROF_TIMER(total_ns);
+void gt_bit_scale(const CostMatrix& cost,
+                  int last_row_cap,
+                  long long gap_bound,
+                  MatchVec& row_match,
+                  MatchVec& col_match,
+                  DualVec& y_u,
+                  DualVec& y_v) {
     const int n = static_cast<int>(cost.size());
     const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
-
-    if (n == 0 || m == 0) {
-        row_match.clear();
-        col_match.clear();
-        y_u.clear();
-        y_v.clear();
-        return;
-    }
-
-    // The 1-optimality bound compares the matching found against an optimal one
-    // through the duals, and the column terms cancel only when both matchings
-    // use every column. On a square instance they do. On a rectangular one they
-    // pay for different column sets, the bound does not hold, and the matching
-    // that comes back can be far from optimal.
-    //
-    // Squaring the instance with zero-cost dummies restores it. A dummy may take
-    // any partner for nothing, so a minimum-cost perfect matching on the square
-    // instance costs what the rectangular optimum costs, and the real rows in it
-    // are that optimum. The price is the square: an n x m instance is solved as
-    // an N x N one, N = max(n, m).
-    if (n != m) {
-        const int N = (n > m) ? n : m;
-        CostMatrix square(N, std::vector<long long>(N, 0));
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                square[i][j] = cost[i][j];
-            }
-        }
-
-        MatchVec square_row_match, square_col_match;
-        DualVec square_y_u, square_y_v;
-        solve_gabow_tarjan_inner(square, square_row_match, square_col_match,
-                                 square_y_u, square_y_v);
-
-        // A real unit paired with a dummy is a real unit left unmatched.
-        row_match.assign(n, NIL);
-        col_match.assign(m, NIL);
-        for (int i = 0; i < n; ++i) {
-            const int j = square_row_match[i];
-            if (j != NIL && j >= 0 && j < m) {
-                row_match[i] = j;
-                col_match[j] = i;
-            }
-        }
-        y_u.assign(square_y_u.begin(), square_y_u.begin() + n);
-        y_v.assign(square_y_v.begin(), square_y_v.begin() + m);
-        return;
-    }
 
     // Step 1: Find minimum cost to shift everything to non-negative
     long long min_cost = 0;
@@ -1361,13 +1423,14 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         }
     }
     
-    // Step 2: CRITICAL - Multiply by (n+1) as per paper
-    // Create ĉ(e) = (n+1) * (c(e) - min_cost)
+    // Step 2: CRITICAL - Multiply by K = gap_bound + 1 as per paper
+    // Create c^(e) = K * (c(e) - min_cost)
+    const long long K = gap_bound + 1;
     CostMatrix scaled_cost(n, std::vector<long long>(m));
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             if (cost[i][j] < BIG_INT) {
-                scaled_cost[i][j] = static_cast<long long>(n + 1) * (cost[i][j] - min_cost);
+                scaled_cost[i][j] = K * (cost[i][j] - min_cost);
             } else {
                 scaled_cost[i][j] = BIG_INT;
             }
@@ -1390,6 +1453,11 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         // matching via augmenting paths rather than assuming the diagonal is
         // available -- a forbidden diagonal would otherwise leave units
         // unmatched even when a perfect matching exists.
+        //
+        // The capacitated row takes whatever the ordinary rows leave, which
+        // costs the same wherever it lands, so it is filled last and needs no
+        // search of its own.
+        const int cap_row = capacitated_row(n, last_row_cap);
         row_match.assign(n, NIL);
         col_match.assign(m, NIL);
         y_u.assign(n, min_cost);
@@ -1411,8 +1479,17 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         };
 
         for (int u = 0; u < n; ++u) {
+            if (u == cap_row) continue;
             std::fill(seen.begin(), seen.end(), 0);
             try_augment(u);
+        }
+
+        if (cap_row != NIL) {
+            for (int v = 0; v < m; ++v) {
+                if (col_match[v] == NIL && cost[cap_row][v] < BIG_INT) {
+                    col_match[v] = cap_row;
+                }
+            }
         }
         return;
     }
@@ -1474,17 +1551,121 @@ void solve_gabow_tarjan_inner(const CostMatrix& cost,
         // safe and strips edges that cannot belong to any optimum for this
         // scale.
         scale_match(c_current, row_match, col_match, y_u, y_v,
-                    /*enable_6n_prune=*/true);
+                    /*enable_6n_prune=*/true, last_row_cap);
     }
-    
+
     // Step 7: Adjust duals back for original costs
-    // The duals maintain: y_u[i] + y_v[j] = (n+1) * (original[i][j] - min_cost) for matched edges
+    // The duals maintain: y_u[i] + y_v[j] = K * (original[i][j] - min_cost) for matched edges
     // We need to adjust back to original scale and add back min_cost shift
     for (int i = 0; i < n; ++i) {
-        y_u[i] = y_u[i] / static_cast<long long>(n + 1) + min_cost;
+        y_u[i] = y_u[i] / K + min_cost;
     }
     for (int j = 0; j < m; ++j) {
-        y_v[j] = y_v[j] / static_cast<long long>(n + 1);
+        y_v[j] = y_v[j] / K;
+    }
+}
+
+}  // namespace
+
+/**
+ * Gabow-Tarjan solver over an instance of any shape
+ *
+ * The 1-optimality bound compares the matching found against an optimal one
+ * through the duals, and the column terms cancel only when both matchings use
+ * every column. On a square instance they do. On a rectangular one they pay
+ * for different column sets, the bound does not hold, and the matching that
+ * comes back can be far from optimal.
+ *
+ * A dummy side restores it. A dummy may take any partner for nothing, so a
+ * minimum-cost saturating matching over the real rows plus m - n dummy rows
+ * costs what the rectangular optimum costs, and the real rows in it are that
+ * optimum. Those dummy rows are copies of one node, so the solver carries them
+ * as one row of capacity m - n and the instance stays n + 1 rows tall.
+ *
+ * With the dummy side collapsed the bound tightens as well. Write y_d for the
+ * dummy row's dual. Every column obeys y_d + y_v[j] <= 1, and every column the
+ * dummy holds obeys y_d + y_v[j] >= 0. Take the matching M found and any
+ * matching M* covering the same rows, and let t be the number of columns M
+ * uses that M* does not. Summing the 1-feasibility bounds over the real edges
+ * costs n, the columns in M and not M* contribute at most t(1 - y_d), the
+ * columns in M* and not M at most t * y_d, y_d cancels, and cost(M) is within
+ * n + t <= 2n of cost(M*). The square instance's bound is its own size, which
+ * for a wide problem is m.
+ *
+ * A tall instance is the same problem read the other way round, so it is
+ * transposed rather than given a second implementation.
+ *
+ * @param cost Original cost matrix (BIG_INT for forbidden edges)
+ * @param row_match Output: optimal matching from rows (0-based)
+ * @param col_match Output: optimal matching from columns (0-based)
+ * @param y_u Output: optimal dual variables for rows
+ * @param y_v Output: optimal dual variables for columns
+ */
+void solve_gabow_tarjan_inner(const CostMatrix& cost,
+                              MatchVec& row_match,
+                              MatchVec& col_match,
+                              DualVec& y_u,
+                              DualVec& y_v) {
+    PROF_RESET();
+    PROF_TIMER(total_ns);
+    const int n = static_cast<int>(cost.size());
+    const int m = (n > 0 ? static_cast<int>(cost[0].size()) : 0);
+
+    if (n == 0 || m == 0) {
+        row_match.assign(n, NIL);
+        col_match.assign(m, NIL);
+        y_u.assign(n, 0);
+        y_v.assign(m, 0);
+        return;
+    }
+
+    if (n > m) {
+        CostMatrix flipped(m, std::vector<long long>(n));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                flipped[j][i] = cost[i][j];
+            }
+        }
+
+        MatchVec flipped_row_match, flipped_col_match;
+        DualVec flipped_y_u, flipped_y_v;
+        solve_gabow_tarjan_inner(flipped, flipped_row_match, flipped_col_match,
+                                 flipped_y_u, flipped_y_v);
+
+        row_match = flipped_col_match;
+        col_match = flipped_row_match;
+        y_u = flipped_y_v;
+        y_v = flipped_y_u;
+        return;
+    }
+
+    const int dummy_cap = m - n;
+    if (dummy_cap == 0) {
+        gt_bit_scale(cost, /*last_row_cap=*/1, /*gap_bound=*/n,
+                     row_match, col_match, y_u, y_v);
+    } else {
+        // One extra row standing for the whole dummy side, zero cost to every
+        // column. At m = n + 1 it stands for a single dummy and the instance
+        // is square again, so it carries no capacity of its own.
+        CostMatrix padded(cost);
+        padded.emplace_back(m, 0);
+
+        MatchVec padded_row_match;
+        DualVec padded_y_u;
+        gt_bit_scale(padded, /*last_row_cap=*/dummy_cap, /*gap_bound=*/2LL * n,
+                     padded_row_match, col_match, padded_y_u, y_v);
+
+        // A column the dummy row holds is a column no real unit was paired with.
+        const int dummy_row = n;
+        row_match.assign(n, NIL);
+        for (int j = 0; j < m; ++j) {
+            if (col_match[j] == dummy_row) {
+                col_match[j] = NIL;
+            } else if (col_match[j] != NIL) {
+                row_match[col_match[j]] = j;
+            }
+        }
+        y_u.assign(padded_y_u.begin(), padded_y_u.begin() + n);
     }
 
 #ifdef COUPLR_GT_PROFILE

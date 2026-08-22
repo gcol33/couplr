@@ -658,6 +658,16 @@ Rcpp::NumericVector gt_duals_to_r(const DualVec& duals) {
   return out;
 }
 
+// Column view of a row-side matching, which is what the solver reads.
+MatchVec gt_col_match_of(const MatchVec& row_match, int m) {
+  MatchVec out(m, NIL);
+  for (int i = 0; i < static_cast<int>(row_match.size()); ++i) {
+    const int j = row_match[i];
+    if (j >= 0 && j < m) out[j] = i;
+  }
+  return out;
+}
+
 Rcpp::List gt_paths_to_r(const std::vector<std::vector<std::pair<int, int>>>& paths) {
   Rcpp::List out(paths.size());
   for (int p = 0; p < static_cast<int>(paths.size()); ++p) {
@@ -689,8 +699,8 @@ bool gt_check_one_feasible(Rcpp::NumericMatrix cost,
                            Rcpp::IntegerVector col_match,
                            Rcpp::NumericVector y_u,
                            Rcpp::NumericVector y_v) {
+  (void)row_match;  // the matching is read from the column side
   return check_one_feasible(gt_cost_from_r(cost),
-                            gt_match_from_r(row_match),
                             gt_match_from_r(col_match),
                             gt_duals_from_r(y_u),
                             gt_duals_from_r(y_v));
@@ -702,7 +712,8 @@ Rcpp::List gt_build_equality_graph(Rcpp::NumericMatrix cost,
                                    Rcpp::NumericVector y_u,
                                    Rcpp::NumericVector y_v) {
   auto graph = build_equality_graph(gt_cost_from_r(cost),
-                                    gt_match_from_r(row_match),
+                                    gt_col_match_of(gt_match_from_r(row_match),
+                                                    cost.ncol()),
                                     gt_duals_from_r(y_u),
                                     gt_duals_from_r(y_v));
   Rcpp::List out(graph.size());
@@ -746,9 +757,8 @@ Rcpp::List gt_find_maximal_augmenting_paths(Rcpp::List eq_graph,
       graph[i].push_back(j - 1);
     }
   }
-  auto paths = find_maximal_augmenting_paths(graph,
-                                             gt_match_from_r(row_match),
-                                             gt_match_from_r(col_match));
+  (void)row_match;  // the search reads the matching from the column side
+  auto paths = find_maximal_augmenting_paths(graph, gt_match_from_r(col_match));
   return gt_paths_to_r(paths);
 }
 

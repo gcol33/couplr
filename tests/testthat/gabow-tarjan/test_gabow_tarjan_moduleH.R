@@ -242,14 +242,29 @@ test_that("Module H handles rectangular matrices (4x3)", {
 
   result <- call_module_h(cost)
 
-  # 4 rows matched (3 real + 1 dummy)
-  expect_equal(result$n_matched, 4)
+  # Three columns hold three rows, so the fourth row comes back unmatched.
+  expect_equal(result$n_matched, 3)
 
-  real_matches  <- sum(result$row_match <= 3, na.rm = TRUE)
-  dummy_matches <- sum(result$row_match >  3, na.rm = TRUE)
+  matched <- result$row_match[!is.na(result$row_match)]
+  expect_true(all(matched >= 1L & matched <= ncol(cost)))
+  expect_equal(length(unique(matched)), length(matched))
+  expect_equal(result$cost, assignment(cost, method = "jv")$total_cost)
+})
 
-  expect_equal(real_matches, 3)
-  expect_equal(dummy_matches, 1)
+test_that("Module H handles rectangular matrices (3x9)", {
+  set.seed(88)
+  cost <- matrix(sample(1:100, 27, replace = TRUE), nrow = 3)
+
+  result <- call_module_h(cost)
+
+  expect_equal(result$n_matched, 3)
+  matched <- result$row_match[!is.na(result$row_match)]
+  expect_equal(length(unique(matched)), 3L)
+  expect_equal(result$cost, assignment(cost, method = "jv")$total_cost)
+
+  expect_true(check_complementary_slackness(
+    cost, result$row_match, result$col_match, result$y_u, result$y_v
+  ))
 })
 
 test_that("Module H produces same result as Hungarian on small matrices", {

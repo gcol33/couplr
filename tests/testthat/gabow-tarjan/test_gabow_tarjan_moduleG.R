@@ -466,49 +466,25 @@ test_that("scale_match dual updates are cumulative", {
   }
 })
 
-test_that("scale_match handles rectangular matrices (more rows than cols)", {
-  # 4x3 matrix - not all rows can be matched to distinct columns
-  # The algorithm will pad with dummy columns internally
+test_that("scale_match rejects an instance its rows cannot cover", {
+  # 1-optimality is a statement about a matching that saturates both sides, so
+  # one scale of the bit-scaling needs row capacities adding up to the number
+  # of columns. Giving a shape the dummy side has not been added to is an
+  # error rather than a silently one-sided answer.
   cost <- matrix(c(
     1, 2, 3,
     4, 5, 6,
     7, 8, 9,
     10, 11, 12
   ), nrow = 4, byrow = TRUE)
-  
-  result <- couplr:::scale_match_cpp(cost)
-  
-  # Should find a perfect matching (all rows matched)
-  expect_true(is_perfect_matching(result$row_match))
-  
-  # Some rows may be matched to dummy columns (values > ncol(cost))
-  # Real columns should be 1, 2, 3; dummy columns would be 4+
-  real_matches <- sum(result$row_match <= 3)
-  dummy_matches <- sum(result$row_match > 3)
-  
-  # Exactly 3 rows can match to real columns, 1 must match to dummy
-  expect_equal(real_matches, 3)
-  expect_equal(dummy_matches, 1)
-  
-  # col_match should only have entries for real columns (size 3)
-  expect_equal(length(result$col_match), 3)
-  
-  # y_v should only have entries for real columns (size 3)
-  expect_equal(length(result$y_v), 3)
-  
-  # Verify consistency for real column assignments
-  for (i in seq_len(4)) {
-    j <- result$row_match[i]
-    if (j <= 3) {  # Real column
-      # Column should point back to this row
-      expect_equal(result$col_match[j], i)
-    }
-  }
-  
-  # The row matched to the dummy column should be the most expensive
-  # since dummy columns have cost BIG_INT
-  dummy_row <- which(result$row_match > 3)
-  expect_equal(length(dummy_row), 1)
+
+  expect_error(couplr:::scale_match_cpp(cost),
+               "every column can be matched in")
+
+  # The solver above it adds that side and returns the rectangular optimum.
+  res <- lap_solve_gabow_tarjan(cost, maximize = FALSE)
+  expect_equal(res$n_matched, 3)
+  expect_equal(res$total_cost, assignment(cost, method = "jv")$total_cost)
 })
 
 test_that("scale_match performance on larger matrix (10x10)", {

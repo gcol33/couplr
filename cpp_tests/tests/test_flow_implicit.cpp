@@ -319,7 +319,7 @@ TEST_CASE("A deficiency that survives a round is attacked wider", "[flow][implic
 // the duals a warm-started master hands back
 // ---------------------------------------------------------------------------
 
-TEST_CASE("A warm-started master prices a matched pair below zero and a cold one does not",
+TEST_CASE("A grown master's duals sit on the tight face and agree with a cold solve",
           "[flow][implicit][duals]") {
     std::mt19937 rng(90210u);
     const int64_t nr = 40;
@@ -331,21 +331,19 @@ TEST_CASE("A warm-started master prices a matched pair below zero and a cold one
 
     // Started empty, so every master after the first resumes from the one
     // before it. A min-cost flow is optimal with an arc at its upper bound
-    // priced below zero, and the warm start reaches exactly that: the slackness
-    // repair saturates a newly added arc and no later augmentation touches it.
+    // priced below zero, so a master that resumes is free to hand back duals
+    // the assignment LP refuses: the slackness repair saturates a newly added
+    // arc and no later augmentation touches it. Whether a given instance
+    // reaches that state is decided by which of the two starting points the
+    // solve costs cheaper, and the projection is what the certificate reads
+    // either way.
     lap::CompiledDesign warm = lap::compile_one_to_one(oracle, {});
     lap::CandidateSet cand(nr, nc);
     const lap::ImplicitResult grown =
         lap::solve_implicit_assignment(c, warm.problem, cand, opts);
     REQUIRE(grown.status == "optimal");
-
-    double worst = 0.0;
-    for (const lap::ImplicitRound& r : grown.rounds) {
-        worst = std::max(worst, r.matched_slack);
-    }
-    REQUIRE(worst > opts.tol);
-    // And the projection onto the tight face is what carries it to a
-    // certificate the LP accepts.
+    REQUIRE(lap::implicit_detail::matched_slack(c, grown.match, grown.u, grown.v)
+            <= opts.tol);
     REQUIRE(grown.certified);
 
     // Solved in one round over every pair, the question does not arise: each
@@ -359,6 +357,31 @@ TEST_CASE("A warm-started master prices a matched pair below zero and a cold one
     REQUIRE(once.rounds[0].matched_slack <= opts.tol);
     REQUIRE(once.certified);
     REQUIRE(once.total_cost == Approx(grown.total_cost).margin(1e-12));
+}
+
+TEST_CASE("The projection lowers a matched row's dual onto its own cost",
+          "[flow][implicit][duals]") {
+    lap::CostMatrix c(4, 4);
+    for (int64_t i = 0; i < 4; ++i) {
+        for (int64_t j = 0; j < 4; ++j) c.at(i, j) = 1.0 + static_cast<double>(i);
+    }
+    c.forbid(3, 3);
+
+    // Row 0's pair prices strictly below zero, row 1's is already tight, row 2
+    // holds no pair, and row 3's pair is one the source forbids.
+    const std::vector<int>     match{0, 1, -1, 3};
+    const std::vector<double>  v{0.0, 0.0, 0.0, 0.0};
+    std::vector<double>        u{5.0, 2.0, 7.0, 9.0};
+
+    REQUIRE(lap::implicit_detail::matched_slack(c, match, u, v) == Approx(4.0));
+
+    lap::tighten_matched_duals(c, match, u, v);
+
+    REQUIRE(u[0] == Approx(1.0));   // lowered onto c(0,0) - v(0)
+    REQUIRE(u[1] == Approx(2.0));   // already tight
+    REQUIRE(u[2] == Approx(7.0));   // unmatched, left alone
+    REQUIRE(u[3] == Approx(9.0));   // forbidden pair, left alone
+    REQUIRE(lap::implicit_detail::matched_slack(c, match, u, v) <= 1e-9);
 }
 
 // ---------------------------------------------------------------------------

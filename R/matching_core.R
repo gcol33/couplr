@@ -224,6 +224,25 @@
   cost_matrix[plan$row_unit, plan$col_unit, drop = FALSE]
 }
 
+# The pairs a solve produced, in the caller's ids, carrying the distance of each
+# pair and one .{var}_diff column per matching variable. `rows` and `cols` index
+# the two sides pair by pair, so every column here is read at the same position
+# and the pairing is positional throughout rather than joined back together.
+.pairs_tibble <- function(left, right, left_ids, right_ids,
+                          rows, cols, distances, vars) {
+  pairs <- tibble::tibble(
+    left_id = left_ids[rows],
+    right_id = right_ids[cols],
+    distance = distances
+  )
+
+  for (v in vars) {
+    pairs[[paste0(".", v, "_diff")]] <- left[[v]][rows] - right[[v]][cols]
+  }
+
+  pairs
+}
+
 # Read a solved assignment back as pairs in the caller's units. The solver
 # answered in node offsets of the compiled design, and the maps turn each one
 # into the left or right unit it stands for: the identity on the 1:1 design,
@@ -261,16 +280,8 @@
   matched_cols <- matched_cols[valid]
   distances <- distances[valid]
 
-  pairs <- tibble::tibble(
-    left_id = left_ids[matched_rows],
-    right_id = right_ids[matched_cols],
-    distance = distances
-  )
-
-  for (v in vars) {
-    pairs[[paste0(".", v, "_diff")]] <- left[[v]][matched_rows] -
-      right[[v]][matched_cols]
-  }
+  pairs <- .pairs_tibble(left, right, left_ids, right_ids,
+                         matched_rows, matched_cols, distances, vars)
 
   list(pairs = pairs, matched_rows = matched_rows, matched_cols = matched_cols)
 }

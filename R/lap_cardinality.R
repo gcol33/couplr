@@ -24,23 +24,61 @@
 # rounded away and the cardinality-before-cost ordering stops holding.
 PAD_PRECISION_LIMIT <- 2^53
 
+# Weights that make a sum of tiers read in priority order. `counts` gives the
+# largest number of units each tier can contribute, ordered from the tier that
+# yields first to the tier that yields last, and `base_magnitude` bounds the
+# total of the unweighted quantity all of them sit above.
+#
+# A tier's weight has to exceed everything beneath it can accumulate, so that one
+# unit of it is never worth trading for any amount of the lower tiers. Building
+# the weights upward from `base_magnitude` gives each one that property in turn,
+# and the running total is the largest objective the weighted problem reaches.
+#
+# Returns NULL when that total passes the range a double orders exactly, because
+# the ordering the weights encode stops holding there.
+.lex_tier_weights <- function(counts, base_magnitude) {
+  counts <- as.numeric(counts)
+  if (!length(counts)) {
+    return(numeric(0))
+  }
+  if (anyNA(counts) || any(!is.finite(counts)) || any(counts < 0) ||
+      length(base_magnitude) != 1L || !is.finite(base_magnitude) ||
+      base_magnitude < 0) {
+    return(NULL)
+  }
+
+  weights <- numeric(length(counts))
+  reach <- base_magnitude
+  for (t in seq_along(counts)) {
+    weights[t] <- reach + 1
+    reach <- reach + counts[t] * weights[t]
+  }
+
+  if (!all(is.finite(weights)) || !is.finite(reach) ||
+      reach > PAD_PRECISION_LIMIT) {
+    return(NULL)
+  }
+  weights
+}
+
 # Magnitude a per-unit sentinel has to exceed for a minimum-cost solve to order
 # matchings by cardinality before cost. A matching of k pairs has real cost
-# within [k * lo, k * hi], so a sentinel above (k + 1) * (|lo| + |hi|) can never
-# be traded away for a saving on the real edges: dropping one sentinel edge
-# always beats any rearrangement of the rest.
+# within [k * lo, k * hi], so the cost a rearrangement of the real edges can
+# recover sits under (k + 1) * (|lo| + |hi|), and a sentinel above that can never
+# be traded away for such a saving: dropping one sentinel edge always beats any
+# rearrangement of the rest.
 #
-# Returns NULL when k sentinels would push the total past the range a double
-# orders exactly, because the lexicographic ordering stops holding there.
+# This is the two-tier case of .lex_tier_weights(): cardinality over cost.
 .cardinality_sentinel <- function(real_costs, k) {
   if (!length(real_costs)) {
     return(NULL)
   }
-  sentinel <- (k + 1) * (abs(max(real_costs)) + abs(min(real_costs))) + 1
-  if (!is.finite(sentinel) || k * sentinel > PAD_PRECISION_LIMIT) {
+  span <- abs(max(real_costs)) + abs(min(real_costs))
+  weights <- .lex_tier_weights(counts = k, base_magnitude = (k + 1) * span)
+  if (is.null(weights)) {
     return(NULL)
   }
-  sentinel
+  weights[[1L]]
 }
 
 .validate_cardinality_args <- function(cardinality, n_matches,

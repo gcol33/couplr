@@ -169,14 +169,22 @@ for (n_total in SIZES) {
     if (identical(r$status, "ok")) {
       cat(sprintf("  %-8s %8.2f s  %d pairs  cost %.6f\n",
                   mode, r$elapsed, r$n_pairs, r$total_cost))
+      ## Two different quantities, so they are printed as two different kinds
+      ## of number. candidate_edges is the graph that was built, against the
+      ## complete one that was not, and is a share. edges_evaluated counts
+      ## distance evaluations over all rounds, so a pair priced in three rounds
+      ## counts three times and the total can exceed the complete pair count;
+      ## it is reported as a multiple of that count, not as a share of it.
       if (mode == "implicit" && !is.na(r$possible_edges) &&
           r$possible_edges > 0) {
-        cat(sprintf("           %s of %s pairs kept, %s evaluated (%.4f%%), %d rounds\n",
+        cat(sprintf("           graph built: %s of %s pairs (%.4f%%), %d rounds\n",
                     format(r$candidate_edges, big.mark = ","),
                     format(r$possible_edges, big.mark = ","),
-                    format(r$edges_evaluated, big.mark = ","),
-                    100 * r$edges_evaluated / r$possible_edges,
+                    100 * r$candidate_edges / r$possible_edges,
                     r$n_rounds))
+        cat(sprintf("           distances computed: %s (%.2fx the complete pair count)\n",
+                    format(r$edges_evaluated, big.mark = ","),
+                    r$edges_evaluated / r$possible_edges))
       }
     } else {
       cat(sprintf("  %-8s %s\n", mode, r$status))
@@ -210,11 +218,16 @@ print(results[, c("n_total", "memory_mode", "elapsed_s", "status",
 
 imp <- results[results$memory_mode == "implicit" & results$status == "ok", ]
 if (nrow(imp) > 0) {
-  cat("\n--- what the loop touched ---\n")
-  imp$evaluated_pct <- round(100 * imp$edges_evaluated / imp$possible_edges, 4)
-  imp$kept_pct      <- round(100 * imp$candidate_edges / imp$possible_edges, 4)
-  print(imp[, c("n_total", "possible_edges", "candidate_edges", "kept_pct",
-                "edges_evaluated", "evaluated_pct", "n_rounds",
+  ## `graph_pct` is the sparsity claim: the arcs the loop ended up holding
+  ## against the arcs the complete problem has. `distances_x` is the price paid
+  ## for it, as a multiple of the complete pair count, and it is above 1 here:
+  ## at eight covariates the loop computes more distances than one full sweep
+  ## would and still wins, because what it never builds is the graph.
+  cat("\n--- what the loop built, and what it paid ---\n")
+  imp$graph_pct   <- round(100 * imp$candidate_edges / imp$possible_edges, 4)
+  imp$distances_x <- round(imp$edges_evaluated / imp$possible_edges, 2)
+  print(imp[, c("n_total", "possible_edges", "candidate_edges", "graph_pct",
+                "edges_evaluated", "distances_x", "n_rounds",
                 "certified_optimal")])
 }
 

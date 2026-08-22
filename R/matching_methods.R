@@ -36,8 +36,11 @@ print.matching_result <- function(x, ...) {
   if (!is.null(x$status)) {
     cat("Status:", x$status, "\n")
   }
-  if (!is.null(x$certificate)) {
+  if (!is.null(x$certificate) && is.null(x$cardinality)) {
     cat("Certified optimal:", x$certificate$certified_optimal, "\n")
+  }
+  if (!is.null(x$cardinality)) {
+    print(x$cardinality)
   }
   if (!is.null(x$search)) {
     cat(sprintf("Pairs generated: %s of %s (%.4g%%), %s rounds\n",

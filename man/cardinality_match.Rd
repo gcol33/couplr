@@ -8,72 +8,208 @@ cardinality_match(
   left,
   right,
   vars,
-  max_std_diff = 0.1,
+  fine = NULL,
+  refined = NULL,
+  refined_exact = 1L,
+  moments = NULL,
+  max_std_diff = Inf,
+  engine = c("auto", "flow", "branch_bound", "heuristic"),
   distance = "euclidean",
   weights = NULL,
   scale = FALSE,
   auto_scale = FALSE,
+  sigma = NULL,
+  max_distance = Inf,
+  calipers = NULL,
+  left_id = NULL,
+  right_id = NULL,
+  time_limit = 30,
+  node_limit = 500L,
   method = "auto",
   max_iter = 100L,
   batch_fraction = 0.1
 )
 }
 \arguments{
-\item{left}{Data frame of "left" units}
+\item{left}{Data frame of "left" units, one row each.}
 
-\item{right}{Data frame of "right" units}
+\item{right}{Data frame of "right" units, one row each.}
 
-\item{vars}{Character vector of matching variable names}
+\item{vars}{Character vector of matching variable names.}
 
-\item{max_std_diff}{Maximum allowed absolute standardized difference
-(default: 0.1, corresponding to "excellent" balance)}
+\item{fine}{Exact fine balance on one partition: a character vector of
+column names, cross-classified, or a one-sided formula. In a formula \code{+}
+and \code{:} both mean interaction, so \code{~ region + sex} and \code{~ region:sex} both
+ask for balance on every region-by-sex cell. \code{fine = X} is the same
+request as \verb{refined = list(X), refined_exact = 1}.}
 
-\item{distance}{Distance metric (default: "euclidean")}
+\item{refined}{A nested hierarchy of groupings, coarsest first: a list, each
+element a character vector or one-sided formula, or a character vector as
+shorthand for its own sequence of prefixes, so \code{c("region", "site")} means
+region, then region crossed with site. Each level must sit inside the one
+before it.}
 
-\item{weights}{Optional named vector of variable weights}
+\item{refined_exact}{How many of the coarsest levels of \code{refined} are
+enforced exactly (default: 1). The remaining levels are balanced as closely
+as the exact levels allow.}
 
-\item{scale}{Scaling method (default: FALSE)}
+\item{moments}{Moment constraints beyond \code{max_std_diff}: a named numeric of
+standardized-difference bounds, as in \code{c(x = 0.05, y = 0.1)}, or a list of
+entries with fields \code{var}, \code{stat} (\code{"std_diff"} or \code{"mean_diff"}),
+\code{transform}, \code{max} and \code{min}. A variable bounded here must not also be
+bounded by \code{max_std_diff}.}
 
-\item{auto_scale}{If TRUE, automatically select scaling (default: FALSE)}
+\item{max_std_diff}{Maximum absolute standardized difference on every
+variable in \code{vars} (default: \code{Inf}, stating no such constraint). A finite
+value states one moment row per variable and per direction, which is what
+sends a call to the Lagrangian search; see Details.}
 
-\item{method}{LAP solver method (default: "auto")}
+\item{engine}{Which solver answers the problem: \code{"flow"} for a single
+min-cost flow solve, available when no moment row is stated;
+\code{"branch_bound"} for the Lagrangian search moment rows need; \code{"auto"}
+(default) for whichever of the two the stated constraints call for; and
+\code{"heuristic"} for the pruning loop.}
 
-\item{max_iter}{Maximum pruning iterations (default: 100)}
+\item{distance}{Distance metric (default: "euclidean").}
 
-\item{batch_fraction}{Fraction of worst pairs to remove per iteration
-(default: 0.1). Larger values speed up convergence but may over-prune.}
+\item{weights}{Optional named vector of variable weights.}
+
+\item{scale}{Scaling method (default: FALSE).}
+
+\item{auto_scale}{If TRUE, check variable health and select scaling
+automatically (default: FALSE).}
+
+\item{sigma}{Bandwidth for the distance metrics that take one.}
+
+\item{max_distance}{Pairs farther apart than this are not available.}
+
+\item{calipers}{Named vector of per-variable caliper widths.}
+
+\item{left_id, right_id}{Name of the id column on each side. When absent, ids
+come from an \code{id} column, from row names, or are synthesized.}
+
+\item{time_limit}{Seconds the search may run (default: 30).}
+
+\item{node_limit}{Nodes the search may open (default: 500).}
+
+\item{method}{LAP solver method for the heuristic's initial match
+(default: "auto"). Reaches \code{engine = "heuristic"} only.}
+
+\item{max_iter}{Maximum pruning iterations (default: 100). Reaches
+\code{engine = "heuristic"} only.}
+
+\item{batch_fraction}{Fraction of the remaining pairs the heuristic deletes
+per iteration (default: 0.1). Reaches \code{engine = "heuristic"} only.}
 }
 \value{
-A matching_result object with additional cardinality info:
-\code{result$info$pruning_iterations}, \code{result$info$pairs_removed},
-\code{result$info$final_balance}.
+A \code{matching_result} object. Beyond the fields every matching carries
+it holds:
+\itemize{
+\item \code{cardinality} - the report: \code{n_matched}, \code{best_possible}, \code{gap},
+\code{gap_fraction}, \code{certified}, \code{stopped_on}, \code{n_nodes}, and the state of
+every stated constraint. See \code{\link[=print.cardinality_report]{print.cardinality_report()}}.
+\item \code{certificate} - present when the search certified optimality.
+\item \code{status} - \code{"optimal"}, \code{"iteration_limit"}, or \code{"heuristic"}.
+\item \code{info$engine} - the engine that answered.
+}
+\code{info$pruning_iterations} and \code{info$pairs_removed} are carried by
+\code{engine = "heuristic"}.
 }
 \description{
-Maximizes the number of matched pairs subject to balance constraints.
-Uses iterative pruning: starts with a full match, then removes pairs
-that contribute most to imbalance until all variables satisfy the
-standardized difference threshold.
+Maximizes the number of matched pairs subject to balance constraints, and
+reports how far the matched sample sits from the largest one the constraints
+admit.
 }
 \details{
-Cardinality matching (Zubizarreta 2014) finds the largest matched sample
-that satisfies pre-specified balance constraints. This implementation uses
-an iterative pruning heuristic:
-\enumerate{
-\item Run full optimal matching via \code{\link[=match_couples]{match_couples()}}
-\item Compute balance diagnostics
-\item While any |std_diff| exceeds \code{max_std_diff}:
-\itemize{
-\item Identify the variable with worst balance
-\item Remove the batch of pairs contributing most to that imbalance
-\item Recompute balance
-}
-}
+Cardinality matching (Zubizarreta 2012) asks for the largest matched sample
+that satisfies stated balance constraints, rather than the closest one. The
+constraints come in two kinds, and which kinds are stated decides how the
+problem is solved.
+
+Fine and refined covariate balance are representable in the matching network
+itself (Rosenbaum, Ross and Silber 2007; Pimentel, Kelz, Silber and
+Rosenbaum 2015): every category becomes a node, and a single min-cost flow
+solve returns the largest balanced sample together with a dual certificate
+of its optimality, at polynomial cost. \code{max_std_diff} defaults to \code{Inf},
+stating no moment constraint, so a call asking for fine or refined balance
+alone takes this path and comes back certified:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{cardinality_match(left, right, vars, fine = "region")
+}\if{html}{\out{</div>}}
+
+Linear moment constraints -- a bound on a standardized or mean difference --
+cut across the network and are dualized instead. Their multipliers are
+updated per node, the Lagrangian value bounds the subtree, and the search
+branches on unit inclusion until the bound meets the incumbent or a budget
+runs out. A finite \code{max_std_diff} states one such constraint per variable
+and per direction, so it is what moves a call onto this path, and
+\code{node_limit} and \code{time_limit} are what end it when the bound does not close.
+The report says which happened: \code{certified} is \code{TRUE} only when the search
+settled and the gap is zero, and \code{gap} says how many matched units separate
+the answer from the bound when it is not.
+
+How long the search runs depends on whether the moment bounds bind. When the
+distance-minimizing match already satisfies them, which happens with a loose
+bound or with a \code{right} pool large enough that the closest partners are
+already balanced, the root node certifies and the call returns in
+milliseconds. When they bind, every node costs a flow solve, and although
+the root enters a feasible incumbent before the first node is opened, the
+bound above it closes slowly, so a call can spend its whole budget and still
+report a gap. Set \code{node_limit} and
+\code{time_limit} to a budget you are willing to spend, and read \code{stopped_on} and
+\code{gap} to see what the budget bought.
+
+The objective is lexicographic. Matched cardinality comes first, total
+distance second, so a pair is never added at the cost of a match and never
+dropped to shorten one.
+
+\code{engine = "heuristic"} runs a pruning loop instead: a full match, then
+repeated deletion of the pairs carrying the worst variable's imbalance. Its
+properties follow from the loop. It starts from a full match and deletes
+pairs, and never re-adds one, so it cannot recover from an over-aggressive
+deletion. It never maximizes cardinality, it only shrinks a starting match.
+It considers one variable per iteration, the current worst, so balance on
+the others is incidental. It computes no bound, so it cannot say how far its
+answer sits from the largest balanced sample; \code{best_possible} and \code{gap} are
+\code{NA} and \code{certified} is \code{FALSE}.
 }
 \examples{
 set.seed(42)
-left <- data.frame(id = 1:20, x = rnorm(20, 0, 1), y = rnorm(20, 0, 1))
-right <- data.frame(id = 21:50, x = rnorm(30, 0.5, 1), y = rnorm(30, 0.3, 1))
-result <- cardinality_match(left, right, vars = c("x", "y"), max_std_diff = 0.2)
-print(result)
+left <- data.frame(id = 1:20, x = rnorm(20), y = rnorm(20),
+                   region = rep(c("A", "B"), length.out = 20))
+right <- data.frame(id = 21:50, x = rnorm(30, 0.5), y = rnorm(30, 0.3),
+                    region = rep(c("A", "B"), length.out = 30))
 
+# Exact fine balance on region, no moment constraint: one flow solve,
+# answered with a certificate.
+fit <- cardinality_match(left, right, vars = c("x", "y"),
+                         fine = "region")
+fit$cardinality
+
+# A standardized-difference bound as well: the same match, searched by
+# branch and bound under a small node budget.
+bb <- cardinality_match(left, right, vars = c("x", "y"),
+                        fine = "region", max_std_diff = 0.1,
+                        node_limit = 25L)
+bb$cardinality
+
+}
+\references{
+Zubizarreta, J. R. (2012). Using mixed integer programming for matching in
+an observational study of kidney failure after surgery. \emph{Journal of the
+American Statistical Association}, 107(500), 1360-1371.
+
+Rosenbaum, P. R., Ross, R. N. and Silber, J. H. (2007). Minimum distance
+matched sampling with fine balance in an observational study of treatment
+for ovarian cancer. \emph{Journal of the American Statistical Association},
+102(477), 75-83.
+
+Pimentel, S. D., Kelz, R. R., Silber, J. H. and Rosenbaum, P. R. (2015).
+Large, sparse optimal matching with refined covariate balance in an
+observational study of the health outcomes produced by new surgeons.
+\emph{Journal of the American Statistical Association}, 110(510), 515-527.
+}
+\seealso{
+\code{\link[=match_couples]{match_couples()}} for distance-minimizing matching,
+\code{\link[=balance_diagnostics]{balance_diagnostics()}} for reading balance off any matched sample.
 }

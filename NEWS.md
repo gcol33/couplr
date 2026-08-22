@@ -32,6 +32,39 @@
   both in the potential update, both masked by a defensive clamp. Reading the
   solver's own state is what removes the class.
 
+* **`cardinality_match()` maximizes matched cardinality subject to balance
+  constraints and reports an optimality gap** (#30). The matched sample now
+  comes back beside the largest sample the stated constraints admit, in
+  `result$cardinality`: `n_matched`, `best_possible`, `gap`, `gap_fraction`,
+  `certified`, `stopped_on`, and the state of every constraint the match was
+  asked to meet. Total distance remains the objective, ordered after
+  cardinality.
+
+  Fine and refined covariate balance are stated with the new `fine` and
+  `refined` arguments and are represented in the matching network, so
+  `max_std_diff = Inf` reaches a single min-cost flow solve that returns the
+  largest balanced sample with a dual certificate at polynomial cost. Linear
+  moment constraints -- a finite `max_std_diff`, or an explicit `moments` --
+  are dualized and searched by branch and bound under `node_limit` and
+  `time_limit`. `engine` names the solver directly, and refuses an argument the
+  named engine would not read.
+
+  `max_std_diff` now defaults to `Inf` rather than `0.1`, so a call states a
+  moment constraint only when it asks for one, and a call that states balance
+  through `fine` or `refined` alone is answered certified. A caller relying on
+  the previous default reaches it with `max_std_diff = 0.1`. `time_limit`
+  defaults to 30 seconds.
+
+  `engine = "heuristic"` runs the pruning loop: a full match, then repeated
+  deletion of the pairs carrying the worst variable's imbalance. It carries
+  `info$pruning_iterations` and `info$pairs_removed`, which are now heuristic
+  only, and reports `best_possible` and `gap` as `NA` with
+  `certified = FALSE`, since the loop derives no bound.
+
+  `left_id` and `right_id` are read through the same path as every other entry
+  point, so the pairs a match with no `id` column produces are keyed on the
+  values the rest of the package joins them by.
+
 ## Improvements
 
 * Euclidean and squared-Euclidean distances are summed one dimension at a time

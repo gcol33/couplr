@@ -1,64 +1,86 @@
-## Release notes (1.6.0)
+## Release notes (1.6.1)
 
-This release supersedes 1.5.5, the version currently on CRAN.
+This release supersedes 1.5.3, the version currently on CRAN. Versions 1.5.4,
+1.5.5 and 1.6.0 were published on GitHub and never submitted, so their changes
+are collected here as well.
 
 ### New features
 
-* `verify_assignment()` checks an assignment against the optimality conditions
-  and reports which of them hold: primal feasibility, dual feasibility, and
-  complementary slackness on both matched arcs and unmatched columns.
-  `certified_optimal` is `TRUE` only when every one of them holds. Dual
-  feasibility is tested over every admissible pair, so duals that certify
-  nothing fail the check rather than pass it.
+* `memory_mode = "implicit"` solves an assignment by generating the pairs it
+  needs, on `assignment()` and `match_couples()`. Every row starts with its
+  nearest admissible partners, that sparse problem is solved by the flow model,
+  and the pairs left out are priced against the duals it returns until none
+  prices in. The duals then certify the sparse solution optimal for the
+  complete problem, which is how the answer matches a dense solve on every
+  problem small enough to run both.
 
-* `assignment()` gained a `cardinality` argument, with `"maximum"` and
-  `"fixed"` alongside the previous behaviour, now named `"complete"`. All
-  three are solved exactly by the same solver: dummy columns are appended,
-  priced so that the solver's own optimum is the requested objective.
+* `match_path()` solves a matching per value of one argument as one sequence.
+  `vary = "max_distance"` sweeps the distance cut over ascending values, each
+  point resuming from the matching the point before it found. It returns a
+  `couplr_path` carrying one row per point and the certificate for each.
 
-* `explain_dispatch()` reports which solver `method = "auto"` selects and why,
-  without solving. The dispatch rules moved out of the branch chain in
-  `assignment()` into one ordered table that both the dispatch and the report
-  read. Dispatch decisions themselves are unchanged.
+* `cardinality_match()` maximizes matched cardinality subject to balance
+  constraints and reports an optimality gap. Fine and refined covariate balance
+  are represented in the matching network; moment constraints are dualized and
+  searched by branch and bound under `node_limit` and `time_limit`.
 
-* `solver_status_values()` gives the closed set of values `status` can take. A
-  status outside the set is now an error at the point a result is constructed.
-  `match_couples()` and `full_match()` results carry a `status` from the same
-  vocabulary.
+* `method = "push_relabel"` runs cost-scaling push-relabel (Goldberg and
+  Tarjan 1990) on the compiled flow problem. The value previously dispatched to
+  successive shortest paths with Johnson potentials.
+
+* `verify_assignment()`, `explain_dispatch()`, `solver_status_values()` and a
+  `cardinality` argument on `assignment()` (from 1.6.0).
+
+* `assignment_duals()` gained `certify` and reads a lazy cost specification.
 
 ### Bug fixes
 
-* The min-cost flow search no longer runs forever on a cost matrix with many
-  tied entries. The two directions of one residual arc are priced by
-  expressions that are negatives of each other in exact arithmetic and not in
-  floating point, so both could round below zero at once and form a
-  negative-reduced-cost cycle for the search to circle. It was reachable from
-  `match_couples()` with default arguments.
+* `method = "gabow_tarjan"` returns the optimum on rectangular problems, and
+  takes its integer scale from the range the sentinel leaves. The previous
+  conversion placed the largest magnitude at 1e6, so an instance carrying one
+  large entry among small ones could come back above the optimum while
+  reporting that it was optimal.
 
-* `status` is computed from what the solver terminated on instead of being
-  assigned as a literal. `network_simplex` now reports `"iteration_limit"`
-  when the pivot cap ends the loop with an improving arc still available, and
-  decides infeasibility from Hall's condition before the loop rather than from
-  unmatched rows after it. `full_match()` no longer reports `"optimal"` for
-  results that are not, and every unit now appears in exactly one of `groups`
-  and `unmatched`.
+* Every reader drops a pair the optimum was forced onto a forbidden edge, so a
+  cost at or above `BIG_COST` is read as no edge everywhere in the package.
 
-* Constrained matching is optimal instead of greedy. When calipers,
-  `max_distance` or explicit forbidden pairs left the admissible graph without
-  a complete matching, `match_couples()` returned a greedy matching while still
-  reporting the optimal solver that had been asked for. It now reaches the
-  lexicographic optimum -- most admissible pairs first, then least total
-  distance -- by replacing forbidden entries with a finite sentinel and
-  dropping the pairs that come back on one.
+* Every reader in the matching layer joins on the id column. Columns had been
+  attached by row order in five places, two of which scrambled what they
+  attached. Duplicated ids are rejected at extraction.
 
-### Documentation
+* `verify_flow()`'s per-arc tolerance scales with the numbers behind the
+  reduced cost, so an exactly optimal flow no longer fails its own certificate
+  on rounding.
 
-* `?assignment`, `?verify_assignment` and `?explain_dispatch` state the
-  dispatch rules and the certificate's conditions rather than summarising them.
+* `time_limit` reaches the flow solver, which asks between augmentations and
+  returns the new status `"interrupted"`. Ctrl+C raises an R interrupt
+  condition from inside the solve.
+
+* A matching's status is derived from what the design asked for, which covers
+  the k:1 and with-replacement designs.
+
+* `get_free_ram_mb()` reads the page size from `vm_stat` rather than assuming
+  4096 bytes, so Apple Silicon no longer sees a quarter of its memory (1.5.4).
+
+* `method = "auto"` selects a solver from one C++ pass over the cost matrix
+  instead of several full-size temporaries (1.5.5). Dispatch decisions are
+  unchanged.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+The note is the incoming-feasibility one, reporting seven updates in the past
+six months. 1.5.3 is the last version that reached CRAN; 1.5.4, 1.5.5 and 1.6.0
+went to GitHub only, and this submission collects them. It carries corrections
+to results the package returned without saying they were wrong: matched data
+assembled by row order rather than by id, `method = "gabow_tarjan"` returning a
+matching above the optimum on rectangular problems and on wide cost ranges
+while reporting it optimal, and a status of "optimal" on matchings that placed
+a forbidden pair. I intend to leave a longer gap after this one.
+
+`methods` has been dropped from Imports, which clears the unused-import note
+1.5.3 carried.
 
 ## Test environments
 

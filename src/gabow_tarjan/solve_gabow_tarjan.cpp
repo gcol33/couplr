@@ -2,7 +2,8 @@
 // Gabow-Tarjan LAP solver implementation with R interface
 
 #include <Rcpp.h>
-#include <cmath>                // for std::abs, std::round, std::llround, std::fabs
+#include <cmath>                // for std::round, std::llround, std::fabs
+#include <string>
 #include <algorithm>
 #include <limits>
 #include "utils_gabow_tarjan.h"
@@ -98,25 +99,33 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
     
     // Convert R matrix to C++ cost matrix with integer costs
     CostMatrix cost_matrix(n, std::vector<long long>(m));
-    
-    // Scaling factor for floating-point → integer
-    double scale_factor = 1.0;
-    
-    // Detect whether all finite costs are (near) integers
+
+    // Maximization is minimization of the negated costs. The negation is exact
+    // in floating point, so it happens before anything is measured and comes
+    // back out of the duals at the end.
+    const double sign = maximize ? -1.0 : 1.0;
+
+    // Range of the costs the solver will see, and whether they are all (near)
+    // integers. A forbidden pair carries the sentinel rather than a cost and
+    // takes part in neither.
     bool all_integer = true;
-    
-    // Find max absolute value for potential scaling
-    double max_abs = 0.0;
+    bool any_finite = false;
+    double lo = 0.0;
+    double hi = 0.0;
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             double val = cost(i, j);
             if (!R_finite(val)) continue;
-            
-            double abs_val = std::abs(val);
-            if (abs_val > max_abs) {
-                max_abs = abs_val;
+            val *= sign;
+
+            if (!any_finite) {
+                lo = hi = val;
+                any_finite = true;
+            } else {
+                if (val < lo) lo = val;
+                if (val > hi) hi = val;
             }
-            
+
             // Check if val is almost an integer
             double rounded = std::round(val);
             if (std::fabs(val - rounded) > 1e-9) {
@@ -124,68 +133,84 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
             }
         }
     }
-    
-    // Only scale when we actually have non-integer costs
-    if (!all_integer && max_abs > 0.0 && max_abs < 1e6) {
-        // scale so max ≈ 1e6
-        scale_factor = 1e6 / max_abs;
+
+    // K is the multiplier that separates the optimum from any 1-optimal
+    // matching: the instance's own size plus one on a square problem, and twice
+    // the short side plus one on a rectangular one, where the dummy side is one
+    // row of the capacity of the padding.
+    const int short_side = (n < m) ? n : m;
+    const long long multiplier =
+        (n == m) ? (static_cast<long long>(n) + 1)
+                 : (2LL * static_cast<long long>(short_side) + 1);
+
+    // Costs enter the solver shifted to start at zero. Every matching the
+    // solver may return covers the same number of pairs, min(n, m) real ones
+    // with the dummy row holding the remaining columns for nothing, so one
+    // constant subtracted from every cost moves every candidate by the same
+    // amount and leaves the optimum where it was. Shifting here rather than
+    // relying on the inner shift, which only pulls costs up to zero, means the
+    // fixed-point scale below has the whole span of the costs to work with
+    // instead of their distance from the origin.
+    double shift = any_finite ? lo : 0.0;
+    if (all_integer) shift = std::round(shift);
+    const double range = any_finite ? (hi - lo) : 0.0;
+
+    // The inner routine forms K * (c - min_c) in long long and reads any value
+    // at or above BIG_INT (1e15) as a forbidden edge. It then works with
+    // reduced costs c - y_u - y_v and with sums of those along augmenting
+    // paths, which stay within a small multiple of that product. The integer
+    // costs handed to it therefore have to satisfy
+    //
+    //     K * (c_hi - c_lo) <= BIG_INT / 8,
+    //
+    // which holds every scaled cost clear of the sentinel and leaves the
+    // multiple and the path sums inside 64-bit: at the limit an instance of
+    // 10^4 units sums to 4e18 against an LLONG_MAX of 9.2e18. Costs that get
+    // scaled are placed an order further in, so the conversion never lands on
+    // the boundary; costs used as they are have to meet the bound themselves.
+    constexpr long long REPRESENTABLE_PRODUCT = BIG_INT / 8;
+    constexpr long long SCALED_PRODUCT = BIG_INT / 100;
+    const double mult_d = static_cast<double>(multiplier);
+    const double representable_span =
+        static_cast<double>(REPRESENTABLE_PRODUCT) / mult_d;
+    const double scaled_span = static_cast<double>(SCALED_PRODUCT) / mult_d;
+
+    // Scaling factor for floating-point → integer
+    double scale_factor = 1.0;
+
+    if (all_integer) {
+        // Integer costs go in as they are, so the bound is a property of the
+        // input and no scale can arrange it.
+        if (range > representable_span) {
+            Rcpp::stop("gabow_tarjan: integer cost range (" +
+                       std::to_string(range) + ") exceeds what bit-scaling can "
+                       "represent on a " + std::to_string(n) + " x " +
+                       std::to_string(m) + " instance (limit " +
+                       std::to_string(representable_span) + "); use method = "
+                       "'jv' or 'auction'.");
+        }
+    } else if (range > 0.0) {
+        scale_factor = scaled_span / range;
+        // The product scale_factor * range is scaled_span by construction; the
+        // factor itself is what leaves the double range when the costs are
+        // spread over a span far below one.
+        constexpr double MAX_SCALE = 1e300;
+        if (!(scale_factor <= MAX_SCALE)) scale_factor = MAX_SCALE;
     }
-    
+
     // Fill integer cost matrix (with rounding, not truncation)
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             double val = cost(i, j);
             if (R_finite(val)) {
-                double scaled = val;
-                
-                // Only apply scale_factor for non-integer matrices
-                if (!all_integer) {
-                    scaled *= scale_factor;
-                }
-                
-                // Proper rounding to nearest integer
-                long long int_cost = static_cast<long long>(std::llround(scaled));
-                
-                // Negate for maximization if needed
-                if (maximize) {
-                    int_cost = -int_cost;
-                }
-                
-                cost_matrix[i][j] = int_cost;
+                // The shift puts the finite costs on [0, range] and the scale
+                // holds the product inside the bound above, so llround has a
+                // value it can hold. An all-integer matrix keeps the scale at
+                // one and the shift at an integer, so its costs stay exact.
+                cost_matrix[i][j] =
+                    std::llround(scale_factor * (val * sign - shift));
             } else {
                 cost_matrix[i][j] = BIG_INT; // forbidden
-            }
-        }
-    }
-
-    // Guard the bit-scaling arithmetic against overflow / sentinel collision.
-    // The inner routine forms (n+1) * (c - min_c) in long long and uses BIG_INT
-    // (1e15) as the forbidden marker. A finite scaled cost reaching that
-    // magnitude would be silently treated as forbidden, and the (n+1) product
-    // can exceed LLONG_MAX at extreme scale -- both would yield a wrong
-    // "optimal" with no error. Reject such inputs with a clear message instead.
-    {
-        long long lo = 0, hi = 0;
-        bool any_finite = false;
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                long long c = cost_matrix[i][j];
-                if (c >= BIG_INT) continue;  // forbidden sentinel
-                if (!any_finite) { lo = hi = c; any_finite = true; }
-                else { if (c < lo) lo = c; if (c > hi) hi = c; }
-            }
-        }
-        if (any_finite) {
-            if (hi >= BIG_INT || lo <= -BIG_INT) {
-                Rcpp::stop("gabow_tarjan: cost magnitudes collide with the "
-                           "forbidden sentinel (>= 1e15); use method = 'jv' or "
-                           "'auction'.");
-            }
-            long long range = hi - lo;
-            if (range > 0 &&
-                range > std::numeric_limits<long long>::max() / static_cast<long long>(n + 1)) {
-                Rcpp::stop("gabow_tarjan: cost range too large for bit-scaling "
-                           "(overflows 64-bit); use method = 'jv' or 'auction'.");
             }
         }
     }
@@ -232,15 +257,22 @@ Rcpp::List solve_gabow_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize) {
         }
     }
 
-    // Convert duals back to original scale
+    // Convert duals back to original scale. The shift returns on the side that
+    // holds exactly one pair per unit, which is the short one: adding it there
+    // keeps u_i + v_j = c_ij on the pairs where it was tight, and leaves the
+    // long side's sign condition, v_j <= 0 on a column no unit was paired with,
+    // where the solver put it.
+    const bool rows_are_short = (n <= m);
+    const double u_shift = rows_are_short ? shift : 0.0;
+    const double v_shift = rows_are_short ? 0.0 : shift;
     Rcpp::NumericVector u_R(n);
     Rcpp::NumericVector v_R(m);
     for (int i = 0; i < n; ++i) {
-        double val = static_cast<double>(y_u[i]) / scale_factor;
+        double val = static_cast<double>(y_u[i]) / scale_factor + u_shift;
         u_R[i] = maximize ? -val : val;
     }
     for (int j = 0; j < m; ++j) {
-        double val = static_cast<double>(y_v[j]) / scale_factor;
+        double val = static_cast<double>(y_v[j]) / scale_factor + v_shift;
         v_R[j] = maximize ? -val : val;
     }
     

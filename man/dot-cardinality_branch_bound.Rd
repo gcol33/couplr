@@ -48,7 +48,9 @@ bound that is valid for the whole problem, never with an unproven claim of
 optimality.
 }
 \details{
-A single \code{.flow_solve()} is not interruptible, so \code{time_limit} is checked
-between nodes and is only as responsive as one solve of the network.
+\code{time_limit} reaches the solver. A solve that runs out of budget stops
+between augmentations and comes back saying so, and the node it belonged to
+goes back on the frontier unopened, so the bound the search reports still
+covers the whole tree.
 }
 \keyword{internal}

@@ -29,6 +29,10 @@
 #'     not a proof of optimality.}
 #'   \item{`"iteration_limit"`}{The solver stopped on an iteration cap rather
 #'     than on optimality. The solution is feasible; its optimality is unproven.}
+#'   \item{`"interrupted"`}{The solver stopped on a time budget or a user
+#'     interrupt, part way through. What it had placed respects every capacity,
+#'     and is short of what the problem asked it to place, so it is neither an
+#'     answer nor evidence that no answer exists.}
 #'   \item{`"heuristic"`}{Produced by a heuristic. Optimality is neither claimed
 #'     nor checked.}
 #' }
@@ -43,7 +47,7 @@
 #' @export
 solver_status_values <- function() {
   c("optimal", "partial", "infeasible", "eps_optimal",
-    "iteration_limit", "heuristic")
+    "iteration_limit", "interrupted", "heuristic")
 }
 
 # Reject anything outside the vocabulary at the point of construction, so an

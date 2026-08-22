@@ -322,3 +322,145 @@ test_that("full_match carries the certificate of the flow it actually solved", {
   expect_true(result$certificate$primal_feasible)
   expect_equal(result$certificate$duality_gap, 0, tolerance = 1e-9)
 })
+
+# --- warm starts --------------------------------------------------------------
+#
+# A warm start is a starting point, never an answer: what it may change is how
+# many augmentations a solve takes, and what it may not change is what the solve
+# returns. Every test here compares a warm solve against the cold solve of the
+# same problem and asserts the two agree.
+
+# A network wide enough that a warm start has something to save: 40 rows and 40
+# columns over a random cost matrix, compiled the way the balance designs
+# compile.
+flow_wide_fixture <- function(seed = 7L, n = 40L) {
+  set.seed(seed)
+  n_nodes <- 2 * n + 2
+  rows <- seq_len(n)
+  cols <- seq_len(n)
+  arcs <- data.frame(
+    tail  = c(rep(1, n), rep(1 + rows, each = n), 1 + n + cols),
+    head  = c(1 + rows, rep(1 + n + cols, times = n), rep(2 + 2 * n, n)),
+    lower = 0,
+    upper = 1,
+    cost  = c(rep(0, n), round(stats::runif(n * n, 0, 10), 3), rep(0, n))
+  )
+  list(n_nodes = n_nodes,
+       supply = c(n, rep(0, 2 * n), -n),
+       arcs = arcs)
+}
+
+test_that("a warm start returns the cold answer", {
+  prob <- flow_wide_fixture()
+  cold <- couplr:::.flow_solve(prob)
+
+  warm <- couplr:::.flow_solve(prob, warm_flow = cold$flow,
+                               warm_potential = cold$potential)
+
+  expect_identical(warm$status, "optimal")
+  expect_equal(warm$total_cost, cold$total_cost)
+  expect_equal(warm$flow, cold$flow)
+  expect_true(verify_flow(warm)$certified_optimal)
+  # Started from its own optimum, the solve has nothing left to augment.
+  expect_identical(warm$n_augmentations, 0)
+})
+
+test_that("a warm start from another cost vector still lands on the optimum", {
+  prob <- flow_wide_fixture(seed = 9L)
+  other <- prob
+  other$arcs$cost <- rev(prob$arcs$cost)
+  stale <- couplr:::.flow_solve(other)
+
+  cold <- couplr:::.flow_solve(prob)
+  warm <- couplr:::.flow_solve(prob, warm_flow = stale$flow,
+                               warm_potential = stale$potential)
+
+  expect_identical(warm$status, "optimal")
+  expect_equal(warm$total_cost, cold$total_cost)
+  expect_true(verify_flow(warm)$certified_optimal)
+})
+
+test_that("either half of a warm start is enough on its own", {
+  prob <- flow_wide_fixture(seed = 11L)
+  cold <- couplr:::.flow_solve(prob)
+
+  flow_only <- couplr:::.flow_solve(prob, warm_flow = cold$flow)
+  pot_only <- couplr:::.flow_solve(prob, warm_potential = cold$potential)
+
+  for (res in list(flow_only, pot_only)) {
+    expect_identical(res$status, "optimal")
+    expect_equal(res$total_cost, cold$total_cost)
+    expect_true(verify_flow(res)$certified_optimal)
+  }
+})
+
+test_that("a warm start of the wrong shape is named in the caller's terms", {
+  prob <- flow_fixture()
+
+  expect_error(couplr:::.flow_solve(prob, warm_flow = c(1, 2)),
+               "`warm_flow` has length 2")
+  expect_error(couplr:::.flow_solve(prob, warm_potential = c(0, 0)),
+               "`warm_potential` has length 2")
+  expect_error(couplr:::.flow_solve(prob, warm_flow = rep(NA_real_, 4)),
+               "must not contain NA")
+  expect_error(couplr:::.flow_solve(prob, warm_flow = c(0, 0, 0, 0.5)),
+               "not a whole number")
+  # A flow above an arc's capacity is a different problem's flow, not a start.
+  expect_error(couplr:::.flow_solve(prob, warm_flow = c(9, 0, 0, 0)),
+               "outside its bounds")
+})
+
+test_that("a warm start agrees with the cold answer across instances", {
+  for (seed in 21:32) {
+    prob <- flow_wide_fixture(seed = seed, n = 25L)
+    cold <- couplr:::.flow_solve(prob)
+    shifted <- prob
+    shifted$arcs$cost <- prob$arcs$cost + round(stats::runif(nrow(prob$arcs)), 3)
+    moved_cold <- couplr:::.flow_solve(shifted)
+    moved_warm <- couplr:::.flow_solve(shifted, warm_flow = cold$flow,
+                                       warm_potential = cold$potential)
+
+    expect_equal(moved_warm$total_cost, moved_cold$total_cost)
+    expect_true(verify_flow(moved_warm)$certified_optimal)
+  }
+})
+
+# --- time budgets -------------------------------------------------------------
+
+test_that("a spent budget stops the solve and says so", {
+  prob <- flow_wide_fixture(seed = 13L)
+  stopped <- couplr:::.flow_solve(prob, time_limit = 0)
+
+  expect_identical(stopped$status, "interrupted")
+  expect_true("interrupted" %in% solver_status_values())
+  expect_lt(stopped$flow_sent, stopped$flow_required)
+  # It is not an answer and it is not evidence that no answer exists.
+  expect_false(verify_flow(stopped)$certified_optimal)
+  expect_identical(couplr:::.flow_solve(prob)$status, "optimal")
+})
+
+test_that("an interrupted flow still respects every arc bound", {
+  prob <- flow_wide_fixture(seed = 15L)
+  stopped <- couplr:::.flow_solve(prob, time_limit = 0)
+
+  expect_length(stopped$flow, nrow(prob$arcs))
+  expect_true(all(stopped$flow >= prob$arcs$lower))
+  expect_true(all(stopped$flow <= prob$arcs$upper))
+  expect_length(stopped$potential, prob$n_nodes)
+})
+
+test_that("a budget the solve fits inside changes nothing", {
+  prob <- flow_wide_fixture(seed = 17L)
+  cold <- couplr:::.flow_solve(prob)
+  budgeted <- couplr:::.flow_solve(prob, time_limit = 60)
+
+  expect_identical(budgeted$status, "optimal")
+  expect_equal(budgeted$total_cost, cold$total_cost)
+})
+
+test_that("a time limit is checked in the caller's terms", {
+  expect_error(couplr:::.flow_solve(flow_fixture(), time_limit = -1),
+               "non-negative")
+  expect_error(couplr:::.flow_solve(flow_fixture(), time_limit = c(1, 2)),
+               "single non-negative")
+})

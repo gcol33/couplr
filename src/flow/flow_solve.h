@@ -14,6 +14,7 @@
 #include "flow_problem.h"
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -39,8 +40,9 @@ struct FlowResult {
     int64_t flow_sent = 0;
     int64_t flow_required = 0;
 
-    // From solver_status_values(): "optimal", "partial", "infeasible" or
-    // "iteration_limit". Derived from the termination state, never asserted.
+    // From solver_status_values(): "optimal", "partial", "infeasible",
+    // "iteration_limit" or "interrupted". Derived from the termination state,
+    // never asserted.
     std::string status = "infeasible";
 
     int64_t n_augmentations = 0;
@@ -109,6 +111,23 @@ struct FlowOptions {
     // Where to write the per-search record. Null asks for none, and costs the
     // solve nothing beyond one null check per augmentation.
     FlowTrace* trace = nullptr;
+
+    // Asked once every `check_every` augmentations, and once per pass of the
+    // starting potential relaxation. Returning true stops the loop where it
+    // stands, and the solve comes back with status "interrupted" carrying the
+    // flow as far as it got: feasible on every arc bound, short of the b-flow
+    // the balances asked for. An empty function is no check at all.
+    //
+    // Stopping and failing are different answers, which is why this returns a
+    // bool rather than throwing. A caller that does want to unwind -- an R
+    // binding turning a user interrupt into an R condition -- throws from
+    // inside the function instead, and the solver is transparent to it.
+    std::function<bool()> should_stop;
+
+    // How many augmentations pass between two calls of should_stop. One
+    // augmentation is one Dijkstra over the residual graph, so the cadence
+    // trades responsiveness against the cost of the call itself.
+    int64_t check_every = 32;
 };
 
 // Solve `prob`, expanding its blocks in place if that has not happened yet.

@@ -88,7 +88,10 @@ automatically (default: FALSE).}
 \item{left_id, right_id}{Name of the id column on each side. When absent, ids
 come from an \code{id} column, from row names, or are synthesized.}
 
-\item{time_limit}{Seconds the search may run (default: 30).}
+\item{time_limit}{Seconds the search may run (default: 30). The budget
+reaches the flow solver, so a solve in flight stops between augmentations
+rather than running to completion, and the node it belonged to is left
+unopened so the reported bound still covers the whole tree.}
 
 \item{node_limit}{Nodes the search may open (default: 500).}
 
@@ -146,7 +149,9 @@ and per direction, so it is what moves a call onto this path, and
 \code{node_limit} and \code{time_limit} are what end it when the bound does not close.
 The report says which happened: \code{certified} is \code{TRUE} only when the search
 settled and the gap is zero, and \code{gap} says how many matched units separate
-the answer from the bound when it is not.
+the answer from the bound when it is not. Every stopping path returns a
+matched set that satisfies every stated constraint, together with a bound
+valid for the whole problem.
 
 How long the search runs depends on whether the moment bounds bind. When the
 distance-minimizing match already satisfies them, which happens with a loose

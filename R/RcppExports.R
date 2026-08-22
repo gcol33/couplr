@@ -141,8 +141,8 @@ lap_solve_network_simplex <- function(cost) {
     .Call(`_couplr_lap_solve_network_simplex`, cost)
 }
 
-lap_flow_solve <- function(n_nodes, supply, tail, head, lower, upper, cost, tol = 1e-12, relax_eps = 1e-18, max_augmentations = 0.0, return_potentials = TRUE) {
-    .Call(`_couplr_lap_flow_solve`, n_nodes, supply, tail, head, lower, upper, cost, tol, relax_eps, max_augmentations, return_potentials)
+lap_flow_solve <- function(n_nodes, supply, tail, head, lower, upper, cost, warm_flow, warm_potential, time_limit, tol = 1e-12, relax_eps = 1e-18, max_augmentations = 0.0, return_potentials = TRUE) {
+    .Call(`_couplr_lap_flow_solve`, n_nodes, supply, tail, head, lower, upper, cost, warm_flow, warm_potential, time_limit, tol, relax_eps, max_augmentations, return_potentials)
 }
 
 lap_flow_certify <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol) {

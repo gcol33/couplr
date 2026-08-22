@@ -483,8 +483,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_flow_solve
-Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply, Rcpp::IntegerVector tail, Rcpp::IntegerVector head, Rcpp::NumericVector lower, Rcpp::NumericVector upper, Rcpp::NumericVector cost, double tol, double relax_eps, double max_augmentations, bool return_potentials);
-RcppExport SEXP _couplr_lap_flow_solve(SEXP n_nodesSEXP, SEXP supplySEXP, SEXP tailSEXP, SEXP headSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP costSEXP, SEXP tolSEXP, SEXP relax_epsSEXP, SEXP max_augmentationsSEXP, SEXP return_potentialsSEXP) {
+Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply, Rcpp::IntegerVector tail, Rcpp::IntegerVector head, Rcpp::NumericVector lower, Rcpp::NumericVector upper, Rcpp::NumericVector cost, Rcpp::NumericVector warm_flow, Rcpp::NumericVector warm_potential, double time_limit, double tol, double relax_eps, double max_augmentations, bool return_potentials);
+RcppExport SEXP _couplr_lap_flow_solve(SEXP n_nodesSEXP, SEXP supplySEXP, SEXP tailSEXP, SEXP headSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP costSEXP, SEXP warm_flowSEXP, SEXP warm_potentialSEXP, SEXP time_limitSEXP, SEXP tolSEXP, SEXP relax_epsSEXP, SEXP max_augmentationsSEXP, SEXP return_potentialsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -495,11 +495,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cost(costSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type warm_flow(warm_flowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type warm_potential(warm_potentialSEXP);
+    Rcpp::traits::input_parameter< double >::type time_limit(time_limitSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type relax_eps(relax_epsSEXP);
     Rcpp::traits::input_parameter< double >::type max_augmentations(max_augmentationsSEXP);
     Rcpp::traits::input_parameter< bool >::type return_potentials(return_potentialsSEXP);
-    rcpp_result_gen = Rcpp::wrap(lap_flow_solve(n_nodes, supply, tail, head, lower, upper, cost, tol, relax_eps, max_augmentations, return_potentials));
+    rcpp_result_gen = Rcpp::wrap(lap_flow_solve(n_nodes, supply, tail, head, lower, upper, cost, warm_flow, warm_potential, time_limit, tol, relax_eps, max_augmentations, return_potentials));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -946,7 +949,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_jv_duals", (DL_FUNC) &_couplr_lap_solve_jv_duals, 2},
     {"_couplr_cpp_lap_solve_jv_duals_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_duals_lazy, 8},
     {"_couplr_lap_solve_network_simplex", (DL_FUNC) &_couplr_lap_solve_network_simplex, 1},
-    {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 11},
+    {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 14},
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
     {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},
     {"_couplr_lap_flow_compile_couples", (DL_FUNC) &_couplr_lap_flow_compile_couples, 4},

@@ -75,7 +75,10 @@ Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List flow_solve_impl(int n_nodes, Rcpp::NumericVector supply,
                            Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
                            Rcpp::NumericVector lower, Rcpp::NumericVector upper,
-                           Rcpp::NumericVector cost, double tol, double relax_eps,
+                           Rcpp::NumericVector cost,
+                           Rcpp::NumericVector warm_flow,
+                           Rcpp::NumericVector warm_potential,
+                           double time_limit, double tol, double relax_eps,
                            double max_augmentations, bool return_potentials);
 Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
@@ -397,11 +400,15 @@ Rcpp::List lap_solve_network_simplex(Rcpp::NumericMatrix cost) {
 Rcpp::List lap_flow_solve(int n_nodes, Rcpp::NumericVector supply,
                           Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
                           Rcpp::NumericVector lower, Rcpp::NumericVector upper,
-                          Rcpp::NumericVector cost, double tol = 1e-12,
+                          Rcpp::NumericVector cost,
+                          Rcpp::NumericVector warm_flow,
+                          Rcpp::NumericVector warm_potential,
+                          double time_limit, double tol = 1e-12,
                           double relax_eps = 1e-18, double max_augmentations = 0.0,
                           bool return_potentials = true) {
-  return flow_solve_impl(n_nodes, supply, tail, head, lower, upper, cost, tol,
-                         relax_eps, max_augmentations, return_potentials);
+  return flow_solve_impl(n_nodes, supply, tail, head, lower, upper, cost,
+                         warm_flow, warm_potential, time_limit, tol, relax_eps,
+                         max_augmentations, return_potentials);
 }
 
 // [[Rcpp::export]]

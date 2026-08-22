@@ -157,11 +157,53 @@ print.couplr_flow_problem <- function(x, ...) {
   invisible(x)
 }
 
+# A warm start is aligned to the arc array of the problem it is handed to, and
+# is only ever a starting point: the solver restores complementary slackness
+# against the potentials before the first search, so a flow that no longer
+# satisfies conservation costs augmentations rather than correctness. What it
+# may not do is sit outside an arc bound, which is a shape error and not a
+# starting point at all.
+.flow_warm <- function(x, n, what) {
+  if (is.null(x)) return(numeric(0))
+  x <- as.numeric(x)
+  if (!length(x)) return(numeric(0))
+  if (length(x) != n) {
+    stop("`", what, "` has length ", length(x), " but the problem has ", n,
+         if (identical(what, "warm_flow")) " arcs." else " nodes.",
+         call. = FALSE)
+  }
+  if (anyNA(x)) {
+    stop("`", what, "` must not contain NA.", call. = FALSE)
+  }
+  x
+}
+
 # Solve a flow problem and keep the problem with the answer, so the flow, the
 # potentials and the network they belong to travel together to the certificate.
+#
+# `warm_flow` and `warm_potential` start the solve from a known point instead of
+# from the arc lower bounds and a relaxation pass. They are what makes a
+# sequence of solves over one network cheap: a repricing moves the costs and
+# leaves the topology, and an arc-bound edit moves one bound, so the previous
+# answer is a near-optimal dual for the next problem. Both default to empty,
+# which is the cold solve.
+#
+# `time_limit` bounds this one solve in seconds. The solver checks it between
+# augmentations, so a solve that runs out comes back with status "interrupted",
+# a flow inside every arc bound, and no claim about the problem. A user
+# interrupt is checked at the same points and raises an R interrupt condition
+# rather than returning, since a caller asking to stop is not asking for a
+# partial answer.
 .flow_solve <- function(problem, tol = 1e-12, relax_eps = 1e-18,
-                        max_augmentations = 0, return_potentials = TRUE) {
+                        max_augmentations = 0, return_potentials = TRUE,
+                        warm_flow = NULL, warm_potential = NULL,
+                        time_limit = Inf) {
   problem <- .as_flow_problem(problem)
+  if (!is.numeric(time_limit) || length(time_limit) != 1L ||
+      is.na(time_limit) || time_limit < 0) {
+    stop("`time_limit` must be a single non-negative number of seconds, or ",
+         "Inf.", call. = FALSE)
+  }
   res <- lap_flow_solve(problem$n_nodes, problem$supply,
                         problem$arcs$tail, problem$arcs$head,
                         problem$arcs$lower, problem$arcs$upper,
@@ -169,7 +211,13 @@ print.couplr_flow_problem <- function(x, ...) {
                         tol = tol, relax_eps = relax_eps,
                         max_augmentations = .flow_count(max_augmentations,
                                                         "max_augmentations"),
-                        return_potentials = return_potentials)
+                        return_potentials = return_potentials,
+                        warm_flow = .flow_warm(warm_flow, nrow(problem$arcs),
+                                               "warm_flow"),
+                        warm_potential = .flow_warm(warm_potential,
+                                                    problem$n_nodes,
+                                                    "warm_potential"),
+                        time_limit = as.numeric(time_limit))
   res$status <- .validate_status(res$status)
   res$problem <- problem
   structure(res, class = "flow_solve_result")

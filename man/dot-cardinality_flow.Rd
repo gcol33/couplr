@@ -11,7 +11,9 @@
   lambda = NULL,
   edits = NULL,
   cost = NULL,
-  tol = 1e-09
+  tol = 1e-09,
+  warm = NULL,
+  time_limit = Inf
 )
 }
 \arguments{
@@ -28,11 +30,20 @@
 \item{cost}{Optional distance matrix for the audit.}
 
 \item{tol}{Numeric tolerance for the certificate.}
+
+\item{warm}{Optional \code{list(flow, potential)} from an earlier solve of the
+same network, used as the solver's starting point.}
+
+\item{time_limit}{Seconds this one solve may run.}
 }
 \value{
 A list with the solve status, the flow and potentials, the
 certificate, the audit, the matched set, the true objective \code{objective}
-and the relaxed objective \code{relaxed} the multipliers price.
+and the relaxed objective \code{relaxed} the multipliers price. A solve that ran
+out of time comes back with status \code{"interrupted"}, its flow and
+potentials, and nothing else: it proved neither an optimum nor the absence
+of one, so certifying and auditing it would be work spent on a number no
+caller may read.
 }
 \description{
 Applies a node's arc bounds and multipliers, solves the network, certifies

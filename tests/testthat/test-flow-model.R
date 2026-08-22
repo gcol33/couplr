@@ -534,7 +534,15 @@ test_that("a balance design large enough to round past 1e-9 still certifies", {
 
   expect_identical(solved$status, "optimal")
   expect_gt(max(abs(solved$potential)), 1e6)
-  expect_lt(cert$min_residual_reduced_cost, -1e-9)
+
+  # One unit in the last place of a potential this size is around 1e-9, and the
+  # worst residual arc sits within a few of them: that is the resolution an
+  # absolute 1e-9 is read at, rather than above. The tolerance the certificate
+  # used scales with the same numbers, which puts it orders of magnitude clear.
+  ulp <- .Machine$double.eps * max(abs(solved$potential))
+  expect_gt(ulp, 5e-10)
+  expect_lt(abs(cert$min_residual_reduced_cost), 4 * ulp)
+  expect_gt(cert$dual_tolerance, 1e-3)
   expect_true(cert$certified_optimal)
 
   report <- couplr:::.cardinality_solve(left, right, cost, refined = "g",

@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-22. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-23. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/`, `dev_notes/phase2/` and `dev_notes/phase3/` for the
 certification layer's, the flow model's and the edge-generation loop's design,
@@ -11,21 +11,21 @@ findings and repros.
 **Phases 0 through 3 are done.** Phase 0's probe returned GO, phase 1 is the
 certification layer, phase 2 is the one internal flow model, and phase 3 is the
 implicit edge-generation loop and the warm-started design path: C0 through C11
-and D1 through D3, all in. The next thing on `roadmap.md` is re-running the
-paper's own benchmark end to end, and after that phase 4, which is section E and
-section I. See "Next action" at the end.
+and D1 through D3, all in. The paper's own benchmark has since been re-run end
+to end on 1.6.1, so phase 3's numbers are paper numbers. What is left on
+`roadmap.md` is the `paper/rjournal/` rewrite and phase 4, which is section E
+and section I. See "Next action" at the end.
 
-**1.6.0 is released on git**, at commit `9c8fbe3` with tag `v1.6.0`.
-`DESCRIPTION` reads 1.6.1, bumped in `2127151`, and 1.6.1 is unreleased and
-untagged. `NEWS.md`'s 1.6.1 section carries every user-visible change since the
-tag; see "What NEWS carries for 1.6.1" at the end.
+**1.6.1 is released.** Tag `v1.6.1` sits on `ac147eb`, which is HEAD, and CRAN
+published 1.6.1 on 2026-08-23 at 00:20 UTC. `NEWS.md`'s 1.6.1 section carries
+every user-visible change since the 1.6.0 tag; see "What NEWS carries for 1.6.1"
+at the end.
 
-**Nothing is staged for CRAN.** `cran-comments.md` describes 1.6.0 while
-`DESCRIPTION` reads 1.6.1, and it opens "This release supersedes 1.5.5, the
-version currently on CRAN". That 1.5.5 figure is carried from an earlier note
-and was not re-checked here, because cran.r-project.org was unreachable from
-this machine. Re-check before relying on it. Note also that 1.5.4 was tagged and
-never submitted, so tag history is not a record of what CRAN has.
+**`cran-comments.md` matches what went in.** It reads 1.6.1 and opens "This
+release supersedes 1.5.3, the version currently on CRAN", which the CRAN version
+history confirms: 1.5.3 was the published version before this one. 1.5.4, 1.5.5
+and 1.6.0 were tagged on git and never submitted, so tag history is not a record
+of what CRAN has.
 
 **No issue is open.** Every issue #2 through #43 is closed; #30, #33, #41, #42
 and #43 closed on 2026-08-22. See "Issues".
@@ -314,10 +314,17 @@ Closed on 2026-08-22:
 
 ## Facts that will bite anyone benchmarking
 
-- **couplr lazy JV takes 104.33 s on beast, not the 68.1 s the paper reports.**
-  The published timings came from the Mac mini (`~/dev/couplr-bench`), which is
-  about 1.5x faster on this single-threaded workload. Re-measure before
-  comparing anything to the paper's table.
+- **couplr lazy JV takes 104.33 s on beast, against the 62.495 s the paper's
+  table now reports at n_total 50,000.** The published timings come from the Mac
+  mini (`~/dev/couplr-bench`), which is about 1.5x faster on this single-threaded
+  workload. Re-measure before comparing anything to the paper's table.
+- **The bench scripts resume from their own CSVs.** Left in place, a table's
+  rows are re-emitted rather than recomputed, which is how the scaling table came
+  to carry MatchIt and optmatch rows from a different day than its couplr rows. A
+  published table is one session: park `benchmark-table.csv`,
+  `scaling-results.csv` and `scaling-lazy-results.csv` before a full re-run.
+  `KEEP_BASELINE_ROWS=1` restores the carry-forward, which is worth about 25
+  minutes while iterating and not for a table that gets published.
 - **couplr's Mahalanobis uses the pooled within-group covariance**
   (`R/matching_distance.R`), not `cov(rbind(left, right))`. Using the stacked
   covariance is a different metric with a different optimum.
@@ -1218,25 +1225,29 @@ so most of what was timed is re-certifying an answer that is already final.
 
 ## Next action
 
-**Phase 3 is done.** C0 through C11 and D1 through D3 are in, the loop has a
-front door, and the last three issues the phase left open closed on 2026-08-22.
-Nothing in `roadmap.md` phase 3 is outstanding.
+**Phase 3 is done and its numbers are paper numbers.** C0 through C11 and D1
+through D3 are in, the loop has a front door, the last three issues the phase
+left open closed on 2026-08-22, and the benchmark re-run this note used to owe
+has happened: run 20260822-191702 on the Mac mini, couplr 1.6.1, all four stages
+exiting 0, with the scaling table re-timed in one session and
+`implicit-results.csv` and `implicit-equivalence.csv` new beside it. Nothing in
+`roadmap.md` phase 3 is outstanding.
 
-**Re-run the paper's own benchmark end to end.** Every phase-3 number so far
-comes from a harness under `dev_notes/phase3/`, which is gitignored and lives on
-this machine only: the D3 sweep ratios, the one-node search's two orders of
-magnitude, the implicit loop's round counts. None of it has been through
-`paper/bench_*.R` on the benchmark the paper reports. Until it has, there are
-phase numbers and no paper numbers, and `roadmap.md` puts the `paper/rjournal/`
-rewrite after phase 3 produces numbers rather than alongside generating them.
+**Rewrite `paper/rjournal/`.** `roadmap.md` put that rewrite after phase 3
+produced paper numbers, and it has. Neither manuscript mentions the loop today:
+`grep -c implicit` returns 0 in both `paper/rjournal/rjournal.Rmd` and
+`paper/paper.md`, so the certified edge generation, the flow model, `match_path()`
+and exact cardinality matching are absent from the article that is meant to carry
+them. `roadmap.md`'s "The paper" section holds the title and the five
+contributions to write to.
 
-Two conditions on that run. It belongs on the Mac mini, in `~/dev/couplr-bench`,
-which is where the paper's timings come from and is about 1.5x faster than beast
-single-threaded, so mixing machines within one table is not an option. And the
-bench scripts resume from their own CSVs, so a full re-run means moving
-`paper/benchmark-table.csv`, `paper/scaling-results.csv` and
-`paper/scaling-lazy-results.csv` aside first; left in place they are re-emitted
-rather than recomputed.
+`paper/rjournal/data/` holds the 1.6.1 tables, except `lalonde-results.csv`. Its
+`n_pairs` and `total_cost` columns are interpolated into the article and the
+1.6.1 re-run did not emit them, because the common-objective scoring block lived
+only in `paper/rjournal/scripts/bench_lalonde.R` while the re-run ran
+`paper/bench_lalonde.R`. The two are one script again, both writing all six
+columns, so the lalonde stage needs one more run on the Mac mini before the
+article quotes that table.
 
 After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
 section I, the benchmark grid.
@@ -1253,8 +1264,22 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-Clean apart from what this note is committed with. `origin/main` and local are
-level at the docs commit this note ships in; the four commits before it are:
+Clean apart from what this note is committed with. `origin/main` and local sit at
+`ac147eb`, which `v1.6.1` tags. The eight commits since the previous note are the
+benchmark re-run and what it turned up:
+
+```
+ac147eb  test   the tolerance case reads the resolution instead of a threshold
+667bd66  test   the projection is tested where it runs
+427c78f  fix    the vignette's matched data comes from the matching it names
+57952f8  bench  the implicit stage regenerates from parked, and the loop repeats
+5d9edf6  bench  the scaling table is one session
+5d76b5f  bench  the paper's numbers are re-measured on 1.6.1
+82b6b71  bench  the arcs built and the distances computed are two different numbers
+f3e18da  bench  the implicit loop is timed against the paths it replaces
+```
+
+The four release commits before those are:
 
 ```
 1dd39ee  fix    the certificate reads a reduced cost at the resolution it has (#43)
@@ -1304,9 +1329,9 @@ scale, the forbidden-pair readers, the derived status and `block_summary`'s
 columns, the join-by-key sweep and the id contract, and the interop verbs
 dispatching on the generics that own them.
 
-What is still owed is `cran-comments.md`, which describes 1.6.0 while
-`DESCRIPTION` reads 1.6.1, and nothing is staged for CRAN. The 1.5.5-on-CRAN
-figure in it is carried from the earlier note and was not re-checked here.
+`cran-comments.md` is written against 1.6.1 and names 1.5.3 as the version it
+supersedes, which is what CRAN's version history shows. 1.6.1 went in on that
+text and was published on 2026-08-23.
 
 ## File map
 

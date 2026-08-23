@@ -1241,13 +1241,19 @@ and exact cardinality matching are absent from the article that is meant to carr
 them. `roadmap.md`'s "The paper" section holds the title and the five
 contributions to write to.
 
-`paper/rjournal/data/` holds the 1.6.1 tables, except `lalonde-results.csv`. Its
-`n_pairs` and `total_cost` columns are interpolated into the article and the
-1.6.1 re-run did not emit them, because the common-objective scoring block lived
-only in `paper/rjournal/scripts/bench_lalonde.R` while the re-run ran
-`paper/bench_lalonde.R`. The two are one script again, both writing all six
-columns, so the lalonde stage needs one more run on the Mac mini before the
-article quotes that table.
+`paper/rjournal/data/` holds the 1.6.1 tables, `lalonde-results.csv` included.
+That one was the last outstanding: its `n_pairs` and `total_cost` columns are
+interpolated into the article and run 20260822-191702 did not emit them, because
+the common-objective scoring block lived only in
+`paper/rjournal/scripts/bench_lalonde.R` while that run called
+`paper/bench_lalonde.R`. The two are one script again, and run
+lalonde-20260823-131433 on the Mac mini re-ran the stage from it, exit 0, with
+all six columns written. The objective it scores is unchanged from the 1.5.5
+table, 185 pairs at 304.042 for couplr against 304.043 for both alternatives, so
+the three interpolations read what they read before. The timings are what moved:
+14.6 ms for couplr, 170.7 for MatchIt, 144 for optmatch, now measured on the same
+machine and the same package build as the scaling table.
+`lalonde-per-covariate.csv` came back byte-identical.
 
 After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
 section I, the benchmark grid.
@@ -1264,11 +1270,15 @@ holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
 
-Clean apart from what this note is committed with. `origin/main` and local sit at
-`ac147eb`, which `v1.6.1` tags. The eight commits since the previous note are the
-benchmark re-run and what it turned up:
+Clean apart from what this note is committed with. `origin/main` sits at
+`ac147eb`, which `v1.6.1` tags, and local is ahead of it by the documentation
+commits below, none of them pushed. The eleven commits since the previous note
+are the benchmark re-run, what it turned up, and the documentation that followed:
 
 ```
+b697bcd  docs   the article reads the 1.6.1 tables, and the lalonde harness is one script
+9cd2ac4  docs   every exported topic has a place in the index
+6e1b1d7  docs   the note reads the release that shipped, and the benchmark it owed is run
 ac147eb  test   the tolerance case reads the resolution instead of a threshold
 667bd66  test   the projection is tested where it runs
 427c78f  fix    the vignette's matched data comes from the matching it names

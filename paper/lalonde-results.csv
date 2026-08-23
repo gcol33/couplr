@@ -1,4 +1,4 @@
-"package","median_ms","max_abs_smd","mean_abs_smd"
-"couplr",14.4,1.053,0.184
-"MatchIt",172.7,1.053,0.184
-"optmatch",146.2,1.053,0.184
+"package","median_ms","n_pairs","total_cost","max_abs_smd","mean_abs_smd"
+"couplr",14.6,185,304.042,1.053,0.184
+"MatchIt",170.7,185,304.043,1.053,0.184
+"optmatch",144,185,304.043,1.053,0.184

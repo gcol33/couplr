@@ -862,14 +862,17 @@ knitr::kable(
 )
 ```
 
-The margin widens with problem size. couplr is roughly nine times faster than
-\pkg{optmatch} at $n = 500$ and twenty-four times faster at $n = 20{,}000$,
-where it finishes in 11.4 seconds against 4.7 minutes. \pkg{MatchIt} runs
-between eleven and twenty-four times slower up to $n = 10{,}000$, which is the
+The margin widens with problem size. couplr is roughly eight times faster than
+\pkg{optmatch} at $n = 500$ and twenty-seven times faster at $n = 20{,}000$,
+where it finishes in
+`r sprintf("%.1f", scaling$median_s[scaling$n_total == 20000 & scaling$package == "couplr"])`
+seconds against 4.7 minutes. \pkg{MatchIt} runs
+between ten and twenty-five times slower up to $n = 10{,}000$, which is the
 largest size it completes before `matchit(method = "optimal")` aborts inside the
 \pkg{optmatch} back end with an integer-size overflow. At $n = 50{,}000$ couplr
-finishes in 79 seconds and both alternatives exceed the 300-second per-replicate
-cap.
+finishes in
+`r sprintf("%.0f", scaling$median_s[scaling$n_total == 50000 & scaling$package == "couplr"])`
+seconds and both alternatives exceed the 300-second per-replicate cap.
 
 A likely contributor is the difference in formulation rather than a faster inner
 loop in any single algorithm. \pkg{optmatch} solves a minimum-cost flow problem,
@@ -884,7 +887,8 @@ under `memory_mode = "lazy"` completes in
 `r sprintf("%.0f", lazy$elapsed_s[lazy$n_total == 50000])` seconds without ever
 building the distance matrix, returning the assignment the dense path returns.
 At $n = 20{,}000$ it takes
-`r sprintf("%.1f", lazy$elapsed_s[lazy$n_total == 20000])` seconds against 11.4
+`r sprintf("%.1f", lazy$elapsed_s[lazy$n_total == 20000])` seconds against
+`r sprintf("%.1f", scaling$median_s[scaling$n_total == 20000 & scaling$package == "couplr"])`
 for the dense path, so on these problems recomputing distances is cheaper than
 materialising and traversing the matrix.
 

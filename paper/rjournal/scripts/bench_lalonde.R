@@ -31,7 +31,7 @@ suppressPackageStartupMessages({
 
 set.seed(20260515)
 
-paper_dir <- file.path(repo_root, "paper", "rjournal", "data")
+paper_dir <- file.path(repo_root, "paper")
 
 ## ---- data: Lalonde NSW, with the standard MatchIt formula ----
 data("lalonde", package = "MatchIt")

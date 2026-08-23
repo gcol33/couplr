@@ -101,6 +101,11 @@ reference:
   - balance_diagnostics
   - balance_table
   - sensitivity_analysis
+- title: Optimality Verification
+  desc: Check a solution against the dual prices that certify it
+  contents:
+  - verify_assignment
+  - verify_flow
 - title: Distance and Preprocessing
   desc: Distance computation and data preparation
   contents:
@@ -124,6 +129,8 @@ reference:
   contents:
   - get_total_cost
   - get_method_used
+  - explain_dispatch
+  - solver_status_values
   - as_assignment_matrix
   - is_lap_solve_result
   - is_lap_solve_batch_result

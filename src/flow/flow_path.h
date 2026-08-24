@@ -80,6 +80,7 @@ struct PathPoint {
 
 struct PathResult {
     std::vector<PathPoint> points;
+    int64_t seed_width      = 0;   // columns the first point's seed gave a row
     int64_t possible_edges  = 0;   // nrow * ncol
     int64_t edges_evaluated = 0;   // over the whole path
     int64_t candidate_edges = 0;   // pairs the set held at the last point
@@ -185,6 +186,10 @@ PathResult solve_path(Source& src, FlowProblem& prob, CandidateSet& cand,
 
         pt.witness           = res.witness;
         pt.witness_certified = res.witness_certified;
+
+        // Every point runs the loop over one candidate set, so the seed the
+        // first point sized is the seed the whole path was built on.
+        if (k == 0) out.seed_width = res.seed_width;
 
         out.points.push_back(std::move(pt));
     }

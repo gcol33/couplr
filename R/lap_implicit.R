@@ -27,22 +27,35 @@
 # drift apart in what they mean:
 #
 #   keep_per_row  violators a row contributes per pricing round
-#   width         columns the first feasibility round gives a deficient row
+#   width         columns the first feasibility round gives a deficient row,
+#                 or 0 to size the seed from the number of columns
 #   tol           a pair prices out at cbar < -tol
 #   max_rounds    guard, not a convergence bound
 #
 # They are not arguments of assignment() or match_couples(). The loop converges
-# on any of them and none has a measured rule behind it yet, so they stay
-# reachable for the harnesses that measure them and off the front doors until
-# one does.
+# on any of them, so they stay reachable for the harnesses that measure them and
+# off the front doors. `width` is the one with a rule behind it: the harnesses
+# read the seed against problem size, variable count and covariate type, and
+# implicit_seed_width() in src/flow/flow_implicit.h carries what they found. A
+# run reports the width it used as `search$seed_width`.
 .implicit_defaults <- function() {
-  list(keep_per_row = 5, width = 5, tol = 1e-9, max_rounds = 60)
+  list(keep_per_row = 5, width = 0, tol = 1e-9, max_rounds = 60)
 }
 
 .check_positive_count <- function(x, what) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 1 || x != trunc(x)) {
     stop("`", what, "` must be a single whole number of at least 1.",
          call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# `width` alone takes 0, which asks the loop for the measured seed rather than
+# naming one.
+.check_seed_width <- function(x) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x != trunc(x)) {
+    stop("`width` must be a single whole number of at least 0, where 0 sizes ",
+         "the seed from the problem.", call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -83,7 +96,7 @@
     stop("`tol` must be a single non-negative number.", call. = FALSE)
   }
   .check_positive_count(keep_per_row, "keep_per_row")
-  .check_positive_count(width, "width")
+  .check_seed_width(width)
   .check_positive_count(max_rounds, "max_rounds")
 
   lazy <- is_lazy_cost_spec(cost)
@@ -160,6 +173,7 @@
   out$u <- u_out
   out$v <- v_out
   out$search <- list(
+    seed_width      = as.integer(raw$seed_width),
     candidate_edges = as.numeric(raw$candidate_edges),
     possible_edges  = as.numeric(raw$possible_edges),
     edges_evaluated = as.numeric(raw$edges_evaluated),

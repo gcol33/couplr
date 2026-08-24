@@ -599,6 +599,78 @@ TEST_CASE("Without the certificate the loop answers the same and scans less",
 // the shape the loop takes
 // ---------------------------------------------------------------------------
 
+TEST_CASE("An unnamed width is the rule read off the source, and it is reported",
+          "[flow][implicit][seed]") {
+    SECTION("six columns per doubling of ncol, capped at the columns there are") {
+        REQUIRE(lap::implicit_seed_width(1) == 1);
+        REQUIRE(lap::implicit_seed_width(2) == 2);
+        REQUIRE(lap::implicit_seed_width(8) == 8);
+        REQUIRE(lap::implicit_seed_width(16) == 16);   // 6 * 4 is over 16
+        REQUIRE(lap::implicit_seed_width(17) == 17);   // 6 * 5 is over 17
+        REQUIRE(lap::implicit_seed_width(64) == 36);
+        REQUIRE(lap::implicit_seed_width(1024) == 60);
+        REQUIRE(lap::implicit_seed_width(33333) == 96);
+
+        // Monotone and never wider than the source, which is what the loop
+        // relies on when it hands the width to a feasibility round.
+        int64_t previous = 0;
+        for (int64_t ncol = 1; ncol <= 5000; ++ncol) {
+            const int64_t w = lap::implicit_seed_width(ncol);
+            REQUIRE(w >= 1);
+            REQUIRE(w <= ncol);
+            REQUIRE(w >= previous);
+            previous = w;
+        }
+    }
+
+    SECTION("the loop runs on it, reports it, and answers what a dense solve does") {
+        std::mt19937 rng(20260824u);
+        lap::CostMatrix c = random_cost(12, 200, rng);
+        lap::SourceOracle<lap::CostMatrix> oracle(c);
+        const DenseSolve dense = solve_dense(oracle);
+        REQUIRE(dense.row_perfect);
+
+        lap::CompiledDesign design = lap::compile_one_to_one(oracle, {});
+        lap::CandidateSet cand(12, 200);
+        lap::ImplicitOptions opts;   // width left at its default
+        REQUIRE(opts.width == 0);
+        const lap::ImplicitResult res =
+            lap::solve_implicit_assignment(c, design.problem, cand, opts);
+
+        REQUIRE(res.status == "optimal");
+        REQUIRE(res.seed_width == lap::implicit_seed_width(200));
+        REQUIRE(res.total_cost == Approx(dense.total_cost).margin(1e-12));
+        REQUIRE(res.certified);
+    }
+
+    SECTION("a named width is the width, and the two agree on the answer") {
+        std::mt19937 rng(20260825u);
+        lap::CostMatrix c = random_cost(10, 120, rng);
+        lap::SourceOracle<lap::CostMatrix> oracle(c);
+
+        lap::CompiledDesign a = lap::compile_one_to_one(oracle, {});
+        lap::CandidateSet cand_a(10, 120);
+        lap::ImplicitOptions ruled;
+        const lap::ImplicitResult by_rule =
+            lap::solve_implicit_assignment(c, a.problem, cand_a, ruled);
+
+        lap::CompiledDesign b = lap::compile_one_to_one(oracle, {});
+        lap::CandidateSet cand_b(10, 120);
+        lap::ImplicitOptions named;
+        named.width = 2;
+        const lap::ImplicitResult by_name =
+            lap::solve_implicit_assignment(c, b.problem, cand_b, named);
+
+        REQUIRE(by_name.seed_width == 2);
+        REQUIRE(by_rule.seed_width == lap::implicit_seed_width(120));
+        REQUIRE(by_name.status == "optimal");
+        REQUIRE(by_rule.status == "optimal");
+        REQUIRE(by_name.total_cost == Approx(by_rule.total_cost).margin(1e-12));
+        REQUIRE(by_name.certified);
+        REQUIRE(by_rule.certified);
+    }
+}
+
 TEST_CASE("A problem the loop cannot price is refused rather than solved",
           "[flow][implicit]") {
     std::mt19937 rng(5150u);
@@ -636,9 +708,11 @@ TEST_CASE("A problem the loop cannot price is refused rather than solved",
         REQUIRE_THROWS_AS(lap::solve_implicit_assignment(c, a.problem, cand, opts),
                           lap::DimensionException);
 
+        // Zero is the rule rather than a width, so it is a negative one that
+        // names no column for a deficient row.
         lap::CompiledDesign b = lap::compile_one_to_one(oracle, {});
         opts.keep_per_row = 5;
-        opts.width = 0;
+        opts.width = -1;
         REQUIRE_THROWS_AS(lap::solve_implicit_assignment(c, b.problem, cand, opts),
                           lap::DimensionException);
 

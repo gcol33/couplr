@@ -60,6 +60,45 @@
 
 namespace lap {
 
+// Columns the seed gives a deficient row when the caller names no width.
+//
+// The loop's floor is two rounds: one to seed, one to sweep the omitted pairs,
+// find nothing that prices in, and certify. It reaches that floor once the seed
+// already holds every pair that can end up tight, and a seed short of it buys
+// its missing pairs a round at a time, each round costing a further sweep and a
+// further master solve.
+//
+// Where that floor is reached is not readable off the shape of the problem.
+// Over ncol from 3.3e3 to 6.7e4 it ran from 20 columns to 230, and the data
+// moved it further than the size did: eight-dimensional Gaussian coordinates
+// reached it at 21, 20, 32 and 68 columns across those sizes, while the same
+// sizes over six Gaussian coordinates and two binary ones needed 20, 40, 40 and
+// 80 -- covariates that tie leave many columns at one distance from a row, and
+// a row then has to hold more of them. Nothing the loop can read before it
+// seeds separates those cases.
+//
+// So the seed is sized to clear the floor rather than to sit on it, which is
+// the cheap side to miss on wherever a sweep is expensive. Six columns per
+// doubling of ncol clears every measured case whose pairs the ball bound cannot
+// prune, and costs 2% to 21% over the width that reached the floor exactly; the
+// seeds below the floor ran 30% to 150% over. A source with fewer columns than
+// the rule asks for takes all of them.
+//
+// The exception runs the other way and is left alone deliberately. Where the
+// bound does prune -- two coordinates, a few percent of the grid evaluated --
+// a further sweep is cheap and a wider seed is not, so the fastest run sits
+// below the floor rather than on it: at ncol = 6.7e4 the floor wanted 230
+// columns and took 5.33 s, where 45 columns took 2.66 s over five rounds. The
+// rule asks for 102 there and lands at 3.53 s. It is deliberately short of that
+// floor, and it is short in the regime where the whole solve costs seconds.
+inline int64_t implicit_seed_width(int64_t ncol) {
+    if (ncol < 1) return 1;
+    int64_t doublings = 0;
+    while ((int64_t{1} << doublings) < ncol) ++doublings;  // ceil(log2(ncol))
+    const int64_t width = 6 * doublings;
+    return width < ncol ? (width < 1 ? 1 : width) : ncol;
+}
+
 struct ImplicitOptions {
     // Violators a row contributes per pricing round. At least one, because a
     // round that adds nothing prices the same pairs again next round.
@@ -69,7 +108,10 @@ struct ImplicitOptions {
     // every round that has to run again. It is also the seed: a loop started
     // from an empty candidate set spends its first round with every row
     // deficient, which is the k-nearest seed taken over the whole source.
-    int width = 5;
+    //
+    // Zero, the default, takes it from implicit_seed_width() instead, which is
+    // the rule the measurements above put behind it.
+    int width = 0;
 
     // Zero threshold for pricing and for the certificate. A pair prices out at
     // cbar < -tol, and the loop stops when none does.
@@ -153,6 +195,7 @@ struct ImplicitResult {
     std::vector<ImplicitRound> rounds;
 
     // What the search cost, in the terms the public surface reports.
+    int64_t seed_width      = 0;   // columns the first round gave a row
     int64_t candidate_edges = 0;   // pairs the candidate set ended up holding
     int64_t possible_edges  = 0;   // nrow * ncol
     int64_t edges_evaluated = 0;   // pairs a cost was computed for, all rounds
@@ -272,7 +315,7 @@ void require_shape(const Source& src, const FlowProblem& prob,
                             " adds no pair, so a pricing round cannot change the "
                             "master it priced");
     }
-    if (opts.width < 1) {
+    if (opts.width < 0) {
         LAP_THROW_DIMENSION("solve_implicit_assignment: width " +
                             std::to_string(opts.width) +
                             " adds no column to a deficient row");
@@ -349,7 +392,10 @@ ImplicitResult run_rounds(const Source& src, FlowProblem& prob, CandidateSet& ca
     // The ladder, over the deficient rows alone. A feasibility round costs the
     // same per row whatever width it keeps, so a deficiency that survives a
     // round is cheaper to attack wider than to attack again at the same width.
-    int width = opts.width;
+    int width = opts.width > 0
+                    ? opts.width
+                    : static_cast<int>(implicit_seed_width(src.ncol));
+    out.seed_width = width;
 
     bool decided = false;
     for (int64_t round = 1; round <= opts.max_rounds; ++round) {

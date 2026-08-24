@@ -376,6 +376,7 @@ test_that("the search knobs are checked before the loop runs", {
   expect_error(couplr:::.assignment_implicit(cost, keep_per_row = 0),
                "keep_per_row")
   expect_error(couplr:::.assignment_implicit(cost, width = 2.5), "width")
+  expect_error(couplr:::.assignment_implicit(cost, width = -1), "width")
   expect_error(couplr:::.assignment_implicit(cost, max_rounds = 0), "max_rounds")
   expect_error(couplr:::.assignment_implicit(cost, tol = -1), "tol")
   expect_error(couplr:::.assignment_implicit(cost, certify = NA), "certify")
@@ -394,6 +395,31 @@ test_that("the knobs change the rounds and not the answer", {
     expect_equal(loop$total_cost, reference, tolerance = IMPLICIT_COST_TOL)
     expect_true(loop$certificate$certified_optimal)
   }
+})
+
+test_that("the seed is sized from the problem when no width is named", {
+  set.seed(4053)
+  cost <- cert_problem(40, 400)
+  reference <- assignment(cost)$total_cost
+
+  sized <- couplr:::.assignment_implicit(cost)
+  # Six columns per doubling of ncol, which is what implicit_seed_width() reads
+  # off the source, and the run says which width it ran on.
+  expect_equal(sized$search$seed_width, 6L * as.integer(ceiling(log2(400))))
+  expect_equal(sized$total_cost, reference, tolerance = IMPLICIT_COST_TOL)
+  expect_true(sized$certificate$certified_optimal)
+
+  # A source with fewer columns than the rule asks for takes all of them.
+  narrow <- couplr:::.assignment_implicit(cert_problem(4, 8))
+  expect_equal(narrow$search$seed_width, 8L)
+
+  # A named width is still the width it names, and it is the candidate set the
+  # seed leaves behind that it moves, not the answer.
+  named <- couplr:::.assignment_implicit(cost, width = 3)
+  expect_equal(named$search$seed_width, 3L)
+  expect_equal(named$total_cost, reference, tolerance = IMPLICIT_COST_TOL)
+  expect_true(named$certificate$certified_optimal)
+  expect_lt(named$search$candidate_edges, sized$search$candidate_edges)
 })
 
 test_that("a round cap the loop cannot finish inside is reported as one", {

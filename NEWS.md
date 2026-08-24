@@ -1,3 +1,31 @@
+# couplr 1.6.2
+
+## Improvements
+
+* **The edge-generation loop sizes its own seed.** Under
+  `memory_mode = "implicit"` the first round used to give every row five
+  columns whatever the problem was. Five is short enough that the loop bought
+  the rest of what it needed a round at a time, and every one of those rounds
+  costs a full pricing sweep over the pairs the master does not hold. The seed
+  is now read off the number of columns, and a run reports the width it used as
+  `$search$seed_width`.
+
+  On the eight-covariate scaling problem the paper uses, the loop settles in two
+  rounds instead of four to seven, and runs 1.9x to 2.4x faster at 5,000 to
+  50,000 units. That turns the comparison with `memory_mode = "lazy"` around:
+  the mode used to lose to it below 50,000 units (0.62x at 5,000, 0.87x at
+  20,000) and now leads at every size measured, from 1.1x at 5,000 to 3.1x at
+  50,000.
+
+  The answer and the proof behind it are untouched. Across the seed widths
+  measured -- 8 to 256 columns at four sizes, and 5 to 160 at four more -- every
+  run returned the same total distance to the last digit and came back
+  certified.
+
+* `match_path()` reports the same `$search$seed_width`, and `width` still takes
+  an explicit column count on both surfaces. Zero, the new default, asks for
+  the sized seed.
+
 # couplr 1.6.1
 
 ## New features

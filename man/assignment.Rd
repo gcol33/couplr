@@ -160,11 +160,11 @@ the method was named explicitly. See \code{\link[=explain_dispatch]{explain_disp
 checked. See \code{certify}.
 }
 Under \code{memory_mode = "implicit"} the result also carries \code{u} and \code{v}, the
-duals the last restricted master produced, and \code{search}: the pairs the
-candidate set ended up holding (\code{candidate_edges}) out of \code{possible_edges},
-the pairs a cost was computed for (\code{edges_evaluated}), the round count, and
-\code{rounds}, one row per round of what the master held, what priced out and what
-each step cost.
+duals the last restricted master produced, and \code{search}: the columns the
+first round gave each row (\code{seed_width}), the pairs the candidate set ended
+up holding (\code{candidate_edges}) out of \code{possible_edges}, the pairs a cost was
+computed for (\code{edges_evaluated}), the round count, and \code{rounds}, one row per
+round of what the master held, what priced out and what each step cost.
 }
 \description{
 Solve the linear assignment problem (minimum- or maximum-cost matching)

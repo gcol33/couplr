@@ -119,6 +119,7 @@ Rcpp::List path_to_r(const lap::PathResult& res, int64_t nrow, bool maximize) {
         Rcpp::Named("rounds") = rounds,
         Rcpp::Named("witness") = witness,
         Rcpp::Named("witness_certified") = witness_certified,
+        Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),
         Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
         Rcpp::Named("candidate_edges") = static_cast<double>(res.candidate_edges),
         Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated));

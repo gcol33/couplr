@@ -56,7 +56,9 @@ for its value, which is the claim a path is read for.}
 
 \item{keep_per_row, width, tol, max_rounds}{The edge-generation loop's search
 knobs, shared with \code{memory_mode = "implicit"}. Each point converges on any
-of them.}
+of them. \code{width} is the columns the seed gives a row, and 0, the default,
+sizes it from the number of columns; \verb{$search$seed_width} reports what the
+path used.}
 }
 \value{
 An object of class \code{couplr_path}: \verb{$path}, one row per point,

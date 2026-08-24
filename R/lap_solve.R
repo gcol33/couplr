@@ -138,11 +138,11 @@
 #'         checked. See `certify`.
 #' }
 #' Under `memory_mode = "implicit"` the result also carries `u` and `v`, the
-#' duals the last restricted master produced, and `search`: the pairs the
-#' candidate set ended up holding (`candidate_edges`) out of `possible_edges`,
-#' the pairs a cost was computed for (`edges_evaluated`), the round count, and
-#' `rounds`, one row per round of what the master held, what priced out and what
-#' each step cost.
+#' duals the last restricted master produced, and `search`: the columns the
+#' first round gave each row (`seed_width`), the pairs the candidate set ended
+#' up holding (`candidate_edges`) out of `possible_edges`, the pairs a cost was
+#' computed for (`edges_evaluated`), the round count, and `rounds`, one row per
+#' round of what the master held, what priced out and what each step cost.
 #'
 #' @details
 #' `method = "auto"` selects an algorithm based on problem size/shape and data

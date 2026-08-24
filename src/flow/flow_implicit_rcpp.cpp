@@ -161,6 +161,7 @@ Rcpp::List result_to_r(const lap::ImplicitResult& res, int64_t nrow, bool maximi
         Rcpp::Named("v") = duals_to_r(res.v, maximize),
         Rcpp::Named("certificate") = certificate,
         Rcpp::Named("certified") = res.certified,
+        Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),
         Rcpp::Named("candidate_edges") = static_cast<double>(res.candidate_edges),
         Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
         Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),

@@ -99,7 +99,9 @@
 #'   then synthesized ids with a warning. See [match_couples()].
 #' @param keep_per_row,width,tol,max_rounds The edge-generation loop's search
 #'   knobs, shared with `memory_mode = "implicit"`. Each point converges on any
-#'   of them.
+#'   of them. `width` is the columns the seed gives a row, and 0, the default,
+#'   sizes it from the number of columns; `$search$seed_width` reports what the
+#'   path used.
 #'
 #' @return An object of class `couplr_path`: `$path`, one row per point,
 #'   `$balance`, one row per point per variable, and the match vector,
@@ -157,7 +159,7 @@ match_path <- function(left, right, vars,
     stop("`tol` must be a single non-negative number.", call. = FALSE)
   }
   .check_positive_count(keep_per_row, "keep_per_row")
-  .check_positive_count(width, "width")
+  .check_seed_width(width)
   .check_positive_count(max_rounds, "max_rounds")
 
   if (auto_scale) {
@@ -306,6 +308,7 @@ match_path <- function(left, right, vars,
       rounds      = lapply(raw$rounds, tibble::as_tibble),
       witness     = witness,
       search      = list(
+        seed_width      = as.integer(raw$seed_width),
         possible_edges  = as.numeric(raw$possible_edges),
         candidate_edges = as.numeric(raw$candidate_edges),
         edges_evaluated = as.numeric(raw$edges_evaluated)

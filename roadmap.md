@@ -632,8 +632,8 @@ with the rest deleted. It did not fail, so the full road is live.
 rather than alongside generating them. It carries the title and all five
 contributions below, and `paper/bench_path.R` was added so the frontier claim is
 reproducible from the submission. `current.md` records what changed and what was
-measured for it. What is left is the decision recorded under its "Next action":
-1.6.2 is what every number was measured on, and 1.6.1 is what CRAN has.
+measured for it. Every number was measured on 1.6.2, which CRAN gets in due time
+and `https://gcol33.r-universe.dev` carries in the meantime.
 
 > **couplr: Certified optimal matching without building the assignment graph**
 

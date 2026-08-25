@@ -15,14 +15,14 @@ warm-started design path: C0 through C11 and D1 through D3, all in.
 `paper/rjournal/` is now the article those phases were for, retitled and
 rewritten around five contributions; see "The R Journal article is rewritten"
 below. What is left on `roadmap.md` is phase 4, which is section E and section
-I, and one decision before the article goes out. See "Next action" at the end.
+I. See "Next action" at the end.
 
 **1.6.1 is released; the tree is 1.6.2.** Tag `v1.6.1` sits on `ac147eb`, and
 CRAN published 1.6.1 on 2026-08-23 at 00:20 UTC. `DESCRIPTION` now reads 1.6.2,
 which is the sized implicit seed and nothing else, and it has not been submitted.
 `NEWS.md` carries both sections; see "What NEWS carries for 1.6.1" at the end.
-Every measurement in the article was made on 1.6.2, which is the decision named
-under "Next action".
+Every measurement in the article was made on 1.6.2, which
+`https://gcol33.r-universe.dev` carries until CRAN has it.
 
 **`cran-comments.md` matches what went in.** It reads 1.6.1 and opens "This
 release supersedes 1.5.3, the version currently on CRAN", which the CRAN version
@@ -1228,23 +1228,11 @@ so most of what was timed is re-certifying an answer that is already final.
 
 ## Next action
 
-**Decide which version the article describes, and submit.** The article is
-written and its every number was measured on 1.6.2, which is in the tree and not
-on CRAN. Two ways to close that, and it is a call rather than a task:
-
-1. Put 1.6.2 on CRAN, then submit. The article then describes the published
-   version. 1.6.1 went up on 2026-08-23, so this is a second release inside a
-   week, and CRAN discourages that; the release is one perf change plus one new
-   reported field, so the cover note is short.
-2. Submit against 1.6.1 and re-measure the implicit stage back onto 1.6.1. That
-   costs the seed-width result: on 1.6.1 the loop takes four to seven rounds
-   where it now takes two, and `memory_mode = "implicit"` loses to `"lazy"`
-   below 50,000 units instead of leading at five of six sizes. The article
-   would ship a table the code no longer produces.
-
-Option 1 is the one to take unless the CRAN timing is judged worse than shipping
-a superseded table. Review times being what they are, 1.6.2 will be the older
-version by the time the article is read either way.
+**Submit the article.** The version question is settled. 1.6.2 goes to CRAN in
+due time, and `https://gcol33.r-universe.dev` carries it in the meantime, built
+from the GitHub repository within the hour, so a reader can install the version
+every number was measured on today. The article waits on neither, and the
+implicit stage stays measured on 1.6.2.
 
 After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
 section I, the benchmark grid.

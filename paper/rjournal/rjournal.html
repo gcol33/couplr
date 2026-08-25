@@ -2992,11 +2992,11 @@ threshold, independently of the distance metric in use. Explicit forbidden pairs
 are passed as non-finite entries by the user. Every solver recognises a
 non-finite entry as a missing edge, so no returned pair ever violates a
 constraint.</p>
-<p>Tight constraints usually make <a href="#eq:lap">(1)</a> infeasible, and the interesting
-question is what happens then. couplr first drops the rows and columns whose
-every edge is forbidden, which are reported unmatched. The remaining submatrix
-can still fail Hall’s condition, with several rows competing for the same few
-admissible columns, and no assignment reaching every row. Rather than return
+<p>Tight constraints usually make <a href="#eq:lap">(1)</a> infeasible. couplr first drops the
+rows and columns whose every edge is forbidden, which are reported unmatched.
+The remaining submatrix can still fail Hall’s condition, with several rows
+competing for the same few admissible columns, and no assignment reaching every
+row. Rather than return
 whichever pairs a heuristic happens to find, couplr replaces the forbidden
 entries with a finite sentinel and re-solves with the same optimal solver. The
 sentinel is set above <span class="math inline">\((k+1)\)</span> times the spread of the admissible costs, where
@@ -3159,9 +3159,9 @@ place is around <span class="math inline">\(10^{-9}\)</span> and an exactly opti
 tolerance of that size. The comparisons therefore scale with the arc’s own
 magnitude, and the widest tolerance any comparison used comes back as
 <code>dual_tolerance</code>, so the verdict names the resolution it was reached at.</p>
-<p>The consequence that matters for the rest of the article is that node potentials
-come back from every design rather than from the one-to-one case alone. Those
-potentials are what the next section prices against.</p>
+<p>Node potentials therefore come back from every design rather than from the
+one-to-one case alone. Those potentials are what the next section prices
+against.</p>
 <h2 data-number="6" id="matching-without-building-the-graph"><span class="header-section-number">6</span> Matching without building the graph</h2>
 <p>A matching problem on <span class="math inline">\(n\)</span> treated units and <span class="math inline">\(m\)</span> controls has <span class="math inline">\(nm\)</span> admissible
 pairs, and materialising them is what sets the size ceiling: at 50,000 against
@@ -3381,8 +3381,7 @@ directly for speed, which the lazy type cannot support; these are guarded by a
 the solver. One solver body therefore serves both cost representations, and
 there is no second implementation to keep in step. The pricing oracle of the
 edge-generation loop needs <code>at(i, j)</code> and <code>allowed(i, j)</code> and nothing else, so
-it consumes the same concept rather than introducing a third representation of
-the costs.</p>
+it consumes the same concept and adds no third representation of the costs.</p>
 <p><code>LazyCostMatrix</code> also bakes in the transformations that the dense path applies
 in a separate preparation pass, namely mapping forbidden entries to a large
 sentinel and negating costs when maximising. Doing this at construction is what
@@ -3417,7 +3416,7 @@ test, through <code>any(is.nan())</code>, <code>range(finite = TRUE)</code> and
 slow as naming the solver it would pick. A single C++ pass now returns every
 quantity the rules need, with no allocation and no second scan: the binary-cost
 test is a branch inside the same loop rather than a <code>unique()</code> over the finite
-entries, and an integer cost matrix is read as integers rather than coerced.
+entries, and an integer cost matrix is read as integers.
 That leaves the inspection a linear read in front of a superlinear solve, so its
 share of the runtime falls as problems grow, and the dashed line in
 Figure <a href="#fig:solver-bench">1</a> sits on the solver the dispatcher selects. The

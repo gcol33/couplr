@@ -450,11 +450,11 @@ are passed as non-finite entries by the user. Every solver recognises a
 non-finite entry as a missing edge, so no returned pair ever violates a
 constraint.
 
-Tight constraints usually make \eqref{eq:lap} infeasible, and the interesting
-question is what happens then. couplr first drops the rows and columns whose
-every edge is forbidden, which are reported unmatched. The remaining submatrix
-can still fail Hall's condition, with several rows competing for the same few
-admissible columns, and no assignment reaching every row. Rather than return
+Tight constraints usually make \eqref{eq:lap} infeasible. couplr first drops the
+rows and columns whose every edge is forbidden, which are reported unmatched.
+The remaining submatrix can still fail Hall's condition, with several rows
+competing for the same few admissible columns, and no assignment reaching every
+row. Rather than return
 whichever pairs a heuristic happens to find, couplr replaces the forbidden
 entries with a finite sentinel and re-solves with the same optimal solver. The
 sentinel is set above \((k+1)\) times the spread of the admissible costs, where
@@ -625,9 +625,9 @@ tolerance of that size. The comparisons therefore scale with the arc's own
 magnitude, and the widest tolerance any comparison used comes back as
 \texttt{dual\_tolerance}, so the verdict names the resolution it was reached at.
 
-The consequence that matters for the rest of the article is that node potentials
-come back from every design rather than from the one-to-one case alone. Those
-potentials are what the next section prices against.
+Node potentials therefore come back from every design rather than from the
+one-to-one case alone. Those potentials are what the next section prices
+against.
 
 \section{Matching without building the graph}\label{matching-without-building-the-graph}
 
@@ -899,8 +899,7 @@ directly for speed, which the lazy type cannot support; these are guarded by a
 the solver. One solver body therefore serves both cost representations, and
 there is no second implementation to keep in step. The pricing oracle of the
 edge-generation loop needs \texttt{at(i,\ j)} and \texttt{allowed(i,\ j)} and nothing else, so
-it consumes the same concept rather than introducing a third representation of
-the costs.
+it consumes the same concept and adds no third representation of the costs.
 
 \texttt{LazyCostMatrix} also bakes in the transformations that the dense path applies
 in a separate preparation pass, namely mapping forbidden entries to a large
@@ -948,7 +947,7 @@ test, through \texttt{any(is.nan())}, \texttt{range(finite\ =\ TRUE)} and
 slow as naming the solver it would pick. A single C++ pass now returns every
 quantity the rules need, with no allocation and no second scan: the binary-cost
 test is a branch inside the same loop rather than a \texttt{unique()} over the finite
-entries, and an integer cost matrix is read as integers rather than coerced.
+entries, and an integer cost matrix is read as integers.
 That leaves the inspection a linear read in front of a superlinear solve, so its
 share of the runtime falls as problems grow, and the dashed line in
 Figure \ref{fig:solver-bench} sits on the solver the dispatcher selects. The

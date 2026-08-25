@@ -3,7 +3,7 @@
 # ==============================================================================
 # The C++ src/solvers/network_simplex/solve_network_simplex.cpp is the only
 # truly distinct algorithm among the "MCF-based" production methods (push_relabel,
-# csa, orlin, network_simplex): it maintains a spanning tree basis over the
+# csa, network_simplex): it maintains a spanning tree basis over the
 # LAP-as-MCF graph and pivots one arc at a time, as the file claims. It reports
 # status "optimal" only when block pricing has scanned every arc without finding
 # a negative reduced cost, "iteration_limit" when its pivot cap ends the loop

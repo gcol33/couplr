@@ -210,12 +210,12 @@ test_that("csa extensive", {
   }
 })
 
-test_that("orlin extensive", {
+test_that("sap_dense extensive", {
   skip_on_cran()
   for (n in 3:6) {
     set.seed(n * 10000)
     cost <- matrix(sample(1:100, n * n, replace = TRUE), n, n)
-    result <- assignment(cost, method = "orlin")
+    result <- assignment(cost, method = "sap_dense")
     expect_equal(length(result$match), n)
   }
 })

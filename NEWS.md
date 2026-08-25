@@ -1,5 +1,22 @@
 # couplr 1.6.2
 
+## Breaking changes
+
+* **The `"orlin"` solver is now `"sap_dense"`.** The C++ behind it runs
+  successive shortest paths: each augmentation is a Dijkstra search on reduced
+  costs followed by a Johnson potential shift. It has no scaling phases and no
+  auction warm-up, so it is not the Orlin-Ahuja (1992) algorithm its old name
+  named, and its `alpha` and `auction_rounds` arguments were never read. The
+  method now carries a name that describes what it does: shortest augmenting
+  paths whose priority queue is a linear scan over the columns rather than a
+  heap, which costs `O(n * m^2)` and suits a dense cost matrix. Calls passing
+  `method = "orlin"` now raise an error listing the valid methods. Results,
+  duals and timings are unchanged; only the name is.
+* **`assignment()` documents `O(sqrt(V) * E * log(V * C))` for
+  `"gabow_tarjan"`,** on a graph of `V` vertices and `E` edges, which for an
+  `n` by `n` cost matrix is `O(n^2.5 * log(n * C))`. The previous `O(n^3 log C)`
+  did not match the bound in the source it cites.
+
 ## Improvements
 
 * **The edge-generation loop sizes its own seed.** Under

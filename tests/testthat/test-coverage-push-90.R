@@ -205,13 +205,13 @@ test_that("ssp handles various sizes", {
   }
 })
 
-test_that("orlin handles various sizes", {
+test_that("sap_dense handles various sizes", {
   skip_on_cran()
 
   for (n in c(3, 4, 5, 6)) {
     set.seed(n * 88)
     cost <- matrix(sample(1:80, n * n, replace = TRUE), n, n)
-    result <- assignment(cost, method = "orlin")
+    result <- assignment(cost, method = "sap_dense")
 
     expect_equal(length(result$match), n)
   }

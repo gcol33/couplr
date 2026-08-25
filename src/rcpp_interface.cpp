@@ -601,15 +601,15 @@ Rcpp::List lap_solve_cycle_cancel(Rcpp::NumericMatrix cost, bool maximize) {
 
 
 // =======================
-// Orlin-Ahuja Algorithm Export (production only)
+// Dense-scan successive shortest path export
 // =======================
 
 // Forward declaration for production solver
-extern Rcpp::List oa_solve_impl(Rcpp::NumericMatrix cost_r, bool maximize, double alpha, int auction_rounds);
+extern Rcpp::List sap_dense_solve_impl(Rcpp::NumericMatrix cost_r, bool maximize);
 
 // [[Rcpp::export]]
-Rcpp::List oa_solve(Rcpp::NumericMatrix cost_r, double alpha = 5.0, int auction_rounds = 10) {
-    return oa_solve_impl(cost_r, false, alpha, auction_rounds);
+Rcpp::List sap_dense_solve(Rcpp::NumericMatrix cost_r) {
+    return sap_dense_solve_impl(cost_r, false);
 }
 
 // =======================

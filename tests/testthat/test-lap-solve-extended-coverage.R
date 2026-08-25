@@ -265,7 +265,7 @@ test_that("all methods produce valid results on simple matrix", {
   methods <- c("jv", "hungarian", "auction", "auction_gs", "auction_scaled",
                "sap", "csflow", "bruteforce", "ssap_bucket",
                "cycle_cancel", "gabow_tarjan", "lapmod", "csa",
-               "ramshaw_tarjan", "push_relabel", "orlin", "network_simplex")
+               "ramshaw_tarjan", "push_relabel", "sap_dense", "network_simplex")
 
   for (m in methods) {
     result <- assignment(cost, method = m)

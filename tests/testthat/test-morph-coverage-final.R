@@ -146,10 +146,10 @@ test_that("compute_distances with different distance metrics", {
 # lap_solve edge cases
 # ------------------------------------------------------------------------------
 
-test_that("assignment with orlin method", {
+test_that("assignment with sap_dense method", {
   skip_on_cran()
   cost <- matrix(runif(25), 5, 5)
-  result <- assignment(cost, method = "orlin")
+  result <- assignment(cost, method = "sap_dense")
   expect_equal(result$status, "optimal")
 })
 

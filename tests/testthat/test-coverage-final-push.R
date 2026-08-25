@@ -88,13 +88,13 @@ test_that("hk01 handles binary/uniform costs", {
   expect_equal(result$total_cost, 0)  # Diagonal is 0
 })
 
-test_that("orlin handles various sizes", {
+test_that("sap_dense handles various sizes", {
   skip_on_cran()
 
   for (n in c(3, 4, 5)) {
     set.seed(n * 444)
     cost <- matrix(sample(1:50, n * n, replace = TRUE), n, n)
-    result <- assignment(cost, method = "orlin")
+    result <- assignment(cost, method = "sap_dense")
 
     expect_equal(length(result$match), n)
   }

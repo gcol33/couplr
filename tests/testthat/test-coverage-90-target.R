@@ -222,14 +222,14 @@ test_that("csa handles medium matrices", {
   expect_true(all(sort(result$match) == 1:6))
 })
 
-test_that("orlin handles various sizes", {
+test_that("sap_dense handles various sizes", {
   skip_on_cran()
 
   for (n in c(3, 4, 5)) {
     set.seed(100 + n)
     cost <- matrix(sample(1:50, n * n, replace = TRUE), nrow = n, ncol = n)
     result <- tryCatch(
-      assignment(cost, method = "orlin"),
+      assignment(cost, method = "sap_dense"),
       error = function(e) list(error = TRUE)
     )
 

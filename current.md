@@ -24,6 +24,20 @@ rewritten around five contributions; see "The R Journal article is rewritten"
 below. What is left on `roadmap.md` is phase 4, which is section E and section
 I. See "Next action" at the end.
 
+**The article is one page over the hard limit, and that is the binding
+constraint on the rest of the round.** It knits to 21 pages against the R
+Journal's 20. Batch A's additions are what the review asked for and cannot come
+back out, so the page is owed to batch I's abstract cut and to batch G moving
+the benchmark grids to supplementary material. Re-measure after both. If it is
+still over then, D4's conclusion that no cut list is needed stops holding.
+
+**The tree is committed and pushed, and the installed build is the tree.**
+Batch A is the head of `main` and nothing is unpushed.
+`devtools::install()` was run on 2026-08-25 to knit the article against the real
+build rather than a `load_all()` one, so the library copy of couplr is the
+working tree and not CRAN's 1.6.1. `paper/rjournal/rjournal.{pdf,html,tex,R}`
+are regenerated and committed from that build.
+
 **1.6.1 is released; the tree is 1.6.2.** Tag `v1.6.1` sits on `ac147eb`, and
 CRAN published 1.6.1 on 2026-08-23 at 00:20 UTC. `DESCRIPTION` now reads 1.6.2,
 which is the sized implicit seed and nothing else, and it has not been submitted.
@@ -1273,7 +1287,8 @@ away would not have drawn the objection, and what replaces it is close to it.
   too.
 - **The title:** "couplr: Optimal Matching with Verifiable Certificates and Sparse
   Edge Generation". Applied to `rjournal.Rmd`. The body sweep over "provably",
-  "proof", "exact" and "certified" is the rest of batch A and is not done.
+  "proof", "exact" and "certified" landed with the rest of batch A on the same
+  day; see "Batch A is done".
 - **D2, the `orlin` solver: renamed to `sap_dense`, done.** See below.
 - **D3, the version: ship 1.6.2.** The article then matches CRAN as it claims. The
   rename is a breaking change and goes out in this release, so it has to clear
@@ -1457,13 +1472,36 @@ consequence of the other three in the exact conclusion, and the article's
 certification section now says so, but the numerical path still computes it and
 the formalism section is where that is stated in the article's own terms.
 
+The passage to edit is the dual display at `rjournal.Rmd` equation `duals`, in
+"The assignment problem behind matching", and the four-condition sentence that
+opens "Certifying a solution" below it. `R/lap_certify.R:11-46` and
+`src/core/lap_certify.h:7-40` already carry the derivation in prose, including
+why the sign condition is conditional on `ncol > nrow`; the article should not
+say anything those two do not.
+
 Then in review order: **D** the edge-generation proposition and the sentinel
 lemma, which is the batch that most improves the paper; **F** the related work,
 where nothing is written before the primary source is read; **G** the benchmark
 re-runs, now unblocked by D4; **H** the worked examples; **I** reproducibility,
 the abstract's 255 words, and the 1.6.2 release.
 
+**Two things a batch after this one has to carry.** The article is a page over
+the limit, so G and I are not optional tidying, they are what buys the page
+back. And the release is gated: `sap_dense` is a breaking change, so 1.6.2 has
+to clear `cran-check` and a blocking `check_win_devel()` before any upload.
+
 **Do not submit.** The previous note said submit; the review supersedes it.
+
+**How to pick up a fresh session.** Read this file's "Where things stand", then
+`review/INDEX.md` for what the reviewer asked and `review/dispositions.md` for
+what was decided and what has landed. Batch A's own record is above, under
+"Batch A is done", with the measurements in `dev_notes/review1/findings.md`.
+Rebuild with `Rcpp::compileAttributes()` then `pkgbuild::compile_dll()`; the C++
+harness needs the Rtools mingw bin directory prepended to `PATH` before
+`cmake --build cpp_tests/build`, and `./cpp_tests/build/couplr_tests.exe` runs
+it. The R suite is `devtools::test()` and takes long enough to want a detached
+run; `dev_notes/phase3/run_rtests.ps1` is the harness that survives a turn
+boundary.
 
 ## The R Journal article is rewritten
 
@@ -1627,6 +1665,18 @@ supersedes, which is what CRAN's version history shows. 1.6.1 went in on that
 text and was published on 2026-08-23.
 
 ## File map
+
+`dev_notes/` is gitignored, so everything below is local to this machine and
+does not travel with a clone.
+
+`dev_notes/review1/`
+
+| File | What |
+|---|---|
+| `findings.md` | Batch A's design, the measurements behind its wording, and the one thing the first draft of the prose got wrong |
+| `exactness.R` | How often the exact conditions hold: cost type by size by solver, ten instances per cell. Resumes from its CSV |
+| `exactness.csv`, `exactness.log` | The current numbers from it |
+| `knit.log` | The install-and-knit run that produced the committed article artefacts |
 
 `dev_notes/phase1/`
 

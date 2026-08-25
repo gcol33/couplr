@@ -48,7 +48,7 @@ retitle.
 
 It keeps the two distinguishing contributions and drops the overbroad claim. Applied
 to `rjournal.Rmd`. The body sweep over "provably", "proof", "exact" and "certified"
-is the rest of batch A and has not been done.
+landed with the rest of batch A on 2026-08-25; see batch A below.
 
 ### D2. The `orlin` solver
 

@@ -8,6 +8,12 @@ findings and repros.
 
 ## Where things stand
 
+**The article came back on its first review, and it is a major revision.** A
+reviewer returned 20 pages on 2026-08-25. It is saved verbatim at
+`review/round1.md`, triaged in `review/INDEX.md`, and decided in
+`review/dispositions.md`. Batch C is done and batch A has its title. See "The first
+review is in, and it lands on the title".
+
 **Phases 0 through 3 are done, and the article they were for is written.** Phase
 0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
 internal flow model, and phase 3 is the implicit edge-generation loop and the
@@ -1226,22 +1232,155 @@ feasible caliper and the largest distance the unconstrained optimum uses is two
 points of twenty at n = 500 and n = 2,000 and empty at n = 5,000 and n = 20,000,
 so most of what was timed is re-certifying an answer that is already final.
 
+## The first review is in, and it lands on the title
+
+A reviewer returned 20 pages on 2026-08-25, verdict major revision before
+submission. `review/round1.md` is the review as sent, byte for byte.
+`review/INDEX.md` triages it and `review/dispositions.md` carries one decision per
+batch. `review` is tracked and `.Rbuildignore`d, so it stays out of the tarball.
+
+Thirty numbered items across four blocks: nine on mathematics, six on novelty and
+related work, eleven on benchmarks, four on R Journal guidelines, plus a
+seventeen-row guideline audit with three hard failures. Fourteen of its claims can
+be checked against this repository. All fourteen hold, including the ones that cost
+the most to fix: the abstract is 255 words against a 250 cap, the Gabow-Tarjan bound
+reuses `n` and `m` after the paper has bound them to the matrix sides,
+`bench_scaling.R` builds one instance per size so its five replicates measure timing
+noise rather than instance variability, and the public benchmark scripts write
+`<repo>/paper/scaling-results.csv` while the Rmd reads `data/scaling-results.csv`,
+so the supplied scripts cannot regenerate what the article consumes.
+
+**The title was the expensive one, and it was a deliberate change.** `roadmap.md`
+records the working title "Certified Optimal Matching without Building the
+Assignment Graph" being revised to "provably optimal" on the reasoning that
+"certified" is optimization jargon and the negation buries the mechanism. The
+reviewer read "provably" against a verifier that is double precision with a `1e-9`
+tolerance and called the gap the most serious issue in the paper. The title revised
+away would not have drawn the objection, and what replaces it is close to it.
+`roadmap.md` has not been updated and still argues for the superseded title.
+
+**Five decisions, taken 2026-08-25.**
+
+- **D1, what the certificate proves: route 2.** Add exact verification for integer
+  and rational costs, and retitle. Verification is where exactness is cheap: given
+  integer costs, a candidate `X` and duals, checking `u_i + v_j <= C_ij`,
+  complementary slackness and objective equality is integer arithmetic with no
+  tolerance. The solver keeps double precision; only the checker changes. The
+  package already scales reals to integers for `gabow_tarjan`, which is the same
+  path the review says is underspecified, so one piece of work closes both. Doubles
+  still get a numerical certificate, which is why the title changes under this route
+  too.
+- **The title:** "couplr: Optimal Matching with Verifiable Certificates and Sparse
+  Edge Generation". Applied to `rjournal.Rmd`. The body sweep over "provably",
+  "proof", "exact" and "certified" is the rest of batch A and is not done.
+- **D2, the `orlin` solver: renamed to `sap_dense`, done.** See below.
+- **D3, the version: ship 1.6.2.** The article then matches CRAN as it claims. The
+  rename is a breaking change and goes out in this release, so it has to clear
+  `cran-check` and a blocking `check_win_devel()` first.
+- **D4, where the expanded benchmarks live: supplementary material.** The submission
+  guidance lists among the required files "Other supplementary files that contain
+  additional technical details or examples". The factorial grid, the memory
+  measurements and the adversarial implicit cases go there and the 20 pages carry
+  summaries, so no cut list is needed. The same page sets a reproduction limit of
+  "a reasonable time (less than 10 minutes)" and recommends supplying intermediate
+  outputs for computationally intensive work, so the quick and full reproduction
+  modes are compliance: the default reproduction reads the supplied intermediates
+  and finishes inside the limit, and the full benchmark suite may run longer.
+
+## Batch C is done, and the solver count had a problem the review did not reach
+
+`R/trace_orlin.R` recorded, in this repository's own words, that the `orlin`
+production method was misnamed. Reading `orlin_solve.cpp` in full confirms it: the
+solver runs successive shortest paths, Dijkstra on reduced costs followed by a
+Johnson potential shift, with no scaling phases and no auction warm-up. Its `alpha`
+and `auction_rounds` arguments were accepted from R, threaded through Rcpp, and
+never read. Five headers in that directory, `orlin_scaling.h`, `orlin_bidding.h`,
+`orlin_prices.h`, `orlin_ssp.h` and `orlin_types.h`, about 36 KB of them, were
+included by nothing.
+
+The review asks only whether "19 solvers" counts aliases. The answer given is that
+the `method` argument takes twenty names besides `"auto"` and `"ssp"` resolves to
+`"sap"` at `R/lap_solve.R:212`, leaving nineteen implementations. The larger problem
+is that one of those nineteen carried the name of an algorithm it does not
+implement, and the vignette taught that algorithm over about forty lines, ran
+`lap_solve(cost, method = "orlin")` as its worked example, listed it among methods
+"that exist in no other R package", and called it asymptotically optimal for large
+sparse instances.
+
+**The method is now `"sap_dense"`.** `"orlin"` is gone from the `method` vector
+rather than kept as an alias, so a call using it fails through `match.arg()` with
+the valid list. `NEWS.md` carries the reason under a Breaking changes heading. The
+dead headers are deleted and the unused parameters are gone from the C++, the Rcpp
+export and the R wrapper. `src/solvers/orlin_ahuja/` is `src/solvers/sap_dense/`,
+`R/trace_orlin.R` is `R/trace_sap_dense.R`, and
+`tests/testthat/test-assignment-orlin.R` is `test-assignment-sap-dense.R`.
+
+What the rest of batch C fixed:
+
+- The Gabow-Tarjan bound is stated in the symbols its source uses,
+  `O(sqrt(|V|) |E| log(|V| C_max))`, with `|V| = n + m` and `|E| = nm` written out.
+  `man/assignment.Rd` and the roxygen behind it carried `O(n^3 log C)`, which agreed
+  with neither the source nor the paper; both now read `O(n^2.5 log(nC))` for a
+  square matrix.
+- `hk01` has its construction stated in the paper and the manual. Constant costs
+  make every perfect matching optimal. On a `{0,1}` matrix Hopcroft-Karp runs over
+  the zero-cost edges alone, where a perfect matching totals zero and is therefore
+  optimal, and when none exists the problem goes to the weighted solver on the
+  original costs. Hopcroft-Karp is a decision procedure with an exact fallback.
+- The vignette's Orlin-Ahuja section, its worked example, its complexity-table row
+  and its reference are gone. The scaling family is three algorithms. `sap_dense`
+  has a passage beside SAP and LAPMOD.
+- Figure 1 was rebuilt and looked at. The solver moved to the JV / augmenting path
+  panel, which required adding it to that panel's in-panel key or the curve would
+  have been dropped from the plot silently. Its colour `#B07AA1` was a pink from the
+  Flow-based range and is now `#08519C`, in the panel's blue family.
+
+Three things were checked and closed rather than carried:
+
+- **`hk01` in Figure 1 runs one code path, the intended one.** On the exact
+  instances the figure times, `SEED = 42` and
+  `matrix(sample(0:1, n*n, replace = TRUE))` for n from 10 to 5000, every one
+  returns total cost 0, so the zero-cost subgraph had a perfect matching and
+  Hopcroft-Karp answered. Sweeping the zero share at n = 200 puts the fallback at
+  roughly 2 to 3 percent zeros, which is the log(n)/n threshold. A random binary
+  matrix at p = 0.5 is nowhere near it. The caption is accurate as written.
+- **`lap_animate()` is fine.** It returns an htmlwidget, so a trace is at `$x$meta`
+  and not `$meta`. `hungarian`, `csflow` and `sap_dense` all carry their algorithm
+  name and description.
+- **The rename was checked against `jv`.** `sap`, `ssp` and `sap_dense` return the
+  same objective on five random rectangular instances, `maximize` works, the trace
+  registry resolves the new name, and the old name errors.
+
+Full `devtools::test()`: 0 failures, 0 errors.
+
 ## Next action
 
-**Submit the article.** The version question is settled. 1.6.2 goes to CRAN in
-due time, and `https://gcol33.r-universe.dev` carries it in the meantime, built
-from the GitHub repository within the hour, so a reader can install the version
-every number was measured on today. The article waits on neither, and the
-implicit stage stays measured on 1.6.2.
+**Batch A: the exact-arithmetic verifier, then the vocabulary sweep.** The title is
+applied; the body is not. Grep `rjournal.Rmd`, `man/assignment.Rd` and the roxygen
+in `R/lap_solve.R` and `R/lap_certify.R` for "provably", "proof", "exact" and
+"certified", and settle each occurrence against one vocabulary: a mathematical
+certificate in exact arithmetic for integer and rational costs, and a numerical
+certificate at a stated tolerance for doubles. The same work states the integer
+scaling rule the review asks for in 1.5: the scaling factor, the rounding rule, the
+error bound, which instance optimality is claimed for, the overflow guard, and when
+conversion is refused. All of that is properties of code that already exists, so
+read it rather than describing it from outside. The website carries the same
+overbroad claims and is swept with the paper.
 
-After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
-section I, the benchmark grid.
+Then in review order: **B** the LP formalism, cheap and uncontestable; **D** the
+edge-generation proposition and the sentinel lemma, which is the batch that most
+improves the paper; **F** the related work, where nothing is written before the
+primary source is read; **G** the benchmark re-runs, now unblocked by D4; **H** the
+worked examples; **I** reproducibility and the 1.6.2 release.
+
+**Do not submit.** The previous note said submit; the review supersedes it.
 
 ## The R Journal article is rewritten
 
-`paper/rjournal/rjournal.Rmd` is now "couplr: Certified Optimal Matching without
-Building the Assignment Graph", the title `roadmap.md` set, and it is built
-around the five contributions that section names. It renders to 20 pages, which
+`paper/rjournal/rjournal.Rmd` is "couplr: Optimal Matching with Verifiable
+Certificates and Sparse Edge Generation", retitled on 2026-08-25 in answer to the
+first review, and it is built around the five contributions that section names.
+`roadmap.md` still records the superseded title and its reasoning; see below. It renders to 20 pages, which
 is the R Journal's cap, so anything added from here has to displace something.
 
 What the rewrite added, against the 1.5.5 article it replaces:
@@ -1307,6 +1446,22 @@ per augmentation, at 3.1 to 352 against 7.3 to 646 labelled, so the queue is
 holding very little on the 1:10 and 1:2 shapes and the prize is on the 1:1 ones.
 
 ## Working tree
+
+**Dirty, and nothing is committed.** Batch C and the retitle are 37 changed paths in
+the working tree, none of them staged into a commit. The renames are recorded as
+renames by `git mv`, so the history stays readable. What changed: `R/lap_solve.R`,
+`R/RcppExports.R`, `R/trace_network_simplex.R`, `R/trace_orlin.R` to
+`R/trace_sap_dense.R`, the three files under `src/solvers/orlin_ahuja/` moved to
+`src/solvers/sap_dense/` with five headers deleted, `src/rcpp_interface.cpp`,
+`src/RcppExports.cpp`, both `Makevars`, `man/assignment.Rd`, eleven test files with
+one renamed, `vignettes/algorithms.Rmd`, `NEWS.md`, `.Rbuildignore`, both copies of
+`make-figure.R`, both `benchmark-table.csv`, `paper/rjournal/rjournal.Rmd`, and the
+new untracked `review/`.
+
+The rebuilt DLL and the regenerated `man/` are in the tree. Before any timing
+comparison, start from `rm -f src/*.o src/*/*.o src/*.dll`, for the reason below.
+
+The note that follows describes the tree as it stood before the review arrived.
 
 Clean apart from what this note is committed with. `origin/main` sits at
 `ac147eb`, which `v1.6.1` tags, and local is ahead of it by the documentation

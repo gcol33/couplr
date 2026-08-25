@@ -95,8 +95,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_certify_dense
-Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol);
-RcppExport SEXP _couplr_lap_certify_dense(SEXP costSEXP, SEXP matchSEXP, SEXP uSEXP, SEXP vSEXP, SEXP maximizeSEXP, SEXP tolSEXP) {
+Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic);
+RcppExport SEXP _couplr_lap_certify_dense(SEXP costSEXP, SEXP matchSEXP, SEXP uSEXP, SEXP vSEXP, SEXP maximizeSEXP, SEXP tolSEXP, SEXP arithmeticSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -106,13 +106,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type v(vSEXP);
     Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(lap_certify_dense(cost, match, u, v, maximize, tol));
+    Rcpp::traits::input_parameter< std::string >::type arithmetic(arithmeticSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_certify_dense(cost, match, u, v, maximize, tol, arithmetic));
     return rcpp_result_gen;
 END_RCPP
 }
 // lap_certify_lazy
-Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol);
-RcppExport SEXP _couplr_lap_certify_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP matchSEXP, SEXP uSEXP, SEXP vSEXP, SEXP maximizeSEXP, SEXP tolSEXP) {
+Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic);
+RcppExport SEXP _couplr_lap_certify_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP matchSEXP, SEXP uSEXP, SEXP vSEXP, SEXP maximizeSEXP, SEXP tolSEXP, SEXP arithmeticSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -128,7 +129,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type v(vSEXP);
     Rcpp::traits::input_parameter< bool >::type maximize(maximizeSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(lap_certify_lazy(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol));
+    Rcpp::traits::input_parameter< std::string >::type arithmetic(arithmeticSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_certify_lazy(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -918,8 +920,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_jv", (DL_FUNC) &_couplr_lap_solve_jv, 2},
     {"_couplr_cpp_lap_solve_jv_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_lazy, 8},
     {"_couplr_cpp_lap_solve_auction_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_auction_lazy, 9},
-    {"_couplr_lap_certify_dense", (DL_FUNC) &_couplr_lap_certify_dense, 6},
-    {"_couplr_lap_certify_lazy", (DL_FUNC) &_couplr_lap_certify_lazy, 12},
+    {"_couplr_lap_certify_dense", (DL_FUNC) &_couplr_lap_certify_dense, 7},
+    {"_couplr_lap_certify_lazy", (DL_FUNC) &_couplr_lap_certify_lazy, 13},
     {"_couplr_lap_scan_reduced_costs", (DL_FUNC) &_couplr_lap_scan_reduced_costs, 4},
     {"_couplr_lap_hall_witness_dense", (DL_FUNC) &_couplr_lap_hall_witness_dense, 1},
     {"_couplr_lap_hall_witness_lazy", (DL_FUNC) &_couplr_lap_hall_witness_lazy, 7},

@@ -1,5 +1,5 @@
 % !TeX root = RJwrapper.tex
-\title{couplr: Provably Optimal Matching with Sparse Edge Generation}
+\title{couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation}
 
 
 \author{by Gilles Colling}
@@ -84,8 +84,10 @@ reach the same solver core. We contribute five things to R:
   condition separately. The check is independent of the solver that produced
   the solution, and a matching from a solver that returns no duals of its own
   can be certified against duals obtained separately.
+  \texttt{verify\_assignment()} decides those conditions in exact arithmetic where the
+  potentials allow it, and names the arithmetic its verdict was reached in.
 \item
-  Exact dual-certified adaptive edge generation. Under
+  Dual-certified adaptive edge generation. Under
   \texttt{memory\_mode\ =\ "implicit"} the complete graph is never built: a sparse
   restricted problem is solved, the omitted pairs are priced against its
   duals, violating pairs are added, and the loop repeats until none prices in,
@@ -191,6 +193,7 @@ verify_assignment(assignment(cost), cost)
 #>     unmatched columns free TRUE    (max |v_j| 0.000e+00)
 #>   duality_gap              0.000000e+00
 #>   certified_optimal        TRUE 
+#>   arithmetic               exact, no tolerance
 #> 
 #>   primal objective  0.2821665586
 #>   dual objective    0.2821665586
@@ -216,11 +219,53 @@ contributed a spurious term to the dual objective. \texttt{verify\_assignment()}
 asserts both halves, and reports them separately as \texttt{cs\_matched\_tight} and
 \texttt{cs\_unmatched\_free}.
 
-Tolerances are the other place where a certificate can overstate what it knows.
-An absolute tolerance on a sum of many terms is not reachable in double
-precision, so the duality-gap comparison scales with the magnitude of the
-objective, and the value compared against is returned as part of the
-certificate. A verdict therefore names the resolution it was reached at.
+The arithmetic the conditions are decided in is the other place where a
+certificate can overstate what it knows. Each of them is the sign of
+\(C_{ij} - u_i - v_j\), and every quantity in that expression is a double, which
+is a rational number, so each sign has an exact answer. Deciding them within a
+band around zero instead makes the verdict a statement about a neighbourhood of
+the instance rather than about the instance: a certificate at tolerance
+\(\epsilon\) accepts potentials violating dual feasibility by \(\epsilon\) on any
+pair and missing tightness by \(\epsilon\) on any matched arc, which bounds the
+matching's excess over the optimum by about \(2(n + m)\epsilon\) rather than
+pinning it at zero. At the largest shape in the benchmark below and the default
+\(\epsilon = 10^{-9}\), that is \(10^{-4}\) in the cost units.
+
+Setting the band to zero is not the fix, because the sign of the double
+evaluation can itself be wrong. With \(C_{ij} = 2^{-60}\), \(u_i = 1\) and
+\(v_j = -1\) the first subtraction rounds to \(-1\) and the expression returns zero
+on a pair whose reduced cost is positive; at \(C_{ij} = -2^{-60}\) it returns zero
+on a pair whose reduced cost is negative, which is a dual infeasibility a
+zero-band check would accept. \texttt{verify\_assignment()} evaluates the sign exactly
+instead. It
+splits each rounded addition into the sum and the part rounding lost, which
+gives an expansion of doubles equal to the difference in the reals, and takes
+the sign of that expansion \citep{Shewchuk1997}. A rounding-error bound decides
+which pairs are far enough from zero for the double evaluation to settle them,
+so the expansion runs on the pairs near tightness rather than on all \(nm\).
+
+Removing the band from the two conditions removes it from the conclusion.
+Objective equality is then not a fourth measurement but a consequence: with
+matched arcs tight and unmatched columns free, the primal cost is the sum of
+\(u\) over matched rows plus the sum of \(v\) over used columns, which is the dual
+objective exactly when every row is matched. The software reports the gap it
+computes as an independent numerical cross-check on that reasoning.
+
+An exact certificate states that the matching attains the minimum total cost of
+the cost matrix as supplied. It is available when the potentials are exactly
+optimal for that matrix, which is a property of the arithmetic that produced
+them. Over ten instances per cell, integer costs and uniform costs on the unit
+interval gave an exact certificate in every instance at 50, 200 and 800 rows
+square and at 200 rows against 600 columns, and in every instance for each of
+the eleven solvers we ran at 200 by 200. Euclidean distances between normal
+clouds gave one in none of them: those potentials miss exact tightness by a
+relative \(2 \times 10^{-16}\) to \(5 \times 10^{-15}\), a few units in the last
+place, which is what rounding in the arithmetic that produced them costs. There
+the certificate decides the same conditions within a stated tolerance and says
+that is what it did. Every instance in the grid was certified in one arithmetic
+or the other. A verdict therefore names the arithmetic it was reached in, and
+\texttt{arithmetic\ =\ "exact"} refuses the fallback for a caller who wants the stronger
+statement or nothing.
 
 \subsection{Why more than one algorithm}\label{why-more-than-one-algorithm}
 
@@ -247,10 +292,34 @@ long paths.
 \textbf{Cost-scaling methods} solve a sequence of increasingly precise problems,
 each time halving the scale on which costs are rounded and reusing the previous
 solution \citep{GoldbergKennedy1995}. The Gabow-Tarjan bit-scaling algorithm
-\citep{GabowTarjan1989} belongs here, and reaches
-\(O(\sqrt{n}\, m \log(n C_{\max}))\), where \(C_{\max} = \max_{i,j} |C_{ij}|\).
+\citep{GabowTarjan1989} belongs here. On a graph with \(|V|\) nodes and \(|E|\) edges it
+reaches \(O(\sqrt{|V|}\, |E| \log(|V| C_{\max}))\) for integer costs, where
+\(C_{\max} = \max_{i,j} |C_{ij}|\). A complete bipartite graph on \(n\) and \(m\) units
+has \(|V| = n + m\) and \(|E| = nm\), so the bound there is
+\(O(\sqrt{n + m}\; nm \log((n + m) C_{\max}))\).
 To our knowledge this algorithm did not previously have a publicly available
 open-source implementation in any language.
+
+Bit-scaling runs on integers, so the conversion is part of the method and its
+rule is stated rather than left to the caller. Finite costs are shifted so the
+smallest is zero, multiplied by a scale factor \(s\), and rounded to the nearest
+integer, with \(s\) set so that \(K s (C_{\max} - C_{\min}) \le 10^{13}\), where
+\(K\) is \(n + 1\) on a square problem and \(2 \min(n, m) + 1\) on a rectangular one.
+\(K\) is the separation the algorithm needs between the optimum and a 1-optimal
+matching, and the bound keeps the scaled costs clear of the sentinel marking a
+forbidden pair and the path sums the solver forms inside 64-bit arithmetic. A
+matrix whose finite entries are each within \(10^{-9}\) of an integer is taken as
+an integer matrix and enters at \(s = 1\), so the optimum returned is the optimum
+of the instance as supplied; such a matrix is refused, with the limit named,
+when its range exceeds \(1.25 \times 10^{14} / K\), since no other scale is
+available to it. Costs that are not integers are solved on the rounded
+instance, where each cost moved by at most \(1 / 2s\), so the matching returned
+costs at most \(\min(n, m) K (C_{\max} - C_{\min}) / 10^{13}\) more than the
+optimum of the matrix as supplied: about \(10^{-7}\) of the range at \(n = 1000\)
+and \(10^{-5}\) of it at \(n = 10000\) on a square problem. Potentials are divided
+by \(s\) and shifted back, so they belong to the original matrix, and whether the
+matching is optimal for it rather than only for the rounded instance is a
+question \texttt{verify\_assignment()} answers.
 
 \textbf{Network-flow methods} treat \eqref{eq:lap} as a minimum-cost flow problem on a
 bipartite network \citep{Ahuja1993} and apply push-relabel \citep{GoldbergTarjan1988},
@@ -260,11 +329,21 @@ right base for variable-ratio designs where a group absorbs several units. On a
 plain one-to-one problem they are the slowest choice.
 
 \textbf{Special-purpose routines} cover cases where the general machinery is wasted:
-exhaustive enumeration below nine units, Hopcroft-Karp style bipartite matching
+exhaustive enumeration below nine units, Hopcroft-Karp bipartite matching
 \citep{HopcroftKarp1973} when costs are binary or constant, Ramshaw-Tarjan
 \citep{RamshawTarjan2012} for strongly rectangular problems where padding to a square
 matrix would dominate the work, and bottleneck assignment, which minimises the
 largest pair cost instead of the sum.
+
+The binary case is worth stating in full, since a maximum-cardinality routine
+carries no costs and the problem does. When every admissible edge holds the same
+value, all perfect matchings cost the same and any maximum-cardinality matching
+is optimal. When the finite costs are \(\{0, 1\}\), the routine runs
+Hopcroft-Karp on the zero-cost edges alone. A perfect matching there totals
+zero, which no assignment improves on, so it is optimal for the original costs.
+If the zero-cost subgraph admits no perfect matching, the optimum needs at least
+one unit edge, and the problem is passed to the weighted solver on the original
+matrix. The specialised path answers only where its answer is the optimum.
 
 Two extensions return something other than a single optimal assignment. Murty's
 ranking procedure \citep{Murty1968} with Lawler's partition scheme \citep{Lawler1972}
@@ -706,6 +785,14 @@ unlist(m_imp$search[c("seed_width", "n_rounds",
 #>              54               2           10800           60000
 \end{verbatim}
 
+The certificate the loop returns is the numerical one. Dual feasibility over the
+pairs the master omits comes from the pricing bounds, which ask whether anything
+prices below \(-\text{tol}\) rather than evaluating each omitted pair, so the
+exact conclusion of the certification section is not reachable from a scan
+assembled that way. What the loop establishes is optimality for the complete
+problem at the tolerance it priced at, and the certificate reports that as its
+arithmetic.
+
 Constraints tighten the loop rather than complicating it, since a caliper or a
 distance ceiling is checked before a distance is computed and removes pairs from
 the set to be priced. When the admissible pairs cannot support a complete
@@ -784,7 +871,8 @@ matrix in hand. \texttt{lap\_solve()} and \texttt{assignment()} take a matrix an
 optimal assignment; \texttt{lap\_solve()} also accepts a long data frame of source,
 target and cost columns, which is the natural shape when costs arrive from a
 database. The \texttt{method} argument names any of the nineteen solvers; \texttt{"auto"} is
-the default.
+the default. It accepts twenty names, because \texttt{"ssp"} is a second spelling of
+\texttt{"sap"} and resolves to it.
 
 \begin{verbatim}
 set.seed(1)
@@ -1018,8 +1106,8 @@ benchmark in the next section reports both comparisons on the sizes it covers.
 Certificates give a third check, and it is the one that survives leaving the
 test suite. \texttt{verify\_assignment()} and \texttt{verify\_flow()} run in \(O(nm)\) and
 \(O(\text{arcs})\) respectively without solving anything, so a user can run them
-on their own problem, at their own tolerance, against a solution the package
-produced.
+on their own problem, in exact arithmetic or at their own tolerance, against a
+solution the package produced.
 
 The package carries 138 R test files and 37 C++ test files, covering
 the R layer, the solver bodies compiled outside R, the C++ wrappers, dispatch

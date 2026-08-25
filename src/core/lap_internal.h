@@ -29,14 +29,14 @@ Rcpp::List solve_ssap_bucket_impl(Rcpp::NumericMatrix cost, bool maximize);
 // certification and feasibility witnesses
 Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
                               Rcpp::NumericVector u, Rcpp::NumericVector v,
-                              bool maximize, double tol);
+                              bool maximize, double tol, std::string arithmetic);
 Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                              std::string distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars,
                              Rcpp::IntegerVector match, Rcpp::NumericVector u,
-                             Rcpp::NumericVector v, bool maximize, double tol);
+                             Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic);
 Rcpp::List scan_reduced_costs_impl(Rcpp::NumericMatrix cost, Rcpp::NumericVector u,
                                    Rcpp::NumericVector v, double tol);
 Rcpp::List hall_witness_dense_impl(Rcpp::NumericMatrix cost);

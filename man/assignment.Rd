@@ -191,6 +191,43 @@ characteristics:
 }
 The other solvers are available by naming them explicitly.
 }
+\section{Integer conversion for bit-scaling}{
+
+
+\code{"gabow_tarjan"} is a bit-scaling algorithm and runs on integer costs. The
+conversion is part of the method, so the rule it follows and what it claims
+afterwards are both properties of the solve rather than of the caller's
+preparation.
+
+Finite costs are shifted so the smallest is zero, multiplied by a scale
+factor \code{s}, and rounded to the nearest integer. \code{s} is set so that
+\code{K * s * (max - min)} stays at or below \code{10^13}, where \code{K} is \code{n + 1} on a
+square problem and \code{2 * min(n, m) + 1} on a rectangular one. \code{K} is the
+separation the algorithm needs between the optimum and a 1-optimal matching,
+and the bound holds every scaled cost clear of the sentinel that marks a
+forbidden pair while keeping the path sums the solver forms inside 64-bit
+arithmetic. Forbidden pairs take the sentinel and take part in neither the
+range nor the conversion.
+
+A matrix whose finite entries are each within \code{1e-9} of an integer is taken
+as an integer matrix: \code{s} is one, the shift is an integer, and every cost
+reaches the solver as the integer nearest to it. The optimum is then the
+optimum of the instance as supplied. Such a matrix is refused when its range
+exceeds \code{1.25 * 10^14 / K}, since a scale of one is the only one available
+and no choice brings the instance inside the bound; the error names the limit
+and points at \code{"jv"} or \code{"auction"}.
+
+Costs that are not integers are solved on the rounded instance. Rounding
+moves each cost by at most \code{1 / (2 * s)}, so the matching returned costs at
+most \code{min(n, m) * K * (max - min) / 10^13} more than the optimum of the
+matrix as supplied. On a square problem that is about
+\code{n^2 * (max - min) / 10^13}, which is \code{10^-7} of the range at \code{n = 1000} and
+\code{10^-5} of it at \code{n = 10000}. Duals are divided by \code{s} and shifted back, so
+they belong to the original matrix; whether the matching is optimal for that
+matrix and not only for the rounded one is a question
+\code{\link[=verify_assignment]{verify_assignment()}} answers rather than one this bound settles.
+}
+
 \examples{
 cost <- matrix(c(4,2,5, 3,3,6, 7,5,4), nrow = 3, byrow = TRUE)
 res  <- assignment(cost)

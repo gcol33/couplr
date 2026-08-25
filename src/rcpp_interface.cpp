@@ -204,8 +204,9 @@ Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::Numeri
 // [[Rcpp::export]]
 Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
                              Rcpp::NumericVector u, Rcpp::NumericVector v,
-                             bool maximize, double tol) {
-  return certify_dense_impl(cost, match, u, v, maximize, tol);
+                             bool maximize, double tol,
+                             std::string arithmetic) {
+  return certify_dense_impl(cost, match, u, v, maximize, tol, arithmetic);
 }
 
 // [[Rcpp::export]]
@@ -215,9 +216,10 @@ Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix ri
                             double max_distance, Rcpp::List calipers,
                             Rcpp::CharacterVector vars,
                             Rcpp::IntegerVector match, Rcpp::NumericVector u,
-                            Rcpp::NumericVector v, bool maximize, double tol) {
+                            Rcpp::NumericVector v, bool maximize, double tol,
+                            std::string arithmetic) {
   return certify_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
-                           calipers, vars, match, u, v, maximize, tol);
+                           calipers, vars, match, u, v, maximize, tol, arithmetic);
 }
 
 // [[Rcpp::export]]

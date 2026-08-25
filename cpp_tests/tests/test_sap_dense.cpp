@@ -5,7 +5,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_error.h"
-#include "solvers/orlin_ahuja/orlin_solve.h"
+#include "solvers/sap_dense/sap_dense_solve.h"
 
 using Catch::Approx;
 
@@ -17,7 +17,7 @@ static lap::CostMatrix make_cost(std::initializer_list<std::initializer_list<dou
     return lap::CostMatrix(data);
 }
 
-TEST_CASE("Orlin solver - basic square matrices", "[orlin][basic]") {
+TEST_CASE("SAP-dense solver - basic square matrices", "[sap_dense][basic]") {
     SECTION("3x3 matrix") {
         auto cost = make_cost({
             {1, 2, 3},
@@ -25,7 +25,7 @@ TEST_CASE("Orlin solver - basic square matrices", "[orlin][basic]") {
             {7, 8, 9}
         });
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.assignment.size() == 3);
@@ -38,7 +38,7 @@ TEST_CASE("Orlin solver - basic square matrices", "[orlin][basic]") {
             {3, 4}
         });
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.total_cost == Approx(5.0));
@@ -47,21 +47,21 @@ TEST_CASE("Orlin solver - basic square matrices", "[orlin][basic]") {
     SECTION("1x1 trivial") {
         auto cost = make_cost({{42.0}});
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.total_cost == Approx(42.0));
     }
 }
 
-TEST_CASE("Orlin solver - rectangular matrices", "[orlin][rectangular]") {
+TEST_CASE("SAP-dense solver - rectangular matrices", "[sap_dense][rectangular]") {
     SECTION("2x3 (more cols than rows)") {
         auto cost = make_cost({
             {1, 2, 3},
             {4, 5, 6}
         });
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.n_matched() == 2);
@@ -75,7 +75,7 @@ TEST_CASE("Orlin solver - rectangular matrices", "[orlin][rectangular]") {
             {90, 100, 110, 3, 120}
         });
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.n_matched() == 3);
@@ -83,7 +83,7 @@ TEST_CASE("Orlin solver - rectangular matrices", "[orlin][rectangular]") {
     }
 }
 
-TEST_CASE("Orlin solver - maximization", "[orlin][maximize]") {
+TEST_CASE("SAP-dense solver - maximization", "[sap_dense][maximize]") {
     SECTION("3x3 maximize") {
         auto cost = make_cost({
             {1, 2, 3},
@@ -91,40 +91,14 @@ TEST_CASE("Orlin solver - maximization", "[orlin][maximize]") {
             {7, 8, 9}
         });
 
-        auto result = lap::solve_orlin(cost, true);
+        auto result = lap::solve_sap_dense(cost, true);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.total_cost == Approx(15.0));
     }
 }
 
-TEST_CASE("Orlin solver - parameters", "[orlin][params]") {
-    auto cost = make_cost({
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    });
-
-    SECTION("default parameters") {
-        auto result = lap::solve_orlin(cost, false);
-        REQUIRE(result.status == "optimal");
-        REQUIRE(result.total_cost == Approx(15.0));
-    }
-
-    SECTION("custom alpha") {
-        auto result = lap::solve_orlin(cost, false, 3.0);
-        REQUIRE(result.status == "optimal");
-        REQUIRE(result.total_cost == Approx(15.0));
-    }
-
-    SECTION("custom auction_rounds") {
-        auto result = lap::solve_orlin(cost, false, 5.0, 5);
-        REQUIRE(result.status == "optimal");
-        REQUIRE(result.total_cost == Approx(15.0));
-    }
-}
-
-TEST_CASE("Orlin solver - forbidden edges", "[orlin][forbidden]") {
+TEST_CASE("SAP-dense solver - forbidden edges", "[sap_dense][forbidden]") {
     SECTION("some forbidden edges") {
         lap::CostMatrix cost(3, 3);
         cost.at(0, 0) = 1;  cost.at(0, 1) = 2;  cost.at(0, 2) = 3;
@@ -136,25 +110,25 @@ TEST_CASE("Orlin solver - forbidden edges", "[orlin][forbidden]") {
         cost.forbid(1, 1);
         cost.forbid(2, 2);
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.total_cost == Approx(15.0));
     }
 }
 
-TEST_CASE("Orlin solver - empty matrix", "[orlin][edge]") {
+TEST_CASE("SAP-dense solver - empty matrix", "[sap_dense][edge]") {
     SECTION("empty matrix") {
         lap::CostMatrix cost(0, 0);
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.assignment.empty());
     }
 }
 
-TEST_CASE("Orlin solver - infeasible cases", "[orlin][infeasible]") {
+TEST_CASE("SAP-dense solver - infeasible cases", "[sap_dense][infeasible]") {
     SECTION("more rows than cols throws") {
         auto cost = make_cost({
             {1, 2},
@@ -162,7 +136,7 @@ TEST_CASE("Orlin solver - infeasible cases", "[orlin][infeasible]") {
             {5, 6}
         });
 
-        REQUIRE_THROWS_AS(lap::solve_orlin(cost, false), lap::DimensionException);
+        REQUIRE_THROWS_AS(lap::solve_sap_dense(cost, false), lap::DimensionException);
     }
 
     SECTION("row with all forbidden throws") {
@@ -173,11 +147,11 @@ TEST_CASE("Orlin solver - infeasible cases", "[orlin][infeasible]") {
         cost.forbid(0, 0);
         cost.forbid(0, 1);
 
-        REQUIRE_THROWS_AS(lap::solve_orlin(cost, false), lap::InfeasibleException);
+        REQUIRE_THROWS_AS(lap::solve_sap_dense(cost, false), lap::InfeasibleException);
     }
 }
 
-TEST_CASE("Orlin solver - larger problem", "[orlin][performance]") {
+TEST_CASE("SAP-dense solver - larger problem", "[sap_dense][performance]") {
     SECTION("10x10 matrix") {
         lap::CostMatrix cost(10, 10);
         for (int i = 0; i < 10; ++i) {
@@ -186,14 +160,14 @@ TEST_CASE("Orlin solver - larger problem", "[orlin][performance]") {
             }
         }
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.status == "optimal");
         REQUIRE(result.n_matched() == 10);
     }
 }
 
-TEST_CASE("Orlin solver - assignment validity", "[orlin][validity]") {
+TEST_CASE("SAP-dense solver - assignment validity", "[sap_dense][validity]") {
     SECTION("valid permutation") {
         auto cost = make_cost({
             {1, 2, 3, 4},
@@ -201,7 +175,7 @@ TEST_CASE("Orlin solver - assignment validity", "[orlin][validity]") {
             {9, 10, 11, 12}
         });
 
-        auto result = lap::solve_orlin(cost, false);
+        auto result = lap::solve_sap_dense(cost, false);
 
         REQUIRE(result.assignment.size() == 3);
 

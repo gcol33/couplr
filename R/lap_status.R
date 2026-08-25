@@ -6,8 +6,9 @@
 #   status       what the solver terminated on. Derived from the solver's own
 #                termination state, and it never asserts more than the solver
 #                knows.
-#   certificate  a proof, present only when one was checked. The only place
-#                optimality is asserted as proven.
+#   certificate  a checked statement about the answer, present only when one
+#                was taken. The only place optimality is asserted rather than
+#                reported, and it names the arithmetic it was decided in.
 #
 # An exact solver reaching its own optimality condition may report
 # status = "optimal". Only a verified certificate may report
@@ -26,7 +27,7 @@
 #'   \item{`"infeasible"`}{No assignment of the requested cardinality exists.}
 #'   \item{`"eps_optimal"`}{An auction solve terminated at a caller-supplied
 #'     epsilon. The result is within `n * epsilon` of optimal, which is a bound,
-#'     not a proof of optimality.}
+#'     not a certificate.}
 #'   \item{`"iteration_limit"`}{The solver stopped on an iteration cap rather
 #'     than on optimality. The solution is feasible; its optimality is unproven.}
 #'   \item{`"interrupted"`}{The solver stopped on a time budget or a user

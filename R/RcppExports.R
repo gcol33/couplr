@@ -25,12 +25,12 @@ cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max
     .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps)
 }
 
-lap_certify_dense <- function(cost, match, u, v, maximize, tol) {
-    .Call(`_couplr_lap_certify_dense`, cost, match, u, v, maximize, tol)
+lap_certify_dense <- function(cost, match, u, v, maximize, tol, arithmetic) {
+    .Call(`_couplr_lap_certify_dense`, cost, match, u, v, maximize, tol, arithmetic)
 }
 
-lap_certify_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol) {
-    .Call(`_couplr_lap_certify_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol)
+lap_certify_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic) {
+    .Call(`_couplr_lap_certify_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic)
 }
 
 lap_scan_reduced_costs <- function(cost, u, v, tol) {

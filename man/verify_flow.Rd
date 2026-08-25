@@ -57,8 +57,13 @@ Invisibly returns \code{x}.
 Checks a flow and a set of node potentials against the linear-programming
 optimality conditions for the minimum-cost flow problem, and returns the
 result of each check. Unlike the \code{status} field on a solve result, which
-records what the solver terminated on, this is a proof: \code{certified_optimal}
-is \code{TRUE} only when every condition holds.
+records what the solver terminated on, this is a statement about the flow:
+\code{certified_optimal} is \code{TRUE} only when every condition holds. The
+comparisons are made within a relative tolerance, so what it establishes is
+optimality to that tolerance; the exact-arithmetic conclusion
+\code{\link[=verify_assignment]{verify_assignment()}} can reach has no counterpart here, because the arc
+bounds and the potentials of a general flow are compared per arc against a
+tolerance that scales with them.
 }
 \details{
 The problem is

@@ -157,11 +157,12 @@ auto_all <- do.call(rbind, lapply(panel_levels, function(p) {
 }))
 
 pal <- c(
-  "JV" = "#0072B2", "SAP" = "#56B4E9", "LAPMOD" = "#004E73",
+  "JV" = "#0072B2", "SAP" = "#56B4E9", "SAP-D" = "#08519C",
+  "LAPMOD" = "#004E73",
   "Auction" = "#E69F00", "Auction-GS" = "#8C5200", "Auction-S" = "#F0C066",
   "CSA" = "#009E73", "Gabow-T" = "#004534", "SSAP-B" = "#66C2A5",
   "CS-flow" = "#CC79A7", "Cycle-C" = "#7B2D5E", "Push-R" = "#E5B8D4",
-  "Net-S" = "#6A3D9A", "Orlin" = "#B07AA1",
+  "Net-S" = "#6A3D9A",
   "Hungarian" = "#D55E00", "Munkres" = "#8C3B00", "Ramshaw" = "#5A4634",
   "HK-01" = "#117733", "Brute-F" = "#999933"
 )
@@ -169,10 +170,10 @@ pal <- c(
 # Curves run from the lower left to the upper right on log-log axes, so the
 # upper left of every panel is free for an in-panel key.
 key_order <- list(
-  "JV / augmenting path" = c("JV", "SAP", "LAPMOD"),
+  "JV / augmenting path" = c("JV", "SAP", "SAP-D", "LAPMOD"),
   "Auction"              = c("Auction", "Auction-GS", "Auction-S"),
   "Cost scaling"         = c("CSA", "Gabow-T", "SSAP-B"),
-  "Flow-based"           = c("CS-flow", "Cycle-C", "Push-R", "Net-S", "Orlin"),
+  "Flow-based"           = c("CS-flow", "Cycle-C", "Push-R", "Net-S"),
   "Other"                = c("Hungarian", "Munkres", "Ramshaw", "HK-01",
                              "Brute-F")
 )

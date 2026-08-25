@@ -109,7 +109,47 @@ directly in the round-2 reply.
 
 ## A. Exactness claim and its cascade — 1.1, 1.5
 
-**ACCEPT.** The claim outruns the implementation and the reviewer is right that the
+**ACCEPT. Done 2026-08-25.** See `dev_notes/review1/findings.md` for the design,
+the measurements and the one thing the first draft of the prose got wrong.
+
+What landed: `verify_assignment()` gains `arithmetic`, taking `"auto"` (the
+default), `"exact"` and `"double"`. Every condition is the sign of
+`c_ij - u_i - v_j`, and `src/core/lap_exact.h` decides that sign exactly for any
+finite doubles, behind a rounding-error filter so the expansion runs on the
+pairs near tightness rather than on all `nm`. The exact conclusion drops the
+objective comparison in favour of `all_rows_matched`, which is what objective
+equality reduces to once the other conditions hold exactly, and this is also
+what 1.3 asks the article to say. The exact conditions imply the numerical ones
+at any non-negative `tol`, so `certified_optimal` under `"auto"` is unchanged
+and nothing in the suite moved: 8783 R assertions and 328 C++ test cases pass.
+
+Availability was measured rather than asserted, ten instances per cell: integer
+and uniform costs gave an exact certificate on every instance at three sizes,
+both orientations and eleven solvers; computed Euclidean distances gave a
+numerical one on every instance, missing exact tightness by a relative `2e-16`
+to `5e-15`. The article states both.
+
+1.5 is stated in `assignment()` and in the article, read out of
+`solve_gabow_tarjan.cpp` rather than described from outside: the scale factor,
+the rounding rule, the refusal condition and its limit, the instance whose
+optimum is claimed, and the bound between the rounded instance's optimum and
+the original's.
+
+Batch C left one thing behind that this batch found: `cpp_tests` still carried
+`test_orlin.cpp` including a deleted header, so the C++ harness did not build.
+It is `test_sap_dense.cpp` now, and the test case exercising the removed `alpha`
+and `auction_rounds` parameters is gone.
+
+Still open in this cascade: the abstract's own wording and its 255-word length,
+which batch I owns.
+
+**The article is 21 pages after this batch, against a hard limit of 20.** The
+additions are what the review asked for and cannot come back out. The page is
+owed to batch I's abstract cut and to batch G moving the benchmark grids to
+supplementary material. Re-measure after both; a page still over then makes
+D4's cut list necessary after all.
+
+The claim outruns the implementation and the reviewer is right that the
 paper acknowledges this once, on page 3, then drops the qualification everywhere
 else.
 

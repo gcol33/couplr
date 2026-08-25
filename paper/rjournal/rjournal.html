@@ -111,7 +111,7 @@ margin-left: 2em;
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>couplr: Certified Optimal Matching without Building the Assignment Graph</title>
+  <title>couplr: Provably Optimal Matching with Sparse Edge Generation</title>
 
   <meta property="description" itemprop="description" content="Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN." />
 
@@ -122,18 +122,18 @@ margin-left: 2em;
   <meta name="article:author" content="Gilles Colling" />
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="couplr: Certified Optimal Matching without Building the Assignment Graph" />
+  <meta property="og:title" content="couplr: Provably Optimal Matching with Sparse Edge Generation" />
   <meta property="og:type" content="article" />
   <meta property="og:description" content="Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN." />
   <meta property="og:locale" content="en_US" />
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary" />
-  <meta property="twitter:title" content="couplr: Certified Optimal Matching without Building the Assignment Graph" />
+  <meta property="twitter:title" content="couplr: Provably Optimal Matching with Sparse Edge Generation" />
   <meta property="twitter:description" content="Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN." />
 
   <!--  https://scholar.google.com/intl/en/scholar/inclusion.html#indexing -->
-  <meta name="citation_title" content="couplr: Certified Optimal Matching without Building the Assignment Graph" />
+  <meta name="citation_title" content="couplr: Provably Optimal Matching with Sparse Edge Generation" />
   <meta name="citation_pdf_url" content="rjournal.pdf" />
   <meta name="citation_journal_title" content="The R Journal" />
   <meta name="citation_issn" content="2073-4859" />
@@ -177,7 +177,7 @@ margin-left: 2em;
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","date","description","draft","author","type","output","header-includes","bibliography","journal","slug","pdf_url","creative_commons","packages","CTV","csl"]}},"value":[{"type":"character","attributes":{},"value":["couplr: Certified Optimal Matching without Building the Assignment Graph"]},{"type":"character","attributes":{},"value":["2026-08-25"]},{"type":"character","attributes":{},"value":["Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.\n"]},{"type":"logical","attributes":{},"value":[false]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","address","url","orcid_id","email"]}},"value":[{"type":"character","attributes":{},"value":["Gilles Colling"]},{"type":"character","attributes":{},"value":["University of Vienna"]},{"type":"character","attributes":{},"value":["Department of Botany and Biodiversity Research","Rennweg 14, 1030 Vienna, Austria"]},{"type":"character","attributes":{},"value":["https://gillescolling.com"]},{"type":"character","attributes":{},"value":["0000-0003-3070-6066"]},{"type":"character","attributes":{},"value":["gilles.colling051@gmail.com"]}]}]},{"type":"character","attributes":{},"value":["package"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained","toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["\\usepackage{placeins}"]},{"type":"character","attributes":{},"value":["RJreferences.bib"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","issn","firstpage","lastpage"]}},"value":[{"type":"character","attributes":{},"value":["The R Journal"]},{"type":"character","attributes":{},"value":["2073-4859"]},{"type":"double","attributes":{},"value":[1]},{"type":"NULL"}]},{"type":"character","attributes":{},"value":["rjournal"]},{"type":"character","attributes":{},"value":["rjournal.pdf"]},{"type":"character","attributes":{},"value":["CC BY"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["cran","bioc"]}},"value":[{"type":"character","attributes":{},"value":["MatchIt","optmatch","Matching","designmatch","cobalt","clue","lpSolve","couplr","marginaleffects","ggplot2","Rcpp","tibble","dplyr","rlang","purrr"]},{"type":"list","attributes":{},"value":[]}]},{"type":"character","attributes":{},"value":["CausalInference","ChemPhys","ClinicalTrials","Cluster","Databases","Econometrics","ExperimentalDesign","HighPerformanceComputing","MissingData","MixedModels","ModelDeployment","NetworkAnalysis","NumericalMathematics","OfficialStatistics","Optimization","Phylogenetics","Spatial","TeachingStatistics"]},{"type":"character","attributes":{},"value":["C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6/rjtools/rjournal.csl"]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","date","description","draft","author","type","output","header-includes","bibliography","journal","slug","pdf_url","creative_commons","packages","CTV","csl"]}},"value":[{"type":"character","attributes":{},"value":["couplr: Provably Optimal Matching with Sparse Edge Generation"]},{"type":"character","attributes":{},"value":["2026-08-25"]},{"type":"character","attributes":{},"value":["Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.\n"]},{"type":"logical","attributes":{},"value":[false]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","address","url","orcid_id","email"]}},"value":[{"type":"character","attributes":{},"value":["Gilles Colling"]},{"type":"character","attributes":{},"value":["University of Vienna"]},{"type":"character","attributes":{},"value":["Department of Botany and Biodiversity Research","Rennweg 14, 1030 Vienna, Austria"]},{"type":"character","attributes":{},"value":["https://gillescolling.com"]},{"type":"character","attributes":{},"value":["0000-0003-3070-6066"]},{"type":"character","attributes":{},"value":["gilles.colling051@gmail.com"]}]}]},{"type":"character","attributes":{},"value":["package"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained","toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["\\usepackage{placeins}"]},{"type":"character","attributes":{},"value":["RJreferences.bib"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","issn","firstpage","lastpage"]}},"value":[{"type":"character","attributes":{},"value":["The R Journal"]},{"type":"character","attributes":{},"value":["2073-4859"]},{"type":"double","attributes":{},"value":[1]},{"type":"NULL"}]},{"type":"character","attributes":{},"value":["rjournal"]},{"type":"character","attributes":{},"value":["rjournal.pdf"]},{"type":"character","attributes":{},"value":["CC BY"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["cran","bioc"]}},"value":[{"type":"character","attributes":{},"value":["MatchIt","optmatch","Matching","designmatch","cobalt","clue","lpSolve","couplr","marginaleffects","ggplot2","Rcpp","tibble","dplyr","rlang","purrr"]},{"type":"list","attributes":{},"value":[]}]},{"type":"character","attributes":{},"value":["CausalInference","ChemPhys","ClinicalTrials","Cluster","Databases","Econometrics","ExperimentalDesign","HighPerformanceComputing","MissingData","MixedModels","ModelDeployment","NetworkAnalysis","NumericalMathematics","OfficialStatistics","Optimization","Phylogenetics","Spatial","TeachingStatistics"]},{"type":"character","attributes":{},"value":["C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6/rjtools/rjournal.csl"]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   
@@ -2592,7 +2592,7 @@ font-size: 20px;
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"couplr: Certified Optimal Matching without Building the Assignment Graph","description":"Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.","authors":[{"author":"Gilles Colling","authorURL":"https://gillescolling.com","affiliation":"University of Vienna","affiliationURL":"#","orcidID":"0000-0003-3070-6066"}],"publishedDate":"2026-08-25T00:00:00.000+02:00","citationText":"Colling, 2026"}
+{"title":"couplr: Provably Optimal Matching with Sparse Edge Generation","description":"Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.","authors":[{"author":"Gilles Colling","authorURL":"https://gillescolling.com","affiliation":"University of Vienna","affiliationURL":"#","orcidID":"0000-0003-3070-6066"}],"publishedDate":"2026-08-25T00:00:00.000+02:00","citationText":"Colling, 2026"}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2602,7 +2602,7 @@ font-size: 20px;
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>couplr: Certified Optimal Matching without Building the Assignment Graph</h1>
+<h1>couplr: Provably Optimal Matching with Sparse Edge Generation</h1>
 
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
@@ -2658,8 +2658,8 @@ returns a matching and a status, and the status records the state the solver
 terminated in. Whether that matching is the optimal one is a separate question
 with a checkable answer, since linear programming supplies optimality
 conditions that a third party can test on the returned solution, and the dual
-variables those conditions need are not part of what the packages above return.
-The second concerns size. The set of admissible pairs is materialised before it
+variables those conditions need are not part of what the packages above return.</p>
+<p>The second concerns size. The set of admissible pairs is materialised before it
 is solved, so the largest problem that can be attempted is the largest graph
 that fits in memory, whatever the structure of the costs.</p>
 <p>We present the <a href="https://cran.r-project.org/package=couplr">couplr</a> package <span class="citation" data-cites="couplr">(<a href="#ref-couplr" role="doc-biblioref">Colling 2026</a>)</span>, which treats the assignment
@@ -2724,7 +2724,8 @@ application poses.</p>
 <p>In a matching application, rows are treated units, columns are controls, and
 <span class="math inline">\(C_{ij}\)</span> is a distance between covariate vectors. In a scheduling application,
 rows are workers, columns are shifts, and <span class="math inline">\(C_{ij}\)</span> is a cost or the negative of
-a preference score. Forbidden pairs are encoded as <span class="math inline">\(C_{ij} = \infty\)</span>, and
+a preference score.</p>
+<p>Forbidden pairs are encoded as <span class="math inline">\(C_{ij} = \infty\)</span>, and
 enough of them make <a href="#eq:lap">(1)</a> infeasible, since no assignment can then
 reach every row. couplr solves a lexicographic relaxation in that case: the
 largest number of matched rows first, then the smallest total cost among the
@@ -2922,7 +2923,8 @@ formats them.</p>
 </div>
 <p>Experience and certification fall below the conventional 0.1 threshold on the
 absolute standardised difference <span class="citation" data-cites="Stuart2010">(<a href="#ref-Stuart2010" role="doc-biblioref">Stuart 2010</a>)</span>, while age remains slightly
-above it at 0.116; all three are below 0.15. <code>join_matched()</code> then returns
+above it at 0.116; all three are below 0.15.</p>
+<p><code>join_matched()</code> then returns
 the analysis-ready frame, one row per pair, with every column of both input
 tables carried through under <code>_left</code> and <code>_right</code> suffixes, so an outcome model
 can be fitted directly on the matched data.</p>
@@ -3280,7 +3282,8 @@ rather than the one the warm start happened to reach.</p>
 matrix in hand. <code>lap_solve()</code> and <code>assignment()</code> take a matrix and return the
 optimal assignment; <code>lap_solve()</code> also accepts a long data frame of source,
 target and cost columns, which is the natural shape when costs arrive from a
-database.</p>
+database. The <code>method</code> argument names any of the nineteen solvers; <code>&quot;auto&quot;</code> is
+the default.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
@@ -3303,11 +3306,10 @@ database.</p>
 Total cost: 120 
 Method: bruteforce </code></pre>
 </div>
-<p>The <code>method</code> argument names any of the nineteen solvers; <code>&quot;auto&quot;</code> is the
-default. Dual potentials come from <code>assignment_duals()</code>, which returns the
-vectors <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> of <a href="#eq:duals">(2)</a> alongside the assignment. Passing that
-result to <code>verify_assignment()</code> certifies the matching without a second solve,
-since the potentials it needs are already in hand:</p>
+<p>Dual potentials come from <code>assignment_duals()</code>, which returns the vectors <span class="math inline">\(u\)</span>
+and <span class="math inline">\(v\)</span> of <a href="#eq:duals">(2)</a> alongside the assignment. Passing that result to
+<code>verify_assignment()</code> certifies the matching without a second solve, since the
+potentials it needs are already in hand:</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://gillescolling.com/couplr/reference/assignment_duals.html">assignment_duals</a></span><span class="op">(</span><span class="va">cost</span><span class="op">)</span></span>
@@ -3431,12 +3433,12 @@ and evaluates distances as it requests them, which trades arithmetic for
 memory and returns the same assignment the dense path returns. The lazy path
 covers Jonker-Volgenant and auction with the built-in metrics, together with
 calipers and the distance ceiling.</p>
-<p>Under <code>&quot;implicit&quot;</code>, the edge-generation loop described above runs. The three
-modes differ in what the solver ranges over. The dense path holds the complete
-matrix. The lazy path holds no matrix and still considers every pair, computing
-each distance when it is asked for. The implicit path holds a sparse graph and
-grows it until its duals certify it, so most pairs are priced without ever
-becoming arcs. All three return the same assignment.</p>
+<p>Under <code>&quot;implicit&quot;</code>, the edge-generation loop described above runs, and the three
+modes then differ in what the solver ranges over. The dense path holds the
+complete matrix. The lazy path holds no matrix and still considers every pair,
+computing each distance when it is asked for. The implicit path holds a sparse
+graph and grows it until its duals certify it, so most pairs are priced without
+ever becoming arcs. All three return the same assignment.</p>
 <p>Under <code>&quot;auto&quot;</code>, the package decides. Below ten million cells, about 80 MB dense,
 it skips the check entirely, since probing free memory on every ordinary problem
 would be pure overhead. Above that, we estimate the dense footprint with a
@@ -3477,7 +3479,8 @@ benchmark in the next section reports both comparisons on the sizes it covers.</
 test suite. <code>verify_assignment()</code> and <code>verify_flow()</code> run in <span class="math inline">\(O(nm)\)</span> and
 <span class="math inline">\(O(\text{arcs})\)</span> respectively without solving anything, so a user can run them
 on their own problem, at their own tolerance, against a solution the package
-produced. The package carries 138 R test files and 37 C++ test files, covering
+produced.</p>
+<p>The package carries 138 R test files and 37 C++ test files, covering
 the R layer, the solver bodies compiled outside R, the C++ wrappers, dispatch
 rules and the matching designs.</p>
 <h3 data-number="9.6" id="dependency-footprint"><span class="header-section-number">9.6</span> Dependency footprint</h3>
@@ -3489,13 +3492,15 @@ comparable figures on the same day were 18 for <a href="https://cran.r-project.o
 <a href="https://cran.r-project.org/package=MatchIt">MatchIt</a> and 7 for <a href="https://cran.r-project.org/package=designmatch">designmatch</a>.</p>
 <p>Two choices sit behind that number. First, we use no external solver: all
 nineteen algorithms are package source, so there is no dependency on an LP or
-MIP library and no system solver to install. Second, everything that serves a
-single feature lives in <code>Suggests</code> and is loaded at call time. The animation and image-morphing functions, the plotting
-helpers, the interoperability layer for <a href="https://cran.r-project.org/package=MatchIt">MatchIt</a>, <a href="https://cran.r-project.org/package=optmatch">optmatch</a> and
-<a href="https://cran.r-project.org/package=cobalt">cobalt</a>, and the parallel back end are all optional in this sense, so a user
-who only wants to match pays for none of them. <code>LinkingTo</code> deserves particular
-care, since every entry there forces a compile of that package before couplr can
-be built from source; couplr declares only what its headers actually include.</p>
+MIP library and no system solver to install. That choice also keeps <code>LinkingTo</code>
+to <code>Rcpp</code> alone, which matters because every entry there forces a compile of
+that package before couplr can be built from source; couplr declares only what
+its headers actually include. Second, everything that serves a single feature
+lives in <code>Suggests</code> and is loaded at call time. The animation and image-morphing
+functions, the plotting helpers, the interoperability layer for
+<a href="https://cran.r-project.org/package=MatchIt">MatchIt</a>, <a href="https://cran.r-project.org/package=optmatch">optmatch</a> and <a href="https://cran.r-project.org/package=cobalt">cobalt</a>, and the parallel
+back end are all optional in this sense, so a user who only wants to match pays
+for none of them.</p>
 <h2 data-number="10" id="performance"><span class="header-section-number">10</span> Performance</h2>
 <h3 data-number="10.1" id="solver-benchmark"><span class="header-section-number">10.1</span> Solver benchmark</h3>
 <p>Figure <a href="#fig:solver-bench">1</a> reports median wall-clock solve time against
@@ -3901,25 +3906,30 @@ solution checkable by a third party, which turns a reported status into a
 certificate. And a certificate is what makes it safe to solve a problem that was
 never built, since the loop that grows a sparse graph needs a statement about
 the complete one to know when to stop.</p>
-<p>couplr has five limitations. The edge-generation loop’s scope is the
-unit-capacity assignment: a full match’s column nodes carry capacities above
-one, so its column duals are not the assignment duals the pricer reads, and
-<code>full_match()</code> has no implicit path. Its pricing is a block scan over the
-complete pair set, which keeps memory near-linear while leaving the arithmetic
-at one pass over the pairs per round, so at eight covariates the loop evaluates
-more distances than a single full sweep and wins on what it does not build
-rather than on what it does not compute. The lazy cost path covers
-Jonker-Volgenant and auction with the built-in metrics, and user-supplied
-distance functions still require a dense matrix. <code>cardinality_match()</code> answers a
-moment-constrained problem by branch and bound under a node and time limit, so
-such a run can stop with a gap rather than a certificate, and reports which of
-the two it reached; the fine and refined balance constraints, which the network
-represents directly, are answered certified. The dispatch rules are calibrated
-on dense uniform integer costs and on the sparsity and rectangularity boundaries
-that follow from them; cost structures far from that regime may be better served
-by naming a solver explicitly, which is why every solver stays reachable by
-name. Matching on observed covariates cannot address unmeasured confounding, and
-the sensitivity analysis quantifies exposure to it rather than removing it.</p>
+<p>couplr has five limitations:</p>
+<ul>
+<li>The edge-generation loop’s scope is the unit-capacity assignment: a full
+match’s column nodes carry capacities above one, so its column duals are not
+the assignment duals the pricer reads, and <code>full_match()</code> has no implicit
+path. Its pricing is a block scan over the complete pair set, which keeps
+memory near-linear while leaving the arithmetic at one pass over the pairs per
+round, so at eight covariates the loop evaluates more distances than a single
+full sweep and wins on what it does not build rather than on what it does not
+compute.</li>
+<li>The lazy cost path covers Jonker-Volgenant and auction with the built-in
+metrics, and user-supplied distance functions still require a dense matrix.</li>
+<li><code>cardinality_match()</code> answers a moment-constrained problem by branch and bound
+under a node and time limit, so such a run can stop with a gap rather than a
+certificate, and reports which of the two it reached; the fine and refined
+balance constraints, which the network represents directly, are answered
+certified.</li>
+<li>The dispatch rules are calibrated on dense uniform integer costs and on the
+sparsity and rectangularity boundaries that follow from them; cost structures
+far from that regime may be better served by naming a solver explicitly, which
+is why every solver stays reachable by name.</li>
+<li>Matching on observed covariates cannot address unmeasured confounding, and the
+sensitivity analysis quantifies exposure to it rather than removing it.</li>
+</ul>
 <p>Two extensions follow from the limitations above. A metric-tree pricer would
 attack the arithmetic the block scan leaves in place: pruning a subtree <span class="math inline">\(S\)</span> of
 controls for row <span class="math inline">\(i\)</span> requires <span class="math inline">\(\min_{j \in S} C_{ij} \ge u_i + \max_{j \in S}
@@ -4094,11 +4104,11 @@ J. R. Zubizarreta, R. D. Paredes and P. R. Rosenbaum. Matching for balance, pair
 <p>Text and figures are licensed under Creative Commons Attribution <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. The figures that have been reused from other sources don&#39;t fall under this license and can be recognized by a note in their caption: &quot;Figure from ...&quot;.</p>
 <h3 id="citation">Citation</h3>
 <p>For attribution, please cite this work as</p>
-<pre class="citation-appendix short">Colling, &quot;couplr: Certified Optimal Matching without Building the Assignment Graph&quot;, The R Journal, 2026</pre>
+<pre class="citation-appendix short">Colling, &quot;couplr: Provably Optimal Matching with Sparse Edge Generation&quot;, The R Journal, 2026</pre>
 <p>BibTeX citation</p>
 <pre class="citation-appendix long">@article{rjournal,
   author = {Colling, Gilles},
-  title = {couplr: Certified Optimal Matching without Building the Assignment Graph},
+  title = {couplr: Provably Optimal Matching with Sparse Edge Generation},
   journal = {The R Journal},
   year = {2026},
   issn = {2073-4859},

@@ -1,5 +1,5 @@
 ---
-title: "couplr: Certified Optimal Matching without Building the Assignment Graph"
+title: "couplr: Provably Optimal Matching with Sparse Edge Generation"
 date: "2026-08-25"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
@@ -117,6 +117,7 @@ terminated in. Whether that matching is the optimal one is a separate question
 with a checkable answer, since linear programming supplies optimality
 conditions that a third party can test on the returned solution, and the dual
 variables those conditions need are not part of what the packages above return.
+
 The second concerns size. The set of admissible pairs is materialised before it
 is solved, so the largest problem that can be attempted is the largest graph
 that fits in memory, whatever the structure of the costs.
@@ -188,7 +189,9 @@ application poses.
 In a matching application, rows are treated units, columns are controls, and
 $C_{ij}$ is a distance between covariate vectors. In a scheduling application,
 rows are workers, columns are shifts, and $C_{ij}$ is a cost or the negative of
-a preference score. Forbidden pairs are encoded as $C_{ij} = \infty$, and
+a preference score.
+
+Forbidden pairs are encoded as $C_{ij} = \infty$, and
 enough of them make \@ref(eq:lap) infeasible, since no assignment can then
 reach every row. couplr solves a lexicographic relaxation in that case: the
 largest number of matched rows first, then the smallest total cost among the
@@ -357,7 +360,9 @@ balance_table(bal)
 
 Experience and certification fall below the conventional 0.1 threshold on the
 absolute standardised difference [@Stuart2010], while age remains slightly
-above it at 0.116; all three are below 0.15. `join_matched()` then returns
+above it at 0.116; all three are below 0.15.
+
+`join_matched()` then returns
 the analysis-ready frame, one row per pair, with every column of both input
 tables carried through under `_left` and `_right` suffixes, so an outcome model
 can be fitted directly on the matched data.
@@ -693,7 +698,8 @@ The solver layer is reachable on its own, for a user who arrives with a cost
 matrix in hand. `lap_solve()` and `assignment()` take a matrix and return the
 optimal assignment; `lap_solve()` also accepts a long data frame of source,
 target and cost columns, which is the natural shape when costs arrive from a
-database.
+database. The `method` argument names any of the nineteen solvers; `"auto"` is
+the default.
 
 ```{r solver-basic, echo=TRUE}
 set.seed(1)
@@ -702,11 +708,10 @@ res  <- lap_solve(cost)
 res
 ```
 
-The `method` argument names any of the nineteen solvers; `"auto"` is the
-default. Dual potentials come from `assignment_duals()`, which returns the
-vectors $u$ and $v$ of \@ref(eq:duals) alongside the assignment. Passing that
-result to `verify_assignment()` certifies the matching without a second solve,
-since the potentials it needs are already in hand:
+Dual potentials come from `assignment_duals()`, which returns the vectors $u$
+and $v$ of \@ref(eq:duals) alongside the assignment. Passing that result to
+`verify_assignment()` certifies the matching without a second solve, since the
+potentials it needs are already in hand:
 
 ```{r solver-duals, echo=TRUE}
 d <- assignment_duals(cost)
@@ -843,12 +848,12 @@ memory and returns the same assignment the dense path returns. The lazy path
 covers Jonker-Volgenant and auction with the built-in metrics, together with
 calipers and the distance ceiling.
 
-Under `"implicit"`, the edge-generation loop described above runs. The three
-modes differ in what the solver ranges over. The dense path holds the complete
-matrix. The lazy path holds no matrix and still considers every pair, computing
-each distance when it is asked for. The implicit path holds a sparse graph and
-grows it until its duals certify it, so most pairs are priced without ever
-becoming arcs. All three return the same assignment.
+Under `"implicit"`, the edge-generation loop described above runs, and the three
+modes then differ in what the solver ranges over. The dense path holds the
+complete matrix. The lazy path holds no matrix and still considers every pair,
+computing each distance when it is asked for. The implicit path holds a sparse
+graph and grows it until its duals certify it, so most pairs are priced without
+ever becoming arcs. All three return the same assignment.
 
 Under `"auto"`, the package decides. Below ten million cells, about 80 MB dense,
 it skips the check entirely, since probing free memory on every ordinary problem
@@ -895,7 +900,9 @@ Certificates give a third check, and it is the one that survives leaving the
 test suite. `verify_assignment()` and `verify_flow()` run in $O(nm)$ and
 $O(\text{arcs})$ respectively without solving anything, so a user can run them
 on their own problem, at their own tolerance, against a solution the package
-produced. The package carries 138 R test files and 37 C++ test files, covering
+produced.
+
+The package carries 138 R test files and 37 C++ test files, covering
 the R layer, the solver bodies compiled outside R, the C++ wrappers, dispatch
 rules and the matching designs.
 
@@ -910,13 +917,15 @@ comparable figures on the same day were 18 for \CRANpkg{optmatch}, 8 for
 
 Two choices sit behind that number. First, we use no external solver: all
 nineteen algorithms are package source, so there is no dependency on an LP or
-MIP library and no system solver to install. Second, everything that serves a
-single feature lives in `Suggests` and is loaded at call time. The animation and image-morphing functions, the plotting
-helpers, the interoperability layer for \CRANpkg{MatchIt}, \CRANpkg{optmatch} and
-\CRANpkg{cobalt}, and the parallel back end are all optional in this sense, so a user
-who only wants to match pays for none of them. `LinkingTo` deserves particular
-care, since every entry there forces a compile of that package before couplr can
-be built from source; couplr declares only what its headers actually include.
+MIP library and no system solver to install. That choice also keeps `LinkingTo`
+to `Rcpp` alone, which matters because every entry there forces a compile of
+that package before couplr can be built from source; couplr declares only what
+its headers actually include. Second, everything that serves a single feature
+lives in `Suggests` and is loaded at call time. The animation and image-morphing
+functions, the plotting helpers, the interoperability layer for
+\CRANpkg{MatchIt}, \CRANpkg{optmatch} and \CRANpkg{cobalt}, and the parallel
+back end are all optional in this sense, so a user who only wants to match pays
+for none of them.
 
 # Performance
 
@@ -1322,25 +1331,29 @@ certificate. And a certificate is what makes it safe to solve a problem that was
 never built, since the loop that grows a sparse graph needs a statement about
 the complete one to know when to stop.
 
-couplr has five limitations. The edge-generation loop's scope is the
-unit-capacity assignment: a full match's column nodes carry capacities above
-one, so its column duals are not the assignment duals the pricer reads, and
-`full_match()` has no implicit path. Its pricing is a block scan over the
-complete pair set, which keeps memory near-linear while leaving the arithmetic
-at one pass over the pairs per round, so at eight covariates the loop evaluates
-more distances than a single full sweep and wins on what it does not build
-rather than on what it does not compute. The lazy cost path covers
-Jonker-Volgenant and auction with the built-in metrics, and user-supplied
-distance functions still require a dense matrix. `cardinality_match()` answers a
-moment-constrained problem by branch and bound under a node and time limit, so
-such a run can stop with a gap rather than a certificate, and reports which of
-the two it reached; the fine and refined balance constraints, which the network
-represents directly, are answered certified. The dispatch rules are calibrated
-on dense uniform integer costs and on the sparsity and rectangularity boundaries
-that follow from them; cost structures far from that regime may be better served
-by naming a solver explicitly, which is why every solver stays reachable by
-name. Matching on observed covariates cannot address unmeasured confounding, and
-the sensitivity analysis quantifies exposure to it rather than removing it.
+couplr has five limitations:
+
+- The edge-generation loop's scope is the unit-capacity assignment: a full
+  match's column nodes carry capacities above one, so its column duals are not
+  the assignment duals the pricer reads, and `full_match()` has no implicit
+  path. Its pricing is a block scan over the complete pair set, which keeps
+  memory near-linear while leaving the arithmetic at one pass over the pairs per
+  round, so at eight covariates the loop evaluates more distances than a single
+  full sweep and wins on what it does not build rather than on what it does not
+  compute.
+- The lazy cost path covers Jonker-Volgenant and auction with the built-in
+  metrics, and user-supplied distance functions still require a dense matrix.
+- `cardinality_match()` answers a moment-constrained problem by branch and bound
+  under a node and time limit, so such a run can stop with a gap rather than a
+  certificate, and reports which of the two it reached; the fine and refined
+  balance constraints, which the network represents directly, are answered
+  certified.
+- The dispatch rules are calibrated on dense uniform integer costs and on the
+  sparsity and rectangularity boundaries that follow from them; cost structures
+  far from that regime may be better served by naming a solver explicitly, which
+  is why every solver stays reachable by name.
+- Matching on observed covariates cannot address unmeasured confounding, and the
+  sensitivity analysis quantifies exposure to it rather than removing it.
 
 Two extensions follow from the limitations above. A metric-tree pricer would
 attack the arithmetic the block scan leaves in place: pruning a subtree $S$ of

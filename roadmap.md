@@ -635,13 +635,17 @@ reproducible from the submission. `current.md` records what changed and what was
 measured for it. Every number was measured on 1.6.2, which CRAN gets in due time
 and `https://gcol33.r-universe.dev` carries in the meantime.
 
-> **couplr: Certified optimal matching without building the assignment graph**
+> **couplr: Provably optimal matching with sparse edge generation**
 
-Two revisions from the working title. "Matrix-free" went because it shipped in
-1.5.6 and a title claiming it invites a reviewer to check NEWS. "Without
+Three revisions from the working title. "Matrix-free" went because it shipped
+in 1.5.6 and a title claiming it invites a reviewer to check NEWS. "Without
 evaluating the distance set" went because phase 0 disproved it at eight
 covariates: the loop evaluates more distances than one full sweep there and
-wins anyway. What is never built is the graph. Revert if either reads worse.
+wins anyway. "Certified ... without building the assignment graph" went
+because "certified" is optimization jargon that does not say what the reader
+gets, and the negation buries the mechanism; "provably optimal" states the
+guarantee directly and "sparse edge generation" names what the loop actually
+does. Revert if it reads worse.
 
 Contributions:
 

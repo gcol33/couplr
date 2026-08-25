@@ -8,8 +8,8 @@ To the Editors of The R Journal
 
 Dear Editors,
 
-I am submitting "couplr: Certified Optimal Matching without Building the
-Assignment Graph" for consideration as a contributed research article.
+I am submitting "couplr: Provably Optimal Matching with Sparse Edge
+Generation" for consideration as a contributed research article.
 
 The paper describes an R package for the linear assignment problem and for the
 matching workflows built on it. My reason for sending it to The R Journal rather

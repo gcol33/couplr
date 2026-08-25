@@ -14,7 +14,22 @@ lalonde   <- read.csv("data/lalonde-per-covariate.csv", stringsAsFactors = FALSE
 lal_obj   <- read.csv("data/lalonde-results.csv", stringsAsFactors = FALSE)
 scaling   <- read.csv("data/scaling-results.csv", stringsAsFactors = FALSE)
 lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
+imp       <- read.csv("data/implicit-results.csv", stringsAsFactors = FALSE)
+equiv     <- read.csv("data/implicit-equivalence.csv", stringsAsFactors = FALSE)
+pth       <- read.csv("data/path-results.csv", stringsAsFactors = FALSE)
+n_path_values <- pth$points[1]
 couplr_ver <- as.character(utils::packageVersion("couplr"))
+
+## Timings by size for one memory mode, from the edge-generation benchmark.
+imp_at <- function(mode, n, col = "elapsed_s") {
+  imp[[col]][imp$memory_mode == mode & imp$n_total == n][1]
+}
+
+
+## ----certify, echo=TRUE-------------------------------------------------------
+set.seed(2)
+cost <- matrix(runif(120), nrow = 6, ncol = 20)
+verify_assignment(assignment(cost), cost)
 
 
 ## ----workflow-data, echo=TRUE-------------------------------------------------
@@ -68,6 +83,40 @@ m_cal <- match_couples(
 c(pairs = nrow(m_cal$pairs), unmatched_left = length(m_cal$unmatched$left))
 
 
+## ----verify-flow, echo=TRUE---------------------------------------------------
+prob <- list(
+  n_nodes = 4,
+  supply  = c(2, 1, -2, -1),
+  arcs = data.frame(tail  = c(1, 1, 2, 2), head  = c(3, 4, 3, 4),
+                    lower = c(0, 0, 0, 0), upper = c(2, 2, 2, 2),
+                    cost  = c(1, 3, 2, 1))
+)
+cert <- verify_flow(c(2, 0, 0, 1), prob, potential = c(0, 0, 1, 1))
+c(certified = cert$certified_optimal, gap = cert$duality_gap)
+
+
+## ----implicit, echo=TRUE------------------------------------------------------
+m_imp <- match_couples(
+  treated, control, vars = covars,
+  auto_scale  = TRUE,
+  memory_mode = "implicit",
+  certify     = TRUE
+)
+m_imp$certificate$certified_optimal
+unlist(m_imp$search[c("seed_width", "n_rounds",
+                      "candidate_edges", "possible_edges")])
+
+
+## ----path, echo=TRUE----------------------------------------------------------
+p <- match_path(
+  treated, control, vars = covars,
+  auto_scale = TRUE,
+  vary   = "max_distance",
+  values = c(1.0, 1.2, 1.5, 2.0, 3.0)
+)
+p$path[, c("max_distance", "n_matched", "total_distance", "certified")]
+
+
 ## ----solver-basic, echo=TRUE--------------------------------------------------
 set.seed(1)
 cost <- matrix(sample.int(100, 25, replace = TRUE), nrow = 5)
@@ -76,15 +125,8 @@ res
 
 
 ## ----solver-duals, echo=TRUE--------------------------------------------------
-d   <- assignment_duals(cost)
-i   <- which(d$match > 0)
-j   <- d$match[i]
-sel <- cbind(i, j)
-
-c(primal   = length(i) == min(dim(cost)) && !anyDuplicated(j),
-  dual     = all(outer(d$u, d$v, "+") <= cost + 1e-9),
-  tight    = all(abs(d$u[i] + d$v[j] - cost[sel]) < 1e-9),
-  no_gap   = abs(sum(cost[sel]) - sum(d$u) - sum(d$v)) < 1e-9)
+d <- assignment_duals(cost)
+verify_assignment(d, cost)$certified_optimal
 
 
 ## ----solver-kbest, echo=TRUE--------------------------------------------------
@@ -251,6 +293,54 @@ knitr::kable(
 )
 
 
+## ----implicit-table, echo=FALSE-----------------------------------------------
+isz  <- c(500, 2000, 5000, 10000, 20000, 50000)
+ilab <- c("167 + 333", "667 + 1,333", "1,667 + 3,333",
+          "3,333 + 6,667", "6,667 + 13,333", "16,667 + 33,333")
+
+secs <- function(mode) {
+  vapply(isz, function(n) {
+    s <- imp_at(mode, n)
+    if (is.na(s)) return("not run")
+    if (s < 1) sprintf("%.0f ms", s * 1000) else sprintf("%.3g s", s)
+  }, character(1))
+}
+share <- vapply(isz, function(n) {
+  sprintf("%.2f%%", 100 * imp_at("implicit", n, "candidate_edges") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+dists <- vapply(isz, function(n) {
+  sprintf("%.2f", imp_at("implicit", n, "edges_evaluated") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+rounds <- vapply(isz, function(n) {
+  as.character(imp_at("implicit", n, "n_rounds"))
+}, character(1))
+
+knitr::kable(
+  data.frame(`Problem size` = ilab, dense = secs("dense"), lazy = secs("lazy"),
+             implicit = secs("implicit"), `Graph built` = share,
+             `Distances` = dists, Rounds = rounds, check.names = FALSE),
+  align = "lrrrrrr", booktabs = TRUE,
+  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the arcs the complete problem has. Distances is the number of distance evaluations the loop made over all rounds, as a multiple of the complete pair count, so a pair priced in two rounds counts twice. All three arms were timed in one session, which is a different session from the one Table 2 reports. The dense arm was run at the four sizes where its pairing can be compared against the loop's, which is what this benchmark exists to check; Table 2 carries dense timings at the two largest sizes. Every cell returned the same total distance."
+)
+
+
+## ----path-table, echo=FALSE---------------------------------------------------
+knitr::kable(
+  data.frame(
+    `Problem size` = ilab[match(pth$n_total, isz)],
+    `As a path` = sprintf("%.3g s", pth$warm_s),
+    `Independently` = sprintf("%.3g s", pth$cold_s),
+    Ratio = sprintf("%.2fx", pth$speedup),
+    `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
+    check.names = FALSE
+  ),
+  align = "lrrrr", booktabs = TRUE,
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, summed per-point solve time on a single core of an Apple M4 Pro. Rounds is the pricing rounds the path took against the rounds the independent solves took, summed over the sweep. The independent solve is a one-point path, so both sides are the same solver reached the same way and differ only in whether a point starts from the point before it."
+)
+
+
 ## ----capability, echo=FALSE---------------------------------------------------
 cap <- data.frame(
   Feature = c("Per-variable calipers from a named vector",
@@ -259,14 +349,17 @@ cap <- data.frame(
               "k-best assignments",
               "Bottleneck (minimax) assignment",
               "Rosenbaum sensitivity bounds",
+              "Dual potentials and optimality certificate",
               "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "via optmatch", "no", "no", "no", "no", "via optmatch"),
-  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "2 back ends"),
+  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
+  MatchIt = c("yes", "via optmatch", "no", "no", "no", "no", "no",
+              "via optmatch"),
+  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "no",
+               "2 back ends"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(). Assessed 2026-08-09 against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-25. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 

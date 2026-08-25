@@ -626,10 +626,14 @@ three months before discovering its central idea does not hold. Had phase 0
 failed, phases A, H and I would still have been worth shipping as couplr 1.6
 with the rest deleted. It did not fail, so the full road is live.
 
-## The paper
+## The paper: DONE
 
-`paper/rjournal/` gets rewritten after phase 3 produces numbers, not alongside
-generating them.
+`paper/rjournal/` was rewritten on 2026-08-25, after phase 3 produced numbers
+rather than alongside generating them. It carries the title and all five
+contributions below, and `paper/bench_path.R` was added so the frontier claim is
+reproducible from the submission. `current.md` records what changed and what was
+measured for it. What is left is the decision recorded under its "Next action":
+1.6.2 is what every number was measured on, and 1.6.1 is what CRAN has.
 
 > **couplr: Certified optimal matching without building the assignment graph**
 
@@ -653,13 +657,13 @@ MatchIt on convenience or optmatch on full matching and starts competing with
 general optimization libraries, while exploiting matching structure they cannot
 see.
 
-Verify every reference against CrossRef before it goes in the manuscript. The
-citations named in this document are from memory: Hansen and Klopfer (2006,
-JCGS) on full matching via network flows; Bertsekas and Tseng (1988, Operations
-Research) on relaxation methods; Zubizarreta (2012, JASA) on cardinality
-matching by mixed integer programming; Rosenbaum, Ross and Silber (2007, JASA)
-on fine balance; Pimentel, Kelz, Silber and Rosenbaum (2015, JASA) on refined
-covariate balance.
+Every reference in the manuscript was verified against CrossRef on 2026-08-25,
+including the ones this document named from memory. Rosenbaum, Ross and Silber
+(2007, JASA) on fine balance and Pimentel, Kelz, Silber and Rosenbaum (2015,
+JASA) on refined covariate balance are in and cited; Bertsekas and Tseng (1988)
+belongs with section E and is not cited yet. The check also found one wrong DOI
+already in the bibliography, on the `cobalt` entry. Anything added from here goes
+through the same check.
 
 This targets The R Journal or JSS. It does not address the JOSS rejection,
 which turned on demonstrated research use and still turns on the east-west

@@ -1,25 +1,28 @@
 ---
-title: "couplr: Optimal Pairing and Matching via Linear Assignment"
-date: "`r Sys.Date()`"
+title: "couplr: Certified Optimal Matching without Building the Assignment Graph"
+date: "2026-08-25"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
   small as possible is the linear assignment problem, which sits underneath
   causal-inference matching, experimental design, task allocation and image
-  alignment. R users currently meet it through two separate families of
-  packages: causal-inference packages that reach the solver through a
-  design-level argument, and solver packages that expose one algorithm each
-  without preprocessing, constraints or balance diagnostics. We present the
-  couplr package, which covers both. A data-frame interface builds distances,
-  applies calipers, blocks and forbidden pairs, and returns matched output with
-  balance diagnostics. A matrix interface exposes nineteen assignment
-  algorithms written from scratch in C++, together with dual variables that
-  certify optimality, k-best assignments and bottleneck assignment. A
-  dispatcher chooses among the solvers from problem shape, sparsity, cost type
-  and size, and a lazy cost representation matches fifty thousand units without
-  building the distance matrix. Constrained problems are solved to their
-  lexicographic optimum, the largest admissible matching and the cheapest among
-  those of its size. On a one-to-one Mahalanobis task couplr reproduces the
-  balance MatchIt and optmatch achieve, at sizes where both stop. couplr is
+  alignment. Two things bound what software built on it can offer. An answer
+  arrives without a proof, since a solver reports the state it terminated in
+  rather than a statement about the matching that a user can check. And the
+  graph of admissible pairs is built before it is solved, which puts the size
+  ceiling at the memory that complete graph occupies. We present the couplr
+  package, which addresses both. Every matching design compiles into one
+  internal flow model, so node potentials come back from all of them and can be
+  checked against the linear-programming optimality conditions. On those
+  potentials the package solves without building the graph: each unit starts
+  with its nearest admissible partners, the omitted pairs are priced against
+  the duals the sparse solve returns, and pairs enter until none prices in, at
+  which point the duals certify the sparse solution optimal for the complete
+  problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent
+  of the pairs and returns the assignment the dense solve returns, certified.
+  Warm starting the same loop traces a matching frontier over a swept
+  constraint at a fraction of the cost of solving each point from cold. A
+  data-frame interface, nineteen assignment algorithms, balance diagnostics and
+  cardinality matching with an optimality gap sit on the same core. couplr is
   available on CRAN.
 draft: false
 author:
@@ -54,7 +57,16 @@ lalonde   <- read.csv("data/lalonde-per-covariate.csv", stringsAsFactors = FALSE
 lal_obj   <- read.csv("data/lalonde-results.csv", stringsAsFactors = FALSE)
 scaling   <- read.csv("data/scaling-results.csv", stringsAsFactors = FALSE)
 lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
+imp       <- read.csv("data/implicit-results.csv", stringsAsFactors = FALSE)
+equiv     <- read.csv("data/implicit-equivalence.csv", stringsAsFactors = FALSE)
+pth       <- read.csv("data/path-results.csv", stringsAsFactors = FALSE)
+n_path_values <- pth$points[1]
 couplr_ver <- as.character(utils::packageVersion("couplr"))
+
+## Timings by size for one memory mode, from the edge-generation benchmark.
+imp_at <- function(mode, n, col = "elapsed_s") {
+  imp[[col]][imp$memory_mode == mode & imp$n_total == n][1]
+}
 ```
 
 # Introduction
@@ -72,7 +84,7 @@ optimality rather than greedily.
 R has good software at both ends of this problem, in two separate groups of
 packages. On the statistical side, \CRANpkg{MatchIt} [@MatchIt] provides a
 common interface to several matching designs and delegates optimal pair and
-full matching to \CRANpkg{optmatch} [@optmatch]. \pkg{optmatch} formulates
+full matching to \CRANpkg{optmatch} [@optmatch]. \CRANpkg{optmatch} formulates
 those designs as minimum-cost flow problems [@HansenKlopfer2006] and supports
 more than one back end, currently RELAX-IV and LEMON, selected through its
 `solver` argument. \CRANpkg{Matching} [@Matching] provides multivariate and
@@ -84,8 +96,8 @@ packages. What these expose is the matching design; the assignment problem
 underneath is reached through a solver argument at most, without dual
 variables, alternative optima or a bottleneck objective. Statements about other
 packages here and in Table \@ref(tab:capability) were assessed on 2026-08-09
-against \pkg{MatchIt} 4.7.2, \pkg{optmatch} 0.10.8, \pkg{Matching} 4.10-15 and
-\pkg{designmatch} 0.5.5.
+against \CRANpkg{MatchIt} 4.7.2, \CRANpkg{optmatch} 0.10.8, \CRANpkg{Matching} 4.10-15 and
+\CRANpkg{designmatch} 0.5.5.
 
 On the algorithmic side, \CRANpkg{clue} [@clue] exposes the Hungarian method
 through `solve_LSAP()`, and \CRANpkg{lpSolve} [@lpSolve] solves the assignment
@@ -98,30 +110,58 @@ Matching on observed covariates instead of a propensity score, imposing
 calipers on more than one variable at a time, blocking, and choosing the solver
 deliberately are all available in R, each in a different package.
 
+Two further limits are common to both groups, and they are the ones this
+article is about. The first concerns what a result says about itself. A solve
+returns a matching and a status, and the status records the state the solver
+terminated in. Whether that matching is the optimal one is a separate question
+with a checkable answer, since linear programming supplies optimality
+conditions that a third party can test on the returned solution, and the dual
+variables those conditions need are not part of what the packages above return.
+The second concerns size. The set of admissible pairs is materialised before it
+is solved, so the largest problem that can be attempted is the largest graph
+that fits in memory, whatever the structure of the costs.
+
 We present the \CRANpkg{couplr} package [@couplr], which treats the assignment
 problem itself as the organising object and builds the workflow around it. A
 user who starts from a data frame with covariates and a treatment indicator,
 and a user who starts from a cost matrix, enter through different functions and
-reach the same solver core. We contribute three things to R:
+reach the same solver core. We contribute five things to R:
 
-1. A matching interface in which covariate distance is the primary entry point,
-   with calipers, blocking, forbidden pairs, variable ratios, replacement,
-   balance diagnostics and Rosenbaum sensitivity bounds in one object model.
-2. Nineteen assignment algorithms implemented from scratch in C++ and reachable
+1. A common compilation layer for statistical matching designs. One-to-one,
+   k-to-one, with replacement, blocked and full matching are descriptions of
+   the same internal flow model, differing in the capacities their arcs
+   receive, so what is written once serves all of them.
+2. Certificates rather than reported status. `verify_assignment()` and
+   `verify_flow()` take a solution and check primal feasibility, dual
+   feasibility, complementary slackness and objective equality, returning each
+   condition separately. The check is independent of the solver that produced
+   the solution, and a matching from a solver that returns no duals of its own
+   can be certified against duals obtained separately.
+3. Exact dual-certified adaptive edge generation. Under
+   `memory_mode = "implicit"` the complete graph is never built: a sparse
+   restricted problem is solved, the omitted pairs are priced against its
+   duals, violating pairs are added, and the loop repeats until none prices in,
+   at which point the duals certify optimality for the complete problem.
+4. Warm-started matching frontiers. `match_path()` sweeps one constraint over a
+   sequence of values, resuming each point from the matching the point before
+   it found, and returns a certificate per point.
+5. Nineteen assignment algorithms implemented from scratch in C++ and reachable
    by name, covering augmenting-path, auction, cost-scaling and network-flow
-   families, together with dual variables, k-best assignments, bottleneck
-   assignment and entropy-regularised transport.
-3. A dispatcher and a memory model that pick the solver and the cost
-   representation from the problem, so the interface does not change as
-   problems grow from hundreds to tens of thousands of units.
+   families, together with k-best assignments, bottleneck assignment,
+   entropy-regularised transport, and cardinality matching that reports an
+   optimality gap against the largest sample its constraints admit.
 
-We state the problem couplr solves and the algorithm families that solve it,
-walk through a matching workflow and the designs around it, then describe the
-solver layer. The software design follows in detail: object model, C++
-organisation, dispatch rules, memory modes, verification and dependency
-footprint. A performance section reports per-solver timings, a balance
-comparison against \pkg{MatchIt} and \pkg{optmatch} on the LaLonde data, and a
-scaling comparison. Results were produced with couplr version `r couplr_ver`.
+We state the problem couplr solves, the conditions that certify a solution to
+it, and the algorithm families that reach one. A matching workflow and the
+designs around it follow, then the three pieces that carry the contributions
+above: the flow model every design compiles into, the edge-generation loop
+built on its duals, and the frontier that warm-starts that loop. The software
+design follows in detail: object model, C++ organisation, dispatch rules,
+memory modes, verification and dependency footprint. A performance section
+reports per-solver timings, a balance comparison against \CRANpkg{MatchIt} and
+\CRANpkg{optmatch} on the LaLonde data, a scaling comparison, and what the
+edge-generation loop builds and pays. Results were produced with couplr version
+`r couplr_ver`.
 
 # The assignment problem behind matching
 
@@ -167,14 +207,50 @@ u_i + v_j = C_{ij} \quad \text{whenever } X_{ij} = 1 ,
 (\#eq:duals)
 \end{equation}
 
-Dual feasibility on its own says nothing about a particular $X$. The certificate
-needs four parts together: $X$ is primal feasible, $(u, v)$ satisfies the
-inequality in \@ref(eq:duals), every selected edge is tight, and the primal and
-dual objectives agree. couplr returns the potentials from `assignment_duals()`,
-so a user can check all four without trusting the solver. The reduced cost
+with $v_j \le 0$, since the column constraint is an inequality. The reduced cost
 $C_{ij} - u_i - v_j$ is a lower bound on what forcing pair $(i,j)$ would add to
 the total rather than the whole of it, because forcing one pair can displace
 others.
+
+## Certifying a solution
+
+Dual feasibility on its own says nothing about a particular $X$. What certifies
+optimality is four conditions holding together: $X$ is primal feasible, $(u,v)$
+satisfies the inequality and the sign condition in \@ref(eq:duals), the
+complementary slackness conditions hold, and the primal and dual objectives
+agree. `verify_assignment()` checks all four and reports each separately, so a
+failure names the condition it failed on.
+
+```{r certify, echo=TRUE}
+set.seed(2)
+cost <- matrix(runif(120), nrow = 6, ncol = 20)
+verify_assignment(assignment(cost), cost)
+```
+
+Two properties make this a check rather than a report. It is written against
+the solution, not against the solver, so it takes an assignment, a cost matrix
+and a pair of potentials and never consults the code that produced them.
+And optimal duals are shared by all optimal solutions of a linear program, so a
+matching from one solver can be certified against potentials obtained from
+another. That is what puts the solvers returning no duals of their own inside
+the scope of the check.
+
+Complementary slackness is where a plausible verifier goes wrong, and the
+rectangular case is where it shows. It has two halves: every matched pair is
+tight, $u_i + v_j = C_{ij}$, and every column left unmatched is free,
+$v_j = 0$. A verifier that asserts the first half alone accepts solutions that
+are not optimal. In our own prototyping a perfect, dual-feasible,
+matched-tight solution passed such a check while its primal cost stood 0.4%
+above the optimum, because one unmatched column retained $v_j < 0$ and so
+contributed a spurious term to the dual objective. `verify_assignment()`
+asserts both halves, and reports them separately as `cs_matched_tight` and
+`cs_unmatched_free`.
+
+Tolerances are the other place where a certificate can overstate what it knows.
+An absolute tolerance on a sum of many terms is not reachable in double
+precision, so the duality-gap comparison scales with the magnitude of the
+objective, and the value compared against is returned as part of the
+certificate. A verdict therefore names the resolution it was reached at.
 
 ## Why more than one algorithm
 
@@ -404,21 +480,212 @@ entry points, each returning an object in the same family:
   treated (ATT) or the average treatment effect (ATE).
 - `cardinality_match()` targets the cardinality-matching objective
   [@Zubizarreta2014], the largest matched sample meeting prespecified balance
-  constraints. The implementation is an iterative pruning heuristic rather than
-  the mixed-integer program: it starts from a full match and repeatedly removes
-  the pairs contributing most to the worst-balanced variable until every
-  standardised difference falls under the threshold. It therefore approximates
-  the cardinality-matching solution and does not certify maximality.
+  constraints, with total distance ordered after cardinality. Which solver
+  answers it follows from the kind of balance asked for. Fine and refined
+  covariate balance [@RosenbaumRossSilber2007; @Pimentel2015], stated through
+  `fine` and `refined`, are representable in the matching network as category
+  nodes, so a call stating balance that way reaches a single minimum-cost flow
+  solve that returns the largest balanced sample with a dual certificate at
+  polynomial cost. Linear moment constraints, a finite `max_std_diff` or an
+  explicit `moments` argument, are not representable that way; they are
+  dualised and searched by branch and bound under `node_limit` and
+  `time_limit`. Either way the result reports `n_matched` beside
+  `best_possible`, the largest sample the stated constraints admit, with the
+  `gap` between them, whether the answer is `certified`, and what the search
+  `stopped_on`. A pruning loop is available as `engine = "heuristic"` and
+  reports its gap as unknown, which is the honest reading of what a heuristic
+  establishes.
 
 ## Interoperability
 
 couplr fits into a workflow built around the established packages.
 `as_matchit()` converts a couplr result into a `matchit` object, so downstream
-code written against \pkg{MatchIt} keeps working, and `match_data()` returns
-data in the layout that \pkg{MatchIt} users expect. `bal.tab()` methods are
+code written against \CRANpkg{MatchIt} keeps working, and `match_data()` returns
+data in the layout that \CRANpkg{MatchIt} users expect. `bal.tab()` methods are
 registered for the couplr result classes, so \CRANpkg{cobalt} produces its usual
 balance output on a couplr match. Weighted matched data flows into
 \CRANpkg{marginaleffects} [@marginaleffects] for estimation.
+
+# One flow model for every design
+
+Underneath the designs of the previous section there is one object. It has
+nodes, each carrying a signed supply, and arcs, each carrying a cost and a
+capacity range. As Table \@ref(tab:designs) sets out, a one-to-one match, a
+k-to-one match, matching with replacement and a full match differ in the bounds
+their arcs receive, not in the code that solves them. Formulating full matching as a minimum-cost flow problem is
+established [@HansenKlopfer2006]; what the flow model contributes here is that
+every design in the package compiles into it, so one solver, one certificate
+and one warm start serve all of them.
+
+Table: (\#tab:designs) How each matching design is stated in the internal flow
+model. The designs differ in the capacity bounds their arcs receive and in how
+many networks are built, rather than in which solver runs.
+
+| Design | Flow formulation |
+|:-------|:-----------------|
+| One-to-one matching | Unit-capacity bipartite flow |
+| k-to-one matching | Capacitated bipartite flow, treated supply k |
+| Matching with replacement | Control capacities above one |
+| Blocked and exact matching | Independent networks per stratum |
+| Full matching | Lower and upper capacitated circulation |
+| Fine and refined balance | Category nodes with capacity bounds |
+
+Compiling a design, solving it, and checking the answer stay three separate
+steps, because the third is worth something only while it is separate: a solver
+that hands back its own verdict has proven nothing. The flow and the potentials
+go into `verify_flow()` as inputs to a check, and the arcs the flow is checked
+against are stated independently of it.
+
+```{r verify-flow, echo=TRUE}
+prob <- list(
+  n_nodes = 4,
+  supply  = c(2, 1, -2, -1),
+  arcs = data.frame(tail  = c(1, 1, 2, 2), head  = c(3, 4, 3, 4),
+                    lower = c(0, 0, 0, 0), upper = c(2, 2, 2, 2),
+                    cost  = c(1, 3, 2, 1))
+)
+cert <- verify_flow(c(2, 0, 0, 1), prob, potential = c(0, 0, 1, 1))
+c(certified = cert$certified_optimal, gap = cert$duality_gap)
+```
+
+Two solvers read that network. One is successive shortest paths with Johnson
+potentials [@Johnson1977], reachable as `method = "csflow"`. The other, reachable
+as `method = "push_relabel"`, is cost-scaling push-relabel in the successive
+approximation of @GoldbergTarjan1990: a sequence of $\varepsilon$-optimal flows,
+each phase dividing $\varepsilon$, saturating the arcs the smaller $\varepsilon$
+no longer admits, and clearing the resulting excess with two local operations. A
+push moves excess along an arc of negative reduced cost; a relabel lowers the
+price of a node that holds excess and has no such arc, by exactly the amount
+that gives it one. Below $\varepsilon = 1/(n+1)$ an $\varepsilon$-optimal flow on
+integer costs is optimal, which is what ends the scaling, so real costs are
+scaled to integers first, without which the bound says nothing.
+
+Tolerance is where a flow certificate can overstate what it knows, and the
+scale of the potentials sets it. A design that ranks objectives lexicographically
+by weighting them, as `cardinality_match()` ranks cardinality above balance
+above distance, reaches potentials in the millions, where one unit in the last
+place is around $10^{-9}$ and an exactly optimal flow cannot meet an absolute
+tolerance of that size. The comparisons therefore scale with the arc's own
+magnitude, and the widest tolerance any comparison used comes back as
+`dual_tolerance`, so the verdict names the resolution it was reached at.
+
+The consequence that matters for the rest of the article is that node potentials
+come back from every design rather than from the one-to-one case alone. Those
+potentials are what the next section prices against.
+
+# Matching without building the graph
+
+A matching problem on $n$ treated units and $m$ controls has $nm$ admissible
+pairs, and materialising them is what sets the size ceiling: at 50,000 against
+100,000 the dense cost matrix alone is 40 GB. The lazy representation of the
+previous designs removes the matrix while leaving the search over all $m$
+columns intact. What `memory_mode = "implicit"` removes is the graph itself.
+
+The loop is exact adaptive edge generation, the assignment-problem instance of
+pricing a restricted master against its duals:
+
+1. Give every row its nearest admissible partners, a seed of a few columns each.
+2. Solve that sparse problem with the flow model of the previous section.
+3. Take the dual prices $u_i$ and $v_j$ it returns.
+4. Price the omitted pairs on their reduced cost $C_{ij} - u_i - v_j$.
+5. Add the pairs that price negative.
+6. Warm-start from the current flow and prices, and re-solve.
+7. Stop when no omitted pair prices in.
+
+The stopping rule is the certificate. When no omitted pair has a negative
+reduced cost, $(u,v)$ is dual feasible for the complete problem rather than for
+the sparse one only, and the four conditions of the certification section then
+hold on the complete problem. So the sparse solution is optimal for a problem
+that was never built, and `certify = TRUE` runs that check and returns it. The
+answer is the assignment a dense solve returns, reached without the memory a
+dense solve needs.
+
+Two quantities in `$search` describe what that cost. `candidate_edges` against
+`possible_edges` is the graph that was built against the complete one that was
+not. `edges_evaluated` counts distance evaluations over all rounds, so a pair
+priced in three rounds counts three times and the total can exceed the complete
+pair count. They move in opposite directions and both belong in the report: the
+loop holds a small graph by evaluating distances more than once.
+
+Round count is therefore the quantity to control, since each additional round
+prices every omitted pair again. The seed width is read off the number of
+columns rather than fixed, and a run reports the width it used as
+`$search$seed_width`. A seed too narrow buys the rest of what it needs a round
+at a time; a seed too wide pays for columns the matching never uses. The rule
+clears the two-round floor, one seed and one sweep that finds nothing to add
+and certifies, on the problems in the performance section below.
+
+```{r implicit, echo=TRUE}
+m_imp <- match_couples(
+  treated, control, vars = covars,
+  auto_scale  = TRUE,
+  memory_mode = "implicit",
+  certify     = TRUE
+)
+m_imp$certificate$certified_optimal
+unlist(m_imp$search[c("seed_width", "n_rounds",
+                      "candidate_edges", "possible_edges")])
+```
+
+Constraints tighten the loop rather than complicating it, since a caliper or a
+distance ceiling is checked before a distance is computed and removes pairs from
+the set to be priced. When the admissible pairs cannot support a complete
+matching, the result carries Hall's witness [@Hall1935], the set of rows whose
+admissible columns are too few to go round, which says which units are short of
+partners instead of reporting only that the problem is infeasible.
+
+The mode is available on `match_couples()` and `assignment()`, and it is
+requested rather than selected: `memory_mode = "auto"` does not choose it. Its
+scope is the unit-capacity assignment, because a full match's column nodes carry
+capacities above one and a column dual there is not the assignment dual the
+pricer reads.
+
+# Matching frontiers
+
+A caliper is rarely known in advance. The usual practice is to sweep it, look at
+what the matched sample and its balance do across the sweep, and choose a point,
+which means solving the same problem many times over. `match_path()` solves the
+sweep as one sequence.
+
+```{r path, echo=TRUE}
+p <- match_path(
+  treated, control, vars = covars,
+  auto_scale = TRUE,
+  vary   = "max_distance",
+  values = c(1.0, 1.2, 1.5, 2.0, 3.0)
+)
+p$path[, c("max_distance", "n_matched", "total_distance", "certified")]
+```
+
+The sweep shows where the constraint stops binding: the total distance falls
+until 1.5 and does not move above it, because a cut that wide forbids nothing
+the unconstrained optimum uses. Reading that off a path is the point of solving
+the sweep rather than one value.
+
+Each point resumes from the matching the point before it found. Raising the
+distance cut admits pairs while leaving that matching feasible, so what remains
+at the new point is to repair reduced-cost violations on the arcs that just
+became admissible, which is one round of the pricing loop of the previous
+section. An independent call at that value pays for a solve from cold. One
+mechanism serves the sweep and the single solve.
+
+A value whose admissible pairs cannot support a complete matching is reported
+rather than approximated. Such a point comes back with no matching, with the
+Hall witness of the previous section beside it, so a sweep that starts below the
+feasibility threshold says where that threshold is.
+
+The direction is a correctness requirement rather than a convention. `values`
+must ascend, because a descending sweep withdraws pairs the current matching may
+be standing on, which breaks feasibility and needs a repair phase the loop does
+not have. A descending sequence is refused, and the message says why.
+
+The return value is a `couplr_path`. Its `$path` component carries a row per
+point with the matched count, the total distance, the seconds and rounds that
+point took, and whether it was certified; `$balance` carries a row per point per
+variable, so the balance profile across the sweep is a data frame rather than
+something to assemble by hand. `certify = TRUE` is the default here, and a
+point's certificate is what says its matching is the optimal one at that value
+rather than the one the warm start happened to reach.
 
 # The solver layer
 
@@ -437,19 +704,13 @@ res
 
 The `method` argument names any of the nineteen solvers; `"auto"` is the
 default. Dual potentials come from `assignment_duals()`, which returns the
-vectors $u$ and $v$ of \@ref(eq:duals) alongside the assignment, so all four
-parts of the certificate can be checked independently of the solver:
+vectors $u$ and $v$ of \@ref(eq:duals) alongside the assignment. Passing that
+result to `verify_assignment()` certifies the matching without a second solve,
+since the potentials it needs are already in hand:
 
 ```{r solver-duals, echo=TRUE}
-d   <- assignment_duals(cost)
-i   <- which(d$match > 0)
-j   <- d$match[i]
-sel <- cbind(i, j)
-
-c(primal   = length(i) == min(dim(cost)) && !anyDuplicated(j),
-  dual     = all(outer(d$u, d$v, "+") <= cost + 1e-9),
-  tight    = all(abs(d$u[i] + d$v[j] - cost[sel]) < 1e-9),
-  no_gap   = abs(sum(cost[sel]) - sum(d$u) - sum(d$v)) < 1e-9)
+d <- assignment_duals(cost)
+verify_assignment(d, cost)$certified_optimal
 ```
 
 Four extensions operate on the same matrix. `lap_solve_kbest()` returns the k
@@ -475,10 +736,11 @@ invisible when a solver returns one assignment.
 ## Layers and object model
 
 The package is organised in three layers. The first converts user input into a
-cost matrix: it validates the data frames, screens covariates, applies scaling
-and weights, computes distances, and writes constraints into the matrix. The
-second solves \@ref(eq:lap). The third builds result objects and the methods
-that consume them.
+cost source: it validates the data frames, screens covariates, applies scaling
+and weights, and settles how distances are to be obtained and which pairs are
+admissible. The second compiles the requested design into the flow model and
+solves it, which for the plain one-to-one case is \@ref(eq:lap). The third
+builds result objects and the methods that consume them.
 
 The object model is S3 throughout. Matching results carry the class vector
 `c("matching_result", "couplr_result")`, with the design-specific classes
@@ -503,10 +765,11 @@ metadata carried in attributes.
 All nineteen solvers are written from scratch in C++ and exposed through
 \CRANpkg{Rcpp} [@Rcpp]. The `src` tree separates concerns: `src/core` holds the
 cost-source types and shared utilities with no Rcpp dependency, `src/solvers`
-holds one algorithm per file with a thin `_rcpp.cpp` wrapper each, and
+holds one algorithm per file with a thin `_rcpp.cpp` wrapper each, `src/flow`
+holds the flow model, its two solvers and the edge-generation loop, and
 `src/interface` holds the conversion between R objects and the internal types.
 The separation means the solver bodies are ordinary C++ that can be compiled and
-tested outside R.
+tested outside R, which is what the C++ test suite does.
 
 We template solvers on their cost source rather than writing them against a
 concrete matrix. A cost source has to provide `at(i, j)`, `allowed(i, j)` and
@@ -518,7 +781,10 @@ ceiling in `allowed()`. A handful of hot loops index the dense mask array
 directly for speed, which the lazy type cannot support; these are guarded by a
 `supports_raw_mask` trait and an `if constexpr` branch rather than by duplicating
 the solver. One solver body therefore serves both cost representations, and
-there is no second implementation to keep in step.
+there is no second implementation to keep in step. The pricing oracle of the
+edge-generation loop needs `at(i, j)` and `allowed(i, j)` and nothing else, so
+it consumes the same concept rather than introducing a third representation of
+the costs.
 
 `LazyCostMatrix` also bakes in the transformations that the dense path applies
 in a separate preparation pass, namely mapping forbidden entries to a large
@@ -569,13 +835,20 @@ naming the method.
 The dense representation of the cost matrix is the binding constraint on problem
 size long before runtime is. A 100,000 by 100,000 problem needs 80 GB as doubles;
 the same units described by 100 covariates need 80 MB. couplr exposes this as
-`memory_mode`, with values `"dense"`, `"lazy"` and `"auto"`.
+`memory_mode`, with values `"dense"`, `"lazy"`, `"implicit"` and `"auto"`.
 
 Under `"lazy"`, no cost matrix is built. The solver holds the feature matrices
 and evaluates distances as it requests them, which trades arithmetic for
 memory and returns the same assignment the dense path returns. The lazy path
 covers Jonker-Volgenant and auction with the built-in metrics, together with
 calipers and the distance ceiling.
+
+Under `"implicit"`, the edge-generation loop described above runs. The three
+modes differ in what the solver ranges over. The dense path holds the complete
+matrix. The lazy path holds no matrix and still considers every pair, computing
+each distance when it is asked for. The implicit path holds a sparse graph and
+grows it until its duals certify it, so most pairs are priced without ever
+becoming arcs. All three return the same assignment.
 
 Under `"auto"`, the package decides. Below ten million cells, about 80 MB dense,
 it skips the check entirely, since probing free memory on every ordinary problem
@@ -607,16 +880,24 @@ Constrained matching is checked against the same standard, and needs its own
 reference because the objective is lexicographic. An enumeration over all
 partial matchings of a small instance gives the largest admissible matching and
 the cheapest total among matchings of that size, and the constrained solve has
-to reproduce both. That test is what showed us the earlier behaviour was wrong:
-until version 1.5.6, a constrained problem whose admissible graph had no
-complete matching returned a greedy partial matching under the name of the
-optimal solver that had been requested. The package carries 126 test files in
-total, covering the R layer, the C++ wrappers, dispatch rules and the matching
-designs.
+to reproduce both.
 
-Dual feasibility gives a second, independent check that a user can run on their
-own problem, since \@ref(eq:duals) can be verified in $O(nm)$ without solving
-anything, as shown in the solver section above.
+The paths that avoid materialising the problem are checked differentially,
+against the path that materialises it. The implicit loop and the dense solve are
+run on the same instance and required to return the same total and the same
+pairing wherever the dense solve can be run at all, and a warm-started point on
+a path is required to return what an independent solve at that value returns.
+Two implementations that should agree exactly are the useful kind of oracle,
+since a disagreement is a defect rather than a matter of degree, and the
+benchmark in the next section reports both comparisons on the sizes it covers.
+
+Certificates give a third check, and it is the one that survives leaving the
+test suite. `verify_assignment()` and `verify_flow()` run in $O(nm)$ and
+$O(\text{arcs})$ respectively without solving anything, so a user can run them
+on their own problem, at their own tolerance, against a solution the package
+produced. The package carries 138 R test files and 37 C++ test files, covering
+the R layer, the solver bodies compiled outside R, the C++ wrappers, dispatch
+rules and the matching designs.
 
 ## Dependency footprint
 
@@ -624,15 +905,15 @@ couplr declares \CRANpkg{Rcpp}, \CRANpkg{tibble} [@tibble], \CRANpkg{dplyr},
 \CRANpkg{rlang}, \CRANpkg{purrr} and `methods` in `Imports`, and `Rcpp` alone in
 `LinkingTo`. The recursive closure of hard dependencies is 17 non-base packages,
 so a default installation brings 18 packages including couplr itself. The
-comparable figures on the same day were 18 for \pkg{optmatch}, 8 for
-\pkg{MatchIt} and 7 for \pkg{designmatch}.
+comparable figures on the same day were 18 for \CRANpkg{optmatch}, 8 for
+\CRANpkg{MatchIt} and 7 for \CRANpkg{designmatch}.
 
 Two choices sit behind that number. First, we use no external solver: all
 nineteen algorithms are package source, so there is no dependency on an LP or
 MIP library and no system solver to install. Second, everything that serves a
 single feature lives in `Suggests` and is loaded at call time. The animation and image-morphing functions, the plotting
-helpers, the interoperability layer for \pkg{MatchIt}, \pkg{optmatch} and
-\pkg{cobalt}, and the parallel back end are all optional in this sense, so a user
+helpers, the interoperability layer for \CRANpkg{MatchIt}, \CRANpkg{optmatch} and
+\CRANpkg{cobalt}, and the parallel back end are all optional in this sense, so a user
 who only wants to match pays for none of them. `LinkingTo` deserves particular
 care, since every entry there forces a compile of that package before couplr can
 be built from source; couplr declares only what its headers actually include.
@@ -647,8 +928,8 @@ integers uniformly from $[1, 10{,}000]$ on square matrices and report medians of
 five replicates on a single core of an Apple M4 Pro. The slower families are
 capped at smaller sizes so that the scalable solvers can be measured to
 $n = 5000$ within a reasonable budget. All timings in this section were measured
-on 2026-08-09 under R 4.6.0 with couplr `r couplr_ver`, \pkg{optmatch} 0.10.8
-and \pkg{MatchIt} 4.7.2.
+on 2026-08-09 under R 4.6.0 with couplr `r couplr_ver`, \CRANpkg{optmatch} 0.10.8
+and \CRANpkg{MatchIt} 4.7.2.
 
 ```{r solver-bench, fig.height=6.2, fig.cap="Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. Seventeen solvers are timed on square integer cost matrices with entries drawn uniformly from 1 to 10,000. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs. Medians of five replicates on a single core of an Apple M4 Pro. Cubic-time and general flow solvers are capped at smaller sizes, which is why their lines end early.", fig.alt="Five panels of log-log line plots showing solve time in milliseconds against problem size n from 4 to 5000. Solve time rises with problem size in every panel. The Jonker-Volgenant panel reaches n equals 5000 in roughly one second, the fastest of the families. Auction, cost-scaling and flow-based solvers are one to three orders of magnitude slower at matched sizes and stop at n equals 1000 or 2000. The dashed dispatcher line lies on top of the fastest solver in each panel."}
 fam_map <- c(
@@ -863,19 +1144,19 @@ knitr::kable(
 ```
 
 The margin widens with problem size. couplr is roughly eight times faster than
-\pkg{optmatch} at $n = 500$ and twenty-seven times faster at $n = 20{,}000$,
+\CRANpkg{optmatch} at $n = 500$ and twenty-seven times faster at $n = 20{,}000$,
 where it finishes in
 `r sprintf("%.1f", scaling$median_s[scaling$n_total == 20000 & scaling$package == "couplr"])`
-seconds against 4.7 minutes. \pkg{MatchIt} runs
+seconds against 4.7 minutes. \CRANpkg{MatchIt} runs
 between ten and twenty-five times slower up to $n = 10{,}000$, which is the
 largest size it completes before `matchit(method = "optimal")` aborts inside the
-\pkg{optmatch} back end with an integer-size overflow. At $n = 50{,}000$ couplr
+\CRANpkg{optmatch} back end with an integer-size overflow. At $n = 50{,}000$ couplr
 finishes in
 `r sprintf("%.0f", scaling$median_s[scaling$n_total == 50000 & scaling$package == "couplr"])`
 seconds and both alternatives exceed the 300-second per-replicate cap.
 
 A likely contributor is the difference in formulation rather than a faster inner
-loop in any single algorithm. \pkg{optmatch} solves a minimum-cost flow problem,
+loop in any single algorithm. \CRANpkg{optmatch} solves a minimum-cost flow problem,
 which is the right formulation for the full and variable-ratio designs it is
 built around and more machinery than a plain one-to-one problem needs; couplr's
 dispatcher sends this dense square problem to Jonker-Volgenant. Separating that
@@ -896,6 +1177,106 @@ materialising and traversing the matrix.
 \FloatBarrier
 ```
 
+## Edge generation
+
+Table \@ref(tab:implicit-table) reports the three memory modes on those same
+problems. The dense and lazy arms are pinned to Jonker-Volgenant, so they differ
+only in representation; the implicit arm carries the flow model as its
+restricted master by construction, which is a difference between the arms and is
+the definition of the mode rather than a choice.
+
+```{r implicit-table, echo=FALSE}
+isz  <- c(500, 2000, 5000, 10000, 20000, 50000)
+ilab <- c("167 + 333", "667 + 1,333", "1,667 + 3,333",
+          "3,333 + 6,667", "6,667 + 13,333", "16,667 + 33,333")
+
+secs <- function(mode) {
+  vapply(isz, function(n) {
+    s <- imp_at(mode, n)
+    if (is.na(s)) return("not run")
+    if (s < 1) sprintf("%.0f ms", s * 1000) else sprintf("%.3g s", s)
+  }, character(1))
+}
+share <- vapply(isz, function(n) {
+  sprintf("%.2f%%", 100 * imp_at("implicit", n, "candidate_edges") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+dists <- vapply(isz, function(n) {
+  sprintf("%.2f", imp_at("implicit", n, "edges_evaluated") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+rounds <- vapply(isz, function(n) {
+  as.character(imp_at("implicit", n, "n_rounds"))
+}, character(1))
+
+knitr::kable(
+  data.frame(`Problem size` = ilab, dense = secs("dense"), lazy = secs("lazy"),
+             implicit = secs("implicit"), `Graph built` = share,
+             `Distances` = dists, Rounds = rounds, check.names = FALSE),
+  align = "lrrrrrr", booktabs = TRUE,
+  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the arcs the complete problem has. Distances is the number of distance evaluations the loop made over all rounds, as a multiple of the complete pair count, so a pair priced in two rounds counts twice. All three arms were timed in one session, which is a different session from the one Table 2 reports. The dense arm was run at the four sizes where its pairing can be compared against the loop's, which is what this benchmark exists to check; Table 2 carries dense timings at the two largest sizes. Every cell returned the same total distance."
+)
+```
+
+Three things in that table go together. The implicit loop holds a small graph:
+`r share[1]` of the pairs at the smallest size and `r share[6]` at the largest,
+a share that falls as the problem grows, since the pairs a matching can use grow
+more slowly than the pairs a problem has. It pays for that in arithmetic, at
+`r dists[6]` to `r dists[1]` times the complete pair count in distance
+evaluations, so at eight covariates the loop computes more distances than one
+full sweep would. And it is still the fastest arm at five of the six sizes,
+because what it avoids is not the arithmetic but the graph. At
+`r ilab[6]` it finishes in
+`r sprintf("%.0f", imp_at("implicit", 50000))` seconds against
+`r sprintf("%.0f", imp_at("lazy", 50000))` for the lazy path. At
+`r ilab[2]` the lazy path is faster, at
+`r sprintf("%.0f", 1000 * imp_at("lazy", 2000))` ms against
+`r sprintf("%.0f", 1000 * imp_at("implicit", 2000))` ms, which is where the
+loop's fixed costs are still visible against a problem this size.
+
+Every run in the table settled in `r rounds[1]` rounds, one seed and one sweep
+that found nothing to add and certified. Every one came back certified with a
+duality gap of zero. On the four sizes where the dense solve can also be run,
+the two agree exactly: the totals differ by
+`r max(equiv$cost_gap)` and the pairing is identical unit by unit, so the loop
+returns the assignment rather than an assignment of the same cost.
+
+## Warm-started paths
+
+Table \@ref(tab:path-table) reports a sweep of `r n_path_values` caliper values
+solved as one path against the same `r n_path_values` values solved
+independently. The grid is the data's own: its tight end is the tightest caliper
+the problem still admits a complete matching under, found by bisection, and its
+wide end is the median treated-to-control distance, which admits half the pairs
+and constrains nothing.
+
+```{r path-table, echo=FALSE}
+knitr::kable(
+  data.frame(
+    `Problem size` = ilab[match(pth$n_total, isz)],
+    `As a path` = sprintf("%.3g s", pth$warm_s),
+    `Independently` = sprintf("%.3g s", pth$cold_s),
+    Ratio = sprintf("%.2fx", pth$speedup),
+    `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
+    check.names = FALSE
+  ),
+  align = "lrrrr", booktabs = TRUE,
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, summed per-point solve time on a single core of an Apple M4 Pro. Rounds is the pricing rounds the path took against the rounds the independent solves took, summed over the sweep. The independent solve is a one-point path, so both sides are the same solver reached the same way and differ only in whether a point starts from the point before it."
+)
+```
+
+The saving comes from the rounds column. A warm-started point starts from a
+matching that is still feasible at the new value, so what it has to repair are
+the reduced-cost violations on the arcs the wider cut just admitted, which the
+loop reaches in about one round per point. A point solved independently starts
+from a seed and pays for the seeding sweep as well.
+
+Correctness is the part of this comparison that has to hold before the timing
+means anything. Every point on the path returns the status and the matched count
+its independent solve returns, and the totals agree to
+`r sprintf("%.3g", max(pth$worst_total_gap))` relative, so the path is the same
+sequence of matchings that solving each value from cold would produce.
+
 ## Feature coverage
 
 Table \@ref(tab:capability) lists the features that separate the three packages.
@@ -910,15 +1291,18 @@ cap <- data.frame(
               "k-best assignments",
               "Bottleneck (minimax) assignment",
               "Rosenbaum sensitivity bounds",
+              "Dual potentials and optimality certificate",
               "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "via optmatch", "no", "no", "no", "no", "via optmatch"),
-  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "2 back ends"),
+  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
+  MatchIt = c("yes", "via optmatch", "no", "no", "no", "no", "no",
+              "via optmatch"),
+  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "no",
+               "2 back ends"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(). Assessed 2026-08-09 against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-25. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 ```
 
@@ -929,29 +1313,44 @@ a set of tasks that R currently treats as unrelated. Making the assignment
 problem the organising object, rather than a hidden step inside a matching
 function, is what lets a single package serve a causal-inference user starting
 from covariates and an operations-research user starting from a cost matrix.
-Three design consequences follow from that decision. The object model gives the
-result classes a shared parent, so diagnostics are written once. Solvers are
-templated on their cost source, so the dense and lazy paths cannot drift apart.
-A dispatcher turns the choice among nineteen solvers into an implementation
-detail for users who would rather not make it.
+Four design consequences follow from that decision. The object model gives the
+result classes a shared parent, so diagnostics are written once. Every design
+compiles into one flow model, so what is written for the model serves all of
+them and node potentials come back from all of them. Those potentials make a
+solution checkable by a third party, which turns a reported status into a
+certificate. And a certificate is what makes it safe to solve a problem that was
+never built, since the loop that grows a sparse graph needs a statement about
+the complete one to know when to stop.
 
-couplr has four limitations. The lazy cost path covers Jonker-Volgenant and
-auction with the built-in metrics; other solvers and
-user-supplied distance functions still require a dense matrix, and `full_match()`
-uses a flow back end that has no lazy path yet. `cardinality_match()` is a
-pruning heuristic and does not certify that the matched sample it returns is the
-largest one satisfying the balance constraints, which the mixed-integer
-formulation would. The dispatch rules are calibrated on dense uniform integer
-costs and on the sparsity and rectangularity boundaries that follow from them;
-cost structures far from that regime may be better served by naming a solver
-explicitly, which is why every solver stays reachable by name. Matching on
-observed covariates cannot address unmeasured confounding, and the sensitivity
-analysis quantifies exposure to it rather than removing it.
+couplr has five limitations. The edge-generation loop's scope is the
+unit-capacity assignment: a full match's column nodes carry capacities above
+one, so its column duals are not the assignment duals the pricer reads, and
+`full_match()` has no implicit path. Its pricing is a block scan over the
+complete pair set, which keeps memory near-linear while leaving the arithmetic
+at one pass over the pairs per round, so at eight covariates the loop evaluates
+more distances than a single full sweep and wins on what it does not build
+rather than on what it does not compute. The lazy cost path covers
+Jonker-Volgenant and auction with the built-in metrics, and user-supplied
+distance functions still require a dense matrix. `cardinality_match()` answers a
+moment-constrained problem by branch and bound under a node and time limit, so
+such a run can stop with a gap rather than a certificate, and reports which of
+the two it reached; the fine and refined balance constraints, which the network
+represents directly, are answered certified. The dispatch rules are calibrated
+on dense uniform integer costs and on the sparsity and rectangularity boundaries
+that follow from them; cost structures far from that regime may be better served
+by naming a solver explicitly, which is why every solver stays reachable by
+name. Matching on observed covariates cannot address unmeasured confounding, and
+the sensitivity analysis quantifies exposure to it rather than removing it.
 
-We are extending the lazy representation to more solvers and adding a
-minimum-cost flow path for variable-ratio designs under the same templated cost
-interface. We are also widening the benchmark beyond uniform integer costs, so
-that the dispatch rules can be recalibrated on sparse, rectangular and
+Two extensions follow from the limitations above. A metric-tree pricer would
+attack the arithmetic the block scan leaves in place: pruning a subtree $S$ of
+controls for row $i$ requires $\min_{j \in S} C_{ij} \ge u_i + \max_{j \in S}
+v_j$, and Mahalanobis distance is Euclidean after whitening, so one tree serves
+both metrics. Where such a bound prunes, the pruning is itself the certificate
+and no complete scan is needed. Calipers are the case for it, since they are
+axis-aligned boxes in the original covariates and are where matching users
+actually work. Separately, we are widening the benchmark beyond uniform integer
+costs, so that the dispatch rules can be recalibrated on sparse, rectangular and
 clustered cost matrices rather than resting on the structure each routine
 exploits.
 

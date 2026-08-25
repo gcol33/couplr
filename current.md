@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-23. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-25. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/`, `dev_notes/phase2/` and `dev_notes/phase3/` for the
 certification layer's, the flow model's and the edge-generation loop's design,
@@ -8,18 +8,21 @@ findings and repros.
 
 ## Where things stand
 
-**Phases 0 through 3 are done.** Phase 0's probe returned GO, phase 1 is the
-certification layer, phase 2 is the one internal flow model, and phase 3 is the
-implicit edge-generation loop and the warm-started design path: C0 through C11
-and D1 through D3, all in. The paper's own benchmark has since been re-run end
-to end on 1.6.1, so phase 3's numbers are paper numbers. What is left on
-`roadmap.md` is the `paper/rjournal/` rewrite and phase 4, which is section E
-and section I. See "Next action" at the end.
+**Phases 0 through 3 are done, and the article they were for is written.** Phase
+0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
+internal flow model, and phase 3 is the implicit edge-generation loop and the
+warm-started design path: C0 through C11 and D1 through D3, all in.
+`paper/rjournal/` is now the article those phases were for, retitled and
+rewritten around five contributions; see "The R Journal article is rewritten"
+below. What is left on `roadmap.md` is phase 4, which is section E and section
+I, and one decision before the article goes out. See "Next action" at the end.
 
-**1.6.1 is released.** Tag `v1.6.1` sits on `ac147eb`, which is HEAD, and CRAN
-published 1.6.1 on 2026-08-23 at 00:20 UTC. `NEWS.md`'s 1.6.1 section carries
-every user-visible change since the 1.6.0 tag; see "What NEWS carries for 1.6.1"
-at the end.
+**1.6.1 is released; the tree is 1.6.2.** Tag `v1.6.1` sits on `ac147eb`, and
+CRAN published 1.6.1 on 2026-08-23 at 00:20 UTC. `DESCRIPTION` now reads 1.6.2,
+which is the sized implicit seed and nothing else, and it has not been submitted.
+`NEWS.md` carries both sections; see "What NEWS carries for 1.6.1" at the end.
+Every measurement in the article was made on 1.6.2, which is the decision named
+under "Next action".
 
 **`cran-comments.md` matches what went in.** It reads 1.6.1 and opens "This
 release supersedes 1.5.3, the version currently on CRAN", which the CRAN version
@@ -1225,38 +1228,85 @@ so most of what was timed is re-certifying an answer that is already final.
 
 ## Next action
 
-**Phase 3 is done and its numbers are paper numbers.** C0 through C11 and D1
-through D3 are in, the loop has a front door, the last three issues the phase
-left open closed on 2026-08-22, and the benchmark re-run this note used to owe
-has happened: run 20260822-191702 on the Mac mini, couplr 1.6.1, all four stages
-exiting 0, with the scaling table re-timed in one session and
-`implicit-results.csv` and `implicit-equivalence.csv` new beside it. Nothing in
-`roadmap.md` phase 3 is outstanding.
+**Decide which version the article describes, and submit.** The article is
+written and its every number was measured on 1.6.2, which is in the tree and not
+on CRAN. Two ways to close that, and it is a call rather than a task:
 
-**Rewrite `paper/rjournal/`.** `roadmap.md` put that rewrite after phase 3
-produced paper numbers, and it has. Neither manuscript mentions the loop today:
-`grep -c implicit` returns 0 in both `paper/rjournal/rjournal.Rmd` and
-`paper/paper.md`, so the certified edge generation, the flow model, `match_path()`
-and exact cardinality matching are absent from the article that is meant to carry
-them. `roadmap.md`'s "The paper" section holds the title and the five
-contributions to write to.
+1. Put 1.6.2 on CRAN, then submit. The article then describes the published
+   version. 1.6.1 went up on 2026-08-23, so this is a second release inside a
+   week, and CRAN discourages that; the release is one perf change plus one new
+   reported field, so the cover note is short.
+2. Submit against 1.6.1 and re-measure the implicit stage back onto 1.6.1. That
+   costs the seed-width result: on 1.6.1 the loop takes four to seven rounds
+   where it now takes two, and `memory_mode = "implicit"` loses to `"lazy"`
+   below 50,000 units instead of leading at five of six sizes. The article
+   would ship a table the code no longer produces.
 
-`paper/rjournal/data/` holds the 1.6.1 tables, `lalonde-results.csv` included.
-That one was the last outstanding: its `n_pairs` and `total_cost` columns are
-interpolated into the article and run 20260822-191702 did not emit them, because
-the common-objective scoring block lived only in
-`paper/rjournal/scripts/bench_lalonde.R` while that run called
-`paper/bench_lalonde.R`. The two are one script again, and run
-lalonde-20260823-131433 on the Mac mini re-ran the stage from it, exit 0, with
-all six columns written. The objective it scores is unchanged from the 1.5.5
-table, 185 pairs at 304.042 for couplr against 304.043 for both alternatives, so
-the three interpolations read what they read before. The timings are what moved:
-14.6 ms for couplr, 170.7 for MatchIt, 144 for optmatch, now measured on the same
-machine and the same package build as the scaling table.
-`lalonde-per-covariate.csv` came back byte-identical.
+Option 1 is the one to take unless the CRAN timing is judged worse than shipping
+a superseded table. Review times being what they are, 1.6.2 will be the older
+version by the time the article is read either way.
 
 After that, phase 4: section E, the clean-room Bertsekas-Tseng relaxation, and
 section I, the benchmark grid.
+
+## The R Journal article is rewritten
+
+`paper/rjournal/rjournal.Rmd` is now "couplr: Certified Optimal Matching without
+Building the Assignment Graph", the title `roadmap.md` set, and it is built
+around the five contributions that section names. It renders to 20 pages, which
+is the R Journal's cap, so anything added from here has to displace something.
+
+What the rewrite added, against the 1.5.5 article it replaces:
+
+- The introduction names the two limits the article is about, that a solve
+  reports a status rather than a checkable statement, and that the graph is
+  materialised before it is solved, and the contribution list runs to five.
+- A "Certifying a solution" subsection, with `verify_assignment()`, the two
+  halves of complementary slackness, and the rectangular case where a verifier
+  asserting only the first half accepts a solution 0.4% above the optimum.
+- "One flow model for every design", with the design-to-formulation table,
+  `verify_flow()`, and both flow solvers reading the same network.
+- "Matching without building the graph", the loop, the certificate that stops
+  it, seed sizing, and Hall's witness.
+- "Matching frontiers", `match_path()`, and why the sweep has to ascend.
+- Two performance subsections, Tables 3 and 4, on the loop and on the path.
+- `cardinality_match()` is described as it now is, certified through the
+  network for fine and refined balance and searched by branch and bound for
+  moment constraints, with `best_possible` and `gap`. The old text called it a
+  pruning heuristic that does not certify maximality, which was true when it was
+  written and is now wrong, and it appeared in the limitations list.
+- A certificate row in the capability table, assessed 2026-08-25: neither
+  MatchIt 4.7.2 nor optmatch 0.10.8 exports a function returning duals or
+  verifying optimality.
+
+Two measurements were made for it, both on the Mac mini against 1.6.2, both
+single-core with BLAS pinned to one thread:
+
+- `implicit-20260825-083919`, `paper/bench_implicit.R`. Implicit is fastest at
+  five of six sizes; at 16,667 x 33,333 it holds 0.288% of the pairs and takes
+  20.1 s against 62.1 s for lazy, in two rounds, certified with a zero gap. At
+  667 x 1,333 lazy leads, 55 ms against 64 ms. Cost identical to the dense solve
+  at every size and the pairing identical unit by unit at the four sizes where
+  dense runs.
+- `path-20260825-084714`, `paper/bench_path.R`, which is new: the phase-3
+  measurement `dev_notes/phase3/d3_timing.R` promoted to a paper script writing
+  `paper/path-results.csv` and `paper/path-points.csv`, so the frontier claim is
+  reproducible from the submission. `paper/bench_path.R` is the one to change
+  from here; `d3_timing.R` stays as the record of what 1.6.0 measured on beast,
+  with its pinned launcher, and is not what the article reads. Twenty caliper values as one path against
+  twenty independent solves: 2.67x, 2.07x, 2.15x, 2.08x at the four shapes, with
+  every point returning its independent solve's status and matched count and the
+  totals agreeing exactly. Those ratios are lower than the 2.83x to 4.54x the
+  phase-3 note records, because that note measured 1.6.0, where the cold side
+  paid for four to seven rounds per point rather than two. The sized seed sped
+  the cold side up more than the warm one.
+
+Every DOI in `RJreferences.bib` was checked against CrossRef on 2026-08-25. One
+was wrong: the `cobalt` entry claimed a Journal of Open Source Software article
+at `10.21105/joss.07610`, which resolves to an unrelated paper on damage
+mechanics, and cobalt has no JOSS article. It is now a `@manual` with the CRAN
+DOI. Four entries were added, all verified: Goldberg and Tarjan (1990), Hall
+(1935), Rosenbaum, Ross and Silber (2007), Pimentel et al. (2015).
 
 Nothing in the master is left that is sized by the graph rather than by the work.
 Every `O(n_nodes)` pass per augmentation is gone, the residual graph is one

@@ -149,7 +149,8 @@ nothing could be matched.
 }
 
 Under \code{memory_mode = "implicit"} it also carries \code{certificate}, the checked
-proof of optimality (see \code{\link[=verify_assignment]{verify_assignment()}}), and \code{search}: the pairs
+statement of optimality (see \code{\link[=verify_assignment]{verify_assignment()}}, which names the
+arithmetic it was decided in), and \code{search}: the pairs
 the loop generated out of the pairs the problem states, the pairs a cost
 was computed for, and one row per round of what each round did. An
 infeasible answer carries \code{witness} instead, naming the units that could

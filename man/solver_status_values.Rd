@@ -21,7 +21,7 @@ under a maximum-cardinality-then-minimum-cost objective.}
 \item{\code{"infeasible"}}{No assignment of the requested cardinality exists.}
 \item{\code{"eps_optimal"}}{An auction solve terminated at a caller-supplied
 epsilon. The result is within \code{n * epsilon} of optimal, which is a bound,
-not a proof of optimality.}
+not a certificate.}
 \item{\code{"iteration_limit"}}{The solver stopped on an iteration cap rather
 than on optimality. The solution is feasible; its optimality is unproven.}
 \item{\code{"interrupted"}}{The solver stopped on a time budget or a user

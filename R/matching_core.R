@@ -967,7 +967,8 @@
 #'     nothing could be matched.
 #'
 #'   Under `memory_mode = "implicit"` it also carries `certificate`, the checked
-#'   proof of optimality (see [verify_assignment()]), and `search`: the pairs
+#'   statement of optimality (see [verify_assignment()], which names the
+#'   arithmetic it was decided in), and `search`: the pairs
 #'   the loop generated out of the pairs the problem states, the pairs a cost
 #'   was computed for, and one row per round of what each round did. An
 #'   infeasible answer carries `witness` instead, naming the units that could

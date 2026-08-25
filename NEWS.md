@@ -1,5 +1,24 @@
 # couplr 1.6.2
 
+## Improvements
+
+* **`verify_assignment()` decides its conditions in exact arithmetic and says
+  so.** Every condition the certificate checks is the sign of
+  `c_ij - u_i - v_j`, and a double is a rational number, so that sign has an
+  exact answer; the check now evaluates it exactly instead of reading the sign
+  of a rounded difference. The new `arithmetic` argument takes `"auto"`, the
+  default, which reports the exact conclusion when the exact conditions hold
+  and the tolerance conclusion otherwise, `"exact"`, which refuses to fall
+  back, and `"double"`, which is the previous behaviour. The certificate
+  carries `arithmetic`, `exact_certificate` and `all_rows_matched`, and its
+  print method names the arithmetic the conclusion is in. The exact conditions
+  imply the numerical ones at any non-negative `tol`, so `certified_optimal`
+  under `"auto"` is what it was before.
+* **`assignment()` documents the integer conversion `"gabow_tarjan"` performs.**
+  The scale factor, the rounding rule, the instance whose optimum is claimed,
+  the range a matrix is refused at, and the bound on how far the rounded
+  instance's optimum can sit from the original one are all stated.
+
 ## Breaking changes
 
 * **The `"orlin"` solver is now `"sap_dense"`.** The C++ behind it runs

@@ -95,7 +95,7 @@ representative of the dual, in the gauge the solver fixes. Present for
 \item{certificate}{A \code{flow_certificate} from
 \code{\link{verify_flow}}, checking the solved flow and its potentials
 against the optimality conditions. \code{status} says what the solver
-terminated on; this says what was proven. Present for
+terminated on; this says what was checked. Present for
 \code{method = "optimal"} only.}
 }
 }

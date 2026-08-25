@@ -165,6 +165,41 @@
 #' }
 #' The other solvers are available by naming them explicitly.
 #'
+#' @section Integer conversion for bit-scaling:
+#'
+#' `"gabow_tarjan"` is a bit-scaling algorithm and runs on integer costs. The
+#' conversion is part of the method, so the rule it follows and what it claims
+#' afterwards are both properties of the solve rather than of the caller's
+#' preparation.
+#'
+#' Finite costs are shifted so the smallest is zero, multiplied by a scale
+#' factor `s`, and rounded to the nearest integer. `s` is set so that
+#' `K * s * (max - min)` stays at or below `10^13`, where `K` is `n + 1` on a
+#' square problem and `2 * min(n, m) + 1` on a rectangular one. `K` is the
+#' separation the algorithm needs between the optimum and a 1-optimal matching,
+#' and the bound holds every scaled cost clear of the sentinel that marks a
+#' forbidden pair while keeping the path sums the solver forms inside 64-bit
+#' arithmetic. Forbidden pairs take the sentinel and take part in neither the
+#' range nor the conversion.
+#'
+#' A matrix whose finite entries are each within `1e-9` of an integer is taken
+#' as an integer matrix: `s` is one, the shift is an integer, and every cost
+#' reaches the solver as the integer nearest to it. The optimum is then the
+#' optimum of the instance as supplied. Such a matrix is refused when its range
+#' exceeds `1.25 * 10^14 / K`, since a scale of one is the only one available
+#' and no choice brings the instance inside the bound; the error names the limit
+#' and points at `"jv"` or `"auction"`.
+#'
+#' Costs that are not integers are solved on the rounded instance. Rounding
+#' moves each cost by at most `1 / (2 * s)`, so the matching returned costs at
+#' most `min(n, m) * K * (max - min) / 10^13` more than the optimum of the
+#' matrix as supplied. On a square problem that is about
+#' `n^2 * (max - min) / 10^13`, which is `10^-7` of the range at `n = 1000` and
+#' `10^-5` of it at `n = 10000`. Duals are divided by `s` and shifted back, so
+#' they belong to the original matrix; whether the matching is optimal for that
+#' matrix and not only for the rounded one is a question
+#' [verify_assignment()] answers rather than one this bound settles.
+#'
 #' @seealso
 #' \itemize{
 #'   \item [lap_solve()] — Tidy interface returning tibbles

@@ -5,7 +5,14 @@
 \alias{print.assignment_certificate}
 \title{Verify that an assignment is optimal}
 \usage{
-verify_assignment(x, cost = NULL, duals = NULL, maximize = FALSE, tol = 1e-09)
+verify_assignment(
+  x,
+  cost = NULL,
+  duals = NULL,
+  maximize = FALSE,
+  tol = 1e-09,
+  arithmetic = c("auto", "exact", "double")
+)
 
 \method{print}{assignment_certificate}(x, ...)
 }
@@ -22,10 +29,18 @@ potentials in the orientation of \code{cost}. Overrides any duals on \code{x}.}
 \item{maximize}{Logical; whether the assignment maximized rather than
 minimized. Defaults to \code{FALSE}.}
 
-\item{tol}{Numeric tolerance for the feasibility and slackness comparisons.
-The duality-gap comparison scales this by the magnitude of the objective,
-since an absolute tolerance on a sum of many terms is not reachable in
-double precision.}
+\item{tol}{Numeric tolerance for the feasibility and slackness comparisons of
+a numerical certificate, ignored by an exact one. The duality-gap
+comparison scales it by the magnitude of the objective, since an absolute
+tolerance on a sum of many terms is not reachable in double precision.}
+
+\item{arithmetic}{One of \code{"auto"}, \code{"exact"} or \code{"double"}. \code{"auto"}, the
+default, reports the exact conclusion when the exact conditions hold and
+the numerical one otherwise, which is the strongest statement the instance
+supports; the exact conditions imply the numerical ones at any
+non-negative \code{tol}, so \code{"auto"} certifies nothing \code{"double"} would refuse.
+\code{"exact"} refuses to fall back, so \code{certified_optimal} is then \code{TRUE} only
+on an exact certificate. \code{"double"} decides everything within \code{tol}.}
 
 \item{...}{Ignored.}
 }
@@ -34,6 +49,22 @@ An object of class \code{assignment_certificate}, a list with elements:
 \itemize{
 \item \code{certified_optimal} — logical, the conclusion. \code{TRUE} only when
 every condition below holds.
+\item \code{arithmetic} — \code{"exact"} or \code{"double"}, the arithmetic the
+conclusion was reached in.
+\item \code{exact_certificate} — logical; whether the conditions hold in exact
+arithmetic. \code{arithmetic = "double"} does not ask the question, and
+reports \code{FALSE} here and in \code{exact_available}.
+\item \code{exact_available} — logical; whether the exact question was asked of
+every condition. It is \code{FALSE} under \code{arithmetic = "double"}, and on
+a certificate assembled from a scan that priced part of the problem
+against a tolerance rather than evaluating it, which is what the
+edge-generation loop hands back.
+\item \code{all_rows_matched} — logical; every row of the short side holds a
+column. This is what stands in for objective equality in the exact
+check: with tight matched arcs and free unmatched columns, the two
+objectives are equal exactly when it is \code{TRUE}.
+\item \code{n_exact_violations}, \code{n_exact_untight} — pairs failing exact dual
+feasibility, and matched pairs not exactly tight.
 \item \code{primal_feasible} — logical; no column claimed twice, no forbidden
 pair matched, no index out of range.
 \item \code{dual_feasible} — logical; \code{c_ij - u_i - v_j >= -tol} over every
@@ -54,10 +85,34 @@ Invisibly returns \code{x}.
 \description{
 Checks a solved assignment against the linear-programming optimality
 conditions and returns the result of each check. Unlike the \code{status} field on
-a solve result, which records what the solver terminated on, this is a proof:
-\code{certified_optimal} is \code{TRUE} only when every condition holds.
+a solve result, which records what the solver terminated on, this is a
+statement about the matching: \code{certified_optimal} is \code{TRUE} only when every
+condition holds.
 }
-\details{
+\section{What the certificate proves}{
+The conditions are decided in one of two arithmetics, and the certificate
+says which one it used.
+
+An \strong{exact certificate} decides every condition in exact arithmetic, with no
+tolerance anywhere. It proves that the matching attains the minimum total
+cost of the cost matrix as supplied. The three quantities in each condition
+are IEEE doubles, and a double is a rational number, so \code{c_ij - u_i - v_j}
+has an exact sign; the check evaluates that sign exactly rather than reading
+the sign of a rounded difference. A cost matrix that is itself a rounding of
+something else — Mahalanobis distances, say — is still certified as the
+matrix it is, which is the problem the solver was given.
+
+A \strong{numerical certificate} decides the same conditions within \code{tol}. It
+establishes optimality up to that tolerance and no further. It is what is
+available when the duals are not exactly optimal for the matrix, which is the
+ordinary case for costs carrying a full double mantissa: a dual computed as
+\code{c_ij - v_j} in double arithmetic misses exact tightness by the rounding of
+that subtraction.
+
+Integer-valued costs are the case where the exact certificate is routinely
+available, because an optimal dual solution is then integer-valued too and
+the solver reaches it in arithmetic that does not round.
+
 The check needs dual variables. If \code{x} carries them (as
 \code{\link[=assignment_duals]{assignment_duals()}} results do), they are used. Otherwise they are obtained
 by solving \code{cost} with \code{\link[=assignment_duals]{assignment_duals()}}, which costs a second solve.
@@ -69,6 +124,7 @@ Optimal duals are shared by all optimal solutions of a linear program, so a
 matching from one solver can be certified against duals from another. That is
 what makes it possible to certify solvers that return no duals of their own.
 }
+
 \examples{
 set.seed(1)
 cost <- matrix(runif(100), 10, 10)
@@ -78,6 +134,12 @@ verify_assignment(assignment(cost), cost)
 # Passing the duals result reuses its duals instead of solving again.
 rect <- matrix(runif(120), 6, 20)
 verify_assignment(assignment_duals(rect), rect)
+
+# Integer costs carry an integer optimal dual solution, so the conditions
+# hold with no tolerance and the certificate is exact.
+int_cost <- matrix(sample(1:100, 64, replace = TRUE), 8, 8)
+cert <- verify_assignment(assignment(int_cost), int_cost)
+cert$arithmetic
 
 }
 \seealso{

@@ -36,7 +36,7 @@ include_directories(
     ${SRC_DIR}/flow
     ${SRC_DIR}/solvers
     ${SRC_DIR}/solvers/network_simplex
-    ${SRC_DIR}/solvers/orlin_ahuja
+    ${SRC_DIR}/solvers/sap_dense
 )
 
 # Pure C++ implementation sources (NO Rcpp dependencies)
@@ -77,7 +77,7 @@ set(CPP_IMPL_SOURCES
 
     # Subdirectory solvers
     ${SRC_DIR}/solvers/network_simplex/solve_network_simplex.cpp
-    ${SRC_DIR}/solvers/orlin_ahuja/orlin_solve.cpp
+    ${SRC_DIR}/solvers/sap_dense/sap_dense_solve.cpp
 )
 
 # Test sources
@@ -101,7 +101,7 @@ set(TEST_SOURCES
     tests/test_lapmod.cpp
     tests/test_line_metric.cpp
     tests/test_network_simplex.cpp
-    tests/test_orlin.cpp
+    tests/test_sap_dense.cpp
     tests/test_push_relabel.cpp
     tests/test_ramshaw_tarjan.cpp
     tests/test_sinkhorn.cpp
@@ -117,6 +117,7 @@ set(TEST_SOURCES
     tests/test_flow_implicit.cpp
     tests/test_flow_path.cpp
     tests/test_flow_compile.cpp
+    tests/test_lap_exact.cpp
     tests/test_flow_certify.cpp
     tests/test_flow_assign.cpp
 )

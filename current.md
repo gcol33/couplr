@@ -11,8 +11,9 @@ findings and repros.
 **The article came back on its first review, and it is a major revision.** A
 reviewer returned 20 pages on 2026-08-25. It is saved verbatim at
 `review/round1.md`, triaged in `review/INDEX.md`, and decided in
-`review/dispositions.md`. Batch C is done and batch A has its title. See "The first
-review is in, and it lands on the title".
+`review/dispositions.md`. Batches A and C are done. See "The first
+review is in, and it lands on the title" and "Batch A is done: the certificate
+says which arithmetic it was reached in".
 
 **Phases 0 through 3 are done, and the article they were for is written.** Phase
 0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
@@ -1287,6 +1288,98 @@ away would not have drawn the objection, and what replaces it is close to it.
   modes are compliance: the default reproduction reads the supplied intermediates
   and finishes inside the limit, and the full benchmark suite may run longer.
 
+## Batch A is done: the certificate says which arithmetic it was reached in
+
+Items 1.1 and 1.5, decided by D1 route 2. The design, the measurements and the
+one thing the first draft of the prose got wrong are in
+`dev_notes/review1/findings.md`.
+
+**The exact check is not restricted to integer costs, and it costs nothing to
+have.** Every condition the certificate checks is the sign of
+`c_ij - u_i - v_j`. Every quantity in it is a double, and a double is a rational
+number, so the sign has an exact answer for any finite input. `src/core/lap_exact.h`
+decides it with Knuth's two-sum twice over, which writes the difference as a
+non-overlapping expansion whose most significant non-zero component carries the
+sign, and runs that behind a rounding-error filter so the expansion touches the
+pairs near tightness rather than all `nm` of them. Ninety lines, no dependency,
+no integer conversion and no eligibility gate. D1 asked for exact verification
+for integer and rational costs; what the code can actually do is wider.
+
+**`verify_assignment()` gains `arithmetic`.** `"auto"`, the default, reports the
+exact conclusion when the exact conditions hold and the tolerance conclusion
+otherwise. `"exact"` refuses to fall back. `"double"` is the previous behaviour
+and does not ask the exact question at all, which is what `exact_available`
+distinguishes from a genuine exact failure. The certificate carries
+`arithmetic`, `exact_certificate`, `exact_available`, `all_rows_matched` and two
+counts, and its print method names the arithmetic. The exact conditions imply
+the numerical ones at any non-negative `tol`, so `certified_optimal` under
+`"auto"` is what it was: the suite went from 8725 to 8783 assertions with no
+failures, and the 58 new ones are the new test file.
+
+**Objective equality is a consequence in the exact conclusion, not a fourth
+check.** With matched arcs tight and unmatched columns free, the primal cost is
+the sum of `u` over matched rows plus the sum of `v` over used columns, which is
+the dual objective exactly when every row is matched. So `all_rows_matched`
+stands where the magnitude-scaled gap comparison stands, and the gap is still
+computed and reported as an independent numerical cross-check. Review item 1.3
+asks the article to say exactly this.
+
+**The first draft of the prose was wrong, and a C++ test proved it.** It said a
+tolerance is needed because an exactly tight arc can evaluate to `-1e-17`. It
+cannot: if `c = u + v` in the reals then `c - u` has a representable exact
+result equal to `v`, so `(c - u) - v` is exactly zero with no rounding anywhere.
+The two real reasons replaced it. A tolerance `eps` weakens the statement, since
+it bounds the matching's excess over the optimum by about `2 (n + m) eps`
+instead of pinning it at zero, which at the article's largest shape and the
+default `1e-9` is `1e-4` in the cost units. And setting the tolerance to zero on
+the double evaluation is unsound, since with `c = 2^-60`, `u = 1`, `v = -1` the
+expression returns 0 on a pair whose reduced cost is positive, and at
+`c = -2^-60` it returns 0 on one whose reduced cost is negative.
+
+**How often the exact conditions hold was measured, not asserted.**
+`dev_notes/review1/exactness.R`, ten instances per cell. Integer costs and
+uniform costs on the unit interval gave an exact certificate on every instance
+at 50, 200 and 800 square and at 200 by 600, and on every instance for each of
+eleven solvers at 200 by 200. Euclidean distances between five-dimensional
+normal clouds gave one on none of them, missing exact tightness by a relative
+`2e-16` to `5e-15`. Every instance in the grid certified in one arithmetic or
+the other. Uniform costs carry a full mantissa just as computed distances do, so
+what separates the two columns is not mantissa length but whether the solver's
+own arithmetic on those costs rounds.
+
+**The loop's certificate stays numerical, and the article says so.** Dual
+feasibility over the pairs the restricted master omits comes from pricing bounds
+compared against `tol` rather than from evaluating those pairs, so the merged
+scan is not exact-checked. Making that path exact means making the pricing bound
+a rigorous one-sided bound and pricing at zero, which is an algorithmic change.
+`verify_flow()` stays numerical for its own reason: its conditions are per-arc
+comparisons on a general min-cost flow with bounds, against a tolerance that
+scales with each arc.
+
+**Batch C left the C++ harness broken, and this batch found it.** `cpp_tests`
+still carried `test_orlin.cpp` including a header batch C deleted, so
+`cmake --build` failed outright. It is `test_sap_dense.cpp` now, its test case
+for the removed `alpha` and `auction_rounds` parameters is gone, and
+`test_lap_exact.cpp` is new: 45,012 assertions checking the exact sign against
+integer arithmetic on a dyadic grid, across magnitudes, and on the cases where
+the double evaluation is wrong. All 328 C++ test cases pass.
+
+**The article is 21 pages now, and the limit is 20.** The certification
+section's exact-arithmetic passage and the integer-conversion paragraph cost the
+page. Nothing in batch A can come back out without losing what the review asked
+for, so the page is owed to the batches that were always going to free space:
+the abstract's 255 words in batch I, and the benchmark grids that D4 moved to
+supplementary material in batch G. Re-measure after G and I; if the page is
+still there, the cut list D4 said was unnecessary becomes necessary.
+
+**1.5 was read out of the code.** `solve_gabow_tarjan.cpp:100-215` gives the
+scale factor `s` with `K * s * (max - min) <= 1e13`, `K = n + 1` square and
+`2 * min(n, m) + 1` rectangular; entries within `1e-9` of an integer entering at
+`s = 1`; refusal above a range of `1.25e14 / K` with the limit named; and a
+bound of `min(n, m) * K * (max - min) / 1e13` between the rounded instance's
+optimum and the original's, which is about `1e-7` of the range at `n = 1000` and
+`1e-5` at `n = 10000`. All of it now stated in `assignment()` and in the article.
+
 ## Batch C is done, and the solver count had a problem the review did not reach
 
 `R/trace_orlin.R` recorded, in this repository's own words, that the `orlin`
@@ -1355,23 +1448,20 @@ Full `devtools::test()`: 0 failures, 0 errors.
 
 ## Next action
 
-**Batch A: the exact-arithmetic verifier, then the vocabulary sweep.** The title is
-applied; the body is not. Grep `rjournal.Rmd`, `man/assignment.Rd` and the roxygen
-in `R/lap_solve.R` and `R/lap_certify.R` for "provably", "proof", "exact" and
-"certified", and settle each occurrence against one vocabulary: a mathematical
-certificate in exact arithmetic for integer and rational costs, and a numerical
-certificate at a stated tolerance for doubles. The same work states the integer
-scaling rule the review asks for in 1.5: the scaling factor, the rounding rule, the
-error bound, which instance optimality is claimed for, the overflow guard, and when
-conversion is refused. All of that is properties of code that already exists, so
-read it rather than describing it from outside. The website carries the same
-overbroad claims and is swept with the paper.
+**Batch B: the LP formalism.** Cheap and uncontestable. State the dual objective
+`max sum u_i + sum v_j` subject to `u_i + v_j <= C_ij` and `v_j <= 0`, split the
+current display so dual feasibility and complementary slackness are separate,
+and give the unmatched-column condition `v_j = 0` its own line. On 1.3, call
+them four reported checks: batch A already made objective equality a
+consequence of the other three in the exact conclusion, and the article's
+certification section now says so, but the numerical path still computes it and
+the formalism section is where that is stated in the article's own terms.
 
-Then in review order: **B** the LP formalism, cheap and uncontestable; **D** the
-edge-generation proposition and the sentinel lemma, which is the batch that most
-improves the paper; **F** the related work, where nothing is written before the
-primary source is read; **G** the benchmark re-runs, now unblocked by D4; **H** the
-worked examples; **I** reproducibility and the 1.6.2 release.
+Then in review order: **D** the edge-generation proposition and the sentinel
+lemma, which is the batch that most improves the paper; **F** the related work,
+where nothing is written before the primary source is read; **G** the benchmark
+re-runs, now unblocked by D4; **H** the worked examples; **I** reproducibility,
+the abstract's 255 words, and the 1.6.2 release.
 
 **Do not submit.** The previous note said submit; the review supersedes it.
 

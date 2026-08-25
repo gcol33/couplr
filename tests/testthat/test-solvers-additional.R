@@ -129,22 +129,22 @@ test_that("push_relabel handles larger problems", {
 })
 
 # ------------------------------------------------------------------------------
-# Orlin-Ahuja solver tests
+# dense-scan SSP solver tests
 # ------------------------------------------------------------------------------
 
-test_that("orlin solves basic problem", {
+test_that("sap_dense solves basic problem", {
   cost <- matrix(c(1, 5, 5, 1), 2, 2)
 
-  result <- assignment(cost, method = "orlin")
+  result <- assignment(cost, method = "sap_dense")
 
   expect_s3_class(result, "lap_solve_result")
   expect_equal(result$total_cost, 2)
 })
 
-test_that("orlin handles larger problems", {
+test_that("sap_dense handles larger problems", {
   cost <- make_test_cost(10)
 
-  result <- assignment(cost, method = "orlin")
+  result <- assignment(cost, method = "sap_dense")
 
   expect_equal(length(result$match), 10)
 })

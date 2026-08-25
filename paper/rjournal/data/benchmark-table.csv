@@ -110,13 +110,13 @@
 "network_simplex","Net-S","Flow-based",200,7.925423
 "network_simplex","Net-S","Flow-based",500,78.817744
 "network_simplex","Net-S","Flow-based",1000,831.492095
-"orlin","Orlin","Flow-based",10,0.035875
-"orlin","Orlin","Flow-based",25,0.039729
-"orlin","Orlin","Flow-based",50,0.084214
-"orlin","Orlin","Flow-based",100,0.316274
-"orlin","Orlin","Flow-based",200,1.654514
-"orlin","Orlin","Flow-based",500,9.046076
-"orlin","Orlin","Flow-based",1000,44.539038
+"sap_dense","SAP-D","JV / Augmenting path",10,0.035875
+"sap_dense","SAP-D","JV / Augmenting path",25,0.039729
+"sap_dense","SAP-D","JV / Augmenting path",50,0.084214
+"sap_dense","SAP-D","JV / Augmenting path",100,0.316274
+"sap_dense","SAP-D","JV / Augmenting path",200,1.654514
+"sap_dense","SAP-D","JV / Augmenting path",500,9.046076
+"sap_dense","SAP-D","JV / Augmenting path",1000,44.539038
 "push_relabel","Push-R","Flow-based",10,0.04264
 "push_relabel","Push-R","Flow-based",25,0.086674
 "push_relabel","Push-R","Flow-based",50,0.311477

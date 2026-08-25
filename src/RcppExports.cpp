@@ -771,16 +771,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// oa_solve
-Rcpp::List oa_solve(Rcpp::NumericMatrix cost_r, double alpha, int auction_rounds);
-RcppExport SEXP _couplr_oa_solve(SEXP cost_rSEXP, SEXP alphaSEXP, SEXP auction_roundsSEXP) {
+// sap_dense_solve
+Rcpp::List sap_dense_solve(Rcpp::NumericMatrix cost_r);
+RcppExport SEXP _couplr_sap_dense_solve(SEXP cost_rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cost_r(cost_rSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< int >::type auction_rounds(auction_roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(oa_solve(cost_r, alpha, auction_rounds));
+    rcpp_result_gen = Rcpp::wrap(sap_dense_solve(cost_r));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -967,7 +965,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_color_palette_info_cpp", (DL_FUNC) &_couplr_color_palette_info_cpp, 5},
     {"_couplr_spatial_cost_matrix_cpp", (DL_FUNC) &_couplr_spatial_cost_matrix_cpp, 4},
     {"_couplr_lap_solve_cycle_cancel", (DL_FUNC) &_couplr_lap_solve_cycle_cancel, 2},
-    {"_couplr_oa_solve", (DL_FUNC) &_couplr_oa_solve, 3},
+    {"_couplr_sap_dense_solve", (DL_FUNC) &_couplr_sap_dense_solve, 1},
     {"_couplr_gt_cost_length", (DL_FUNC) &_couplr_gt_cost_length, 2},
     {"_couplr_gt_is_eligible", (DL_FUNC) &_couplr_gt_is_eligible, 4},
     {"_couplr_gt_check_one_feasible", (DL_FUNC) &_couplr_gt_check_one_feasible, 5},

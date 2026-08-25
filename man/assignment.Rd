@@ -8,9 +8,9 @@ assignment(
   cost,
   maximize = FALSE,
   method = c("auto", "jv", "hungarian", "munkres", "auction", "auction_gs",
-    "auction_scaled", "sap", "ssp", "csflow", "hk01", "bruteforce", "ssap_bucket",
-    "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan", "push_relabel",
-    "orlin", "network_simplex"),
+    "auction_scaled", "sap", "ssp", "sap_dense", "csflow", "hk01", "bruteforce",
+    "ssap_bucket", "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan",
+    "push_relabel", "network_simplex"),
   auction_eps = NULL,
   eps = NULL,
   memory_mode = "auto",
@@ -45,9 +45,17 @@ entries are treated as forbidden assignments.}
 
 \strong{Specialized solvers:}
 \itemize{
-\item \code{"sap"} / \code{"ssp"} — Shortest augmenting path, handles sparsity well
+\item \code{"sap"} — Shortest augmenting path over the shared flow model,
+handles sparsity well. \code{"ssp"} is accepted as a second spelling of this
+method and resolves to \code{"sap"}.
+\item \code{"sap_dense"} — Shortest augmenting path with a linear scan in place
+of a heap, O(n * m^2), suited to a dense cost matrix
 \item \code{"lapmod"} — Sparse JV variant, faster when >50\\% entries are NA/Inf
-\item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) costs only
+\item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) or constant costs.
+Constant costs make every perfect matching optimal. On a \verb{\{0,1\}} matrix
+the search runs over the zero-cost edges alone, where a perfect matching
+totals zero and is therefore optimal; if none exists the problem is
+passed to the weighted solver on the original costs.
 \item \code{"ssap_bucket"} — 'Dial' algorithm for integer costs
 \item \code{"bruteforce"} — Exact enumeration for tiny problems (n <= 8)
 }
@@ -56,7 +64,9 @@ entries are treated as forbidden assignments.}
 \itemize{
 \item \code{"csa"} — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
 \item \code{"gabow_tarjan"} — 'Gabow-Tarjan' bit-scaling with complementary
-slackness O(n^3 log C). Its optimality bound holds for a matching that
+slackness. On a graph of \code{V} vertices and \code{E} edges the bound is
+O(sqrt(V) * E * log(V * C)), which for an \code{n} by \code{n} cost matrix is
+O(n^2.5 * log(n * C)). Its optimality bound holds for a matching that
 saturates both sides, so a rectangular problem gains a dummy side of
 zero cost. The dummies are copies of one node and are carried as a
 single unit holding as many partners as there are dummies, so the
@@ -64,7 +74,6 @@ problem is solved at its own \code{n} by \code{m} shape.
 \item \code{"cycle_cancel"} — Cycle-canceling with 'Karp' algorithm
 \item \code{"csflow"} — Successive shortest paths with 'Johnson' potentials
 \item \code{"network_simplex"} — 'Network simplex' with spanning tree representation
-\item \code{"orlin"} — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
 \item \code{"push_relabel"} — 'Goldberg-Tarjan' cost-scaling push-relabel
 \item \code{"ramshaw_tarjan"} — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 }

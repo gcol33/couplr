@@ -31,9 +31,17 @@
 #'
 #'   **Specialized solvers:**
 #'   \itemize{
-#'     \item `"sap"` / `"ssp"` — Shortest augmenting path, handles sparsity well
+#'     \item `"sap"` — Shortest augmenting path over the shared flow model,
+#'       handles sparsity well. `"ssp"` is accepted as a second spelling of this
+#'       method and resolves to `"sap"`.
+#'     \item `"sap_dense"` — Shortest augmenting path with a linear scan in place
+#'       of a heap, O(n * m^2), suited to a dense cost matrix
 #'     \item `"lapmod"` — Sparse JV variant, faster when >50\% entries are NA/Inf
-#'     \item `"hk01"` — 'Hopcroft-Karp' for binary (0/1) costs only
+#'     \item `"hk01"` — 'Hopcroft-Karp' for binary (0/1) or constant costs.
+#'       Constant costs make every perfect matching optimal. On a `{0,1}` matrix
+#'       the search runs over the zero-cost edges alone, where a perfect matching
+#'       totals zero and is therefore optimal; if none exists the problem is
+#'       passed to the weighted solver on the original costs.
 #'     \item `"ssap_bucket"` — 'Dial' algorithm for integer costs
 #'     \item `"bruteforce"` — Exact enumeration for tiny problems (n <= 8)
 #'   }
@@ -42,7 +50,9 @@
 #'   \itemize{
 #'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large
 #'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
-#'       slackness O(n^3 log C). Its optimality bound holds for a matching that
+#'       slackness. On a graph of `V` vertices and `E` edges the bound is
+#'       O(sqrt(V) * E * log(V * C)), which for an `n` by `n` cost matrix is
+#'       O(n^2.5 * log(n * C)). Its optimality bound holds for a matching that
 #'       saturates both sides, so a rectangular problem gains a dummy side of
 #'       zero cost. The dummies are copies of one node and are carried as a
 #'       single unit holding as many partners as there are dummies, so the
@@ -50,7 +60,6 @@
 #'     \item `"cycle_cancel"` — Cycle-canceling with 'Karp' algorithm
 #'     \item `"csflow"` — Successive shortest paths with 'Johnson' potentials
 #'     \item `"network_simplex"` — 'Network simplex' with spanning tree representation
-#'     \item `"orlin"` — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))
 #'     \item `"push_relabel"` — 'Goldberg-Tarjan' cost-scaling push-relabel
 #'     \item `"ramshaw_tarjan"` — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)
 #'   }
@@ -173,9 +182,9 @@
 #' @export
 assignment <- function(cost, maximize = FALSE,
                        method = c("auto","jv","hungarian","munkres","auction","auction_gs","auction_scaled",
-                                  "sap","ssp","csflow","hk01","bruteforce",
+                                  "sap","ssp","sap_dense","csflow","hk01","bruteforce",
                                   "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
-                                  "ramshaw_tarjan","push_relabel","orlin","network_simplex"),
+                                  "ramshaw_tarjan","push_relabel","network_simplex"),
                        auction_eps = NULL, eps = NULL, memory_mode = "auto",
                        certify = NULL,
                        cardinality = c("complete", "maximum", "fixed"),
@@ -304,7 +313,7 @@ assignment <- function(cost, maximize = FALSE,
     "csa"           = lap_solve_csa(work, maximize),
     "ramshaw_tarjan"= lap_solve_ramshaw_tarjan(work, maximize),
     "push_relabel"  = lap_solve_push_relabel(work, maximize),
-    "orlin"           = lap_solve_orlin(work, maximize),
+    "sap_dense"     = lap_solve_sap_dense(work, maximize),
     "network_simplex"= lap_solve_network_simplex_wrapper(work, maximize),
     stop("Unknown or unimplemented method: ", method)
   )
@@ -959,21 +968,21 @@ print.bottleneck_result <- function(x, ...) {
 }
 
 # ==============================================================================
-# Internal: Orlin-Ahuja Wrapper
+# Internal: Dense-scan Successive Shortest Path Wrapper
 # ==============================================================================
-# Wrapper for the Orlin-Ahuja scaling algorithm that returns standard LAP format
+# Returns standard LAP format
 
 #' @keywords internal
-lap_solve_orlin <- function(cost, maximize = FALSE) {
-  # Orlin-Ahuja epsilon-scaling algorithm with hybrid auction/SSP
-  # O(sqrt(n) * m * log(nC)) complexity
+lap_solve_sap_dense <- function(cost, maximize = FALSE) {
+  # Successive shortest paths, Dijkstra with a linear scan over the columns
+  # O(n * m^2) complexity
   work <- if (maximize) -cost else cost
   # Treat NA *and* non-finite (e.g. -Inf produced by negating +Inf in maximize
   # mode) as forbidden. The plain `is.na(work)` check missed -Inf and let
   # forbidden cells slip into the solver as extreme-cost real edges.
   work[!is.finite(work)] <- Inf
 
-  result <- oa_solve(work, alpha = 5.0, auction_rounds = 10)
+  result <- sap_dense_solve(work)
 
   # Recompute total_cost from original cost matrix
   n <- nrow(cost)
@@ -1017,9 +1026,10 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 # ==============================================================================
 # Note on Specialized Algorithms
 # ==============================================================================
-# For specialized algorithms like ssap_bucket, cycle_cancel, gabow_tarjan, and orlin,
-# use assignment(cost, method = "ssap_bucket"), assignment(cost, method = "cycle_cancel"),
-# assignment(cost, method = "gabow_tarjan"), or assignment(cost, method = "orlin").
+# For specialized algorithms like ssap_bucket, cycle_cancel, gabow_tarjan, and
+# sap_dense, use assignment(cost, method = "ssap_bucket"),
+# assignment(cost, method = "cycle_cancel"), assignment(cost, method = "gabow_tarjan"),
+# or assignment(cost, method = "sap_dense").
 #
 # These are accessed via the method parameter in assignment() rather than
 # separate wrapper functions to keep the API clean.

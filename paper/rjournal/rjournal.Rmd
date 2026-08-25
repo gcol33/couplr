@@ -1,5 +1,5 @@
 ---
-title: "couplr: Provably Optimal Matching with Sparse Edge Generation"
+title: "couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation"
 date: "2026-08-25"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
@@ -280,8 +280,11 @@ long paths.
 **Cost-scaling methods** solve a sequence of increasingly precise problems,
 each time halving the scale on which costs are rounded and reusing the previous
 solution [@GoldbergKennedy1995]. The Gabow-Tarjan bit-scaling algorithm
-[@GabowTarjan1989] belongs here, and reaches
-$O(\sqrt{n}\, m \log(n C_{\max}))$, where $C_{\max} = \max_{i,j} |C_{ij}|$.
+[@GabowTarjan1989] belongs here. On a graph with $|V|$ nodes and $|E|$ edges it
+reaches $O(\sqrt{|V|}\, |E| \log(|V| C_{\max}))$ for integer costs, where
+$C_{\max} = \max_{i,j} |C_{ij}|$. A complete bipartite graph on $n$ and $m$ units
+has $|V| = n + m$ and $|E| = nm$, so the bound there is
+$O(\sqrt{n + m}\; nm \log((n + m) C_{\max}))$.
 To our knowledge this algorithm did not previously have a publicly available
 open-source implementation in any language.
 
@@ -293,11 +296,21 @@ right base for variable-ratio designs where a group absorbs several units. On a
 plain one-to-one problem they are the slowest choice.
 
 **Special-purpose routines** cover cases where the general machinery is wasted:
-exhaustive enumeration below nine units, Hopcroft-Karp style bipartite matching
+exhaustive enumeration below nine units, Hopcroft-Karp bipartite matching
 [@HopcroftKarp1973] when costs are binary or constant, Ramshaw-Tarjan
 [@RamshawTarjan2012] for strongly rectangular problems where padding to a square
 matrix would dominate the work, and bottleneck assignment, which minimises the
 largest pair cost instead of the sum.
+
+The binary case is worth stating in full, since a maximum-cardinality routine
+carries no costs and the problem does. When every admissible edge holds the same
+value, all perfect matchings cost the same and any maximum-cardinality matching
+is optimal. When the finite costs are $\{0, 1\}$, the routine runs
+Hopcroft-Karp on the zero-cost edges alone. A perfect matching there totals
+zero, which no assignment improves on, so it is optimal for the original costs.
+If the zero-cost subgraph admits no perfect matching, the optimum needs at least
+one unit edge, and the problem is passed to the weighted solver on the original
+matrix. The specialised path answers only where its answer is the optimum.
 
 Two extensions return something other than a single optimal assignment. Murty's
 ranking procedure [@Murty1968] with Lawler's partition scheme [@Lawler1972]
@@ -699,7 +712,8 @@ matrix in hand. `lap_solve()` and `assignment()` take a matrix and return the
 optimal assignment; `lap_solve()` also accepts a long data frame of source,
 target and cost columns, which is the natural shape when costs arrive from a
 database. The `method` argument names any of the nineteen solvers; `"auto"` is
-the default.
+the default. It accepts twenty names, because `"ssp"` is a second spelling of
+`"sap"` and resolves to it.
 
 ```{r solver-basic, echo=TRUE}
 set.seed(1)
@@ -962,11 +976,12 @@ auto_all <- do.call(rbind, lapply(panel_levels, function(p) {
 }))
 
 pal <- c(
-  "JV" = "#0072B2", "SAP" = "#56B4E9", "LAPMOD" = "#004E73",
+  "JV" = "#0072B2", "SAP" = "#56B4E9", "SAP-D" = "#08519C",
+  "LAPMOD" = "#004E73",
   "Auction" = "#E69F00", "Auction-GS" = "#8C5200", "Auction-S" = "#F0C066",
   "CSA" = "#009E73", "Gabow-T" = "#004534", "SSAP-B" = "#66C2A5",
   "CS-flow" = "#CC79A7", "Cycle-C" = "#7B2D5E", "Push-R" = "#E5B8D4",
-  "Net-S" = "#6A3D9A", "Orlin" = "#B07AA1",
+  "Net-S" = "#6A3D9A",
   "Hungarian" = "#D55E00", "Munkres" = "#8C3B00", "Ramshaw" = "#5A4634",
   "HK-01" = "#117733", "Brute-F" = "#999933"
 )
@@ -974,10 +989,10 @@ pal <- c(
 # Curves run from the lower left to the upper right on log-log axes, so the
 # upper left of every panel is free for an in-panel key.
 key_order <- list(
-  "JV / augmenting path" = c("JV", "SAP", "LAPMOD"),
+  "JV / augmenting path" = c("JV", "SAP", "SAP-D", "LAPMOD"),
   "Auction"              = c("Auction", "Auction-GS", "Auction-S"),
   "Cost scaling"         = c("CSA", "Gabow-T", "SSAP-B"),
-  "Flow-based"           = c("CS-flow", "Cycle-C", "Push-R", "Net-S", "Orlin"),
+  "Flow-based"           = c("CS-flow", "Cycle-C", "Push-R", "Net-S"),
   "Other"                = c("Hungarian", "Munkres", "Ramshaw", "HK-01",
                              "Brute-F")
 )

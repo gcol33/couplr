@@ -1,7 +1,7 @@
-// src/solvers/orlin_ahuja/orlin_solve.cpp
-// Pure C++ Orlin-Ahuja LAP solver implementation - NO Rcpp dependencies
+// src/solvers/sap_dense/sap_dense_solve.cpp
+// Pure C++ successive shortest path LAP solver, dense scan - NO Rcpp dependencies
 
-#include "orlin_solve.h"
+#include "sap_dense_solve.h"
 #include "../../core/lap_error.h"
 #include "../../core/lap_utils.h"
 #include <vector>
@@ -17,7 +17,7 @@ namespace {
 constexpr int UNASSIGNED = -1;
 constexpr double INF_COST = std::numeric_limits<double>::infinity();
 
-// Simple matching state for SSP algorithm
+// Matching state carried across augmentations
 struct MatchingState {
     int n;                          // number of rows
     int m;                          // number of columns
@@ -200,8 +200,7 @@ bool ssp_augment_once(
 }  // anonymous namespace
 
 // Main solver implementation
-LapResult solve_orlin(const CostMatrix& cost, bool maximize,
-                      double alpha, int auction_rounds) {
+LapResult solve_sap_dense(const CostMatrix& cost, bool maximize) {
     const int n = static_cast<int>(cost.nrow);
     const int m = static_cast<int>(cost.ncol);
 
@@ -221,8 +220,7 @@ LapResult solve_orlin(const CostMatrix& cost, bool maximize,
     // Initialize matching state with zero prices
     MatchingState state(n, m);
 
-    // Use SSP (Dijkstra) to build the matching from scratch
-    // Each augmentation increases matching size by 1
+    // Build the matching from scratch: each augmentation raises its size by 1
     int min_size = std::min(n, m);
     int augmentations = 0;
     int max_augmentations = min_size * 2;  // Safety limit

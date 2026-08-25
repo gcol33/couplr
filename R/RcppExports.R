@@ -213,8 +213,8 @@ lap_solve_cycle_cancel <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_cycle_cancel`, cost, maximize)
 }
 
-oa_solve <- function(cost_r, alpha = 5.0, auction_rounds = 10L) {
-    .Call(`_couplr_oa_solve`, cost_r, alpha, auction_rounds)
+sap_dense_solve <- function(cost_r) {
+    .Call(`_couplr_sap_dense_solve`, cost_r)
 }
 
 gt_cost_length <- function(c_ij, in_matching) {

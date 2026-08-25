@@ -29,7 +29,7 @@ cert_solver_registry <- function() {
     list(method = "gabow_tarjan",   accepts = function(n, m, kind) TRUE),
     list(method = "ramshaw_tarjan", accepts = function(n, m, kind) TRUE),
     list(method = "push_relabel",   accepts = function(n, m, kind) TRUE),
-    list(method = "orlin",          accepts = function(n, m, kind) TRUE),
+    list(method = "sap_dense",          accepts = function(n, m, kind) TRUE),
     list(method = "network_simplex", accepts = function(n, m, kind) TRUE),
     list(method = "ssap_bucket",    accepts = function(n, m, kind) kind == "integer"),
     list(method = "hk01",           accepts = function(n, m, kind) kind == "binary"),

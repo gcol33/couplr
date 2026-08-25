@@ -84,7 +84,7 @@ theme_diagram <- function() {
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R packages still use nothing else.
 
-couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods that exist in no other R package (Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan) and, to our knowledge, no publicly available open-source implementation in any language for Gabow-Tarjan bit-scaling assignment.
+couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods that exist in no other R package (Network Simplex, Ramshaw-Tarjan) and, to our knowledge, no publicly available open-source implementation in any language for Gabow-Tarjan bit-scaling assignment.
 
 ### Who This Vignette Is For
 
@@ -177,7 +177,7 @@ A bar chart of timings tells you which algorithm finished first; it does not tel
 animated_methods()
 ```
 
-Every assignment method in couplr now has an animation. The list covers each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the rectangular-input variant (Ramshaw-Tarjan), the bucket-priority alternative (SSAP-bucket), the economic / bidding view (Auction with LIFO and Gauss-Seidel sweeps, plus epsilon-scaling), the bit-scaling discrete-cost approach (Gabow-Tarjan), the min-cost-flow family (CSflow, cycle-canceling, push-relabel, CSA, Orlin, network-simplex), the special-case Hopcroft-Karp on 0/1 matrices, and the brute-force enumeration for tiny inputs.
+Every assignment method in couplr now has an animation. The list covers each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the rectangular-input variant (Ramshaw-Tarjan), the bucket-priority alternative (SSAP-bucket), the economic / bidding view (Auction with LIFO and Gauss-Seidel sweeps, plus epsilon-scaling), the bit-scaling discrete-cost approach (Gabow-Tarjan), the min-cost-flow family (CSflow, cycle-canceling, push-relabel, CSA, network-simplex), the special-case Hopcroft-Karp on 0/1 matrices, and the brute-force enumeration for tiny inputs.
 
 All four demos below run on a 30x30 cost matrix so you can see the algorithm's shape, not just a handful of edges. The header tracks `k / 30 matched`; matched pairs fade into the background as the algorithm commits them; orange edges are the current search; red dashed edges mark the augmenting path being built.
 
@@ -502,7 +502,7 @@ In the late 1980s, researchers discovered a powerful trick called **epsilon-scal
 
 This transforms how the algorithm behaves. Large epsilon means big steps and rapid progress; small epsilon means careful refinement. The total work can end up being less than doing everything exactly from the start.
 
-Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and Orlin-Ahuja.
+Three algorithms exploit this insight: Auction, CSA, and Gabow-Tarjan.
 
 ---
 
@@ -758,47 +758,7 @@ result <- lap_solve(cost, method = "gabow_tarjan")
 cat("Total cost:", get_total_cost(result), "\n")
 ```
 
-Gabow-Tarjan is primarily of theoretical interest. It provides the best known worst-case bounds for integer costs. But there's one more scaling algorithm, with even better theoretical complexity.
-
----
-
-### Orlin-Ahuja Algorithm (1992)
-
-James Orlin and Ravindra Ahuja developed a **double-scaling** algorithm that scales both costs AND capacities simultaneously.
-
-**The insight**: Cost-scaling alone gives $O(n^3 \log C)$. But if we also scale *flow capacities*, we can exploit the structure of sparse graphs. At each scale, we only need to push $O(\sqrt{n})$ units of flow before refining.
-
-**The algorithm**:
-
-1. Scale costs as in Gabow-Tarjan (process bits from high to low).
-
-2. At each cost scale, use **capacity scaling**:
-
-   - Start with large capacity increments $\Delta = 2^k$
-
-   - Find augmenting paths that can carry $\Delta$ flow
-
-   - Halve $\Delta$ and repeat until $\Delta = 1$
-
-3. The capacity scaling limits work per phase to $O(m)$ augmentations.
-
-**Why $\sqrt{n}$ appears**: The assignment problem has $n$ units of flow total. With capacity scaling, each phase handles $O(\sqrt{n})$ flow units, and there are $O(\sqrt{n})$ phases per cost scale. This geometric structure yields the improved bound.
-
-**Complexity**: $O(\sqrt{n} \cdot m \cdot \log(nC))$ where $m$ is the number of edges.
-
-For sparse problems where $m \ll n^2$, this is dramatically better than $O(n^3)$.
-
-```{r orlin-example}
-set.seed(111)
-n <- 50
-cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
-result <- lap_solve(cost, method = "orlin")
-cat("Total cost:", get_total_cost(result), "\n")
-```
-
-Orlin-Ahuja provides the best theoretical bounds for sparse problems with large cost ranges. The implementation complexity is substantial: maintaining blocking flows across scaling phases requires careful data structure engineering. In practice, the overhead often makes it slower than CSA for dense problems. But for large sparse instances, it's asymptotically optimal.
-
-That's four scaling algorithms, each trading precision for speed in a different way. But there's a completely different way to think about the problem entirely.
+Gabow-Tarjan is primarily of theoretical interest. It provides the best known worst-case bounds for integer costs. That closes the scaling family, and there's a completely different way to think about the problem entirely.
 
 ---
 
@@ -1017,6 +977,22 @@ cat("Total cost:", round(get_total_cost(result), 2), "\n")
 
 For very sparse problems, SAP can be orders of magnitude faster than dense algorithms.
 
+`"sap_dense"` runs the same successive-shortest-path search with the opposite
+storage assumption. Its Dijkstra step picks the next column by scanning every
+unfinalized one instead of pulling from a heap, which costs $O(m)$ per
+extraction and $O(n m^2)$ over a full solve. On a dense cost matrix, where
+every column is a candidate at every step, the scan does the work a heap would
+do anyway without paying for the heap.
+
+```{r sap-dense-example}
+set.seed(789)
+n <- 60
+cost <- matrix(runif(n * n, 0, 100), n, n)
+result <- lap_solve(cost, method = "sap_dense")
+cat("Total cost:", round(get_total_cost(result), 2), "
+")
+```
+
 ---
 
 ### Ramshaw-Tarjan: Rectangular Problems (2012)
@@ -1210,8 +1186,8 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
 | Auction (Scaled) | $O(n^2 \log(nC)/\epsilon)$ | Large dense, fastest | `"auction_scaled"` |
 | CSA | $O(n^3)$ amortized | Medium-large dense | `"csa"` |
 | Cost-Scaling Flow | $O(n^3 \log(nC))$ | General min-cost flow | `"csflow"` |
-| Gabow-Tarjan | $O(\sqrt{n}\, m \log(nC))$ | Large integer costs | `"gabow_tarjan"` |
-| Orlin-Ahuja | $O(\sqrt{n} m \log(nC))$ | Large sparse | `"orlin"` |
+| Gabow-Tarjan | $O(\sqrt{V}\, E \log(VC))$ | Large integer costs | `"gabow_tarjan"` |
+| SAP (dense scan) | $O(n m^2)$ | Dense costs | `"sap_dense"` |
 | Network Simplex | $O(n^3)$ typical | Dual info needed | `"network_simplex"` |
 | Push-Relabel | $O(n^2 m)$ | Max-flow style | `"push_relabel"` |
 | Cycle Canceling | $O(n^2 m \cdot C)$ | Theoretical interest | `"cycle_cancel"` |
@@ -1237,8 +1213,6 @@ Or just use `method = "auto"` and let couplr choose.
 - Gabow, H. N., & Tarjan, R. E. (1989). Faster scaling algorithms for network problems. *SIAM Journal on Computing*.
 
 - Goldberg, A. V., & Kennedy, R. (1995). An efficient cost scaling algorithm for the assignment problem. *Mathematical Programming*.
-
-- Orlin, J. B., & Ahuja, R. K. (1992). New scaling algorithms for the assignment and minimum mean cycle problems. *Mathematical Programming*.
 
 - Ramshaw, L., & Tarjan, R. E. (2012). On minimum-cost assignments in unbalanced bipartite graphs. *HP Labs Technical Report*.
 

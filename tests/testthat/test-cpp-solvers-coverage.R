@@ -115,7 +115,7 @@ test_that("cycle_cancel with sparse matrix", {
 })
 
 # ------------------------------------------------------------------------------
-# Orlin-Ahuja (csa) solver tests
+# dense-scan SSP (csa) solver tests
 # ------------------------------------------------------------------------------
 
 test_that("csa solver works on small matrices", {

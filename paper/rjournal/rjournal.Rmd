@@ -1424,7 +1424,10 @@ fmt_cell <- function(pkg, n) {
   r <- scaling[scaling$n_total == n & scaling$package == pkg, ]
   if (nrow(r) == 0) return("not run")
   if (is.na(r$median_s[1])) {
-    return(if (grepl("timeout", r$status[1])) "timeout" else "int overflow")
+    st <- r$status[1]
+    return(if (grepl("timeout", st)) "timeout"
+           else if (grepl("overflow", st) || grepl("2^31", st, fixed = TRUE)) "int overflow"
+           else "error")
   }
   in_ms <- r$median_s[1] < 1
   d <- function(x) if (in_ms) sprintf("%.0f", 1000 * x) else sprintf("%.3g", x)

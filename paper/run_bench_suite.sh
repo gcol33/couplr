@@ -24,12 +24,13 @@ RSCRIPT=${RSCRIPT:-Rscript}
 
 # Order: the three tables the article carries first, so the article can be
 # rebuilt before the supplementary grids have finished.
-ALL="scaling implicit path regimes implicit_grid memory figure"
+ALL="scaling scaling_lazy implicit path regimes implicit_grid memory figure"
 WHICH=${1:-$ALL}
 
 script_for() {
   case "$1" in
     scaling)       echo "paper/bench_scaling.R" ;;
+    scaling_lazy)  echo "paper/bench_scaling_lazy.R" ;;
     implicit)      echo "paper/bench_implicit.R" ;;
     path)          echo "paper/bench_path.R" ;;
     regimes)       echo "paper/bench_regimes.R" ;;

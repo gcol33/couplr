@@ -204,7 +204,7 @@ on D2.
 
 ## D. Formal statements for the central contribution — 1.6, 1.9
 
-**ACCEPT.** This is the batch that most improves the paper.
+**ACCEPT. Done 2026-08-26.** This is the batch that most improves the paper.
 
 The adaptive edge-generation loop is the contribution, and it currently reaches the
 reader as narrative. Give it a proposition, a proof in exact arithmetic, the
@@ -458,3 +458,88 @@ intended, page 3 of the PDF inspected. The article is 22 pages.
 
 Left for batch I: `RJreferences.bib:5` still cites couplr as version 1.5.5, which
 D3 sweeps to 1.6.2 with the website and the tag.
+
+---
+
+## Batch D, what landed
+
+Manuscript only, `paper/rjournal/rjournal.Rmd`. No code changed; every statement
+was read out of the implementation rather than described from outside.
+
+**1.6, the sentinel.** "Reshaping the cost matrix" now states the padded
+objective and proves the ordering. With `[l, h]` the range of the admissible
+costs of the pruned submatrix and `k` the smaller of its two dimensions, every
+padded assignment matches all `k` rows and costs `s*sigma + R` with
+`R` in `[(k-s)l, (k-s)h]`. Lemma 1: if `sigma > k(|l| + |h|)` then an assignment
+using more sentinel edges than another costs strictly more, proved in three
+lines from those two facts. The paper gives the formula couplr uses,
+`sigma = (k+1)(|l| + |h|) + 1` from `.cardinality_sentinel()`, and says it
+satisfies the hypothesis whatever the signs of `l` and `h` and when the
+admissible costs are all zero.
+
+The four things 1.6 said the informal statement left open:
+
+- *Negative costs.* The span is `|l| + |h|`, so the bound holds for any signs.
+  The proof uses `(k-s')l >= -k|l|` and `-(k-s)h >= -k|h|`, which is where the
+  signs enter.
+- *Maximisation by negation.* Stated: the instance is negated and the sentinel
+  with it, so the lemma applies to the negated problem, and the objective is
+  recomputed over real pairs so no sentinel reaches a reported cost.
+- *Overflow.* The lemma is over the reals and the solve is in doubles, so the
+  paper gives the largest total the padded objective reaches,
+  `(k+1)(|l| + |h|) + k*sigma`, and says what happens above `2^53`:
+  `match_couples()` warns and returns a greedy partial matching, saying it is
+  not optimal; `assignment(cardinality = "maximum")` errors and asks for
+  rescaled costs or an `unmatched_penalty`. This is `PAD_PRECISION_LIMIT` and
+  the NULL return of `.lex_tier_weights()`.
+- *Non-integral costs.* Nothing in the lemma assumes integrality; `l` and `h`
+  are a real range. No sentence claims this, because the statement shows it.
+
+**1.9, the edge-generation loop.** The seven-step narrative is a six-step
+algorithm over a candidate set `E_t`, carrying the parameters the code has: the
+seed width `6*ceil(log2(m))` capped at `m` from `implicit_seed_width()`, the
+pricing threshold, and the warm start. Then Proposition 1 with the exact
+hypothesis the reviewer proposed, and a proof by weak duality: restricted
+optimality makes the cost of `X` equal `sum u + sum v`, the hypothesis extends
+dual feasibility to every admissible pair, so that sum bounds the complete
+problem below and `X` attains it.
+
+The rest of 1.9's list, all in the section:
+
+- *Tolerance version.* Under `cbar >= -eps` the shifted potentials `u_i - eps`
+  are dual feasible everywhere, which costs the dual objective `n*eps`, so the
+  matching is within `n*eps` of the complete optimum: `2e-5` at the largest
+  benchmark shape and the default `1e-9`. This is the statement the loop's
+  certificate carries, which is why the numerical-certificate paragraph now
+  points at it.
+- *Finite termination.* Each pricing round adds at least one pair the master did
+  not hold, so `|E_t|` strictly increases under the bound `nm`. `max_rounds`
+  (60) is named a guard rather than the argument.
+- *Worst case.* Stated as that bound: the loop may build the complete graph and
+  pay for the rounds that got there, which is why `memory_mode = "auto"` does
+  not select the mode.
+- *Work and storage.* A complete sweep is `O(nm)` and stores nothing, so the
+  memory held is the candidate set: `nw` from the seed plus what the rounds add,
+  reported as `candidate_edges`.
+- *Batching.* `keep_per_row`, five by default, so a round adds at most `5n`
+  pairs and never fewer than one.
+- *Ties and determinism.* Selection is by strict improvement on a row's worst
+  kept reduced cost (`flow_topk.h`, `key < beg->first`) over a scan running
+  columns ascending, so an exact tie keeps the lower column index, and violators
+  enter in `(i, j)` order.
+- *Infeasible restricted graph.* Its own paragraph, absorbing the Hall sentence
+  that used to sit lower down: a short master has no dual solution to price
+  with, Hall's condition names `S` and `N(S)`, only columns outside `N(S)` can
+  move the deficiency so the re-seed takes those, and when there are none the
+  witness is the infeasibility certificate.
+
+**Page count unchanged at 22.** The additions were paid for by three trims the
+new material made redundant: the seed-width sentence in the round-count
+paragraph, the Hall sentence in the constraints paragraph, and (in batch B) the
+narrative restatement of complementary slackness.
+
+Not in this batch: naming column generation and citing Lübbecke and Desrosiers,
+which is 2.1 and belongs to batch F.
+
+Knitted and read: 0 unresolved references, Lemma 1 on page 7 and Proposition 1
+on page 10 of the PDF, both inspected.

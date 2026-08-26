@@ -75,6 +75,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_lazy_pair_distances
+Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, Rcpp::IntegerVector rows, Rcpp::IntegerVector cols);
+RcppExport SEXP _couplr_cpp_lazy_pair_distances(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP rowsSEXP, SEXP colsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type cols(colsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lazy_pair_distances(left_mat, right_mat, metric, inv_cov, rows, cols));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_lap_solve_auction_lazy
 Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize, Rcpp::Nullable<double> eps);
 RcppExport SEXP _couplr_cpp_lap_solve_auction_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
@@ -919,6 +935,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_solve_bruteforce", (DL_FUNC) &_couplr_lap_solve_bruteforce, 2},
     {"_couplr_lap_solve_jv", (DL_FUNC) &_couplr_lap_solve_jv, 2},
     {"_couplr_cpp_lap_solve_jv_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_jv_lazy, 8},
+    {"_couplr_cpp_lazy_pair_distances", (DL_FUNC) &_couplr_cpp_lazy_pair_distances, 6},
     {"_couplr_cpp_lap_solve_auction_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_auction_lazy, 9},
     {"_couplr_lap_certify_dense", (DL_FUNC) &_couplr_lap_certify_dense, 7},
     {"_couplr_lap_certify_lazy", (DL_FUNC) &_couplr_lap_certify_lazy, 13},

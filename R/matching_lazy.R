@@ -80,39 +80,28 @@ transpose_lazy_cost_spec <- function(spec) {
 
 #' Compute paired (not cross) distances for specific matched pairs
 #'
-#' Given matched row/column index pairs (as produced by a solve), recomputes
-#' each pair's distance directly from left_mat/right_mat. This is cheap
-#' regardless of n_left/n_right: the number of matched pairs never exceeds
-#' min(n_left, n_right), so this never approaches the O(n*m) cost the lazy
-#' path exists to avoid. Mirrors compute_distance_matrix()'s per-metric
-#' formulas exactly, but pairwise rather than all-pairs.
+#' Given matched row/column index pairs (as produced by a solve), reports each
+#' pair's distance. The evaluation is the solver's own: the same C++ routine the
+#' lazy path priced the pair with is called on that pair, rather than the
+#' formula being written a second time here. Two implementations of one metric
+#' agree to rounding and not to the last bit, and the difference is visible
+#' where it matters most -- a caliper set at a distance the package reported can
+#' exclude the pair it was read from.
+#'
+#' This is cheap regardless of n_left/n_right: the number of matched pairs never
+#' exceeds min(n_left, n_right), so it never approaches the O(n*m) cost the lazy
+#' path exists to avoid.
 #'
 #' @return Numeric vector of length length(matched_rows).
 #' @keywords internal
 lazy_pair_distances <- function(spec, matched_rows, matched_cols) {
-  L <- spec$left_mat[matched_rows, , drop = FALSE]
-  R <- spec$right_mat[matched_cols, , drop = FALSE]
-  diff <- L - R
-
-  switch(spec$distance,
-    "euclidean" = ,
-    "l2" = sqrt(rowSums(diff^2)),
-    "manhattan" = ,
-    "l1" = ,
-    "cityblock" = rowSums(abs(diff)),
-    "squared_euclidean" = ,
-    "sqeuclidean" = ,
-    "sq" = rowSums(diff^2),
-    "chebyshev" = ,
-    "chebychev" = ,
-    "maximum" = ,
-    "max" = apply(abs(diff), 1, max),
-    "mahalanobis" = ,
-    "maha" = {
-      inv_cov <- lazy_cost_spec_inv_cov(spec)
-      sqrt(pmax(rowSums((diff %*% inv_cov) * diff), 0))
-    },
-    stop("Unknown distance metric: ", spec$distance, call. = FALSE)
+  cpp_lazy_pair_distances(
+    left_mat = spec$left_mat,
+    right_mat = spec$right_mat,
+    metric = spec$distance,
+    inv_cov = lazy_cost_spec_inv_cov(spec),
+    rows = as.integer(matched_rows),
+    cols = as.integer(matched_cols)
   )
 }
 

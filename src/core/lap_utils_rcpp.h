@@ -117,6 +117,19 @@ lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     const Rcpp::CharacterVector& var_names,
     bool maximize);
 
+// The distance of specific matched pairs, evaluated by the same code the lazy
+// solve evaluated them with. The R side needs these to report a pair's distance
+// and must not recompute them from the formula: a second implementation of the
+// same metric lands an ulp away, and a caliper set at a reported distance then
+// excludes the pair it was read from. `rows`/`cols` are 1-based.
+Rcpp::NumericVector lazy_pair_distances_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+    const Rcpp::IntegerVector& rows,
+    const Rcpp::IntegerVector& cols);
+
 // Convert a pure lap::LapResult to the standard Rcpp result list.
 // Assignment is shifted 0-based -> 1-based (0 = unmatched) and the total is
 // recomputed from original_cost via compute_total_cost for cross-solver

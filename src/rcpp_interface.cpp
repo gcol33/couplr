@@ -192,6 +192,16 @@ Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatr
 }
 
 // [[Rcpp::export]]
+Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat,
+                                            Rcpp::NumericMatrix right_mat,
+                                            std::string metric,
+                                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                            Rcpp::IntegerVector rows,
+                                            Rcpp::IntegerVector cols) {
+  return lazy_pair_distances_impl(left_mat, right_mat, metric, inv_cov, rows, cols);
+}
+
+// [[Rcpp::export]]
 Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                       std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                       double max_distance, Rcpp::List calipers,

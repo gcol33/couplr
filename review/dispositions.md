@@ -167,7 +167,7 @@ than describing it from the outside.
 
 ## B. The LP formalism — 1.2, 1.3
 
-**ACCEPT both.** Cheap and uncontestable.
+**ACCEPT both. Done 2026-08-26.** Cheap and uncontestable.
 
 State the dual objective `max sum u_i + sum v_j` subject to `u_i + v_j <= C_ij`,
 `v_j <= 0`. Split the current display so dual feasibility and complementary
@@ -424,3 +424,37 @@ Verified, all three closed:
   three carry their algorithm name and description. There was no defect.
 
 Test suite: full `devtools::test()` run, 0 failures, 0 errors.
+
+---
+
+## Batch B, what landed
+
+Manuscript only, `paper/rjournal/rjournal.Rmd`. No code changed.
+
+- Equation `duals` is the dual program: `max sum u_i + sum v_j` subject to
+  `u_i + v_j <= C_ij` and `v_j <= 0`. It previously gave the constraints with the
+  matched-edge equality folded in, and no objective.
+- Complementary slackness is its own display, equation `cs`, with the
+  unmatched-column condition `v_j = 0` written as an implication rather than
+  recovered from prose below the display.
+- The sign condition carries what `src/core/lap_certify.h:19-29` and
+  `R/lap_certify.R:36-42` already say: the dual objective sums `v` over every
+  column while an assignment pays only for the ones it uses, so at `n = m`, where
+  no column can be left out, `v` is unrestricted in sign, and
+  `verify_assignment()` imposes `v_j <= 0` only when `n < m`. Jonker-Volgenant's
+  free-sign duals certify a square problem for that reason.
+- "Certifying a solution" opens on three conditions, not four: primal
+  feasibility, dual feasibility for `duals`, and both halves of `cs`. Objective
+  equality is named a reported check, matching what the exact-arithmetic
+  paragraph below it already concluded. The text says `verify_assignment()`
+  reports four checks.
+- The narrative restatement of slackness's two halves was the same content as
+  equation `cs` and is gone; the passage points at the display and keeps the 0.4%
+  prototyping failure. The edge-generation stopping rule no longer says "the four
+  conditions of the certification section".
+
+Knitted and read: 0 unresolved references, equations `(2)` and `(3)` render as
+intended, page 3 of the PDF inspected. The article is 22 pages.
+
+Left for batch I: `RJreferences.bib:5` still cites couplr as version 1.5.5, which
+D3 sweeps to 1.6.2 with the website and the tag.

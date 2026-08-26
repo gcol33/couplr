@@ -204,27 +204,43 @@ The constraint matrix of \@ref(eq:lap) is totally unimodular, so the linear
 programming relaxation has integral optima [@Birkhoff1946; @Burkard1999] and the
 combinatorial problem can be solved by primal-dual methods rather than by branch
 and bound. The dual assigns a potential $u_i$ to each row and $v_j$ to each
-column subject to
+column, and is
 
 \begin{equation}
-u_i + v_j \le C_{ij} \quad \forall (i,j), \qquad
-u_i + v_j = C_{ij} \quad \text{whenever } X_{ij} = 1 ,
+\max_{u, v} \; \sum_{i=1}^{n} u_i + \sum_{j=1}^{m} v_j
+\quad \text{subject to} \quad
+u_i + v_j \le C_{ij} \; \forall (i,j), \qquad
+v_j \le 0 \; \forall j .
 (\#eq:duals)
 \end{equation}
 
-with $v_j \le 0$, since the column constraint is an inequality. The reduced cost
-$C_{ij} - u_i - v_j$ is a lower bound on what forcing pair $(i,j)$ would add to
-the total rather than the whole of it, because forcing one pair can displace
-others.
+The sign condition is what the column inequality in \@ref(eq:lap) costs: the
+dual objective sums $v$ over every column while an assignment pays only for the
+ones it uses. When $n = m$ none can be left out, the column constraints bind,
+and $v$ is unrestricted in sign; `verify_assignment()` imposes $v_j \le 0$ only
+when $n < m$, since Jonker-Volgenant returns free-sign potentials on a square
+problem and they certify optimality there.
+
+Complementary slackness ties a pair of potentials to a particular $X$:
+
+\begin{equation}
+X_{ij} = 1 \implies u_i + v_j = C_{ij} , \qquad
+\textstyle\sum_{i} X_{ij} = 0 \implies v_j = 0 .
+(\#eq:cs)
+\end{equation}
+
+The reduced cost $C_{ij} - u_i - v_j$ is a lower bound on what forcing pair
+$(i,j)$ would add to the total rather than the whole of it, because forcing one
+pair can displace others.
 
 ## Certifying a solution
 
 Dual feasibility on its own says nothing about a particular $X$. What certifies
-optimality is four conditions holding together: $X$ is primal feasible, $(u,v)$
-satisfies the inequality and the sign condition in \@ref(eq:duals), the
-complementary slackness conditions hold, and the primal and dual objectives
-agree. `verify_assignment()` checks all four and reports each separately, so a
-failure names the condition it failed on.
+optimality is $X$ primal feasible, $(u, v)$ feasible for \@ref(eq:duals), and
+both halves of \@ref(eq:cs) holding. In exact arithmetic those three settle the
+primal and dual objectives as well, so objective equality is a reported check
+rather than a condition of its own. `verify_assignment()` reports four checks
+and gives each separately, so a failure names the check it failed on.
 
 ```{r certify, echo=TRUE}
 set.seed(2)
@@ -241,10 +257,9 @@ another. That is what puts the solvers returning no duals of their own inside
 the scope of the check.
 
 Complementary slackness is where a plausible verifier goes wrong, and the
-rectangular case is where it shows. It has two halves: every matched pair is
-tight, $u_i + v_j = C_{ij}$, and every column left unmatched is free,
-$v_j = 0$. A verifier that asserts the first half alone accepts solutions that
-are not optimal. In our own prototyping a perfect, dual-feasible,
+rectangular case is where it shows. A verifier that asserts the first half of
+\@ref(eq:cs) alone, tightness on matched pairs, accepts solutions that are not
+optimal. In our own prototyping a perfect, dual-feasible,
 matched-tight solution passed such a check while its primal cost stood 0.4%
 above the optimum, because one unmatched column retained $v_j < 0$ and so
 contributed a spurious term to the dual objective. `verify_assignment()`
@@ -677,8 +692,8 @@ pricing a restricted master against its duals:
 
 The stopping rule is the certificate. When no omitted pair has a negative
 reduced cost, $(u,v)$ is dual feasible for the complete problem rather than for
-the sparse one only, and the four conditions of the certification section then
-hold on the complete problem. So the sparse solution is optimal for a problem
+the sparse one only, and the conditions of the certification section then hold
+on the complete problem. So the sparse solution is optimal for a problem
 that was never built, and `certify = TRUE` runs that check and returns it. The
 answer is the assignment a dense solve returns, reached without the memory a
 dense solve needs.

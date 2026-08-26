@@ -11,9 +11,10 @@ findings and repros.
 **The article came back on its first review, and it is a major revision.** A
 reviewer returned 20 pages on 2026-08-25. It is saved verbatim at
 `review/round1.md`, triaged in `review/INDEX.md`, and decided in
-`review/dispositions.md`. Batches A and C are done. See "The first
-review is in, and it lands on the title" and "Batch A is done: the certificate
-says which arithmetic it was reached in".
+`review/dispositions.md`. Batches A, B and C are done. See "The first
+review is in, and it lands on the title", "Batch A is done: the certificate
+says which arithmetic it was reached in", and "Batch B is done: the dual is a
+program and slackness is its own display".
 
 **Phases 0 through 3 are done, and the article they were for is written.** Phase
 0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
@@ -24,12 +25,15 @@ rewritten around five contributions; see "The R Journal article is rewritten"
 below. What is left on `roadmap.md` is phase 4, which is section E and section
 I. See "Next action" at the end.
 
-**The article is one page over the hard limit, and that is the binding
-constraint on the rest of the round.** It knits to 21 pages against the R
-Journal's 20. Batch A's additions are what the review asked for and cannot come
-back out, so the page is owed to batch I's abstract cut and to batch G moving
-the benchmark grids to supplementary material. Re-measure after both. If it is
-still over then, D4's conclusion that no cut list is needed stops holding.
+**The article is two pages over the hard limit, and that is the binding
+constraint on the rest of the round.** It knits to 22 pages against the R
+Journal's 20: batch A cost the first and batch B's second display cost the
+second. Both are what the review asked for and cannot come back out, so the
+pages are owed to batch I's abstract cut and to batch G moving the benchmark
+grids to supplementary material. The overflow is smaller than the count makes it
+look: page 22 holds one bibliography entry and the address block, so about ten
+lines pull it back to 21. Re-measure after G and I. If it is still over then,
+D4's conclusion that no cut list is needed stops holding.
 
 **The tree is committed and pushed, and the installed build is the tree.**
 Batch A is the head of `main` and nothing is unpushed.
@@ -1463,33 +1467,62 @@ Three things were checked and closed rather than carried:
 
 Full `devtools::test()`: 0 failures, 0 errors.
 
+## Batch B is done: the dual is a program and slackness is its own display
+
+The paper touched only `paper/rjournal/rjournal.Rmd`; no code changed, so the
+suite was not re-run.
+
+Equation `duals` was the dual constraints with the matched-edge equality folded
+in, and no objective. It is now the dual program: `max sum u_i + sum v_j`
+subject to `u_i + v_j <= C_ij` and `v_j <= 0`. Complementary slackness moved out
+into equation `cs`, both halves on one line, the unmatched-column condition
+`v_j = 0` stated in its own implication rather than in prose below the display.
+
+The sign condition carries the sentence `lap_certify.h:19-29` and
+`lap_certify.R:36-42` already carried: the dual objective sums `v` over every
+column while an assignment pays only for the columns it uses, so at `n = m`,
+where no column can be left out, `v` is unrestricted in sign, and
+`verify_assignment()` imposes `v_j <= 0` only when `n < m`. That is why
+Jonker-Volgenant's free-sign duals certify a square problem.
+
+"Certifying a solution" no longer opens on four conditions holding together. It
+opens on three, primal feasibility, dual feasibility for the new `duals`, and
+both halves of `cs`; objective equality is named a reported check, which is what
+the exact-arithmetic paragraph further down already concluded and what item 1.3
+asked for. `verify_assignment()` reports four checks and the article now says
+that in those words.
+
+Two follow-on edits the split made necessary. The narrative restatement of
+slackness's two halves under "Complementary slackness is where a plausible
+verifier goes wrong" was the same content as equation `cs` and is gone; the
+passage now points at the display and keeps the 0.4% prototyping failure, which
+was the part worth keeping. The stopping-rule paragraph in the edge-generation
+section said "the four conditions of the certification section" and now says
+"the conditions".
+
+Knitted and read: `unresolved refs 0`, equations `(2)` and `(3)` render as
+intended, and page 3 of the PDF was looked at rather than assumed.
+
+**One thing batch I still owes.** `RJreferences.bib:5` cites couplr as "R
+package version 1.5.5". D3 sweeps the bibliography, the website and the tag to
+1.6.2 in batch I; it was left alone here rather than half-swept.
+
 ## Next action
 
-**Batch B: the LP formalism.** Cheap and uncontestable. State the dual objective
-`max sum u_i + sum v_j` subject to `u_i + v_j <= C_ij` and `v_j <= 0`, split the
-current display so dual feasibility and complementary slackness are separate,
-and give the unmatched-column condition `v_j = 0` its own line. On 1.3, call
-them four reported checks: batch A already made objective equality a
-consequence of the other three in the exact conclusion, and the article's
-certification section now says so, but the numerical path still computes it and
-the formalism section is where that is stated in the article's own terms.
+**Batch D: formal statements for the central contribution.** Items 1.6 and 1.9,
+and the disposition calls it the batch that most improves the paper. The
+adaptive edge-generation loop reaches the reader as narrative and needs a
+proposition, a proof in exact arithmetic, and the sentinel lemma. See
+`review/dispositions.md`, batch D, for what was decided.
 
-The passage to edit is the dual display at `rjournal.Rmd` equation `duals`, in
-"The assignment problem behind matching", and the four-condition sentence that
-opens "Certifying a solution" below it. `R/lap_certify.R:11-46` and
-`src/core/lap_certify.h:7-40` already carry the derivation in prose, including
-why the sign condition is conditional on `ncol > nrow`; the article should not
-say anything those two do not.
-
-Then in review order: **D** the edge-generation proposition and the sentinel
-lemma, which is the batch that most improves the paper; **F** the related work,
+Then in review order: **F** the related work,
 where nothing is written before the primary source is read; **G** the benchmark
 re-runs, now unblocked by D4; **H** the worked examples; **I** reproducibility,
 the abstract's 255 words, and the 1.6.2 release.
 
-**Two things a batch after this one has to carry.** The article is a page over
-the limit, so G and I are not optional tidying, they are what buys the page
-back. And the release is gated: `sap_dense` is a breaking change, so 1.6.2 has
+**Two things a batch after this one has to carry.** The article is two pages
+over the limit, so G and I are not optional tidying, they are what buys the
+pages back. And the release is gated: `sap_dense` is a breaking change, so 1.6.2 has
 to clear `cran-check` and a blocking `check_win_devel()` before any upload.
 
 **Do not submit.** The previous note said submit; the review supersedes it.
@@ -1511,7 +1544,8 @@ boundary.
 Certificates and Sparse Edge Generation", retitled on 2026-08-25 in answer to the
 first review, and it is built around the five contributions that section names.
 `roadmap.md` still records the superseded title and its reasoning; see below. It
-rendered to 20 pages when it was rewritten, and batch A has taken it to 21; see
+rendered to 20 pages when it was rewritten, and batches A and B have taken it to
+22; see
 "Where things stand" for what buys the page back.
 
 What the rewrite added, against the 1.5.5 article it replaces:

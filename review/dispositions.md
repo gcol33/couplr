@@ -232,7 +232,7 @@ costs nothing and removes a claim a reviewer would otherwise keep pulling at.
 
 ## F. Related work — 2.1 through 2.6
 
-**ACCEPT.** The novelty boundary as drawn is too wide, and the narrower claim the
+**ACCEPT. Done 2026-08-26.** The novelty boundary as drawn is too wide, and the narrower claim the
 reviewer offers is both true and more convincing: existing approaches build a
 prespecified sparse network, couplr expands a restricted graph until complete-graph
 dual feasibility is verified.
@@ -543,3 +543,91 @@ which is 2.1 and belongs to batch F.
 
 Knitted and read: 0 unresolved references, Lemma 1 on page 7 and Proposition 1
 on page 10 of the PDF, both inspected.
+
+---
+
+## Batch F, what landed
+
+Manuscript and bibliography only. Every source below was read this session
+before its sentence was written; none was paraphrased from memory.
+
+**What was read.** Lübbecke and Desrosiers 2005 §2.1, from the authors' own
+text: the master problem over `J`, the restricted master over `J' ⊆ J`, the
+pricing step `arg min c_j - u'a_j`, and "If c* >= 0, no reduced cost coefficient
+is negative and [the restricted solution] optimally solves the master problem as
+well." Their subproblem is an optimisation over an implicitly given set; ours is
+the enumeration of their equation (2), which is the one real departure and is
+what the paper says. Pimentel et al. 2015 (abstract, Europe PMC) and the
+rcbalance 1.8.8 reference manual: `build.dist.struct()` produces a
+distance/sparsity object listing each treated unit's permissible controls, from
+exact groups and a propensity or user caliper, solved as minimum-cost flow
+through rlemon. Yu, Silber and Rosenbaum 2020 (abstract): an iterative form of
+Glover's algorithm on a doubly convex bipartite graph picks an optimal
+propensity-score caliper, "radically reducing the number of candidate matches;
+then we optimally match in a large but much sparser graph". Yu and Rosenbaum
+2022 (abstract): pairings are graded, matched at the best grade, "incorporating
+progressively lower grade pairs only to the degree they are needed. In effect,
+only sparse networks are built, stored and optimized." Abeywickrama, Liang and
+Tan 2021 (paper): exact Kuhn-Munkres with edge costs computed incrementally
+behind "an inexpensive lower-bound heuristic", which is application-specific.
+quickmatch 0.2.3, its own Description: "near-optimal generalized full matching",
+"more than an order of magnitude quicker than other methods".
+
+**2.1, column generation is named.** The loop section opens on it, cited, with
+the restricted master, the pricing formula and the stopping condition in the
+survey's terms, and states the one departure: pair variables are enumerated
+rather than produced by an oracle, a pair variable being an index rather than a
+combinatorial object.
+
+**2.2, the novelty claim is the narrower one.** The second limit in the
+introduction no longer says the admissible pairs are generally materialised
+before solving. It says sparse matching is a developed literature whose sparse
+network is settled before the solve that uses it, names rcbalance,
+Yu-Silber-Rosenbaum and Yu-Rosenbaum for how each settles it, notes that a
+network too sparse drops pairings it should have considered, and states what is
+missing as a rule read off the solution in hand plus a statement about the pairs
+never built.
+
+**2.3, incremental cost computation is separated.** A paragraph in the loop
+section: Abeywickrama et al. defer exact costs behind an application-specific
+lower bound and save arithmetic; the pricing here asks nothing of the cost
+function beyond evaluating a pair and saves storage, evaluating every omitted
+pair once per round. The metric-tree pricer already in the discussion is named
+as where the two meet. Graded matching is separated in the same paragraph: a
+grade is a property of the pairing fixed before the match, a reduced cost is a
+property of the solution just returned, and the loop stops on a statement about
+the complete graph rather than on the grades running out.
+
+**2.4, the ecosystem map is wider.** rcbalance and quickmatch join the
+introduction's package paragraph with what each does in its own terms. Table 5
+stays focused, as the disposition allows. RBestMatch is not in the paper: it is
+CRAN-archived (last 0.1.1, 2022-02-19) and the method it implements is cited
+through Yu and Rosenbaum 2022, which is the primary source.
+
+**2.5, optmatch is described by what it provides, and a claim of ours was
+wrong.** The paper said the dual variables the optimality conditions need "are
+not part of what the packages above return". That is false for optmatch 0.10.8.
+A `fullmatch()` result carries `attr(m, "MCFSolutions")@nodes$price`, real node
+prices that vary across nodes; the class has no Rd page and is not exported, and
+`evaluate_primal()`, which would evaluate the primal against them, is not
+exported either. Checked directly: `getNamespaceExports("optmatch")` holds
+neither, and a `fullmatch(pr ~ cost, data = nuclearplants)` run returns 34 nodes
+with prices from -1.2523 to 0. The introduction now says no package exports a
+function returning the duals or checking the conditions, names optmatch as the
+closest, and gives its documented guarantee in its own words: `tol` times the
+number of subjects bounds how far the returned match may differ from an optimal
+solution of the specified problem. `InfinitySparseMatrix` and the four LEMON
+algorithms are named where optmatch is introduced. Table 5's certificate-row
+note carries the same correction and is re-dated 2026-08-26.
+
+**2.6 is not a writing item.** It asks couplr's empirical breadth to match
+current matching-software articles. That is batch G, and nothing was written
+here to stand in for it.
+
+Bibliography: six entries added (LubbeckeDesrosiers2005, YuSilberRosenbaum2020,
+YuRosenbaum2022, Abeywickrama2021, rcbalance, quickmatch). Pimentel2015 was
+already present and is now cited in the introduction as well.
+
+**The article is 23 pages.** Batch F cost one, and roughly half of it is the six
+new bibliography entries, which cannot come out. Page 23 holds three references
+and the address block.

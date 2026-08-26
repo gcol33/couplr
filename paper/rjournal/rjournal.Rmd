@@ -525,13 +525,44 @@ The remaining submatrix can still fail Hall's condition, with several rows
 competing for the same few admissible columns, and no assignment reaching every
 row. Rather than return
 whichever pairs a heuristic happens to find, couplr replaces the forbidden
-entries with a finite sentinel and re-solves with the same optimal solver. The
-sentinel is set above $(k+1)$ times the spread of the admissible costs, where
-$k$ is the largest possible number of pairs, so one sentinel edge outweighs any
-saving available on the real edges. Minimising cost on the padded problem
-therefore minimises the number of sentinel edges first and the real cost
-second, and dropping the sentinel pairs leaves exactly the lexicographic
-optimum: the largest admissible matching, cheapest among those of its size.
+entries with a finite sentinel $\sigma$ and re-solves with the same optimal
+solver.
+
+Write $[\ell, h]$ for the range of the admissible costs of the pruned submatrix
+and $k$ for the smaller of its two dimensions. Every feasible assignment of the
+padded problem matches all $k$ rows, so it splits into $s$ sentinel edges and
+$k - s$ real ones and costs $s\sigma + R$ with $R \in [(k-s)\ell, (k-s)h]$.
+
+**Lemma 1.** *If $\sigma > k(|\ell| + |h|)$, then a padded assignment using more
+sentinel edges than another costs strictly more.*
+
+*Proof.* Let $M'$ and $M$ use $s'$ and $s$ sentinel edges with $s' > s$, and
+write $R'$ and $R$ for their real costs. Then
+$$
+\text{cost}(M') - \text{cost}(M) = (s' - s)\sigma + R' - R
+\ge \sigma + (k - s')\ell - (k - s)h
+\ge \sigma - k|\ell| - k|h| > 0 . \qquad \square
+$$
+
+A minimum-cost solve of the padded problem therefore uses as few sentinel edges
+as any assignment can, which is a maximum-cardinality admissible matching, and
+among the assignments attaining that number it minimises $R$. Dropping the
+sentinel pairs leaves the lexicographic optimum: the largest admissible
+matching, cheapest among those of its size. couplr takes
+$\sigma = (k+1)(|\ell| + |h|) + 1$, which satisfies the hypothesis whatever the
+signs of $\ell$ and $h$ and when the admissible costs are all zero, and
+`assignment(cardinality = "maximum")` prices its dummy columns with the same
+quantity. A maximisation is solved by negation and the sentinel is negated with
+it, so the lemma applies to the negated instance; the objective is recomputed
+over the real pairs, so no sentinel enters a reported cost.
+
+The lemma is about real numbers and the solve is in doubles, so the padded
+objective has to stay inside the range a double orders exactly. The largest
+total it can reach is $(k+1)(|\ell| + |h|) + k\sigma$, and above $2^{53}$ the
+padding is refused rather than returned as an ordering the arithmetic cannot
+represent: `match_couples()` warns and falls back to a greedy partial matching,
+saying that it is not optimal, and `assignment(cardinality = "maximum")` errors
+and asks for rescaled costs or an explicit `unmatched_penalty`.
 
 ```{r constraints, echo=TRUE}
 m_cal <- match_couples(
@@ -680,23 +711,80 @@ previous designs removes the matrix while leaving the search over all $m$
 columns intact. What `memory_mode = "implicit"` removes is the graph itself.
 
 The loop is exact adaptive edge generation, the assignment-problem instance of
-pricing a restricted master against its duals:
+pricing a restricted master against its duals. Write
+$E_t \subseteq \{1, \dots, n\} \times \{1, \dots, m\}$ for the candidate set at
+round $t$ and $\epsilon$ for the pricing threshold.
 
-1. Give every row its nearest admissible partners, a seed of a few columns each.
-2. Solve that sparse problem with the flow model of the previous section.
-3. Take the dual prices $u_i$ and $v_j$ it returns.
-4. Price the omitted pairs on their reduced cost $C_{ij} - u_i - v_j$.
-5. Add the pairs that price negative.
-6. Warm-start from the current flow and prices, and re-solve.
-7. Stop when no omitted pair prices in.
+1. Seed $E_0$ with each row's $w$ nearest admissible columns, $w$ read off $m$
+   as $6\lceil \log_2 m\rceil$ and capped at $m$.
+2. Solve \@ref(eq:lap) restricted to $E_t$ with the flow model of the previous
+   section, warm-started from the incumbent flow and prices when $t > 0$. If it
+   comes back short of a complete matching, repair the shortfall as below and
+   repeat this step.
+3. Read the master's potentials as assignment duals $(u, v)$.
+4. Price the omitted pairs: $\bar{C}_{ij} = C_{ij} - u_i - v_j$ for admissible
+   $(i,j) \notin E_t$.
+5. Stop if $\bar{C}_{ij} \ge -\epsilon$ everywhere.
+6. Otherwise set $E_{t+1} = E_t \cup V_t$, where $V_t$ holds each row's most
+   negative violators, and return to step 2.
 
-The stopping rule is the certificate. When no omitted pair has a negative
-reduced cost, $(u,v)$ is dual feasible for the complete problem rather than for
-the sparse one only, and the conditions of the certification section then hold
-on the complete problem. So the sparse solution is optimal for a problem
-that was never built, and `certify = TRUE` runs that check and returns it. The
-answer is the assignment a dense solve returns, reached without the memory a
-dense solve needs.
+The stopping rule is the certificate.
+
+**Proposition 1.** *Let $X$ solve \@ref(eq:lap) restricted to a pair set $E$
+with optimal duals $(u, v)$, and suppose $C_{ij} - u_i - v_j \ge 0$ for every
+admissible $(i,j) \notin E$. Then $X$ is optimal for the complete problem.*
+
+*Proof.* Optimality on $E$ gives complementary slackness for $X$ and $(u,v)$
+there, so every matched pair is tight and every unmatched column has $v_j = 0$,
+and the cost of $X$ is $\sum_i u_i + \sum_j v_j$. The hypothesis extends dual
+feasibility from $E$ to every admissible pair, so $(u, v)$ is feasible for
+\@ref(eq:duals) on the complete problem and that sum is a lower bound on the
+cost of every assignment of it. $X$ is one of them and attains the bound.
+$\square$
+
+Nothing in the argument is numerical: the hypothesis is the sign of
+$\bar{C}_{ij}$ on the omitted pairs, and the conclusion is equality, not
+proximity. The loop prices against $-\epsilon$ instead of zero, which weakens
+the conclusion by a stated amount. Under $\bar{C}_{ij} \ge -\epsilon$ the
+shifted potentials $u_i - \epsilon$ are dual feasible over every admissible
+pair, and shifting costs the dual objective $n\epsilon$, so the matching's cost
+is within $n\epsilon$ of the complete optimum. At $\epsilon = 10^{-9}$ and the
+largest shape in the benchmark below that is $2 \times 10^{-5}$ in the cost
+units.
+
+The loop terminates because each pricing round adds at least one pair $E_t$ did
+not hold: the round continues only when some omitted pair prices below
+$-\epsilon$, and that pair's row keeps it. So $|E_t|$ strictly increases, and it
+is bounded by $nm$. The worst case is that bound: a problem whose optimal duals
+price most of the grid in makes the loop build the complete graph and pay for
+the rounds that got there. `max_rounds`, 60 by default, is a guard rather than the
+termination argument; a run that reaches it returns `iteration_limit` rather
+than a certificate.
+
+Each complete pricing sweep is $O(nm)$ arithmetic and stores nothing: the
+source is read one pair at a time and the reduced cost is consumed on the spot,
+so the memory the mode holds is the candidate set, $nw$ pairs from the seed plus
+what the rounds add. Rows contribute at most `keep_per_row` violators each,
+five by default, so a round adds at most $5n$ pairs and never fewer than one.
+Selection is by strict improvement on a row's worst kept reduced cost over a
+scan running columns ascending, so an exact tie keeps the lower column index,
+and violators enter in $(i,j)$ order: the same input gives the same candidate
+set at every round.
+
+A master that comes back short of a complete matching has no dual solution to
+price with, so the shortfall is repaired rather than priced. Hall's condition
+[@Hall1935] names a row set $S$ whose neighbourhood $N(S)$ in the restricted
+graph is too small to go round. Every restricted edge out of $S$ already lands
+in $N(S)$, so only columns outside it can move the deficiency, and the re-seed
+reads the full source over the rows of $S$ and takes columns from outside
+$N(S)$. When there are none, $N(S)$ is the neighbourhood of $S$ in the complete
+problem as well, and the result is infeasible with $(S, N(S))$ as its witness,
+which says which units are short of partners rather than reporting only that
+the problem is infeasible.
+
+So the sparse solution is optimal for a problem that was never built, and
+`certify = TRUE` runs that check and returns it. The answer is the assignment a
+dense solve returns, reached without the memory a dense solve needs.
 
 Two quantities in `$search` describe what that cost. `candidate_edges` against
 `possible_edges` is the graph that was built against the complete one that was
@@ -706,12 +794,12 @@ pair count. They move in opposite directions and both belong in the report: the
 loop holds a small graph by evaluating distances more than once.
 
 Round count is therefore the quantity to control, since each additional round
-prices every omitted pair again. The seed width is read off the number of
-columns rather than fixed, and a run reports the width it used as
-`$search$seed_width`. A seed too narrow buys the rest of what it needs a round
-at a time; a seed too wide pays for columns the matching never uses. The rule
-clears the two-round floor, one seed and one sweep that finds nothing to add
-and certifies, on the problems in the performance section below.
+prices every omitted pair again, and it is what the seed rule of step 1 is sized
+for. A seed too narrow buys the rest of what it needs a round at a time; a seed
+too wide pays for columns the matching never uses. The rule clears the two-round
+floor, one seed and one sweep that finds nothing to add and certifies, on the
+problems in the performance section below, and a run reports the width it used
+as `$search$seed_width`.
 
 ```{r implicit, echo=TRUE}
 m_imp <- match_couples(
@@ -725,23 +813,21 @@ unlist(m_imp$search[c("seed_width", "n_rounds",
                       "candidate_edges", "possible_edges")])
 ```
 
-The certificate the loop returns is the numerical one. Dual feasibility over the
-pairs the master omits comes from the pricing bounds, which ask whether anything
-prices below $-\text{tol}$ rather than evaluating each omitted pair, so the
-exact conclusion of the certification section is not reachable from a scan
-assembled that way. What the loop establishes is optimality for the complete
-problem at the tolerance it priced at, and the certificate reports that as its
-arithmetic.
+The certificate the loop returns is the numerical one, which is why the
+$\epsilon$ version of Proposition 1 is the statement it carries. Dual
+feasibility over the pairs the master omits comes from the pricing bounds, which
+ask whether anything prices below $-\epsilon$ rather than evaluating each
+omitted pair, so the exact conclusion of the certification section is not
+reachable from a scan assembled that way, and the certificate reports that as
+its arithmetic.
 
 Constraints tighten the loop rather than complicating it, since a caliper or a
 distance ceiling is checked before a distance is computed and removes pairs from
-the set to be priced. When the admissible pairs cannot support a complete
-matching, the result carries Hall's witness [@Hall1935], the set of rows whose
-admissible columns are too few to go round, which says which units are short of
-partners instead of reporting only that the problem is infeasible.
+the set to be priced.
 
 The mode is available on `match_couples()` and `assignment()`, and it is
-requested rather than selected: `memory_mode = "auto"` does not choose it. Its
+requested rather than selected: `memory_mode = "auto"` does not choose it,
+because the worst case above is a real one. Its
 scope is the unit-capacity assignment, because a full match's column nodes carry
 capacities above one and a column dual there is not the assignment dual the
 pricer reads.

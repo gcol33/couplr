@@ -11,10 +11,11 @@ findings and repros.
 **The article came back on its first review, and it is a major revision.** A
 reviewer returned 20 pages on 2026-08-25. It is saved verbatim at
 `review/round1.md`, triaged in `review/INDEX.md`, and decided in
-`review/dispositions.md`. Batches A, B and C are done. See "The first
+`review/dispositions.md`. Batches A, B, C and D are done. See "The first
 review is in, and it lands on the title", "Batch A is done: the certificate
-says which arithmetic it was reached in", and "Batch B is done: the dual is a
-program and slackness is its own display".
+says which arithmetic it was reached in", "Batch B is done: the dual is a
+program and slackness is its own display", and "Batch D is done: the loop has a
+proposition and the sentinel has a lemma".
 
 **Phases 0 through 3 are done, and the article they were for is written.** Phase
 0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
@@ -28,12 +29,14 @@ I. See "Next action" at the end.
 **The article is two pages over the hard limit, and that is the binding
 constraint on the rest of the round.** It knits to 22 pages against the R
 Journal's 20: batch A cost the first and batch B's second display cost the
-second. Both are what the review asked for and cannot come back out, so the
-pages are owed to batch I's abstract cut and to batch G moving the benchmark
-grids to supplementary material. The overflow is smaller than the count makes it
-look: page 22 holds one bibliography entry and the address block, so about ten
-lines pull it back to 21. Re-measure after G and I. If it is still over then,
-D4's conclusion that no cut list is needed stops holding.
+second. Batch D added a proposition, a lemma and two proofs and cost nothing,
+because the trims its own material made redundant paid for it. What is left
+cannot come back out, so the pages are owed to batch I's abstract cut and to
+batch G moving the benchmark grids to supplementary material. The overflow is
+smaller than the count makes it look: page 22 holds one bibliography entry and
+the address block, so about ten lines pull it back to 21. Re-measure after G and
+I. If it is still over then, D4's conclusion that no cut list is needed stops
+holding.
 
 **The tree is committed and pushed, and the installed build is the tree.**
 Batch A is the head of `main` and nothing is unpushed.
@@ -1507,18 +1510,63 @@ intended, and page 3 of the PDF was looked at rather than assumed.
 package version 1.5.5". D3 sweeps the bibliography, the website and the tag to
 1.6.2 in batch I; it was left alone here rather than half-swept.
 
+## Batch D is done: the loop has a proposition and the sentinel has a lemma
+
+The paper touched only `paper/rjournal/rjournal.Rmd`; no code changed, so the
+suite was not re-run. Every statement was read out of the implementation.
+
+**The sentinel now has a formula and a proof.** With `[l, h]` the range of the
+admissible costs of the pruned submatrix and `k` the smaller of its two
+dimensions, a padded assignment matches all `k` rows and costs `s*sigma + R`
+with `R` in `[(k-s)l, (k-s)h]`. Lemma 1 is that `sigma > k(|l| + |h|)` makes an
+assignment using more sentinel edges cost strictly more, and the proof is three
+lines from those two facts. couplr's `sigma = (k+1)(|l| + |h|) + 1`, from
+`.cardinality_sentinel()` in `R/lap_cardinality.R:72`, clears it for any signs
+and for all-zero costs. Negative costs are where the `|l| + |h|` span earns its
+keep; a maximisation negates the instance and the sentinel with it; the overflow
+question is answered by the largest total the padded objective reaches,
+`(k+1)(|l| + |h|) + k*sigma`, and what happens above `2^53`, which is
+`PAD_PRECISION_LIMIT` and the NULL return of `.lex_tier_weights()`.
+
+**The loop is an algorithm with a proposition.** The seven-step narrative is a
+six-step algorithm over a candidate set `E_t` carrying the code's own
+parameters: the seed width `6*ceil(log2(m))` capped at `m` from
+`implicit_seed_width()`, the pricing threshold, and the warm start. Proposition
+1 is the reviewer's own statement, proved by weak duality in four lines.
+Everything else on 1.9's list is in the section: the tolerance version (`n*eps`,
+which is `2e-5` at the largest benchmark shape), finite termination from
+`|E_t|` strictly increasing under `nm`, the worst case as that same bound,
+`O(nm)` per sweep with nothing stored, the candidate set as the storage,
+`keep_per_row = 5` as the batching rule, the strict-improvement tie rule from
+`flow_topk.h` that keeps the lower column index, and the Hall re-seed as its own
+paragraph.
+
+Three trims paid for the additions, so the article is still 22 pages: the
+seed-width sentence in the round-count paragraph and the Hall sentence in the
+constraints paragraph both said what the new material now says, and batch B had
+already removed the narrative restatement of complementary slackness.
+
+Knitted and read: 0 unresolved references, Lemma 1 on page 7 and Proposition 1
+on page 10, both inspected in the PDF.
+
+**One thing batch F owns, not this batch.** Item 2.1 asks the paper to name the
+loop as column generation and cite Lübbecke and Desrosiers. The section says
+"pricing a restricted master against its duals" and stops short of the name.
+That is F's, where nothing is written before the primary source is read.
+
 ## Next action
 
-**Batch D: formal statements for the central contribution.** Items 1.6 and 1.9,
-and the disposition calls it the batch that most improves the paper. The
-adaptive edge-generation loop reaches the reader as narrative and needs a
-proposition, a proof in exact arithmetic, and the sentinel lemma. See
-`review/dispositions.md`, batch D, for what was decided.
+**Batch F: related work.** Items 2.1 through 2.6. The novelty boundary as drawn
+is too wide, and the batch is reading before writing: column generation and
+Lübbecke and Desrosiers for 2.1, and Pimentel et al. 2015, `rcbalance`, and Yu,
+Silber and Rosenbaum 2020 for 2.2, against which the sweeping claim that
+admissible pairs are generally materialised before solving has to be narrowed.
+See `review/dispositions.md`, batch F.
 
-Then in review order: **F** the related work,
-where nothing is written before the primary source is read; **G** the benchmark
-re-runs, now unblocked by D4; **H** the worked examples; **I** reproducibility,
-the abstract's 255 words, and the 1.6.2 release.
+Then in review order: **E** what the verifier is independent of, one paragraph
+that costs nothing; **G** the benchmark re-runs, now unblocked by D4; **H** the
+worked examples; **I** reproducibility, the abstract's 255 words, and the 1.6.2
+release.
 
 **Two things a batch after this one has to carry.** The article is two pages
 over the limit, so G and I are not optional tidying, they are what buys the

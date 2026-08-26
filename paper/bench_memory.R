@@ -182,8 +182,13 @@ if (is.null(peak_reader) || !file.exists(peak_reader$cmd)) {
 rscript <- file.path(R.home("bin"), "Rscript")
 script  <- file.path(paper_dir, "bench_memory.R")
 
+## The summary block below rewrites this file with three derived columns. A
+## resumed run reads its own measurements back and re-derives them, so they are
+## dropped here rather than being carried into a row that does not have them.
+DERIVED <- c("baseline_arm", "baseline_mb", "over_baseline_mb")
 results <- if (file.exists(out_csv)) {
-  read.csv(out_csv, stringsAsFactors = FALSE)
+  prior <- read.csv(out_csv, stringsAsFactors = FALSE)
+  prior[, setdiff(names(prior), DERIVED), drop = FALSE]
 } else {
   data.frame()
 }

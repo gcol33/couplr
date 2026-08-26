@@ -32,9 +32,11 @@ kb <- function(x, caption, align = NULL, ...) {
   knitr::kable(x, booktabs = TRUE, longtable = TRUE, row.names = FALSE,
                align = align, caption = caption, ...)
 }
-shape <- function(n_rows, n_cols) sprintf("%s x %s",
-                                          format(n_rows, big.mark = ","),
-                                          format(n_cols, big.mark = ","))
+## Compact enough not to wrap inside a table cell.
+shape <- function(n_rows, n_cols) sprintf("%dx%d", n_rows, n_cols)
+pat_short <- c(none = "complete", random_60 = "60%", random_25 = "25%",
+               block_4 = "4 blocks")
+short_pat <- function(x) unname(ifelse(is.na(pat_short[x]), x, pat_short[x]))
 ```
 
 # What this file holds
@@ -140,14 +142,15 @@ kb(by_rule[order(-by_rule$Cells), ],
 ```{r regime-worst}
 w <- regime_verdict[order(-regime_verdict$ratio), ]
 w <- head(w, 25)
-kb(data.frame(Tier = w$tier, Regime = w$regime, Pattern = w$pattern,
-              Shape = w$shape, Rule = w$auto_rule, Picked = w$auto_picks,
+kb(data.frame(Regime = w$regime, Pattern = short_pat(w$pattern),
+              Shape = gsub(" ", "", w$shape), Rule = w$auto_rule,
+              Picked = w$auto_picks,
               `Best` = w$best_method,
               `Dispatched (ms)` = sprintf("%.3g", 1000 * w$auto_s),
               `Best (ms)` = sprintf("%.3g", 1000 * w$best_s),
               Ratio = sprintf("%.2fx", w$ratio), check.names = FALSE),
    caption = "The 25 cells where the dispatched solver was furthest off the cell's fastest.",
-   align = "lllllllrrr")
+   align = "llllllrrr")
 ```
 
 ## Every cell
@@ -155,12 +158,12 @@ kb(data.frame(Tier = w$tier, Regime = w$regime, Pattern = w$pattern,
 ```{r regime-all}
 v <- regime_verdict[order(regime_verdict$tier, regime_verdict$regime,
                           regime_verdict$pattern, regime_verdict$shape), ]
-kb(data.frame(Tier = v$tier, Regime = v$regime, Pattern = v$pattern,
-              Shape = v$shape, Rule = v$auto_rule, Picked = v$auto_picks,
-              Best = v$best_method, Ratio = sprintf("%.2fx", v$ratio),
-              check.names = FALSE),
+kb(data.frame(Regime = v$regime, Pattern = short_pat(v$pattern),
+              Shape = gsub(" ", "", v$shape), Rule = v$auto_rule,
+              Picked = v$auto_picks, Best = v$best_method,
+              Ratio = sprintf("%.2fx", v$ratio), check.names = FALSE),
    caption = "Every cell of the solver grid: the rule that fired, the solver it picked, the fastest solver in the cell, and the ratio between them.",
-   align = "lllllllr")
+   align = "llllllr")
 ```
 
 ## Every solver, every cell
@@ -169,7 +172,7 @@ kb(data.frame(Tier = v$tier, Regime = v$regime, Pattern = v$pattern,
 r <- regime_results[order(regime_results$tier, regime_results$regime,
                           regime_results$pattern, regime_results$n_rows,
                           regime_results$n_cols, regime_results$median_s), ]
-kb(data.frame(Tier = r$tier, Regime = r$regime, Pattern = r$pattern,
+kb(data.frame(Regime = r$regime, Pattern = short_pat(r$pattern),
               Shape = shape(r$n_rows, r$n_cols), Solver = r$method,
               Instances = r$instances,
               `Median (ms)` = sprintf("%.3g", 1000 * r$median_s),
@@ -177,7 +180,7 @@ kb(data.frame(Tier = r$tier, Regime = r$regime, Pattern = r$pattern,
               `Q75 (ms)` = sprintf("%.3g", 1000 * r$q75_s),
               check.names = FALSE),
    caption = "Milliseconds per solver and cell: the median across instances, with the quartiles beside it. An instance contributes the median of its own repetitions, so the quartiles are between problems rather than between repetitions of one problem. A solver that errored or timed out on a cell has no row there.",
-   align = "lllllrrrr")
+   align = "llllrrrr")
 ```
 
 ## Do the solvers agree

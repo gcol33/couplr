@@ -1,9 +1,19 @@
 ## Scaling benchmark: couplr vs MatchIt vs optmatch across problem size.
 ## 1-to-1 optimal Mahalanobis matching on synthetic data, treated:control = 1:2,
-## single-core, per-cell timeout. Resume-safe: writes paper/scaling-results.csv
-## after each (n, package) cell.
+## single-core, per-run timeout.
+##
+## Each size is generated as several independent instances and each instance is
+## timed several times. The repetitions measure the machine, the instances
+## measure the problem, and the two are not the same quantity: a spread taken
+## across repetitions of one matrix says how steady the clock is, and says
+## nothing about how much the work varies from one draw to the next. Every run
+## is written to paper/scaling-runs.csv on its own row, and the summary reports
+## the median and the quartiles across instances.
+##
+## Resume-safe: both files are rewritten after each (n, package, instance).
 ##
 ## Reproducible via:  Rscript paper/bench_scaling.R
+##                    Rscript paper/bench_scaling.R --quick
 ##
 ## NOTE: From n_total = 10000, `optmatch::pairmatch()` exceeds the default
 ## `optmatch_max_problem_size` (1e7 entries). Setting the option to Inf
@@ -25,12 +35,13 @@ repo_root <- if (file.exists("DESCRIPTION")) {
 ## unoptimised couplr against optimised installs of the comparison packages.
 options(pkg.build_extra_flags = FALSE)
 
-suppressPackageStartupMessages({
-  needed <- c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")
-  for (p in needed) {
-    if (!requireNamespace(p, quietly = TRUE))
-      install.packages(p, repos = "https://cloud.r-project.org")
+for (p in c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")) {
+  if (!requireNamespace(p, quietly = TRUE)) {
+    stop("This benchmark needs the ", p, " package: install.packages(\"", p,
+         "\")", call. = FALSE)
   }
+}
+suppressPackageStartupMessages({
   library(MatchIt)
   library(optmatch)
   library(R.utils)
@@ -51,16 +62,34 @@ options(optmatch_max_problem_size = Inf)
 
 paper_dir <- file.path(repo_root, "paper")
 out_csv   <- file.path(paper_dir, "scaling-results.csv")
+runs_csv  <- file.path(paper_dir, "scaling-runs.csv")
+
+argv  <- commandArgs(TRUE)
+QUICK <- any(argv == "--quick")
 
 ## ---- benchmark grid ----
+## Instances first, repetitions inside them. The large sizes carry fewer of
+## both: at 20000 a single optmatch solve is minutes, and a second instance
+## there costs more than the spread it would report is worth.
 grid <- data.frame(
-  n_total = c(500, 2000, 5000, 10000, 20000, 50000),
-  reps    = c(  5,    5,    3,     3,     1,     1)
+  n_total   = c(500L, 2000L, 5000L, 10000L, 20000L, 50000L),
+  instances = c(   5L,   5L,    5L,     3L,     2L,     1L),
+  reps      = c(   3L,   3L,    2L,     2L,     1L,     1L)
 )
-TIMEOUT_S <- 300  # per-replicate cap
+if (QUICK) {
+  grid <- data.frame(n_total = c(300L, 600L), instances = 2L, reps = 2L)
+}
+TIMEOUT_S <- 600  # per run
 
 ## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
 source(file.path(repo_root, "paper", "bench_common.R"))
+
+## Instance 1 of every size is the problem the earlier single-instance table was
+## measured on, so the new rows extend that record rather than replacing it with
+## an unrelated draw.
+instance_seed <- function(n_total, instance) {
+  bench_seed(n_total) + (instance - 1L) * 1000003L
+}
 
 ## ---- per-package callables ----
 ## memory_mode is pinned to "dense" so all three packages are timed on the same
@@ -87,7 +116,7 @@ callables <- list(couplr = couplr_call, optmatch = optmatch_call,
 
 ## ---- timed call: returns list(elapsed_s, status) ----
 time_one <- function(fn, d, timeout_s) {
-  res <- tryCatch(
+  tryCatch(
     withTimeout({
       t0 <- proc.time()[["elapsed"]]
       .x <- fn(d)
@@ -95,69 +124,107 @@ time_one <- function(fn, d, timeout_s) {
       list(elapsed = t1 - t0, status = "ok")
     }, timeout = timeout_s, onTimeout = "error"),
     TimeoutException = function(e) list(elapsed = NA_real_, status = "timeout"),
-    error            = function(e) list(elapsed = NA_real_, status = paste0("error: ", conditionMessage(e)))
+    error            = function(e) list(elapsed = NA_real_,
+                                        status = paste0("error: ", conditionMessage(e)))
   )
-  res
 }
 
-## ---- main loop, writing partial results ----
-results <- data.frame(
-  n_total = integer(0), package = character(0),
-  reps = integer(0), median_s = numeric(0), status = character(0)
-)
-if (file.exists(out_csv)) {
-  prior <- read.csv(out_csv, stringsAsFactors = FALSE)
-  if (nrow(prior) > 0) {
-    results <- prior
-    cat("Resuming from", out_csv, "with", nrow(results), "rows already done.\n")
-  }
+## ---- resume-safe accumulators ----------------------------------------------
+runs <- if (file.exists(runs_csv)) {
+  read.csv(runs_csv, stringsAsFactors = FALSE)
+} else {
+  data.frame()
+}
+
+have_run <- function(n_total, pkg, instance) {
+  nrow(runs) > 0 &&
+    any(runs$n_total == n_total & runs$package == pkg &
+          runs$instance == instance)
+}
+
+## The published table is the summary, and it is derived from the raw rows
+## rather than accumulated alongside them, so the two cannot drift apart.
+summarise_runs <- function(runs) {
+  if (!nrow(runs)) return(data.frame())
+  do.call(rbind, lapply(split(runs, list(runs$n_total, runs$package),
+                              drop = TRUE), function(g) {
+    ok <- g[g$status == "ok", ]
+    ## One number per instance -- the median of its repetitions -- so the
+    ## quartiles below are taken over instances and not over repetitions.
+    per_instance <- if (nrow(ok)) {
+      vapply(split(ok$seconds, ok$instance), median, numeric(1))
+    } else {
+      numeric(0)
+    }
+    q <- if (length(per_instance)) {
+      stats::quantile(per_instance, c(0.25, 0.5, 0.75), names = FALSE)
+    } else {
+      rep(NA_real_, 3)
+    }
+    data.frame(
+      n_total = g$n_total[1], package = g$package[1],
+      instances = length(per_instance), runs = nrow(ok),
+      median_s = round(q[2], 4), q25_s = round(q[1], 4), q75_s = round(q[3], 4),
+      min_s = if (length(per_instance)) round(min(per_instance), 4) else NA_real_,
+      max_s = if (length(per_instance)) round(max(per_instance), 4) else NA_real_,
+      status = if (nrow(ok) == nrow(g)) "ok" else g$status[g$status != "ok"][1],
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 write_partial <- function() {
-  write.csv(results, out_csv, row.names = FALSE)
+  write.csv(runs, runs_csv, row.names = FALSE)
+  summ <- summarise_runs(runs)
+  summ <- summ[order(summ$n_total, summ$package), ]
+  write.csv(summ, out_csv, row.names = FALSE)
+  invisible(summ)
 }
 
 for (i in seq_len(nrow(grid))) {
-  n_total <- grid$n_total[i]
-  reps    <- grid$reps[i]
-  cat(sprintf("\n=== n_total = %d, reps = %d ===\n", n_total, reps))
+  n_total   <- grid$n_total[i]
+  instances <- grid$instances[i]
+  reps      <- grid$reps[i]
+  cat(sprintf("\n=== n_total = %d, %d instance(s) x %d rep(s) ===\n",
+              n_total, instances, reps))
   flush.console()
-  d <- make_data(n_total, seed = bench_seed(n_total))
 
-  for (pkg in names(callables)) {
-    done <- nrow(results) > 0 &&
-      any(results$n_total == n_total & results$package == pkg)
-    if (done) {
-      cat(sprintf("  %-8s : already recorded, skipping\n", pkg))
-      next
-    }
-    fn <- callables[[pkg]]
-    ## warm-up at small n only (avoid burning the timeout twice at large n)
-    if (n_total <= 2000) invisible(try(fn(d), silent = TRUE))
-    times <- numeric(0); final_status <- "ok"
-    for (r in seq_len(reps)) {
-      tr <- time_one(fn, d, TIMEOUT_S)
-      if (tr$status == "ok") {
-        times <- c(times, tr$elapsed)
-      } else {
-        final_status <- tr$status
-        break
+  for (instance in seq_len(instances)) {
+    seed <- instance_seed(n_total, instance)
+    d <- NULL
+    for (pkg in names(callables)) {
+      if (have_run(n_total, pkg, instance)) {
+        cat(sprintf("  i%d %-8s : already recorded, skipping\n", instance, pkg))
+        next
       }
+      if (is.null(d)) d <- make_data(n_total, seed = seed)
+      fn <- callables[[pkg]]
+      ## Warm-up at small n only: at large n it would cost a second full solve.
+      if (n_total <= 2000) invisible(try(fn(d), silent = TRUE))
+
+      times <- numeric(0); statuses <- character(0)
+      for (r in seq_len(reps)) {
+        tr <- time_one(fn, d, TIMEOUT_S)
+        times <- c(times, tr$elapsed); statuses <- c(statuses, tr$status)
+        if (tr$status != "ok") break   # a failure repeats, and costs the timeout again
+      }
+      runs <- rbind(runs, data.frame(
+        n_total = n_total, package = pkg, instance = instance, seed = seed,
+        rep = seq_along(times), seconds = round(times, 4), status = statuses,
+        stringsAsFactors = FALSE
+      ))
+      ok <- statuses == "ok"
+      cat(sprintf("  i%d %-8s : %s\n", instance, pkg,
+                  if (any(ok)) sprintf("median %.3f s of %d rep(s)",
+                                       median(times[ok]), sum(ok))
+                  else statuses[1]))
+      flush.console()
+      write_partial()
     }
-    med <- if (length(times) > 0) median(times) else NA_real_
-    cat(sprintf("  %-8s : median = %s s, status = %s\n", pkg,
-                ifelse(is.na(med), "NA", sprintf("%.3f", med)), final_status))
-    flush.console()
-    results <- rbind(results, data.frame(
-      n_total = n_total, package = pkg, reps = length(times),
-      median_s = round(med, 4), status = final_status,
-      stringsAsFactors = FALSE
-    ))
-    write_partial()
   }
 }
 
+summ <- write_partial()
 cat("\nFinal results:\n")
-print(results)
-write_partial()
-cat("\nWrote", out_csv, "\n")
+print(summ, row.names = FALSE)
+cat("\nWrote", out_csv, "and", runs_csv, "\n")

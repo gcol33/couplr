@@ -1,5 +1,18 @@
 # couplr 1.6.2
 
+## Bug fixes
+
+* **A matched pair's reported distance is the one the solver priced it with.**
+  Under `memory_mode = "lazy"` and `"implicit"` the distance column was
+  recomputed in R from a second copy of the metric's formula, which agrees with
+  the solver's own evaluation to rounding and not to the last bit. A
+  `max_distance` set at a distance the package had reported could therefore
+  exclude the pair it was read from: on a Mahalanobis problem whose widest
+  matched arc is the one the matching depends on, a caliper at that value
+  returned a complete matching on the dense path and none on the lazy and
+  implicit paths. The reported distance now comes from the same routine the
+  solve evaluated the pair with, and the formula is written once.
+
 ## Improvements
 
 * **`verify_assignment()` decides its conditions in exact arithmetic and says

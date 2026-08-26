@@ -1,0 +1,356 @@
+---
+title: "Supplementary material for *couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation*"
+author: "Gilles Colling"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: pdflatex
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{placeins}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
+                      fig.align = "center", out.width = "100%")
+
+d <- function(f) read.csv(file.path("..", "data", f), stringsAsFactors = FALSE)
+
+regime_runs    <- d("regime-runs.csv")
+regime_cells   <- d("regime-cells.csv")
+regime_results <- d("regime-results.csv")
+regime_verdict <- d("regime-verdict.csv")
+igrid_runs     <- d("implicit-grid-runs.csv")
+igrid          <- d("implicit-grid-results.csv")
+memory         <- d("memory-results.csv")
+imp            <- d("implicit-results.csv")
+scaling_runs   <- d("scaling-runs.csv")
+
+kb <- function(x, caption, align = NULL, ...) {
+  knitr::kable(x, booktabs = TRUE, longtable = TRUE, row.names = FALSE,
+               align = align, caption = caption, ...)
+}
+shape <- function(n_rows, n_cols) sprintf("%s x %s",
+                                          format(n_rows, big.mark = ","),
+                                          format(n_cols, big.mark = ","))
+```
+
+# What this file holds
+
+The article reports summaries of four measurements that are too large to print
+in full: the solver grid over problem regimes, the edge-generation loop over
+covariate counts, point clouds, calipers and sizes, the peak memory of every
+mode and comparator, and the raw runs behind the scaling table. This file
+carries them in full, and names the script that produced each one so any of them
+can be re-measured.
+
+```{r provenance}
+env <- tryCatch(readLines(file.path("..", "data", "ENVIRONMENT.txt")),
+                error = function(e) character(0))
+if (length(env)) cat(paste(env, collapse = "\n"))
+```
+
+| Section | Script | Files |
+|---|---|---|
+| Solver selection across regimes | `scripts/bench_regimes.R` | `regime-runs.csv`, `regime-cells.csv`, `regime-results.csv`, `regime-verdict.csv` |
+| The edge-generation loop | `scripts/bench_implicit_grid.R` | `implicit-grid-runs.csv`, `implicit-grid-results.csv` |
+| Peak memory | `scripts/bench_memory.R` | `memory-results.csv` |
+| Representation against solver | `scripts/bench_implicit.R` | `implicit-results.csv` |
+| Scaling, every run | `scripts/bench_scaling.R` | `scaling-runs.csv`, `scaling-results.csv` |
+
+Every script is resume-safe: it writes its rows as it goes and skips a cell it
+already holds, so a run that is interrupted continues where it stopped. Moving
+the CSV aside forces a full re-measurement. `paper/run_bench_suite.sh` runs all
+of them in order on one machine, which is how the numbers here were produced.
+
+\FloatBarrier
+
+# Solver selection across problem regimes
+
+`assignment(method = "auto")` chooses a solver from five rules read off one pass
+over the cost matrix: enumerate an at most 8 by 8 problem, use a cardinality
+algorithm where the finite costs are constant or binary, use the sparse
+Jonker-Volgenant variant where more than half the entries are forbidden, use the
+shortest-augmenting-path solver where there are at least three times as many
+columns as rows, and otherwise use Jonker-Volgenant. The article's solver figure
+varies problem size on square dense integer costs, which is the last rule's
+regime and no other. This grid varies the properties the rules are stated over.
+
+A cell is a cost regime, a forbidden pattern and a shape. Each cell is generated
+as several independent instances, each instance is timed several times, and
+every solver in the panel sees the same instance.
+
+```{r regime-design}
+reg_lab <- c(int_uniform = "integer, uniform on 1..10,000",
+             dbl_uniform = "double, uniform on (0, 1)",
+             binary = "binary, 0 or 1",
+             constant = "constant",
+             tied = "integer, five distinct values",
+             heavy_tailed = "double, lognormal",
+             metric_uniform = "euclidean over uniform points in 8 dimensions",
+             metric_clustered = "euclidean over eight clusters in 8 dimensions")
+pat_lab <- c(none = "complete: every pair admissible",
+             random_60 = "60 percent of pairs admissible, unstructured",
+             random_25 = "25 percent admissible, unstructured",
+             block_4 = "25 percent admissible in four disconnected components")
+
+kb(data.frame(Factor = c(rep("cost regime", length(reg_lab)),
+                         rep("forbidden pattern", length(pat_lab))),
+              Level = c(names(reg_lab), names(pat_lab)),
+              Meaning = c(unname(reg_lab), unname(pat_lab))),
+   caption = "The factors the solver grid crosses. Shapes and sizes are in the next table.",
+   align = "lll")
+```
+
+```{r regime-shapes}
+sh <- unique(regime_cells[, c("tier", "n_rows", "n_cols")])
+sh <- sh[order(sh$tier, sh$n_rows, sh$n_cols), ]
+sh$aspect <- sprintf("1:%.0f", sh$n_cols / sh$n_rows)
+sh$Shape <- shape(sh$n_rows, sh$n_cols)
+tier_panel <- tapply(regime_runs$method, regime_runs$tier,
+                     function(x) length(unique(x)))
+sh$`Solvers in the panel` <- as.integer(tier_panel[sh$tier])
+kb(sh[, c("tier", "Shape", "aspect", "Solvers in the panel")],
+   caption = "Shapes. The base tier runs the whole panel at a size every solver in it reaches; the large tier repeats the crossing at a size only the scalable solvers reach.",
+   align = "llrr")
+```
+
+## What the rules cost
+
+For each cell, the solver `"auto"` selected is timed as a solver of its own, so
+its number carries the probing pass the rules cost, and it is compared against
+the fastest named solver in the same cell.
+
+```{r regime-by-rule}
+by_rule <- do.call(rbind, lapply(split(regime_verdict, regime_verdict$auto_rule),
+                                 function(g) data.frame(
+  Rule = g$auto_rule[1],
+  Cells = nrow(g),
+  `Picked the cell's fastest` = sum(g$auto_picks == g$best_method),
+  `Median ratio` = sprintf("%.2fx", median(g$ratio)),
+  `Worst ratio` = sprintf("%.2fx", max(g$ratio)),
+  check.names = FALSE)))
+kb(by_rule[order(-by_rule$Cells), ],
+   caption = "Each dispatch rule, over the cells where it fired. Ratio is the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x means the rule picked the best available solver and 2.00x means it cost twice the best.",
+   align = "lrrrr")
+```
+
+```{r regime-worst}
+w <- regime_verdict[order(-regime_verdict$ratio), ]
+w <- head(w, 25)
+kb(data.frame(Tier = w$tier, Regime = w$regime, Pattern = w$pattern,
+              Shape = w$shape, Rule = w$auto_rule, Picked = w$auto_picks,
+              `Best` = w$best_method,
+              `Dispatched (ms)` = sprintf("%.3g", 1000 * w$auto_s),
+              `Best (ms)` = sprintf("%.3g", 1000 * w$best_s),
+              Ratio = sprintf("%.2fx", w$ratio), check.names = FALSE),
+   caption = "The 25 cells where the dispatched solver was furthest off the cell's fastest.",
+   align = "lllllllrrr")
+```
+
+## Every cell
+
+```{r regime-all}
+v <- regime_verdict[order(regime_verdict$tier, regime_verdict$regime,
+                          regime_verdict$pattern, regime_verdict$shape), ]
+kb(data.frame(Tier = v$tier, Regime = v$regime, Pattern = v$pattern,
+              Shape = v$shape, Rule = v$auto_rule, Picked = v$auto_picks,
+              Best = v$best_method, Ratio = sprintf("%.2fx", v$ratio),
+              check.names = FALSE),
+   caption = "Every cell of the solver grid: the rule that fired, the solver it picked, the fastest solver in the cell, and the ratio between them.",
+   align = "lllllllr")
+```
+
+## Every solver, every cell
+
+```{r regime-full}
+r <- regime_results[order(regime_results$tier, regime_results$regime,
+                          regime_results$pattern, regime_results$n_rows,
+                          regime_results$n_cols, regime_results$median_s), ]
+kb(data.frame(Tier = r$tier, Regime = r$regime, Pattern = r$pattern,
+              Shape = shape(r$n_rows, r$n_cols), Solver = r$method,
+              Instances = r$instances,
+              `Median (ms)` = sprintf("%.3g", 1000 * r$median_s),
+              `Q25 (ms)` = sprintf("%.3g", 1000 * r$q25_s),
+              `Q75 (ms)` = sprintf("%.3g", 1000 * r$q75_s),
+              check.names = FALSE),
+   caption = "Milliseconds per solver and cell: the median across instances, with the quartiles beside it. An instance contributes the median of its own repetitions, so the quartiles are between problems rather than between repetitions of one problem. A solver that errored or timed out on a cell has no row there.",
+   align = "lllllrrrr")
+```
+
+## Do the solvers agree
+
+Every solver in a cell solves the same instance, so their totals have to agree.
+A disagreement would be a defect in a solver rather than a property of the
+regime.
+
+```{r regime-agreement}
+ok <- regime_runs[regime_runs$status == "ok" & !is.na(regime_runs$total_cost), ]
+key <- paste(ok$tier, ok$regime, ok$pattern, ok$n_rows, ok$n_cols, ok$instance)
+ag <- do.call(rbind, lapply(split(ok, key), function(g) {
+  ref <- median(g$total_cost)
+  data.frame(worst = max(abs(g$total_cost - ref) / pmax(1, abs(ref))),
+             solvers = length(unique(g$method)))
+}))
+cat(sprintf("%d instances carrying %d to %d solvers each; the worst relative disagreement on the optimum is %.3g.\n",
+            nrow(ag), min(ag$solvers), max(ag$solvers), max(ag$worst)))
+```
+
+\FloatBarrier
+
+# The edge-generation loop away from one cloud
+
+The article's implicit results come from one cloud: eight independent normal
+covariates with the treated group shifted, one draw per size. This grid sweeps
+one factor at a time around that base, several seeds deep. Where the dense path
+can afford the problem, the loop's answer is compared against it unit by unit.
+
+```{r igrid-summary}
+g <- igrid[order(igrid$sweep, igrid$n_total, igrid$dim, igrid$cloud,
+                 igrid$caliper), ]
+kb(data.frame(Sweep = g$sweep, Cloud = g$cloud, Dim = g$dim,
+              Units = format(g$n_total, big.mark = ","), Caliper = g$caliper,
+              Seeds = g$seeds,
+              Rounds = sprintf("%g-%g", g$rounds_min, g$rounds_max),
+              `Graph %` = sprintf("%.3f", g$graph_pct_med),
+              `Distances` = sprintf("%.2fx", g$distances_x_med),
+              `Implicit` = sprintf("%.3g s", g$implicit_s_med),
+              `Lazy` = sprintf("%.3g s", g$lazy_s_med),
+              `Speedup` = sprintf("%.2fx", g$speedup_med),
+              check.names = FALSE),
+   caption = "The loop by cell. Rounds is the range over seeds. Graph is the median share of the complete pair count the candidate set ended up holding, in percent. Distances is the median number of distance evaluations over all rounds as a multiple of the complete pair count. Implicit and lazy are median seconds over seeds and speedup is their median ratio.",
+   align = "lllllrrrrrrr")
+```
+
+```{r igrid-certificate}
+kb(data.frame(Sweep = g$sweep, Cloud = g$cloud, Dim = g$dim,
+              Units = format(g$n_total, big.mark = ","), Caliper = g$caliper,
+              `Worst duality gap` = format(g$worst_gap, digits = 3),
+              `All certified` = g$all_certified,
+              `Equals the dense solve` = ifelse(is.na(g$equal_to_dense),
+                                                "not run", g$equal_to_dense),
+              check.names = FALSE),
+   caption = "The certificate by cell. The duality gap is the residual the loop stopped on. Equals the dense solve compares the pairing unit by unit where the dense path could be run, and reads not run where the problem was too large for it.",
+   align = "lllllrrr")
+```
+
+```{r igrid-spread}
+imp_runs <- igrid_runs[igrid_runs$memory_mode == "implicit" &
+                         igrid_runs$status == "ok", ]
+imp_runs$graph_pct <- 100 * imp_runs$candidate_edges / imp_runs$possible_edges
+kb(data.frame(Sweep = imp_runs$sweep, Cloud = imp_runs$cloud,
+              Dim = imp_runs$dim,
+              Units = format(imp_runs$n_total, big.mark = ","),
+              Caliper = imp_runs$caliper, Seed = imp_runs$seed_index,
+              Rounds = imp_runs$n_rounds,
+              `Seed width` = imp_runs$seed_width,
+              `Graph %` = sprintf("%.3f", imp_runs$graph_pct),
+              `Seconds` = sprintf("%.3g", imp_runs$elapsed_s),
+              `Gap` = format(imp_runs$duality_gap, digits = 3),
+              check.names = FALSE),
+   caption = "Every implicit run in the grid, one row per seed. Seed width is the number of columns the first round gave each row.",
+   align = "lllllrrrrrr")
+```
+
+```{r igrid-failures}
+bad <- igrid_runs[igrid_runs$status != "ok", ]
+if (nrow(bad)) {
+  kb(data.frame(Sweep = bad$sweep, Cloud = bad$cloud, Dim = bad$dim,
+                Units = bad$n_total, Caliper = bad$caliper,
+                Mode = bad$memory_mode, Seed = bad$seed_index,
+                Status = bad$status, check.names = FALSE),
+     caption = "Cells that did not finish.", align = "llllllll")
+} else {
+  cat("Every cell of the grid finished.\n")
+}
+```
+
+\FloatBarrier
+
+# Peak memory
+
+Peak resident set size is a property of a process, so each cell here is a fresh
+R process that loads what it needs, does one matching and exits, measured from
+outside by the platform's `time` utility. The baseline row of a size is a
+process that loaded the same packages and matched nothing, and it is what the
+increment column is measured against. `dense_matrix` builds the distance matrix
+and stops, which separates the representation from the solver that runs on it.
+
+```{r memory-table}
+m <- memory[order(memory$n_total, memory$arm), ]
+kb(data.frame(Units = format(m$n_total, big.mark = ","), Arm = m$arm,
+              `Peak RSS` = sprintf("%.0f MB", m$peak_rss_mb),
+              `Over baseline` = ifelse(is.na(m$over_baseline_mb), "-",
+                                       sprintf("%.0f MB", m$over_baseline_mb)),
+              `R heap peak` = sprintf("%.0f MB", m$heap_peak_mb),
+              `Matrix` = sprintf("%.0f MB", m$matrix_mb),
+              `Package estimate` = sprintf("%.0f MB", m$estimate_mb),
+              `Seconds` = sprintf("%.3g", m$elapsed_s),
+              Status = m$status, check.names = FALSE),
+   caption = "Peak resident set size by arm and problem size. Matrix is the bytes the dense cost matrix itself needs at that shape. Package estimate is what estimate_dense_matrix_mb() predicts, which is four times the matrix and is what the memory dispatcher warns from.",
+   align = "llrrrrrrl")
+```
+
+```{r memory-heuristic}
+dm <- memory[memory$arm == "dense_matrix" & !is.na(memory$over_baseline_mb), ]
+if (nrow(dm)) {
+  kb(data.frame(Units = format(dm$n_total, big.mark = ","),
+                `Matrix` = sprintf("%.0f MB", dm$matrix_mb),
+                `Measured over baseline` = sprintf("%.0f MB", dm$over_baseline_mb),
+                `Measured / matrix` = sprintf("%.2f", dm$over_baseline_mb / dm$matrix_mb),
+                `Package estimate` = sprintf("%.0f MB", dm$estimate_mb),
+                check.names = FALSE),
+     caption = "The four-fold estimate against the measurement. The estimate is deliberately conservative: it exists to avoid under-warning before a large allocation, not to predict the peak.",
+     align = "lrrrr")
+}
+```
+
+\FloatBarrier
+
+# Representation against solver
+
+The implicit mode is a representation and a solver at once: its restricted
+master is the flow model, and naming a solver under it is an error rather than a
+setting. Reading its timing as a representation comparison would therefore
+attribute the flow solver's behaviour to the representation. The table below is
+the decomposition: down a column, one solver over two representations; across a
+row, one representation under two solvers.
+
+```{r repr-solver}
+sizes <- sort(unique(imp$n_total))
+cell <- function(mode, n) {
+  v <- imp$elapsed_s[imp$memory_mode == mode & imp$n_total == n]
+  if (!length(v) || is.na(v[1])) return("not run")
+  if (v[1] < 1) sprintf("%.0f ms", 1000 * v[1]) else sprintf("%.3g s", v[1])
+}
+kb(data.frame(
+  Units = format(sizes, big.mark = ","),
+  `Dense, JV` = vapply(sizes, function(n) cell("dense", n), character(1)),
+  `Lazy, JV` = vapply(sizes, function(n) cell("lazy", n), character(1)),
+  `Dense, flow` = vapply(sizes, function(n) cell("dense_csflow", n), character(1)),
+  `Implicit` = vapply(sizes, function(n) cell("implicit", n), character(1)),
+  check.names = FALSE),
+  caption = "Wall-clock seconds by representation and solver. Dense and lazy differ only in whether the matrix is materialised; dense and dense-flow differ only in the solver; implicit is the mode as a user meets it.",
+  align = "lrrrr")
+```
+
+\FloatBarrier
+
+# Scaling, every run
+
+The scaling table in the article reports the median across instances. These are
+the runs behind it, one row per repetition.
+
+```{r scaling-runs}
+sr <- scaling_runs[order(scaling_runs$n_total, scaling_runs$package,
+                         scaling_runs$instance, scaling_runs$rep), ]
+kb(data.frame(Units = format(sr$n_total, big.mark = ","), Package = sr$package,
+              Instance = sr$instance, Seed = sr$seed, Rep = sr$rep,
+              Seconds = ifelse(is.na(sr$seconds), "-",
+                               sprintf("%.4g", sr$seconds)),
+              Status = sr$status, check.names = FALSE),
+   caption = "Every scaling run. Instance is an independently generated problem of that size; rep is a repetition on that problem. A run that failed or timed out carries its status and no time.",
+   align = "llrrrrl")
+```

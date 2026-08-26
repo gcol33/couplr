@@ -6,19 +6,20 @@ abstract: >
   small as possible is the linear assignment problem, which sits underneath
   causal-inference matching, experimental design, task allocation and image
   alignment. Two things bound what software built on it can offer. An answer
-  arrives without a proof, since a solver reports the state it terminated in
-  rather than a statement about the matching that a user can check. And the
-  graph of admissible pairs is built before it is solved, which puts the size
-  ceiling at the memory that complete graph occupies. We present the couplr
+  arrives without a proof: a solver reports the state it terminated in rather
+  than a checkable statement about the matching. And the graph of admissible
+  pairs is built before it is solved, so the size ceiling is the memory that
+  complete graph occupies. We present the couplr
   package, which addresses both. Every matching design compiles into one
   internal flow model, so node potentials come back from all of them and can be
   checked against the linear-programming optimality conditions. On those
   potentials the package solves without building the graph: each unit starts
   with its nearest admissible partners, the omitted pairs are priced against
-  the duals the sparse solve returns, and pairs enter until none prices in, at
-  which point the duals certify the sparse solution optimal for the complete
-  problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent
-  of the pairs and returns the assignment the dense solve returns, certified.
+  the duals the sparse solve returns, and pairs enter until none prices in,
+  where the duals certify the sparse solution optimal for the complete problem.
+  Matching 16,667 treated units to 33,333 controls stores 0.29 percent of the
+  pairs, prices the rest without storing them, and returns the dense solve's
+  assignment, certified.
   Warm starting the same loop traces a matching frontier over a swept
   constraint at a fraction of the cost of solving each point from cold. A
   data-frame interface, nineteen assignment algorithms, balance diagnostics and
@@ -60,12 +61,27 @@ lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
 imp       <- read.csv("data/implicit-results.csv", stringsAsFactors = FALSE)
 equiv     <- read.csv("data/implicit-equivalence.csv", stringsAsFactors = FALSE)
 pth       <- read.csv("data/path-results.csv", stringsAsFactors = FALSE)
+regime    <- read.csv("data/regime-verdict.csv", stringsAsFactors = FALSE)
+igrid     <- read.csv("data/implicit-grid-results.csv", stringsAsFactors = FALSE)
+memory    <- read.csv("data/memory-results.csv", stringsAsFactors = FALSE)
 n_path_values <- pth$points[1]
 couplr_ver <- as.character(utils::packageVersion("couplr"))
 
 ## Timings by size for one memory mode, from the edge-generation benchmark.
 imp_at <- function(mode, n, col = "elapsed_s") {
   imp[[col]][imp$memory_mode == mode & imp$n_total == n][1]
+}
+
+## Every ratio the prose states is read off the tables rather than written into
+## the sentence, so a re-measurement cannot leave a stale number in the text.
+scal_at <- function(pkg, n) {
+  scaling$median_s[scaling$package == pkg & scaling$n_total == n][1]
+}
+scal_ratio <- function(n, against = "optmatch") {
+  scal_at(against, n) / scal_at("couplr", n)
+}
+mem_at <- function(arm, n, col = "peak_rss_mb") {
+  memory[[col]][memory$arm == arm & memory$n_total == n][1]
 }
 ```
 
@@ -1273,10 +1289,50 @@ practical on its own input.
 
 These orderings hold for dense uniform integer costs on square matrices, and
 that is the whole of what the figure establishes. They fix the dispatcher's
-default. The remaining rules rest on the structure the special-purpose routines
-exploit rather than on measurement, and the regimes that would test them,
-sparse, strongly rectangular and degenerate cost scales, are left to the
-benchmark extension described in the summary.
+default.
+
+## Solver selection across regimes
+
+The default is one of five rules. The other four read properties the figure
+holds fixed: whether the finite costs have a scale worth exploiting, how much of
+the matrix is forbidden and whether what remains is one component, and how far
+from square the problem is. Table \@ref(tab:regimes) crosses those properties.
+Eight cost regimes, from uniform integers through binary, constant, heavily tied
+and heavy-tailed costs to euclidean distances over uniform and clustered points,
+are crossed with four admissibility patterns, complete, unstructured at two
+densities and four disconnected components, and with three aspect ratios from
+square to one row per ten columns, at two sizes. Each cell is generated as
+several independent instances, each instance is timed several times, and every
+solver in the panel sees the same instance. The solver `"auto"` selects is timed
+as a solver of its own, so its number carries the probing pass the rules cost,
+and it is read against the fastest named solver in the same cell.
+
+```{r regimes, echo=FALSE}
+rule_lab <- c(tiny = "at most 8 by 8",
+              no_cost_scale = "no cost scale to exploit",
+              sparse = "more than half the entries forbidden",
+              very_rectangular = "at least three columns per row",
+              default = "no earlier rule applies")
+by_rule <- do.call(rbind, lapply(split(regime, regime$auto_rule), function(g) {
+  data.frame(
+    Rule = rule_lab[g$auto_rule[1]],
+    Solver = g$auto_picks[1],
+    Cells = nrow(g),
+    `Fastest` = sum(g$auto_picks == g$best_method),
+    `Median` = sprintf("%.2fx", median(g$ratio)),
+    `Worst` = sprintf("%.2fx", max(g$ratio)),
+    check.names = FALSE
+  )
+}))
+by_rule <- by_rule[order(-by_rule$Cells), ]
+
+knitr::kable(
+  by_rule, align = "llrrrr", booktabs = TRUE, row.names = FALSE,
+  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver."
+)
+```
+
+The full grid, every solver in every cell, is in the supplementary material.
 
 ## Balance against established alternatives
 
@@ -1346,27 +1402,46 @@ indicator.
 
 ## Scaling
 
-Table \@ref(tab:scaling) reports median wall-clock time on synthetic problems
-with the same eight-covariate structure, at six sizes with a one-to-two ratio of
-treated to control units. Every package in this comparison materialises the
-distance matrix here, so we time couplr with `memory_mode = "dense"`.
+Table \@ref(tab:scaling) reports wall-clock time on synthetic problems with the
+same eight-covariate structure, at six sizes with a one-to-two ratio of treated
+to control units, so every problem here is rectangular. Every package in this
+comparison materialises the distance matrix, so we time couplr with
+`memory_mode = "dense"`. Each size is generated as several independent
+instances with the timing repetitions inside them, and the table reports the
+median and the interquartile range across instances: repetitions of one matrix
+measure the clock, and what varies between problems is what a reader wants to
+know.
 
 ```{r scaling, echo=FALSE}
 lab <- c("167 + 333", "667 + 1,333", "1,667 + 3,333",
          "3,333 + 6,667", "6,667 + 13,333", "16,667 + 33,333")
 sizes <- c(500, 2000, 5000, 10000, 20000, 50000)
 
-fmt <- function(pkg) {
-  vapply(sizes, function(n) {
-    r <- scaling[scaling$n_total == n & scaling$package == pkg, ]
-    if (nrow(r) == 0) return("not run")
-    if (is.na(r$median_s[1])) {
-      return(if (grepl("timeout", r$status[1])) "timeout" else "int overflow")
-    }
-    s <- r$median_s[1]
-    if (s < 1) sprintf("%.0f ms", s * 1000) else sprintf("%.3g s", s)
-  }, character(1))
+## A cell is the median across instances, with the quartiles beside it in the
+## same unit. One instance has no spread to report, and says so in the caption
+## rather than in a bracket that would look like one.
+fmt_cell <- function(pkg, n) {
+  r <- scaling[scaling$n_total == n & scaling$package == pkg, ]
+  if (nrow(r) == 0) return("not run")
+  if (is.na(r$median_s[1])) {
+    return(if (grepl("timeout", r$status[1])) "timeout" else "int overflow")
+  }
+  in_ms <- r$median_s[1] < 1
+  d <- function(x) if (in_ms) sprintf("%.0f", 1000 * x) else sprintf("%.3g", x)
+  core <- paste0(d(r$median_s[1]), if (in_ms) " ms" else " s")
+  if (isTRUE(r$instances[1] >= 2L)) {
+    paste0(core, " (", d(r$q25_s[1]), "-", d(r$q75_s[1]), ")")
+  } else {
+    core
+  }
 }
+fmt <- function(pkg) vapply(sizes, function(n) fmt_cell(pkg, n), character(1))
+
+inst <- vapply(sizes, function(n) {
+  r <- scaling[scaling$n_total == n & scaling$package == "couplr", ]
+  if (nrow(r) == 0) NA_integer_ else as.integer(r$instances[1])
+}, integer(1))
+single <- sizes[!is.na(inst) & inst < 2]
 
 tab <- data.frame(
   `Problem size` = lab,
@@ -1378,29 +1453,38 @@ tab <- data.frame(
 
 knitr::kable(
   tab, align = "lrrr", booktabs = TRUE,
-  caption = "One-to-one optimal Mahalanobis matching, median wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Medians of 5, 5, 3, 3, 1 and 1 replicates for the six rows. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a replicate exceeding the 300-second cap."
+  caption = sprintf(
+    "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance. The %s %s carry one instance and are single runs rather than medians, so no range is reported for them. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the %d-second cap.",
+    paste(format(single, big.mark = ","), collapse = " and "),
+    if (length(single) == 1) "row" else "rows", 600L)
 )
 ```
 
-The margin widens with problem size. couplr is roughly eight times faster than
-\CRANpkg{optmatch} at $n = 500$ and twenty-seven times faster at $n = 20{,}000$,
-where it finishes in
-`r sprintf("%.1f", scaling$median_s[scaling$n_total == 20000 & scaling$package == "couplr"])`
-seconds against 4.7 minutes. \CRANpkg{MatchIt} runs
-between ten and twenty-five times slower up to $n = 10{,}000$, which is the
-largest size it completes before `matchit(method = "optimal")` aborts inside the
-\CRANpkg{optmatch} back end with an integer-size overflow. At $n = 50{,}000$ couplr
-finishes in
-`r sprintf("%.0f", scaling$median_s[scaling$n_total == 50000 & scaling$package == "couplr"])`
-seconds and both alternatives exceed the 300-second per-replicate cap.
+The margin widens with problem size. couplr is about
+`r sprintf("%.0f", scal_ratio(500))` times faster than \CRANpkg{optmatch} at
+$n = 500$ and `r sprintf("%.0f", scal_ratio(20000))` times faster at
+$n = 20{,}000$, where it finishes in
+`r sprintf("%.1f", scal_at("couplr", 20000))` seconds against
+`r sprintf("%.1f", scal_at("optmatch", 20000) / 60)` minutes.
+\CRANpkg{MatchIt} runs
+`r sprintf("%.0f", min(sapply(c(500, 2000, 5000, 10000), scal_ratio, against = "MatchIt")))`
+to
+`r sprintf("%.0f", max(sapply(c(500, 2000, 5000, 10000), scal_ratio, against = "MatchIt")))`
+times slower up to $n = 10{,}000$, which is the largest size it completes before
+`matchit(method = "optimal")` aborts inside the \CRANpkg{optmatch} back end with
+an integer-size overflow. At $n = 50{,}000$ couplr finishes in
+`r sprintf("%.0f", scal_at("couplr", 50000))`
+seconds and both alternatives exceed the 600-second cap.
 
-A likely contributor is the difference in formulation rather than a faster inner
-loop in any single algorithm. \CRANpkg{optmatch} solves a minimum-cost flow problem,
-which is the right formulation for the full and variable-ratio designs it is
-built around and more machinery than a plain one-to-one problem needs; couplr's
-dispatcher sends this dense square problem to Jonker-Volgenant. Separating that
-contribution from implementation differences would need a benchmark that holds
-the formulation fixed across packages, which these timings do not do.
+What the table compares is three workflows on one task, from data frame to
+matched pairs, and not three implementations of one algorithm. The packages do
+not state the same problem. \CRANpkg{optmatch} solves a minimum-cost flow
+problem, which is what the full and variable-ratio designs it is built around
+need and more machinery than a plain one-to-one problem does, and
+\CRANpkg{MatchIt} reaches that same back end; couplr's dispatcher sends this
+rectangular problem to Jonker-Volgenant. Reading the margin as a faster inner
+loop would need a benchmark that holds the formulation fixed across packages,
+which this one does not.
 
 The lazy path removes the memory ceiling as well. The same $n = 50{,}000$ match
 under `memory_mode = "lazy"` completes in
@@ -1480,6 +1564,89 @@ the two agree exactly: the totals differ by
 `r max(equiv$cost_gap)` and the pairing is identical unit by unit, so the loop
 returns the assignment rather than an assignment of the same cost.
 
+The implicit column is a representation and a solver at once, so a reader
+comparing it with the dense column is reading both differences together. The
+supplementary material carries the decomposition: the same materialised matrix
+solved by the flow solver, which is the family the restricted master belongs to,
+beside the same matrix solved by Jonker-Volgenant. At `r ilab[4]` the
+materialised matrix takes `r sprintf("%.3g", imp_at("dense", 10000))` seconds
+under Jonker-Volgenant and
+`r sprintf("%.3g", imp_at("dense_csflow", 10000))` seconds under the flow
+solver, against `r sprintf("%.3g", imp_at("implicit", 10000))` seconds for the
+loop, so what the loop saves is not what a change of solver would give.
+
+```{r igrid-numbers, echo=FALSE}
+ig_cells   <- nrow(igrid)
+ig_seeds   <- sum(igrid$seeds)
+ig_rounds  <- c(min(igrid$rounds_min), max(igrid$rounds_max))
+ig_graph   <- range(igrid$graph_pct_med)
+ig_dist    <- range(igrid$distances_x_med)
+ig_cert    <- sum(igrid$all_certified %in% TRUE)
+ig_eq_den  <- sum(!is.na(igrid$equal_to_dense))
+ig_eq      <- sum(igrid$equal_to_dense %in% TRUE)
+ig_gap     <- max(igrid$worst_gap, na.rm = TRUE)
+ig_clouds  <- igrid[igrid$sweep == "cloud", ]
+ig_slow    <- ig_clouds$cloud[which.min(ig_clouds$speedup_med)]
+ig_slow_x  <- min(ig_clouds$speedup_med)
+ig_fast    <- ig_clouds$cloud[which.max(ig_clouds$speedup_med)]
+ig_fast_x  <- max(ig_clouds$speedup_med)
+ig_dims    <- igrid[igrid$sweep == "dimension", ]
+ig_dim_rng <- range(ig_dims$dim)
+```
+
+One cloud is not a characterisation, and the table above reports one. The
+supplementary material sweeps the loop around that cloud one factor at a time:
+covariate counts from `r ig_dim_rng[1]` to `r ig_dim_rng[2]`, seven point
+clouds including clustered points, a displaced treated group, coordinates on a
+coarse lattice so that distances tie, one contested core where every treated
+unit's nearest controls are the same few, and a shell where every
+treated-to-control distance is nearly equal, three caliper settings including
+the tightest value each problem is still feasible under, and five sizes, each at
+several seeds. Across the `r ig_cells` cells that grid holds, the loop settled in
+`r ig_rounds[1]` to `r ig_rounds[2]` rounds and ended holding between
+`r sprintf("%.2f", ig_graph[1])` and `r sprintf("%.2f", ig_graph[2])` percent of
+the complete pair count, at `r sprintf("%.2f", ig_dist[1])` to
+`r sprintf("%.2f", ig_dist[2])` times that count in distance evaluations.
+`r ig_cert` of the `r ig_cells` cells certified with a duality gap of
+`r format(ig_gap, digits = 3)`, and `r ig_eq` of the `r ig_eq_den` cells small
+enough to run the dense path beside the loop returned the same pairing unit by
+unit. The margin over the lazy path is where the clouds separate: it is widest
+on `r ig_fast` at `r sprintf("%.2fx", ig_fast_x)` and narrowest on `r ig_slow`
+at `r sprintf("%.2fx", ig_slow_x)`.
+
+## Memory
+
+The claim that memory rather than time is what bounds a dense matching has so
+far been made with edge shares, which are a proxy for it. Peak resident set size
+is the quantity itself, and it is a property of a process rather than of an
+expression, so each arm here is a fresh R session that loads what it needs, runs
+one matching and exits, measured from outside. A session that loaded the same
+packages and matched nothing is the floor each arm is read against.
+
+```{r memory-numbers, echo=FALSE}
+mem_n <- max(memory$n_total[memory$arm == "dense" & memory$status == "ok"])
+mem_lab <- sprintf("%s + %s", format(round(mem_n / 3), big.mark = ","),
+                   format(mem_n - round(mem_n / 3), big.mark = ","))
+mem_over <- function(arm, n = mem_n) mem_at(arm, n, "over_baseline_mb")
+mem_matrix <- mem_at("dense_matrix", mem_n, "matrix_mb")
+mem_ratio <- mem_over("dense_matrix") / mem_matrix
+```
+
+At `r mem_lab` the dense path peaks `r sprintf("%.0f", mem_over("dense"))` MB
+above that floor, the lazy path `r sprintf("%.0f", mem_over("lazy"))` MB and the
+loop `r sprintf("%.0f", mem_over("implicit"))` MB, against
+`r sprintf("%.0f", mem_over("optmatch"))` MB for \CRANpkg{optmatch} and
+`r sprintf("%.0f", mem_over("MatchIt"))` MB for \CRANpkg{MatchIt}. Building the
+distance matrix and stopping there accounts for
+`r sprintf("%.0f", mem_over("dense_matrix"))` MB of the dense path's peak, on a
+matrix whose entries occupy `r sprintf("%.0f", mem_matrix)` MB, so the process
+carries `r sprintf("%.1f", mem_ratio)` times the matrix at that shape against
+the four times `estimate_dense_matrix_mb()` assumes when the dispatcher decides
+whether a dense solve fits. The estimate exists to avoid under-warning before a
+large allocation rather than to predict the peak, and the measurement says which
+side of the true figure it sits on. Every arm and every size is in the
+supplementary material.
+
 ## Warm-started paths
 
 Table \@ref(tab:path-table) reports a sweep of `r n_path_values` caliper values
@@ -1489,18 +1656,28 @@ the problem still admits a complete matching under, found by bisection, and its
 wide end is the median treated-to-control distance, which admits half the pairs
 and constrains nothing.
 
+The number a user meets is the wall clock for the whole sweep, so that is the
+one the table leads with: it carries the feasibility check, the balance reading
+each point takes, the conversions in and out of the solver and the rest of the
+R-level work, none of which the solver's own clock sees. Both sides pay that
+work per point, because an independent solve here is a path of one value rather
+than a separate entry point, so the comparison is like for like. The solver time
+is reported beside it as the diagnostic it is: it says how much of the saving is
+the warm start rather than the sweep's shared setup.
+
 ```{r path-table, echo=FALSE}
 knitr::kable(
   data.frame(
     `Problem size` = ilab[match(pth$n_total, isz)],
-    `As a path` = sprintf("%.3g s", pth$warm_s),
-    `Independently` = sprintf("%.3g s", pth$cold_s),
-    Ratio = sprintf("%.2fx", pth$speedup),
+    `As a path` = sprintf("%.3g s", pth$warm_wall),
+    `Independently` = sprintf("%.3g s", pth$cold_wall),
+    Ratio = sprintf("%.2fx", pth$wall_speedup),
+    `Solve time` = sprintf("%.2fx", pth$speedup),
     `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
     check.names = FALSE
   ),
-  align = "lrrrr", booktabs = TRUE,
-  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, summed per-point solve time on a single core of an Apple M4 Pro. Rounds is the pricing rounds the path took against the rounds the independent solves took, summed over the sweep. The independent solve is a one-point path, so both sides are the same solver reached the same way and differ only in whether a point starts from the point before it."
+  align = "lrrrrr", booktabs = TRUE,
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Solve time is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do per point. Rounds is the pricing rounds the path took against the rounds the independent solves took, summed over the sweep. The independent solve is a one-point path, so both sides are the same solver reached the same way and differ only in whether a point starts from the point before it."
 )
 ```
 

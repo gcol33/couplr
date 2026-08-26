@@ -24,7 +24,7 @@ RSCRIPT=${RSCRIPT:-Rscript}
 
 # Order: the three tables the article carries first, so the article can be
 # rebuilt before the supplementary grids have finished.
-ALL="scaling implicit path regimes implicit_grid memory"
+ALL="scaling implicit path regimes implicit_grid memory figure"
 WHICH=${1:-$ALL}
 
 script_for() {
@@ -35,9 +35,26 @@ script_for() {
     regimes)       echo "paper/bench_regimes.R" ;;
     implicit_grid) echo "paper/bench_implicit_grid.R" ;;
     memory)        echo "paper/bench_memory.R" ;;
+    figure)        echo "paper/make-figure.R" ;;
     *)             echo "" ;;
   esac
 }
+
+# What the numbers were measured on. The article states the R version, the
+# platform and the comparison packages' versions, and this is where it reads
+# them from rather than from memory of an earlier run.
+{
+  echo "run        $STAMP"
+  echo "host       $(uname -a)"
+  echo "commit     $(git rev-parse --short HEAD 2>/dev/null) $(git status --porcelain 2>/dev/null | wc -l | tr -d ' ') modified paths"
+  "$RSCRIPT" --vanilla -e 'cat(R.version.string, "\n", R.version$platform, "\n", sep = "");
+    for (p in c("couplr", "MatchIt", "optmatch", "microbenchmark")) {
+      v <- tryCatch(as.character(utils::packageVersion(p)), error = function(e) "not installed")
+      cat(sprintf("%-14s %s\n", p, v))
+    }
+    cat("DESCRIPTION    ", read.dcf("DESCRIPTION", "Version")[1, 1], "\n", sep = "")'
+} > logs/ENVIRONMENT.txt 2>&1
+cat logs/ENVIRONMENT.txt
 
 for name in $WHICH; do
   script=$(script_for "$name")

@@ -37,6 +37,35 @@ static lap::DistanceMetric metric_from_string(const std::string& metric) {
   return lap::DistanceMetric::Euclidean;  // unreachable
 }
 
+Rcpp::NumericVector lazy_pair_distances_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+    const Rcpp::IntegerVector& rows,
+    const Rcpp::IntegerVector& cols) {
+  if (rows.size() != cols.size()) {
+    LAP_ERROR("lazy_pair_distances_impl: rows and cols must have the same length");
+  }
+  // No calipers and no distance cut: these pairs are the ones a solve already
+  // chose, so nothing is being filtered, and maximize is false so the distance
+  // comes back in the sign it was computed in.
+  lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+      left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(),
+      Rcpp::CharacterVector::create(), false);
+
+  Rcpp::NumericVector out(rows.size());
+  for (R_xlen_t k = 0; k < rows.size(); ++k) {
+    const int64_t i = static_cast<int64_t>(rows[k]) - 1;
+    const int64_t j = static_cast<int64_t>(cols[k]) - 1;
+    if (i < 0 || i >= cm.nrow || j < 0 || j >= cm.ncol) {
+      LAP_ERROR("lazy_pair_distances_impl: pair index out of range");
+    }
+    out[k] = cm.at(i, j);
+  }
+  return out;
+}
+
 lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,

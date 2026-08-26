@@ -21,6 +21,10 @@ cpp_lap_solve_jv_lazy <- function(left_mat, right_mat, metric, inv_cov, max_dist
     .Call(`_couplr_cpp_lap_solve_jv_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize)
 }
 
+cpp_lazy_pair_distances <- function(left_mat, right_mat, metric, inv_cov, rows, cols) {
+    .Call(`_couplr_cpp_lazy_pair_distances`, left_mat, right_mat, metric, inv_cov, rows, cols)
+}
+
 cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps = NULL) {
     .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps)
 }

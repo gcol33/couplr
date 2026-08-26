@@ -1,6 +1,6 @@
 # couplr: current state
 
-Updated 2026-08-25. Read this first, then `roadmap.md` for the plan,
+Updated 2026-08-26. Read this first, then `roadmap.md` for the plan,
 `dev_notes/pricing-probe/findings.md` for phase 0's numbers, and
 `dev_notes/phase1/`, `dev_notes/phase2/` and `dev_notes/phase3/` for the
 certification layer's, the flow model's and the edge-generation loop's design,
@@ -1296,8 +1296,10 @@ away would not have drawn the objection, and what replaces it is close to it.
 - **D4, where the expanded benchmarks live: supplementary material.** The submission
   guidance lists among the required files "Other supplementary files that contain
   additional technical details or examples". The factorial grid, the memory
-  measurements and the adversarial implicit cases go there and the 20 pages carry
-  summaries, so no cut list is needed. The same page sets a reproduction limit of
+  measurements and the adversarial implicit cases go there and the paper carries
+  summaries, so no cut list is needed at 20 pages. Batch A has since taken it to
+  21, so that holds only if G and I buy the page back.
+  The same page sets a reproduction limit of
   "a reasonable time (less than 10 minutes)" and recommends supplying intermediate
   outputs for computationally intensive work, so the quick and full reproduction
   modes are compliance: the default reproduction reads the supplied intermediates
@@ -1508,8 +1510,9 @@ boundary.
 `paper/rjournal/rjournal.Rmd` is "couplr: Optimal Matching with Verifiable
 Certificates and Sparse Edge Generation", retitled on 2026-08-25 in answer to the
 first review, and it is built around the five contributions that section names.
-`roadmap.md` still records the superseded title and its reasoning; see below. It renders to 20 pages, which
-is the R Journal's cap, so anything added from here has to displace something.
+`roadmap.md` still records the superseded title and its reasoning; see below. It
+rendered to 20 pages when it was rewritten, and batch A has taken it to 21; see
+"Where things stand" for what buys the page back.
 
 What the rewrite added, against the 1.5.5 article it replaces:
 

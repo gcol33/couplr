@@ -17,7 +17,11 @@
 ## the flow model, and naming a solver under memory_mode = "implicit" is an
 ## error rather than a setting, so that arm carries its own solver by
 ## construction. That is a difference between the arms, and it is the mode's
-## definition rather than a choice this script makes.
+## definition rather than a choice this script makes. A fourth arm solves the
+## same materialized matrix with a flow solver, so the table can be read both
+## ways: down one solver across two representations, and across two solvers on
+## one representation. Without it the implicit row is a representation and a
+## solver at once and neither can be attributed.
 ##
 ## Reproducible via:  Rscript paper/bench_implicit.R
 
@@ -65,11 +69,25 @@ TIMEOUT_S   <- 3600   # per cell; a cell that exceeds it is recorded, not droppe
 ## ---- one timed cell ---------------------------------------------------------
 ## Returns the timing, the answer, and, for the implicit arm, the certificate
 ## and the pair counts the loop kept for itself.
+## The arms, as (representation, solver) pairs. Reading the table sideways is
+## what separates the two: `dense` and `lazy` are one solver over two
+## representations, `dense` and `dense_csflow` are one representation under two
+## solvers, and `implicit` is the mode as a user meets it, which is a
+## representation and a solver at once because its restricted master is the
+## flow model and naming a solver under it is an error rather than a setting.
+mode_spec <- list(
+  dense        = list(memory_mode = "dense",    method = "jv"),
+  lazy         = list(memory_mode = "lazy",     method = "jv"),
+  implicit     = list(memory_mode = "implicit", method = NULL),
+  dense_csflow = list(memory_mode = "dense",    method = "csflow")
+)
+
 time_match <- function(d, mode) {
+  spec <- mode_spec[[mode]]
   tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
   args <- list(left = tr, right = ct, vars = covars,
-               distance = "mahalanobis", memory_mode = mode)
-  if (mode != "implicit") args$method <- "jv"
+               distance = "mahalanobis", memory_mode = spec$memory_mode)
+  if (!is.null(spec$method)) args$method <- spec$method
 
   res <- tryCatch(
     withTimeout({
@@ -153,7 +171,7 @@ for (n_total in SIZES) {
   d <- make_data(n_total, seed = bench_seed(n_total))
 
   modes <- if (n_total %in% DENSE_SIZES) {
-    c("dense", "lazy", "implicit")
+    c("dense", "lazy", "implicit", "dense_csflow")
   } else {
     c("lazy", "implicit")
   }

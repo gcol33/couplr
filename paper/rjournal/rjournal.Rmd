@@ -1043,11 +1043,10 @@ allows the untouched solver body to work on either type.
 
 ## Automatic solver selection
 
-`method = "auto"` inspects the problem and picks a solver. The rules are few,
-and the benchmark in the next section supports rule 5 directly. Rules 1 to 4
-are initial heuristics: they follow from the structure each special-purpose
-routine exploits, and the thresholds in them are not calibrated against a
-benchmark that varies sparsity or rectangularity.
+`method = "auto"` inspects the problem and picks a solver. The rules are few.
+Each follows from the structure the routine it names exploits, and what each one
+costs where it fires is measured in Table \@ref(tab:regimes), on a grid that
+varies the properties the rules read.
 
 1. Problems with at most eight rows and eight columns go to exhaustive
    enumeration, which is exact and faster than setting up a general solver.
@@ -1104,8 +1103,9 @@ Under `"auto"`, the package decides. Below ten million cells, about 80 MB dense,
 it skips the check entirely, since probing free memory on every ordinary problem
 would be pure overhead. Above that, we estimate the dense footprint with a
 factor of four over the raw eight bytes per cell, which covers the copies made
-during conversion and preparation that can coexist under garbage-collection
-lag, and compare that against available system memory. Available memory is read
+during conversion and preparation that can coexist under garbage-collection lag,
+and compare that against available system memory. What a dense solve actually
+peaks at is measured in the Performance section. Available memory is read
 per platform, from `MemAvailable` on Linux, from `vm_stat` page counts on macOS,
 including inactive and speculative pages because the kernel keeps almost nothing
 on the free list, and from `Win32_OperatingSystem` on Windows. If the estimate

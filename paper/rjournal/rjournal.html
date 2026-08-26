@@ -175,10 +175,13 @@ margin-left: 2em;
   <meta name="citation_reference" content="citation_title=Adaptive precision floating-point arithmetic and fast robust geometric predicates;citation_volume=18;citation_doi=10.1007/PL00009321;citation_author=Jonathan Richard Shewchuk" />
   <meta name="citation_reference" content="citation_title=Minimum distance matched sampling with fine balance in an observational study of treatment for ovarian cancer;citation_volume=102;citation_doi=10.1198/016214506000001059;citation_author=Paul R. Rosenbaum;citation_author=Richard N. Ross;citation_author=Jeffrey H. Silber" />
   <meta name="citation_reference" content="citation_title=Large, sparse optimal matching with refined covariate balance in an observational study of the health outcomes produced by new surgeons;citation_volume=110;citation_doi=10.1080/01621459.2014.997879;citation_author=Samuel D. Pimentel;citation_author=Rachel R. Kelz;citation_author=Jeffrey H. Silber;citation_author=Paul R. Rosenbaum" />
+  <meta name="citation_reference" content="citation_title=Selected topics in column generation;citation_volume=53;citation_doi=10.1287/opre.1050.0234;citation_author=Marco E. Lübbecke;citation_author=Jacques Desrosiers" />
+  <meta name="citation_reference" content="citation_title=Graded matching for large observational studies;citation_volume=31;citation_doi=10.1080/10618600.2022.2058001;citation_author=Ruoqi Yu;citation_author=Paul R. Rosenbaum" />
+  <meta name="citation_reference" content="citation_title=Optimizing bipartite matching in real-world applications by incremental cost computation;citation_volume=14;citation_doi=10.14778/3450980.3450983;citation_author=Tenindra Abeywickrama;citation_author=Victor Liang;citation_author=Kian-Lee Tan" />
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","date","description","draft","author","type","output","header-includes","bibliography","journal","slug","pdf_url","creative_commons","packages","CTV","csl"]}},"value":[{"type":"character","attributes":{},"value":["couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation"]},{"type":"character","attributes":{},"value":["2026-08-25"]},{"type":"character","attributes":{},"value":["Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.\n"]},{"type":"logical","attributes":{},"value":[false]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","address","url","orcid_id","email"]}},"value":[{"type":"character","attributes":{},"value":["Gilles Colling"]},{"type":"character","attributes":{},"value":["University of Vienna"]},{"type":"character","attributes":{},"value":["Department of Botany and Biodiversity Research","Rennweg 14, 1030 Vienna, Austria"]},{"type":"character","attributes":{},"value":["https://gillescolling.com"]},{"type":"character","attributes":{},"value":["0000-0003-3070-6066"]},{"type":"character","attributes":{},"value":["gilles.colling051@gmail.com"]}]}]},{"type":"character","attributes":{},"value":["package"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained","toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["\\usepackage{placeins}"]},{"type":"character","attributes":{},"value":["RJreferences.bib"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","issn","firstpage","lastpage"]}},"value":[{"type":"character","attributes":{},"value":["The R Journal"]},{"type":"character","attributes":{},"value":["2073-4859"]},{"type":"double","attributes":{},"value":[1]},{"type":"NULL"}]},{"type":"character","attributes":{},"value":["rjournal"]},{"type":"character","attributes":{},"value":["rjournal.pdf"]},{"type":"character","attributes":{},"value":["CC BY"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["cran","bioc"]}},"value":[{"type":"character","attributes":{},"value":["MatchIt","optmatch","Matching","designmatch","cobalt","clue","lpSolve","couplr","marginaleffects","ggplot2","Rcpp","tibble","dplyr","rlang","purrr"]},{"type":"list","attributes":{},"value":[]}]},{"type":"character","attributes":{},"value":["CausalInference","ChemPhys","ClinicalTrials","Cluster","Databases","Econometrics","ExperimentalDesign","HighPerformanceComputing","MissingData","MixedModels","ModelDeployment","NetworkAnalysis","NumericalMathematics","OfficialStatistics","Optimization","Phylogenetics","Spatial","TeachingStatistics"]},{"type":"character","attributes":{},"value":["C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6/rjtools/rjournal.csl"]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","date","description","draft","author","type","output","header-includes","bibliography","journal","slug","pdf_url","creative_commons","packages","CTV","csl"]}},"value":[{"type":"character","attributes":{},"value":["couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation"]},{"type":"character","attributes":{},"value":["2026-08-25"]},{"type":"character","attributes":{},"value":["Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching, experimental design, task allocation and image alignment. Two things bound what software built on it can offer. An answer arrives without a proof, since a solver reports the state it terminated in rather than a statement about the matching that a user can check. And the graph of admissible pairs is built before it is solved, which puts the size ceiling at the memory that complete graph occupies. We present the couplr package, which addresses both. Every matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package solves without building the graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the sparse solution optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns the assignment the dense solve returns, certified. Warm starting the same loop traces a matching frontier over a swept constraint at a fraction of the cost of solving each point from cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching with an optimality gap sit on the same core. couplr is available on CRAN.\n"]},{"type":"logical","attributes":{},"value":[false]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","address","url","orcid_id","email"]}},"value":[{"type":"character","attributes":{},"value":["Gilles Colling"]},{"type":"character","attributes":{},"value":["University of Vienna"]},{"type":"character","attributes":{},"value":["Department of Botany and Biodiversity Research","Rennweg 14, 1030 Vienna, Austria"]},{"type":"character","attributes":{},"value":["https://gillescolling.com"]},{"type":"character","attributes":{},"value":["0000-0003-3070-6066"]},{"type":"character","attributes":{},"value":["gilles.colling051@gmail.com"]}]}]},{"type":"character","attributes":{},"value":["package"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained","toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["\\usepackage{placeins}"]},{"type":"character","attributes":{},"value":["RJreferences.bib"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","issn","firstpage","lastpage"]}},"value":[{"type":"character","attributes":{},"value":["The R Journal"]},{"type":"character","attributes":{},"value":["2073-4859"]},{"type":"double","attributes":{},"value":[1]},{"type":"NULL"}]},{"type":"character","attributes":{},"value":["rjournal"]},{"type":"character","attributes":{},"value":["rjournal.pdf"]},{"type":"character","attributes":{},"value":["CC BY"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["cran","bioc"]}},"value":[{"type":"character","attributes":{},"value":["MatchIt","optmatch","Matching","designmatch","rcbalance","quickmatch","cobalt","clue","lpSolve","couplr","marginaleffects","ggplot2","Rcpp","tibble","dplyr","rlang","purrr"]},{"type":"list","attributes":{},"value":[]}]},{"type":"character","attributes":{},"value":["CausalInference","ChemPhys","ClinicalTrials","Cluster","Databases","Econometrics","ExperimentalDesign","HighPerformanceComputing","MissingData","MixedModels","ModelDeployment","NetworkAnalysis","NumericalMathematics","OfficialStatistics","Optimization","Phylogenetics","Spatial","TeachingStatistics"]},{"type":"character","attributes":{},"value":["C:/Users/Gilles Colling/AppData/Local/R/win-library/4.6/rjtools/rjournal.csl"]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   
@@ -2633,17 +2636,25 @@ common interface to several matching designs and delegates optimal pair and
 full matching to <a href="https://cran.r-project.org/package=optmatch">optmatch</a> <span class="citation" data-cites="optmatch">(<a href="#ref-optmatch" role="doc-biblioref">Hansen 2007</a>)</span>. <a href="https://cran.r-project.org/package=optmatch">optmatch</a> formulates
 those designs as minimum-cost flow problems <span class="citation" data-cites="HansenKlopfer2006">(<a href="#ref-HansenKlopfer2006" role="doc-biblioref">Hansen and Klopfer 2006</a>)</span> and supports
 more than one back end, currently RELAX-IV and LEMON, selected through its
-<code>solver</code> argument. <a href="https://cran.r-project.org/package=Matching">Matching</a> <span class="citation" data-cites="Matching">(<a href="#ref-Matching" role="doc-biblioref">Sekhon 2011</a>)</span> provides multivariate and
+<code>solver</code> argument with a choice of four LEMON algorithms, and stores sparse
+distances as an <code>InfinitySparseMatrix</code> whose non-finite entries are the pairings
+it will not consider. <a href="https://cran.r-project.org/package=Matching">Matching</a> <span class="citation" data-cites="Matching">(<a href="#ref-Matching" role="doc-biblioref">Sekhon 2011</a>)</span> provides multivariate and
 propensity-score matching, with <code>GenMatch()</code> using genetic search to optimise
 covariate weights. <a href="https://cran.r-project.org/package=designmatch">designmatch</a> <span class="citation" data-cites="designmatch">(<a href="#ref-designmatch" role="doc-biblioref">Zubizarreta et al. 2024</a>)</span> formulates
 balance-constrained designs as integer programs and defaults to the open-source
-HiGHS solver. <a href="https://cran.r-project.org/package=cobalt">cobalt</a> <span class="citation" data-cites="cobalt">(<a href="#ref-cobalt" role="doc-biblioref">Greifer 2025</a>)</span> supplies balance diagnostics across
+HiGHS solver. <a href="https://cran.r-project.org/package=rcbalance">rcbalance</a> <span class="citation" data-cites="rcbalance">(<a href="#ref-rcbalance" role="doc-biblioref">Pimentel 2022</a>)</span> matches under refined covariate
+balance constraints <span class="citation" data-cites="Pimentel2015">(<a href="#ref-Pimentel2015" role="doc-biblioref">Pimentel et al. 2015</a>)</span>, taking a distance structure that lists the
+permissible controls of each treated unit and solving the resulting network as a
+minimum-cost flow problem. <a href="https://cran.r-project.org/package=quickmatch">quickmatch</a> <span class="citation" data-cites="quickmatch">(<a href="#ref-quickmatch" role="doc-biblioref">Sävje et al. 2024</a>)</span> aims at large data
+sets with generalized full matching, which its own description calls
+near-optimal. <a href="https://cran.r-project.org/package=cobalt">cobalt</a> <span class="citation" data-cites="cobalt">(<a href="#ref-cobalt" role="doc-biblioref">Greifer 2025</a>)</span> supplies balance diagnostics across
 packages. What these expose is the matching design; the assignment problem
-underneath is reached through a solver argument at most, without dual
-variables, alternative optima or a bottleneck objective. Statements about other
+underneath is reached through a solver argument at most, and alternative optima
+and a bottleneck objective sit outside all of them. Statements about other
 packages here and in Table <a href="#tab:capability">5</a> were assessed on 2026-08-09
 against <a href="https://cran.r-project.org/package=MatchIt">MatchIt</a> 4.7.2, <a href="https://cran.r-project.org/package=optmatch">optmatch</a> 0.10.8, <a href="https://cran.r-project.org/package=Matching">Matching</a> 4.10-15 and
-<a href="https://cran.r-project.org/package=designmatch">designmatch</a> 0.5.5.</p>
+<a href="https://cran.r-project.org/package=designmatch">designmatch</a> 0.5.5, and against the reference manuals of
+<a href="https://cran.r-project.org/package=rcbalance">rcbalance</a> 1.8.8 and <a href="https://cran.r-project.org/package=quickmatch">quickmatch</a> 0.2.3 on 2026-08-26.</p>
 <p>On the algorithmic side, <a href="https://cran.r-project.org/package=clue">clue</a> <span class="citation" data-cites="clue">(<a href="#ref-clue" role="doc-biblioref">Hornik 2024</a>)</span> exposes the Hungarian method
 through <code>solve_LSAP()</code>, and <a href="https://cran.r-project.org/package=lpSolve">lpSolve</a> <span class="citation" data-cites="lpSolve">(<a href="#ref-lpSolve" role="doc-biblioref"><span class="nocase">Berkelaar et al.</span> 2024</a>)</span> solves the assignment
 problem as a general linear program. These return an optimum for a cost matrix
@@ -2658,11 +2669,26 @@ article is about. The first concerns what a result says about itself. A solve
 returns a matching and a status, and the status records the state the solver
 terminated in. Whether that matching is the optimal one is a separate question
 with a checkable answer, since linear programming supplies optimality
-conditions that a third party can test on the returned solution, and the dual
-variables those conditions need are not part of what the packages above return.</p>
-<p>The second concerns size. The set of admissible pairs is materialised before it
-is solved, so the largest problem that can be attempted is the largest graph
-that fits in memory, whatever the structure of the costs.</p>
+conditions that a third party can test on the returned solution, and none of the
+packages above exports a function that returns the dual variables those
+conditions need or that checks the conditions. <a href="https://cran.r-project.org/package=optmatch">optmatch</a> comes closest:
+a <code>fullmatch()</code> result carries the node prices its flow solver ended on in an
+undocumented attribute, and the function that would evaluate the primal against
+them is internal. What it documents in their place is a solver tolerance, <code>tol</code>
+times the number of subjects bounding how far the returned match may differ from
+an optimal solution of the specified problem.</p>
+<p>The second concerns size. Sparse matching is a developed literature, and what
+its methods have in common is that the sparse network is settled before the
+matching is solved over it. <a href="https://cran.r-project.org/package=rcbalance">rcbalance</a> takes a per-unit list of
+permissible controls built from exact groups and a caliper. <span class="citation" data-cites="YuSilberRosenbaum2020">Yu et al. (<a href="#ref-YuSilberRosenbaum2020" role="doc-biblioref">2020</a>)</span>
+choose a propensity-score caliper by an iterative form of Glover’s algorithm,
+radically reducing the candidate matches, and then match optimally in the much
+sparser graph that leaves. <span class="citation" data-cites="YuRosenbaum2022">Yu and Rosenbaum (<a href="#ref-YuRosenbaum2022" role="doc-biblioref">2022</a>)</span> grade the potential pairings and
+admit lower grades only as far as they are needed, so that only sparse networks
+are built, stored and optimised. In each case the rule deciding which pairs
+exist is fixed in advance of the solve that uses them, and a network too sparse
+drops pairings it should have considered. What is missing is a rule read off the
+solution in hand, and a statement about the pairs it never built.</p>
 <p>We present the <a href="https://cran.r-project.org/package=couplr">couplr</a> package <span class="citation" data-cites="couplr">(<a href="#ref-couplr" role="doc-biblioref">Colling 2026</a>)</span>, which treats the assignment
 problem itself as the organising object and builds the workflow around it. A
 user who starts from a data frame with covariates and a treatment indicator,
@@ -3281,8 +3307,14 @@ pairs, and materialising them is what sets the size ceiling: at 50,000 against
 100,000 the dense cost matrix alone is 40 GB. The lazy representation of the
 previous designs removes the matrix while leaving the search over all <span class="math inline">\(m\)</span>
 columns intact. What <code>memory_mode = &quot;implicit&quot;</code> removes is the graph itself.</p>
-<p>The loop is exact adaptive edge generation, the assignment-problem instance of
-pricing a restricted master against its duals. Write
+<p>The loop is column generation <span class="citation" data-cites="LubbeckeDesrosiers2005">(<a href="#ref-LubbeckeDesrosiers2005" role="doc-biblioref">Lübbecke and Desrosiers 2005</a>)</span> over the pair variables
+of <a href="#eq:lap">(1)</a>. A restricted master problem holds a subset of them, its
+optimal duals price the rest at <span class="math inline">\(C_{ij} - u_i - v_j\)</span>, and the restricted
+solution solves the full problem as soon as no omitted variable prices negative.
+One thing separates it from the textbook setting: the omitted variables are
+enumerated rather than returned by an optimisation oracle, because a pair
+variable is an index rather than a combinatorial object to be searched for.
+Write
 <span class="math inline">\(E_t \subseteq \{1, \dots, n\} \times \{1, \dots, m\}\)</span> for the candidate set at
 round <span class="math inline">\(t\)</span> and <span class="math inline">\(\epsilon\)</span> for the pricing threshold.</p>
 <ol type="1">
@@ -3390,6 +3422,18 @@ its arithmetic.</p>
 <p>Constraints tighten the loop rather than complicating it, since a caliper or a
 distance ceiling is checked before a distance is computed and removes pairs from
 the set to be priced.</p>
+<p>Two neighbours are worth separating from this. <span class="citation" data-cites="Abeywickrama2021">Abeywickrama et al. (<a href="#ref-Abeywickrama2021" role="doc-biblioref">2021</a>)</span> also decline to
+compute a complete cost matrix, solving the assignment exactly while deferring
+exact edge costs behind an inexpensive lower bound; that bound is
+application-specific, and what it saves is arithmetic. The pricing here needs
+nothing of the cost function beyond the ability to evaluate a pair, and what it
+saves is storage, since every omitted pair is still evaluated once per round.
+The metric-tree pricer in the discussion below is where the two meet. Graded
+matching <span class="citation" data-cites="YuRosenbaum2022">(<a href="#ref-YuRosenbaum2022" role="doc-biblioref">Yu and Rosenbaum 2022</a>)</span> also enlarges a sparse network only as far as it has
+to, but a grade is a property of the pairing, fixed before the match; the
+reduced cost that admits a pair here is a property of the solution the master
+has just returned, and the loop stops on a statement about the complete graph
+rather than on the grades running out.</p>
 <p>The mode is available on <code>match_couples()</code> and <code>assignment()</code>, and it is
 requested rather than selected: <code>memory_mode = &quot;auto&quot;</code> does not choose it,
 because the worst case above is a real one. Its
@@ -3738,8 +3782,8 @@ indicator.</p>
 <h3 data-number="10.3" id="scaling"><span class="header-section-number">10.3</span> Scaling</h3>
 <p>Table <a href="#tab:scaling">2</a> reports median wall-clock time on synthetic problems
 with the same eight-covariate structure, at six sizes with a one-to-two ratio of
-treated to control units. Every package materialises the distance matrix here,
-so we time couplr with <code>memory_mode = &quot;dense&quot;</code>.</p>
+treated to control units. Every package in this comparison materialises the
+distance matrix here, so we time couplr with <code>memory_mode = &quot;dense&quot;</code>.</p>
 <div class="layout-chunk" data-layout="l-body">
 <table>
 <caption><span id="tab:scaling">Table 2: </span>One-to-one optimal Mahalanobis matching, median wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Medians of 5, 5, 3, 3, 1 and 1 replicates for the six rows. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a replicate exceeding the 300-second cap.</caption>
@@ -3993,7 +4037,7 @@ Rows where all three offer the feature, covariate distance, propensity-score
 matching, exact blocking and a cost-matrix entry point, are omitted.</p>
 <div class="layout-chunk" data-layout="l-body">
 <table>
-<caption><span id="tab:capability">Table 5: </span>Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch’s full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-25. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8.</caption>
+<caption><span id="tab:capability">Table 5: </span>Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch’s full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-26: optmatch attaches the node prices its flow solver ended on to a fullmatch() result in an undocumented MCFSolutions attribute, and the function that evaluates the primal against them is internal. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8.</caption>
 <colgroup>
 <col style="width: 52%" />
 <col style="width: 14%" />
@@ -4117,10 +4161,13 @@ the GitHub issue tracker.</p>
 <p>No external funding supported this work.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <h3 class="appendix" data-number="12.1" id="cran-packages-used"><span class="header-section-number">12.1</span> CRAN packages used</h3>
-<p><a href="https://cran.r-project.org/package=MatchIt">MatchIt</a>, <a href="https://cran.r-project.org/package=optmatch">optmatch</a>, <a href="https://cran.r-project.org/package=Matching">Matching</a>, <a href="https://cran.r-project.org/package=designmatch">designmatch</a>, <a href="https://cran.r-project.org/package=cobalt">cobalt</a>, <a href="https://cran.r-project.org/package=clue">clue</a>, <a href="https://cran.r-project.org/package=lpSolve">lpSolve</a>, <a href="https://cran.r-project.org/package=couplr">couplr</a>, <a href="https://cran.r-project.org/package=marginaleffects">marginaleffects</a>, <a href="https://cran.r-project.org/package=ggplot2">ggplot2</a>, <a href="https://cran.r-project.org/package=Rcpp">Rcpp</a>, <a href="https://cran.r-project.org/package=tibble">tibble</a>, <a href="https://cran.r-project.org/package=dplyr">dplyr</a>, <a href="https://cran.r-project.org/package=rlang">rlang</a>, <a href="https://cran.r-project.org/package=purrr">purrr</a></p>
+<p><a href="https://cran.r-project.org/package=MatchIt">MatchIt</a>, <a href="https://cran.r-project.org/package=optmatch">optmatch</a>, <a href="https://cran.r-project.org/package=Matching">Matching</a>, <a href="https://cran.r-project.org/package=designmatch">designmatch</a>, <a href="https://cran.r-project.org/package=rcbalance">rcbalance</a>, <a href="https://cran.r-project.org/package=quickmatch">quickmatch</a>, <a href="https://cran.r-project.org/package=cobalt">cobalt</a>, <a href="https://cran.r-project.org/package=clue">clue</a>, <a href="https://cran.r-project.org/package=lpSolve">lpSolve</a>, <a href="https://cran.r-project.org/package=couplr">couplr</a>, <a href="https://cran.r-project.org/package=marginaleffects">marginaleffects</a>, <a href="https://cran.r-project.org/package=ggplot2">ggplot2</a>, <a href="https://cran.r-project.org/package=Rcpp">Rcpp</a>, <a href="https://cran.r-project.org/package=tibble">tibble</a>, <a href="https://cran.r-project.org/package=dplyr">dplyr</a>, <a href="https://cran.r-project.org/package=rlang">rlang</a>, <a href="https://cran.r-project.org/package=purrr">purrr</a></p>
 <h3 class="appendix" data-number="12.2" id="cran-task-views-implied-by-cited-packages"><span class="header-section-number">12.2</span> CRAN Task Views implied by cited packages</h3>
 <p><a href="https://cran.r-project.org/view=CausalInference">CausalInference</a>, <a href="https://cran.r-project.org/view=ChemPhys">ChemPhys</a>, <a href="https://cran.r-project.org/view=ClinicalTrials">ClinicalTrials</a>, <a href="https://cran.r-project.org/view=Cluster">Cluster</a>, <a href="https://cran.r-project.org/view=Databases">Databases</a>, <a href="https://cran.r-project.org/view=Econometrics">Econometrics</a>, <a href="https://cran.r-project.org/view=ExperimentalDesign">ExperimentalDesign</a>, <a href="https://cran.r-project.org/view=HighPerformanceComputing">HighPerformanceComputing</a>, <a href="https://cran.r-project.org/view=MissingData">MissingData</a>, <a href="https://cran.r-project.org/view=MixedModels">MixedModels</a>, <a href="https://cran.r-project.org/view=ModelDeployment">ModelDeployment</a>, <a href="https://cran.r-project.org/view=NetworkAnalysis">NetworkAnalysis</a>, <a href="https://cran.r-project.org/view=NumericalMathematics">NumericalMathematics</a>, <a href="https://cran.r-project.org/view=OfficialStatistics">OfficialStatistics</a>, <a href="https://cran.r-project.org/view=Optimization">Optimization</a>, <a href="https://cran.r-project.org/view=Phylogenetics">Phylogenetics</a>, <a href="https://cran.r-project.org/view=Spatial">Spatial</a>, <a href="https://cran.r-project.org/view=TeachingStatistics">TeachingStatistics</a></p>
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Abeywickrama2021" class="csl-entry" role="listitem">
+T. Abeywickrama, V. Liang and K.-L. Tan. Optimizing bipartite matching in real-world applications by incremental cost computation. <em>Proceedings of the VLDB Endowment</em>, 14(7): 1150–1158, 2021. DOI <a href="https://doi.org/10.14778/3450980.3450983">10.14778/3450980.3450983</a>.
+</div>
 <div id="ref-Ahuja1993" class="csl-entry" role="listitem">
 R. K. Ahuja, T. L. Magnanti and J. B. Orlin. <em>Network flows: Theory, algorithms, and applications.</em> Englewood Cliffs, NJ: Prentice Hall, 1993.
 </div>
@@ -4202,6 +4249,9 @@ R. J. LaLonde. Evaluating the econometric evaluations of training programs with 
 <div id="ref-Lawler1972" class="csl-entry" role="listitem">
 E. L. Lawler. A procedure for computing the <span>K</span> best solutions to discrete optimization problems and its application to the shortest path problem. <em>Management Science</em>, 18(7): 401–405, 1972. DOI <a href="https://doi.org/10.1287/mnsc.18.7.401">10.1287/mnsc.18.7.401</a>.
 </div>
+<div id="ref-LubbeckeDesrosiers2005" class="csl-entry" role="listitem">
+M. E. Lübbecke and J. Desrosiers. Selected topics in column generation. <em>Operations Research</em>, 53(6): 1007–1023, 2005. DOI <a href="https://doi.org/10.1287/opre.1050.0234">10.1287/opre.1050.0234</a>.
+</div>
 <div id="ref-tibble" class="csl-entry" role="listitem">
 K. Müller and H. Wickham. <em><span class="nocase">tibble</span>: Simple data frames.</em> 2025. URL <a href="https://CRAN.R-project.org/package=tibble">https://CRAN.R-project.org/package=tibble</a>. R package version 3.3.0.
 </div>
@@ -4213,6 +4263,9 @@ K. G. Murty. An algorithm for ranking all the assignments in order of increasing
 </div>
 <div id="ref-Orlin1993" class="csl-entry" role="listitem">
 J. B. Orlin. A faster strongly polynomial minimum cost flow algorithm. <em>Operations Research</em>, 41(2): 338–350, 1993. DOI <a href="https://doi.org/10.1287/opre.41.2.338">10.1287/opre.41.2.338</a>.
+</div>
+<div id="ref-rcbalance" class="csl-entry" role="listitem">
+S. D. Pimentel. <em><span class="nocase">rcbalance</span>: Large, sparse optimal matching with refined covariate balance.</em> 2022. URL <a href="https://CRAN.R-project.org/package=rcbalance">https://CRAN.R-project.org/package=rcbalance</a>. R package version 1.8.8.
 </div>
 <div id="ref-Pimentel2015" class="csl-entry" role="listitem">
 S. D. Pimentel, R. R. Kelz, J. H. Silber and P. R. Rosenbaum. Large, sparse optimal matching with refined covariate balance in an observational study of the health outcomes produced by new surgeons. <em>Journal of the American Statistical Association</em>, 110(510): 515–527, 2015. DOI <a href="https://doi.org/10.1080/01621459.2014.997879">10.1080/01621459.2014.997879</a>.
@@ -4229,6 +4282,9 @@ P. R. Rosenbaum, R. N. Ross and J. H. Silber. Minimum distance matched sampling 
 <div id="ref-RosenbaumRubin1983" class="csl-entry" role="listitem">
 P. R. Rosenbaum and D. B. Rubin. The central role of the propensity score in observational studies for causal effects. <em>Biometrika</em>, 70(1): 41–55, 1983. DOI <a href="https://doi.org/10.1093/biomet/70.1.41">10.1093/biomet/70.1.41</a>.
 </div>
+<div id="ref-quickmatch" class="csl-entry" role="listitem">
+F. Sävje, J. S. Sekhon and M. Higgins. <em><span class="nocase">quickmatch</span>: Quick generalized full matching.</em> 2024. URL <a href="https://CRAN.R-project.org/package=quickmatch">https://CRAN.R-project.org/package=quickmatch</a>. R package version 0.2.3.
+</div>
 <div id="ref-Matching" class="csl-entry" role="listitem">
 J. S. Sekhon. Multivariate and propensity score matching software with automated balance optimization: The <span>Matching</span> package for <span>R</span>. <em>Journal of Statistical Software</em>, 42(7): 1–52, 2011. DOI <a href="https://doi.org/10.18637/jss.v042.i07">10.18637/jss.v042.i07</a>.
 </div>
@@ -4240,6 +4296,12 @@ E. A. Stuart. Matching methods for causal inference: A review and a look forward
 </div>
 <div id="ref-ggplot2" class="csl-entry" role="listitem">
 H. Wickham. <em><span class="nocase">ggplot2</span>: Elegant graphics for data analysis.</em> Springer-Verlag New York, 2016. URL <a href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+</div>
+<div id="ref-YuRosenbaum2022" class="csl-entry" role="listitem">
+R. Yu and P. R. Rosenbaum. Graded matching for large observational studies. <em>Journal of Computational and Graphical Statistics</em>, 31(4): 1406–1415, 2022. DOI <a href="https://doi.org/10.1080/10618600.2022.2058001">10.1080/10618600.2022.2058001</a>.
+</div>
+<div id="ref-YuSilberRosenbaum2020" class="csl-entry" role="listitem">
+R. Yu, J. H. Silber and P. R. Rosenbaum. Matching methods for observational studies derived from large administrative databases. <em>Statistical Science</em>, 35(3): 338–355, 2020. DOI <a href="https://doi.org/10.1214/19-STS699">10.1214/19-STS699</a>.
 </div>
 <div id="ref-designmatch" class="csl-entry" role="listitem">
 J. R. Zubizarreta, C. Kilcioglu and J. P. Vielma. <em><span class="nocase">designmatch</span>: Matched samples that are balanced and representative by design.</em> 2024. URL <a href="https://CRAN.R-project.org/package=designmatch">https://CRAN.R-project.org/package=designmatch</a>. R package version 0.5.4.

@@ -28,17 +28,25 @@ common interface to several matching designs and delegates optimal pair and
 full matching to \CRANpkg{optmatch} \citep{optmatch}. \CRANpkg{optmatch} formulates
 those designs as minimum-cost flow problems \citep{HansenKlopfer2006} and supports
 more than one back end, currently RELAX-IV and LEMON, selected through its
-\texttt{solver} argument. \CRANpkg{Matching} \citep{Matching} provides multivariate and
+\texttt{solver} argument with a choice of four LEMON algorithms, and stores sparse
+distances as an \texttt{InfinitySparseMatrix} whose non-finite entries are the pairings
+it will not consider. \CRANpkg{Matching} \citep{Matching} provides multivariate and
 propensity-score matching, with \texttt{GenMatch()} using genetic search to optimise
 covariate weights. \CRANpkg{designmatch} \citep{designmatch} formulates
 balance-constrained designs as integer programs and defaults to the open-source
-HiGHS solver. \CRANpkg{cobalt} \citep{cobalt} supplies balance diagnostics across
+HiGHS solver. \CRANpkg{rcbalance} \citep{rcbalance} matches under refined covariate
+balance constraints \citep{Pimentel2015}, taking a distance structure that lists the
+permissible controls of each treated unit and solving the resulting network as a
+minimum-cost flow problem. \CRANpkg{quickmatch} \citep{quickmatch} aims at large data
+sets with generalized full matching, which its own description calls
+near-optimal. \CRANpkg{cobalt} \citep{cobalt} supplies balance diagnostics across
 packages. What these expose is the matching design; the assignment problem
-underneath is reached through a solver argument at most, without dual
-variables, alternative optima or a bottleneck objective. Statements about other
+underneath is reached through a solver argument at most, and alternative optima
+and a bottleneck objective sit outside all of them. Statements about other
 packages here and in Table \ref{tab:capability} were assessed on 2026-08-09
 against \CRANpkg{MatchIt} 4.7.2, \CRANpkg{optmatch} 0.10.8, \CRANpkg{Matching} 4.10-15 and
-\CRANpkg{designmatch} 0.5.5.
+\CRANpkg{designmatch} 0.5.5, and against the reference manuals of
+\CRANpkg{rcbalance} 1.8.8 and \CRANpkg{quickmatch} 0.2.3 on 2026-08-26.
 
 On the algorithmic side, \CRANpkg{clue} \citep{clue} exposes the Hungarian method
 through \texttt{solve\_LSAP()}, and \CRANpkg{lpSolve} \citep{lpSolve} solves the assignment
@@ -56,12 +64,27 @@ article is about. The first concerns what a result says about itself. A solve
 returns a matching and a status, and the status records the state the solver
 terminated in. Whether that matching is the optimal one is a separate question
 with a checkable answer, since linear programming supplies optimality
-conditions that a third party can test on the returned solution, and the dual
-variables those conditions need are not part of what the packages above return.
+conditions that a third party can test on the returned solution, and none of the
+packages above exports a function that returns the dual variables those
+conditions need or that checks the conditions. \CRANpkg{optmatch} comes closest:
+a \texttt{fullmatch()} result carries the node prices its flow solver ended on in an
+undocumented attribute, and the function that would evaluate the primal against
+them is internal. What it documents in their place is a solver tolerance, \texttt{tol}
+times the number of subjects bounding how far the returned match may differ from
+an optimal solution of the specified problem.
 
-The second concerns size. The set of admissible pairs is materialised before it
-is solved, so the largest problem that can be attempted is the largest graph
-that fits in memory, whatever the structure of the costs.
+The second concerns size. Sparse matching is a developed literature, and what
+its methods have in common is that the sparse network is settled before the
+matching is solved over it. \CRANpkg{rcbalance} takes a per-unit list of
+permissible controls built from exact groups and a caliper. \citet{YuSilberRosenbaum2020}
+choose a propensity-score caliper by an iterative form of Glover's algorithm,
+radically reducing the candidate matches, and then match optimally in the much
+sparser graph that leaves. \citet{YuRosenbaum2022} grade the potential pairings and
+admit lower grades only as far as they are needed, so that only sparse networks
+are built, stored and optimised. In each case the rule deciding which pairs
+exist is fixed in advance of the solve that uses them, and a network too sparse
+drops pairings it should have considered. What is missing is a rule read off the
+solution in hand, and a statement about the pairs it never built.
 
 We present the \CRANpkg{couplr} package \citep{couplr}, which treats the assignment
 problem itself as the organising object and builds the workflow around it. A
@@ -762,8 +785,14 @@ pairs, and materialising them is what sets the size ceiling: at 50,000 against
 previous designs removes the matrix while leaving the search over all \(m\)
 columns intact. What \texttt{memory\_mode\ =\ "implicit"} removes is the graph itself.
 
-The loop is exact adaptive edge generation, the assignment-problem instance of
-pricing a restricted master against its duals. Write
+The loop is column generation \citep{LubbeckeDesrosiers2005} over the pair variables
+of \eqref{eq:lap}. A restricted master problem holds a subset of them, its
+optimal duals price the rest at \(C_{ij} - u_i - v_j\), and the restricted
+solution solves the full problem as soon as no omitted variable prices negative.
+One thing separates it from the textbook setting: the omitted variables are
+enumerated rather than returned by an optimisation oracle, because a pair
+variable is an index rather than a combinatorial object to be searched for.
+Write
 \(E_t \subseteq \{1, \dots, n\} \times \{1, \dots, m\}\) for the candidate set at
 round \(t\) and \(\epsilon\) for the pricing threshold.
 
@@ -898,6 +927,19 @@ its arithmetic.
 Constraints tighten the loop rather than complicating it, since a caliper or a
 distance ceiling is checked before a distance is computed and removes pairs from
 the set to be priced.
+
+Two neighbours are worth separating from this. \citet{Abeywickrama2021} also decline to
+compute a complete cost matrix, solving the assignment exactly while deferring
+exact edge costs behind an inexpensive lower bound; that bound is
+application-specific, and what it saves is arithmetic. The pricing here needs
+nothing of the cost function beyond the ability to evaluate a pair, and what it
+saves is storage, since every omitted pair is still evaluated once per round.
+The metric-tree pricer in the discussion below is where the two meet. Graded
+matching \citep{YuRosenbaum2022} also enlarges a sparse network only as far as it has
+to, but a grade is a property of the pairing, fixed before the match; the
+reduced cost that admits a pair here is a property of the solution the master
+has just returned, and the loop stops on a statement about the complete graph
+rather than on the grades running out.
 
 The mode is available on \texttt{match\_couples()} and \texttt{assignment()}, and it is
 requested rather than selected: \texttt{memory\_mode\ =\ "auto"} does not choose it,
@@ -1315,8 +1357,8 @@ indicator.
 
 Table \ref{tab:scaling} reports median wall-clock time on synthetic problems
 with the same eight-covariate structure, at six sizes with a one-to-two ratio of
-treated to control units. Every package materialises the distance matrix here,
-so we time couplr with \texttt{memory\_mode\ =\ "dense"}.
+treated to control units. Every package in this comparison materialises the
+distance matrix here, so we time couplr with \texttt{memory\_mode\ =\ "dense"}.
 
 \begin{table}
 
@@ -1464,7 +1506,7 @@ matching, exact blocking and a cost-matrix entry point, are omitted.
 
 \begin{table}
 
-\caption{\label{tab:capability}Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-25. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8.}
+\caption{\label{tab:capability}Selected assignment-layer features. The table covers the layer this article is about and deliberately omits areas where the alternatives lead, among them the breadth of matching designs reachable through a single MatchIt call and the maturity of optmatch's full-matching implementation. Row meanings: per-variable calipers are marked partial for optmatch because its calipers threshold one distance object at a time, so a per-variable set requires combining objects; rectangular problems are accepted by both alternatives as unequal group sizes, but reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix; the assignment algorithm is user-selectable in optmatch through solver = (RELAX-IV or LEMON, with a choice of LEMON algorithm) and in MatchIt by forwarding solver to optmatch::fullmatch(); the certificate row records whether the package exports a function returning dual variables or verifying optimality, which neither alternative does, and was assessed on 2026-08-26: optmatch attaches the node prices its flow solver ended on to a fullmatch() result in an undocumented MCFSolutions attribute, and the function that evaluates the primal against them is internal. The other rows were assessed 2026-08-09. Both assessments were made against MatchIt 4.7.2 and optmatch 0.10.8.}
 \centering
 \begin{tabular}[t]{lccc}
 \toprule

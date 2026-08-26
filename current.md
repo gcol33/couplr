@@ -11,11 +11,12 @@ findings and repros.
 **The article came back on its first review, and it is a major revision.** A
 reviewer returned 20 pages on 2026-08-25. It is saved verbatim at
 `review/round1.md`, triaged in `review/INDEX.md`, and decided in
-`review/dispositions.md`. Batches A, B, C and D are done. See "The first
+`review/dispositions.md`. Batches A, B, C, D and F are done. See "The first
 review is in, and it lands on the title", "Batch A is done: the certificate
 says which arithmetic it was reached in", "Batch B is done: the dual is a
-program and slackness is its own display", and "Batch D is done: the loop has a
-proposition and the sentinel has a lemma".
+program and slackness is its own display", "Batch D is done: the loop has a
+proposition and the sentinel has a lemma", and "Batch F is done: the novelty
+claim is narrower and one of ours was wrong".
 
 **Phases 0 through 3 are done, and the article they were for is written.** Phase
 0's probe returned GO, phase 1 is the certification layer, phase 2 is the one
@@ -26,17 +27,17 @@ rewritten around five contributions; see "The R Journal article is rewritten"
 below. What is left on `roadmap.md` is phase 4, which is section E and section
 I. See "Next action" at the end.
 
-**The article is two pages over the hard limit, and that is the binding
-constraint on the rest of the round.** It knits to 22 pages against the R
-Journal's 20: batch A cost the first and batch B's second display cost the
-second. Batch D added a proposition, a lemma and two proofs and cost nothing,
-because the trims its own material made redundant paid for it. What is left
-cannot come back out, so the pages are owed to batch I's abstract cut and to
-batch G moving the benchmark grids to supplementary material. The overflow is
-smaller than the count makes it look: page 22 holds one bibliography entry and
-the address block, so about ten lines pull it back to 21. Re-measure after G and
-I. If it is still over then, D4's conclusion that no cut list is needed stops
-holding.
+**The article is three pages over the hard limit, and that is the binding
+constraint on the rest of the round.** It knits to 23 pages against the R
+Journal's 20: batch A cost the first, batch B's second display the second, and
+batch F the third, about half of that third being six new bibliography entries.
+Batch D added a proposition, a lemma and two proofs and cost nothing, because
+the trims its own material made redundant paid for it. None of it can come back
+out, so the pages are owed to batch I's abstract cut and to batch G moving the
+benchmark grids to supplementary material. The overflow is smaller than the
+count makes it look: page 23 holds three bibliography entries and the address
+block. Re-measure after G and I. If it is still over then, D4's conclusion that
+no cut list is needed stops holding, and the cut list is the next decision.
 
 **The tree is committed and pushed, and the installed build is the tree.**
 Batch A is the head of `main` and nothing is unpushed.
@@ -1554,21 +1555,63 @@ loop as column generation and cite Lübbecke and Desrosiers. The section says
 "pricing a restricted master against its duals" and stops short of the name.
 That is F's, where nothing is written before the primary source is read.
 
+## Batch F is done: the novelty claim is narrower and one of ours was wrong
+
+Manuscript and bibliography only, no code. Every source was read this session
+before its sentence was written; `review/dispositions.md`, "Batch F, what
+landed", records what each one says in its authors' terms.
+
+**The loop is called column generation, cited.** The section opens on the
+restricted master, the pricing formula and the stopping condition in Lübbecke
+and Desrosiers's own terms, and names the one departure: pair variables are
+enumerated rather than produced by an optimisation oracle, a pair variable being
+an index rather than a combinatorial object to search for.
+
+**The second limit in the introduction is the reviewer's narrower claim.** It no
+longer says admissible pairs are generally materialised before solving, which
+was too sweeping. It says sparse matching is a developed literature whose sparse
+network is settled before the solve that uses it, names how rcbalance, Yu-Silber-
+Rosenbaum 2020 and Yu-Rosenbaum 2022 each settle it, and states what is missing
+as a rule read off the solution in hand plus a statement about the pairs never
+built. Abeywickrama et al. 2021 and graded matching are separated from the loop
+in their own paragraph, on what each saves: arithmetic behind an
+application-specific bound, against storage behind general dual pricing.
+
+**A claim of ours was false and is corrected.** The paper said the dual
+variables the optimality conditions need "are not part of what the packages
+above return". optmatch 0.10.8 returns them: `attr(m, "MCFSolutions")@nodes$price`
+on a `fullmatch()` result holds real node prices, checked directly on
+`nuclearplants`, 34 nodes from -1.2523 to 0. What is true is the narrower thing:
+the class has no Rd page and is not exported, and `evaluate_primal()` is not
+exported either, so no function reaches them. The introduction says that instead,
+names optmatch as the closest, and gives optmatch's own documented guarantee,
+`tol` times the number of subjects. Table 5's certificate-row note carries the
+same correction, re-dated 2026-08-26. A reviewer who checked would have found
+this; better it is ours.
+
+**Not written here.** Item 2.6 asks couplr's empirical breadth to match current
+matching-software articles. That is batch G, and nothing was written to stand in
+for it. RBestMatch stays out of the paper: CRAN-archived, last 0.1.1 on
+2022-02-19, and its method is cited through Yu and Rosenbaum 2022.
+
+Knitted and read: 0 unresolved references, every new citation resolves, and
+pages 2 and 11 were inspected in the PDF.
+
 ## Next action
 
-**Batch F: related work.** Items 2.1 through 2.6. The novelty boundary as drawn
-is too wide, and the batch is reading before writing: column generation and
-Lübbecke and Desrosiers for 2.1, and Pimentel et al. 2015, `rcbalance`, and Yu,
-Silber and Rosenbaum 2020 for 2.2, against which the sweeping claim that
-admissible pairs are generally materialised before solving has to be narrowed.
-See `review/dispositions.md`, batch F.
+**Batch G: the benchmark structure.** Items 3.1 through 3.8, six of which need
+new runs, and D4 has already established that the factorial grid, the memory
+measurements and the adversarial implicit cases go to supplementary material
+while the paper keeps a summary. This is also what item 2.6 asks for and the
+larger half of what buys the pages back. The runs belong on the Mac mini in
+`~/dev/couplr-bench`; see "paper bench machine" for why, and note the bench
+scripts resume from their CSVs.
 
 Then in review order: **E** what the verifier is independent of, one paragraph
-that costs nothing; **G** the benchmark re-runs, now unblocked by D4; **H** the
-worked examples; **I** reproducibility, the abstract's 255 words, and the 1.6.2
-release.
+that costs nothing; **H** the worked examples; **I** reproducibility, the
+abstract's 255 words, and the 1.6.2 release.
 
-**Two things a batch after this one has to carry.** The article is two pages
+**Two things a batch after this one has to carry.** The article is three pages
 over the limit, so G and I are not optional tidying, they are what buys the
 pages back. And the release is gated: `sap_dense` is a breaking change, so 1.6.2 has
 to clear `cran-check` and a blocking `check_win_devel()` before any upload.
@@ -1592,8 +1635,8 @@ boundary.
 Certificates and Sparse Edge Generation", retitled on 2026-08-25 in answer to the
 first review, and it is built around the five contributions that section names.
 `roadmap.md` still records the superseded title and its reasoning; see below. It
-rendered to 20 pages when it was rewritten, and batches A and B have taken it to
-22; see
+rendered to 20 pages when it was rewritten, and batches A, B and F have taken it
+to 23; see
 "Where things stand" for what buys the page back.
 
 What the rewrite added, against the 1.5.5 article it replaces:

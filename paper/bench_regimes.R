@@ -327,20 +327,28 @@ summ <- do.call(rbind, lapply(split(per_instance, list(cell_key(per_instance),
 rownames(summ) <- NULL
 write.csv(summ, file.path(paper_dir, "regime-results.csv"), row.names = FALSE)
 
-## The comparison the rules are on trial for: in each cell, the fastest named
-## solver against what "auto" delivered. "auto" is timed as a solver of its own,
-## so its number carries the probing pass the rules cost.
+## The comparison the rules are on trial for, and it is two comparisons rather
+## than one. `ratio` is what a caller pays for `"auto"`: it carries the probing
+## pass, which on a small problem can be a large share of a short solve.
+## `picked_ratio` is what the rule's *choice* costs, the solver it names timed as
+## a named solver against the cell's fastest, with no probe in either number.
+## Reporting only the first would charge the rules for the probe; reporting only
+## the second would hide what the probe costs.
 verdict <- do.call(rbind, lapply(split(summ, cell_key(summ)), function(g) {
   named <- g[g$method != "auto", ]
   auto  <- g[g$method == "auto", ]
   if (!nrow(named) || !nrow(auto)) return(NULL)
   best <- named[which.min(named$median_s), ]
+  picked <- named[named$method == auto$auto_method[1], ]
+  picked_s <- if (nrow(picked)) picked$median_s[1] else NA_real_
   data.frame(tier = g$tier[1], regime = g$regime[1], pattern = g$pattern[1],
              shape = sprintf("%d x %d", g$n_rows[1], g$n_cols[1]),
              auto_rule = auto$auto_rule[1], auto_picks = auto$auto_method[1],
              auto_s = round(auto$median_s, 4),
+             picked_s = round(picked_s, 4),
              best_method = best$method, best_s = round(best$median_s, 4),
              ratio = round(auto$median_s / best$median_s, 2),
+             picked_ratio = round(picked_s / best$median_s, 2),
              stringsAsFactors = FALSE)
 }))
 rownames(verdict) <- NULL
@@ -352,10 +360,12 @@ print(utils::head(verdict, 20), row.names = FALSE)
 
 cat("\n--- how often each rule fires, and what it costs ---\n")
 by_rule <- do.call(rbind, lapply(split(verdict, verdict$auto_rule), function(g)
-  data.frame(rule = g$auto_rule[1], cells = nrow(g),
-             median_ratio = round(median(g$ratio), 2),
-             worst_ratio = round(max(g$ratio), 2),
+  data.frame(rule = g$auto_rule[1], solver = g$auto_picks[1], cells = nrow(g),
              picked_the_best = sum(g$auto_picks == g$best_method),
+             median_picked_ratio = round(median(g$picked_ratio, na.rm = TRUE), 2),
+             worst_picked_ratio = round(max(g$picked_ratio, na.rm = TRUE), 2),
+             median_auto_ratio = round(median(g$ratio), 2),
+             worst_auto_ratio = round(max(g$ratio), 2),
              stringsAsFactors = FALSE)))
 print(by_rule, row.names = FALSE)
 

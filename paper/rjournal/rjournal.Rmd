@@ -1454,12 +1454,22 @@ tab <- data.frame(
   check.names = FALSE
 )
 
+single_txt <- if (length(single) == 1) {
+  sprintf("The %s row carries one instance and is a single run rather than a median, so no range is reported for it.",
+          format(single, big.mark = ","))
+} else if (length(single) > 1) {
+  sprintf("The %s rows carry one instance each and are single runs rather than medians, so no range is reported for them.",
+          paste(format(single, big.mark = ","), collapse = " and "))
+} else {
+  ""
+}
+
 knitr::kable(
   tab, align = "lrrr", booktabs = TRUE,
-  caption = sprintf(
-    "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance. The %s %s carry one instance and are single runs rather than medians, so no range is reported for them. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the %d-second cap.",
-    paste(format(single, big.mark = ","), collapse = " and "),
-    if (length(single) == 1) "row" else "rows", 600L)
+  caption = paste(
+    "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance.",
+    single_txt,
+    "The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the 600-second cap.")
 )
 ```
 
@@ -1593,6 +1603,11 @@ ig_slow    <- ig_clouds$cloud[which.min(ig_clouds$speedup_med)]
 ig_slow_x  <- min(ig_clouds$speedup_med)
 ig_fast    <- ig_clouds$cloud[which.max(ig_clouds$speedup_med)]
 ig_fast_x  <- max(ig_clouds$speedup_med)
+## A ratio below one is the loop losing, and the sentence says so only where
+## that happens rather than carrying the caveat unconditionally.
+ig_note    <- if (ig_slow_x < 1) {
+  ", where a ratio below one is the loop losing to the lazy path"
+} else ""
 ig_dims    <- igrid[igrid$sweep == "dimension", ]
 ig_dim_rng <- range(ig_dims$dim)
 ```
@@ -1613,9 +1628,9 @@ the complete pair count, at `r sprintf("%.2f", ig_dist[1])` to
 `r ig_cert` of the `r ig_cells` cells certified with a duality gap of
 `r format(ig_gap, digits = 3)`, and `r ig_eq` of the `r ig_eq_den` cells small
 enough to run the dense path beside the loop returned the same pairing unit by
-unit. The margin over the lazy path is where the clouds separate: it is widest
-on `r ig_fast` at `r sprintf("%.2fx", ig_fast_x)` and narrowest on `r ig_slow`
-at `r sprintf("%.2fx", ig_slow_x)`.
+unit. The margin over the lazy path is where the clouds separate: it runs from
+`r sprintf("%.2fx", ig_fast_x)` on `r ig_fast` to
+`r sprintf("%.2fx", ig_slow_x)` on `r ig_slow``r ig_note`.
 
 ## Memory
 

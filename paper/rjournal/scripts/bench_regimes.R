@@ -40,14 +40,11 @@ repo_root <- if (file.exists("DESCRIPTION")) {
 ## from an optimised build, matching how the package is installed in use.
 options(pkg.build_extra_flags = FALSE)
 
-for (p in c("R.utils", "RhpcBLASctl")) {
-  if (!requireNamespace(p, quietly = TRUE)) {
-    stop("This benchmark needs the ", p, " package: install.packages(\"", p,
-         "\")", call. = FALSE)
-  }
+if (!requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+  stop("This benchmark needs the RhpcBLASctl package: ",
+       "install.packages(\"RhpcBLASctl\")", call. = FALSE)
 }
 suppressPackageStartupMessages({
-  library(R.utils)
   library(RhpcBLASctl)
   pkgload::load_all(repo_root, quiet = TRUE)
 })
@@ -155,37 +152,37 @@ instance_seed <- function(tier, regime, pattern, n_rows, n_cols, instance) {
 ## `proc.time()` cannot resolve that. Each repetition is written out on its own
 ## row.
 measure <- function(cost, method, reps, timeout_s) {
-  probe <- tryCatch(
-    withTimeout({
-      t0 <- proc.time()[["elapsed"]]
-      res <- assignment(cost, method = method)
-      list(seconds = proc.time()[["elapsed"]] - t0, status = "ok",
-           total_cost = res$total_cost, n_matched = sum(res$match > 0L))
-    }, timeout = timeout_s, onTimeout = "error"),
-    TimeoutException = function(e)
-      list(seconds = NA_real_, status = "timeout",
-           total_cost = NA_real_, n_matched = NA_integer_),
-    error = function(e)
-      list(seconds = NA_real_, status = paste0("error: ", conditionMessage(e)),
-           total_cost = NA_real_, n_matched = NA_integer_)
-  )
-  if (!identical(probe$status, "ok")) {
-    return(list(seconds = NA_real_, status = probe$status,
-                total_cost = probe$total_cost, n_matched = probe$n_matched))
-  }
-  secs <- if (HAVE_MB) {
-    mb <- microbenchmark::microbenchmark(assignment(cost, method = method),
-                                         times = reps, unit = "s")
-    as.numeric(mb$time) / 1e9
-  } else {
-    vapply(seq_len(reps), function(i) {
-      t0 <- proc.time()[["elapsed"]]
-      invisible(assignment(cost, method = method))
-      proc.time()[["elapsed"]] - t0
-    }, numeric(1))
-  }
-  list(seconds = secs, status = rep("ok", length(secs)),
-       total_cost = probe$total_cost, n_matched = probe$n_matched)
+  failed <- function(status) list(seconds = NA_real_, status = status,
+                                  total_cost = NA_real_, n_matched = NA_integer_)
+
+  probe <- bounded_call(function() {
+    t0 <- proc.time()[["elapsed"]]
+    res <- assignment(cost, method = method)
+    list(seconds = proc.time()[["elapsed"]] - t0,
+         total_cost = res$total_cost, n_matched = sum(res$match > 0L))
+  }, timeout_s)
+  if (!probe$ok) return(failed(probe$status))
+
+  ## The probe established that one solve fits the budget, so the repetitions
+  ## get that budget once each, and a solver whose cost varies between runs is
+  ## still bounded.
+  timed <- bounded_call(function() {
+    if (HAVE_MB) {
+      mb <- microbenchmark::microbenchmark(assignment(cost, method = method),
+                                           times = reps, unit = "s")
+      as.numeric(mb$time) / 1e9
+    } else {
+      vapply(seq_len(reps), function(i) {
+        t0 <- proc.time()[["elapsed"]]
+        invisible(assignment(cost, method = method))
+        proc.time()[["elapsed"]] - t0
+      }, numeric(1))
+    }
+  }, reps * timeout_s + 10)
+  if (!timed$ok) return(failed(timed$status))
+
+  list(seconds = timed$value, status = rep("ok", length(timed$value)),
+       total_cost = probe$value$total_cost, n_matched = probe$value$n_matched)
 }
 
 ## ---- resume-safe accumulators ----------------------------------------------

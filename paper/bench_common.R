@@ -2,6 +2,45 @@
 ## Every reported size is generated here, so the figures, the scaling table and
 ## the lazy-path timings all describe the same eight-covariate problem.
 
+## ============================================================================
+## Bounding a call by the clock
+## ============================================================================
+## A solver spends its time inside compiled code, where a limit set in the
+## interpreter cannot fire, so the clock is enforced from outside the call: it
+## runs in a forked child and the parent kills a child that outruns its budget.
+##
+## Only the child's return value crosses back, so anything measured about the
+## call, its elapsed time or the heap it turned over, has to be measured inside
+## `fn` and returned from it. Keep that value small: it is serialised.
+##
+## Returns list(ok = TRUE, value = <what fn returned>), or
+## list(ok = FALSE, status = "timeout"), or
+## list(ok = FALSE, status = "error: <message>").
+bounded_call <- function(fn, timeout_s) {
+  if (.Platform$OS.type != "unix") {
+    stop("bounded_call() enforces its timeout by forking, which needs a unix ",
+         "platform. The paper's benchmarks are measured on one machine; run ",
+         "them there.", call. = FALSE)
+  }
+  job <- parallel::mcparallel(fn())
+  got <- parallel::mccollect(job, wait = FALSE, timeout = timeout_s)
+  if (is.null(got)) {
+    tools::pskill(job$pid, tools::SIGKILL)
+    ## Reaping a killed child: it has no result to deliver, and saying so is
+    ## not a condition the caller needs to see.
+    suppressWarnings(parallel::mccollect(job, wait = FALSE, timeout = 2))
+    return(list(ok = FALSE, status = "timeout"))
+  }
+  value <- got[[1L]]
+  if (inherits(value, "try-error")) {
+    cond <- attr(value, "condition")
+    msg <- if (is.null(cond)) trimws(as.character(value)) else
+      conditionMessage(cond)
+    return(list(ok = FALSE, status = paste0("error: ", msg)))
+  }
+  list(ok = TRUE, value = value)
+}
+
 ## 6 continuous (age-like, educ-like, two-earnings-like, two extras),
 ## 2 binary (race / nodegree-like). Treated shifted slightly to make
 ## the matching problem non-degenerate. Treated:control = 1:2.

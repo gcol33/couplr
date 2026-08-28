@@ -24,6 +24,7 @@
 ## solver at once and neither can be attributed.
 ##
 ## Reproducible via:  Rscript paper/bench_implicit.R
+##                    Rscript paper/bench_implicit.R --quick
 
 repo_root <- if (file.exists("DESCRIPTION")) {
   normalizePath(".", winslash = "/", mustWork = TRUE)
@@ -38,12 +39,8 @@ repo_root <- if (file.exists("DESCRIPTION")) {
 options(pkg.build_extra_flags = FALSE)
 
 suppressPackageStartupMessages({
-  needed <- c("R.utils", "RhpcBLASctl")
-  for (p in needed) {
-    if (!requireNamespace(p, quietly = TRUE))
-      install.packages(p, repos = "https://cloud.r-project.org")
-  }
-  library(R.utils)
+  if (!requireNamespace("RhpcBLASctl", quietly = TRUE))
+    install.packages("RhpcBLASctl", repos = "https://cloud.r-project.org")
   library(RhpcBLASctl)
   pkgload::load_all(repo_root, quiet = TRUE)
 })
@@ -65,6 +62,15 @@ equiv_csv <- file.path(paper_dir, "implicit-equivalence.csv")
 SIZES       <- c(500L, 2000L, 5000L, 10000L, 20000L, 50000L)
 DENSE_SIZES <- c(500L, 2000L, 5000L, 10000L)
 TIMEOUT_S   <- 3600   # per cell; a cell that exceeds it is recorded, not dropped
+
+## A reduced grid, small enough that every arm runs to completion in seconds
+## and every size carries the dense arm. It exercises the arms themselves; the
+## article reads the full grid above.
+if (any(commandArgs(TRUE) == "--quick")) {
+  SIZES       <- c(300L, 600L)
+  DENSE_SIZES <- SIZES
+  TIMEOUT_S   <- 60
+}
 
 ## ---- one timed cell ---------------------------------------------------------
 ## Returns the timing, the answer, and, for the implicit arm, the certificate
@@ -89,43 +95,37 @@ time_match <- function(d, mode) {
                distance = "mahalanobis", memory_mode = spec$memory_mode)
   if (!is.null(spec$method)) args$method <- spec$method
 
-  res <- tryCatch(
-    withTimeout({
-      t0 <- proc.time()[["elapsed"]]
-      m  <- do.call(match_couples, args)
-      t1 <- proc.time()[["elapsed"]]
-      list(m = m, elapsed = t1 - t0, status = "ok")
-    }, timeout = TIMEOUT_S, onTimeout = "error"),
-    TimeoutException = function(e) list(m = NULL, elapsed = NA_real_,
-                                        status = "timeout"),
-    error = function(e) list(m = NULL, elapsed = NA_real_,
-                             status = paste0("error: ", conditionMessage(e)))
-  )
+  ## The solve and everything read off it happen in one bounded call, so the
+  ## matching itself never crosses back: only the summary below does.
+  res <- bounded_call(function() {
+    t0 <- proc.time()[["elapsed"]]
+    m  <- do.call(match_couples, args)
+    elapsed <- proc.time()[["elapsed"]] - t0
+    cert <- m$certificate
+    srch <- m$search
+    list(
+      elapsed     = elapsed,
+      status      = "ok",
+      total_cost  = sum(m$pairs$distance),
+      n_pairs     = nrow(m$pairs),
+      right_id    = m$pairs$right_id,
+      certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
+      duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
+      candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
+      possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
+      edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
+      n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds
+    )
+  }, TIMEOUT_S)
 
-  if (is.null(res$m)) {
+  if (!res$ok) {
     return(list(elapsed = NA_real_, status = res$status, total_cost = NA_real_,
                 n_pairs = NA_integer_, right_id = NULL,
                 certified = NA, duality_gap = NA_real_,
                 candidate_edges = NA_real_, possible_edges = NA_real_,
                 edges_evaluated = NA_real_, n_rounds = NA_integer_))
   }
-
-  m <- res$m
-  cert <- m$certificate
-  srch <- m$search
-  list(
-    elapsed     = res$elapsed,
-    status      = res$status,
-    total_cost  = sum(m$pairs$distance),
-    n_pairs     = nrow(m$pairs),
-    right_id    = m$pairs$right_id,
-    certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
-    duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
-    candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
-    possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
-    edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
-    n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds
-  )
+  res$value
 }
 
 ## ---- resume-safe accumulators ----------------------------------------------

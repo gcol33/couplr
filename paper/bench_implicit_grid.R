@@ -46,14 +46,11 @@ repo_root <- if (file.exists("DESCRIPTION")) {
 ## from an optimised build, matching how the package is installed in use.
 options(pkg.build_extra_flags = FALSE)
 
-for (p in c("R.utils", "RhpcBLASctl")) {
-  if (!requireNamespace(p, quietly = TRUE)) {
-    stop("This benchmark needs the ", p, " package: install.packages(\"", p,
-         "\")", call. = FALSE)
-  }
+if (!requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+  stop("This benchmark needs the RhpcBLASctl package: ",
+       "install.packages(\"RhpcBLASctl\")", call. = FALSE)
 }
 suppressPackageStartupMessages({
-  library(R.utils)
   library(RhpcBLASctl)
   pkgload::load_all(repo_root, quiet = TRUE)
 })
@@ -128,45 +125,43 @@ run_mode <- function(cl, mode, max_distance, timeout_s = TIMEOUT_S) {
   if (is.finite(max_distance)) args$max_distance <- max_distance
   if (mode != "implicit") args$method <- "jv"
 
-  gc(reset = TRUE, verbose = FALSE)
-  res <- tryCatch(
-    withTimeout({
-      t0 <- proc.time()[["elapsed"]]
-      m <- quietly(do.call(match_couples, args))
-      list(m = m, elapsed = proc.time()[["elapsed"]] - t0, status = "ok")
-    }, timeout = timeout_s, onTimeout = "error"),
-    TimeoutException = function(e) list(m = NULL, elapsed = NA_real_,
-                                        status = "timeout"),
-    error = function(e) list(m = NULL, elapsed = NA_real_,
-                             status = paste0("error: ", conditionMessage(e)))
-  )
-  ## R's own heap high-water mark over the call. It is not the process peak --
-  ## the solver's C++ workspace is invisible to gc() -- and paper/bench_memory.R
-  ## measures that separately; this is the part of the footprint R owns.
-  heap_mb <- sum(gc(verbose = FALSE)[, "max used"] * c(56, 8)) / 1e6
+  ## The solve and everything read off it happen in one bounded call, so the
+  ## matching itself never crosses back: only the summary below does.
+  res <- bounded_call(function() {
+    gc(reset = TRUE, verbose = FALSE)
+    t0 <- proc.time()[["elapsed"]]
+    m <- quietly(do.call(match_couples, args))
+    elapsed <- proc.time()[["elapsed"]] - t0
+    ## R's own heap high-water mark over the call. It is not the process peak,
+    ## since the solver's C++ workspace is invisible to gc(), and
+    ## paper/bench_memory.R measures that separately; this is the part of the
+    ## footprint R owns.
+    heap_mb <- sum(gc(verbose = FALSE)[, "max used"] * c(56, 8)) / 1e6
+    cert <- m$certificate; srch <- m$search
+    list(
+      status = "ok", elapsed = elapsed, heap_mb = heap_mb,
+      n_pairs = nrow(m$pairs), total_cost = sum(m$pairs$distance),
+      certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
+      duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
+      n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds,
+      seed_width      = if (is.null(srch)) NA_real_ else srch$seed_width,
+      candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
+      possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
+      edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
+      max_arc = if (nrow(m$pairs)) max(m$pairs$distance) else NA_real_,
+      right_id = m$pairs$right_id
+    )
+  }, timeout_s)
 
-  if (is.null(res$m)) {
-    return(list(status = res$status, elapsed = NA_real_, heap_mb = heap_mb,
+  if (!res$ok) {
+    return(list(status = res$status, elapsed = NA_real_, heap_mb = NA_real_,
                 n_pairs = NA_integer_, total_cost = NA_real_,
                 certified = NA, duality_gap = NA_real_, n_rounds = NA_integer_,
                 seed_width = NA_real_, candidate_edges = NA_real_,
                 possible_edges = NA_real_, edges_evaluated = NA_real_,
                 max_arc = NA_real_, right_id = NULL))
   }
-  m <- res$m; cert <- m$certificate; srch <- m$search
-  list(
-    status = "ok", elapsed = res$elapsed, heap_mb = heap_mb,
-    n_pairs = nrow(m$pairs), total_cost = sum(m$pairs$distance),
-    certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
-    duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
-    n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds,
-    seed_width      = if (is.null(srch)) NA_real_ else srch$seed_width,
-    candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
-    possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
-    edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
-    max_arc = if (nrow(m$pairs)) max(m$pairs$distance) else NA_real_,
-    right_id = m$pairs$right_id
-  )
+  res$value
 }
 
 ## The tightest caliper the problem still admits a complete matching under.

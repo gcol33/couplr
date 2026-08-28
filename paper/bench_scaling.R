@@ -35,7 +35,7 @@ repo_root <- if (file.exists("DESCRIPTION")) {
 ## unoptimised couplr against optimised installs of the comparison packages.
 options(pkg.build_extra_flags = FALSE)
 
-for (p in c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")) {
+for (p in c("MatchIt", "optmatch", "RhpcBLASctl")) {
   if (!requireNamespace(p, quietly = TRUE)) {
     stop("This benchmark needs the ", p, " package: install.packages(\"", p,
          "\")", call. = FALSE)
@@ -44,7 +44,6 @@ for (p in c("MatchIt", "optmatch", "R.utils", "RhpcBLASctl")) {
 suppressPackageStartupMessages({
   library(MatchIt)
   library(optmatch)
-  library(R.utils)
   library(RhpcBLASctl)
   pkgload::load_all(repo_root, quiet = TRUE)
 })
@@ -116,17 +115,13 @@ callables <- list(couplr = couplr_call, optmatch = optmatch_call,
 
 ## ---- timed call: returns list(elapsed_s, status) ----
 time_one <- function(fn, d, timeout_s) {
-  tryCatch(
-    withTimeout({
-      t0 <- proc.time()[["elapsed"]]
-      .x <- fn(d)
-      t1 <- proc.time()[["elapsed"]]
-      list(elapsed = t1 - t0, status = "ok")
-    }, timeout = timeout_s, onTimeout = "error"),
-    TimeoutException = function(e) list(elapsed = NA_real_, status = "timeout"),
-    error            = function(e) list(elapsed = NA_real_,
-                                        status = paste0("error: ", conditionMessage(e)))
-  )
+  got <- bounded_call(function() {
+    t0 <- proc.time()[["elapsed"]]
+    .x <- fn(d)
+    proc.time()[["elapsed"]] - t0
+  }, timeout_s)
+  if (!got$ok) return(list(elapsed = NA_real_, status = got$status))
+  list(elapsed = got$value, status = "ok")
 }
 
 ## ---- resume-safe accumulators ----------------------------------------------

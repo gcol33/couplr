@@ -64,8 +64,7 @@ rjournal.html
 RJwrapper.tex
 RJournal.sty
 RJreferences.bib
-_Rpackages.txt
-README.md"
+_Rpackages.txt"
 
 DIRS="data
 scripts
@@ -95,6 +94,17 @@ for d in $DIRS; do
     ! -name '*.log' ! -name '*.aux' ! -name '*.out' \
     -exec cp {} "$root/$d/" \;
 done
+
+# --- checks ----------------------------------------------------------------
+
+# Checked on the staged tree, which is what ships. An error stops the build.
+
+if ! Rscript "$here/check_submission.R" \
+     "$(cygpath -m "$root" 2>/dev/null || echo "$root")" \
+     "$(cygpath -m "$here/WORDLIST" 2>/dev/null || echo "$here/WORDLIST")"; then
+  echo "submission checks reported an error" >&2
+  exit 1
+fi
 
 rm -f "$out_zip"
 

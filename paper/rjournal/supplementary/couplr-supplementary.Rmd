@@ -68,6 +68,19 @@ already holds, so a run that is interrupted continues where it stopped. Moving
 the CSV aside forces a full re-measurement. `paper/run_bench_suite.sh` runs all
 of them in order on one machine, which is how the numbers here were produced.
 
+The scripts load couplr from a source checkout with `pkgload::load_all()` and
+write their CSVs under `paper/`, so they run from a clone of the package
+repository rather than from the submission archive:
+
+```
+git clone https://github.com/gcol33/couplr
+cd couplr
+sh paper/run_bench_suite.sh
+```
+
+The scaling, implicit, implicit-grid, regimes and memory scripts also take
+`--quick`, which runs a reduced grid.
+
 \FloatBarrier
 
 # Solver selection across problem regimes

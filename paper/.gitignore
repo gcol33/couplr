@@ -2,3 +2,10 @@
 _*.png
 _*.pdf
 bench_runs/
+
+# LaTeX and knit artifacts from the R Journal build
+rjournal/*.log
+rjournal/*.aux
+rjournal/*.out
+rjournal/rjournal.knit.md
+rjournal/RJwrapper.pdf

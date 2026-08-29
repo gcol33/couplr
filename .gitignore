@@ -59,3 +59,6 @@ paper/rjournal/*.log
 # rj_style_metrics.py --pull refs --extract refs). Kept out of the tree so it
 # cannot be swept into the 10 MB submission archive.
 paper/rjournal/refs/
+
+# Benchmark suite run logs
+logs/

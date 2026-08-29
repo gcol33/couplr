@@ -1,6 +1,6 @@
 ---
 title: "couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation"
-date: "2026-08-25"
+date: "2026-08-30"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
   small as possible is the linear assignment problem, which sits underneath

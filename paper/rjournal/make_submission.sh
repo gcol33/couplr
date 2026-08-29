@@ -19,6 +19,19 @@ out_zip="$paper/couplr-rjournal-submission.zip"
 
 sh "$here/sync_inputs.sh"
 
+# --- article date ----------------------------------------------------------
+
+# rjtools' check_date() requires the article's date to be the day it is
+# submitted, so the archive is built on that day and not before.
+
+art_date=$(grep -m1 '^date:' "$here/rjournal.Rmd" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+today=$(date +%Y-%m-%d)
+if [ "$art_date" != "$today" ]; then
+  echo "article date is $art_date, today is $today" >&2
+  echo "set date: \"$today\" in rjournal.Rmd, then re-render both formats" >&2
+  exit 1
+fi
+
 # --- freshness -------------------------------------------------------------
 
 for built in rjournal.pdf rjournal.html rjournal.tex; do

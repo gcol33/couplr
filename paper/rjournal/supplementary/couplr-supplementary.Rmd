@@ -46,7 +46,8 @@ in full: the solver grid over problem regimes, the edge-generation loop over
 covariate counts, point clouds, calipers and sizes, the peak memory of every
 mode and comparator, and the raw runs behind the scaling table. This file
 carries them in full, and names the script that produced each one so any of them
-can be re-measured.
+can be re-measured. It also carries the parts of the software design the article
+points at: the object model, the C++ organisation and the dependency footprint.
 
 ```{r provenance}
 env <- tryCatch(readLines(file.path("..", "data", "ENVIRONMENT.txt")),
@@ -357,3 +358,72 @@ kb(data.frame(Units = format(sr$n_total, big.mark = ","), Package = sr$package,
    caption = "Every scaling run. Instance is an independently generated problem of that size; rep is a repetition on that problem. A run that failed or timed out carries its status and no time.",
    align = "llrrrrl")
 ```
+
+\FloatBarrier
+
+# Software design
+
+The article describes the three layers the package is organised in, the dispatch
+rules, the memory modes and how the package is verified. This section carries the
+object model, the C++ organisation and the dependency footprint.
+
+## Object model
+
+The object model is S3 throughout. Matching results carry the class vector
+`c("matching_result", "couplr_result")`, with the design-specific classes
+(`full_matching_result`, `cem_result`, `subclass_result`) sharing the
+`couplr_result` parent, which is what lets `balance_diagnostics()`,
+`join_matched()`, `match_data()` and the `bal.tab()` methods dispatch on it once
+rather than being rewritten per design. Results are plain lists of tibbles, so a
+user who wants something the package does not provide can reach in and take it.
+`lap_solve()` returns a tibble subclassed as `lap_solve_result` with `source`,
+`target` and `cost` columns, so an optimum is usable in a plot or a join without
+an extraction step, while `get_total_cost()` and `get_method_used()` recover the
+metadata carried in attributes.
+
+## C++ organisation
+
+All nineteen solvers are written from scratch in C++ and exposed through Rcpp,
+with `src/core` holding the cost-source types and shared utilities with no Rcpp
+dependency, `src/solvers` one algorithm per file with a thin `_rcpp.cpp` wrapper
+each, `src/flow` the flow model, its two solvers and the edge-generation loop,
+and `src/interface` the conversion between R objects and the internal types. The
+separation means the solver bodies are ordinary C++ that can be compiled and
+tested outside R, which is what the C++ test suite does.
+
+Solvers are templated on their cost source rather than written against a concrete
+matrix. A cost source provides `at(i, j)`, `allowed(i, j)` and `empty()`, and two
+types satisfy that interface: `CostMatrix`, which owns a dense flat array plus a
+mask, and `LazyCostMatrix`, which owns the two feature matrices and computes
+$C_{ij}$ on demand from the requested metric, applying calipers and the distance
+ceiling in `allowed()`. A handful of hot loops index the dense mask array
+directly for speed, which the lazy type cannot support; these are guarded by a
+`supports_raw_mask` trait and an `if constexpr` branch rather than by duplicating
+the solver. One solver body therefore serves both cost representations, and the
+pricing oracle of the edge-generation loop needs `at(i, j)` and `allowed(i, j)`
+and nothing else, so it consumes the same concept and adds no third
+representation of the costs.
+
+`LazyCostMatrix` also bakes in the transformations that the dense path applies in
+a separate preparation pass, namely mapping forbidden entries to a large sentinel
+and negating costs when maximising. Doing this at construction is what allows the
+untouched solver body to work on either type.
+
+## Dependency footprint
+
+couplr declares Rcpp, tibble, dplyr, rlang, purrr and `methods` in `Imports`, and
+`Rcpp` alone in `LinkingTo`. The recursive closure of hard dependencies is 17
+non-base packages, so a default installation brings 18 packages including couplr
+itself. The comparable figures on the same day were 18 for optmatch, 8 for
+MatchIt and 7 for designmatch.
+
+Two choices sit behind that number. First, we use no external solver: all
+nineteen algorithms are package source, so there is no dependency on an LP or MIP
+library and no system solver to install. That choice also keeps `LinkingTo` to
+`Rcpp` alone, which matters because every entry there forces a compile of that
+package before couplr can be built from source; couplr declares only what its
+headers actually include. Second, everything that serves a single feature lives
+in `Suggests` and is loaded at call time. The animation and image-morphing
+functions, the plotting helpers, the interoperability layer for MatchIt, optmatch
+and cobalt, and the parallel back end are all optional in this sense, so a user
+who only wants to match pays for none of them.

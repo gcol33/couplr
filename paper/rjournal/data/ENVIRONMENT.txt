@@ -1,0 +1,9 @@
+run        20260828-170754
+host       Darwin Mac 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:41:15 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T6041 arm64
+commit     5a1693c 40 modified paths
+R version 4.5.3 (2026-03-11)
+aarch64-apple-darwin25.3.0
+couplr         1.6.2
+MatchIt        4.7.2
+optmatch       0.10.8
+microbenchmark 1.5.0

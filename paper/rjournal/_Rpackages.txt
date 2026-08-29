@@ -1,5 +1,13 @@
 couplr
+cobalt
 ggplot2
+ggrepel
 knitr
-rmarkdown
+MatchIt
+microbenchmark
+optmatch
+patchwork
+pkgload
 rjtools
+rmarkdown
+RhpcBLASctl

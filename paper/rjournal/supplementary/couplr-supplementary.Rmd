@@ -47,7 +47,9 @@ covariate counts, point clouds, calipers and sizes, the peak memory of every
 mode and comparator, and the raw runs behind the scaling table. This file
 carries them in full, and names the script that produced each one so any of them
 can be re-measured. It also carries the parts of the software design the article
-points at: the object model, the C++ organisation and the dependency footprint.
+points at: the object model, the C++ organisation and the dependency
+footprint, the proof of the sentinel-padding lemma the article states, and
+the outcome analysis the article points at.
 
 ```{r provenance}
 env <- tryCatch(readLines(file.path("..", "data", "ENVIRONMENT.txt")),
@@ -80,6 +82,112 @@ sh paper/run_bench_suite.sh
 
 The scaling, implicit, implicit-grid, regimes and memory scripts also take
 `--quick`, which runs a reduced grid.
+
+\FloatBarrier
+
+# The sentinel padding lemma
+
+Tight constraints can leave the matching problem infeasible, and couplr answers
+it by replacing the forbidden entries with a finite sentinel and re-solving.
+The article states the lemma that makes a minimum-cost solve of the padded
+problem return the lexicographic optimum, the largest admissible matching and
+the cheapest among those of its size, and defers the proof here.
+
+Write $[\ell, h]$ for the range of the admissible costs of the pruned
+submatrix, $k$ for the smaller of its two dimensions and $\sigma$ for the
+sentinel. Every feasible assignment of the padded problem matches all $k$ rows,
+so it splits into $s$ sentinel edges and $k - s$ real ones and costs
+$s\sigma + R$ with $R \in [(k-s)\ell, (k-s)h]$.
+
+**Lemma 1.** *If $\sigma > k(|\ell| + |h|)$, then a padded assignment using more
+sentinel edges than another costs strictly more.*
+
+*Proof.* Let $M'$ and $M$ use $s'$ and $s$ sentinel edges with $s' > s$, and
+write $R'$ and $R$ for their real costs. Then
+$$
+\text{cost}(M') - \text{cost}(M) = (s' - s)\sigma + R' - R
+\ge \sigma + (k - s')\ell - (k - s)h
+\ge \sigma - k|\ell| - k|h| > 0 . \qquad \square
+$$
+
+couplr takes $\sigma = (k+1)(|\ell| + |h|) + 1$, which satisfies the hypothesis
+whatever the signs of $\ell$ and $h$ and when the admissible costs are all
+zero, and leaves a margin of $|\ell| + |h| + 1$ between a matching and one
+using more sentinel edges. `assignment(cardinality = "maximum")` prices its dummy
+columns with the same quantity, and a maximisation is solved by negation with
+the sentinel negated alongside it, so the lemma applies to the negated
+instance. The reported objective is recomputed over the real pairs, so no
+sentinel enters it.
+
+The lemma's hypothesis is a statement about the numbers actually used, so it is
+checkable on the doubles in hand and couplr's $\sigma$ satisfies it by
+construction. What the lemma does not settle is the solve. A solver working
+where a double no longer resolves a gap of $|\ell| + |h| + 1$ cannot be relied
+on to order two assignments the padding separates by that much, so couplr
+refuses a padded objective above $2^{53}$ rather than returning an ordering its
+arithmetic may not support. That threshold is a precondition on the solve and
+not a proof of it: $2^{53}$ bounds the integers a double carries exactly, and
+the padded costs need not be integers. What establishes that a particular
+padded solve reached its optimum is the certificate `verify_assignment()`
+returns for the padded matrix, and the lemma carries that verdict across to the
+lexicographic objective.
+
+\FloatBarrier
+
+# From matched pairs to an estimate
+
+The article shows the matched sample and defers the outcome analysis here. The
+match is rebuilt below so this file stands on its own.
+
+```{r estimate-setup, echo=TRUE, message=FALSE, warning=FALSE}
+library(couplr)
+data(hospital_staff)
+treated <- transform(hospital_staff$nurses_extended,   id = nurse_id)
+control <- transform(hospital_staff$controls_extended, id = nurse_id)
+covars  <- c("age", "experience_years", "certification_level")
+m <- match_couples(treated, control, vars = covars, auto_scale = TRUE)
+```
+
+Taking the hourly rate as the outcome, the paired difference within each
+matched pair estimates the association between full-time status and pay among
+nurses comparable on age, experience and certification.
+
+```{r estimate-effect, echo=TRUE}
+matched <- join_matched(m, treated, control)
+d  <- matched$hourly_rate_left - matched$hourly_rate_right
+tt <- t.test(d)
+c(estimate = mean(d), lower = tt$conf.int[1], upper = tt$conf.int[2])
+```
+
+Full-time nurses earn `r sprintf("%.2f", mean(matched$hourly_rate_left - matched$hourly_rate_right))`
+more per hour than their matched part-time counterparts, with a 95 percent
+interval that excludes zero. As a paired difference on a matched sample this
+estimates an adjusted association. Reading it as the causal effect of full-time
+status is what rests on assumptions no matching method can verify: conditional
+ignorability, positivity, and the stable unit treatment value assumption
+(SUTVA), under which a unit's outcome depends on its own treatment alone. The
+matched output can also be passed to an outcome model for regression
+adjustment; valid estimation and uncertainty quantification still depend on the
+estimator used.
+
+What matching can offer against the first of those assumptions is a statement
+about how strong an unmeasured confounder would have to be to overturn the
+result. `sensitivity_analysis()` implements Rosenbaum bounds (Rosenbaum 2002)
+for the Wilcoxon signed-rank statistic on one-to-one matched pairs, reporting
+upper and lower p-value bounds across a grid of the odds-ratio parameter
+$\Gamma$.
+
+```{r estimate-sensitivity, echo=TRUE}
+sens <- sensitivity_analysis(m, treated, control, outcome_var = "hourly_rate")
+sens$results[sens$results$gamma %in% c(1, 1.5, 1.75, 2), ]
+```
+
+At $\Gamma = 1$, meaning no hidden bias, the association is significant. It
+survives an unmeasured confounder that raises one pair member's odds of being
+full-time by half, and stops being significant at
+$\Gamma =$ `r sens$critical_gamma`. A reader can judge from that number whether
+a confounder of that strength is plausible in this setting; the analysis
+quantifies exposure to hidden bias rather than removing it.
 
 \FloatBarrier
 

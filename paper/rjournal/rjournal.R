@@ -21,11 +21,12 @@ regime    <- read.csv("data/regime-verdict.csv", stringsAsFactors = FALSE)
 igrid     <- read.csv("data/implicit-grid-results.csv", stringsAsFactors = FALSE)
 memory    <- read.csv("data/memory-results.csv", stringsAsFactors = FALSE)
 n_path_values <- pth$points[1]
-couplr_ver <- as.character(utils::packageVersion("couplr"))
 
 ## The environment block the benchmark suite writes beside its CSVs, so the
-## article states the machine, the R version and the date its numbers were
-## measured on rather than repeating a remembered value.
+## article states the machine, the R version, the package version and the date
+## its numbers were measured on rather than repeating a remembered value. The
+## version is read from here and not from the rendering machine's library,
+## which answers a different question from the one the sentences ask.
 env_lines <- readLines("data/ENVIRONMENT.txt", warn = FALSE)
 env_field <- function(key) {
   hit <- grep(paste0("^", key, "[[:space:]]"), env_lines, value = TRUE)
@@ -35,6 +36,7 @@ env_field <- function(key) {
 bench_run    <- env_field("run")
 bench_date   <- format(as.Date(substr(bench_run, 1, 8), "%Y%m%d"))
 bench_commit <- env_field("commit")
+couplr_ver   <- env_field("couplr")
 bench_r <- sub("^R version ([0-9.]+).*$", "\\1",
                grep("^R version", env_lines, value = TRUE)[1])
 
@@ -54,6 +56,27 @@ scal_ratio <- function(n, against = "optmatch") {
 mem_at <- function(arm, n, col = "peak_rss_mb") {
   memory[[col]][memory$arm == arm & memory$n_total == n][1]
 }
+
+## The multipliers the memory guard is built on, taken from the package rather
+## than repeated here, beside the peaks they were set above.
+solve_factor  <- eval(formals(couplr:::estimate_dense_solve_mb)$solve_factor)
+matrix_factor <- eval(formals(couplr:::estimate_dense_matrix_mb)$overhead_factor)
+mem_sizes <- sort(unique(memory$n_total[memory$arm == "dense" &
+                                        memory$status == "ok"]))
+mem_sizes <- mem_sizes[mem_sizes >= 5000]
+mem_over_matrix <- function(arm) {
+  over <- vapply(mem_sizes, function(n) mem_at(arm, n, "over_baseline_mb"),
+                 numeric(1))
+  cells <- vapply(mem_sizes, function(n) mem_at(arm, n, "matrix_mb"), numeric(1))
+  over / cells
+}
+and_list <- function(v) {
+  if (length(v) < 2) return(paste(v))
+  paste0(paste(v[-length(v)], collapse = ", "), " and ", v[length(v)])
+}
+mem_size_list   <- and_list(format(mem_sizes, big.mark = ",", trim = TRUE))
+mem_solve_list  <- and_list(sprintf("%.1f", mem_over_matrix("dense")))
+mem_matrix_list <- and_list(sprintf("%.1f", mem_over_matrix("dense_matrix")))
 
 
 ## ----certify, echo=TRUE-------------------------------------------------------
@@ -222,7 +245,7 @@ by_rule <- by_rule[order(-by_rule$Cells), ]
 
 knitr::kable(
   by_rule, align = "llrrrr", booktabs = TRUE, row.names = FALSE,
-  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver."
+  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver. The large tier times a reduced panel that omits the special-purpose solvers, so a cell whose dispatched solver is not in it reads below 1.00x."
 )
 
 
@@ -237,9 +260,14 @@ reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
 reg_worst <- regime[which.max(regime$ratio), ]
 x <- function(v) sprintf("%.2fx", v)
+## A cell has no `picked_s` exactly where the solver the rule named was not
+## itself in that cell's panel, which is the large tier's reduced panel.
+off_panel <- regime[is.na(regime$picked_s), ]
+reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
+ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
 
 
-## ----love, fig.height=3.1, fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
+## ----love, fig.height=3.1, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
 pretty <- c(age = "age", educ = "education (years)",
             race_Black = "race: Black", race_Hispanic = "race: Hispanic",
             married = "married", nodegree = "no high-school degree",

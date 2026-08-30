@@ -9,8 +9,8 @@ abstract: >
   reports the state it terminated in, not a checkable statement about the
   matching. And the graph of admissible pairs is built before it is solved, so
   its memory sets the size ceiling. We present the couplr package, which
-  addresses both. Every matching design whose answer is an optimisation compiles
-  into one internal flow model, so node potentials come back from all of them and
+  addresses both. Every flow-representable matching design compiles into one
+  internal flow model, so node potentials come back from all of them and
   can be checked against the linear-programming optimality conditions. On those
   potentials the package optimises over a restricted set of pairs: each unit
   starts with its nearest admissible partners, the omitted pairs are priced
@@ -18,8 +18,8 @@ abstract: >
   in, at which point the duals certify the result optimal for the complete
   problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of
   the pairs and returns the dense solve's assignment, certified. Warm starting
-  the same loop traces a matching frontier over a swept constraint far more
-  cheaply than solving each point cold. A data-frame interface, nineteen
+  the same loop traces a matching frontier over a swept constraint at roughly
+  half the cost of solving each point cold. A data-frame interface, nineteen
   assignment algorithms, balance diagnostics and cardinality matching share the
   same core. couplr is available on CRAN.
 draft: false
@@ -40,6 +40,8 @@ output:
 header-includes:
   - "\\hypersetup{pdftitle={couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation}, pdfauthor={Gilles Colling}}"
   - \usepackage{placeins}
+  - \usepackage{float}
+  - \floatplacement{table}{H}
   - \renewcommand{\topfraction}{0.9}
   - \renewcommand{\bottomfraction}{0.9}
   - \renewcommand{\textfraction}{0.06}
@@ -71,11 +73,12 @@ regime    <- read.csv("data/regime-verdict.csv", stringsAsFactors = FALSE)
 igrid     <- read.csv("data/implicit-grid-results.csv", stringsAsFactors = FALSE)
 memory    <- read.csv("data/memory-results.csv", stringsAsFactors = FALSE)
 n_path_values <- pth$points[1]
-couplr_ver <- as.character(utils::packageVersion("couplr"))
 
 ## The environment block the benchmark suite writes beside its CSVs, so the
-## article states the machine, the R version and the date its numbers were
-## measured on rather than repeating a remembered value.
+## article states the machine, the R version, the package version and the date
+## its numbers were measured on rather than repeating a remembered value. The
+## version is read from here and not from the rendering machine's library,
+## which answers a different question from the one the sentences ask.
 env_lines <- readLines("data/ENVIRONMENT.txt", warn = FALSE)
 env_field <- function(key) {
   hit <- grep(paste0("^", key, "[[:space:]]"), env_lines, value = TRUE)
@@ -85,6 +88,7 @@ env_field <- function(key) {
 bench_run    <- env_field("run")
 bench_date   <- format(as.Date(substr(bench_run, 1, 8), "%Y%m%d"))
 bench_commit <- env_field("commit")
+couplr_ver   <- env_field("couplr")
 bench_r <- sub("^R version ([0-9.]+).*$", "\\1",
                grep("^R version", env_lines, value = TRUE)[1])
 
@@ -104,6 +108,27 @@ scal_ratio <- function(n, against = "optmatch") {
 mem_at <- function(arm, n, col = "peak_rss_mb") {
   memory[[col]][memory$arm == arm & memory$n_total == n][1]
 }
+
+## The multipliers the memory guard is built on, taken from the package rather
+## than repeated here, beside the peaks they were set above.
+solve_factor  <- eval(formals(couplr:::estimate_dense_solve_mb)$solve_factor)
+matrix_factor <- eval(formals(couplr:::estimate_dense_matrix_mb)$overhead_factor)
+mem_sizes <- sort(unique(memory$n_total[memory$arm == "dense" &
+                                        memory$status == "ok"]))
+mem_sizes <- mem_sizes[mem_sizes >= 5000]
+mem_over_matrix <- function(arm) {
+  over <- vapply(mem_sizes, function(n) mem_at(arm, n, "over_baseline_mb"),
+                 numeric(1))
+  cells <- vapply(mem_sizes, function(n) mem_at(arm, n, "matrix_mb"), numeric(1))
+  over / cells
+}
+and_list <- function(v) {
+  if (length(v) < 2) return(paste(v))
+  paste0(paste(v[-length(v)], collapse = ", "), " and ", v[length(v)])
+}
+mem_size_list   <- and_list(format(mem_sizes, big.mark = ",", trim = TRUE))
+mem_solve_list  <- and_list(sprintf("%.1f", mem_over_matrix("dense")))
+mem_matrix_list <- and_list(sprintf("%.1f", mem_over_matrix("dense_matrix")))
 ```
 
 # Introduction
@@ -601,7 +626,7 @@ capacity range. As Table \@ref(tab:designs) sets out, a one-to-one match, a
 k-to-one match, matching with replacement and a full match differ in the bounds
 their arcs receive, not in the code that solves them. Formulating full matching as a minimum-cost flow problem is established
 [@HansenKlopfer2006]; what the flow model contributes here is that every
-design in the package whose answer is an optimisation compiles into it, so one
+design in the package that a flow can represent compiles into it, so one
 solver, one certificate and one warm start serve all of them. Those are the
 six rows of the table: one-to-one, k-to-one, with replacement, blocked and
 exact, full matching, and fine and refined balance. The designs that sit
@@ -937,10 +962,11 @@ edge-generation loop described above. All three return the same assignment.
 Under `"auto"` the package decides. Below ten million cells, about 80 MB
 dense, it skips the check, since probing free memory on every ordinary problem
 would be pure overhead. Above that it estimates what a dense solve peaks at
-rather than what the matrix occupies, at a multiplier read off the
-measurements in the Performance section, and compares that against available
-system memory read per platform. If the estimate exceeds half of what is
-available, `"auto"` switches to the lazy path where one exists and warns where
+rather than what the matrix occupies, at `r solve_factor` times the raw cell
+bytes, and compares that against available system memory read per platform.
+The Performance section reports the peaks that multiplier sits above. If the
+estimate exceeds half of what is available, `"auto"` switches to the lazy path
+where one exists and warns where
 one does not, naming blocking, greedy matching or a smaller problem. Detection
 failure is treated as unknown rather than as success: a fixed 4 GB threshold
 takes over, so the guard never silently disappears on an unrecognised
@@ -1126,7 +1152,7 @@ by_rule <- by_rule[order(-by_rule$Cells), ]
 
 knitr::kable(
   by_rule, align = "llrrrr", booktabs = TRUE, row.names = FALSE,
-  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver."
+  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver. The large tier times a reduced panel that omits the special-purpose solvers, so a cell whose dispatched solver is not in it reads below 1.00x."
 )
 ```
 
@@ -1141,13 +1167,24 @@ reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
 reg_worst <- regime[which.max(regime$ratio), ]
 x <- function(v) sprintf("%.2fx", v)
+## A cell has no `picked_s` exactly where the solver the rule named was not
+## itself in that cell's panel, which is the large tier's reduced panel.
+off_panel <- regime[is.na(regime$picked_s), ]
+reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
+ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
 ```
 
 Over the `r nrow(regime)` cells the dispatcher picked the fastest solver of the
 panel in `r reg_fast` of them, at a median `r x(median(regime$ratio))` of the
-cell's best time. The two rules that were removed can be read off the same
-table. Over the `r nrow(reg_rect)` cells with at least three columns per row,
-where the rectangular rule used to fire, the default takes a median
+cell's best time. A cell reads below `1.00x` for one of two reasons. The large
+tier times a reduced panel, so on its `r nrow(off_panel)` binary cells the
+solver the dispatcher named was not among those it is read against; on the
+`r nrow(ncs_in)` cells of that rule whose panel does hold its solver the median
+is `r x(median(ncs_in$ratio))`. Elsewhere the two sides are separate timings of
+one solver and scatter by a few percent either way. The two rules that were
+removed can be read off the same table. Over the `r nrow(reg_rect)` cells with
+at least three columns per row, where the rectangular rule used to fire, the
+default takes a median
 `r x(median(reg_rect$ratio))`; over the `r nrow(reg_sp)` cells with more than
 half the entries forbidden, `r x(median(reg_sp$ratio))`. Neither is a regime the
 default needs help in. Where it is furthest behind, at
@@ -1158,6 +1195,10 @@ score it on the measurements that chose it.
 
 The full grid, every solver in every cell, is in the supplementary material.
 
+```{=latex}
+\FloatBarrier
+```
+
 ## Balance against established alternatives
 
 Speed only matters once the packages agree on the answer. We fix the task in
@@ -1167,7 +1208,7 @@ it on the LaLonde NSW data [@LaLonde1986; @DehejiaWahba1999], 185 treated units,
 429 controls and eight covariates. The pooled within-group convention is the one
 `optmatch::match_on()` uses by default and the one couplr adopts.
 
-```{r love, fig.height=3.1, fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."}
+```{r love, fig.height=3.1, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."}
 pretty <- c(age = "age", educ = "education (years)",
             race_Black = "race: Black", race_Hispanic = "race: Hispanic",
             married = "married", nodegree = "no high-school degree",
@@ -1224,6 +1265,10 @@ respondents drops from 1.757 to 1.053 without approaching it. That is a
 property of this dataset rather than of any package: the control pool does not
 hold enough Black respondents for a one-to-one match to balance that
 indicator.
+
+```{=latex}
+\FloatBarrier
+```
 
 ## Scaling
 
@@ -1471,6 +1516,10 @@ section happening: the graph the loop ends up holding is most of the one it
 set out to avoid, and it has paid for the rounds that built it. This is why
 the mode is requested rather than selected.
 
+```{=latex}
+\FloatBarrier
+```
+
 ## Memory
 
 The claim that memory rather than time is what bounds a dense matching has so
@@ -1503,10 +1552,20 @@ for `r sprintf("%.0f", mem_over("dense_matrix"))` MB on a matrix whose entries
 occupy `r sprintf("%.0f", mem_matrix)` MB, so holding it costs `r sprintf("%.1f", mem_ratio)` times its cells and solving over it costs `r sprintf("%.1f", mem_solve_ratio)` times them. That gap is preparation copies
 and the solver's own workspace, and it is what the automatic mode has to read:
 a guard sized on the matrix would let a dense solve start on a machine it does
-not fit. `estimate_dense_matrix_mb()` estimates the matrix and
-`estimate_dense_solve_mb()` the peak of the solve, at a multiplier read off
-these measurements, and `memory_mode = "auto"` compares the second against
-available memory. Every arm and size is in the supplementary material.
+not fit. `estimate_dense_matrix_mb()` estimates the matrix at
+`r matrix_factor` times the raw cell bytes and `estimate_dense_solve_mb()` the
+peak of the solve at `r solve_factor` times them, and `memory_mode = "auto"`
+compares the second against available memory. Neither multiplier is fitted to
+one cell. Across `r mem_size_list` units the solve peaked at
+`r mem_solve_list` times the cell bytes and the matrix at `r mem_matrix_list`
+times them, so each default sits above the largest of those rather than at any
+one of them. That is the direction the guard has to err in, since it exists to
+refuse a solve that will not fit rather than to predict where the peak lands.
+Every arm and size is in the supplementary material.
+
+```{=latex}
+\FloatBarrier
+```
 
 ## Warm-started paths
 
@@ -1553,6 +1612,10 @@ its independent solve returns, and the totals agree to
 `r sprintf("%.3g", max(pth$worst_total_gap))` relative, so the path is the same
 sequence of matchings that solving each value from cold would produce.
 
+```{=latex}
+\FloatBarrier
+```
+
 ## Feature coverage
 
 Table \@ref(tab:capability) lists the features that separate the three packages.
@@ -1582,6 +1645,10 @@ knitr::kable(
 )
 ```
 
+```{=latex}
+\FloatBarrier
+```
+
 # Summary and discussion
 
 We built couplr on the observation that one optimisation problem sits
@@ -1589,11 +1656,11 @@ underneath a set of tasks R currently treats as unrelated. Making the
 assignment problem the organising object, rather than a hidden step inside a
 matching function, is what lets one package serve a causal-inference user
 starting from covariates and an operations-research user starting from a cost
-matrix. Three design consequences follow. Every design whose answer is an
-optimisation compiles into one flow model, so node potentials come back from
-all of them. Those potentials make a solution checkable
-by a third party, which turns a reported status into a certificate. And a
-certificate is what makes it safe to solve a problem that was never built, since
+matrix. Three design consequences follow. Every flow-representable design
+compiles into one flow model, so node potentials come back from all of them.
+Those potentials make a solution independently checkable, which turns a
+reported status into a certificate. And a certificate is what makes it safe to
+solve a problem that was never built, since
 the loop that grows a sparse graph needs a statement about the complete one to
 know when to stop.
 
@@ -1625,12 +1692,17 @@ couplr has five limitations:
   sensitivity analysis quantifies exposure to it rather than removing it.
 
 One extension follows from those limitations. A metric-tree pricer would
-attack the arithmetic the block scan leaves in place: pruning a subtree $S$ of
-controls for row $i$ requires $\min_{j \in S} C_{ij} \ge u_i + \max_{j \in S}
-v_j$, and Mahalanobis distance is Euclidean after whitening, so one tree
-serves both metrics. Where such a bound prunes, the pruning is itself the
-certificate. Calipers are the case for it, being axis-aligned boxes in the
-original covariates and where matching users actually work.
+attack the arithmetic the block scan leaves in place. Discarding a subtree $S$
+of controls for row $i$ has to be decided without visiting it, so the test is
+$L(i, S) - u_i - \max_{j \in S} v_j \ge 0$, where $L(i, S)$ is a lower bound on
+$\min_{j \in S} C_{ij}$ computed from the node's summary rather than the
+minimum itself. Mahalanobis distance is Euclidean after whitening, so one tree
+serves both metrics, but each node then has to carry two summaries: a centre
+and radius in whitened coordinates, which is what $L(i, S)$ reads, and an
+axis-aligned bounding box in the original covariates, since a caliper is a box
+there and a whitened ball cannot exclude one. Calipers are the case for the
+second summary, being where matching users actually work. Where such a bound
+prunes, the pruning is itself the certificate.
 
 couplr is available on CRAN and developed at
 `https://github.com/gcol33/couplr`, with documentation at

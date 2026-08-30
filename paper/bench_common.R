@@ -161,6 +161,14 @@ forbidden_patterns <- list(
     label = "25% finite, unstructured", finite_share = 0.25, components = 1L,
     apply = function(cost, n, m) .forbid_random(cost, n, m, 0.25)
   ),
+  random_05 = list(
+    label = "5% finite, unstructured", finite_share = 0.05, components = 1L,
+    apply = function(cost, n, m) .forbid_random(cost, n, m, 0.05)
+  ),
+  random_01 = list(
+    label = "1% finite, unstructured", finite_share = 0.01, components = 1L,
+    apply = function(cost, n, m) .forbid_random(cost, n, m, 0.01)
+  ),
   block_4 = list(
     label = "four forbidden components", finite_share = 0.25, components = 4L,
     apply = function(cost, n, m) .forbid_blocks(cost, n, m, 4L)

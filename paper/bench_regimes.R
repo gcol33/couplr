@@ -99,9 +99,12 @@ fast_panel <- Filter(function(x) x$method %in%
 
 ## ---- the grid ---------------------------------------------------------------
 ## The base tier crosses everything against the whole panel at a size every
-## solver in it can reach. The large tier repeats the crossing at a size only
-## the scalable solvers reach, which is where a rule that holds at 500 rows and
-## fails at 1500 would show.
+## solver in it can reach. The large tier is a subset of that crossing, not a
+## repeat of it: five regimes and three admissibility patterns against the
+## solvers that scale, at a size the rest of the panel cannot reach inside the
+## budget. It is there to show a rule that holds at 500 rows and fails at 1500,
+## so it carries the regimes and patterns where such a reversal is plausible
+## rather than the whole grid.
 tiers <- list(
   base = list(
     shapes    = list(c(500L, 500L), c(500L, 1500L), c(500L, 5000L)),
@@ -114,7 +117,7 @@ tiers <- list(
     shapes    = list(c(1500L, 1500L), c(1500L, 4500L), c(1000L, 10000L)),
     regimes   = c("int_uniform", "dbl_uniform", "binary", "heavy_tailed",
                   "metric_clustered"),
-    patterns  = c("none", "random_25"),
+    patterns  = c("none", "random_25", "random_01"),
     panel     = fast_panel,
     instances = 2L, reps = 2L, timeout_s = 600
   )

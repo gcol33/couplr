@@ -94,16 +94,16 @@ test_that("assignment auto selects lapmod for sparse matrices", {
 
   result <- assignment(cost, method = "auto")
 
-  expect_equal(result$method_used, "lapmod")
+  expect_equal(result$method_used, "jv")
 })
 
-test_that("assignment auto selects sap for very rectangular matrices", {
+test_that("assignment auto sends a very rectangular matrix to jv", {
   skip_on_cran()
   cost <- matrix(runif(30), 10, 30)  # 10 rows, 30 cols (ratio = 3)
 
   result <- assignment(cost, method = "auto")
 
-  expect_equal(result$method_used, "sap")
+  expect_equal(result$method_used, "jv")
 })
 
 test_that("assignment auto picks a dense-square method for small-medium n", {

@@ -34,6 +34,31 @@
 
 ## Breaking changes
 
+* **`method = "auto"` no longer diverts on sparsity or aspect ratio.** Two of
+  the five dispatch rules sent a matrix with more than half its entries
+  forbidden to `"lapmod"`, and a matrix with at least three columns per row to
+  `"sap"`. Measured across the regime grid in `paper/bench_regimes.R`, neither
+  earned its place: `"sap"` was the quickest solver in none of the 32 cells
+  where its rule fired, at a median of 5.75 times the cell's best and a worst
+  of 13.4, and `"lapmod"` was quickest in 2 of 48 cells at 60 and 25 percent of
+  the entries finite, and in 1 of 31 at 5 and 1 percent, the extreme sparsity
+  its adjacency structure exists for. Jonker-Volgenant is at or below the
+  best-known time in both regimes, so both properties now fall through to it.
+  The dispatcher is three rules: enumerate an at most 8 by 8 problem, use
+  `"hk01"` where the finite costs carry no scale, and otherwise `"jv"`. Both
+  `"lapmod"` and `"sap"` remain reachable by name, which is what a caller with
+  a problem outside the measured grid should use.
+* **The memory guard estimates the solve, not the matrix.** `memory_mode =
+  "auto"` compared a dense cost matrix's footprint against available RAM, at
+  four times the raw cell bytes. A dense solve peaks well above the matrix it
+  runs on: measured at 9.4, 7.2 and 8.6 times the raw bytes at 5,000, 10,000
+  and 20,000 units, against the 4 the guard assumed, so a solve could be
+  started on a machine it did not fit. `estimate_dense_solve_mb()` now supplies
+  the figure the guard reads, at a multiplier taken from those measurements;
+  `estimate_dense_matrix_mb()` keeps its own meaning and is no longer what
+  decides the mode. The guard switches to `"lazy"` earlier than it did, and its
+  warnings now name the solve rather than the matrix.
+
 * **The `"orlin"` solver is now `"sap_dense"`.** The C++ behind it runs
   successive shortest paths: each augmentation is a Dijkstra search on reduced
   costs followed by a Johnson potential shift. It has no scaling phases and no

@@ -33,13 +33,13 @@ test_that("assignment auto-selection picks bruteforce for small", {
   expect_equal(result$method_used, "bruteforce")
 })
 
-test_that("assignment auto-selection picks sap for very rectangular", {
+test_that("assignment auto-selection sends a wide problem to jv", {
   skip_on_cran()
-  # m >= 3*n triggers SAP
+  # Aspect ratio is not one of the properties the rules read.
   set.seed(42)
   cost <- matrix(runif(4 * 12), 4, 12)  # 4 rows, 12 cols (12 >= 3*4)
   result <- assignment(cost, method = "auto")
-  expect_equal(result$method_used, "sap")
+  expect_equal(result$method_used, "jv")
 })
 
 # ------------------------------------------------------------------------------

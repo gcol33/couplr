@@ -133,18 +133,50 @@ get_free_ram_mb <- function() {
 
 #' Estimate dense cost-matrix memory footprint in megabytes
 #'
-#' The true peak footprint is not 8 bytes/cell: `matrix(0, n, m)` at the R
-#' level (8B) is followed by `rcpp_to_cost_matrix()`'s copy into a
-#' `lap::CostMatrix` (8B data + 4B mask), then `prepare_for_solve()`'s
-#' unconditional copy (another 12B), and a possible `t()` transpose copy (8B).
-#' Several of these are transient but can coexist during GC lag. A conservative
-#' multiplier avoids systematically under-warning; `n`/`m` are coerced to
-#' `double` before multiplying so the estimate itself can't overflow the way
-#' `lap::CostMatrix`'s old `int` flat-index arithmetic did.
+#' What the matrix itself costs a process, which is more than the 8 bytes a cell
+#' occupies: `matrix(0, n, m)` at the R level is copied into a
+#' `lap::CostMatrix` (8B data + 4B mask), and the two coexist while garbage
+#' collection lags. Building the matrix and stopping there peaked at 2.0 times
+#' the raw cell bytes at 20,000 units on the memory benchmark, so the default
+#' multiplier is above what has been measured rather than fitted to it. `n`/`m`
+#' are coerced to `double` before multiplying so the estimate itself can't
+#' overflow the way `lap::CostMatrix`'s old `int` flat-index arithmetic did.
 #'
+#' This is the matrix, not the solve. [estimate_dense_solve_mb()] is what the
+#' memory guard reads; see there for why the two differ by more than a copy.
+#'
+#' @param n,m Problem dimensions.
+#' @param overhead_factor Multiplier on the raw cell bytes.
+#' @return Numeric scalar, the estimated footprint of the matrix in megabytes.
 #' @keywords internal
 estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
   (as.numeric(n) * as.numeric(m) * 8 * overhead_factor) / 1e6
+}
+
+#' Estimate the peak footprint of a dense solve in megabytes
+#'
+#' The matrix is the allocation a caller can reason about and it is not what
+#' bounds a dense solve. Preparation copies, the solver's own workspace and the
+#' assignment structures it carries all sit on top of the matrix, and the peak
+#' is what decides whether the solve fits, so that is the quantity the guard
+#' compares against available RAM.
+#'
+#' The multiplier is read off the measurement rather than from an enumeration of
+#' the copies, which has proved to understate it. On the memory benchmark -- one
+#' fresh R session per arm, peak resident set taken from outside and read
+#' against an idle session that loaded the same packages -- a dense one-to-one
+#' solve peaked at 9.4, 7.2 and 8.6 times the raw matrix bytes at 5,000, 10,000
+#' and 20,000 units. The default covers the worst of those with headroom, which
+#' is the direction a guard should err in: it exists to refuse a solve that will
+#' not fit, not to predict where the peak lands.
+#'
+#' @param n,m Problem dimensions.
+#' @param solve_factor Multiplier on the raw cell bytes.
+#' @return Numeric scalar, the estimated peak footprint of a dense solve in
+#'   megabytes.
+#' @keywords internal
+estimate_dense_solve_mb <- function(n, m, solve_factor = 10) {
+  (as.numeric(n) * as.numeric(m) * 8 * solve_factor) / 1e6
 }
 
 #' Resolve a requested memory_mode to a concrete decision
@@ -160,8 +192,8 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #' @param solver_supports_implicit Whether the caller's design is the one the
 #'   edge-generation loop solves: a 1:1 matching over a built-in distance
 #'   metric, whose network is one unit-capacity bipartite block.
-#' @param ram_fraction Fraction of available RAM the dense matrix may consume
-#'   before "auto" switches away from dense.
+#' @param ram_fraction Fraction of available RAM a dense solve's peak may
+#'   reach before "auto" switches away from dense.
 #' @param fallback_threshold_mb Fixed threshold used when available RAM can't be
 #'   determined (mirrors the warn+fallback precedent in
 #'   `R/morph_utils.R`'s `matrix_size > 1e8` cell guard).
@@ -213,19 +245,19 @@ resolve_memory_mode <- function(n, m,
     return("dense")
   }
 
-  needed_mb <- estimate_dense_matrix_mb(n, m)
+  needed_mb <- estimate_dense_solve_mb(n, m)
   free_mb <- get_free_ram_mb()
 
   if (is.na(free_mb)) {
     if (needed_mb > fallback_threshold_mb) {
       if (solver_supports_lazy) {
         warning(sprintf(
-          "Could not determine available system RAM; the dense cost matrix would need ~%.0f MB. Switching to memory_mode = \"lazy\".",
+          "Could not determine available system RAM; a dense solve of this problem peaks at ~%.0f MB. Switching to memory_mode = \"lazy\".",
           needed_mb), call. = FALSE)
         return("lazy")
       }
       warning(sprintf(
-        "Could not determine available system RAM; the dense cost matrix would need ~%.0f MB. Proceeding densely -- consider blocking (block_id), method = \"greedy\", or reducing the problem size.",
+        "Could not determine available system RAM; a dense solve of this problem peaks at ~%.0f MB. Proceeding densely -- consider blocking (block_id), method = \"greedy\", or reducing the problem size.",
         needed_mb), call. = FALSE)
     }
     return("dense")
@@ -234,12 +266,12 @@ resolve_memory_mode <- function(n, m,
   if (needed_mb > ram_fraction * free_mb) {
     if (solver_supports_lazy) {
       warning(sprintf(
-        "Dense cost matrix would need ~%.1f GB against ~%.1f GB available RAM. Switching to memory_mode = \"lazy\".",
+        "A dense solve of this problem peaks at ~%.1f GB against ~%.1f GB available RAM. Switching to memory_mode = \"lazy\".",
         needed_mb / 1e3, free_mb / 1e3), call. = FALSE)
       return("lazy")
     }
     warning(sprintf(
-      "Dense cost matrix would need ~%.1f GB against ~%.1f GB available RAM, and this path does not support memory_mode = \"lazy\" yet. Proceeding densely -- consider blocking (block_id), method = \"greedy\", reducing the problem size, or running on a machine with more RAM.",
+      "A dense solve of this problem peaks at ~%.1f GB against ~%.1f GB available RAM, and this path does not support memory_mode = \"lazy\" yet. Proceeding densely -- consider blocking (block_id), method = \"greedy\", reducing the problem size, or running on a machine with more RAM.",
       needed_mb / 1e3, free_mb / 1e3), call. = FALSE)
   }
 

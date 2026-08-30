@@ -55,19 +55,24 @@ test_that("auto dispatch matches the documented rules", {
   expect_equal(pick(matrix(rnorm(400), 20)), "jv")
   expect_equal(pick(matrix(sample(0:1, 400, TRUE), 20)), "hk01")
   expect_equal(pick(matrix(9, 20, 20)), "hk01")
-  expect_equal(pick(matrix(rnorm(400), 10)), "sap")   # 10 x 40, m >= 3n
+  # Neither shape nor sparsity is a property the rules read, so both of these
+  # fall through to the default.
+  expect_equal(pick(matrix(rnorm(400), 10)), "jv")   # 10 x 40, m >= 3n
 
   sparse <- matrix(rnorm(400), 20)
   sparse[sample.int(400, 260)] <- Inf
-  expect_equal(pick(sparse), "lapmod")
+  expect_equal(pick(sparse), "jv")
 
-  # Exactly half non-finite is not sparse: the rule is a strict majority.
-  # The diagonal is kept finite so the instance stays feasible.
   half <- matrix(rnorm(400), 20)
   off <- which(row(half) != col(half))
   half[sample(off, 200)] <- Inf
   expect_equal(mean(is.infinite(half)), 0.5)
   expect_equal(pick(half), "jv")
+
+  # Both remain reachable by name, which is what the rules gave up, not access.
+  expect_equal(assignment(sparse, method = "lapmod")$method_used, "lapmod")
+  expect_equal(assignment(matrix(rnorm(400), 10), method = "sap")$method_used,
+               "sap")
 })
 
 test_that("dispatch is unchanged by cost storage mode", {

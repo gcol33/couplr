@@ -9,6 +9,15 @@
 # Ordered; the first rule whose `test` holds wins. `condition` names the
 # triggering property in the same terms as ?assignment, and `reason` states why
 # that property favours the method.
+#
+# A rule earns its place by beating the default on the regime grid in
+# paper/bench_regimes.R, and two former rules did not. Sending a matrix with
+# more than half its entries forbidden to `lapmod` was never the quickest
+# choice at 60, 25, 5 or 1 percent of the entries finite, and sending a problem
+# with at least three columns per row to `sap` was the quickest in none of the
+# 32 cells where it fired, at a median of 5.75 times the cell's best. Jonker-
+# Volgenant is at or under the best time in both regimes, so both properties
+# now fall through to it. Either solver stays reachable by name.
 .dispatch_rules <- list(
   list(
     id        = "tiny",
@@ -25,24 +34,10 @@
     test      = function(n, m, probe) isTRUE(probe$constant) || isTRUE(probe$binary)
   ),
   list(
-    id        = "sparse",
-    method    = "lapmod",
-    condition = "more than half the entries non-finite",
-    reason    = "forbidden edges are carried in the adjacency structure instead of scanned",
-    test      = function(n, m, probe) probe$n_nonfinite > 0.5 * probe$n_total
-  ),
-  list(
-    id        = "very_rectangular",
-    method    = "sap",
-    condition = "at least 3 times as many columns as rows",
-    reason    = "avoids the padding a square-oriented solver would need",
-    test      = function(n, m, probe) m >= 3 * n
-  ),
-  list(
     id        = "default",
     method    = "jv",
     condition = "no earlier rule applies",
-    reason    = "fastest general-purpose solver at every size since the warm start",
+    reason    = "fastest general-purpose solver measured across the regime grid",
     test      = function(n, m, probe) TRUE
   )
 )

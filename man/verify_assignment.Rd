@@ -104,14 +104,19 @@ matrix it is, which is the problem the solver was given.
 
 A \strong{numerical certificate} decides the same conditions within \code{tol}. It
 establishes optimality up to that tolerance and no further. It is what is
-available when the duals are not exactly optimal for the matrix, which is the
-ordinary case for costs carrying a full double mantissa: a dual computed as
-\code{c_ij - v_j} in double arithmetic misses exact tightness by the rounding of
-that subtraction.
+available when the potentials are not exactly optimal for the matrix: a
+potential computed as \code{c_ij - v_j} misses exact tightness by the rounding of
+that subtraction, and a matched arc off by one unit in the last place is
+enough to put the exact conclusion out of reach.
 
-Integer-valued costs are the case where the exact certificate is routinely
-available, because an optimal dual solution is then integer-valued too and
-the solver reaches it in arithmetic that does not round.
+Which of the two an instance supports is a property of the arithmetic that
+produced the potentials, so it is worth checking rather than assuming.
+Integer costs and costs drawn on the unit interval have given an exact
+certificate on every instance we have measured, across problem sizes, both
+orientations of a rectangular problem, and every solver. Costs that are
+themselves computed, such as Euclidean distances between covariate vectors,
+have given a numerical one, with matched arcs off by a relative \code{1e-16} to
+\code{1e-15}.
 
 The check needs dual variables. If \code{x} carries them (as
 \code{\link[=assignment_duals]{assignment_duals()}} results do), they are used. Otherwise they are obtained

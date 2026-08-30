@@ -84,8 +84,8 @@ test_that("assignment auto handles sparse matrices", {
   cost <- matrix(Inf, 200, 200)
   diag(cost) <- 1  # Only 1% of entries are finite, but constant costs
   result <- assignment(cost, method = "auto")
-  # Constant costs trigger hk01 before sparsity check
-  expect_true(result$method_used %in% c("hk01", "lapmod"))
+  # Constant finite costs carry no scale to exploit, so hk01 answers this.
+  expect_equal(result$method_used, "hk01")
 })
 
 test_that("assignment auto picks a dense-square method for large matrices", {

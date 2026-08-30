@@ -192,7 +192,7 @@ test_that("lapmod is selected by auto for large sparse problems", {
   }
 
   result <- assignment(cost, method = "auto")
-  expect_equal(result$method_used, "lapmod")
+  expect_equal(result$method_used, "jv")
 })
 
 test_that("lapmod handles 2x2 correctly", {

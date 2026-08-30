@@ -10,11 +10,17 @@ lazy_pair_distances(spec, matched_rows, matched_cols)
 Numeric vector of length length(matched_rows).
 }
 \description{
-Given matched row/column index pairs (as produced by a solve), recomputes
-each pair's distance directly from left_mat/right_mat. This is cheap
-regardless of n_left/n_right: the number of matched pairs never exceeds
-min(n_left, n_right), so this never approaches the O(n*m) cost the lazy
-path exists to avoid. Mirrors compute_distance_matrix()'s per-metric
-formulas exactly, but pairwise rather than all-pairs.
+Given matched row/column index pairs (as produced by a solve), reports each
+pair's distance. The evaluation is the solver's own: the same C++ routine the
+lazy path priced the pair with is called on that pair, rather than the
+formula being written a second time here. Two implementations of one metric
+agree to rounding and not to the last bit, and the difference is visible
+where it matters most -- a caliper set at a distance the package reported can
+exclude the pair it was read from.
+}
+\details{
+This is cheap regardless of n_left/n_right: the number of matched pairs never
+exceeds min(n_left, n_right), so it never approaches the O(n*m) cost the lazy
+path exists to avoid.
 }
 \keyword{internal}

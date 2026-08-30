@@ -404,9 +404,13 @@ test_that("explain_dispatch reports the rule assignment actually acts on", {
          method = "bruteforce"),
     list(cost = cert_problem(20, 20, kind = "binary"), rule = "no_cost_scale",
          method = "hk01"),
-    list(cost = cert_problem(10, 40),                  rule = "very_rectangular",
-         method = "sap"),
     list(cost = cert_problem(20, 20),                  rule = "default",
+         method = "jv"),
+    # Shape and sparsity are not properties any rule reads, so both of these
+    # reach the default rather than a solver of their own.
+    list(cost = cert_problem(10, 40),                  rule = "default",
+         method = "jv"),
+    list(cost = cert_problem(30, 30, sparsity = 0.7),  rule = "default",
          method = "jv")
   )
   for (case in cases) {
@@ -435,15 +439,20 @@ test_that("explain_dispatch records that a named method skipped the rules", {
 test_that("every dispatch rule is reachable and exactly one fires", {
   set.seed(115)
   probes <- list(cert_problem(4, 4), cert_problem(20, 20, kind = "binary"),
-                 cert_problem(10, 40), cert_problem(20, 20))
+                 cert_problem(20, 20), cert_problem(10, 40),
+                 cert_problem(30, 30, sparsity = 0.7))
   fired <- character(0)
   for (cost in probes) {
     ex <- explain_dispatch(cost)
     expect_equal(sum(ex$considered$fired), 1L)
     fired <- c(fired, ex$rule)
   }
-  sparse <- cert_problem(30, 30, sparsity = 0.7)
-  fired <- c(fired, explain_dispatch(sparse)$rule)
-  expect_setequal(fired, c("tiny", "no_cost_scale", "very_rectangular",
-                           "default", "sparse"))
+  expect_setequal(fired, c("tiny", "no_cost_scale", "default"))
+
+  # Every rule in the table is reachable: the three that fired above are the
+  # three the table holds.
+  expect_setequal(
+    vapply(couplr:::.dispatch_rules, function(r) r$id, character(1)),
+    c("tiny", "no_cost_scale", "default")
+  )
 })

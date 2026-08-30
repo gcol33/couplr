@@ -283,12 +283,12 @@ test_that("a specification built without a mode is a lazy one", {
 test_that("auto never resolves to implicit", {
   # Large enough that the RAM guard has an opinion, which is the only rule
   # "auto" has and it is not a rule about the loop. The guard says so out loud
-  # on a matrix this size, which is the warning being asserted here.
+  # on a problem this size, which is the warning being asserted here.
   expect_warning(
     resolved <- resolve_memory_mode(1e5, 1e5, "auto",
                                     solver_supports_lazy = FALSE,
                                     solver_supports_implicit = TRUE),
-    "cost matrix would need"
+    "dense solve of this problem peaks"
   )
   expect_equal(resolved, "dense")
   expect_equal(resolve_memory_mode(50, 50, "auto",

@@ -29,8 +29,8 @@ solve path consumes a \code{lazy_cost_spec}; see R/matching_lazy.R).}
 edge-generation loop solves: a 1:1 matching over a built-in distance
 metric, whose network is one unit-capacity bipartite block.}
 
-\item{ram_fraction}{Fraction of available RAM the dense matrix may consume
-before "auto" switches away from dense.}
+\item{ram_fraction}{Fraction of available RAM a dense solve's peak may
+reach before "auto" switches away from dense.}
 
 \item{fallback_threshold_mb}{Fixed threshold used when available RAM can't be
 determined (mirrors the warn+fallback precedent in

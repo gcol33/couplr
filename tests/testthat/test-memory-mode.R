@@ -54,6 +54,50 @@ test_that("estimate_dense_matrix_mb() uses double arithmetic (no integer overflo
   expect_gt(mb, 0)
 })
 
+test_that("estimate_dense_solve_mb() covers the peak a dense solve was measured at", {
+  # The guard decides whether a dense solve fits, so its estimate has to cover
+  # the solve and not the matrix. These are the shapes and peaks the paper's
+  # memory benchmark measured: one fresh R session per arm, peak resident set
+  # read from outside against an idle session that loaded the same packages.
+  # Estimating the matrix alone put the 20,000-unit figure at 2,845 MB against
+  # a solve that peaked at 6,085 MB, which is the under-warning this guards.
+  measured <- data.frame(
+    n_left   = c(1667,  3333,  6667),
+    n_right  = c(3333,  6667, 13333),
+    peak_mb  = c(417.2, 1280.4, 6084.9)
+  )
+  for (i in seq_len(nrow(measured))) {
+    expect_gte(
+      estimate_dense_solve_mb(measured$n_left[i], measured$n_right[i]),
+      measured$peak_mb[i]
+    )
+  }
+
+  # A solve costs strictly more than the matrix it runs on, at every shape.
+  expect_gt(estimate_dense_solve_mb(6667, 13333),
+            estimate_dense_matrix_mb(6667, 13333))
+})
+
+test_that("resolve_memory_mode() reads the solve estimate, not the matrix", {
+  testthat::local_mocked_bindings(
+    get_free_ram_mb = function() 1000,
+    .package = "couplr"
+  )
+  # The switch fires when the estimate passes half the available RAM, which the
+  # mock fixes at 500 MB. At 3000 x 4000 the matrix estimate is 384 MB and the
+  # solve estimate 960 MB, so the threshold falls between them: a guard reading
+  # the matrix leaves this dense, and one reading the solve moves it to lazy.
+  limit_mb <- 0.5 * 1000
+  expect_lt(estimate_dense_matrix_mb(3000, 4000), limit_mb)
+  expect_gt(estimate_dense_solve_mb(3000, 4000), limit_mb)
+
+  expect_warning(
+    mode <- resolve_memory_mode(3000, 4000, "auto", solver_supports_lazy = TRUE),
+    "Switching to memory_mode"
+  )
+  expect_equal(mode, "lazy")
+})
+
 test_that("resolve_memory_mode(): small problems never probe RAM", {
   # A mock that errors if called proves the cheap cell-count short-circuit
   # actually skips the probe for ordinary-sized problems.

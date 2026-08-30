@@ -89,12 +89,13 @@ rules need, and the first matching rule wins:
 than setting up a general solver;
 \item finite entries all equal, or all either 0 or 1: \code{"hk01"}, which
 exploits the absence of a real cost scale;
-\item more than half the entries non-finite: \code{"lapmod"}, which carries
-forbidden edges in its adjacency structure;
-\item at least 3 times as many columns as rows: \code{"sap"}, avoiding the
-padding a square-oriented solver would need;
 \item everything else: \code{"jv"}.
 }
+Sparsity and aspect ratio used to divert the choice to \code{"lapmod"} and
+\code{"sap"}. Neither beat \code{"jv"} on the regime grid, at any of the four
+admissibility densities or three aspect ratios measured, so both now fall
+through to it; each stays reachable by naming it.
+
 Naming a method skips the pass. Rectangular problems are transposed
 internally so the solver always sees at least as many columns as rows, and
 the assignment is mapped back afterwards.}
@@ -211,11 +212,14 @@ range nor the conversion.
 
 A matrix whose finite entries are each within \code{1e-9} of an integer is taken
 as an integer matrix: \code{s} is one, the shift is an integer, and every cost
-reaches the solver as the integer nearest to it. The optimum is then the
-optimum of the instance as supplied. Such a matrix is refused when its range
-exceeds \code{1.25 * 10^14 / K}, since a scale of one is the only one available
-and no choice brings the instance inside the bound; the error names the limit
-and points at \code{"jv"} or \code{"auction"}.
+reaches the solver as the integer nearest to it. Where those entries are
+integers the conversion is exact and the optimum is the optimum of the
+instance as supplied; where they are merely near one, each cost moves by at
+most \code{1e-9}, so the matching returned costs at most \code{2 * min(n, m) * 1e-9}
+more than that optimum. Such a matrix is refused when its range exceeds
+\code{1.25 * 10^14 / K}, since a scale of one is the only one available and no
+choice brings the instance inside the bound; the error names the limit and
+points at \code{"jv"} or \code{"auction"}.
 
 Costs that are not integers are solved on the rounded instance. Rounding
 moves each cost by at most \code{1 / (2 * s)}, so the matching returned costs at

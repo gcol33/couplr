@@ -1,36 +1,4 @@
-# couplr 1.6.2
-
-## Bug fixes
-
-* **A matched pair's reported distance is the one the solver priced it with.**
-  Under `memory_mode = "lazy"` and `"implicit"` the distance column was
-  recomputed in R from a second copy of the metric's formula, which agrees with
-  the solver's own evaluation to rounding and not to the last bit. A
-  `max_distance` set at a distance the package had reported could therefore
-  exclude the pair it was read from: on a Mahalanobis problem whose widest
-  matched arc is the one the matching depends on, a caliper at that value
-  returned a complete matching on the dense path and none on the lazy and
-  implicit paths. The reported distance now comes from the same routine the
-  solve evaluated the pair with, and the formula is written once.
-
-## Improvements
-
-* **`verify_assignment()` decides its conditions in exact arithmetic and says
-  so.** Every condition the certificate checks is the sign of
-  `c_ij - u_i - v_j`, and a double is a rational number, so that sign has an
-  exact answer; the check now evaluates it exactly instead of reading the sign
-  of a rounded difference. The new `arithmetic` argument takes `"auto"`, the
-  default, which reports the exact conclusion when the exact conditions hold
-  and the tolerance conclusion otherwise, `"exact"`, which refuses to fall
-  back, and `"double"`, which is the previous behaviour. The certificate
-  carries `arithmetic`, `exact_certificate` and `all_rows_matched`, and its
-  print method names the arithmetic the conclusion is in. The exact conditions
-  imply the numerical ones at any non-negative `tol`, so `certified_optimal`
-  under `"auto"` is what it was before.
-* **`assignment()` documents the integer conversion `"gabow_tarjan"` performs.**
-  The scale factor, the rounding rule, the instance whose optimum is claimed,
-  the range a matrix is refused at, and the bound on how far the rounded
-  instance's optimum can sit from the original one are all stated.
+# couplr 1.7.0
 
 ## Breaking changes
 
@@ -76,6 +44,23 @@
 
 ## Improvements
 
+* **`verify_assignment()` decides its conditions in exact arithmetic and says
+  so.** Every condition the certificate checks is the sign of
+  `c_ij - u_i - v_j`, and a double is a rational number, so that sign has an
+  exact answer; the check now evaluates it exactly instead of reading the sign
+  of a rounded difference. The new `arithmetic` argument takes `"auto"`, the
+  default, which reports the exact conclusion when the exact conditions hold
+  and the tolerance conclusion otherwise, `"exact"`, which refuses to fall
+  back, and `"double"`, which is the previous behaviour. The certificate
+  carries `arithmetic`, `exact_certificate` and `all_rows_matched`, and its
+  print method names the arithmetic the conclusion is in. The exact conditions
+  imply the numerical ones at any non-negative `tol`, so `certified_optimal`
+  under `"auto"` is what it was before.
+* **`assignment()` documents the integer conversion `"gabow_tarjan"` performs.**
+  The scale factor, the rounding rule, the instance whose optimum is claimed,
+  the range a matrix is refused at, and the bound on how far the rounded
+  instance's optimum can sit from the original one are all stated.
+
 * **The edge-generation loop sizes its own seed.** Under
   `memory_mode = "implicit"` the first round used to give every row five
   columns whatever the problem was. Five is short enough that the loop bought
@@ -99,6 +84,19 @@
 * `match_path()` reports the same `$search$seed_width`, and `width` still takes
   an explicit column count on both surfaces. Zero, the new default, asks for
   the sized seed.
+
+## Bug fixes
+
+* **A matched pair's reported distance is the one the solver priced it with.**
+  Under `memory_mode = "lazy"` and `"implicit"` the distance column was
+  recomputed in R from a second copy of the metric's formula, which agrees with
+  the solver's own evaluation to rounding and not to the last bit. A
+  `max_distance` set at a distance the package had reported could therefore
+  exclude the pair it was read from: on a Mahalanobis problem whose widest
+  matched arc is the one the matching depends on, a caliper at that value
+  returned a complete matching on the dense path and none on the lazy and
+  implicit paths. The reported distance now comes from the same routine the
+  solve evaluated the pair with, and the formula is written once.
 
 # couplr 1.6.1
 

@@ -52,9 +52,10 @@ namespace detail {
 // The smallest reduced cost an admissible column of node `id` could carry, and
 // infinite when the node holds no reachable column at all.
 inline double node_cbar_lo(const BallTree& tree, const LazyCostMatrix& src,
-                           const double* q_whitened, const double* q_original,
-                           int32_t id, double ui) {
-    const double floor_c = node_cost_floor(tree, src, q_whitened, q_original, id);
+                           const double* q_whitened, double q_g,
+                           const double* q_original, int32_t id, double ui) {
+    const double floor_c =
+        node_cost_floor(tree, src, q_whitened, q_g, q_original, id);
     if (!(floor_c < std::numeric_limits<double>::infinity())) {
         return std::numeric_limits<double>::infinity();
     }
@@ -124,14 +125,15 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
 
         const double ui = u[static_cast<std::size_t>(i)];
         const double* x = src.left_row(i);
-        whiten_point(tree, x, q.data());
+        const double q_g = whiten_point(tree, x, q.data());
 
         double rmin = kInf;
         int64_t rmin_j = -1;
         row_violators.clear();
 
         stack.clear();
-        const double root_lb = detail::node_cbar_lo(tree, src, q.data(), x, 0, ui);
+        const double root_lb =
+            detail::node_cbar_lo(tree, src, q.data(), q_g, x, 0, ui);
         if (root_lb < kInf) stack.emplace_back(root_lb, 0);
 
         while (!stack.empty()) {
@@ -171,8 +173,10 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
 
             const int32_t l = tree.left[static_cast<std::size_t>(id)];
             const int32_t r = tree.right[static_cast<std::size_t>(id)];
-            const double lb_l = detail::node_cbar_lo(tree, src, q.data(), x, l, ui);
-            const double lb_r = detail::node_cbar_lo(tree, src, q.data(), x, r, ui);
+            const double lb_l =
+                detail::node_cbar_lo(tree, src, q.data(), q_g, x, l, ui);
+            const double lb_r =
+                detail::node_cbar_lo(tree, src, q.data(), q_g, x, r, ui);
 
             // The weaker bound is pushed first so the stronger one is taken
             // first: the row's best tightens on the promising side, and the

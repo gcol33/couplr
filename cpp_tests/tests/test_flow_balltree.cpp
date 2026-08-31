@@ -181,9 +181,10 @@ TEST_CASE("Ball tree - the ball encloses every member of its node") {
 
     std::vector<double> q(static_cast<std::size_t>(spec.n_vars));
     for (int64_t i = 0; i < src.nrow; ++i) {
-        lap::whiten_point(tree, src.left_row(i), q.data());
+        const double q_g = lap::whiten_point(tree, src.left_row(i), q.data());
         for (int32_t id = 0; id < tree.n_nodes(); ++id) {
-            const lap::BallBounds b = lap::node_ball_bounds(tree, q.data(), id);
+            const lap::BallBounds b =
+                lap::node_ball_bounds(tree, q.data(), q_g, id);
             REQUIRE(b.d_lo >= 0.0);
             REQUIRE(b.d_lo <= b.d_hi + kTol);
             for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
@@ -215,9 +216,11 @@ TEST_CASE("Ball tree - node_cost_lo is under every admissible member's cost") {
 
             std::vector<double> q(static_cast<std::size_t>(spec.n_vars));
             for (int64_t i = 0; i < src.nrow; ++i) {
-                lap::whiten_point(tree, src.left_row(i), q.data());
+                const double q_g =
+                    lap::whiten_point(tree, src.left_row(i), q.data());
                 for (int32_t id = 0; id < tree.n_nodes(); ++id) {
-                    const double lo = lap::node_cost_lo(tree, src, q.data(), id);
+                    const double lo =
+                        lap::node_cost_lo(tree, src, q.data(), q_g, id);
                     for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
                          t < tree.hi[static_cast<std::size_t>(id)]; ++t) {
                         const int64_t j = static_cast<int64_t>(
@@ -251,10 +254,11 @@ TEST_CASE("Ball tree - an out verdict never leaves a member in") {
 
     std::vector<double> q(static_cast<std::size_t>(spec.n_vars));
     for (int64_t i = 0; i < src.nrow; ++i) {
-        lap::whiten_point(tree, src.left_row(i), q.data());
+        const double q_g = lap::whiten_point(tree, src.left_row(i), q.data());
         const double* x = src.left_row(i);
         for (int32_t id = 0; id < tree.n_nodes(); ++id) {
-            const bool d_out = lap::node_distance_out(tree, src, q.data(), id);
+            const bool d_out =
+                lap::node_distance_out(tree, src, q.data(), q_g, id);
             const bool c_out = lap::node_caliper_out(tree, src, x, id);
             if (d_out) ++distance_fired;
             if (c_out) ++caliper_fired;
@@ -416,8 +420,8 @@ TEST_CASE("Ball tree - the shapes a split cannot cut") {
         REQUIRE(tree.hi[0] == static_cast<int32_t>(n_units));
 
         std::vector<double> q(2);
-        lap::whiten_point(tree, src.left_row(0), q.data());
-        const lap::BallBounds b = lap::node_ball_bounds(tree, q.data(), 0);
+        const double q_g = lap::whiten_point(tree, src.left_row(0), q.data());
+        const lap::BallBounds b = lap::node_ball_bounds(tree, q.data(), q_g, 0);
         REQUIRE_THAT(b.d_lo, Catch::Matchers::WithinAbs(b.d_hi, 1e-12));
         REQUIRE_THAT(b.d_lo, Catch::Matchers::WithinAbs(src.at(0, 0), 1e-12));
     }

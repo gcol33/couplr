@@ -4,7 +4,11 @@
 ## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(
   echo = FALSE, warning = FALSE, message = FALSE,
-  fig.align = "center", out.width = "100%"
+  fig.align = "center", out.width = "100%",
+  ## The default pdf() device draws figure text as unembedded Helvetica, so the
+  ## article PDF carries font objects a reader may not have. cairo_pdf embeds
+  ## the faces it draws with. The HTML build keeps its own raster device.
+  dev = if (knitr::is_latex_output()) "cairo_pdf" else "png"
 )
 library(couplr)
 library(ggplot2)
@@ -85,6 +89,18 @@ cost <- matrix(runif(120), nrow = 6, ncol = 20)
 verify_assignment(assignment(cost), cost)
 
 
+## ----solver-basic, echo=TRUE--------------------------------------------------
+set.seed(1)
+cost <- matrix(sample.int(100, 25, replace = TRUE), nrow = 5)
+res  <- lap_solve(cost)
+res
+
+
+## ----solver-kbest, echo=TRUE--------------------------------------------------
+kb <- lap_solve_kbest(cost, k = 3)
+tapply(kb$total_cost, kb$rank, unique)
+
+
 ## ----workflow-match, echo=TRUE------------------------------------------------
 library(couplr)
 data(hospital_staff)
@@ -124,19 +140,99 @@ p <- match_path(treated, control, vars = covars, auto_scale = TRUE,
 p$path[, c("max_distance", "n_matched", "total_distance", "certified")]
 
 
-## ----solver-basic, echo=TRUE--------------------------------------------------
-set.seed(1)
-cost <- matrix(sample.int(100, 25, replace = TRUE), nrow = 5)
-res  <- lap_solve(cost)
-res
+## ----implicit-table, echo=FALSE-----------------------------------------------
+isz  <- c(500, 2000, 5000, 10000, 20000, 50000)
+ilab <- c("167 + 333", "667 + 1,333", "1,667 + 3,333",
+          "3,333 + 6,667", "6,667 + 13,333", "16,667 + 33,333")
+
+secs <- function(mode) {
+  vapply(isz, function(n) {
+    s <- imp_at(mode, n)
+    if (is.na(s)) return("not run")
+    if (s < 1) sprintf("%.0f ms", s * 1000) else sprintf("%.3g s", s)
+  }, character(1))
+}
+share <- vapply(isz, function(n) {
+  sprintf("%.2f%%", 100 * imp_at("implicit", n, "candidate_edges") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+dists <- vapply(isz, function(n) {
+  sprintf("%.2f", imp_at("implicit", n, "edges_evaluated") /
+            imp_at("implicit", n, "possible_edges"))
+}, character(1))
+rounds <- vapply(isz, function(n) {
+  as.character(imp_at("implicit", n, "n_rounds"))
+}, character(1))
+
+knitr::kable(
+  data.frame(`Problem size` = ilab, dense = secs("dense"), lazy = secs("lazy"),
+             implicit = secs("implicit"), `Graph built` = share,
+             `Distances` = dists, Rounds = rounds, check.names = FALSE),
+  align = "lrrrrrr", booktabs = TRUE,
+  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and the scaling table below carries dense timings at the two largest sizes. Every cell returned the same total distance."
+)
 
 
-## ----solver-kbest, echo=TRUE--------------------------------------------------
-kb <- lap_solve_kbest(cost, k = 3)
-tapply(kb$total_cost, kb$rank, unique)
+## ----igrid-numbers, echo=FALSE------------------------------------------------
+ig_cells   <- nrow(igrid)
+ig_seeds   <- sum(igrid$seeds)
+ig_rounds  <- c(min(igrid$rounds_min), max(igrid$rounds_max))
+ig_graph   <- range(igrid$graph_pct_med)
+ig_dist    <- range(igrid$distances_x_med)
+ig_cert    <- sum(igrid$all_certified %in% TRUE)
+ig_eq_den  <- sum(!is.na(igrid$equal_to_dense))
+ig_eq      <- sum(igrid$equal_to_dense %in% TRUE)
+ig_gap     <- max(igrid$worst_gap, na.rm = TRUE)
+## "All N" only where that is what the grid did; otherwise the count is named.
+ig_cert_txt <- if (ig_cert == ig_cells) {
+  sprintf("All %d cells certified", ig_cells)
+} else {
+  sprintf("%d of the %d cells certified", ig_cert, ig_cells)
+}
+ig_clouds  <- igrid[igrid$sweep == "cloud", ]
+ig_slow    <- ig_clouds$cloud[which.min(ig_clouds$speedup_med)]
+ig_slow_x  <- min(ig_clouds$speedup_med)
+ig_fast    <- ig_clouds$cloud[which.max(ig_clouds$speedup_med)]
+ig_fast_x  <- max(ig_clouds$speedup_med)
+## A ratio below one is the loop losing, and the sentence says so only where
+## that happens rather than carrying the caveat unconditionally.
+ig_note    <- if (ig_slow_x < 1) {
+  ", where a ratio below one is the loop losing to the lazy path"
+} else ""
+## The cell built to be hostile to the loop, reported in the text beside the
+## ordinary clouds so the worst case is not left as a statement about a bound.
+ig_cont    <- igrid[igrid$sweep == "cloud" & igrid$cloud == "contested", ][1, ]
+ig_dims    <- igrid[igrid$sweep == "dimension", ]
+ig_dim_rng <- range(ig_dims$dim)
 
 
-## ----solver-bench, fig.height=5.0, fig.cap="Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. Seventeen solvers are timed on square integer cost matrices with entries drawn uniformly from 1 to 10,000. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs. Medians of five replicates on a single core of an Apple M4 Pro. Cubic-time and general flow solvers are capped at smaller sizes, which is why their lines end early.", fig.alt="Five panels of log-log line plots showing solve time in milliseconds against problem size n from 4 to 5000. Solve time rises with problem size in every panel. The Jonker-Volgenant panel reaches n equals 5000 in roughly one second, the fastest of the families. Auction, cost-scaling and flow-based solvers are one to three orders of magnitude slower at matched sizes and stop at n equals 1000 or 2000. The dashed dispatcher line lies on top of the fastest solver in each panel."----
+## ----memory-numbers, echo=FALSE-----------------------------------------------
+mem_n <- max(memory$n_total[memory$arm == "dense" & memory$status == "ok"])
+mem_lab <- sprintf("%s + %s", format(round(mem_n / 3), big.mark = ","),
+                   format(mem_n - round(mem_n / 3), big.mark = ","))
+mem_over <- function(arm, n = mem_n) mem_at(arm, n, "over_baseline_mb")
+mem_matrix <- mem_at("dense_matrix", mem_n, "matrix_mb")
+mem_ratio  <- mem_over("dense_matrix") / mem_matrix
+mem_solve_ratio <- mem_over("dense") / mem_matrix
+
+
+## ----path-table, echo=FALSE---------------------------------------------------
+knitr::kable(
+  data.frame(
+    `Problem size` = ilab[match(pth$n_total, isz)],
+    `As a path` = sprintf("%.3g s", pth$warm_wall),
+    `Independently` = sprintf("%.3g s", pth$cold_wall),
+    Ratio = sprintf("%.2fx", pth$wall_speedup),
+    `Solve time` = sprintf("%.2fx", pth$speedup),
+    `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
+    check.names = FALSE
+  ),
+  align = "lrrrrr", booktabs = TRUE,
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Solve time is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
+)
+
+
+## ----solver-bench, fig.height=4.2, fig.cap="Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs.", fig.alt="Five panels of log-log line plots showing solve time in milliseconds against problem size n from 4 to 5000. Solve time rises with problem size in every panel. The Jonker-Volgenant panel reaches n equals 5000 in roughly one second, the fastest of the families. Auction, cost-scaling and flow-based solvers are one to three orders of magnitude slower at matched sizes and stop at n equals 1000 or 2000. The dashed dispatcher line lies on top of the fastest solver in each panel."----
 fam_map <- c(
   "JV / Augmenting path"  = "JV / augmenting path",
   "Auction"               = "Auction",
@@ -267,7 +363,7 @@ reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
 ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
 
 
-## ----love, fig.height=3.1, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
+## ----love, fig.height=2.6, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
 pretty <- c(age = "age", educ = "education (years)",
             race_Black = "race: Black", race_Hispanic = "race: Hispanic",
             married = "married", nodegree = "no high-school degree",
@@ -367,98 +463,6 @@ knitr::kable(
 )
 
 
-## ----implicit-table, echo=FALSE-----------------------------------------------
-isz  <- c(500, 2000, 5000, 10000, 20000, 50000)
-ilab <- c("167 + 333", "667 + 1,333", "1,667 + 3,333",
-          "3,333 + 6,667", "6,667 + 13,333", "16,667 + 33,333")
-
-secs <- function(mode) {
-  vapply(isz, function(n) {
-    s <- imp_at(mode, n)
-    if (is.na(s)) return("not run")
-    if (s < 1) sprintf("%.0f ms", s * 1000) else sprintf("%.3g s", s)
-  }, character(1))
-}
-share <- vapply(isz, function(n) {
-  sprintf("%.2f%%", 100 * imp_at("implicit", n, "candidate_edges") /
-            imp_at("implicit", n, "possible_edges"))
-}, character(1))
-dists <- vapply(isz, function(n) {
-  sprintf("%.2f", imp_at("implicit", n, "edges_evaluated") /
-            imp_at("implicit", n, "possible_edges"))
-}, character(1))
-rounds <- vapply(isz, function(n) {
-  as.character(imp_at("implicit", n, "n_rounds"))
-}, character(1))
-
-knitr::kable(
-  data.frame(`Problem size` = ilab, dense = secs("dense"), lazy = secs("lazy"),
-             implicit = secs("implicit"), `Graph built` = share,
-             `Distances` = dists, Rounds = rounds, check.names = FALSE),
-  align = "lrrrrrr", booktabs = TRUE,
-  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and Table 3 carries dense timings at the two largest sizes. Every cell returned the same total distance."
-)
-
-
-## ----igrid-numbers, echo=FALSE------------------------------------------------
-ig_cells   <- nrow(igrid)
-ig_seeds   <- sum(igrid$seeds)
-ig_rounds  <- c(min(igrid$rounds_min), max(igrid$rounds_max))
-ig_graph   <- range(igrid$graph_pct_med)
-ig_dist    <- range(igrid$distances_x_med)
-ig_cert    <- sum(igrid$all_certified %in% TRUE)
-ig_eq_den  <- sum(!is.na(igrid$equal_to_dense))
-ig_eq      <- sum(igrid$equal_to_dense %in% TRUE)
-ig_gap     <- max(igrid$worst_gap, na.rm = TRUE)
-## "All N" only where that is what the grid did; otherwise the count is named.
-ig_cert_txt <- if (ig_cert == ig_cells) {
-  sprintf("All %d cells certified", ig_cells)
-} else {
-  sprintf("%d of the %d cells certified", ig_cert, ig_cells)
-}
-ig_clouds  <- igrid[igrid$sweep == "cloud", ]
-ig_slow    <- ig_clouds$cloud[which.min(ig_clouds$speedup_med)]
-ig_slow_x  <- min(ig_clouds$speedup_med)
-ig_fast    <- ig_clouds$cloud[which.max(ig_clouds$speedup_med)]
-ig_fast_x  <- max(ig_clouds$speedup_med)
-## A ratio below one is the loop losing, and the sentence says so only where
-## that happens rather than carrying the caveat unconditionally.
-ig_note    <- if (ig_slow_x < 1) {
-  ", where a ratio below one is the loop losing to the lazy path"
-} else ""
-## The cell built to be hostile to the loop, reported in the text beside the
-## ordinary clouds so the worst case is not left as a statement about a bound.
-ig_cont    <- igrid[igrid$sweep == "cloud" & igrid$cloud == "contested", ][1, ]
-ig_dims    <- igrid[igrid$sweep == "dimension", ]
-ig_dim_rng <- range(ig_dims$dim)
-
-
-## ----memory-numbers, echo=FALSE-----------------------------------------------
-mem_n <- max(memory$n_total[memory$arm == "dense" & memory$status == "ok"])
-mem_lab <- sprintf("%s + %s", format(round(mem_n / 3), big.mark = ","),
-                   format(mem_n - round(mem_n / 3), big.mark = ","))
-mem_over <- function(arm, n = mem_n) mem_at(arm, n, "over_baseline_mb")
-mem_matrix <- mem_at("dense_matrix", mem_n, "matrix_mb")
-mem_ratio  <- mem_over("dense_matrix") / mem_matrix
-mem_solve_ratio <- mem_over("dense") / mem_matrix
-
-
-## ----path-table, echo=FALSE---------------------------------------------------
-knitr::kable(
-  data.frame(
-    `Problem size` = ilab[match(pth$n_total, isz)],
-    `As a path` = sprintf("%.3g s", pth$warm_wall),
-    `Independently` = sprintf("%.3g s", pth$cold_wall),
-    Ratio = sprintf("%.2fx", pth$wall_speedup),
-    `Solve time` = sprintf("%.2fx", pth$speedup),
-    `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
-    check.names = FALSE
-  ),
-  align = "lrrrrr", booktabs = TRUE,
-  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Solve time is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep. The independent solve is a one-point path, so both sides are the same solver reached the same way and differ only in whether a point starts from the one before it."
-)
-
-
 ## ----capability, echo=FALSE---------------------------------------------------
 cap <- data.frame(
   Feature = c("Per-variable calipers from a named vector",
@@ -478,6 +482,6 @@ cap <- data.frame(
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, and both alternatives reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix, MatchIt through optmatch. The algorithm is selectable in optmatch through solver =, reaching RELAX-IV or any of four LEMON algorithms, and in MatchIt by forwarding it. The certificate row records whether a package exports a function returning duals or verifying optimality, which neither does: optmatch attaches its flow solver's node prices to a fullmatch() result in an undocumented MCFSolutions attribute, and the function evaluating the primal against them is internal. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, and both alternatives reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix. The certificate row records whether a package exports a function returning duals or verifying optimality, which neither does: optmatch attaches its flow solver's node prices to a fullmatch() result in an undocumented MCFSolutions attribute, and the function evaluating the primal against them is internal. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 

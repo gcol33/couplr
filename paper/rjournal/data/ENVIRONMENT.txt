@@ -1,16 +1,18 @@
-run        20260830-152350
+run        20260830-152628
 host       Darwin Mac 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:41:15 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T6041 arm64
-commit     a63b760
+commit     a63b760 28 modified paths
 R version 4.5.3 (2026-03-11)
 aarch64-apple-darwin25.3.0
-couplr         1.6.2
+couplr         1.7.0
 MatchIt        4.7.2
 optmatch       0.10.8
 microbenchmark 1.5.0
 
-note       The regime grid was measured at this run and commit. The remaining
-           arms carry over from run 20260828-170754 at commit 5a1693c, which
-           differs from this one only in the dispatch table and the memory
-           guard, neither of which enters those measurements. A single
-           full-suite re-measurement at this commit is under way and replaces
-           this block when it lands.
+note       Every arm the article reports was measured at this one run and
+           commit. The harness read 1.6.2 from the DESCRIPTION at a63b760 and
+           the version is recorded here as 1.7.0: no commit between a63b760 and
+           the 1.7.0 release touches a file under R/ or src/, so the sources
+           that produced these numbers are the released ones and only the
+           version string differs. The modified paths the run recorded are the
+           benchmark outputs it was writing, together with two RcppExports
+           files that differ from the commit only in line endings.

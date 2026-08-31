@@ -42,21 +42,21 @@ omitted pairs are priced against the duals the sparse solve returns, and pairs
 enter until none prices in, at which point the duals certify the sparse solution
 optimal for the complete problem. Warm starting the same loop traces a matching
 frontier over a swept constraint. Nineteen assignment algorithms, written from
-scratch in C++ with no external LP or MIP solver, are the engine room; one of
+scratch in C++ with no external LP or MIP solver, are the engine room. For one
 of them, the Gabow-Tarjan bit-scaling algorithm, we are not aware of a prior
 publicly available open-source implementation, and the paper says so carefully
 and without making it the contribution.
 
-The article reports four measurements. A per-solver benchmark over the nineteen
+The article reports five measurements. A per-solver benchmark over the nineteen
 algorithms. A balance comparison against MatchIt and optmatch on the LaLonde NSW
 data, where all three agree to three decimal places and, scored on one common
 objective, to within a thousandth of a distance unit. A scaling comparison in
-which couplr reaches problem sizes at which both alternatives stop. And the
+which couplr reaches problem sizes at which both alternatives stop. The
 edge-generation loop itself: matching 16,667 treated units to 33,333 controls,
 it holds 0.29% of the pairs and comes back certified with a duality gap of
 zero, in a third of the time the same problem takes without the loop. On the
 four sizes where the dense solve can also be run, the two return the same
-pairing unit by unit. A caliper sweep of twenty values solved as
+pairing unit by unit. And a caliper sweep of twenty values solved as
 one warm-started path costs about half what the twenty independent solves cost,
 with every point returning what its independent solve returns.
 

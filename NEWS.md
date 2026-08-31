@@ -111,6 +111,28 @@
 
 ## Bug fixes
 
+* **`method = "csa"` no longer returns a suboptimal assignment on a wide cost
+  range.** Cost scaling runs on integers, and the conversion scaled the largest
+  absolute cost to 1e6. Two things went wrong with that. Costs clustered far
+  from the origin spent their resolution on the offset, so a unit-wide spread
+  sitting at 1e9 rounded to a single value. And a heavy-tailed matrix, whose
+  smallest entries are a billionth of its largest, rounded those entries
+  together at zero, after which the solver could not order the cheapest pairs
+  and returned whichever of the tied matchings it reached first, reporting
+  `status = "optimal"` while doing it. At n = 60 on lognormal costs it
+  disagreed with the optimum in 40 of 40 replicates, once returning 77329.983
+  against an optimum of 0.0013427418.
+
+  The conversion now shifts the smallest allowed cost to zero and scales the
+  span rather than the magnitude, which is what a complete assignment is
+  invariant under, at a span sized from the instance and capped at 1e9. Costs
+  offset from the origin are unaffected by the offset. A range the resolution
+  cannot order is refused, naming `"jv"` and `"auction"`, rather than answered
+  from a collapsed ordering.
+
+  `verify_assignment()` returned `FALSE` on every one of the wrong answers, so
+  a caller who verified was never misled; a caller who read `status` was.
+
 * **`verify_assignment()` no longer certifies a matching that leaves rows
   unmatched.** The numerical conclusion asked for primal feasibility, dual
   feasibility, complementary slackness and a zero duality gap, and the primal

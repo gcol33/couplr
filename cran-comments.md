@@ -19,7 +19,26 @@
   assumed, so it could start a solve on a machine it did not fit. The guard
   switches to the lazy path earlier than it did.
 
-### Bug fix
+### Bug fixes
+
+* `verify_assignment()` certified a matching that left rows unmatched under its
+  default arithmetic. The numerical conclusion asked for primal feasibility, and
+  the primal feasibility it asked for permitted an uncovered row, so on an input
+  whose duals are all zero the two objectives agree at zero and a matching making
+  no pairs came back certified. The row cover is part of primal feasibility in
+  the model the package solves, and `primal_feasible` now means it, reporting its
+  two halves as `structurally_valid_matching` and `all_rows_matched`. The exact
+  arithmetic was unaffected.
+
+* `method = "csa"` returned a suboptimal assignment on a wide cost range while
+  reporting `status = "optimal"`. Its integer conversion scaled the largest
+  absolute cost rather than the span, so costs clustered far from the origin lost
+  their variation to the offset and a heavy-tailed matrix rounded its smallest
+  entries together, after which the solver could not order the cheapest pairs.
+  The conversion now shifts the smallest cost to zero and scales the span, and a
+  range whose resolution cannot order those pairs is refused with `"jv"` and
+  `"auction"` named instead of answered.
+
 
 * Under `memory_mode = "lazy"` and `"implicit"` the reported distance for a
   matched pair was recomputed in R from a second copy of the metric's formula,
@@ -53,7 +72,8 @@ changes, which is why it is a minor rather than a patch version.
 
 ## Test environments
 
-* local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
+* local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0 (0 errors, 0
+  warnings, 1 note)
 * win-builder: r-devel, r-release
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)

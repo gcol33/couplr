@@ -62,7 +62,7 @@ inline void tree_cheapest_outside(const LazyCostMatrix& src, const BallTree& tre
 
     const double* x = src.left_row(i);
     std::vector<double> q(static_cast<std::size_t>(tree.n_vars), 0.0);
-    whiten_point(tree, x, q.data());
+    const double q_g = whiten_point(tree, x, q.data());
 
     // A max-heap under the same order the answer is selected by, so its front
     // is the column an incoming one has to beat.
@@ -70,7 +70,7 @@ inline void tree_cheapest_outside(const LazyCostMatrix& src, const BallTree& tre
     best.reserve(static_cast<std::size_t>(width));
 
     std::vector<std::pair<double, int32_t>> stack;
-    const double root = node_cost_floor(tree, src, q.data(), x, 0);
+    const double root = node_cost_floor(tree, src, q.data(), q_g, x, 0);
     if (root < kInf) stack.emplace_back(root, 0);
 
     while (!stack.empty()) {
@@ -108,8 +108,8 @@ inline void tree_cheapest_outside(const LazyCostMatrix& src, const BallTree& tre
 
         const int32_t l = tree.left[static_cast<std::size_t>(id)];
         const int32_t r = tree.right[static_cast<std::size_t>(id)];
-        const double fl = node_cost_floor(tree, src, q.data(), x, l);
-        const double fr = node_cost_floor(tree, src, q.data(), x, r);
+        const double fl = node_cost_floor(tree, src, q.data(), q_g, x, l);
+        const double fr = node_cost_floor(tree, src, q.data(), q_g, x, r);
 
         const double limit = static_cast<int32_t>(best.size()) == width
                                  ? best.front().first

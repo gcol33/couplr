@@ -490,3 +490,74 @@ TEST_CASE("Tree pricing - a mismatched shape throws rather than pricing nothing"
     REQUIRE_THROWS_AS(lap::price_tree(src, no_tree, u, v, cand, 3, kTol),
                       lap::DimensionException);
 }
+
+// A restricted master holding one pair, over coordinates whose shared offset
+// dwarfs the separations between them and under a covariance whose stiffest
+// direction is a hundred million times the softest. Both features attack the
+// bound rather than the descent: the offset is what whitening has to cancel
+// before the factor is applied, and the conditioning is what the factorization
+// residual has to be measured against. The duals are the restricted problem's
+// own optimum rather than a shape chosen for the test, so a bound that misses
+// here misses on a solve that could occur.
+TEST_CASE("Tree pricing - offset coordinates under poor conditioning") {
+    constexpr int64_t n_vars = 2;
+    constexpr int64_t ncol = 48;
+    constexpr double offset = 1.0e12;
+
+    std::mt19937 rng(9123471u);
+    std::uniform_real_distribution<double> unif(-1.0e-3, 1.0e-3);
+
+    std::vector<double> left(static_cast<std::size_t>(n_vars));
+    for (double& x : left) x = offset + unif(rng);
+
+    std::vector<double> right(static_cast<std::size_t>(ncol * n_vars));
+    for (double& x : right) x = offset + unif(rng);
+
+    // Eigenvalues 1 and 1e-8 on a basis rotated off the coordinate axes, so no
+    // single covariate carries the ill conditioning on its own.
+    const double h = 0.5;
+    const double lo_eig = 1.0e-8;
+    std::vector<double> inv_cov(static_cast<std::size_t>(n_vars * n_vars));
+    inv_cov[0] = h * (1.0 + lo_eig);
+    inv_cov[1] = h * (1.0 - lo_eig);
+    inv_cov[2] = inv_cov[1];
+    inv_cov[3] = inv_cov[0];
+
+    const lap::LazyCostMatrix src(
+        std::move(left), std::move(right), n_vars,
+        lap::DistanceMetric::Mahalanobis, std::move(inv_cov), kInf,
+        std::vector<lap::CaliperSpec>(), false);
+
+    lap::BallTree tree = lap::build_ball_tree(src, 8);
+    REQUIRE_FALSE(tree.empty());
+
+    // One candidate pair, and the duals that are optimal for it: the row dual
+    // is that pair's own cost and every column dual is zero, which puts the
+    // held pair at reduced cost zero and prices every omitted pair by how much
+    // cheaper it is.
+    constexpr int32_t j0 = 0;
+    double c0 = 0.0;
+    REQUIRE(src.admissible(0, j0, c0));
+
+    std::vector<double> u(1, c0);
+    std::vector<double> v(static_cast<std::size_t>(ncol), 0.0);
+
+    std::vector<lap::CandidateSet::Pair> pairs;
+    pairs.emplace_back(0, j0);
+    lap::CandidateSet cand_block(1, ncol);
+    cand_block.add_pairs(pairs);
+    lap::CandidateSet cand_tree(1, ncol);
+    cand_tree.add_pairs(pairs);
+
+    const lap::BlockPricing block =
+        lap::price_block(src, u, v, cand_block, 8, kTol);
+    const lap::BlockPricing from_tree =
+        lap::price_tree(src, tree, u, v, cand_tree, 8, kTol);
+
+    // The case says nothing while the grid scan has nothing for the tree to
+    // miss, so the omitted pair that prices below the held one is asserted
+    // before the two pricers are compared.
+    REQUIRE(block.n_violators > 0);
+    REQUIRE(block.min_reduced_cost < -kTol);
+    compare(block, from_tree, "offset coordinates under poor conditioning");
+}

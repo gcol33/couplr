@@ -117,9 +117,11 @@ read rather than how a matrix is stored, so they apply to a lazy cost
 specification; \code{"implicit"} also accepts a matrix, where it solves the same
 problem by generating the pairs it needs and saves nothing, which is what
 makes it a check on the complete solve rather than a faster one.
-\code{"implicit"} is slower than \code{"lazy"} on every shape measured so far, and
-the time goes to the restricted solve rather than to the pair scan, so what
-it buys today is the certificate over the complete problem.}
+Against \code{"lazy"} on a lazy cost specification, \code{"implicit"} leads from
+5,000 units upward on the eight-covariate problem the benchmarks use, by
+1.1x at 5,000 rising to 3.1x at 50,000, and loses below that where the
+loop's fixed costs are still visible. What it buys at every size is the
+certificate over the complete problem.}
 
 \item{certify}{Logical; whether to attach a checked \code{assignment_certificate}
 as \code{certificate}. \code{NULL}, the default, takes the path's own answer: \code{TRUE}

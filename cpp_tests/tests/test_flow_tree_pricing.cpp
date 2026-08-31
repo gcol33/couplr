@@ -68,6 +68,15 @@ struct Case {
     double cand_fraction = 0.1;
     int keep_per_row = 3;
     int leaf_size = 8;
+    // Multiplies every coordinate, so a case can sit far from the exponent
+    // range the bound was written at without changing the geometry.
+    double coord_scale = 1.0;
+    // Adds a translation after the scaling, which leaves every pairwise
+    // difference alone while removing the leading digits that carry it.
+    double coord_shift = 0.0;
+    // The smallest eigenvalue the generated covariance is pushed down to. A
+    // value near zero is a matrix whose Cholesky factor is barely defined.
+    double spd_floor = -1.0;
     std::uint32_t seed = 1;
     std::string label;
 };
@@ -75,9 +84,22 @@ struct Case {
 lap::LazyCostMatrix make_source(const Case& c, std::mt19937& rng) {
     std::vector<double> left = random_coords(c.nrow, c.n_vars, rng);
     std::vector<double> right = random_coords(c.ncol, c.n_vars, rng);
+    if (c.coord_scale != 1.0 || c.coord_shift != 0.0) {
+        for (double& x : left) x = x * c.coord_scale + c.coord_shift;
+        for (double& x : right) x = x * c.coord_scale + c.coord_shift;
+    }
     std::vector<double> inv_cov;
     if (c.metric == lap::DistanceMetric::Mahalanobis) {
         inv_cov = spd_matrix(c.n_vars, rng);
+        if (c.spd_floor >= 0.0) {
+            // Shrink the diagonal boost the generator adds, which is what
+            // keeps the matrix comfortably away from singular.
+            for (int64_t i = 0; i < c.n_vars; ++i) {
+                const std::size_t d = static_cast<std::size_t>(i * c.n_vars + i);
+                inv_cov[d] -= static_cast<double>(c.n_vars);
+                inv_cov[d] += c.spd_floor;
+            }
+        }
     }
     return lap::LazyCostMatrix(std::move(left), std::move(right), c.n_vars,
                                c.metric, std::move(inv_cov), c.max_distance,
@@ -295,6 +317,89 @@ TEST_CASE("Tree pricing - the same answer as the grid scan") {
     cases.push_back(tall);
 
     for (const Case& c : cases) run_case(c);
+}
+
+TEST_CASE("Tree pricing - the grid scan is matched at extreme scales") {
+    // The bound is arithmetic over coordinates, so the cases that can break it
+    // are the ones where the arithmetic is worst: coordinates whose exponent
+    // sits far from one, differences that survive only in the trailing bits of
+    // a large translation, and a covariance whose Cholesky factor is barely
+    // defined. A prune that fires where the grid scan finds a violator shows up
+    // here as a disagreement, because both pricers see the same source.
+    std::vector<Case> cases;
+
+    for (int e = -150; e <= 150; e += 50) {
+        if (e == 0) continue;
+        Case scaled;
+        scaled.coord_scale = std::pow(10.0, static_cast<double>(e));
+        scaled.seed = static_cast<std::uint32_t>(200 + e);
+        scaled.label = "euclidean coordinates at 1e" + std::to_string(e);
+        cases.push_back(scaled);
+    }
+
+    for (int e = -60; e <= 60; e += 30) {
+        if (e == 0) continue;
+        Case scaled;
+        scaled.metric = lap::DistanceMetric::Mahalanobis;
+        scaled.n_vars = 4;
+        scaled.coord_scale = std::pow(10.0, static_cast<double>(e));
+        scaled.seed = static_cast<std::uint32_t>(400 + e);
+        scaled.label = "mahalanobis coordinates at 1e" + std::to_string(e);
+        cases.push_back(scaled);
+    }
+
+    // A large translation leaves every pairwise difference unchanged while
+    // spending the leading digits of each coordinate on the offset.
+    for (double shift : {1e6, 1e9, 1e12}) {
+        Case shifted;
+        shifted.coord_shift = shift;
+        shifted.seed = 500;
+        shifted.label = "coordinates translated by " + std::to_string(shift);
+        cases.push_back(shifted);
+
+        Case shifted_maha;
+        shifted_maha.metric = lap::DistanceMetric::Mahalanobis;
+        shifted_maha.n_vars = 4;
+        shifted_maha.coord_shift = shift;
+        shifted_maha.seed = 501;
+        shifted_maha.label = "mahalanobis translated by " + std::to_string(shift);
+        cases.push_back(shifted_maha);
+    }
+
+    // A covariance approaching singular, where the factor the tree whitens by
+    // and the matrix the source reads diverge fastest.
+    for (double floor_v : {1e-2, 1e-5, 1e-8}) {
+        Case ill;
+        ill.metric = lap::DistanceMetric::Mahalanobis;
+        ill.n_vars = 4;
+        ill.spd_floor = floor_v;
+        ill.seed = 600;
+        ill.label = "mahalanobis with a diagonal floor of " + std::to_string(floor_v);
+        cases.push_back(ill);
+    }
+
+    for (const Case& c : cases) {
+        std::mt19937 rng(c.seed);
+        const lap::LazyCostMatrix src = make_source(c, rng);
+        lap::BallTree tree = lap::build_ball_tree(src, c.leaf_size);
+        // An ill-conditioned covariance may leave no Cholesky factor at all,
+        // which is the scan rather than a failure.
+        if (tree.empty()) continue;
+
+        std::vector<double> u, v;
+        make_duals(src, c, rng, u, v);
+
+        const std::vector<lap::CandidateSet::Pair> pairs = candidate_pairs(c, rng);
+        lap::CandidateSet cand_block = make_candidates(c, pairs);
+        lap::CandidateSet cand_tree = make_candidates(c, pairs);
+
+        const lap::BlockPricing block =
+            lap::price_block(src, u, v, cand_block, c.keep_per_row, kTol);
+        const lap::BlockPricing from_tree =
+            lap::price_tree(src, tree, u, v, cand_tree, c.keep_per_row, kTol);
+
+        compare(block, from_tree, c.label);
+    }
 }
 
 TEST_CASE("Tree pricing - a tie at the keep boundary is settled the same way") {

@@ -118,14 +118,20 @@ the underlying feature data as the solver needs it, instead of
 allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, and not yet for
 \code{replace = TRUE}, \code{ratio > 1}, \code{method = "greedy"}, or custom distance
 functions (blocking via \code{block_id} is the other option that reduces
-memory, by solving smaller sub-problems). "implicit" states the problem
+memory, by solving smaller sub-problems). Where the metric carries a ball
+bound, the column set is held in a ball tree and a subtree whose bound
+cannot beat the current threshold is discarded without being read:
+\code{"mahalanobis"} always, the metrics linear in the covariates up to six of
+them. \code{"manhattan"} and \code{"chebyshev"}, a covariance with no Cholesky
+factor, and a higher-dimensional linear metric read the columns instead. "implicit" states the problem
 over every pair and solves it over a fraction of them, generating the pairs
 the answer turns out to need and proving that the ones it never generated
-could not have improved it; same requirements as "lazy", and 1:1 only. It
-is slower than "lazy" on every shape measured so far, and the time goes to
-the restricted solve rather than to the pair scan, so what it buys today is
-the certificate over the complete problem rather than speed. "auto" never
-selects it. "dense" skips the RAM check entirely.}
+could not have improved it; same requirements as "lazy", and 1:1 only. On
+the eight-covariate problem the benchmarks use it leads "lazy" from 5,000
+units upward, by 1.1x at 5,000 rising to 3.1x at 50,000, and loses below
+that where the loop's fixed costs are still visible; what it buys at every
+size is the certificate over the complete problem. "auto" never selects
+it. "dense" skips the RAM check entirely.}
 
 \item{certify}{Logical; whether the result carries a checked
 \code{assignment_certificate} as \code{certificate}. Applies to

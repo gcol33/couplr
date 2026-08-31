@@ -673,6 +673,21 @@ This targets The R Journal or JSS. It does not address the JOSS rejection,
 which turned on demonstrated research use and still turns on the east-west
 divide study reaching preprint.
 
+## couplr 2.0
+
+Scope extensions that the R Journal article states as limitations. None is a
+correction, and none blocks the submission; each removes a bullet from the
+article's limitation list.
+
+| Issue | Work |
+|---|---|
+| #47 | Implicit path for `full_match()`: price flow arcs from flow potentials rather than assignment duals, which generalizes the loop from the unit-capacity case to every design the flow model compiles |
+| #48 | Lazy and implicit support for `replace = TRUE`, `ratio > 1` and `cardinality_match()`, which fall back to a dense matrix today |
+| #49 | Block-wise callback so a user-supplied distance function can run on the lazy and implicit paths, amortizing the R call over a block instead of a pair |
+| #50 | A dispatch rule for heavily tied costs, fixed before it is scored and validated on an independently generated regime grid |
+
+The referee blockers are #44, #45 and #46 and belong to 1.7.1, not here.
+
 ## Deferred
 
 Additional solvers. Home-grown causal estimators. More matching-design

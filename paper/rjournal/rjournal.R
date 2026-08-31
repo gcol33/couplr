@@ -222,13 +222,13 @@ knitr::kable(
     `Problem size` = ilab[match(pth$n_total, isz)],
     `As a path` = sprintf("%.3g s", pth$warm_wall),
     `Independently` = sprintf("%.3g s", pth$cold_wall),
-    Ratio = sprintf("%.2fx", pth$wall_speedup),
-    `Solve time` = sprintf("%.2fx", pth$speedup),
+    `Cold/path` = sprintf("%.2fx", pth$wall_speedup),
+    `Solve-time ratio` = sprintf("%.2fx", pth$speedup),
     `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
     check.names = FALSE
   ),
   align = "lrrrrr", booktabs = TRUE,
-  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Solve time is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Cold/path is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
 )
 
 
@@ -288,17 +288,18 @@ key <- do.call(rbind, lapply(names(key_order), function(p) {
 x_lim <- c(3.5, 6000)
 y_lim <- c(0.008, 2e5)
 lx <- log10(x_lim); ly <- log10(y_lim)
-key$x    <- 10^(lx[1] + 0.05 * diff(lx))
-key$xend <- 10^(lx[1] + 0.17 * diff(lx))
-key$y    <- 10^(ly[2] - (0.05 + 0.118 * key$k) * diff(ly))
+key$x     <- 10^(lx[1] + 0.04 * diff(lx))
+key$xend  <- 10^(lx[1] + 0.16 * diff(lx))
+key$xtext <- 10^(lx[1] + 0.185 * diff(lx))
+key$y     <- 10^(ly[2] - (0.050 + 0.126 * key$k) * diff(ly))
 
 ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
   geom_line(data = auto_all, aes(n, median_ms), inherit.aes = FALSE, colour = "grey45", linetype = "dashed", linewidth = 0.65) + geom_line(linewidth = 0.75) +
   geom_segment(data = key, aes(x = x, xend = xend, y = y, yend = y,
                                colour = label, linetype = label),
                linewidth = 0.75, inherit.aes = FALSE) +
-  geom_text(data = key, aes(x = xend, y = y, label = label),
-            hjust = -0.15, vjust = 0.45, size = 3.4, colour = "grey15",
+  geom_text(data = key, aes(x = xtext, y = y, label = label),
+            hjust = 0, vjust = 0.45, size = 3.5, colour = "grey15",
             inherit.aes = FALSE) +
   facet_wrap(~ panel, ncol = 2) +
   scale_x_log10(breaks = c(10, 100, 1000), limits = x_lim,
@@ -309,14 +310,15 @@ ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
   scale_colour_manual(values = pal, guide = "none") +
   scale_linetype_manual(values = lt, guide = "none") +
   labs(x = "problem size, n", y = "median solve time") +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 13) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major = element_line(colour = "grey92", linewidth = 0.3),
-    strip.text = element_text(face = "bold", hjust = 0, size = 11),
-    axis.text = element_text(size = 9),
-    axis.title = element_text(size = 11),
-    axis.line = element_line(colour = "grey20", linewidth = 0.4)
+    strip.text = element_text(face = "bold", hjust = 0, size = 12.5),
+    axis.text = element_text(size = 10.5),
+    axis.title = element_text(size = 12.5),
+    axis.line = element_line(colour = "grey20", linewidth = 0.4),
+    panel.spacing.x = unit(1.2, "lines")
   )
 
 
@@ -385,19 +387,23 @@ ggplot(long, aes(smd, lab, colour = state, shape = state)) +
                inherit.aes = FALSE, colour = "grey70", linewidth = 0.4) +
   geom_vline(xintercept = 0.1, linetype = "22", colour = "grey30",
              linewidth = 0.4) +
-  geom_point(size = 2.4, stroke = 0.9) +
+  geom_point(size = 2.9, stroke = 1.0) +
   scale_colour_manual(values = c("before matching" = "#D55E00",
                                  "after matching"  = "#0072B2"), name = NULL) +
   scale_shape_manual(values = c("before matching" = 1,
                                 "after matching"  = 15), name = NULL) +
   scale_x_continuous(limits = c(-0.02, 1.85),
-                     breaks = c(0, 0.1, 0.5, 1.0, 1.5)) +
+                     breaks = c(0, 0.1, 0.5, 1.0, 1.5),
+                     labels = c("0", "0.1", "0.5", "1.0", "1.5")) +
   labs(x = "|standardised mean difference|", y = NULL) +
-  theme_minimal(base_size = 10) +
+  theme_minimal(base_size = 13) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3),
+    axis.text = element_text(size = 11),
+    axis.title.x = element_text(size = 12.5),
     legend.position = "bottom",
+    legend.text = element_text(size = 11),
     axis.line.x = element_line(colour = "grey20", linewidth = 0.4)
   )
 
@@ -466,22 +472,22 @@ knitr::kable(
 ## ----capability, echo=FALSE---------------------------------------------------
 cap <- data.frame(
   Feature = c("Per-variable calipers from a named vector",
-              "Rectangular problems without padding",
+              "Rectangular cost matrix as solver entry point",
               "Sparse cost support",
               "k-best assignments",
               "Bottleneck (minimax) assignment",
               "Rosenbaum sensitivity bounds",
-              "Dual potentials and optimality certificate",
+              "Public dual-potential verifier",
               "User-selectable assignment algorithm"),
   couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "via padding", "no", "no", "no", "no", "no",
+  MatchIt = c("yes", "full match", "no", "no", "no", "no", "no",
               "via optmatch"),
-  optmatch = c("partial", "via padding", "yes", "no", "no", "no", "no",
+  optmatch = c("partial", "full match", "yes", "no", "no", "no", "gap bound",
                "5 algorithms"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, and both alternatives reach the solver as a padded or variable-ratio formulation rather than as a rectangular cost matrix. The certificate row records whether a package exports a function returning duals or verifying optimality, which neither does: optmatch attaches its flow solver's node prices to a fullmatch() result in an undocumented MCFSolutions attribute, and the function evaluating the primal against them is internal. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 

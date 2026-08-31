@@ -1,6 +1,7 @@
 ---
 title: "Supplementary material for *couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation*"
 author: "Gilles Colling"
+geometry: a4paper,margin=1in
 output:
   pdf_document:
     toc: true
@@ -10,6 +11,7 @@ header-includes:
   - \usepackage{booktabs}
   - \usepackage{longtable}
   - \usepackage{placeins}
+  - \setlength{\tabcolsep}{4pt}
 ---
 
 ```{r setup, include=FALSE}
@@ -27,6 +29,8 @@ igrid          <- d("implicit-grid-results.csv")
 memory         <- d("memory-results.csv")
 imp            <- d("implicit-results.csv")
 scaling_runs   <- d("scaling-runs.csv")
+scaling_res    <- d("scaling-results.csv")
+bench_tab      <- d("benchmark-table.csv")
 
 kb <- function(x, caption, align = NULL, ...) {
   knitr::kable(x, booktabs = TRUE, longtable = TRUE, row.names = FALSE,
@@ -34,8 +38,15 @@ kb <- function(x, caption, align = NULL, ...) {
 }
 ## Compact enough not to wrap inside a table cell.
 shape <- function(n_rows, n_cols) sprintf("%dx%d", n_rows, n_cols)
-pat_short <- c(none = "complete", random_60 = "60%", random_25 = "25%",
-               block_4 = "4 blocks")
+## The pattern labels are read off the cells the grid actually ran, so a
+## pattern added to the benchmark appears here without being named twice.
+pat_share <- tapply(regime_cells$finite_share, regime_cells$pattern, median)
+pat_comp  <- tapply(regime_cells$components, regime_cells$pattern, max)
+pat_short <- ifelse(names(pat_share) == "none", "complete",
+              ifelse(pat_comp > 1,
+                     sprintf("%.0f%%, %d blocks", 100 * pat_share, pat_comp),
+                     sprintf("%.0f%%", 100 * pat_share)))
+names(pat_short) <- names(pat_share)
 short_pat <- function(x) unname(ifelse(is.na(pat_short[x]), x, pat_short[x]))
 ```
 
@@ -45,16 +56,35 @@ The article reports summaries of four measurements that are too large to print
 in full: the solver grid over problem regimes, the edge-generation loop over
 covariate counts, point clouds, calipers and sizes, the peak memory of every
 mode and comparator, and the raw runs behind the scaling table. This file
-carries them in full, and names the script that produced each one so any of them
-can be re-measured. It also carries the parts of the software design the article
-points at: the object model, the C++ organisation and the dependency
-footprint, the proof of the sentinel-padding lemma the article states, and
+carries the definitions the measurements are stated over, the protocol they
+were taken under, and summary and worst-case views of each one, and names the
+script that produced each so any of them can be re-measured. It also carries the
+parts of the software design the article points at: the object model, the C++
+organisation and the dependency footprint, the proof of the sentinel-padding
+lemma the article states, the glossary behind the solver figure's labels, and
 the outcome analysis the article points at.
+
+Every cell of every measurement is in the CSV files listed below, which ship
+with the submission under `data/`. The tables here select from those files; they
+do not replace them. Each section names the file that carries its cells in full.
 
 ```{r provenance}
 env <- tryCatch(readLines(file.path("..", "data", "ENVIRONMENT.txt")),
                 error = function(e) character(0))
-if (length(env)) cat(paste(env, collapse = "\n"))
+## The host line runs past the width a verbatim block holds, so a line over
+## that width is folded and its continuation indented to the value column.
+if (length(env)) {
+  fold <- function(x, width = 80) {
+    if (nchar(x) <= width) return(x)
+    lead <- attr(regexpr("^ *", x), "match.length")
+    gap  <- attr(regexpr("^\\S+ +", substring(x, lead + 1)), "match.length")
+    head_len <- lead + if (lead == 0 && gap > 0) gap else 0
+    lines <- strwrap(substring(x, head_len + 1), width = width - head_len)
+    paste(c(paste0(substring(x, 1, head_len), lines[1]),
+            paste0(strrep(" ", head_len), lines[-1])), collapse = "\n")
+  }
+  cat(paste(vapply(env, fold, character(1)), collapse = "\n"))
+}
 ```
 
 | Section | Script | Files |
@@ -63,7 +93,8 @@ if (length(env)) cat(paste(env, collapse = "\n"))
 | The edge-generation loop | `scripts/bench_implicit_grid.R` | `implicit-grid-runs.csv`, `implicit-grid-results.csv` |
 | Peak memory | `scripts/bench_memory.R` | `memory-results.csv` |
 | Representation against solver | `scripts/bench_implicit.R` | `implicit-results.csv` |
-| Scaling, every run | `scripts/bench_scaling.R` | `scaling-runs.csv`, `scaling-results.csv` |
+| Scaling | `scripts/bench_scaling.R` | `scaling-runs.csv`, `scaling-results.csv` |
+| The solver figure | `scripts/make-figure.R` | `benchmark-table.csv` |
 
 Every script is resume-safe: it writes its rows as it goes and skips a cell it
 already holds, so a run that is interrupted continues where it stopped. Moving
@@ -84,6 +115,151 @@ The scaling, implicit, implicit-grid, regimes and memory scripts also take
 `--quick`, which runs a reduced grid.
 
 \FloatBarrier
+
+# What a tolerance costs the conclusion
+
+`verify_assignment()` decides its conditions in exact arithmetic by default, and
+the article states the bound that applies when a tolerance is used instead. The
+derivation is here.
+
+A certificate at tolerance $\epsilon$ accepts potentials that violate dual
+feasibility by $\epsilon$ on any pair, miss tightness by $\epsilon$ on any matched arc,
+and leave $|v_j| \le \epsilon$ on any unused column. Write $n$ for the rows
+and $m$ for the columns, with $n \le m$.
+
+Shifting to $u_i - \epsilon$ and $v_j - \epsilon$ restores exact dual
+feasibility and the sign condition, because every violated inequality was
+violated by at most $\epsilon$. The shift costs the dual objective
+$(n + m)\epsilon$, so the optimum is at least
+$\sum_i u_i + \sum_j v_j - (n + m)\epsilon$.
+
+Tightness within $\epsilon$ on the $n$ matched arcs, and $|v_j| \le \epsilon$ on
+the $m - n$ unused columns, put the matching's own cost at most $m\epsilon$
+above that same sum. Its excess over the optimum is therefore at most
+$(n + 2m)\epsilon$.
+
+At the largest shape in the article's benchmark, 16,667 rows against 33,333
+columns, and the default $\epsilon = 10^{-9}$, that is
+$8 \times 10^{-5}$ in the cost units.
+
+The bound is why the band is not simply set to zero. The sign of a reduced cost
+evaluated in double arithmetic can itself be wrong: with
+$C_{ij} = \pm 2^{-60}$, $u_i = 1$ and $v_j = -1$, the first subtraction
+rounds to $-1$ and the expression returns zero on a pair whose reduced cost is
+not zero. In the negative case that is a dual infeasibility a zero-band check
+would accept. The exact path splits each rounded addition into the sum and the
+part the rounding lost, giving an expansion of doubles equal to the difference
+in the reals, and takes the sign of that expansion [@Shewchuk1997]. A
+rounding-error bound decides which pairs the double evaluation already settles,
+so the expansion runs near tightness rather than over all $nm$ pairs.
+
+# The integer conversion bit-scaling performs
+
+`method = "gabow_tarjan"` runs on integers, so a real-valued cost matrix is
+converted before it is solved and the conversion is part of the method.
+
+Finite costs are shifted so the smallest is zero, multiplied by a scale factor
+and rounded. The factor is set to keep the scaled costs clear of the sentinel
+that marks a forbidden pair, and to keep the path sums the solver forms inside
+64-bit arithmetic. A matrix whose range leaves no usable factor is refused, with
+the limit named.
+
+A matrix whose finite entries are each within $10^{-9}$ of an integer enters
+unscaled, at the integer nearest each entry. Where those entries are integers
+the conversion is exact and the optimum returned is the optimum of the instance
+as supplied. Where they are merely near one, each cost moves by at most
+$10^{-9}$, so the matching returned costs at most
+$2\min(n,m) \times 10^{-9}$ more than that optimum.
+
+Costs that are not integers are solved on the rounded instance. The matching
+returned costs at most about $10^{-7}$ of the cost range more than the optimum
+of the matrix as supplied at $n = 1000$, and $10^{-5}$ of it at
+$n = 10{,}000$ on a square problem.
+
+Potentials are divided by the factor and shifted back, so they belong to the
+original matrix. Whether the matching is optimal for that matrix rather than
+only for the rounded instance is a question `verify_assignment()` answers, and
+it is the reason the article reports solver status and certificate separately.
+
+# The bound the pricer prunes with
+
+Where the metric admits a ball bound, the columns of a lazy cost source are
+held in a metric tree and the pricing sweep discards a subtree without visiting
+it.
+
+For a subtree $S$ and row $i$ the test is
+$$
+L(i, S) - u_i - \max_{j \in S} v_j \ge 0 ,
+$$
+where $L(i, S)$ is a lower bound on $\min_{j \in S} C_{ij}$ read off the
+node rather than the minimum itself. If the test holds, no column the node
+carries can price in, and the subtree is discarded.
+
+A node carries two summaries, because a distance and a caliper are stated in
+different coordinates. The first is a centre and radius in whitened
+coordinates, which is what $L(i, S)$ reads. The second is an axis-aligned
+bounding box in the original covariates, because a caliper is a box there and a
+whitened ball cannot exclude one; whitening is a rotation and a scaling, so it
+destroys the axis alignment the per-variable window is stated in.
+
+Mahalanobis distance is Euclidean after whitening, so one tree serves it and
+the Euclidean metrics alike. Its cost is quadratic in the number of covariates,
+dear enough to pay for the bound at every dimension measured, so it always
+takes the tree. The metrics whose cost is linear in the covariates take it only
+in low dimension. Manhattan and Chebyshev carry no ball bound, a covariance
+with no Cholesky factor has no whitened coordinates, and a custom distance
+function is opaque; each falls back to reading the pairs, which is the same
+answer for more work rather than a different answer.
+
+Every bound is lowered by an allowance before it is compared, so a subtree is
+discarded only where it clears the threshold by more than the bound can be
+wrong. The allowance covers the rounding of the centre distance and the radius,
+each a sum of squares and a square root, and for Mahalanobis the residual of
+the factorization the whitening uses, measured against the matrix it came from
+rather than assumed. A subtree that does not clear the threshold is descended
+into, which costs the evaluations the bound would have saved and not the edge,
+so an allowance set too high loses time where one set too low would lose an
+edge.
+
+# What the restricted solve's optimum can cost
+
+Proposition 1 is exact: if no omitted pair has a negative reduced cost, the
+restricted optimum is optimal for the complete problem. The loop as it runs
+weakens that on four counts, and they are worth naming separately rather than
+folded into one term.
+
+Write $n$ for the rows and $m$ for the columns.
+
+- $\delta$, the duality gap the restricted master's own certificate reports.
+  The restricted solution costs at most
+  $\sum_i u_i + \sum_j v_j + \delta$. Every run in the article reported
+  $\delta = 0$.
+- $\epsilon$, the pricing threshold. A pair enters on
+  $\bar{C}_{ij} < -\epsilon$, so termination establishes
+  $\bar{C}_{ij} \ge -\epsilon$ over the omitted pairs rather than
+  $\bar{C}_{ij} \ge 0$. Shifting the row potentials to
+  $u_i - \epsilon$ restores dual feasibility over every admissible pair and
+  costs the dual objective $n\epsilon$.
+- The sign condition on the column potentials. Dual feasibility for a
+  rectangular problem also asks $v_j \le 0$ on the columns an assignment may
+  leave unused. The flow master returns potentials satisfying it by
+  construction on the arcs it carries, and `verify_assignment()` checks it
+  rather than assuming it; shifting $u$ alone does not repair a positive $v_j$.
+- $\eta$, the allowance the pricing bound carries where a metric tree is
+  used. A subtree is discarded only where its bound clears the threshold by
+  more than $\eta$, so the statement termination establishes is
+  $\bar{C}_{ij} \ge -\epsilon$ with the bound's own error already
+  taken out rather than assumed away.
+
+Taken together the complete optimum is at least
+$\sum_i u_i + \sum_j v_j - n\epsilon$, and the returned matching's excess
+over it is at most $\delta + n\epsilon$ under the first two, with the third
+and fourth entering as conditions that must hold rather than as further slack:
+the sign condition is checked, and the tree allowance is subtracted before any
+prune fires.
+
+At $\epsilon = 10^{-9}$ and the largest shape in the article's benchmark,
+16,667 rows, $n\epsilon$ is $2 \times 10^{-5}$ in the cost units.
 
 # The sentinel padding lemma
 
@@ -131,6 +307,57 @@ the padded costs need not be integers. What establishes that a particular
 padded solve reached its optimum is the certificate `verify_assignment()`
 returns for the padded matrix, and the lemma carries that verdict across to the
 lexicographic objective.
+
+\FloatBarrier
+
+# Solver glossary
+
+The article's solver figure labels its traces with abbreviations short enough to
+sit inside a panel. The mapping below gives, for each label, the value the
+`method` argument of `assignment()` and `lap_solve()` takes, the family the
+benchmark table groups it under, and the regime the solver is written for. The
+labels and families are read from `benchmark-table.csv`, the same file the
+figure is drawn from.
+
+```{r solver-glossary, results="asis"}
+solver_note <- c(
+  jv              = "Column reduction and auction-style initialisation; the general-purpose default on a dense problem.",
+  sap             = "Shortest augmenting path over the shared flow model; carries sparsity well.",
+  sap_dense       = "Shortest augmenting path with a linear scan in place of a heap; a dense cost matrix.",
+  lapmod          = "Sparse Jonker-Volgenant variant over an adjacency list; more than half the entries forbidden.",
+  hungarian       = "The classical Hungarian method, O(n^3).",
+  munkres         = "Matrix-form Kuhn-Munkres, O(n^4), kept as a reference implementation.",
+  auction         = "Bertsekas auction with adaptive epsilon.",
+  auction_gs      = "Gauss-Seidel auction variant; spatial structure.",
+  auction_scaled  = "Epsilon-scaling auction; large dense problems.",
+  csa             = "Goldberg-Kennedy cost scaling; medium to large problems.",
+  gabow_tarjan    = "Gabow-Tarjan bit scaling with complementary slackness; integer costs.",
+  ssap_bucket     = "Dial bucket priority queue over augmenting paths; integer costs.",
+  csflow          = "Successive shortest paths with Johnson potentials on the flow model.",
+  cycle_cancel    = "Cycle cancelling with Karp's minimum-mean cycle.",
+  network_simplex = "Network simplex with a spanning-tree representation.",
+  push_relabel    = "Goldberg-Tarjan cost-scaling push-relabel.",
+  ramshaw_tarjan  = "Ramshaw-Tarjan; strongly rectangular problems, where padding to a square would dominate.",
+  hk01            = "Hopcroft-Karp cardinality matching; binary or constant finite costs.",
+  bruteforce      = "Exact enumeration; at most eight rows and eight columns.",
+  auto            = "The dispatch rules, timed as a solver of its own so the probing pass is inside its number.")
+
+gl <- unique(bench_tab[, c("method", "label", "family")])
+gl <- gl[order(gl$family != "Auto", gl$family, gl$method), ]
+gl$Meaning <- unname(solver_note[gl$method])
+## A pipe table rather than kable: the meaning column has to wrap, which a
+## latex tabular built from l columns cannot do.
+cat("| Label | `method =` | Family | Meaning |\n")
+cat("|:------------|:--------------|:---------------|:----------------------------------------|\n")
+cat(sprintf("| %s | `%s` | %s | %s |\n", gl$label, gl$method, gl$family,
+            gl$Meaning), sep = "")
+cat("\nTable: Plot label, argument value, family and intended regime for every solver the article's figure draws.\n\n")
+```
+
+Three further routines are reachable but not drawn in the figure: the
+bottleneck objective, which minimises the largest pair cost instead of the sum,
+Murty's ranking procedure for the k cheapest assignments, and Sinkhorn
+iteration for the entropy-regularised relaxation.
 
 \FloatBarrier
 
@@ -204,7 +431,11 @@ regime and no other. This grid varies the properties the rules are stated over.
 
 A cell is a cost regime, a forbidden pattern and a shape. Each cell is generated
 as several independent instances, each instance is timed several times, and
-every solver in the panel sees the same instance.
+every solver in the panel sees the same instance. The timing a cell reports for
+a solver is the median across its instances, where each instance contributes the
+median of its own repetitions, so the spread is between problems rather than
+between repetitions of one problem. A solver that errored or timed out on a cell
+has no row there.
 
 ```{r regime-design}
 reg_lab <- c(int_uniform = "integer, uniform on 1..10,000",
@@ -215,16 +446,19 @@ reg_lab <- c(int_uniform = "integer, uniform on 1..10,000",
              heavy_tailed = "double, lognormal",
              metric_uniform = "euclidean over uniform points in 8 dimensions",
              metric_clustered = "euclidean over eight clusters in 8 dimensions")
-pat_lab <- c(none = "complete: every pair admissible",
-             random_60 = "60 percent of pairs admissible, unstructured",
-             random_25 = "25 percent admissible, unstructured",
-             block_4 = "25 percent admissible in four disconnected components")
-
+pat_tab <- data.frame(
+  Level = names(pat_share),
+  Meaning = sprintf("%s admissible, %s",
+                    ifelse(names(pat_share) == "none", "every pair",
+                           sprintf("%.0f percent of pairs", 100 * pat_share)),
+                    ifelse(pat_comp > 1,
+                           sprintf("in %d disconnected components", pat_comp),
+                           "unstructured")))
 kb(data.frame(Factor = c(rep("cost regime", length(reg_lab)),
-                         rep("forbidden pattern", length(pat_lab))),
-              Level = c(names(reg_lab), names(pat_lab)),
-              Meaning = c(unname(reg_lab), unname(pat_lab))),
-   caption = "The factors the solver grid crosses. Shapes and sizes are in the next table.",
+                         rep("forbidden pattern", nrow(pat_tab))),
+              Level = c(names(reg_lab), pat_tab$Level),
+              Meaning = c(unname(reg_lab), pat_tab$Meaning)),
+   caption = "The factors the solver grid crosses. The admissible shares are the medians of the shares the generated cells actually held. Shapes and sizes are in the next table.",
    align = "lll")
 ```
 
@@ -245,7 +479,10 @@ kb(sh[, c("tier", "Shape", "aspect", "Solvers in the panel")],
 
 For each cell, the solver `"auto"` selected is timed as a solver of its own, so
 its number carries the probing pass the rules cost, and it is compared against
-the fastest named solver in the same cell.
+the fastest named solver in the same cell. Ratio below is the time the
+dispatched solver took over the time the cell's fastest named solver took, so
+1.00x means the rule picked the best available solver and 2.00x means it cost
+twice the best.
 
 ```{r regime-by-rule}
 by_rule <- do.call(rbind, lapply(split(regime_verdict, regime_verdict$auto_rule),
@@ -257,71 +494,126 @@ by_rule <- do.call(rbind, lapply(split(regime_verdict, regime_verdict$auto_rule)
   `Worst ratio` = sprintf("%.2fx", max(g$ratio)),
   check.names = FALSE)))
 kb(by_rule[order(-by_rule$Cells), ],
-   caption = "Each dispatch rule, over the cells where it fired. Ratio is the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x means the rule picked the best available solver and 2.00x means it cost twice the best.",
+   caption = "Each dispatch rule, over the cells where it fired.",
    align = "lrrrr")
+```
+
+```{r regime-by-regime}
+grp <- function(f) {
+  do.call(rbind, lapply(split(regime_verdict, regime_verdict[[f]]),
+                        function(g) data.frame(
+    Level = as.character(g[[f]][1]),
+    Cells = nrow(g),
+    `Picked the cell's fastest` = sum(g$auto_picks == g$best_method),
+    `Median ratio` = sprintf("%.2fx", median(g$ratio)),
+    `Worst ratio` = sprintf("%.2fx", max(g$ratio)),
+    check.names = FALSE)))
+}
+br <- grp("regime")
+bp <- grp("pattern"); bp$Level <- short_pat(bp$Level)
+bt <- grp("tier")
+kb(rbind(cbind(Factor = "cost regime", br),
+         cbind(Factor = "forbidden pattern", bp),
+         cbind(Factor = "tier", bt)),
+   caption = "The same comparison collapsed over each factor of the grid in turn.",
+   align = "llrrrr")
 ```
 
 ```{r regime-worst}
 w <- regime_verdict[order(-regime_verdict$ratio), ]
-w <- head(w, 25)
+w <- head(w, 15)
 kb(data.frame(Regime = w$regime, Pattern = short_pat(w$pattern),
-              Shape = gsub(" ", "", w$shape), Rule = w$auto_rule,
+              Shape = gsub(" ", "", w$shape),
               Picked = w$auto_picks,
               `Best` = w$best_method,
-              `Dispatched (ms)` = sprintf("%.3g", 1000 * w$auto_s),
+              `Auto (ms)` = sprintf("%.3g", 1000 * w$auto_s),
               `Best (ms)` = sprintf("%.3g", 1000 * w$best_s),
               Ratio = sprintf("%.2fx", w$ratio), check.names = FALSE),
-   caption = "The 25 cells where the dispatched solver was furthest off the cell's fastest.",
-   align = "llllllrrr")
+   caption = "The 15 cells where the dispatched solver was furthest off the cell's fastest.",
+   align = "lllllrrr")
 ```
 
-## Every cell
+The rule, the solver it picked, the fastest solver and the ratio between them
+are in `regime-verdict.csv` for all `r nrow(regime_verdict)` cells.
 
-```{r regime-all}
-v <- regime_verdict[order(regime_verdict$tier, regime_verdict$regime,
-                          regime_verdict$pattern, regime_verdict$shape), ]
-kb(data.frame(Regime = v$regime, Pattern = short_pat(v$pattern),
-              Shape = gsub(" ", "", v$shape), Rule = v$auto_rule,
-              Picked = v$auto_picks, Best = v$best_method,
-              Ratio = sprintf("%.2fx", v$ratio), check.names = FALSE),
-   caption = "Every cell of the solver grid: the rule that fired, the solver it picked, the fastest solver in the cell, and the ratio between them.",
-   align = "llllllr")
+## Every solver against the fastest in its cell
+
+The table below reduces each solver to its position across the grid. A solver's
+ratio in a cell is its median time over the median time of the fastest solver in
+that cell, so the reduction is within-cell and a solver that entered only the
+easy cells is not thereby favoured. Solvers differ in how many cells they
+entered, since the large tier runs a reduced panel and a solver that errored or
+timed out on a cell has no row there.
+
+```{r regime-per-solver}
+key <- paste(regime_results$tier, regime_results$regime, regime_results$pattern,
+             regime_results$n_rows, regime_results$n_cols)
+best_in_cell <- tapply(regime_results$median_s, key, min)
+regime_results$ratio <- regime_results$median_s / best_in_cell[key]
+ps <- do.call(rbind, lapply(split(regime_results, regime_results$method),
+                            function(g) data.frame(
+  Solver = g$method[1],
+  `Cells entered` = nrow(g),
+  `Times fastest` = sum(g$ratio <= 1 + 1e-12),
+  `Median ratio` = sprintf("%.2fx", median(g$ratio)),
+  `Q75 ratio` = sprintf("%.2fx", quantile(g$ratio, 0.75)),
+  `Worst ratio` = sprintf("%.1fx", max(g$ratio)),
+  `Fastest cell (ms)` = sprintf("%.3g", 1000 * min(g$median_s)),
+  `Slowest cell (ms)` = sprintf("%.3g", 1000 * max(g$median_s)),
+  check.names = FALSE)))
+ps <- ps[order(as.numeric(sub("x", "", ps$`Median ratio`))), ]
+kb(ps, caption = "Every solver over the cells it entered, as a ratio to the fastest solver in the same cell.",
+   align = "lrrrrrrr")
 ```
 
-## Every solver, every cell
-
-```{r regime-full}
-r <- regime_results[order(regime_results$tier, regime_results$regime,
-                          regime_results$pattern, regime_results$n_rows,
-                          regime_results$n_cols, regime_results$median_s), ]
-kb(data.frame(Regime = r$regime, Pattern = short_pat(r$pattern),
-              Shape = shape(r$n_rows, r$n_cols), Solver = r$method,
-              Instances = r$instances,
-              `Median (ms)` = sprintf("%.3g", 1000 * r$median_s),
-              `Q25 (ms)` = sprintf("%.3g", 1000 * r$q25_s),
-              `Q75 (ms)` = sprintf("%.3g", 1000 * r$q75_s),
-              check.names = FALSE),
-   caption = "Milliseconds per solver and cell: the median across instances, with the quartiles beside it. An instance contributes the median of its own repetitions, so the quartiles are between problems rather than between repetitions of one problem. A solver that errored or timed out on a cell has no row there.",
-   align = "llllrrrr")
+```{r regime-pointer, results="asis"}
+cells <- length(unique(key))
+cat(sprintf("The per-cell medians and quartiles behind this table are in `regime-results.csv`, %d rows covering %d cells and %d solvers, and the individual timed repetitions are in `regime-runs.csv`, %d rows.\n\n",
+            nrow(regime_results), cells, length(unique(regime_results$method)),
+            nrow(regime_runs)))
 ```
 
 ## Do the solvers agree
 
 Every solver in a cell solves the same instance, so their totals have to agree.
-A disagreement would be a defect in a solver rather than a property of the
-regime.
+Each run below is compared against the median total of its own cell, and a run
+counts as off that median where the difference exceeds $10^{-6}$ of it.
 
-```{r regime-agreement}
+```{r regime-agreement, results="asis"}
 ok <- regime_runs[regime_runs$status == "ok" & !is.na(regime_runs$total_cost), ]
-key <- paste(ok$tier, ok$regime, ok$pattern, ok$n_rows, ok$n_cols, ok$instance)
-ag <- do.call(rbind, lapply(split(ok, key), function(g) {
-  ref <- median(g$total_cost)
-  data.frame(worst = max(abs(g$total_cost - ref) / pmax(1, abs(ref))),
-             solvers = length(unique(g$method)))
-}))
-cat(sprintf("%d instances carrying %d to %d solvers each; the worst relative disagreement on the optimum is %.3g.\n",
-            nrow(ag), min(ag$solvers), max(ag$solvers), max(ag$worst)))
+akey <- paste(ok$tier, ok$regime, ok$pattern, ok$n_rows, ok$n_cols, ok$instance)
+ok$ref <- ave(ok$total_cost, akey, FUN = median)
+ok$rel <- abs(ok$total_cost - ok$ref) / pmax(1, abs(ok$ref))
+n_solv <- length(unique(ok$method))
+per_inst <- tapply(ok$method, akey, function(x) length(unique(x)))
+off <- ok[ok$rel > 1e-6, ]
+agree <- setdiff(unique(ok$method), unique(off$method))
+cat(sprintf("%d instances carry %d to %d solvers each. %d of the %d solvers return the cell median exactly on every run. The other %d are below.\n\n",
+            length(per_inst), min(per_inst), max(per_inst),
+            length(agree), n_solv, length(unique(off$method))))
 ```
+
+```{r regime-agreement-table}
+if (nrow(off)) {
+  os <- do.call(rbind, lapply(split(off, off$method), function(g) data.frame(
+    Solver = g$method[1],
+    `Runs` = sum(ok$method == g$method[1]),
+    `Runs off the median` = nrow(g),
+    `Regimes` = paste(sort(unique(g$regime)), collapse = ", "),
+    `Worst relative difference` = sprintf("%.3g", max(g$rel)),
+    check.names = FALSE)))
+  kb(os[order(-os$`Runs off the median`), ],
+     caption = "The solvers whose total differed from the median total of a cell they ran in.",
+     align = "lrrlr")
+}
+```
+
+Both are scaling methods, and both deviate on the lognormal regime alone, so
+the rounding a scaling step applies over a cost range that wide may be what
+separates them from the rest. The size of the two deviations differs by orders
+of magnitude, and neither is a property of the regime: the remaining solvers
+return one common total on every cell of it. Whether a particular matching is
+optimal for the matrix as supplied is what `verify_assignment()` answers.
 
 \FloatBarrier
 
@@ -333,10 +625,17 @@ one factor at a time around that base, several seeds deep. Where the dense path
 can afford the problem, the loop's answer is compared against it unit by unit.
 
 ```{r igrid-summary}
+## Each sweep moves one factor, so a cell is named by the value that factor
+## took; the rest of the key holds at the base and is stated in the caption.
+sweep_level <- function(x) {
+  ifelse(x$sweep == "caliper", as.character(x$caliper),
+  ifelse(x$sweep == "cloud", x$cloud,
+  ifelse(x$sweep == "dimension", sprintf("%d dimensions", x$dim),
+         paste(formatC(x$n_total, big.mark = ",", format = "d"), "units"))))
+}
 g <- igrid[order(igrid$sweep, igrid$n_total, igrid$dim, igrid$cloud,
                  igrid$caliper), ]
-kb(data.frame(Sweep = g$sweep, Cloud = g$cloud, Dim = g$dim,
-              Units = format(g$n_total, big.mark = ","), Caliper = g$caliper,
+kb(data.frame(Sweep = g$sweep, Level = sweep_level(g),
               Seeds = g$seeds,
               Rounds = sprintf("%g-%g", g$rounds_min, g$rounds_max),
               `Graph %` = sprintf("%.3f", g$graph_pct_med),
@@ -345,41 +644,48 @@ kb(data.frame(Sweep = g$sweep, Cloud = g$cloud, Dim = g$dim,
               `Lazy` = sprintf("%.3g s", g$lazy_s_med),
               `Speedup` = sprintf("%.2fx", g$speedup_med),
               check.names = FALSE),
-   caption = "The loop by cell. Rounds is the range over seeds. Graph is the median share of the complete pair count the candidate set ended up holding, in percent. Distances is the median number of distance evaluations over all rounds as a multiple of the complete pair count. Implicit and lazy are median seconds over seeds and speedup is their median ratio.",
-   align = "lllllrrrrrrr")
+   caption = "The loop by cell. A sweep moves one factor and holds the rest at the base cell, a gaussian cloud of 10,000 units in 8 dimensions with no caliper. Rounds is the range over seeds. Graph is the median share of the complete pair count the candidate set ended up holding, in percent. Distances is the median number of distance evaluations over all rounds as a multiple of the complete pair count. Implicit and lazy are median seconds over seeds and speedup is their median ratio.",
+   align = "llrrrrrrr")
 ```
 
 ```{r igrid-certificate}
-kb(data.frame(Sweep = g$sweep, Cloud = g$cloud, Dim = g$dim,
-              Units = format(g$n_total, big.mark = ","), Caliper = g$caliper,
+kb(data.frame(Sweep = g$sweep, Level = sweep_level(g),
               `Worst duality gap` = format(g$worst_gap, digits = 3),
               `All certified` = g$all_certified,
               `Equals the dense solve` = ifelse(is.na(g$equal_to_dense),
                                                 "not run", g$equal_to_dense),
               check.names = FALSE),
    caption = "The certificate by cell. The duality gap is the residual the loop stopped on. Equals the dense solve compares the pairing unit by unit where the dense path could be run, and reads not run where the problem was too large for it.",
-   align = "lllllrrr")
+   align = "llrrr")
 ```
+
+The medians above are taken over seeds, and the seed-to-seed spread is what
+decides whether they carry. The next table reports, for each cell, the widest
+separation the seeds produced.
 
 ```{r igrid-spread}
 imp_runs <- igrid_runs[igrid_runs$memory_mode == "implicit" &
                          igrid_runs$status == "ok", ]
 imp_runs$graph_pct <- 100 * imp_runs$candidate_edges / imp_runs$possible_edges
-kb(data.frame(Sweep = imp_runs$sweep, Cloud = imp_runs$cloud,
-              Dim = imp_runs$dim,
-              Units = format(imp_runs$n_total, big.mark = ","),
-              Caliper = imp_runs$caliper, Seed = imp_runs$seed_index,
-              Rounds = imp_runs$n_rounds,
-              `Seed width` = imp_runs$seed_width,
-              `Graph %` = sprintf("%.3f", imp_runs$graph_pct),
-              `Seconds` = sprintf("%.3g", imp_runs$elapsed_s),
-              `Gap` = format(imp_runs$duality_gap, digits = 3),
-              check.names = FALSE),
-   caption = "Every implicit run in the grid, one row per seed. Seed width is the number of columns the first round gave each row.",
-   align = "lllllrrrrrr")
+skey <- paste(imp_runs$sweep, imp_runs$cloud, imp_runs$dim, imp_runs$n_total,
+              imp_runs$caliper)
+sp <- do.call(rbind, lapply(split(imp_runs, skey), function(g2) data.frame(
+  Sweep = g2$sweep[1], Level = sweep_level(g2[1, ]),
+  ord_n = g2$n_total[1], ord_d = g2$dim[1], ord_c = g2$caliper[1],
+  Seeds = nrow(g2),
+  `Rounds` = sprintf("%g-%g", min(g2$n_rounds), max(g2$n_rounds)),
+  `Seed width` = sprintf("%g-%g", min(g2$seed_width), max(g2$seed_width)),
+  `Graph %` = sprintf("%.3f-%.3f", min(g2$graph_pct), max(g2$graph_pct)),
+  `Seconds` = sprintf("%.3g-%.3g", min(g2$elapsed_s), max(g2$elapsed_s)),
+  `Slowest / fastest` = sprintf("%.2fx", max(g2$elapsed_s) / min(g2$elapsed_s)),
+  check.names = FALSE)))
+sp <- sp[order(sp$Sweep, sp$ord_n, sp$ord_d, sp$ord_c, sp$Level), ]
+sp <- sp[, setdiff(names(sp), c("ord_n", "ord_d", "ord_c"))]
+kb(sp, caption = "Across the seeds of a cell: the range of each quantity and the ratio of the slowest run to the fastest. Seed width is the number of columns the first round gave each row.",
+   align = "llrrrrrr")
 ```
 
-```{r igrid-failures}
+```{r igrid-failures, results="asis"}
 bad <- igrid_runs[igrid_runs$status != "ok", ]
 if (nrow(bad)) {
   kb(data.frame(Sweep = bad$sweep, Cloud = bad$cloud, Dim = bad$dim,
@@ -388,8 +694,15 @@ if (nrow(bad)) {
                 Status = bad$status, check.names = FALSE),
      caption = "Cells that did not finish.", align = "llllllll")
 } else {
-  cat("Every cell of the grid finished.\n")
+  cat(sprintf("Every cell of the grid finished: %d runs over %d cells and %d memory modes, all with status ok.\n\n",
+              nrow(igrid_runs), nrow(igrid),
+              length(unique(igrid_runs$memory_mode))))
 }
+```
+
+```{r igrid-pointer, results="asis"}
+cat(sprintf("Each of the %d runs behind these tables is a row of `implicit-grid-runs.csv`, carrying its seed, mode, timing, round count, candidate and evaluated edge counts, duality gap and comparison against the dense solve. The per-cell medians are in `implicit-grid-results.csv`.\n\n",
+            nrow(igrid_runs)))
 ```
 
 \FloatBarrier
@@ -404,32 +717,42 @@ increment column is measured against. `dense_matrix` builds the distance matrix
 and stops, which separates the representation from the solver that runs on it.
 
 ```{r memory-table}
-m <- memory[order(memory$n_total, memory$arm), ]
-kb(data.frame(Units = format(m$n_total, big.mark = ","), Arm = m$arm,
-              `Peak RSS` = sprintf("%.0f MB", m$peak_rss_mb),
-              `Over baseline` = ifelse(is.na(m$over_baseline_mb), "-",
-                                       sprintf("%.0f MB", m$over_baseline_mb)),
-              `R heap peak` = sprintf("%.0f MB", m$heap_peak_mb),
-              `Matrix` = sprintf("%.0f MB", m$matrix_mb),
-              `Package estimate` = sprintf("%.0f MB", m$estimate_mb),
-              `Seconds` = sprintf("%.3g", m$elapsed_s),
-              Status = m$status, check.names = FALSE),
-   caption = "Peak resident set size by arm and problem size. Matrix is the bytes the dense cost matrix itself needs at that shape. Package estimate is what estimate_dense_matrix_mb() predicts, which is four times the matrix and is what the memory dispatcher warns from.",
-   align = "llrrrrrrl")
+mm <- memory[order(memory$n_total, memory$arm), ]
+kb(data.frame(Units = formatC(mm$n_total, big.mark = ",", format = "d"),
+              Arm = mm$arm,
+              `Peak RSS` = sprintf("%.0f", mm$peak_rss_mb),
+              `Over baseline` = ifelse(is.na(mm$over_baseline_mb), "-",
+                                       sprintf("%.0f", mm$over_baseline_mb)),
+              `R heap peak` = sprintf("%.0f", mm$heap_peak_mb),
+              `Seconds` = sprintf("%.3g", mm$elapsed_s),
+              Outcome = sub(":.*$", "", mm$status), check.names = FALSE),
+   caption = "Peak resident set size by arm and problem size, in megabytes.",
+   align = "llrrrrl")
 ```
 
 ```{r memory-heuristic}
 dm <- memory[memory$arm == "dense_matrix" & !is.na(memory$over_baseline_mb), ]
 if (nrow(dm)) {
-  kb(data.frame(Units = format(dm$n_total, big.mark = ","),
-                `Matrix` = sprintf("%.0f MB", dm$matrix_mb),
-                `Measured over baseline` = sprintf("%.0f MB", dm$over_baseline_mb),
+  kb(data.frame(Units = formatC(dm$n_total, big.mark = ",", format = "d"),
+                `Matrix` = sprintf("%.0f", dm$matrix_mb),
+                `Measured over baseline` = sprintf("%.0f", dm$over_baseline_mb),
                 `Measured / matrix` = sprintf("%.2f", dm$over_baseline_mb / dm$matrix_mb),
-                `Package estimate` = sprintf("%.0f MB", dm$estimate_mb),
+                `Package estimate` = sprintf("%.0f", dm$estimate_mb),
                 check.names = FALSE),
-     caption = "The four-fold estimate against the measurement. The estimate is deliberately conservative: it exists to avoid under-warning before a large allocation, not to predict the peak.",
+     caption = "The four-fold estimate against the measurement, in megabytes. Matrix is the bytes the dense cost matrix itself needs at that shape, and package estimate is what estimate_dense_matrix_mb() predicts, which is four times the matrix and is what the memory dispatcher warns from. The estimate is deliberately conservative: it exists to avoid under-warning before a large allocation, not to predict the peak.",
      align = "lrrrr")
 }
+```
+
+```{r memory-pointer, results="asis"}
+mb <- memory[memory$status != "ok", ]
+if (nrow(mb)) {
+  cat(sprintf("The %s arm at %s units did not finish, with `%s`. ",
+              mb$arm[1], formatC(mb$n_total[1], big.mark = ",", format = "d"),
+              mb$status[1]))
+}
+cat(sprintf("All %d measured processes are in `memory-results.csv`, which also carries the matrix and estimate columns for every arm.\n\n",
+            nrow(memory)))
 ```
 
 \FloatBarrier
@@ -461,23 +784,53 @@ kb(data.frame(
   align = "lrrrr")
 ```
 
+The certificate, pair count, candidate edge count and round count of each of
+these runs are in `implicit-results.csv`.
+
 \FloatBarrier
 
-# Scaling, every run
+# Scaling
 
-The scaling table in the article reports the median across instances. These are
-the runs behind it, one row per repetition.
+The scaling table in the article reports the median across instances. The
+dispersion behind those medians is below: an instance is an independently
+generated problem of that size, a repetition is one timed solve of that problem,
+and every package sees the same instances.
 
-```{r scaling-runs}
-sr <- scaling_runs[order(scaling_runs$n_total, scaling_runs$package,
-                         scaling_runs$instance, scaling_runs$rep), ]
-kb(data.frame(Units = format(sr$n_total, big.mark = ","), Package = sr$package,
-              Instance = sr$instance, Seed = sr$seed, Rep = sr$rep,
-              Seconds = ifelse(is.na(sr$seconds), "-",
-                               sprintf("%.4g", sr$seconds)),
-              Status = sr$status, check.names = FALSE),
-   caption = "Every scaling run. Instance is an independently generated problem of that size; rep is a repetition on that problem. A run that failed or timed out carries its status and no time.",
-   align = "llrrrrl")
+```{r scaling-summary}
+sres <- scaling_res[order(scaling_res$n_total, scaling_res$package), ]
+fin <- !is.na(sres$median_s)
+num <- function(x, fmt = "%.4g") ifelse(is.na(x), "-", sprintf(fmt, x))
+kb(data.frame(Units = format(sres$n_total, big.mark = ","),
+              Package = sres$package,
+              Instances = sres$instances, Runs = sres$runs,
+              `Median (s)` = num(sres$median_s),
+              `Min (s)` = num(sres$min_s),
+              `Max (s)` = num(sres$max_s),
+              `Max / min` = ifelse(fin & sres$min_s > 0,
+                                   sprintf("%.2fx", sres$max_s / sres$min_s), "-"),
+              Outcome = sub(":.*$", "", sres$status),
+              check.names = FALSE),
+   caption = "Every size and package of the scaling benchmark. Max over min is the spread across all repetitions of that cell, so it carries both the between-instance and the within-instance variation.",
+   align = "llrrrrrrl")
+```
+
+```{r scaling-failures}
+sb <- scaling_runs[scaling_runs$status != "ok", ]
+if (nrow(sb)) {
+  agg <- as.data.frame(table(sb$n_total, sb$package, sb$status),
+                       stringsAsFactors = FALSE)
+  agg <- agg[agg$Freq > 0, ]
+  names(agg) <- c("Units", "Package", "Outcome", "Runs")
+  agg <- agg[order(as.numeric(agg$Units), agg$Package), ]
+  agg$Units <- formatC(as.numeric(agg$Units), big.mark = ",", format = "d")
+  kb(agg[, c("Units", "Package", "Runs", "Outcome")],
+     caption = "The runs that did not return a time.", align = "llrl")
+}
+```
+
+```{r scaling-pointer, results="asis"}
+cat(sprintf("Each of the %d individual repetitions, with its instance index, seed, seconds and status, is a row of `scaling-runs.csv`. The per-cell quartiles are in `scaling-results.csv`.\n\n",
+            nrow(scaling_runs)))
 ```
 
 \FloatBarrier

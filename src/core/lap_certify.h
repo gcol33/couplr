@@ -107,6 +107,18 @@ struct ReducedCostScan {
 // sound.
 struct CertificateReport {
     // primal
+    //
+    // `structurally_valid_matching` reads the match vector as a matching:
+    // every entry in range, no column claimed twice, no forbidden pair
+    // matched. It permits unmatched rows, which is what separates it from
+    // primal feasibility. The primal constrains every row of the short side to
+    // hold exactly one pair, so a matching that leaves a row free is a valid
+    // partial matching and not a feasible solution, and neither conclusion may
+    // rest on it. The objective is summed under the weaker of the two, since
+    // the cost of a partial matching is a meaningful number while the cost of
+    // a vector claiming one column twice is not.
+    bool    structurally_valid_matching = false;
+    bool    all_rows_matched = false;
     bool    primal_feasible = false;
     int64_t n_rows = 0;
     int64_t n_cols = 0;
@@ -133,12 +145,12 @@ struct CertificateReport {
 
     // exact arithmetic
     //
-    // The same conditions decided with no tolerance at all. `all_rows_matched`
-    // stands where objective equality stands in the numerical check: given
-    // dual feasibility, tight matched arcs and free unmatched columns, the two
-    // objectives are equal exactly when every row is matched, so the equality
-    // is a consequence rather than a fourth thing to measure.
-    bool    all_rows_matched = false;
+    // The same conditions decided with no tolerance at all. Where the
+    // numerical conclusion closes on the objective gap, the exact one closes
+    // on the row count already required for primal feasibility: given dual
+    // feasibility, tight matched arcs and free unmatched columns, the two
+    // objectives are equal exactly when every row is matched, so no tolerance
+    // decides the exact conclusion.
     bool    exact_dual_feasible = false;
     bool    exact_cs_matched_tight = false;
     bool    exact_cs_unmatched_free = false;
@@ -324,15 +336,19 @@ CertificateReport certify_assignment_impl(const Source& src,
     for (int64_t j = 0; j < ncol; ++j) {
         if (col_claims[static_cast<std::size_t>(j)] > 1) ++rep.n_duplicate_cols;
     }
-    rep.primal_feasible = (rep.n_out_of_range == 0) &&
-                          (rep.n_duplicate_cols == 0) &&
-                          (rep.n_forbidden_matched == 0);
+    rep.structurally_valid_matching = (rep.n_out_of_range == 0) &&
+                                      (rep.n_duplicate_cols == 0) &&
+                                      (rep.n_forbidden_matched == 0);
+    rep.all_rows_matched = (rep.n_matched == nrow);
+    rep.primal_feasible = rep.structurally_valid_matching && rep.all_rows_matched;
 
     // The primal objective is only meaningful once the matching is a matching:
     // summing over a duplicated column or a forbidden arc produces a number
     // that invites comparison with the dual bound but does not correspond to
-    // any feasible solution.
-    if (rep.primal_feasible) {
+    // any feasible solution. An unmatched row costs nothing and leaves the sum
+    // meaningful, so the objective is reported for a partial matching even
+    // though no conclusion may be drawn from it.
+    if (rep.structurally_valid_matching) {
         detail::CompensatedSum primal;
         for (int64_t i = 0; i < nrow; ++i) {
             const int64_t j = static_cast<int64_t>(match[static_cast<std::size_t>(i)]);
@@ -427,19 +443,17 @@ CertificateReport certify_assignment_impl(const Source& src,
                            rep.complementary_slackness &&
                            (std::abs(rep.duality_gap) <= tol_gap);
 
-    // The exact conclusion asks for a matched row count instead of an
-    // objective comparison. Tight matched arcs make the primal cost the sum of
-    // u over matched rows plus v over used columns; free unmatched columns
-    // make the second sum the sum of v over all columns; every row matched
-    // makes the first the sum of u over all rows. Those three together are the
-    // dual objective, so the gap is zero and no tolerance decides it. The gap
-    // is still computed and reported, as the independent numerical
-    // cross-check it is.
-    rep.all_rows_matched = (rep.n_matched == nrow);
+    // The exact conclusion drops the objective comparison. Tight matched arcs
+    // make the primal cost the sum of u over matched rows plus v over used
+    // columns; free unmatched columns make the second sum the sum of v over
+    // all columns; the row cover primal feasibility already requires makes the
+    // first the sum of u over all rows. Those three together are the dual
+    // objective, so the gap is zero and no tolerance decides it. The gap is
+    // still computed and reported, as the independent numerical cross-check it
+    // is.
     rep.exact_available = want_exact && scan.exact_checked;
     rep.exact_certificate = rep.exact_available &&
                             rep.primal_feasible &&
-                            rep.all_rows_matched &&
                             rep.exact_dual_feasible &&
                             rep.exact_cs_matched_tight &&
                             rep.exact_cs_unmatched_free;

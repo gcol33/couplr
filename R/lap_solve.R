@@ -100,9 +100,11 @@
 #'   specification; `"implicit"` also accepts a matrix, where it solves the same
 #'   problem by generating the pairs it needs and saves nothing, which is what
 #'   makes it a check on the complete solve rather than a faster one.
-#'   `"implicit"` is slower than `"lazy"` on every shape measured so far, and
-#'   the time goes to the restricted solve rather than to the pair scan, so what
-#'   it buys today is the certificate over the complete problem.
+#'   Against `"lazy"` on a lazy cost specification, `"implicit"` leads from
+#'   5,000 units upward on the eight-covariate problem the benchmarks use, by
+#'   1.1x at 5,000 rising to 3.1x at 50,000, and loses below that where the
+#'   loop's fixed costs are still visible. What it buys at every size is the
+#'   certificate over the complete problem.
 #' @param certify Logical; whether to attach a checked `assignment_certificate`
 #'   as `certificate`. `NULL`, the default, takes the path's own answer: `TRUE`
 #'   under `memory_mode = "implicit"`, where the certificate is what

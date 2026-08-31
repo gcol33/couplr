@@ -37,6 +37,7 @@
 #include "flow_topk.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -57,7 +58,13 @@ inline double node_cbar_lo(const BallTree& tree, const LazyCostMatrix& src,
     if (!(floor_c < std::numeric_limits<double>::infinity())) {
         return std::numeric_limits<double>::infinity();
     }
-    return floor_c - ui - tree.max_v[static_cast<std::size_t>(id)];
+    // The cost floor already carries the tree's allowance. The two
+    // subtractions that turn it into a reduced cost are their own rounding,
+    // and the duals are the solver's numbers rather than the tree's, so the
+    // result is stepped down once for each.
+    const double inf = std::numeric_limits<double>::infinity();
+    const double less_u = std::nextafter(floor_c - ui, -inf);
+    return std::nextafter(less_u - tree.max_v[static_cast<std::size_t>(id)], -inf);
 }
 
 }  // namespace detail

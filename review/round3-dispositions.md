@@ -1,7 +1,7 @@
 # Round 3 dispositions
 
 Source: `review/round3.md`. Every claim below was checked in the repository
-before it was accepted or declined. Code work is commit `4c5970d`.
+before it was accepted or declined. Code work is commits `4c5970d` and `cb62180`.
 
 ## Blockers
 
@@ -90,7 +90,7 @@ The release is being folded into 1.7.0 rather than a 1.7.1, which is available
 because 1.7.0 never reached CRAN. CRAN serves 1.6.1.
 
 This dissolves the provenance wording the review asked for rather than requiring
-it. The rerun's `logs/ENVIRONMENT.txt` records `commit 4c5970d` and
+it. The rerun's `logs/ENVIRONMENT.txt` records `commit cb62180` and
 `couplr 1.7.0`, read from the DESCRIPTION at that commit, so the article no
 longer has to explain a benchmark run whose DESCRIPTION said 1.6.2. The only
 modified source paths are `R/RcppExports.R` and `src/RcppExports.cpp`, which
@@ -138,6 +138,26 @@ caveat at all.
 `verify_assignment()` returns `FALSE` on every one of them, which is the
 certification layer doing exactly what it exists for, and is worth stating that
 way rather than only as a defect.
+
+**Fixed in `cb62180`.** The conversion scaled the largest absolute cost to 1e6,
+so it spent the resolution on the offset rather than the span: a unit-wide
+spread sitting at 1e9 collapsed to a single value, and a heavy-tailed matrix
+rounded its smallest entries together at zero. It now shifts the smallest
+allowed cost to zero and scales the span, which is what a complete assignment is
+invariant under, at a span sized from the instance and capped at 1e9. That cap
+is the auction's, not double exactness: a larger span makes the price wars of
+the last scaling phases run past the iteration limit, which is what a first
+attempt at the exactness bound produced.
+
+A span whose resolution cannot order the cheapest pairs is refused, naming `jv`
+and `auction`. Merging two large costs is the bounded error any fixed-point
+conversion carries; merging costs onto the minimum destroys the ordering the
+optimum is built from, and that is the case the guard tests.
+
+Measured after: heavy-tailed costs refused rather than answered, uniform 50x50
+agreeing with `jv` in 25 of 25, and the 1e9-offset case returning a relative
+difference of 0 where it previously collapsed. `test-csa-cost-scaling.R`, 6
+tests and 22 assertions.
 
 Scope checked before it was allowed to worry anyone: the dispatcher never selects
 `csa`, and in the regime grid `csa` is fastest in 2 of 189 cells, neither of them

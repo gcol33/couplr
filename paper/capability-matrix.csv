@@ -6,7 +6,7 @@ Exact blocking / stratification,yes,yes,yes,"couplr: block_id; MatchIt: exact; o
 Forbidden pairs (arbitrary i j list),partial,partial,partial,"No first-class API anywhere: couplr/optmatch via Inf entries; MatchIt antiexact is value-based"
 k-best assignments (Murty),yes,no,no,"couplr: lap_solve_kbest()"
 Bottleneck assignment (minimax),yes,no,no,"couplr: bottleneck_assignment()"
-Rectangular n_treated != n_control native,yes,partial,partial,"couplr handles natively; MatchIt discards unmatched; optmatch uses full/variable-ratio"
+Rectangular cost matrix as solver entry point,yes,via full matching,via full matching,"couplr solves rectangular directly; optmatch pairmatch() wraps fullmatch(); MatchIt optimal calls optmatch::fullmatch()"
 Rosenbaum sensitivity bounds,yes,no,no,"couplr: sensitivity_analysis(); others require external rbounds/sensitivitymw"
 User cost-matrix entry point,yes,yes,yes,"couplr: lap_solve(); MatchIt: distance=<matrix>; optmatch: match_on(<matrix>)"
 Sparse cost support,yes,no,yes,"couplr: sentinel-Inf exploited by SAP/LAPMOD solvers; optmatch: InfinitySparseMatrix class"

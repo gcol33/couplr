@@ -56,6 +56,30 @@
   print method names the arithmetic the conclusion is in. The exact conditions
   imply the numerical ones at any non-negative `tol`, so `certified_optimal`
   under `"auto"` is what it was before.
+* **The edge-generation loop bounds a subtree of columns instead of reading
+  every one.** Under `memory_mode = "lazy"` and `"implicit"` the pricing sweep
+  and the search for a deficient row's cheapest columns both used to scan the
+  column set. Where the cost source carries geometry, both are now answered
+  from a ball tree over the columns: a node holds a centre and radius in
+  whitened coordinates, which bounds the distance, and a box in the original
+  covariates, which is where a caliper is stated. A node whose bound cannot
+  beat the row's threshold is discarded without visiting the columns under it.
+
+  The tree is built when it pays. Mahalanobis distance is quadratic in the
+  number of covariates, dear enough to pay for the bound at every dimension
+  measured, so it always takes the tree. The metrics whose cost is linear in
+  the covariates take it up to six of them, measured at 2.6x at two covariates,
+  level at six and a loss at eight. Manhattan and Chebyshev carry no ball
+  bound, a covariance with no Cholesky factor has no whitened coordinates, and
+  a custom distance function is opaque; each of those falls back to the scan,
+  which is the same answer for more work rather than a different answer.
+
+  Pruning does not reduce total distance evaluations below one complete pass in
+  every regime: seeding and repeated pricing rounds evaluate some pairs more
+  than once, and at eight Mahalanobis covariates the loop still evaluates 1.4
+  to 2.0 complete-pair equivalents. What the loop saves is the graph it never
+  builds and the solver work that follows from it.
+
 * **`assignment()` documents the integer conversion `"gabow_tarjan"` performs.**
   The scale factor, the rounding rule, the instance whose optimum is claimed,
   the range a matrix is refused at, and the bound on how far the rounded
@@ -86,6 +110,27 @@
   the sized seed.
 
 ## Bug fixes
+
+* **`verify_assignment()` no longer certifies a matching that leaves rows
+  unmatched.** The numerical conclusion asked for primal feasibility, dual
+  feasibility, complementary slackness and a zero duality gap, and the primal
+  feasibility it asked for permitted an uncovered row. On an input where the
+  duals are all zero the two objectives then agree at zero, every remaining
+  condition holds vacuously, and `arithmetic = "auto"` and `"double"` returned
+  `certified_optimal = TRUE` for a matching that made no pairs at all. The
+  exact conclusion was unaffected, since it asked for the row count directly.
+
+  The primal in the assignment model constrains every row of the short side to
+  hold exactly one pair, so the row cover is part of primal feasibility rather
+  than a separate condition. `primal_feasible` now means both halves and the
+  certificate reports them separately: `structurally_valid_matching` for the
+  matching read as a matching, which permits unmatched rows, and
+  `all_rows_matched` for the cover. `primal_objective` is still reported for a
+  structurally valid partial matching, since an unmatched row costs nothing and
+  leaves the sum meaningful.
+
+  Callers reading `primal_feasible` on a deliberately partial matching should
+  read `structurally_valid_matching` instead.
 
 * **A matched pair's reported distance is the one the solver priced it with.**
   Under `memory_mode = "lazy"` and `"implicit"` the distance column was

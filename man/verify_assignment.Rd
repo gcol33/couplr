@@ -59,14 +59,19 @@ every condition. It is \code{FALSE} under \code{arithmetic = "double"}, and on
 a certificate assembled from a scan that priced part of the problem
 against a tolerance rather than evaluating it, which is what the
 edge-generation loop hands back.
-\item \code{all_rows_matched} — logical; every row of the short side holds a
-column. This is what stands in for objective equality in the exact
-check: with tight matched arcs and free unmatched columns, the two
-objectives are equal exactly when it is \code{TRUE}.
 \item \code{n_exact_violations}, \code{n_exact_untight} — pairs failing exact dual
 feasibility, and matched pairs not exactly tight.
-\item \code{primal_feasible} — logical; no column claimed twice, no forbidden
-pair matched, no index out of range.
+\item \code{structurally_valid_matching} — logical; no column claimed twice, no
+forbidden pair matched, no index out of range. Unmatched rows are
+permitted, so this holds for a partial matching.
+\item \code{all_rows_matched} — logical; every row of the short side holds a
+column.
+\item \code{primal_feasible} — logical; both of the two above. The primal
+constrains every row of the short side to hold exactly one pair, so
+a partial matching is a valid matching and not a feasible solution,
+and no conclusion rests on it. \code{primal_objective} is still reported
+for one, since an unmatched row costs nothing and leaves the sum
+meaningful.
 \item \code{dual_feasible} — logical; \code{c_ij - u_i - v_j >= -tol} over every
 admissible pair, and, when there are more columns than rows,
 \code{v_j <= tol} for every column.

@@ -120,6 +120,22 @@ struct BallTree {
     // triangular. Empty when whitening is the identity.
     std::vector<double> factor;
 
+    // A relative allowance on the bound's own arithmetic. Every bound the tree
+    // reports is lowered by it before anyone reads it, so a prune fires only
+    // where the bound clears its threshold by more than the bound can be
+    // wrong. Descending where it does not clear costs a leaf evaluation, which
+    // is the cost source's own answer, so an allowance set too high loses time
+    // and an allowance set too low would lose an edge.
+    //
+    // Two things go into it. The centre distance and the radius are each a sum
+    // of n_vars squares and a square root, whose relative error is bounded by
+    // gamma_{n_vars + 3} in the standard sense, with gamma_k = k*eps/(1 - k*eps).
+    // Under Mahalanobis the tree bounds ||L' d|| while the source evaluates
+    // d' A d for the same A the factor came from; the two are the same real
+    // number, and they differ in floating point by the residual of the
+    // factorization, which is measured against A rather than assumed.
+    double bound_rel = 0.0;
+
     bool empty() const { return lo.empty(); }
     int32_t n_nodes() const { return static_cast<int32_t>(lo.size()); }
     bool is_leaf(int32_t id) const {
@@ -218,6 +234,65 @@ inline void whiten_point(const BallTree& tree, const double* x, double* out) {
     }
 }
 
+namespace detail {
+
+// gamma_k in the standard floating-point sense, saturating rather than going
+// negative when k*eps reaches one, which a covariate count could only do at a
+// dimension no tree would be built at.
+inline double gamma_of(int64_t k) {
+    const double e = 0.5 * std::numeric_limits<double>::epsilon();
+    const double d = static_cast<double>(k) * e;
+    if (!(d < 1.0)) return std::numeric_limits<double>::infinity();
+    return d / (1.0 - d);
+}
+
+// The relative allowance the tree lowers every bound by.
+//
+// The geometric part is gamma_{n_vars + 3}: a sum of n_vars squares, the
+// square root over it, and the centre and radius that were built the same way.
+//
+// The Mahalanobis part is the factorization residual. The tree measures
+// ||L' d||^2 where the source measures d' A d, and the difference is
+// d' (L L' - A) d, so the squared distances differ by at most
+// ||L L' - A||_F relative to ||A||_F. Taking that ratio on the squared
+// quantity and applying it to the distance is conservative, since a relative
+// error r on a square is a relative error below r on its root for r below one.
+inline double bound_allowance(const LazyCostMatrix& src,
+                              const std::vector<double>& factor,
+                              int64_t n_vars) {
+    double rel = gamma_of(n_vars + 3);
+    if (src.metric() != DistanceMetric::Mahalanobis || factor.empty()) {
+        return rel;
+    }
+
+    const std::vector<double>& a = src.inv_cov();
+    double num = 0.0;
+    double den = 0.0;
+    for (int64_t i = 0; i < n_vars; ++i) {
+        for (int64_t j = 0; j < n_vars; ++j) {
+            // factor holds L' upper triangular, so (L L')_ij is the inner
+            // product of columns i and j of L', over the rows both reach.
+            double lij = 0.0;
+            const int64_t stop = i < j ? i : j;
+            for (int64_t k = 0; k <= stop; ++k) {
+                lij += factor[static_cast<std::size_t>(k * n_vars + i)] *
+                       factor[static_cast<std::size_t>(k * n_vars + j)];
+            }
+            const double aij = 0.5 * (a[static_cast<std::size_t>(i * n_vars + j)] +
+                                      a[static_cast<std::size_t>(j * n_vars + i)]);
+            const double d = lij - aij;
+            num += d * d;
+            den += aij * aij;
+        }
+    }
+    if (!(den > 0.0)) return rel;
+    const double resid = std::sqrt(num) / std::sqrt(den);
+    if (!std::isfinite(resid)) return std::numeric_limits<double>::infinity();
+    return rel + resid;
+}
+
+}  // namespace detail
+
 // The tree over `src`'s columns, or an empty tree when the metric or the
 // covariance leaves no bound. An empty tree is a routing answer rather than an
 // error: it says this source is price_block()'s to scan.
@@ -243,6 +318,7 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
     tree.n_vars = n_vars;
     tree.n_units = static_cast<int32_t>(src.ncol);
     tree.leaf_size = leaf_size > 0 ? leaf_size : 1;
+    tree.bound_rel = detail::bound_allowance(src, tree.factor, n_vars);
 
     tree.whitened.assign(static_cast<std::size_t>(src.ncol) *
                              static_cast<std::size_t>(n_vars), 0.0);
@@ -340,9 +416,18 @@ inline BallBounds node_ball_bounds(const BallTree& tree, const double* q_whitene
     }
     const double dc = std::sqrt(s);
     const double r = tree.radius[static_cast<std::size_t>(id)];
+    // The near side of the ball is what a prune rests on, so the centre
+    // distance is read low and the radius high; the far side, which bounds a
+    // maximised cost, is read the other way. Both are moved by the tree's own
+    // allowance, so neither side can be tighter than the arithmetic that
+    // produced it.
+    const double rel = tree.bound_rel;
+    const double dc_lo = dc - rel * dc;
+    const double r_hi = r + rel * r;
     BallBounds out;
-    out.d_lo = dc > r ? dc - r : 0.0;
-    out.d_hi = dc + r;
+    out.d_lo = dc_lo > r_hi ? dc_lo - r_hi : 0.0;
+    const double far = dc + r;
+    out.d_hi = far + rel * far;
     return out;
 }
 
@@ -350,8 +435,12 @@ inline BallBounds node_ball_bounds(const BallTree& tree, const double* q_whitene
 // maximize the cost falls as the distance grows, so the bound comes off the far
 // side of the ball.
 inline double cost_lo_of(const LazyCostMatrix& src, const BallBounds& b) {
-    if (src.is_negated()) return -metric_cost_of(src.metric(), b.d_hi);
-    return metric_cost_of(src.metric(), b.d_lo);
+    // metric_cost_of is monotone in the distance, so a bound on the distance
+    // carries to a bound on the cost, and its own rounding is one step.
+    const double inf = std::numeric_limits<double>::infinity();
+    const double c = src.is_negated() ? -metric_cost_of(src.metric(), b.d_hi)
+                                      : metric_cost_of(src.metric(), b.d_lo);
+    return std::nextafter(c, -inf);
 }
 
 // Whether max_distance forbids every column the node holds. The comparison is
@@ -385,11 +474,18 @@ inline bool node_caliper_out(const BallTree& tree, const LazyCostMatrix& src,
     if (cals.empty()) return false;
     const double* blo = tree.node_box_lo(id);
     const double* bhi = tree.node_box_hi(id);
+    const double inf = std::numeric_limits<double>::infinity();
     for (const CaliperSpec& cal : cals) {
         const std::size_t k = static_cast<std::size_t>(cal.var_index);
         const double x = q_original[k];
-        if (blo[k] > x + cal.threshold) return true;
-        if (bhi[k] < x - cal.threshold) return true;
+        // The window's two endpoints are each one rounded addition, and the
+        // box holds coordinates copied rather than computed. Widening the
+        // window by one representable step on each side puts the rounding on
+        // the side that declines to prune.
+        const double hi_edge = std::nextafter(x + cal.threshold, inf);
+        const double lo_edge = std::nextafter(x - cal.threshold, -inf);
+        if (blo[k] > hi_edge) return true;
+        if (bhi[k] < lo_edge) return true;
     }
     return false;
 }

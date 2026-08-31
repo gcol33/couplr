@@ -134,8 +134,10 @@ std::vector<double> duals_to_internal(const Rcpp::NumericVector& x, bool negate)
 }  // namespace
 
 Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
-    ListBuilder out(31);
+    ListBuilder out(32);
 
+    out.add_flag("structurally_valid_matching", rep.structurally_valid_matching);
+    out.add_flag("all_rows_matched", rep.all_rows_matched);
     out.add_flag("primal_feasible", rep.primal_feasible);
     out.add_count("n_rows", rep.n_rows);
     out.add_count("n_cols", rep.n_cols);
@@ -159,7 +161,6 @@ Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
     out.add_number("max_v_unmatched", rep.max_v_unmatched);
     out.add_flag("complementary_slackness", rep.complementary_slackness);
 
-    out.add_flag("all_rows_matched", rep.all_rows_matched);
     out.add_flag("exact_dual_feasible", rep.exact_dual_feasible);
     out.add_flag("exact_cs_matched_tight", rep.exact_cs_matched_tight);
     out.add_flag("exact_cs_unmatched_free", rep.exact_cs_unmatched_free);

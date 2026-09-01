@@ -714,3 +714,57 @@ TEST_CASE("Assignment duals from a flow - a flow that is not an assignment is re
         REQUIRE(duals.v.empty());
     }
 }
+
+TEST_CASE("Assignment certificate - suboptimality bound",
+          "[flow_certify][bound]") {
+    // Optimum (0,0) + (1,1) = 3, reached by u = (1, 2) and v = (0, 0): both
+    // matched pairs price at zero, both omitted pairs at 2.
+    lap::CostMatrix cost(2, 2);
+    cost.at(0, 0) = 1.0;
+    cost.at(0, 1) = 3.0;
+    cost.at(1, 0) = 4.0;
+    cost.at(1, 1) = 2.0;
+    const std::vector<int> match = {0, 1};
+    const std::vector<double> v = {0.0, 0.0};
+
+    SECTION("zero when the conditions hold with no slack") {
+        const std::vector<double> u = {1.0, 2.0};
+        const lap::CertificateReport rep =
+            lap::certify_assignment(cost, match, u, v, TOL);
+        REQUIRE(rep.certified_optimal);
+        REQUIRE(rep.certified_reduced_cost_floor == 0.0);
+        REQUIRE(rep.max_suboptimality == 0.0);
+    }
+
+    SECTION("the depth the reduced costs reach, once per row") {
+        // u_0 raised by a quarter, so (0,0) prices at -0.25 and the dual
+        // objective overshoots by the same quarter. The bound is the gap plus
+        // two rows' worth of the depth: -0.25 + 2 * 0.25.
+        const std::vector<double> u = {1.25, 2.0};
+        const lap::CertificateReport rep =
+            lap::certify_assignment(cost, match, u, v, TOL);
+        REQUIRE_FALSE(rep.certified_optimal);
+        REQUIRE(rep.min_reduced_cost == Approx(-0.25));
+        REQUIRE(rep.duality_gap == Approx(-0.25));
+        REQUIRE(rep.max_suboptimality == Approx(0.25));
+    }
+
+    SECTION("a pruning scan pays for the pairs it never visited") {
+        // What edge generation hands over: no violator was found, but the
+        // pricer proved only that nothing prices below -tol, so the answer is
+        // certified and still carries a bound of one tolerance per row.
+        const std::vector<double> u = {1.0, 2.0};
+        lap::ReducedCostScan scan;
+        scan.min_reduced_cost = 0.0;
+        scan.arg_i = 0;
+        scan.arg_j = 0;
+        scan.n_admissible = 4;
+        scan.proven_floor = -TOL;
+
+        const lap::CertificateReport rep =
+            lap::certify_assignment(cost, match, u, v, TOL, scan);
+        REQUIRE(rep.certified_optimal);
+        REQUIRE(rep.duality_gap == Approx(0.0).margin(TOL));
+        REQUIRE(rep.max_suboptimality == Approx(2.0 * TOL));
+    }
+}

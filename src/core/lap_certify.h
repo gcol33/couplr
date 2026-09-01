@@ -93,6 +93,13 @@ struct ReducedCostScan {
     int64_t n_violations = 0;       // admissible pairs with cbar < -tol
     int64_t n_admissible = 0;       // admissible pairs scanned
 
+    // A lower bound on the reduced cost of every admissible pair the scan
+    // covers, the ones it never evaluated included. A scan that visits every
+    // pair proves min_reduced_cost itself; one that prunes proves only the
+    // bounds it pruned against. The suboptimality bound rests on this, since
+    // min_reduced_cost says nothing about a pair nobody looked at.
+    double  proven_floor = std::numeric_limits<double>::infinity();
+
     // Set by a scan asked for the exact sign of every pair it visited, which
     // is what an exact certificate needs and what a pricing loop does not pay
     // for. A scan that was not asked leaves `exact_checked` false, and a
@@ -164,6 +171,30 @@ struct CertificateReport {
     bool    certified_optimal = false;
     bool    conclusion_is_exact = false;  // which arithmetic the conclusion is in
     double  tolerance = 0.0;
+
+    // The lower bound the scan proves for the reduced cost of every admissible
+    // pair, the ones it never evaluated included. Equal to min_reduced_cost
+    // when the scan visited every pair; below it when a pricer pruned, since a
+    // skipped subtree is known only by the bound it was skipped against.
+    double  certified_reduced_cost_floor = -std::numeric_limits<double>::infinity();
+
+    // The most any feasible solution of the complete problem can beat this one
+    // by, in the cost unit.
+    //
+    // Write eps = max(0, -certified_reduced_cost_floor) and, where the sign
+    // condition applies, s = max(0, max_v). Then u_i - eps and v_j - s satisfy
+    // both dual conditions exactly: every reduced cost gains eps + s and was at
+    // least -eps, and every column dual is at most zero. Their dual objective
+    // is the reported one less n_rows * eps + n_cols * s, and weak duality puts
+    // the optimum above it, so
+    //
+    //     primal - optimum <= duality_gap + n_rows * eps + n_cols * s.
+    //
+    // Zero exactly when the duals are feasible with no slack and the two
+    // objectives agree, which is the case certified_optimal reports. A pruning
+    // pricer that proves only its threshold leaves n_rows * tol here, and that
+    // is the price of not having visited every pair.
+    double  max_suboptimality = std::numeric_limits<double>::quiet_NaN();
 };
 
 // Which arithmetic the conclusion is taken in.
@@ -230,6 +261,8 @@ ReducedCostScan scan_reduced_costs(const Source& src,
         });
     }
 
+    // Every admissible pair was evaluated, so the observed minimum is the floor.
+    out.proven_floor = out.min_reduced_cost;
     return out;
 }
 
@@ -252,6 +285,9 @@ inline ReducedCostScan merge_scans(const ReducedCostScan& a, const ReducedCostSc
     // nobody asked the question of.
     out.exact_checked = a.exact_checked && b.exact_checked;
     out.n_exact_violations = a.n_exact_violations + b.n_exact_violations;
+    // A bound over the union is a bound over each half, so the union can claim
+    // only the weaker of the two.
+    out.proven_floor = std::min(a.proven_floor, b.proven_floor);
 
     const bool b_wins = b.min_reduced_cost < a.min_reduced_cost ||
                         (b.min_reduced_cost == a.min_reduced_cost && a.arg_i < 0) ||
@@ -363,6 +399,7 @@ CertificateReport certify_assignment_impl(const Source& src,
         ? *supplied
         : scan_reduced_costs(src, u, v, tol, want_exact);
     rep.min_reduced_cost = scan.min_reduced_cost;
+    rep.certified_reduced_cost_floor = scan.proven_floor;
     rep.worst_i = scan.arg_i;
     rep.worst_j = scan.arg_j;
 
@@ -430,6 +467,21 @@ CertificateReport certify_assignment_impl(const Source& src,
 
     // ---- conclusion ----
     rep.duality_gap = rep.primal_objective - rep.dual_objective;
+
+    // The shifted duals of the derivation on max_suboptimality. Clamped at zero
+    // because a feasible primal cannot sit below the optimum, so a negative
+    // total is rounding in the two objective sums and not a solution better
+    // than optimal. A NaN objective carries through, since a bound taken from
+    // an infeasible primal would be a number standing for nothing.
+    {
+        const double eps = std::max(0.0, -rep.certified_reduced_cost_floor);
+        const double s = sign_condition_applies ? std::max(0.0, rep.max_v) : 0.0;
+        const double bound = rep.duality_gap +
+                             static_cast<double>(nrow) * eps +
+                             static_cast<double>(ncol) * s;
+        rep.max_suboptimality =
+            std::isnan(bound) ? bound : (bound > 0.0 ? bound : 0.0);
+    }
 
     // The gap tolerance scales with the magnitude of the objective. Both sums
     // carry a relative rounding error of order eps per term, so an absolute

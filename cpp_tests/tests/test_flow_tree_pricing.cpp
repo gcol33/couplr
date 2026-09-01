@@ -140,6 +140,10 @@ void compare(const lap::BlockPricing& block, const lap::BlockPricing& tree,
         REQUIRE(tree.row_min[i] == block.row_min[i]);
     }
     REQUIRE(tree.min_reduced_cost == block.min_reduced_cost);
+    // The floor has to hold over every omitted pair, the ones a prune skipped
+    // included, so it can never sit above the minimum an exhaustive scan finds.
+    REQUIRE(tree.proven_floor <= block.min_reduced_cost);
+    REQUIRE(block.proven_floor == block.min_reduced_cost);
     REQUIRE(tree.arg_i == block.arg_i);
     REQUIRE(tree.arg_j == block.arg_j);
     REQUIRE(tree.n_violators == block.n_violators);

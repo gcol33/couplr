@@ -109,7 +109,37 @@
   an explicit column count on both surfaces. Zero, the new default, asks for
   the sized seed.
 
+* **The certificate says how far the answer can be from the optimum.**
+  `verify_assignment()`, and the certificate an implicit solve carries, gain
+  `max_suboptimality` -- the most any feasible matching of the complete problem
+  can beat the returned one by, in the cost unit -- and
+  `certified_reduced_cost_floor`, the lower bound proved for the reduced cost of
+  every admissible pair. Conditions that hold with no slack put the bound at
+  zero. A proof assembled by a pricer that pruned puts one tolerance per row
+  there instead, because a skipped subtree is known only by the bound it was
+  skipped against, and `certified_reduced_cost_floor` sits below
+  `min_reduced_cost` to say which case a result is in.
+
 ## Bug fixes
+
+* **The ball-tree pricing bound holds under offset coordinates and poor
+  conditioning.** The pricing loop compares each tree node against a bound on
+  the reduced cost of every pair beneath it, and that bound is the only evidence
+  that no omitted pair prices in, so an unsound one reaches `certified_optimal`
+  directly. Three things made it unsound. The Mahalanobis factor's residual was
+  allowed for as `||LL' - A||_F` over `||A||_F`, which does not bound the
+  directional error and understated the allowance by the conditioning of `A`; it
+  is now `||E||_F ||L^-1||_F^2`. The tree whitened absolute coordinates and
+  differenced them afterwards, where the cost differences the points first, so a
+  translation shared by the sample survived into the tree's arithmetic and
+  cancelled there; whitening is now relative to the midpoint of the controls'
+  bounding box. And the allowance was entirely relative, while no relative
+  allowance can cover a cancellation, so it now carries an absolute term as
+  well. On coordinates offset by 1e12 under a covariance with eigenvalues 1 and
+  1e-8, the tree found 21 pairs pricing below the tolerance where an exhaustive
+  scan found 24; it now finds all 24. The caliper comparison in
+  `distance_out_of()` also read an unrounded distance and now steps outward like
+  its sibling.
 
 * **`method = "csa"` no longer returns a suboptimal assignment on a wide cost
   range.** Cost scaling runs on integers, and the conversion scaled the largest

@@ -1,6 +1,6 @@
 ---
-title: "couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation"
-date: "2026-08-31"
+title: "couplr: Optimal Matching with Verifiable Certificates and Column Generation"
+date: "2026-09-01"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
   small as possible is the linear assignment problem, which sits underneath
@@ -12,16 +12,17 @@ abstract: >
   addresses both. Every flow-representable matching design compiles into one
   internal flow model, so node potentials come back from all of them and
   can be checked against the linear-programming optimality conditions. On those
-  potentials the package optimises over a restricted set of pairs: each unit
+  potentials the package optimises over a restricted graph: each unit
   starts with its nearest admissible partners, the omitted pairs are priced
-  against the duals the sparse solve returns, and pairs enter until none prices
-  in, at which point the duals certify the result optimal for the complete
-  problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of
-  the pairs and returns a certified optimum. Warm starting
-  the same loop traces a matching frontier over a swept constraint at roughly
-  half the cost of solving each point cold. A data-frame interface, nineteen
-  assignment algorithms, balance diagnostics and cardinality matching share the
-  same core. couplr is available on CRAN.
+  against the potentials the restricted solve returns, and pairs enter until
+  none prices in, at which point those potentials bound how far the result can
+  sit from the complete problem's optimum. Matching 16,667 treated units to
+  33,333 controls holds 0.29 percent of the pairs and returns an optimum
+  certified within that bound. Warm
+  starting the same loop traces a matching path over a swept constraint at
+  roughly half the cost of solving each point independently. A data-frame
+  interface, nineteen assignment algorithms, balance diagnostics and
+  cardinality matching share the same core. couplr is available on CRAN.
 draft: false
 author:
   - name: Gilles Colling
@@ -38,7 +39,7 @@ output:
     self_contained: yes
     toc: no
 header-includes:
-  - "\\hypersetup{pdftitle={couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation}, pdfauthor={Gilles Colling}}"
+  - "\\hypersetup{pdftitle={couplr: Optimal Matching with Verifiable Certificates and Column Generation}, pdfauthor={Gilles Colling}}"
   - \usepackage{placeins}
   - \usepackage{float}
   - \floatplacement{table}{!ht}
@@ -225,11 +226,12 @@ reach the same solver core. We contribute five things to R:
    and independently of the solver that produced it, in exact arithmetic where
    the potentials allow and naming the arithmetic the verdict was reached in.
 3. Dual-certified adaptive edge generation. Under
-   `memory_mode = "implicit"` the complete graph is never built: a sparse
+   `memory_mode = "implicit"` the complete graph is never built: a
    restricted problem is solved, the omitted pairs are priced against its
    duals, violating pairs are added, and the loop repeats until none prices in,
-   at which point the duals certify optimality for the complete problem.
-4. Warm-started matching frontiers. `match_path()` sweeps one constraint over
+   at which point the duals bound the result's distance from the complete
+   problem's optimum, and certify optimality where that bound closes.
+4. Warm-started matching paths. `match_path()` sweeps one constraint over
    a sequence of values, resuming each point from the one before it, with a
    certificate per point.
 5. Nineteen assignment algorithms written from scratch in C++ and reachable by
@@ -241,7 +243,7 @@ reach the same solver core. We contribute five things to R:
 The article is arranged for two kinds of reader. The assignment engine and the
 matching interface built on it come first and stand on their own; the
 optimisation architecture, its implementation and the measurements follow for a
-reader interested in where the certificates and the sparse edge generation come
+reader interested in where the certificates and the column generation come
 from.
 
 Results were produced with couplr version `r couplr_ver`.
@@ -641,10 +643,11 @@ Beyond one-to-one matching, `match_couples()` takes `ratio` for k-to-one designs
 and `replace` for matching with replacement. Five further designs have their own
 entry points, each returning an object in the same family. `ps_match()` estimates
 a propensity score [@RosenbaumRubin1983] and matches on it, with the caliper
-expressed in standard deviations of the linear predictor. `full_match()` assigns every unit to a matched group of variable size, so no
-unit is discarded, solving a minimum-cost flow problem with Johnson potentials
-[@Johnson1977] on its optimal path and a greedy two-pass heuristic on large
-problems. `cem_match()` implements coarsened exact matching
+expressed in standard deviations of the linear predictor. Where the constraints
+admit it, `full_match()` assigns every unit to a matched group of variable size,
+so no unit is discarded. The default solves the corresponding minimum-cost flow
+problem with Johnson potentials [@Johnson1977]; a two-pass greedy heuristic is
+reached by asking for it, under `method = "greedy"`. `cem_match()` implements coarsened exact matching
 [@IacusKingPorro2012], and `subclass_match()` divides the sample into
 propensity-score subclasses, returning subclass weights for the average
 treatment effect on the treated or on the whole sample.
@@ -659,9 +662,11 @@ reaches a single minimum-cost flow solve returning the largest balanced sample
 with a dual certificate at polynomial cost. Linear moment constraints, a
 finite `max_std_diff` or an explicit `moments` argument, are not, and are
 dualised and searched by branch and bound under `node_limit` and `time_limit`.
-Either way the result reports `n_matched` beside `best_possible`, the largest
-sample the constraints admit, the `gap` between them, whether the answer is
-`certified`, and what the search `stopped_on`. A pruning loop is available as
+Either way the result reports `n_matched` beside `best_possible`, the `gap`
+between them, whether the answer is `certified`, and what the search
+`stopped_on`. `best_possible` is the search's current upper bound on attainable
+sample size, and is the largest sample the constraints admit once `certified`
+is `TRUE`. A pruning loop is available as
 `engine = "heuristic"` and reports its gap as unknown, which is the honest
 reading of what a heuristic establishes.
 
@@ -682,7 +687,7 @@ Three of the package's capabilities are consequences of one decision.
 Compiling every flow-representable design into a single flow model is what
 makes node potentials available from all of them; the potentials are what
 certify a solution; a certificate is what makes it safe to optimise over a
-restricted set of pairs; and a certified restricted solve is what a warm start
+restricted graph of pairs; and a certified restricted solve is what a warm start
 resumes from:
 
 $$\text{common flow duals} \rightarrow \text{certificates}
@@ -817,7 +822,11 @@ the column potentials, and the allowance the pricing bound carries. Their sum
 bounds the matching's excess over the complete optimum. At
 $\epsilon = 10^{-9}$ and the largest shape in the benchmark below, the
 threshold's contribution $n\epsilon$ is $2 \times 10^{-5}$ in the cost
-units, and every run reported there came back with $\delta = 0$.
+units, and every run reported there came back with $\delta = 0$. The
+certificate returns that sum as `max_suboptimality`, beside
+`certified_reduced_cost_floor`, the floor the pricing scan proves for every
+admissible pair, which sits below the minimum it observed exactly where pruning
+supplied part of the proof.
 
 The loop terminates because each round adds at least one pair $E_t$ did not
 hold, so $|E_t|$ strictly increases under the bound $nm$. That bound is the
@@ -860,7 +869,7 @@ $N(S)$. When there are none, $N(S)$ is that neighbourhood in the complete proble
 and the result is infeasible with $(S, N(S))$ as its witness, naming the units
 short of partners rather than only the fact.
 
-So the sparse solution is optimal for a problem that was never built, and
+So the restricted solution is optimal for a problem that was never built, and
 `certify = TRUE` runs that check and returns it.
 
 Two quantities in `$search` describe what that cost. `candidate_edges` against
@@ -940,8 +949,8 @@ solving the sweep rather than one value.
 Each point resumes from the matching the point before it found. Raising the
 distance cut admits pairs while leaving that matching feasible, so what
 remains is to repair reduced-cost violations on the arcs that just became
-admissible, which is one round of the pricing loop of the previous section; an
-independent call at that value pays for a solve from cold. One mechanism
+admissible, which is one round of the pricing loop of the previous section, where an
+independent call at that value needs a full solve. One mechanism
 serves the sweep and the single solve. A value whose admissible pairs cannot
 support a complete matching is reported rather than approximated, coming back
 with no matching and the Hall witness beside it, so a sweep that starts below
@@ -1277,13 +1286,13 @@ knitr::kable(
     `Problem size` = ilab[match(pth$n_total, isz)],
     `As a path` = sprintf("%.3g s", pth$warm_wall),
     `Independently` = sprintf("%.3g s", pth$cold_wall),
-    `Cold/path` = sprintf("%.2fx", pth$wall_speedup),
+    `Wall ratio` = sprintf("%.2fx", pth$wall_speedup),
     `Solve-time ratio` = sprintf("%.2fx", pth$speedup),
     `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
     check.names = FALSE
   ),
   align = "lrrrrr", booktabs = TRUE,
-  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Cold/path is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Wall ratio is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
 )
 ```
 
@@ -1296,8 +1305,10 @@ from a seed and pays for the seeding sweep as well.
 Correctness is the part of this comparison that has to hold before the timing
 means anything. Every point on the path returns the status and the matched count
 its independent solve returns, and the totals agree to
-`r sprintf("%.3g", max(pth$worst_total_gap))` relative, so the path is the same
-sequence of matchings that solving each value from cold would produce.
+`r sprintf("%.3g", max(pth$worst_total_gap))` relative, so the path reproduces
+the feasibility statuses, matched counts and objective values of independent
+solves. Pair identities were not compared, and where a value admits more than
+one optimum equal totals do not make the matchings equal.
 
 ```{=latex}
 \FloatBarrier
@@ -1414,7 +1425,13 @@ enumeration below nine units and the Hopcroft-Karp style solver on binary
 costs, so their timings are not comparable with the rest and are shown only to
 establish that each is practical on its own input. These orderings hold for
 dense uniform integer costs on square matrices, which is the whole of what the
-figure establishes, and they fix the dispatcher's default.
+figure establishes, and they fix the dispatcher's default. Each label in the
+figure is a solver's `method` name: JV `jv`, SAP `sap`, SAP-D `sap_dense`,
+LAPMOD `lapmod`, Auction `auction`, Auction-GS `auction_gs`, Auction-S
+`auction_scaled`, CSA `csa`, CS-flow `csflow`, Push-R `push_relabel`, Cycle-C
+`cycle_cancel`, Net-S `network_simplex`, SSAP-B `ssap_bucket`, Gabow-T
+`gabow_tarjan`, Ramshaw `ramshaw_tarjan`, Hungarian `hungarian`, Munkres
+`munkres`, HK-01 `hk01` and Brute-F `bruteforce`.
 
 
 The grid behind Table \@ref(tab:regimes) is what reduced the rules to three.
@@ -1721,7 +1738,7 @@ cap <- data.frame(
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects. All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
 )
 ```
 
@@ -1741,14 +1758,14 @@ matrix. Three consequences follow. Every flow-representable design compiles
 into one flow model, so node potentials come back from all of them; those
 potentials turn a reported status into a certificate; and a certificate is what
 makes it safe to solve a problem that was never built, since a loop growing a
-sparse graph needs a statement about the complete one to know when to stop.
+restricted graph needs a statement about the complete one to know when to stop.
 
 What that architecture buys is measurable. At `r ilab[6]` the restricted graph
 settled at `r share[6]` of the complete pair count, returned a certified
 optimum, and ran `r sprintf("%.1f", imp_at("lazy", 50000) / imp_at("implicit", 50000))`
 times faster than traversing the complete graph lazily. A sweep of
 `r n_path_values` caliper values solved as one warm-started path cost a median
-`r sprintf("%.2f", 1 / median(pth$wall_speedup))` of solving each point cold, and
+`r sprintf("%.2f", 1 / median(pth$wall_speedup))` of solving each point independently, and
 across the `r nrow(regime)` cells of the solver-regime grid the dispatcher ran
 at a median `r x(median(regime$ratio))` of the cell's fastest measured solver.
 

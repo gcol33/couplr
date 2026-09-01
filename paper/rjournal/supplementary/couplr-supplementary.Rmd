@@ -1,5 +1,5 @@
 ---
-title: "Supplementary material for *couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation*"
+title: "Supplementary material for *couplr: Optimal Matching with Verifiable Certificates and Column Generation*"
 author: "Gilles Colling"
 geometry: a4paper,margin=1in
 output:
@@ -213,13 +213,32 @@ answer for more work rather than a different answer.
 
 Every bound is lowered by an allowance before it is compared, so a subtree is
 discarded only where it clears the threshold by more than the bound can be
-wrong. The allowance covers the rounding of the centre distance and the radius,
-each a sum of squares and a square root, and for Mahalanobis the residual of
-the factorization the whitening uses, measured against the matrix it came from
-rather than assumed. A subtree that does not clear the threshold is descended
-into, which costs the evaluations the bound would have saved and not the edge,
-so an allowance set too high loses time where one set too low would lose an
-edge.
+wrong. The allowance has a relative part and an absolute one, and both are
+needed.
+
+The relative part covers the rounding of the centre distance and the radius,
+each a sum of squares and a square root, and for Mahalanobis the residual
+$E = LL^\top - A$ of the factorization the whitening uses. What a direction $d$
+suffers from that residual is $|d^\top E d| / d^\top A d$, which the
+conditioning of $A$ governs: from $A^{-1} = L^{-\top} L^{-1}$ the ratio is at
+most $\|E\|_F \|L^{-1}\|_F^2$, and that is the form the allowance carries. A
+residual measured against the size of $A$ alone would understate it by exactly
+the conditioning, and understate it most where the geometry is hardest.
+
+The absolute part covers the whitened coordinates themselves. A tree forms them
+once per point and differences them afterwards, where the distance the cost
+source computes differences the two points first, so any translation the sample
+shares survives into the tree's arithmetic and cancels there. Whitening is
+therefore taken relative to the midpoint of the controls' bounding box, which
+removes the translation the sample shares, and what rounding remains is bounded
+by the standard error bound on the dot products forming the whitened
+displacement. No relative allowance can cover that term, since the whitened
+coordinates are formed before the difference the distance is taken over and
+their rounding does not shrink as two points approach.
+
+A subtree that does not clear the threshold is descended into, which costs the
+evaluations the bound would have saved and not the edge, so an allowance set
+too high loses time where one set too low would lose an edge.
 
 # What the restricted solve's optimum can cost
 
@@ -260,6 +279,15 @@ prune fires.
 
 At $\epsilon = 10^{-9}$ and the largest shape in the article's benchmark,
 16,667 rows, $n\epsilon$ is $2 \times 10^{-5}$ in the cost units.
+
+The certificate returns this quantity as `max_suboptimality`, so a caller reads
+what the answer can still be beaten by rather than a bare zero gap. It is
+computed from the floor the pricing scan proves rather than from $\epsilon$
+itself, which is the same number where a prune supplied part of the proof and
+smaller where every pair was evaluated, and it carries $m$ times any positive
+column potential, so a sign condition that fails widens the bound instead of
+invalidating it. `certified_reduced_cost_floor` reports that floor beside
+`min_reduced_cost`, and sits below it exactly where pruning was used.
 
 # The sentinel padding lemma
 

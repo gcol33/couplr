@@ -150,6 +150,17 @@
 #'   \item `complementary_slackness` — logical; both halves.
 #'   \item `cs_matched_tight`, `cs_unmatched_free` — the two halves separately.
 #'   \item `primal_objective`, `dual_objective`, `duality_gap` — numeric.
+#'   \item `max_suboptimality` — numeric; the most any feasible solution can
+#'         beat this one by, in the cost unit. It adds to the duality gap the
+#'         slack the dual conditions were allowed: `n_rows` times the depth the
+#'         reduced costs were permitted below zero, plus, where the sign
+#'         condition applies, `n_cols` times the height the column duals were
+#'         permitted above it. Zero when the conditions hold with no slack at
+#'         all, which is what `certified_optimal` reports.
+#'   \item `certified_reduced_cost_floor` — numeric; the lower bound proved for
+#'         the reduced cost of every admissible pair, the ones never evaluated
+#'         included. Equal to `min_reduced_cost` when every pair was visited,
+#'         and below it when a pruning pricer proved only its own threshold.
 #'   \item `min_reduced_cost`, `worst_i`, `worst_j` — the most violated pair, if
 #'         any.
 #'   \item `max_matched_slack`, `max_v_unmatched`, `max_v` — the quantities the
@@ -356,6 +367,7 @@ print.assignment_certificate <- function(x, ...) {
   cat(sprintf("    unmatched columns free %s   (max |v_j| %.3e)\n",
               flag(x$cs_unmatched_free), x$max_v_unmatched))
   cat(sprintf("  duality_gap              %.6e\n", x$duality_gap))
+  cat(sprintf("  max_suboptimality        %.6e\n", x$max_suboptimality))
   cat(sprintf("  certified_optimal        %s\n", flag(x$certified_optimal)))
   if (identical(x$arithmetic, "exact")) {
     cat("  arithmetic               exact, no tolerance\n\n")

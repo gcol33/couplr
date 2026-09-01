@@ -50,6 +50,20 @@ test_that("the answer carries a certificate of its own", {
   expect_equal(loop$certificate$n_cols, 60)
 })
 
+test_that("the certificate bounds how far the answer can be from the optimum", {
+  set.seed(4044)
+  cost <- cert_problem(15, 60)
+  loop  <- assignment(cost, memory_mode = "implicit")
+  dense <- assignment(cost, method = "jv")
+
+  bound <- loop$certificate$max_suboptimality
+  expect_true(is.finite(bound))
+  expect_gte(bound, 0)
+  # What the bound claims: no feasible matching beats this one by more than
+  # this much. The dense solve is one such matching.
+  expect_lte(loop$total_cost - dense$total_cost, bound + IMPLICIT_COST_TOL)
+})
+
 test_that("the duals it returns certify the matching independently", {
   set.seed(4043)
   cost <- cert_problem(12, 50)

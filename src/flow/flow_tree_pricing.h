@@ -145,7 +145,10 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
             // the bound is re-tested against it here rather than where it was
             // measured.
             const double threshold = rmin > -tol ? rmin : -tol;
-            if (lb >= threshold) continue;
+            if (lb >= threshold) {
+                if (lb < out.proven_floor) out.proven_floor = lb;
+                continue;
+            }
 
             if (tree.is_leaf(id)) {
                 const int32_t end = tree.hi[static_cast<std::size_t>(id)];
@@ -181,12 +184,19 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
             // The weaker bound is pushed first so the stronger one is taken
             // first: the row's best tightens on the promising side, and the
             // other side is often skipped by the time it is reached.
+            // A child that is not pushed is never visited again, and every pair
+            // under it prices at or above its own bound, so that bound is what
+            // the scan can still claim for them.
             if (lb_l <= lb_r) {
                 if (lb_r < threshold) stack.emplace_back(lb_r, r);
+                else if (lb_r < out.proven_floor) out.proven_floor = lb_r;
                 if (lb_l < threshold) stack.emplace_back(lb_l, l);
+                else if (lb_l < out.proven_floor) out.proven_floor = lb_l;
             } else {
                 if (lb_l < threshold) stack.emplace_back(lb_l, l);
+                else if (lb_l < out.proven_floor) out.proven_floor = lb_l;
                 if (lb_r < threshold) stack.emplace_back(lb_r, r);
+                else if (lb_r < out.proven_floor) out.proven_floor = lb_r;
             }
         }
 
@@ -215,6 +225,12 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
         out.violators.push_back(PricedPair{i, j, cbar});
     });
     cand.note_evaluated(out.n_evaluated);
+    // The evaluated pairs are bounded below by the observed minimum and the
+    // skipped ones by the bounds they were skipped against, so the smaller of
+    // the two holds over every omitted admissible pair.
+    if (out.min_reduced_cost < out.proven_floor) {
+        out.proven_floor = out.min_reduced_cost;
+    }
     return out;
 }
 

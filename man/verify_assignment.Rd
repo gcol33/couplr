@@ -78,6 +78,17 @@ admissible pair, and, when there are more columns than rows,
 \item \code{complementary_slackness} — logical; both halves.
 \item \code{cs_matched_tight}, \code{cs_unmatched_free} — the two halves separately.
 \item \code{primal_objective}, \code{dual_objective}, \code{duality_gap} — numeric.
+\item \code{max_suboptimality} — numeric; the most any feasible solution can
+beat this one by, in the cost unit. It adds to the duality gap the
+slack the dual conditions were allowed: \code{n_rows} times the depth the
+reduced costs were permitted below zero, plus, where the sign
+condition applies, \code{n_cols} times the height the column duals were
+permitted above it. Zero when the conditions hold with no slack at
+all, which is what \code{certified_optimal} reports.
+\item \code{certified_reduced_cost_floor} — numeric; the lower bound proved for
+the reduced cost of every admissible pair, the ones never evaluated
+included. Equal to \code{min_reduced_cost} when every pair was visited,
+and below it when a pruning pricer proved only its own threshold.
 \item \code{min_reduced_cost}, \code{worst_i}, \code{worst_j} — the most violated pair, if
 any.
 \item \code{max_matched_slack}, \code{max_v_unmatched}, \code{max_v} — the quantities the

@@ -220,6 +220,7 @@ inline double seconds_since(const Clock::time_point& t0) {
 inline ReducedCostScan omitted_scan(const BlockPricing& priced) {
     ReducedCostScan scan;
     scan.min_reduced_cost = priced.min_reduced_cost;
+    scan.proven_floor = priced.proven_floor;
     scan.arg_i = priced.arg_i;
     scan.arg_j = priced.arg_j;
     scan.n_violations = priced.n_violators;

@@ -19,6 +19,10 @@ test_that("a certificate proves a small dense solve optimal", {
   expect_true(cert$certified_optimal)
   expect_equal(cert$primal_objective, res$total_cost, tolerance = CERT_COST_TOL)
   expect_lt(abs(cert$duality_gap), CERT_COST_TOL)
+  # An exhaustive scan proves the minimum it observed, so the bound carries
+  # nothing but the gap.
+  expect_equal(cert$certified_reduced_cost_floor, cert$min_reduced_cost)
+  expect_lt(cert$max_suboptimality, CERT_COST_TOL)
 })
 
 test_that("the certificate agrees with brute-force enumeration", {

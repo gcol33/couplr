@@ -73,6 +73,14 @@ struct BlockPricing {
 
     double  min_reduced_cost = std::numeric_limits<double>::infinity();
 
+    // A lower bound on the reduced cost of every omitted admissible pair,
+    // including the ones whose cost was never computed. An exhaustive pricer
+    // proves min_reduced_cost itself; a pricer that prunes proves only the
+    // bound it skipped each subtree against. A suboptimality bound for the
+    // complete problem rests on this rather than on min_reduced_cost, which
+    // says nothing about a pair that was never visited.
+    double  proven_floor = std::numeric_limits<double>::infinity();
+
     // The pair min_reduced_cost was taken at, -1 when no omitted pair is
     // admissible. Ties keep the first in (i, j) order, so the pair named is the
     // one an ascending scan of the same pairs would have named.
@@ -180,6 +188,9 @@ BlockPricing price_block(const Source& src,
         out.violators.push_back(PricedPair{i, j, cbar});
     });
     cand.note_evaluated(out.n_evaluated);
+    // Every omitted admissible pair was evaluated, so the observed minimum is
+    // the floor.
+    out.proven_floor = out.min_reduced_cost;
     return out;
 }
 

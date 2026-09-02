@@ -4,7 +4,7 @@
 \alias{estimate_dense_solve_mb}
 \title{Estimate the peak footprint of a dense solve in megabytes}
 \usage{
-estimate_dense_solve_mb(n, m, solve_factor = 10)
+estimate_dense_solve_mb(n, m, solve_factor = 12)
 }
 \arguments{
 \item{n, m}{Problem dimensions.}
@@ -27,9 +27,11 @@ The multiplier is read off the measurement rather than from an enumeration of
 the copies, which has proved to understate it. On the memory benchmark -- one
 fresh R session per arm, peak resident set taken from outside and read
 against an idle session that loaded the same packages -- a dense one-to-one
-solve peaked at 9.4, 7.2 and 8.6 times the raw matrix bytes at 5,000, 10,000
+solve peaked at 10.5, 7.2 and 8.8 times the raw matrix bytes at 5,000, 10,000
 and 20,000 units. The default covers the worst of those with headroom, which
 is the direction a guard should err in: it exists to refuse a solve that will
 not fit, not to predict where the peak lands.
 }
-\keyword{internal}
+\examples{
+estimate_dense_solve_mb(5000, 5000)
+}

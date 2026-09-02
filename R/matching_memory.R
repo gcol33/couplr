@@ -136,9 +136,10 @@ get_free_ram_mb <- function() {
 #' What the matrix itself costs a process, which is more than the 8 bytes a cell
 #' occupies: `matrix(0, n, m)` at the R level is copied into a
 #' `lap::CostMatrix` (8B data + 4B mask), and the two coexist while garbage
-#' collection lags. Building the matrix and stopping there peaked at 2.0 times
-#' the raw cell bytes at 20,000 units on the memory benchmark, so the default
-#' multiplier is above what has been measured rather than fitted to it. `n`/`m`
+#' collection lags. Building the matrix and stopping there peaked at 1.8, 1.7
+#' and 1.5 times the raw cell bytes at 5,000, 10,000 and 20,000 units on the
+#' memory benchmark, so the default multiplier is above what has been measured
+#' rather than fitted to it. `n`/`m`
 #' are coerced to `double` before multiplying so the estimate itself can't
 #' overflow the way `lap::CostMatrix`'s old `int` flat-index arithmetic did.
 #'
@@ -148,7 +149,9 @@ get_free_ram_mb <- function() {
 #' @param n,m Problem dimensions.
 #' @param overhead_factor Multiplier on the raw cell bytes.
 #' @return Numeric scalar, the estimated footprint of the matrix in megabytes.
-#' @keywords internal
+#' @examples
+#' estimate_dense_matrix_mb(5000, 5000)
+#' @export
 estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
   (as.numeric(n) * as.numeric(m) * 8 * overhead_factor) / 1e6
 }
@@ -165,7 +168,7 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #' the copies, which has proved to understate it. On the memory benchmark -- one
 #' fresh R session per arm, peak resident set taken from outside and read
 #' against an idle session that loaded the same packages -- a dense one-to-one
-#' solve peaked at 9.4, 7.2 and 8.6 times the raw matrix bytes at 5,000, 10,000
+#' solve peaked at 10.5, 7.2 and 8.8 times the raw matrix bytes at 5,000, 10,000
 #' and 20,000 units. The default covers the worst of those with headroom, which
 #' is the direction a guard should err in: it exists to refuse a solve that will
 #' not fit, not to predict where the peak lands.
@@ -174,8 +177,10 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #' @param solve_factor Multiplier on the raw cell bytes.
 #' @return Numeric scalar, the estimated peak footprint of a dense solve in
 #'   megabytes.
-#' @keywords internal
-estimate_dense_solve_mb <- function(n, m, solve_factor = 10) {
+#' @examples
+#' estimate_dense_solve_mb(5000, 5000)
+#' @export
+estimate_dense_solve_mb <- function(n, m, solve_factor = 12) {
   (as.numeric(n) * as.numeric(m) * 8 * solve_factor) / 1e6
 }
 

@@ -7,8 +7,15 @@
 #   sh paper/run_bench_suite.sh regimes    # one script, by name
 #
 # Each script writes its own CSVs under paper/ and resumes from them, so a
-# killed suite continues where it stopped. Move the CSVs aside first to force a
-# full re-measurement.
+# killed suite continues where it stopped. FRESH=1 forces a full
+# re-measurement by archiving the selected stages' outputs under
+# logs/archive-<timestamp>/ once the environment block has been written:
+#
+#   FRESH=1 sh paper/run_bench_suite.sh "implicit memory"
+#
+# Clearing them that way rather than by hand keeps the working tree clean at
+# the moment the commit stamp below is taken, so the stamp describes the tree
+# the numbers come from.
 #
 # Logs go to logs/<name>-<timestamp>.log, and logs/<name>.done is written when a
 # script exits, carrying its exit status. logs/SUITE.done marks the end of the
@@ -24,7 +31,7 @@ RSCRIPT=${RSCRIPT:-Rscript}
 
 # Order: the three tables the article carries first, so the article can be
 # rebuilt before the supplementary grids have finished.
-ALL="scaling scaling_lazy implicit path regimes implicit_grid memory figure"
+ALL="scaling scaling_lazy implicit path regimes implicit_grid memory lalonde figure"
 WHICH=${1:-$ALL}
 
 script_for() {
@@ -36,10 +43,35 @@ script_for() {
     regimes)       echo "paper/bench_regimes.R" ;;
     implicit_grid) echo "paper/bench_implicit_grid.R" ;;
     memory)        echo "paper/bench_memory.R" ;;
+    lalonde)       echo "paper/bench_lalonde.R" ;;
     figure)        echo "paper/make-figure.R" ;;
     *)             echo "" ;;
   esac
 }
+
+# What each stage writes, beside what runs it, so a stage carries its own
+# outputs in one place and FRESH has nothing to be told separately.
+outputs_for() {
+  case "$1" in
+    scaling)       echo "paper/scaling-results.csv paper/scaling-runs.csv" ;;
+    scaling_lazy)  echo "paper/scaling-lazy-results.csv" ;;
+    implicit)      echo "paper/implicit-results.csv paper/implicit-equivalence.csv" ;;
+    path)          echo "paper/path-results.csv paper/path-points.csv" ;;
+    regimes)       echo "paper/regime-runs.csv paper/regime-cells.csv paper/regime-results.csv paper/regime-verdict.csv" ;;
+    implicit_grid) echo "paper/implicit-grid-runs.csv paper/implicit-grid-results.csv" ;;
+    memory)        echo "paper/memory-results.csv" ;;
+    lalonde)       echo "paper/lalonde-results.csv paper/lalonde-per-covariate.csv" ;;
+    figure)        echo "paper/benchmark-table.csv paper/figures/benchmark.png" ;;
+    *)             echo "" ;;
+  esac
+}
+
+for name in $WHICH; do
+  if [ -z "$(script_for "$name")" ]; then
+    echo "unknown benchmark: $name" >&2
+    exit 2
+  fi
+done
 
 # What the numbers were measured on. The article states the R version, the
 # platform and the comparison packages' versions, and this is where it reads
@@ -59,12 +91,20 @@ script_for() {
 } > logs/ENVIRONMENT.txt 2>&1
 cat logs/ENVIRONMENT.txt
 
+if [ "${FRESH:-0}" = "1" ]; then
+  archive="logs/archive-$STAMP"
+  for name in $WHICH; do
+    for f in $(outputs_for "$name"); do
+      [ -e "$f" ] || continue
+      mkdir -p "$archive/$(dirname "$f")"
+      mv "$f" "$archive/$f"
+    done
+  done
+  echo "previous outputs archived to $archive"
+fi
+
 for name in $WHICH; do
   script=$(script_for "$name")
-  if [ -z "$script" ]; then
-    echo "unknown benchmark: $name" >&2
-    exit 2
-  fi
   log="logs/${name}-${STAMP}.log"
   echo "=== $name -> $log ==="
   "$RSCRIPT" "$script" > "$log" 2>&1

@@ -73,6 +73,12 @@
 
 ## Improvements
 
+* **`estimate_dense_matrix_mb()` and `estimate_dense_solve_mb()` are
+  exported.** Both were documented and reachable only through `:::`, while
+  the memory-mode documentation and the package's own guard are written
+  around them. A caller sizing a problem before it runs now reads the same
+  two numbers `memory_mode = "auto"` decides on.
+
 * **`verify_assignment()` decides its conditions in exact arithmetic and says
   so.** Every condition the certificate checks is the sign of
   `c_ij - u_i - v_j`, and a double is a rational number, so that sign has an
@@ -150,6 +156,14 @@
   `min_reduced_cost` to say which case a result is in.
 
 ## Bug fixes
+
+* **The dense-solve guard's multiplier now covers every peak it is read
+  against.** `estimate_dense_solve_mb()` defaulted `solve_factor` to 10, and
+  on the memory benchmark a dense one-to-one solve peaked at 10.5 times the
+  raw cell bytes at 5,000 units, so at that size the estimate came in about
+  20 MB under the peak it exists to bound. The default is 12, above the
+  10.5, 7.2 and 8.8 measured at 5,000, 10,000 and 20,000 units. The guard
+  refuses a solve that will not fit, so it has to err high.
 
 * **The ball-tree pricing bound now covers the cost source's own evaluation.**
   The bound has to sit below the number `raw_distance()` returns, since the

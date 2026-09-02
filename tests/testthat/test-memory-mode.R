@@ -60,11 +60,11 @@ test_that("estimate_dense_solve_mb() covers the peak a dense solve was measured 
   # memory benchmark measured: one fresh R session per arm, peak resident set
   # read from outside against an idle session that loaded the same packages.
   # Estimating the matrix alone put the 20,000-unit figure at 2,845 MB against
-  # a solve that peaked at 6,085 MB, which is the under-warning this guards.
+  # a solve that peaked at 6,256 MB, which is the under-warning this guards.
   measured <- data.frame(
     n_left   = c(1667,  3333,  6667),
     n_right  = c(3333,  6667, 13333),
-    peak_mb  = c(417.2, 1280.4, 6084.9)
+    peak_mb  = c(464.3, 1280.2, 6255.7)
   )
   for (i in seq_len(nrow(measured))) {
     expect_gte(
@@ -85,7 +85,7 @@ test_that("resolve_memory_mode() reads the solve estimate, not the matrix", {
   )
   # The switch fires when the estimate passes half the available RAM, which the
   # mock fixes at 500 MB. At 3000 x 4000 the matrix estimate is 384 MB and the
-  # solve estimate 960 MB, so the threshold falls between them: a guard reading
+  # solve estimate 1,152 MB, so the threshold falls between them: a guard reading
   # the matrix leaves this dense, and one reading the solve moves it to lazy.
   limit_mb <- 0.5 * 1000
   expect_lt(estimate_dense_matrix_mb(3000, 4000), limit_mb)

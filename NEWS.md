@@ -1,4 +1,8 @@
-# couplr 1.7.0
+# couplr 1.7.1
+
+1.7.0 was tagged but never released. A critical review of the release
+candidate found two exported paths answering a different question from the
+one asked, so the version that reaches CRAN is this one.
 
 ## Breaking changes
 

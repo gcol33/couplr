@@ -1,4 +1,4 @@
-## Release notes (1.7.0)
+## Release notes (1.7.1)
 
 ### Breaking changes
 
@@ -95,6 +95,10 @@
 The note is the incoming-feasibility one, reporting seven updates in the past
 six months. That is more than I would like. 1.6.1 was published on 2026-08-23
 and I have held this submission back to keep the usual interval.
+
+1.7.0 was tagged and never submitted. A critical review of that candidate
+found two exported paths returning an answer to a different question than the
+caller asked, so the version number moved rather than the tag.
 
 What is in this one: two correctness fixes found in review. The ball-tree
 pricing bound could report `certified_optimal = TRUE` for a matching that a

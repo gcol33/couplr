@@ -93,18 +93,15 @@
 0 errors | 0 warnings | 1 note
 
 The note is the incoming-feasibility one, reporting seven updates in the past
-six months. That is more than I would like, and 1.6.1 was published ten days
-ago.
+six months. That is more than I would like. 1.6.1 was published on 2026-08-23
+and I have held this submission back to keep the usual interval.
 
 What is in this one: two correctness fixes found in review. The ball-tree
 pricing bound could report `certified_optimal = TRUE` for a matching that a
 subtree it skipped would have improved, and `full_match()` solved a narrower
 design than its documentation described. Both are wrong answers returned
-without saying they were wrong, which is why I am not holding them for a
-longer interval. The three breaking changes are why this is a minor rather
-than a patch version.
-
-If you would rather I wait, I am happy to withdraw and resubmit later.
+without saying they were wrong. The three breaking changes are why this is a
+minor rather than a patch version.
 
 ## Test environments
 

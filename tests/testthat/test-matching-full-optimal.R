@@ -96,15 +96,21 @@ test_that("optimal full_match min_controls filters small groups", {
   left <- data.frame(id = 1:3, x = c(1, 50, 100))
   right <- data.frame(id = 4:6, x = c(1.1, 50.1, 50.2))
 
+  # Three left units each needing two right ones is six against three, so
+  # the request cannot be met. Guarding the assertion on a group count made
+  # this an empty test on exactly the case it names.
   result <- full_match(left, right, vars = "x", min_controls = 2,
                        method = "optimal")
+  expect_identical(result$status, "infeasible")
+  expect_equal(result$info$n_groups, 0)
 
-  if (result$info$n_groups > 0) {
-    right_per_group <- table(
-      result$groups$group_id[result$groups$side == "right"]
-    )
-    expect_true(all(right_per_group >= 2))
-  }
+  right2 <- data.frame(id = 4:9,
+                       x = c(1.1, 1.2, 50.1, 50.2, 100.1, 100.2))
+  ok <- full_match(left, right2, vars = "x", min_controls = 2,
+                   method = "optimal")
+  expect_gt(ok$info$n_groups, 0)
+  right_per_group <- table(ok$groups$group_id[ok$groups$side == "right"])
+  expect_true(all(right_per_group >= 2))
 })
 
 
@@ -235,5 +241,29 @@ test_that("optimal full_match known optimal solution", {
     grp <- result$groups[result$groups$group_id == g, ]
     expect_equal(sum(grp$side == "left"), 1)
     expect_equal(sum(grp$side == "right"), 2)
+  }
+})
+
+test_that("min_controls counts right units whichever side is larger", {
+  # Six left units against two right ones cannot give every left unit two
+  # right partners, so the request is infeasible. Compiling the smaller side
+  # as the group centres instead answered a different question: it returned
+  # two groups of three left units and one right unit each, with status
+  # "optimal", against a stated minimum of two right units per group.
+  left  <- data.frame(id = paste0("L", 1:6), x = c(0, 0.1, 0.2, 5, 5.1, 5.2))
+  right <- data.frame(id = paste0("R", 1:2), x = c(0.1, 5.1))
+
+  res <- full_match(left, right, vars = "x", min_controls = 2)
+  expect_identical(res$status, "infeasible")
+  expect_equal(nrow(res$groups), 0L)
+
+  # The orientation that can satisfy it still does, and every group holds at
+  # least the requested number of right units.
+  ok <- full_match(right, left, vars = "x", min_controls = 2)
+  expect_identical(ok$status, "optimal")
+  for (g in unique(ok$groups$group_id)) {
+    grp <- ok$groups[ok$groups$group_id == g, ]
+    expect_equal(sum(grp$side == "left"), 1)
+    expect_gte(sum(grp$side == "right"), 2)
   }
 })

@@ -10,6 +10,8 @@
   calipers = NULL,
   ignore_blocks = FALSE,
   require_full_matching = FALSE,
+  replace = FALSE,
+  ratio = 1L,
   return_unmatched = TRUE,
   return_diagnostics = FALSE,
   solver_fn,

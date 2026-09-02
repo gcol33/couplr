@@ -513,6 +513,8 @@
                                    calipers = NULL,
                                    ignore_blocks = FALSE,
                                    require_full_matching = FALSE,
+                                   replace = FALSE,
+                                   ratio = 1L,
                                    return_unmatched = TRUE,
                                    return_diagnostics = FALSE,
                                    solver_fn, solver_params = list(),
@@ -539,6 +541,29 @@
       max_distance,
       calipers
     )
+  }
+
+  # compute_distances() prints that blocking will be applied when it keeps a
+  # block variable, so the promise has to reach the solve. On a materialised
+  # matrix a block is a forbidden set: every cross-block pair is removed,
+  # which leaves the feasible set the blocked data-frame path solves one
+  # stratum at a time. A unit whose block is missing joins no stratum.
+  if (!isTRUE(ignore_blocks) && !is.null(dist_obj$block_id)) {
+    bcol <- dist_obj$block_id
+    if (!bcol %in% names(left) || !bcol %in% names(right)) {
+      stop("block variable ", bcol, " is recorded on the distance object ",
+           "but is not in the data it was built from", call. = FALSE)
+    }
+    if (is_lazy_cost_spec(cost_matrix)) {
+      stop("blocking a distance object built with memory_mode = ",
+           lazy_cost_spec_mode(cost_matrix), " is not supported yet; rebuild ",
+           "it with memory_mode = dense, or pass ignore_blocks = TRUE",
+           call. = FALSE)
+    }
+    lb <- as.character(left[[bcol]])
+    rb <- as.character(right[[bcol]])
+    same <- outer(lb, rb, function(a, b) !is.na(a) & !is.na(b) & a == b)
+    cost_matrix[!same] <- Inf
   }
 
   # Check cost distribution if requested
@@ -583,11 +608,18 @@
     ))
   }
 
-  # A precomputed distance object is the 1:1 design reached through another
+  # A precomputed distance object reaches the same designs through another
   # door, so it compiles to the same network and is solved through the same
   # maps. Distances are reported alone here: no variable goes to .couples_pairs
   # and no difference column is written.
-  plan <- .couples_design(nrow(cost_matrix), ncol(cost_matrix))
+  plan <- .couples_design(nrow(cost_matrix), ncol(cost_matrix),
+                          replace = replace, ratio = ratio)
+
+  if (identical(plan$route, "separable")) {
+    return(.couples_replace(
+      cost_matrix, left, right, left_ids, right_ids, character(0), ratio, plan
+    ))
+  }
 
   # Solve with row/col filtering (see .solve_with_partial_feasibility)
   solved <- .solve_with_partial_feasibility(.couples_costs(cost_matrix, plan),
@@ -1050,12 +1082,21 @@ match_couples <- function(left, right = NULL,
 
   # Check if left is a distance_object
   if (is_distance_object(left)) {
+    # The distances are already materialised, so there is no representation
+    # left to choose. Naming one would read as a setting that did something.
+    if (!identical(memory_mode, "auto")) {
+      stop("memory_mode does not apply to a precomputed distance object; it ",
+           "was fixed when compute_distances() built it", call. = FALSE)
+    }
     return(match_couples_from_distance(
       left,
       max_distance = max_distance,
       calipers = calipers,
       ignore_blocks = ignore_blocks,
       require_full_matching = require_full_matching,
+      replace = replace,
+      ratio = ratio,
+      certify = certify,
       method = method,
       strategy = strategy,
       return_unmatched = return_unmatched,
@@ -1221,6 +1262,9 @@ match_couples_from_distance <- function(dist_obj,
                                         calipers = NULL,
                                         ignore_blocks = FALSE,
                                         require_full_matching = FALSE,
+                                        replace = FALSE,
+                                        ratio = 1L,
+                                        certify = NULL,
                                         method = "auto",
                                         strategy = "row_best",
                                         return_unmatched = TRUE,
@@ -1233,10 +1277,18 @@ match_couples_from_distance <- function(dist_obj,
     calipers = calipers,
     ignore_blocks = ignore_blocks,
     require_full_matching = require_full_matching,
+    replace = replace,
+    ratio = ratio,
     return_unmatched = return_unmatched,
     return_diagnostics = return_diagnostics,
     solver_fn = if (greedy) greedy_matching else assignment,
-    solver_params = if (greedy) list(strategy = strategy) else list(method = method),
+    solver_params = if (greedy) {
+      list(strategy = strategy)
+    } else if (is.null(certify)) {
+      list(method = method)
+    } else {
+      list(method = method, certify = certify)
+    },
     check_costs = if (greedy) FALSE else check_costs,
     strict_no_pairs = !greedy,
     method_label = if (greedy) "greedy" else "from_distance_object",

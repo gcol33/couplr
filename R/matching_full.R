@@ -10,8 +10,7 @@
 # single right unit cannot meet the bound, so every group is one-to-many: the
 # auxiliary source feeds each centre through an arc bounded by [min_controls,
 # max_controls], every unit passes one unit of flow to the sink, and the centres
-# are the smaller side, so an instance with more left units than right ones is
-# compiled from the transpose and read back through it.
+# are the left units, so the bounds count right units whichever side is larger.
 #
 # Solving there is what makes the node potentials and the optimality
 # certificate available: both are properties of the flow, and the group
@@ -90,13 +89,8 @@
   in_group <- centre_of_unit > 0L
   group_of_unit[in_group] <- centre_group[centre_of_unit[in_group]]
 
-  if (isTRUE(compiled$shape$transposed)) {
-    list(group_of_left = group_of_unit, group_of_right = centre_group,
-         n_groups = sum(held))
-  } else {
-    list(group_of_left = centre_group, group_of_right = group_of_unit,
-         n_groups = sum(held))
-  }
+  list(group_of_left = centre_group, group_of_right = group_of_unit,
+       n_groups = sum(held))
 }
 
 # Node potentials in the caller's left/right terms. They are one representative
@@ -106,11 +100,7 @@
   layout <- compiled$layout
   rows <- potential[layout$row_base + seq_len(layout$n_rows) - 1L]
   cols <- potential[layout$col_base + seq_len(layout$n_cols) - 1L]
-  if (isTRUE(compiled$shape$transposed)) {
-    list(left = cols, right = rows)
-  } else {
-    list(left = rows, right = cols)
-  }
+  list(left = rows, right = cols)
 }
 
 # What the solve terminated on, with one reading applied to it. A shortfall
@@ -199,13 +189,16 @@
 #' `min_controls = 1` it solves full matching in the sense of Hansen and
 #' Klopfer (2006): a group holds either one left unit and several right ones or
 #' one right unit and several left ones, and both shapes may appear in the same
-#' solution. `max_controls` bounds the many side of a group, whichever side
-#' that is.
+#' solution.
+#' `max_controls` bounds the many side there, whichever side that is.
 #'
 #' A lower bound above one admits only the one-to-many shape, because a group
 #' built around a single right unit holds exactly one of them and cannot meet a
-#' lower bound of two. The centres are then the smaller side and every group is
-#' one left unit with between `min_controls` and `max_controls` right ones.
+#' lower bound of two. Every group is then one left unit with between
+#' `min_controls` and `max_controls` right ones. Both bounds count right units
+#' whichever side holds more, so an instance with too few right units to give
+#' every left unit that many is refused as `"infeasible"` rather than answered
+#' with groups counted the other way round.
 #'
 #' Two algorithms are available:
 #'
@@ -214,7 +207,7 @@
 #' simultaneously, with the optimum found via Dijkstra's algorithm with Johnson
 #' potentials. At \code{min_controls = 1} the network is an edge cover over the
 #' admissible pairs, which is what lets a group be centred on either side; above
-#' one it is one centre per group and the centres are the smaller side.
+#' one it is one centre per group and the centres are the left units.
 #'
 #' \strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 #' \enumerate{

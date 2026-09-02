@@ -157,6 +157,27 @@
 
 ## Bug fixes
 
+* **`match_couples()` on a precomputed distance object honours the design it
+  was given.** The branch validated `replace` and `ratio` and then forwarded
+  neither, along with `certify`, so a call naming a ratio or replacement was
+  answered with a one-to-one matching without replacement. It also accepted
+  `ignore_blocks` while never reading the block variable
+  `compute_distances()` stores, so an object built with `block_id` was
+  matched across strata after the package had printed that blocking would be
+  applied. All four reach the solve now, blocking by removing every
+  cross-block pair, and `memory_mode` is refused rather than ignored, since
+  the distances are already materialised. Contract tests compare the two
+  interfaces on the same question.
+
+* **`full_match()` bounds count right units whichever side is larger.** The
+  compiler made the smaller side the group centres, so above the default
+  `min_controls` bounded left units on a tall problem: six left units, two
+  right ones and `min_controls = 2` returned two groups holding one right
+  unit each, with `status = "optimal"` and a certificate. The centres are
+  the left units now and an orientation that cannot meet the bound is
+  refused as `"infeasible"`. The manual said both things in one paragraph
+  and now says one.
+
 * **The dense-solve guard's multiplier now covers every peak it is read
   against.** `estimate_dense_solve_mb()` defaulted `solve_factor` to 10, and
   on the memory benchmark a dense one-to-one solve peaked at 10.5 times the

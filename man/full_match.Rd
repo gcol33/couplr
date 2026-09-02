@@ -110,13 +110,16 @@ right unit.
 \code{min_controls = 1} it solves full matching in the sense of Hansen and
 Klopfer (2006): a group holds either one left unit and several right ones or
 one right unit and several left ones, and both shapes may appear in the same
-solution. \code{max_controls} bounds the many side of a group, whichever side
-that is.
+solution.
+\code{max_controls} bounds the many side there, whichever side that is.
 
 A lower bound above one admits only the one-to-many shape, because a group
 built around a single right unit holds exactly one of them and cannot meet a
-lower bound of two. The centres are then the smaller side and every group is
-one left unit with between \code{min_controls} and \code{max_controls} right ones.
+lower bound of two. Every group is then one left unit with between
+\code{min_controls} and \code{max_controls} right ones. Both bounds count right units
+whichever side holds more, so an instance with too few right units to give
+every left unit that many is refused as \code{"infeasible"} rather than answered
+with groups counted the other way round.
 
 Two algorithms are available:
 
@@ -125,7 +128,7 @@ max-flow problem that minimizes total distance across all group assignments
 simultaneously, with the optimum found via Dijkstra's algorithm with Johnson
 potentials. At \code{min_controls = 1} the network is an edge cover over the
 admissible pairs, which is what lets a group be centred on either side; above
-one it is one centre per group and the centres are the smaller side.
+one it is one centre per group and the centres are the left units.
 
 \strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 \enumerate{

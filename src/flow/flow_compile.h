@@ -212,6 +212,12 @@ struct CompiledFullMatch {
     // Group centres are the smaller side. When transposed, row nodes carry
     // right units and column nodes carry left units.
     bool    transposed   = false;
+
+    // True when both group shapes are admissible, which is min_controls == 1.
+    // The network is then an edge cover over the pairs rather than one centre
+    // per group, and the reading step recovers the groups as the components of
+    // the arcs the solve placed.
+    bool    symmetric    = false;
     int64_t n_centres    = 0;
     int64_t n_units      = 0;
     int64_t min_controls = 0;

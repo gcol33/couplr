@@ -106,24 +106,26 @@ producing matched groups where each group contains at least one left and one
 right unit.
 }
 \details{
-\code{full_match()} builds matched groups of variable size. Every group holds
-exactly one unit of the smaller side and between \code{min_controls} and
-\code{max_controls} units of the larger, the side chosen once for the whole
-solution. This is variable-ratio matching, and it is narrower than full
-matching in the sense of Hansen and Klopfer (2006), which admits
-one-to-many and many-to-one groups in the same solution. An optimum over
-the two shapes together can be strictly cheaper than the best solution of
-either shape alone, so \code{status = "optimal"} here means optimal for the
-design described above, not for the wider problem.
+\code{full_match()} builds matched groups of variable size. Under the default
+\code{min_controls = 1} it solves full matching in the sense of Hansen and
+Klopfer (2006): a group holds either one left unit and several right ones or
+one right unit and several left ones, and both shapes may appear in the same
+solution. \code{max_controls} bounds the many side of a group, whichever side
+that is.
+
+A lower bound above one admits only the one-to-many shape, because a group
+built around a single right unit holds exactly one of them and cannot meet a
+lower bound of two. The centres are then the smaller side and every group is
+one left unit with between \code{min_controls} and \code{max_controls} right ones.
 
 Two algorithms are available:
 
 \strong{Optimal} (\code{method = "optimal"}, default): Solves a min-cost
 max-flow problem that minimizes total distance across all group assignments
-simultaneously. Each left unit becomes a group center absorbing 1 to
-\code{max_controls} right units, with the globally optimal assignment found
-via Dijkstra's algorithm with Johnson potentials. When \code{n_left > n_right},
-roles are transposed automatically.
+simultaneously, with the optimum found via Dijkstra's algorithm with Johnson
+potentials. At \code{min_controls = 1} the network is an edge cover over the
+admissible pairs, which is what lets a group be centred on either side; above
+one it is one centre per group and the centres are the smaller side.
 
 \strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 \enumerate{

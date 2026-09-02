@@ -103,6 +103,15 @@ public:
         blocks_.push_back(blk);
     }
 
+    // The source's own outlet to the sink, for a design whose flow value is not
+    // fixed in advance. The injected total is a constant the network must
+    // absorb, and a design that chooses how many pair arcs to use sends the
+    // remainder straight down this arc at no cost, so the value the bipartite
+    // part carries is free while the problem stays a fixed-value flow.
+    void add_bypass_arc(int64_t lower, int64_t upper) {
+        arcs_.emplace_back(FLOW_SOURCE, FLOW_SINK, lower, upper, 0.0);
+    }
+
     // Flow the auxiliary source injects, absorbed at the auxiliary sink.
     void inject_at_source(int64_t flow) {
         supply_[static_cast<std::size_t>(FLOW_SOURCE)] += flow;
@@ -272,6 +281,54 @@ CompiledDesign compile_k_cardinality(const CostOracle&                      cost
     return close_bipartite(s, k);
 }
 
+// Full matching with both group shapes admissible. A full matching is a set of
+// disjoint stars covering every unit, so the arcs it uses are an edge cover of
+// the admissible pairs: every unit meets at least one chosen arc. Conversely an
+// inclusion-minimal edge cover has no path of three arcs, so each of its
+// components is a star, and with non-negative distances a cheapest cover is
+// minimal. Minimising the total distance over edge covers is therefore exactly
+// minimising it over full matchings.
+//
+// As a flow that is a lower bound of one on both sides, a unit capacity on each
+// pair arc, and no fixed value: the number of arcs a cover uses depends on how
+// many groups it forms, so the source injects a constant that bounds it and the
+// bypass arc absorbs whatever the network does not need. A minimal cover uses
+// at most n_left + n_right - 1 arcs, so that total is always enough.
+//
+// max_controls bounds how many units a group holds on its many side, whichever
+// side that is, which is the same reading as the one-to-many design for a group
+// of one left unit and several right ones.
+void compile_full_matching_symmetric(const CostOracle& costs,
+                                     int64_t           max_controls,
+                                     CompiledFullMatch& out) {
+    const int64_t n_left  = costs.nrow();
+    const int64_t n_right = costs.ncol();
+
+    const int64_t cap = std::min<int64_t>(max_controls,
+                                          std::max<int64_t>(n_left, n_right));
+    out.transposed   = false;
+    out.n_centres    = n_left;
+    out.n_units      = n_right;
+    out.max_capacity = cap;
+
+    // Every unit meets at least one chosen arc and no unit meets more than cap
+    // of them, so one side's capacity has to reach the other side's count.
+    if (capped_mul(cap, n_left) < n_right || capped_mul(cap, n_right) < n_left) {
+        out.bounds_feasible = false;
+        out.reason = "max_controls is too small to cover the larger side";
+        return;
+    }
+
+    Skeleton s = open_bipartite(costs);
+    s.b.add_source_arcs(s.row_base, s.n_rows, 1, cap);
+    s.b.add_sink_arcs(s.col_base, s.n_cols, 1, cap);
+    const int64_t total = n_left + n_right;
+    s.b.add_bypass_arc(0, total);
+    s.b.inject_at_source(total);
+
+    out.design = close_bipartite(s, total);
+}
+
 CompiledFullMatch compile_full_matching(const CostOracle&                      costs,
                                         int64_t                                min_controls,
                                         int64_t                                max_controls,
@@ -287,6 +344,19 @@ CompiledFullMatch compile_full_matching(const CostOracle&                      c
     if (n_left == 0 || n_right == 0) {
         out.bounds_feasible = false;
         out.reason = "one side has no units";
+        return out;
+    }
+
+    // min_controls is the least number of right units a group may hold, and a
+    // many-to-one group holds exactly one. So min_controls above one forbids
+    // that shape outright, and every group is one left unit with several right
+    // ones: the centres are the smaller side and the design below is the whole
+    // feasible set. At min_controls == 1 both shapes are admissible, which is
+    // full matching in the sense of Hansen and Klopfer, and fixing the centres
+    // to one side would drop solutions that can be arbitrarily cheaper.
+    out.symmetric = (min_controls == 1);
+    if (out.symmetric) {
+        compile_full_matching_symmetric(costs, max_controls, out);
         return out;
     }
 

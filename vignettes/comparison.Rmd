@@ -234,7 +234,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
 
 optmatch (Hansen & Klopfer, 2006) specializes in optimal matching using network flow algorithms. It emphasizes full matching and variable ratio matching.
 
-**Key difference**: optmatch pioneered optimal full matching via network flow, and its `fullmatch()` admits one-to-many and many-to-one groups in the same solution. couplr's `full_match()` is the narrower variable-ratio design: every group holds one unit of the smaller side and several of the larger. Where the two shapes can be mixed, optmatch's optimum can be strictly cheaper. couplr's contribution here is one-to-one matching with 20+ algorithm choices and a checkable certificate.
+**Key difference**: optmatch pioneered optimal full matching via network flow. couplr's `full_match()` solves the same problem, admitting one-to-many and many-to-one groups in the same solution, and adds one-to-one matching with 20+ algorithm choices and a checkable certificate.
 
 ### optmatch Approach
 
@@ -282,7 +282,7 @@ Both packages use optimal assignment algorithms, so they should achieve similar 
 
 2. **Algorithm selection**: optmatch uses RELAX-IV; couplr offers 20+ algorithms
 
-3. **Variable-ratio grouping**: `full_match()` in couplr and `fullmatch()` in optmatch. optmatch solves the wider full-matching problem, which also admits many-to-one groups; couplr fixes the group centres to the smaller side.
+3. **Full matching**: `full_match()` in couplr and `fullmatch()` in optmatch, both admitting one-to-many and many-to-one groups in one solution.
 
 ```{r, eval = requireNamespace("optmatch", quietly = TRUE)}
 if (requireNamespace("optmatch", quietly = TRUE)) {

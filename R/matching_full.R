@@ -3,20 +3,77 @@
 # ==============================================================================
 # The optimal route compiles the design into the package's flow model and
 # solves it there. The network is the one src/flow/flow_compile.h describes:
-# the auxiliary source feeds every group centre through an arc bounded by
-# [min_controls, max_controls], each centre reaches the units its distances
-# admit, and every unit passes one unit of flow to the sink. Group centres are
-# the smaller side, so an instance with more left units than right ones is
+# at min_controls == 1 both sides carry a lower bound of one and the pair arcs
+# unit capacity, so the arcs a solve places are an edge cover of the admissible
+# pairs; a cheapest cover is minimal and a minimal cover is a disjoint union of
+# stars, which is exactly a full matching. Above one, a group centred on a
+# single right unit cannot meet the bound, so every group is one-to-many: the
+# auxiliary source feeds each centre through an arc bounded by [min_controls,
+# max_controls], every unit passes one unit of flow to the sink, and the centres
+# are the smaller side, so an instance with more left units than right ones is
 # compiled from the transpose and read back through it.
 #
 # Solving there is what makes the node potentials and the optimality
 # certificate available: both are properties of the flow, and the group
 # memberships alone cannot reconstruct either.
 
+# Full matching with both group shapes admissible. The solve returns an edge
+# cover, and a cheapest cover is minimal, but a zero-cost arc can survive in a
+# cover that is not: dropping any arc whose two ends are both met by another
+# arc leaves every unit covered and costs nothing, and repeating it until none
+# is left makes every component a star. The stars are the groups.
+.full_match_groups_symmetric <- function(compiled, flow) {
+  block <- compiled$block
+  placed <- flow[seq_len(block$n_arcs) + block$first_arc - 1] > 0
+  li <- block$row[placed]
+  rj <- block$col[placed]
+
+  n_left <- as.integer(compiled$shape$n_centres)
+  n_right <- as.integer(compiled$shape$n_units)
+
+  repeat {
+    dl <- tabulate(li, nbins = n_left)
+    dr <- tabulate(rj, nbins = n_right)
+    slack <- which(dl[li] > 1L & dr[rj] > 1L)
+    if (!length(slack)) break
+    # One at a time: dropping two arcs that share an end could uncover it.
+    drop <- slack[1L]
+    li <- li[-drop]
+    rj <- rj[-drop]
+  }
+
+  # Components of a union of stars: every arc joins a leaf to its centre, so
+  # labels propagate in one pass per side until they stop moving.
+  gl <- integer(n_left)
+  gr <- integer(n_right)
+  g <- 0L
+  for (k in seq_along(li)) {
+    a <- li[k]; b <- rj[k]
+    if (gl[a] == 0L && gr[b] == 0L) {
+      g <- g + 1L
+      gl[a] <- g; gr[b] <- g
+    } else if (gl[a] == 0L) {
+      gl[a] <- gr[b]
+    } else if (gr[b] == 0L) {
+      gr[b] <- gl[a]
+    } else if (gl[a] != gr[b]) {
+      # Two stars joined by one arc is a path, which the pruning above removes,
+      # so reaching here means the cover was not minimal.
+      stop("full matching produced a component that is not a star", call. = FALSE)
+    }
+  }
+
+  list(group_of_left = gl, group_of_right = gr, n_groups = g)
+}
+
 # Read a solved flow back as group memberships in the caller's left/right
-# terms. A centre holding fewer than min_controls units did not meet the lower
-# bound on its own arc, so it holds no group and its units stay unmatched.
+# terms. Above a lower bound of one, a centre holding fewer than min_controls
+# units did not meet the bound on its own arc, so it holds no group and its
+# units stay unmatched.
 .full_match_groups <- function(compiled, flow, min_controls) {
+  if (isTRUE(compiled$shape$symmetric)) {
+    return(.full_match_groups_symmetric(compiled, flow))
+  }
   n_centres <- as.integer(compiled$shape$n_centres)
   n_units <- as.integer(compiled$shape$n_units)
 
@@ -138,24 +195,26 @@
 #' }
 #'
 #' @details
-#' `full_match()` builds matched groups of variable size. Every group holds
-#' exactly one unit of the smaller side and between `min_controls` and
-#' `max_controls` units of the larger, the side chosen once for the whole
-#' solution. This is variable-ratio matching, and it is narrower than full
-#' matching in the sense of Hansen and Klopfer (2006), which admits
-#' one-to-many and many-to-one groups in the same solution. An optimum over
-#' the two shapes together can be strictly cheaper than the best solution of
-#' either shape alone, so `status = "optimal"` here means optimal for the
-#' design described above, not for the wider problem.
+#' `full_match()` builds matched groups of variable size. Under the default
+#' `min_controls = 1` it solves full matching in the sense of Hansen and
+#' Klopfer (2006): a group holds either one left unit and several right ones or
+#' one right unit and several left ones, and both shapes may appear in the same
+#' solution. `max_controls` bounds the many side of a group, whichever side
+#' that is.
+#'
+#' A lower bound above one admits only the one-to-many shape, because a group
+#' built around a single right unit holds exactly one of them and cannot meet a
+#' lower bound of two. The centres are then the smaller side and every group is
+#' one left unit with between `min_controls` and `max_controls` right ones.
 #'
 #' Two algorithms are available:
 #'
 #' \strong{Optimal} (\code{method = "optimal"}, default): Solves a min-cost
 #' max-flow problem that minimizes total distance across all group assignments
-#' simultaneously. Each left unit becomes a group center absorbing 1 to
-#' \code{max_controls} right units, with the globally optimal assignment found
-#' via Dijkstra's algorithm with Johnson potentials. When \code{n_left > n_right},
-#' roles are transposed automatically.
+#' simultaneously, with the optimum found via Dijkstra's algorithm with Johnson
+#' potentials. At \code{min_controls = 1} the network is an edge cover over the
+#' admissible pairs, which is what lets a group be centred on either side; above
+#' one it is one centre per group and the centres are the smaller side.
 #'
 #' \strong{Greedy} (\code{method = "greedy"}): A fast two-pass heuristic:
 #' \enumerate{

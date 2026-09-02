@@ -1,0 +1,5 @@
+# Rcpp regenerates these on every load_all(). R writes native line endings,
+# so a CRLF copy in the repo is rewritten on macOS and a clean checkout goes
+# dirty before a benchmark run can stamp the commit it measures.
+/R/RcppExports.R    text eol=lf
+/src/RcppExports.cpp text eol=lf

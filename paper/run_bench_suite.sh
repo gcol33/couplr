@@ -18,8 +18,10 @@
 # the numbers come from.
 #
 # Logs go to logs/<name>-<timestamp>.log, and logs/<name>.done is written when a
-# script exits, carrying its exit status. logs/SUITE.done marks the end of the
-# whole run.
+# script exits, carrying its exit status. logs/SUITE.done is written only when
+# every stage exited zero, and the suite exits non-zero otherwise: a marker
+# that appears after a failed stage says the run is complete when it is not,
+# and anything waiting on it reads a partial measurement as a finished one.
 
 set -u
 
@@ -103,6 +105,7 @@ if [ "${FRESH:-0}" = "1" ]; then
   echo "previous outputs archived to $archive"
 fi
 
+failed=""
 for name in $WHICH; do
   script=$(script_for "$name")
   log="logs/${name}-${STAMP}.log"
@@ -111,6 +114,13 @@ for name in $WHICH; do
   status=$?
   echo "$name exit $status $(date +%Y-%m-%dT%H:%M:%S)" > "logs/${name}.done"
   echo "=== $name exit $status ==="
+  [ "$status" -eq 0 ] || failed="$failed $name"
 done
+
+if [ -n "$failed" ]; then
+  echo "stages failed:$failed" >&2
+  echo "logs/SUITE.done not written; the measurement is partial" >&2
+  exit 1
+fi
 
 echo "suite done $(date +%Y-%m-%dT%H:%M:%S)" > logs/SUITE.done

@@ -617,9 +617,33 @@ n_solv <- length(unique(ok$method))
 per_inst <- tapply(ok$method, akey, function(x) length(unique(x)))
 off <- ok[ok$rel > 1e-6, ]
 agree <- setdiff(unique(ok$method), unique(off$method))
-cat(sprintf("%d instances carry %d to %d solvers each. %d of the %d solvers return the cell median exactly on every run. The other %d are below.\n\n",
-            length(per_inst), min(per_inst), max(per_inst),
-            length(agree), n_solv, length(unique(off$method))))
+off_names <- sort(unique(off$method))
+n_off <- length(off_names)
+off_tail <- if (n_off == 0) {
+  "Every solver returns the cell median exactly on every run."
+} else {
+  sprintf("%d of the %d solvers return the cell median exactly on every run%s",
+          length(agree), n_solv,
+          if (n_off == 1) ", and the one that does not is below."
+          else sprintf(", and the %d that do not are below.", n_off))
+}
+cat(sprintf("%d instances carry %d to %d solvers each. %s\n\n",
+            length(per_inst), min(per_inst), max(per_inst), off_tail))
+
+## The paragraph after the table names the solvers and agrees with their
+## number, so a re-measurement that moves one cannot leave it reading Both.
+off_lead <- if (n_off == 1) {
+  sprintf("`%s` is a scaling method, and it deviates", off_names)
+} else {
+  sprintf("%s are scaling methods, and both deviate",
+          paste(sprintf("`%s`", off_names), collapse = " and "))
+}
+off_size <- if (n_off == 1) {
+  "The deviation is not a property of the regime"
+} else {
+  paste("The size of the deviations differs by orders of magnitude, and",
+        "neither is a property of the regime")
+}
 ```
 
 ```{r regime-agreement-table}
@@ -637,11 +661,10 @@ if (nrow(off)) {
 }
 ```
 
-Both are scaling methods, and both deviate on the lognormal regime alone, so
-the rounding a scaling step applies over a cost range that wide may be what
-separates them from the rest. The size of the two deviations differs by orders
-of magnitude, and neither is a property of the regime: the remaining solvers
-return one common total on every cell of it. Whether a particular matching is
+`r off_lead` on the lognormal regime alone, so the rounding a scaling step
+applies over a cost range that wide may be what separates it from the rest.
+`r off_size`: the remaining solvers return one common total on every cell of
+it. Whether a particular matching is
 optimal for the matrix as supplied is what `verify_assignment()` answers.
 
 \FloatBarrier
@@ -768,7 +791,7 @@ if (nrow(dm)) {
                 `Measured / matrix` = sprintf("%.2f", dm$over_baseline_mb / dm$matrix_mb),
                 `Package estimate` = sprintf("%.0f", dm$estimate_mb),
                 check.names = FALSE),
-     caption = "The four-fold estimate against the measurement, in megabytes. Matrix is the bytes the dense cost matrix itself needs at that shape, and package estimate is what estimate_dense_matrix_mb() predicts, which is four times the matrix and is what the memory dispatcher warns from. The estimate is deliberately conservative: it exists to avoid under-warning before a large allocation, not to predict the peak.",
+     caption = "The four-fold matrix estimate against the measurement, in megabytes. Matrix is the bytes the dense cost matrix itself needs at that shape, and package estimate is what estimate_dense_matrix_mb() predicts, which is four times the matrix. It is the matrix, not the solve: memory_mode = auto reads estimate_dense_solve_mb() instead, which estimates the peak of the solve at twelve times the cell bytes. Both are deliberately conservative, since they exist to refuse a solve that will not fit rather than to predict where a peak lands.",
      align = "lrrrr")
 }
 ```

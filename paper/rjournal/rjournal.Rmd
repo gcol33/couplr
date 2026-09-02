@@ -974,8 +974,8 @@ independently is measured in the empirical evaluation.
 ## Memory representations
 
 The dense representation of the cost matrix is the binding constraint on problem
-size long before runtime is. A 100,000 by 100,000 problem needs 80 GB as doubles;
-the same units described by 100 covariates need 80 MB. couplr exposes this as `memory_mode`, with values `"dense"`, `"lazy"`,
+size long before runtime is. A 100,000 by 100,000 problem needs 80 GB as doubles; the 200,000 units it
+pairs, described by 100 covariates, need 160 MB. couplr exposes this as `memory_mode`, with values `"dense"`, `"lazy"`,
 `"implicit"` and `"auto"`, differing in what the solver ranges over. The dense
 path holds the complete matrix; the lazy path holds none and still considers
 every pair, evaluating each distance when it is asked for, over Jonker-Volgenant and auction with the built-in metrics; the implicit path runs the
@@ -983,9 +983,12 @@ edge-generation loop described above. All three solve the same problem, and on
 the instances reported below they returned the same pairing wherever the pairing
 was compared.
 
-Under `"auto"` the package decides. Below ten million cells, about 80 MB
-dense, it skips the check, since probing free memory on every ordinary problem
-would be pure overhead. Above that it estimates what a dense solve peaks at
+Under `"auto"` the package decides. Below ten million cells it skips the
+check, since probing free memory on every ordinary problem would be pure
+overhead. That is 80 MB of cells, and an estimated solve peak of
+`r format(80 * solve_factor, big.mark = ",")` MB, so the skipped case is
+not free of cost; it is the size at which the probe stops paying for
+itself. Above that it estimates what a dense solve peaks at
 rather than what the matrix occupies, at `r solve_factor` times the raw cell
 bytes, and compares that against available system memory read per platform.
 The empirical evaluation reports the peaks that multiplier sits above. If the

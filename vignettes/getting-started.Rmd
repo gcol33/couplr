@@ -288,7 +288,7 @@ Blocking guarantees that Hospital A patients are only matched to Hospital A cont
 
 ## Full Matching: Keep Every Unit
 
-One-to-one matching discards unmatched controls. If you want every unit in a group, use `full_match()`. It creates variable-ratio groups (e.g., 1 treatment + 3 controls) that minimize total distance. Every group holds exactly one unit of the smaller side, which is narrower than the full matching of Hansen and Klopfer (2006):
+One-to-one matching discards unmatched controls. If you want every unit in a group, use `full_match()`. It creates variable-ratio groups (e.g., 1 treatment + 3 controls, or 2 treatments + 1 control) that minimize total distance:
 
 ```{r full-match-example}
 result_full <- full_match(

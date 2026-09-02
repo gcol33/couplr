@@ -274,18 +274,36 @@ MatchIt documents `distance` as accepting a matrix and optmatch takes one
 through its distance constructor. The row is split into one recording that all
 three accept a user matrix and one recording what a pair match is solved as.
 
-**`full_match()` is not Hansen-Klopfer full matching.** It fixes the group
-centres to the globally smaller side, so every group is 1:k; genuine full
-matching mixes 1:k and k:1 sets in one solution. On a 3 by 3 instance it returns
-10 against `optmatch::fullmatch()`'s 0 and reports `status = "optimal"`, and the
+**`full_match()` was not Hansen-Klopfer full matching [FIXED].** It fixed the
+group centres to the globally smaller side, so every group was 1:k; genuine full
+matching mixes 1:k and k:1 sets in one solution. On a 3 by 3 instance it returned
+10 against `optmatch::fullmatch()`'s 0 and reported `status = "optimal"`, and the
 ratio is unbounded in the spread. The article cited @HansenKlopfer2006 for a
-formulation the code does not implement.
+formulation the code did not implement.
 
-Scoped rather than widened in this release: the manual, both vignettes and the
-article now state the design, and NEWS carries the counterexample. The fix is
-identified and validated in prototype, since minimum-weight full matching is
-exactly a minimum-weight bipartite edge cover, which for the uncapacitated case
-reduces to a max-weight assignment couplr already solves and agreed with
-`optmatch::fullmatch()` on 60 of 60 random instances. What blocks landing it is
-`min_controls > 1`, which is not a uniform degree bound and needs Hansen and
-Klopfer's construction rather than a guess.
+The blocker named earlier in this file, `min_controls > 1`, dissolved on a second
+reading. `min_controls` is the least number of **right** units a group may hold,
+and a many-to-one group holds exactly one, so a lower bound above one forbids
+that shape by arithmetic: the one-centre design is already the whole feasible set
+there and was never wrong. Only `min_controls = 1`, the default, was.
+
+At that value the network now carries a lower bound of one on both sides with
+unit capacity on the pair arcs, so the arcs a solve places are an edge cover of
+the admissible pairs. A cheapest cover is inclusion-minimal, a minimal cover is a
+disjoint union of stars, and such a union covering every unit is exactly a full
+matching, so minimising distance over covers minimises it over full matchings.
+The flow value is not fixed in advance, since the arc count depends on how many
+groups form, so the source injects the unit count and a bypass arc absorbs the
+slack. The reading step prunes any arc whose two ends are both met elsewhere,
+which a zero-cost arc can otherwise leave in a non-minimal cover, and takes the
+components as groups.
+
+The counterexample now returns 0 with two groups, and 80 random instances agree
+with `optmatch::fullmatch()` exactly. Three `test_flow_compile.cpp` cases were
+asserting the old structure at `min_controls = 1`; each was read before being
+touched, and they were retargeted to `min_controls = 2`, where the orientation
+they test still applies. Two new cases cover the counterexample at the network
+level and the boundary between the two designs. C++ 755,071 assertions in 339
+cases, R FAIL 0 PASS 8900.
+
+No benchmark stage calls `full_match()`, so this changes no measured number.

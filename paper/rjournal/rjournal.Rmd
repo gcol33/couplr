@@ -650,12 +650,10 @@ entry points, each returning an object in the same family. `ps_match()` estimate
 a propensity score [@RosenbaumRubin1983] and matches on it, with the caliper
 expressed in standard deviations of the linear predictor. Where the constraints
 admit it, `full_match()` assigns every unit to a matched group of variable size,
-so no unit is discarded. Every group it builds holds exactly one unit of the
-smaller side and between `min_controls` and `max_controls` of the larger, which
-is the variable-ratio design rather than the full matching of
-@HansenKlopfer2006: that admits one-to-many and many-to-one groups in the same
-solution, and an optimum over the two together can be strictly cheaper than the
-best solution of either shape alone. The default solves the corresponding
+so no unit is discarded. A group holds either one left unit and several right
+ones or one right unit and several left ones, and both shapes appear in the same
+solution, which is full matching in the sense of @HansenKlopfer2006. The default
+solves the corresponding
 minimum-cost flow problem with Johnson potentials [@Johnson1977]; a two-pass
 greedy heuristic is reached by asking for it, under `method = "greedy"`. `cem_match()` implements coarsened exact matching
 [@IacusKingPorro2012], and `subclass_match()` divides the sample into
@@ -709,15 +707,18 @@ $$\text{common flow duals} \rightarrow \text{certificates}
 Underneath the designs of the previous section there is one object. It has
 nodes, each carrying a signed supply, and arcs, each carrying a cost and a
 capacity range. As Table \@ref(tab:designs) sets out, a one-to-one match, a
-k-to-one match, matching with replacement and a variable-ratio grouping differ
-in the bounds their arcs receive, not in the code that solves them. Stating a
-matching design as a minimum-cost flow problem is established
-[@HansenKlopfer2006]; what the flow model contributes here is that every
+k-to-one match, matching with replacement and a full match differ in the bounds
+their arcs receive, not in the code that solves them. Stating full matching as a
+minimum-cost flow problem is established [@HansenKlopfer2006]; here it is the
+one design whose flow value is not fixed in advance, since how many pair arcs a
+full matching uses depends on how many groups it forms, so the source injects
+the unit count and a bypass arc absorbs the rest. What the flow model
+contributes is that every
 design in the package that a flow can represent compiles into it, so one
 solver and one certificate serve all of them, with the warm-start machinery
 shared where the public interface exposes it. Those are the
 six rows of the table: one-to-one, k-to-one, with replacement, blocked and
-exact, variable-ratio grouping, and fine and refined balance. The designs that sit
+exact, full matching, and fine and refined balance. The designs that sit
 outside it sit outside because their answer is not a flow: `cem_match()`
 coarsens and strata are read off directly, `subclass_match()` cuts the
 propensity score into subclasses, and the moment constraints of
@@ -734,7 +735,7 @@ many networks are built, rather than in which solver runs.
 | k-to-one matching | Capacitated bipartite flow, treated supply k |
 | Matching with replacement | Control capacities above one |
 | Blocked and exact matching | Independent networks per stratum |
-| Variable-ratio grouping | Lower and upper capacitated circulation |
+| Full matching | Edge cover, both sides bounded below by one |
 | Fine and refined balance | Category nodes with capacity bounds |
 
 Compiling a design, solving it, and checking the answer stay three separate

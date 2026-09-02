@@ -3113,12 +3113,10 @@ entry points, each returning an object in the same family. <code>ps_match()</cod
 a propensity score <span class="citation" data-cites="RosenbaumRubin1983">(<a href="#ref-RosenbaumRubin1983" role="doc-biblioref">Rosenbaum and Rubin 1983</a>)</span> and matches on it, with the caliper
 expressed in standard deviations of the linear predictor. Where the constraints
 admit it, <code>full_match()</code> assigns every unit to a matched group of variable size,
-so no unit is discarded. Every group it builds holds exactly one unit of the
-smaller side and between <code>min_controls</code> and <code>max_controls</code> of the larger, which
-is the variable-ratio design rather than the full matching of
-<span class="citation" data-cites="HansenKlopfer2006">Hansen and Klopfer (<a href="#ref-HansenKlopfer2006" role="doc-biblioref">2006</a>)</span>: that admits one-to-many and many-to-one groups in the same
-solution, and an optimum over the two together can be strictly cheaper than the
-best solution of either shape alone. The default solves the corresponding
+so no unit is discarded. A group holds either one left unit and several right
+ones or one right unit and several left ones, and both shapes appear in the same
+solution, which is full matching in the sense of <span class="citation" data-cites="HansenKlopfer2006">Hansen and Klopfer (<a href="#ref-HansenKlopfer2006" role="doc-biblioref">2006</a>)</span>. The default
+solves the corresponding
 minimum-cost flow problem with Johnson potentials <span class="citation" data-cites="Johnson1977">(<a href="#ref-Johnson1977" role="doc-biblioref">Johnson 1977</a>)</span>; a two-pass
 greedy heuristic is reached by asking for it, under <code>method = &quot;greedy&quot;</code>. <code>cem_match()</code> implements coarsened exact matching
 <span class="citation" data-cites="IacusKingPorro2012">(<a href="#ref-IacusKingPorro2012" role="doc-biblioref">Iacus et al. 2012</a>)</span>, and <code>subclass_match()</code> divides the sample into
@@ -3161,15 +3159,18 @@ resumes from:</p>
 <p>Underneath the designs of the previous section there is one object. It has
 nodes, each carrying a signed supply, and arcs, each carrying a cost and a
 capacity range. As Table <a href="#tab:designs">1</a> sets out, a one-to-one match, a
-k-to-one match, matching with replacement and a variable-ratio grouping differ
-in the bounds their arcs receive, not in the code that solves them. Stating a
-matching design as a minimum-cost flow problem is established
-<span class="citation" data-cites="HansenKlopfer2006">(<a href="#ref-HansenKlopfer2006" role="doc-biblioref">Hansen and Klopfer 2006</a>)</span>; what the flow model contributes here is that every
+k-to-one match, matching with replacement and a full match differ in the bounds
+their arcs receive, not in the code that solves them. Stating full matching as a
+minimum-cost flow problem is established <span class="citation" data-cites="HansenKlopfer2006">(<a href="#ref-HansenKlopfer2006" role="doc-biblioref">Hansen and Klopfer 2006</a>)</span>; here it is the
+one design whose flow value is not fixed in advance, since how many pair arcs a
+full matching uses depends on how many groups it forms, so the source injects
+the unit count and a bypass arc absorbs the rest. What the flow model
+contributes is that every
 design in the package that a flow can represent compiles into it, so one
 solver and one certificate serve all of them, with the warm-start machinery
 shared where the public interface exposes it. Those are the
 six rows of the table: one-to-one, k-to-one, with replacement, blocked and
-exact, variable-ratio grouping, and fine and refined balance. The designs that sit
+exact, full matching, and fine and refined balance. The designs that sit
 outside it sit outside because their answer is not a flow: <code>cem_match()</code>
 coarsens and strata are read off directly, <code>subclass_match()</code> cuts the
 propensity score into subclasses, and the moment constraints of
@@ -3203,8 +3204,8 @@ many networks are built, rather than in which solver runs.</caption>
 <td style="text-align: left;">Independent networks per stratum</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Variable-ratio grouping</td>
-<td style="text-align: left;">Lower and upper capacitated circulation</td>
+<td style="text-align: left;">Full matching</td>
+<td style="text-align: left;">Edge cover, both sides bounded below by one</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Fine and refined balance</td>

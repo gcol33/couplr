@@ -42,21 +42,34 @@
   `n` by `n` cost matrix is `O(n^2.5 * log(n * C))`. The previous `O(n^3 log C)`
   did not match the bound in the source it cites.
 
-## Documentation
+* **`full_match()` solves full matching, not one-to-many matching.** It chose
+  the group centres as the globally smaller side and gave every group exactly
+  one centre, so every group was one left unit with several right ones. Full
+  matching in the sense of Hansen and Klopfer (2006) also admits many-to-one
+  groups, and mixes both shapes in one solution. On the 3 by 3 distance matrix
+  from left units at 0, 10, 10 against right units at 0, 0, 10, the old design
+  returned a total within-group distance of 10 and reported
+  `status = "optimal"`, while `optmatch::fullmatch()` returned 0 by pairing the
+  left unit at 0 with both right units at 0 and the two left units at 10 with
+  the right unit at 10. The gap grows without bound with the spread.
 
-* **`full_match()` is documented as the variable-ratio design it solves.** Every
-  group it builds holds exactly one unit of the smaller side, the side chosen
-  once for the whole solution, and between `min_controls` and `max_controls` of
-  the larger. That is narrower than full matching in the sense of Hansen and
-  Klopfer (2006), which admits one-to-many and many-to-one groups in the same
-  solution, and the difference is not cosmetic: on the 3 by 3 distance matrix
-  with rows at 0, 10, 10 and columns at 0, 0, 10, `full_match()` returns a total
-  within-group distance of 10 and reports `status = "optimal"`, while
-  `optmatch::fullmatch()` returns 0 by pairing one left unit with two right ones
-  and two left units with the remaining right one. The gap grows without bound
-  with the spread. `status = "optimal"` means optimal for the design described
-  in `?full_match`, and the manual, the vignettes and the article now say which
-  design that is. Solving the wider problem is not in this release.
+  Under the default `min_controls = 1` the compiled network now carries a lower
+  bound of one on both sides and unit capacity on the pair arcs, so the arcs a
+  solve places are an edge cover of the admissible pairs. A cheapest cover is
+  inclusion-minimal, a minimal cover is a disjoint union of stars, and a
+  disjoint union of stars covering every unit is exactly a full matching, so
+  minimising distance over covers is minimising it over full matchings. The
+  flow's value is not fixed in advance, since the number of arcs depends on how
+  many groups form, so the source injects the unit count and a bypass arc
+  absorbs what the network does not need. Checked against
+  `optmatch::fullmatch()` on 80 random instances, no disagreement.
+
+  `min_controls` above one is unchanged and was already right: a group built
+  around a single right unit holds exactly one of them and cannot meet a lower
+  bound of two, so only the one-to-many shape is feasible there and the centres
+  are the smaller side. `max_controls` now bounds the many side of a group
+  whichever side that is, which is the same reading as before for a group of one
+  left unit and several right ones.
 
 ## Improvements
 

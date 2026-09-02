@@ -388,6 +388,9 @@ TEST_CASE("compile_k_cardinality - k above the pair ceiling is rejected",
 
 TEST_CASE("compile_full_matching - centres are the left side when it is smaller",
           "[flow][compile][full_match]") {
+    // min_controls above one admits only one-to-many groups, which is where
+    // the centres are fixed to one side. At min_controls == 1 both shapes are
+    // legal and the orientation is free; that design is exercised below.
     lap::CostMatrix cost(3, 8);
     for (int64_t i = 0; i < 3; ++i) {
         for (int64_t j = 0; j < 8; ++j) cost.at(i, j) = static_cast<double>(i * 8 + j);
@@ -395,9 +398,10 @@ TEST_CASE("compile_full_matching - centres are the left side when it is smaller"
     lap::SourceOracle<lap::CostMatrix> oracle(cost);
 
     lap::CompiledFullMatch full =
-        lap::compile_full_matching(oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
+        lap::compile_full_matching(oracle, 2, lap::FLOW_INF_CAP, NO_CATEGORIES);
 
     REQUIRE(full.bounds_feasible);
+    REQUIRE_FALSE(full.symmetric);
     REQUIRE_FALSE(full.transposed);
     REQUIRE(full.n_centres == 3);
     REQUIRE(full.n_units == 8);
@@ -410,7 +414,7 @@ TEST_CASE("compile_full_matching - centres are the left side when it is smaller"
     REQUIRE(prob.arcs.size() == 3 + 8);
     for (int i = 0; i < 3; ++i) {
         REQUIRE(prob.arcs[i].tail == lap::FLOW_SOURCE);
-        REQUIRE(prob.arcs[i].lower == 1);
+        REQUIRE(prob.arcs[i].lower == 2);
         REQUIRE(prob.arcs[i].upper == 8);
     }
     for (int j = 0; j < 8; ++j) {
@@ -436,9 +440,10 @@ TEST_CASE("compile_full_matching - orientation transposes when left is larger",
     }
     lap::SourceOracle<lap::CostMatrix> oracle(cost);
 
-    lap::CompiledFullMatch full = lap::compile_full_matching(oracle, 1, 5, NO_CATEGORIES);
+    lap::CompiledFullMatch full = lap::compile_full_matching(oracle, 2, 5, NO_CATEGORIES);
 
     REQUIRE(full.bounds_feasible);
+    REQUIRE_FALSE(full.symmetric);
     REQUIRE(full.transposed);
     REQUIRE(full.n_centres == 3);
     REQUIRE(full.n_units == 8);
@@ -919,10 +924,13 @@ TEST_CASE("compiled full matching places every unit", "[flow][compile][solve]") 
         lap::CompiledFullMatch full =
             lap::compile_full_matching(oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
         REQUIRE(full.bounds_feasible);
+        REQUIRE(full.symmetric);
 
         lap::FlowResult res = lap::solve_min_cost_flow(full.design.problem);
         REQUIRE(res.status == "optimal");
-        REQUIRE(res.flow_sent == 4);
+        // The injected total is the unit count; what the pair arcs do not
+        // carry leaves down the bypass.
+        REQUIRE(res.flow_sent == 2 + 4);
         REQUIRE(res.total_cost == Approx(0.0));
     }
 
@@ -941,9 +949,9 @@ TEST_CASE("compiled full matching places every unit", "[flow][compile][solve]") 
         lap::SourceOracle<lap::CostMatrix> turned_oracle(turned);
 
         lap::CompiledFullMatch a =
-            lap::compile_full_matching(upright_oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
+            lap::compile_full_matching(upright_oracle, 2, lap::FLOW_INF_CAP, NO_CATEGORIES);
         lap::CompiledFullMatch b =
-            lap::compile_full_matching(turned_oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
+            lap::compile_full_matching(turned_oracle, 2, lap::FLOW_INF_CAP, NO_CATEGORIES);
         REQUIRE_FALSE(a.transposed);
         REQUIRE(b.transposed);
 
@@ -1136,4 +1144,68 @@ TEST_CASE("ShapeOracle - compiles the network the costs would have",
         lap::CompiledDesign design = lap::compile_one_to_one(shape, NO_CATEGORIES);
         REQUIRE_THROWS_AS(lap::expand_blocks(design.problem), lap::LapException);
     }
+}
+
+// Full matching admits one-to-many and many-to-one groups in the same solution.
+// Fixing every group's centre to the globally smaller side drops the mixed
+// solutions, and the cheapest of those can be arbitrarily better: on this
+// instance the left unit at 0 wants both right units at 0, which leaves the two
+// left units at 10 to share the right unit at 10. A design with one centre per
+// group cannot state that, and pays the 10 instead.
+TEST_CASE("compile_full_matching - mixed group shapes beat one centre per group",
+          "[flow][compile][full_match]") {
+    // |x_l - x_r| for left at (0, 10, 10) against right at (0, 0, 10).
+    auto cost = make_cost({
+        { 0,  0, 10},
+        {10, 10,  0},
+        {10, 10,  0}
+    });
+    lap::SourceOracle<lap::CostMatrix> oracle(cost);
+
+    lap::CompiledFullMatch full =
+        lap::compile_full_matching(oracle, 1, lap::FLOW_INF_CAP, NO_CATEGORIES);
+    REQUIRE(full.bounds_feasible);
+    REQUIRE(full.symmetric);
+
+    lap::FlowProblem& prob = full.design.problem;
+    require_well_formed(prob);
+    // Three source arcs, three sink arcs, one bypass. The pair arcs are a block.
+    REQUIRE(prob.arcs.size() == 3 + 3 + 1);
+    // Both sides carry a lower bound of one, which is what makes the arcs an
+    // edge cover rather than an assignment.
+    for (std::size_t i = 0; i < 3; ++i) {
+        REQUIRE(prob.arcs[i].tail == lap::FLOW_SOURCE);
+        REQUIRE(prob.arcs[i].lower == 1);
+    }
+    for (std::size_t j = 3; j < 6; ++j) {
+        REQUIRE(prob.arcs[j].head == lap::FLOW_SINK);
+        REQUIRE(prob.arcs[j].lower == 1);
+    }
+
+    lap::FlowResult res = lap::solve_min_cost_flow(prob);
+    REQUIRE(res.status == "optimal");
+    // Zero, not the 10 a single-centre design is forced to pay.
+    REQUIRE(res.total_cost == Approx(0.0));
+    REQUIRE(res.flow_sent == 3 + 3);
+}
+
+// A lower bound above one forbids the many-to-one shape by arithmetic: such a
+// group holds exactly one right unit and cannot hold min_controls of them. The
+// one-centre design is then the whole feasible set, so it is what gets built.
+TEST_CASE("compile_full_matching - a lower bound above one keeps one centre per group",
+          "[flow][compile][full_match]") {
+    lap::CostMatrix cost(2, 6);
+    for (int64_t i = 0; i < 2; ++i) {
+        for (int64_t j = 0; j < 6; ++j) cost.at(i, j) = static_cast<double>(i + j);
+    }
+    lap::SourceOracle<lap::CostMatrix> oracle(cost);
+
+    lap::CompiledFullMatch one = lap::compile_full_matching(oracle, 1, lap::FLOW_INF_CAP,
+                                                            NO_CATEGORIES);
+    lap::CompiledFullMatch two = lap::compile_full_matching(oracle, 2, lap::FLOW_INF_CAP,
+                                                            NO_CATEGORIES);
+    REQUIRE(one.symmetric);
+    REQUIRE_FALSE(two.symmetric);
+    REQUIRE(two.n_centres == 2);
+    REQUIRE(two.n_units == 6);
 }

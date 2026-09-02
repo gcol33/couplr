@@ -961,8 +961,9 @@ possible sum over feasible solutions. Its node prices travel in an
 `MCFSolutions` attribute that `fullmatch()`'s documentation does not describe,
 and the function scoring a primal against them is not exported.
 
-*Full matching.* optmatch's `fullmatch()` solves the full matching of Hansen and
-Klopfer, which admits one-to-many and many-to-one matched sets in the same
-solution. couplr's `full_match()` builds every group around a single unit of the
-smaller side, so it solves the narrower variable-ratio design, and the article
-and the manual both say so.
+*Full matching.* Both `optmatch::fullmatch()` and couplr's `full_match()` solve
+the full matching of Hansen and Klopfer, which admits one-to-many and
+many-to-one matched sets in the same solution. couplr states it as an edge cover
+over the admissible pairs: a cheapest cover is inclusion-minimal, a minimal
+cover is a disjoint union of stars, and such a union covering every unit is a
+full matching.

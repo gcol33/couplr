@@ -138,8 +138,17 @@
 #' }
 #'
 #' @details
-#' Full matching creates matched groups of variable size. Two algorithms are
-#' available:
+#' `full_match()` builds matched groups of variable size. Every group holds
+#' exactly one unit of the smaller side and between `min_controls` and
+#' `max_controls` units of the larger, the side chosen once for the whole
+#' solution. This is variable-ratio matching, and it is narrower than full
+#' matching in the sense of Hansen and Klopfer (2006), which admits
+#' one-to-many and many-to-one groups in the same solution. An optimum over
+#' the two shapes together can be strictly cheaper than the best solution of
+#' either shape alone, so `status = "optimal"` here means optimal for the
+#' design described above, not for the wider problem.
+#'
+#' Two algorithms are available:
 #'
 #' \strong{Optimal} (\code{method = "optimal"}, default): Solves a min-cost
 #' max-flow problem that minimizes total distance across all group assignments

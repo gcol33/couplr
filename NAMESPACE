@@ -104,27 +104,37 @@ export(update_constraints)
 export(verify_assignment)
 export(verify_flow)
 importFrom(Rcpp,evalCpp)
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_cols)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,first)
-importFrom(dplyr,group_by)
-importFrom(dplyr,group_keys)
-importFrom(dplyr,group_split)
-importFrom(dplyr,group_vars)
-importFrom(dplyr,n)
-importFrom(dplyr,summarise)
+importFrom(dplyr,
+  arrange,
+  bind_cols,
+  bind_rows,
+  first,
+  group_by,
+  group_keys,
+  group_split,
+  group_vars,
+  n,
+  summarise
+)
 importFrom(generics,augment)
 importFrom(purrr,map_dfr)
-importFrom(rlang,enquo)
-importFrom(rlang,eval_tidy)
-importFrom(rlang,quo_is_null)
-importFrom(stats,dist)
-importFrom(stats,median)
-importFrom(stats,quantile)
-importFrom(stats,sd)
-importFrom(tibble,as_tibble)
-importFrom(tibble,tibble)
-importFrom(utils,head)
-importFrom(utils,type.convert)
+importFrom(rlang,
+  enquo,
+  eval_tidy,
+  quo_is_null
+)
+importFrom(stats,
+  dist,
+  median,
+  quantile,
+  sd
+)
+importFrom(tibble,
+  as_tibble,
+  tibble
+)
+importFrom(utils,
+  head,
+  type.convert
+)
 useDynLib(couplr, .registration = TRUE)

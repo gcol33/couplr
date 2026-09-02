@@ -63,8 +63,8 @@ mem_at <- function(arm, n, col = "peak_rss_mb") {
 
 ## The multipliers the memory guard is built on, taken from the package rather
 ## than repeated here, beside the peaks they were set above.
-solve_factor  <- eval(formals(couplr:::estimate_dense_solve_mb)$solve_factor)
-matrix_factor <- eval(formals(couplr:::estimate_dense_matrix_mb)$overhead_factor)
+solve_factor  <- eval(formals(couplr::estimate_dense_solve_mb)$solve_factor)
+matrix_factor <- eval(formals(couplr::estimate_dense_matrix_mb)$overhead_factor)
 mem_sizes <- sort(unique(memory$n_total[memory$arm == "dense" &
                                         memory$status == "ok"]))
 ## The ratios are read from 5,000 units up. At 2,000 the matrix holds 7 MB of
@@ -121,6 +121,13 @@ m$pairs[1:3, c("left_id", "right_id", "distance", ".age_diff")]
 m_cal <- match_couples(treated, control, vars = covars, auto_scale = TRUE,
                        calipers = list(age = 3, experience_years = 2),
                        max_distance = 1.5)
+
+
+## ----constraints-greedy, echo=FALSE-------------------------------------------
+m_greedy <- suppressWarnings(suppressMessages(
+  match_couples(treated, control, vars = covars, auto_scale = TRUE,
+                calipers = list(age = 3, experience_years = 2),
+                max_distance = 1.5, method = "greedy")))
 
 
 ## ----verify-flow, echo=TRUE---------------------------------------------------
@@ -195,9 +202,18 @@ ig_cert_txt <- if (ig_cert == ig_cells) {
   sprintf("%d of the %d cells certified", ig_cert, ig_cells)
 }
 ig_clouds  <- igrid[igrid$sweep == "cloud", ]
-ig_slow    <- ig_clouds$cloud[which.min(ig_clouds$speedup_med)]
+## Prose names for the cloud keys, so no raw factor level reaches the text.
+cloud_lab <- c(gaussian = "the plain Gaussian cloud",
+               clustered = "the clustered points",
+               shifted = "the displaced treated group",
+               heavy_tailed = "the heavy-tailed cloud",
+               lattice_ties = "the lattice ties",
+               contested = "the contested core",
+               shell = "the equidistant shell")
+stopifnot(all(ig_clouds$cloud %in% names(cloud_lab)))
+ig_slow    <- cloud_lab[[ig_clouds$cloud[which.min(ig_clouds$speedup_med)]]]
 ig_slow_x  <- min(ig_clouds$speedup_med)
-ig_fast    <- ig_clouds$cloud[which.max(ig_clouds$speedup_med)]
+ig_fast    <- cloud_lab[[ig_clouds$cloud[which.max(ig_clouds$speedup_med)]]]
 ig_fast_x  <- max(ig_clouds$speedup_med)
 ## A ratio below one is the loop losing, and the sentence says so only where
 ## that happens rather than carrying the caveat unconditionally.
@@ -221,13 +237,14 @@ mem_ratio  <- mem_over("dense_matrix") / mem_matrix
 mem_solve_ratio <- mem_over("dense") / mem_matrix
 
 ## The size whose solve peak sits closest to what the guard assumes, and the
-## megabytes between the two there. The sentence below states the sign, so a
-## re-measurement that moves the peak under the multiplier needs it read again.
+## megabytes of headroom left there. The sentence below states the sign, so the
+## render stops if a re-measurement ever puts a peak above the multiplier.
 mem_solve_ratios <- mem_over_matrix("dense")
 mem_tight   <- which.max(mem_solve_ratios)
 mem_tight_n <- format(mem_sizes[mem_tight], big.mark = ",", trim = TRUE)
 mem_tight_x <- mem_solve_ratios[mem_tight]
-mem_tight_mb <- abs(mem_tight_x - solve_factor) *
+stopifnot(mem_tight_x < solve_factor)
+mem_tight_mb <- (solve_factor - mem_tight_x) *
   mem_at("dense_matrix", mem_sizes[mem_tight], "matrix_mb")
 
 
@@ -366,9 +383,14 @@ knitr::kable(
 reg_fast <- sum(regime$auto_picks == regime$best_method)
 reg_def  <- regime[regime$auto_rule == "default", ]
 ## The two properties that used to carry rules of their own, so the text can
-## say what the default costs in the regimes they were written for.
-reg_rect <- reg_def[reg_def$shape %in% c("500 x 1500", "500 x 5000",
-                                         "1500 x 4500", "1000 x 10000"), ]
+## say what the default costs in the regimes they were written for. The wide
+## predicate is computed from the shape rather than named as a list of shapes,
+## so it and the head-to-head below read the same condition.
+is_wide <- function(shape) {
+  d <- do.call(rbind, strsplit(gsub(" ", "", shape), "x", fixed = TRUE))
+  as.numeric(d[, 2]) >= 3 * as.numeric(d[, 1])
+}
+reg_rect <- reg_def[is_wide(reg_def$shape), ]
 reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
 x <- function(v) sprintf("%.2fx", v)
@@ -403,7 +425,7 @@ h2h_sp   <- head_to_head(
                                "random_01", "block_4"), ], "lapmod")
 
 
-## ----love, fig.height=2.6, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
+## ----love, fig.height=2.3, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
 pretty <- c(age = "age", educ = "education (years)",
             race_Black = "race: Black", race_Hispanic = "race: Hispanic",
             married = "married", nodegree = "no high-school degree",
@@ -479,6 +501,9 @@ inst <- vapply(sizes, function(n) {
   if (nrow(r) == 0) NA_integer_ else as.integer(r$instances[1])
 }, integer(1))
 single <- sizes[!is.na(inst) & inst < 2]
+## Two or three instances give a spread, not a quartile estimate, so the
+## caption names those rows the same way it names the single-run one.
+few <- sizes[!is.na(inst) & inst >= 2 & inst < 4]
 
 tab <- data.frame(
   `Problem size` = lab,
@@ -498,11 +523,17 @@ single_txt <- if (length(single) == 1) {
   ""
 }
 
+few_txt <- if (length(few) == 0) "" else sprintf(
+  "Fewer than four instances back the bracket at %s, so there it is the spread of those runs rather than a quartile estimate.",
+  and_list(sprintf("%s (%d)", format(few, big.mark = ",", trim = TRUE),
+                   inst[match(few, sizes)])))
+
 knitr::kable(
   tab, align = "lrrr", booktabs = TRUE,
   caption = paste(
     "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance.",
     single_txt,
+    few_txt,
     "The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the 600-second cap.")
 )
 

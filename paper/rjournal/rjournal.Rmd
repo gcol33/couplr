@@ -46,9 +46,9 @@ header-includes:
   - \renewcommand{\bottomfraction}{0.9}
   - \renewcommand{\textfraction}{0.06}
   - \renewcommand{\floatpagefraction}{0.75}
-  - \setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
-  - \setlength{\floatsep}{6pt plus 2pt minus 2pt}
-  - \setlength{\intextsep}{6pt plus 2pt minus 2pt}
+  - \setlength{\textfloatsep}{4pt plus 2pt minus 2pt}
+  - \setlength{\floatsep}{4pt plus 2pt minus 2pt}
+  - \setlength{\intextsep}{4pt plus 2pt minus 2pt}
   - \setlength{\bibsep}{0pt}
 bibliography: RJreferences.bib
 ---
@@ -550,8 +550,7 @@ conventional 0.1 threshold on the absolute standardised difference
 the analysis-ready frame, one row per pair, with every column of both inputs
 under `_left` and `_right` suffixes.
 
-The matched frame is the input to an outcome analysis rather than the end of
-one. A paired difference taken on it estimates an adjusted association, and
+ A paired difference taken on it estimates an adjusted association, and
 reading that as a causal effect is what rests on assumptions no matching method
 can verify: conditional ignorability, positivity, and the stable unit treatment
 value assumption. What matching can offer against the first is
@@ -1220,8 +1219,7 @@ fraction of one percent, and evaluates `r sprintf("%.1f", ig_cont$distances_x_me
 and it is still `r sprintf("%.1f", ig_cont$speedup_med)` times faster than the
 lazy path on this cloud. What it shows is the worst case of the previous
 section happening: the graph the loop ends up holding is most of the one it
-set out to avoid, and it has paid for the rounds that built it. This is why
-the mode is requested rather than selected.
+set out to avoid, and it has paid for the rounds that built it. 
 
 ```{=latex}
 \FloatBarrier
@@ -1272,22 +1270,17 @@ a guard sized on the matrix would let a dense solve start on a machine it does
 not fit. `estimate_dense_matrix_mb()` estimates the matrix at
 `r matrix_factor` times the raw cell bytes and `estimate_dense_solve_mb()` the
 peak of the solve at `r solve_factor` times them, and `memory_mode = "auto"`
-compares the second against available memory. Neither multiplier is fitted to
-one cell. Across `r mem_size_list` units the solve peaked at
-`r mem_solve_list` times the cell bytes and the matrix at `r mem_matrix_list`
-times them. Both ratios are read from `r format(min(mem_sizes), big.mark = ",")`
+compares the second against available memory. Neither multiplier is fitted to one cell: across `r mem_size_list` units the
+solve peaked at `r mem_solve_list` times the cell bytes and the matrix at
+`r mem_matrix_list` times them, and both defaults sit above every one of those. Both ratios are read from `r format(min(mem_sizes), big.mark = ",")`
 units up: at `r format(mem_small, big.mark = ",")` the matrix holds
 `r sprintf("%.0f", mem_at("dense_matrix", mem_small, "matrix_mb"))` MB of cells
 against a session floor near
 `r sprintf("%.0f", mem_at("baseline", mem_small, "peak_rss_mb"))` MB, so what
-the peak measures there is the session rather than the solve, and both
-multipliers are exceeded on it. Both defaults bound every one of the sizes
-they are read against. The tightest solve peak, at `r mem_tight_n` units,
-reached `r sprintf("%.1f", mem_tight_x)` times the cells against the
-`r solve_factor` the guard assumes, leaving `r sprintf("%.0f", mem_tight_mb)` MB
-of headroom there. The guard exists to refuse a solve that will not fit rather
-than to predict where a peak lands, so the multiplier is set above the ratios it
-is read against.
+the peak measures there is the session rather than the solve, and both multipliers are exceeded on it. The tightest solve peak, at
+`r mem_tight_n` units, reached `r sprintf("%.1f", mem_tight_x)` times the cells
+against the `r solve_factor` the guard assumes, leaving
+`r sprintf("%.0f", mem_tight_mb)` MB of headroom.
 We report every arm and size in the supplementary material.
 
 ```{=latex}
@@ -1604,7 +1597,7 @@ it on the LaLonde NSW data [@LaLonde1986; @DehejiaWahba1999], 185 treated units,
 429 controls and eight covariates. The pooled within-group convention is the one
 `optmatch::match_on()` uses by default and the one couplr adopts.
 
-```{r love, fig.height=2.6, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."}
+```{r love, fig.height=2.3, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."}
 pretty <- c(age = "age", educ = "education (years)",
             race_Black = "race: Black", race_Hispanic = "race: Hispanic",
             married = "married", nodegree = "no high-school degree",
@@ -1647,9 +1640,7 @@ ggplot(long, aes(smd, lab, colour = state, shape = state)) +
   )
 ```
 
-The three packages produce identical absolute standardised mean differences to
-three decimal places, so one matched point is plotted. Marginals could still
-hide different assignments, so we score all three on one objective: the same
+Marginals could still hide different assignments, so we score all three on one objective: the same
 Mahalanobis distance matrix, summed over each package's chosen pairs. Each matches all `r lal_obj$n_pairs[lal_obj$package == "couplr"]` treated
 units, at a total distance of `r sprintf("%.3f", lal_obj$total_cost[lal_obj$package == "couplr"])` for couplr against `r sprintf("%.3f", lal_obj$total_cost[lal_obj$package == "optmatch"])` for both
 alternatives, a relative difference of `r sprintf("$%.0f \\times 10^{-6}$", 1e6 * abs(diff(range(lal_obj$total_cost))) / min(lal_obj$total_cost))`. That is agreement
@@ -1833,15 +1824,9 @@ knitr::kable(
 Making the assignment problem the organising object, rather than a hidden step
 inside a matching function, is what lets one package serve a causal-inference
 user starting from covariates and an operations-research user starting from a
-cost matrix. Every flow-representable design compiles into one flow model, so
-node potentials come back from all of them, those potentials turn a reported
-status into a certificate, and the certificate is what makes it safe to solve a
-problem that was never built.
+cost matrix. 
 
-What that architecture buys is measurable. At `r ilab[6]` the restricted graph
-settled at `r share[6]` of the complete pair count and returned a certified
-optimum, and over the `r nrow(regime)` cells of the regime grid the dispatcher
-ran at a median `r x(median(regime$ratio))` of the cell's fastest solver.
+
 
 couplr has five limitations:
 

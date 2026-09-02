@@ -929,3 +929,40 @@ in `Suggests` and is loaded at call time. The animation and image-morphing
 functions, the plotting helpers, the interoperability layer for MatchIt, optmatch
 and cobalt, and the parallel back end are all optional in this sense, so a user
 who only wants to match pays for none of them.
+
+# How the feature comparison was read
+
+Each entry of the feature table in the article was read from the alternatives'
+own source and documentation rather than from their prose descriptions, against
+MatchIt 4.7.2 and optmatch 0.10.8. The verifier row was assessed on 2026-08-26
+and the rest on 2026-08-09.
+
+*Cost matrix entry point.* All three accept a cost matrix the user supplies.
+MatchIt documents its `distance` argument as taking "a matrix of pairwise"
+distances, and optmatch takes one through `match_on()`. What separates the
+packages is not whether a matrix is accepted but what a pair match is solved as:
+couplr solves the rectangular assignment directly, while `optmatch::pairmatch()`
+and MatchIt's optimal method both route it through `fullmatch()`.
+
+*Sparse cost support.* optmatch represents a sparse cost through its
+`InfinitySparseMatrix` class. MatchIt's optimal path reaches the same
+representation: `MatchIt:::matchit2optimal()` calls
+`optmatch::as.InfinitySparseMatrix()` on its distance object before solving, and
+adds antiexact constraints to it as further forbidden entries. The row therefore
+reads for MatchIt as it does for the solver it calls. couplr exploits sentinel
+`Inf` entries directly in its SAP and LAPMOD solvers.
+
+*Public dual-potential verifier.* The row asks whether a package exports node
+potentials together with a function that checks the optimality conditions
+against a returned solution. optmatch reports a gap instead: the `exceedances`
+attribute of a `fullmatch()` result is documented as an upper bound, not
+necessarily sharp, on how far the returned sum of distances exceeds the least
+possible sum over feasible solutions. Its node prices travel in an
+`MCFSolutions` attribute that `fullmatch()`'s documentation does not describe,
+and the function scoring a primal against them is not exported.
+
+*Full matching.* optmatch's `fullmatch()` solves the full matching of Hansen and
+Klopfer, which admits one-to-many and many-to-one matched sets in the same
+solution. couplr's `full_match()` builds every group around a single unit of the
+smaller side, so it solves the narrower variable-ratio design, and the article
+and the manual both say so.

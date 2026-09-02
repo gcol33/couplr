@@ -1,5 +1,5 @@
 % !TeX root = RJwrapper.tex
-\title{couplr: Optimal Matching with Verifiable Certificates and Sparse Edge Generation}
+\title{couplr: Optimal Matching with Verifiable Certificates and Column Generation}
 
 
 \author{by Gilles Colling}
@@ -7,7 +7,7 @@
 \maketitle
 
 \abstract{%
-Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching and experimental design. Two things bound what software built on it can offer. An answer arrives without a proof: a solver reports the state it terminated in, not a checkable statement about the matching. And the graph of admissible pairs is built before it is solved, so its memory sets the size ceiling. We present the couplr package, which addresses both. Every flow-representable matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package optimises over a restricted set of pairs: each unit starts with its nearest admissible partners, the omitted pairs are priced against the duals the sparse solve returns, and pairs enter until none prices in, at which point the duals certify the result optimal for the complete problem. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns a certified optimum. Warm starting the same loop traces a matching frontier over a swept constraint at roughly half the cost of solving each point cold. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching share the same core. couplr is available on CRAN.
+Matching two groups of units so that the total cost of the chosen pairs is as small as possible is the linear assignment problem, which sits underneath causal-inference matching and experimental design. Two things bound what software built on it can offer. An answer arrives without a proof: a solver reports the state it terminated in, not a checkable statement about the matching. And the graph of admissible pairs is built before it is solved, so its memory sets the size ceiling. We present the couplr package, which addresses both. Every flow-representable matching design compiles into one internal flow model, so node potentials come back from all of them and can be checked against the linear-programming optimality conditions. On those potentials the package optimises over a restricted graph: each unit starts with its nearest admissible partners, the omitted pairs are priced against the potentials the restricted solve returns, and pairs enter until none prices in, at which point those potentials bound how far the result can sit from the complete problem's optimum. Matching 16,667 treated units to 33,333 controls holds 0.29 percent of the pairs and returns an optimum certified within that bound. Warm starting the same loop traces a matching path over a swept constraint at roughly half the cost of solving each point independently. A data-frame interface, nineteen assignment algorithms, balance diagnostics and cardinality matching share the same core. couplr is available on CRAN.
 }
 
 \section{Introduction}\label{introduction}
@@ -106,12 +106,13 @@ reach the same solver core. We contribute five things to R:
   the potentials allow and naming the arithmetic the verdict was reached in.
 \item
   Dual-certified adaptive edge generation. Under
-  \texttt{memory\_mode\ =\ "implicit"} the complete graph is never built: a sparse
+  \texttt{memory\_mode\ =\ "implicit"} the complete graph is never built: a
   restricted problem is solved, the omitted pairs are priced against its
   duals, violating pairs are added, and the loop repeats until none prices in,
-  at which point the duals certify optimality for the complete problem.
+  at which point the duals bound the result's distance from the complete
+  problem's optimum, and certify optimality where that bound closes.
 \item
-  Warm-started matching frontiers. \texttt{match\_path()} sweeps one constraint over
+  Warm-started matching paths. \texttt{match\_path()} sweeps one constraint over
   a sequence of values, resuming each point from the one before it, with a
   certificate per point.
 \item
@@ -125,7 +126,7 @@ reach the same solver core. We contribute five things to R:
 The article is arranged for two kinds of reader. The assignment engine and the
 matching interface built on it come first and stand on their own; the
 optimisation architecture, its implementation and the measurements follow for a
-reader interested in where the certificates and the sparse edge generation come
+reader interested in where the certificates and the column generation come
 from.
 
 Results were produced with couplr version 1.7.0.
@@ -223,6 +224,7 @@ verify_assignment(assignment(cost), cost)
 #>     matched arcs tight     TRUE    (max slack 0.000e+00)
 #>     unmatched columns free TRUE    (max |v_j| 0.000e+00)
 #>   duality_gap              0.000000e+00
+#>   max_suboptimality        0.000000e+00
 #>   certified_optimal        TRUE 
 #>   arithmetic               exact, no tolerance
 #> 
@@ -569,10 +571,16 @@ Beyond one-to-one matching, \texttt{match\_couples()} takes \texttt{ratio} for k
 and \texttt{replace} for matching with replacement. Five further designs have their own
 entry points, each returning an object in the same family. \texttt{ps\_match()} estimates
 a propensity score \citep{RosenbaumRubin1983} and matches on it, with the caliper
-expressed in standard deviations of the linear predictor. \texttt{full\_match()} assigns every unit to a matched group of variable size, so no
-unit is discarded, solving a minimum-cost flow problem with Johnson potentials
-\citep{Johnson1977} on its optimal path and a greedy two-pass heuristic on large
-problems. \texttt{cem\_match()} implements coarsened exact matching
+expressed in standard deviations of the linear predictor. Where the constraints
+admit it, \texttt{full\_match()} assigns every unit to a matched group of variable size,
+so no unit is discarded. Every group it builds holds exactly one unit of the
+smaller side and between \texttt{min\_controls} and \texttt{max\_controls} of the larger, which
+is the variable-ratio design rather than the full matching of
+\citet{HansenKlopfer2006}: that admits one-to-many and many-to-one groups in the same
+solution, and an optimum over the two together can be strictly cheaper than the
+best solution of either shape alone. The default solves the corresponding
+minimum-cost flow problem with Johnson potentials \citep{Johnson1977}; a two-pass
+greedy heuristic is reached by asking for it, under \texttt{method\ =\ "greedy"}. \texttt{cem\_match()} implements coarsened exact matching
 \citep{IacusKingPorro2012}, and \texttt{subclass\_match()} divides the sample into
 propensity-score subclasses, returning subclass weights for the average
 treatment effect on the treated or on the whole sample.
@@ -587,9 +595,11 @@ reaches a single minimum-cost flow solve returning the largest balanced sample
 with a dual certificate at polynomial cost. Linear moment constraints, a
 finite \texttt{max\_std\_diff} or an explicit \texttt{moments} argument, are not, and are
 dualised and searched by branch and bound under \texttt{node\_limit} and \texttt{time\_limit}.
-Either way the result reports \texttt{n\_matched} beside \texttt{best\_possible}, the largest
-sample the constraints admit, the \texttt{gap} between them, whether the answer is
-\texttt{certified}, and what the search \texttt{stopped\_on}. A pruning loop is available as
+Either way the result reports \texttt{n\_matched} beside \texttt{best\_possible}, the \texttt{gap}
+between them, whether the answer is \texttt{certified}, and what the search
+\texttt{stopped\_on}. \texttt{best\_possible} is the search's current upper bound on attainable
+sample size, and is the largest sample the constraints admit once \texttt{certified}
+is \texttt{TRUE}. A pruning loop is available as
 \texttt{engine\ =\ "heuristic"} and reports its gap as unknown, which is the honest
 reading of what a heuristic establishes.
 
@@ -608,7 +618,7 @@ Three of the package's capabilities are consequences of one decision.
 Compiling every flow-representable design into a single flow model is what
 makes node potentials available from all of them; the potentials are what
 certify a solution; a certificate is what makes it safe to optimise over a
-restricted set of pairs; and a certified restricted solve is what a warm start
+restricted graph of pairs; and a certified restricted solve is what a warm start
 resumes from:
 
 \[\text{common flow duals} \rightarrow \text{certificates}
@@ -619,14 +629,15 @@ resumes from:
 Underneath the designs of the previous section there is one object. It has
 nodes, each carrying a signed supply, and arcs, each carrying a cost and a
 capacity range. As Table \ref{tab:designs} sets out, a one-to-one match, a
-k-to-one match, matching with replacement and a full match differ in the bounds
-their arcs receive, not in the code that solves them. Formulating full matching as a minimum-cost flow problem is established
+k-to-one match, matching with replacement and a variable-ratio grouping differ
+in the bounds their arcs receive, not in the code that solves them. Stating a
+matching design as a minimum-cost flow problem is established
 \citep{HansenKlopfer2006}; what the flow model contributes here is that every
 design in the package that a flow can represent compiles into it, so one
 solver and one certificate serve all of them, with the warm-start machinery
 shared where the public interface exposes it. Those are the
 six rows of the table: one-to-one, k-to-one, with replacement, blocked and
-exact, full matching, and fine and refined balance. The designs that sit
+exact, variable-ratio grouping, and fine and refined balance. The designs that sit
 outside it sit outside because their answer is not a flow: \texttt{cem\_match()}
 coarsens and strata are read off directly, \texttt{subclass\_match()} cuts the
 propensity score into subclasses, and the moment constraints of
@@ -651,7 +662,7 @@ One-to-one matching & Unit-capacity bipartite flow \\
 k-to-one matching & Capacitated bipartite flow, treated supply k \\
 Matching with replacement & Control capacities above one \\
 Blocked and exact matching & Independent networks per stratum \\
-Full matching & Lower and upper capacitated circulation \\
+Variable-ratio grouping & Lower and upper capacitated circulation \\
 Fine and refined balance & Category nodes with capacity bounds \\
 \end{longtable}
 
@@ -765,7 +776,11 @@ the column potentials, and the allowance the pricing bound carries. Their sum
 bounds the matching's excess over the complete optimum. At
 \(\epsilon = 10^{-9}\) and the largest shape in the benchmark below, the
 threshold's contribution \(n\epsilon\) is \(2 \times 10^{-5}\) in the cost
-units, and every run reported there came back with \(\delta = 0\).
+units, and every run reported there came back with \(\delta = 0\). The
+certificate returns that sum as \texttt{max\_suboptimality}, beside
+\texttt{certified\_reduced\_cost\_floor}, the floor the pricing scan proves for every
+admissible pair, which sits below the minimum it observed exactly where pruning
+supplied part of the proof.
 
 The loop terminates because each round adds at least one pair \(E_t\) did not
 hold, so \(|E_t|\) strictly increases under the bound \(nm\). That bound is the
@@ -808,7 +823,7 @@ reads the full source over the rows of \(S\) and takes columns from outside
 and the result is infeasible with \((S, N(S))\) as its witness, naming the units
 short of partners rather than only the fact.
 
-So the sparse solution is optimal for a problem that was never built, and
+So the restricted solution is optimal for a problem that was never built, and
 \texttt{certify\ =\ TRUE} runs that check and returns it.
 
 Two quantities in \texttt{\$search} describe what that cost. \texttt{candidate\_edges} against
@@ -909,8 +924,8 @@ solving the sweep rather than one value.
 Each point resumes from the matching the point before it found. Raising the
 distance cut admits pairs while leaving that matching feasible, so what
 remains is to repair reduced-cost violations on the arcs that just became
-admissible, which is one round of the pricing loop of the previous section; an
-independent call at that value pays for a solve from cold. One mechanism
+admissible, which is one round of the pricing loop of the previous section, where an
+independent call at that value needs a full solve. One mechanism
 serves the sweep and the single solve. A value whose admissible pairs cannot
 support a complete matching is reported rather than approximated, coming back
 with no matching and the Hall witness beside it, so a sweep that starts below
@@ -985,8 +1000,8 @@ few.
 Sparsity and aspect ratio carried rules of their own, sending a mostly
 forbidden matrix to \texttt{lapmod} and a wide one to shortest augmenting paths. Both
 were slower than the default in the regime they were written for, so both were
-removed; Table \ref{tab:regimes} is the measurement, and both solvers stay
-reachable by name.
+removed; the regime grid behind Table \ref{tab:regimes} is the measurement, and
+both solvers stay reachable by name.
 
 Rule 2 reads the entries, and so does the rejection of \texttt{NaN} inputs that runs
 for every method, so choosing a solver costs one C++ pass over the cost matrix,
@@ -1053,13 +1068,13 @@ the definition of the mode rather than a choice.
 \toprule
 Problem size & dense & lazy & implicit & Graph built & Distances & Rounds\\
 \midrule
-167 + 333 & 22 ms & 8 ms & 12 ms & 16.22\% & 2.00 & 2\\
-667 + 1,333 & 161 ms & 53 ms & 56 ms & 4.95\% & 2.00 & 2\\
-1,667 + 3,333 & 837 ms & 351 ms & 299 ms & 2.16\% & 1.96 & 2\\
-3,333 + 6,667 & 3.14 s & 1.59 s & 1.09 s & 1.17\% & 1.88 & 2\\
-6,667 + 13,333 & not run & 6.38 s & 3.9 s & 0.63\% & 1.71 & 2\\
+167 + 333 & 21 ms & 8 ms & 11 ms & 16.22\% & 2.00 & 2\\
+667 + 1,333 & 161 ms & 53 ms & 59 ms & 4.95\% & 2.00 & 2\\
+1,667 + 3,333 & 901 ms & 350 ms & 310 ms & 2.16\% & 1.96 & 2\\
+3,333 + 6,667 & 3.17 s & 1.59 s & 1.15 s & 1.17\% & 1.88 & 2\\
+6,667 + 13,333 & not run & 6.38 s & 4.1 s & 0.63\% & 1.71 & 2\\
 \addlinespace
-16,667 + 33,333 & not run & 62 s & 20.2 s & 0.29\% & 1.42 & 2\\
+16,667 + 33,333 & not run & 61.9 s & 21.3 s & 0.29\% & 1.42 & 2\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1072,11 +1087,11 @@ evaluations, so at eight covariates it computes more distances than one full
 sweep would. And it is still the fastest arm at four of the six sizes, because
 what it avoids is not the arithmetic but the graph. At
 16,667 + 33,333 it finishes in
-20 seconds against
+21 seconds against
 62 for the lazy path. At the two
 smallest sizes the lazy path is faster; at 667 + 1,333 it takes
 53 ms against
-56 ms, which is where the
+59 ms, which is where the
 loop's fixed costs are still visible against a problem this size.
 
 Every run in the table settled in 2 rounds, one seed and one sweep
@@ -1088,9 +1103,9 @@ than an assignment of the same cost.
 
 The implicit column is a representation and a solver at once, so comparing it
 with the dense column reads both differences together. At 3,333 + 6,667 the
-materialised matrix takes 3.14 seconds
-under Jonker-Volgenant and 4.17
-under the flow solver the restricted master belongs to, against 1.09 for the loop, so what the loop
+materialised matrix takes 3.17 seconds
+under Jonker-Volgenant and 4.15
+under the flow solver the restricted master belongs to, against 1.15 for the loop, so what the loop
 saves is not what a change of solver would give. The supplementary material
 carries the decomposition.
 
@@ -1109,8 +1124,8 @@ the complete pair count, at 0.24 to
 6.67 times that count in distance evaluations.
 All 20 cells certified, at a largest absolute duality gap of 3.64e-12, and 18 of the 18 cells small enough to run the dense
 path beside the loop returned the same pairing unit by unit. The margin over the lazy path is where the clouds separate: it runs from
-11.13x on shifted to
-1.09x on heavy\_tailed.
+10.83x on shifted to
+1.04x on heavy\_tailed.
 
 Two rounds is what an ordinary cloud costs and it is not what the loop is
 bounded by, so the grid's hostile cell is worth reading on its own. In the
@@ -1133,16 +1148,16 @@ expression, so each arm here is a fresh R session that loads what it needs, runs
 one matching and exits, measured from outside. A session that loaded the same
 packages and matched nothing is the floor each arm is read against.
 
-At 6,667 + 13,333 the dense path peaks 6234 MB
+At 6,667 + 13,333 the dense path peaks 6256 MB
 above that floor, the lazy path 22 MB and the
 loop 128 MB, against
-27428 MB for \CRANpkg{optmatch} and
-8640 MB for \CRANpkg{MatchIt}. Two readings follow. The loop is not the smallest of the three: the lazy path
+27429 MB for \CRANpkg{optmatch} and
+8641 MB for \CRANpkg{MatchIt}. Two readings follow. The loop is not the smallest of the three: the lazy path
 holds 22 MB against the loop's 128 MB, since it stores no graph at all
 while the loop stores the candidate set it has built. What the loop buys over
 it here is time, and the ceiling both of them remove is the dense path's. The
 second reading is the guard's. Building the matrix and stopping there accounts
-for 1095 MB on a matrix whose entries
+for 1093 MB on a matrix whose entries
 occupy 711 MB, so holding it costs 1.5 times its cells and solving over it costs 8.8 times them. That gap is preparation copies
 and the solver's own workspace, and it is what the automatic mode has to read:
 a guard sized on the matrix would let a dense solve start on a machine it does
@@ -1151,10 +1166,21 @@ not fit. \texttt{estimate\_dense\_matrix\_mb()} estimates the matrix at
 peak of the solve at 10 times them, and \texttt{memory\_mode\ =\ "auto"}
 compares the second against available memory. Neither multiplier is fitted to
 one cell. Across 5,000, 10,000 and 20,000 units the solve peaked at
-9.5, 7.2 and 8.8 times the cell bytes and the matrix at 1.8, 1.7 and 1.5
-times them, so each default sits above the largest of those rather than at any
-one of them. That is the direction the guard has to err in, since it exists to
-refuse a solve that will not fit rather than to predict where the peak lands.
+10.5, 7.2 and 8.8 times the cell bytes and the matrix at 1.8, 1.7 and 1.5
+times them. Both ratios are read from 5,000
+units up: at 2,000 the matrix holds
+7 MB of cells
+against a session floor near
+146 MB, so what
+the peak measures there is the session rather than the solve, and both
+multipliers are exceeded on it. The matrix default bounds every one of the
+sizes it is read against. The largest solve
+peak, at 5,000 units, reached 10.5 times
+the cells against the 10 the guard assumes, so at that size the
+estimate came in 20 MB under the peak it is meant
+to bound. The guard exists to refuse a solve that will not fit rather than to
+predict where a peak lands, so the multiplier has to sit above the ratios it is
+read against, and at this size it does not.
 Every arm and size is in the supplementary material.
 
 \FloatBarrier
@@ -1178,16 +1204,16 @@ the saving is the warm start rather than the sweep's shared setup.
 
 \begin{table}
 
-\caption{\label{tab:path-table}A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Cold/path is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep.}
+\caption{\label{tab:path-table}A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Wall ratio is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep.}
 \centering
 \begin{tabular}[t]{lrrrrr}
 \toprule
-Problem size & As a path & Independently & Cold/path & Solve-time ratio & Rounds\\
+Problem size & As a path & Independently & Wall ratio & Solve-time ratio & Rounds\\
 \midrule
-167 + 333 & 0.057 s & 0.136 s & 2.39x & 2.88x & 22 / 40\\
-667 + 1,333 & 0.489 s & 1.04 s & 2.12x & 2.15x & 23 / 40\\
-1,667 + 3,333 & 2.88 s & 6.12 s & 2.13x & 2.13x & 21 / 40\\
-6,667 + 13,333 & 40.9 s & 84.6 s & 2.07x & 2.07x & 21 / 40\\
+167 + 333 & 0.059 s & 0.139 s & 2.36x & 2.75x & 22 / 40\\
+667 + 1,333 & 0.534 s & 1.09 s & 2.05x & 2.06x & 23 / 40\\
+1,667 + 3,333 & 3.1 s & 6.44 s & 2.08x & 2.08x & 21 / 40\\
+6,667 + 13,333 & 44.1 s & 89.1 s & 2.02x & 2.02x & 21 / 40\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1201,8 +1227,10 @@ from a seed and pays for the seeding sweep as well.
 Correctness is the part of this comparison that has to hold before the timing
 means anything. Every point on the path returns the status and the matched count
 its independent solve returns, and the totals agree to
-0 relative, so the path is the same
-sequence of matchings that solving each value from cold would produce.
+0 relative, so the path reproduces
+the feasibility statuses, matched counts and objective values of independent
+solves. Pair identities were not compared, and where a value admits more than
+one optimum equal totals do not make the matchings equal.
 
 \FloatBarrier
 
@@ -1213,7 +1241,7 @@ problem size for all nineteen solvers, grouped by family. We draw costs as
 integers uniformly from \([1, 10{,}000]\) on square matrices and report medians of
 five replicates on a single core of an Apple M4 Pro. The slower families are
 capped at smaller sizes so that the scalable solvers can be measured to
-\(n = 5000\) within a reasonable budget. All timings in this section were measured on 2026-08-30 under R 4.5.3 with couplr 1.7.0 at commit a63b760,
+\(n = 5000\) within a reasonable budget. All timings in this section were measured on 2026-09-01 under R 4.5.3 with couplr 1.7.0 at commit 3a083b1,
 \CRANpkg{optmatch} 0.10.8 and \CRANpkg{MatchIt} 4.7.2.
 
 \begin{figure}
@@ -1235,7 +1263,13 @@ enumeration below nine units and the Hopcroft-Karp style solver on binary
 costs, so their timings are not comparable with the rest and are shown only to
 establish that each is practical on its own input. These orderings hold for
 dense uniform integer costs on square matrices, which is the whole of what the
-figure establishes, and they fix the dispatcher's default.
+figure establishes, and they fix the dispatcher's default. Each label in the
+figure is a solver's \texttt{method} name: JV \texttt{jv}, SAP \texttt{sap}, SAP-D \texttt{sap\_dense},
+LAPMOD \texttt{lapmod}, Auction \texttt{auction}, Auction-GS \texttt{auction\_gs}, Auction-S
+\texttt{auction\_scaled}, CSA \texttt{csa}, CS-flow \texttt{csflow}, Push-R \texttt{push\_relabel}, Cycle-C
+\texttt{cycle\_cancel}, Net-S \texttt{network\_simplex}, SSAP-B \texttt{ssap\_bucket}, Gabow-T
+\texttt{gabow\_tarjan}, Ramshaw \texttt{ramshaw\_tarjan}, Hungarian \texttt{hungarian}, Munkres
+\texttt{munkres}, HK-01 \texttt{hk01} and Brute-F \texttt{bruteforce}.
 
 The grid behind Table \ref{tab:regimes} is what reduced the rules to three.
 It crosses the properties the solver figure holds fixed: whether the finite
@@ -1264,30 +1298,42 @@ and it is read against the fastest named solver in the same cell.
 \toprule
 Rule & Solver & Cells & Fastest & Median & Worst\\
 \midrule
-no earlier rule applies & jv & 144 & 59 & 1.04x & 9.95x\\
-no cost scale to exploit & hk01 & 45 & 35 & 1.00x & 1.93x\\
+no earlier rule applies & jv & 144 & 59 & 1.14x & 10.41x\\
+no cost scale to exploit & hk01 & 45 & 34 & 1.00x & 2.18x\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Over the 189 cells the dispatcher picked the fastest solver of the
-panel in 94 of them, at a median 1.02x of the
+panel in 93 of them, at a median 1.07x of the
 cell's best time. A cell reads below \texttt{1.00x} for one of two reasons. The large
 tier times a reduced panel, so on its 9 binary cells the
 solver the dispatcher named was not among those it is read against; on the
 36 cells of that rule whose panel does hold its solver the median
-is 1.02x. Elsewhere the two sides are separate timings of
+is 1.01x. Elsewhere the two sides are separate timings of
 one solver and scatter by a few percent either way. The two rules that were
-removed can be read off the same table. Over the 96 cells with
+removed can be read off the same grid. Over the 96 cells with
 at least three columns per row, where the rectangular rule used to fire, the
 default takes a median
-1.02x; over the 96 cells with more than
-half the entries forbidden, 1.14x. Neither is a regime the
-default needs help in. Where it is furthest behind, at
-9.95x, the winner is auction\_scaled on a
-500 x 500 problem with heavily tied costs, which is a structure no
-rule in the table reads and none was added for: fitting one to this grid would
-score it on the measurements that chose it.
+1.04x; over the 96 cells with more than
+half the entries forbidden, 1.23x. Timed against the
+solver each rule named rather than against the panel's best, \texttt{sap} takes a
+median 1.41x of the default's time on the wide cells and \texttt{lapmod}
+1.09x of it on the sparse ones, so in each case the rule was naming the
+slower of the two.
+
+Where the default is behind, it is behind in one cost regime. Over the
+18 cells whose finite costs are heavily tied it takes a median
+3.92x of the fastest solver in the cell and as much as
+10.41x; over the remaining 126 cells of the
+rule the median is 1.06x and the worst
+3.90x. The solvers that win the tied cells are
+\texttt{network\_simplex} in 9 of them and
+\texttt{csflow} in 5, both of them the
+flow formulations that Figure \ref{fig:solver-bench} puts last on dense uniform
+costs. No rule in the table reads how tied the costs are and
+none was added for it: fitting one to this grid would score it on the
+measurements that chose it.
 
 The full grid, every solver in every cell, is in the supplementary material.
 
@@ -1354,27 +1400,27 @@ know.
 \toprule
 Problem size & couplr & optmatch & MatchIt\\
 \midrule
-167 + 333 & 17 ms (17-19) & 120 ms (111-121) & 134 ms (132-139)\\
-667 + 1,333 & 140 ms (139-143) & 1.75 s (1.67-1.77) & 2.14 s (2.12-2.16)\\
-1,667 + 3,333 & 789 ms (779-821) & 12.8 s (12.7-12.8) & 16.3 s (16.2-16.3)\\
-3,333 + 6,667 & 3.16 s (3.1-3.22) & 60.5 s (59.8-60.5) & 74.2 s (73.5-74.3)\\
-6,667 + 13,333 & 11.6 s (11.2-12.1) & 287 s (284-290) & int overflow\\
+167 + 333 & 20 ms (20-21) & 116 ms (116-121) & 138 ms (136-139)\\
+667 + 1,333 & 152 ms (141-164) & 1.75 s (1.67-1.76) & 2.27 s (2.24-2.29)\\
+1,667 + 3,333 & 788 ms (778-814) & 12.8 s (12.7-12.8) & 16.2 s (16.2-16.2)\\
+3,333 + 6,667 & 3.15 s (3.1-3.22) & 60.5 s (59.8-60.6) & 75.3 s (74.6-75.5)\\
+6,667 + 13,333 & 11.6 s (11.1-12) & 286 s (283-290) & int overflow\\
 \addlinespace
-16,667 + 33,333 & 76.3 s & timeout & timeout\\
+16,667 + 33,333 & 75.7 s & timeout & timeout\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The margin widens with problem size. couplr is about
-7 times faster than \CRANpkg{optmatch} at
+6 times faster than \CRANpkg{optmatch} at
 \(n = 500\) and 25 times faster at
 \(n = 20{,}000\), where it finishes in
 11.6 seconds against
 4.8 minutes.
 \CRANpkg{MatchIt} runs
-8
+7
 to
-23
+24
 times slower up to \(n = 10{,}000\), which is the largest size it completes before
 \texttt{matchit(method\ =\ "optimal")} aborts inside the \CRANpkg{optmatch} back end with
 an integer-size overflow. At \(n = 50{,}000\) couplr finishes in
@@ -1410,18 +1456,19 @@ matching, exact blocking and a cost-matrix entry point, are omitted.
 
 \begin{table}
 
-\caption{\label{tab:capability}Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8.}
+\caption{\label{tab:capability}Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed.}
 \centering
 \begin{tabular}[t]{lccc}
 \toprule
 Feature & couplr & MatchIt & optmatch\\
 \midrule
 Per-variable calipers from a named vector & yes & yes & partial\\
-Rectangular cost matrix as solver entry point & yes & full match & full match\\
-Sparse cost support & yes & no & yes\\
+User-supplied cost matrix accepted & yes & yes & yes\\
+Pair matching solved as an assignment & yes & via full match & via full match\\
+Sparse cost support & yes & yes & yes\\
 k-best assignments & yes & no & no\\
-Bottleneck (minimax) assignment & yes & no & no\\
 \addlinespace
+Bottleneck (minimax) assignment & yes & no & no\\
 Rosenbaum sensitivity bounds & yes & no & no\\
 Public dual-potential verifier & yes & no & gap bound\\
 User-selectable assignment algorithm & 19 solvers & via optmatch & 5 algorithms\\
@@ -1433,25 +1480,18 @@ User-selectable assignment algorithm & 19 solvers & via optmatch & 5 algorithms\
 
 \section{Summary and discussion}\label{summary-and-discussion}
 
-We built couplr on the observation that one optimisation problem sits
-underneath a set of tasks R currently treats as unrelated. Making the
-assignment problem the organising object, rather than a hidden step inside a
-matching function, is what lets one package serve a causal-inference user
-starting from covariates and an operations-research user starting from a cost
-matrix. Three consequences follow. Every flow-representable design compiles
-into one flow model, so node potentials come back from all of them; those
-potentials turn a reported status into a certificate; and a certificate is what
-makes it safe to solve a problem that was never built, since a loop growing a
-sparse graph needs a statement about the complete one to know when to stop.
+Making the assignment problem the organising object, rather than a hidden step
+inside a matching function, is what lets one package serve a causal-inference
+user starting from covariates and an operations-research user starting from a
+cost matrix. Every flow-representable design compiles into one flow model, so
+node potentials come back from all of them, those potentials turn a reported
+status into a certificate, and the certificate is what makes it safe to solve a
+problem that was never built.
 
-What that architecture buys is measurable. At 16,667 + 33,333 the restricted graph
-settled at 0.29\% of the complete pair count, returned a certified
-optimum, and ran 3.1
-times faster than traversing the complete graph lazily. A sweep of
-20 caliper values solved as one warm-started path cost a median
-0.47 of solving each point cold, and
-across the 189 cells of the solver-regime grid the dispatcher ran
-at a median 1.02x of the cell's fastest measured solver.
+What that architecture buys is measurable: at 16,667 + 33,333 the restricted graph
+settled at 0.29\% of the complete pair count and returned a certified
+optimum, and over the 189 cells of the regime grid the dispatcher
+ran at a median 1.07x of the cell's fastest solver.
 
 couplr has five limitations:
 
@@ -1466,31 +1506,25 @@ couplr has five limitations:
 \item
   The lazy cost path covers one-to-one matching without replacement under
   Jonker-Volgenant and auction with the built-in metrics. Replacement, a ratio
-  above one, \texttt{cardinality\_match()} and a user-supplied distance function, which
-  expects one call over both matrices rather than one per pair, build the dense
-  matrix.
+  above one, \texttt{cardinality\_match()} and a user-supplied distance function build
+  the dense matrix.
 \item
   \texttt{cardinality\_match()} answers a moment-constrained problem by branch and
-  bound under a node and time limit, so a run can stop with a gap rather than a
-  certificate and reports which it reached. Fine and refined balance, which the
-  network represents directly, is answered certified.
+  bound under node and time limits, so a run can stop with a gap rather than a
+  certificate and reports which it reached. Fine and refined balance is
+  answered certified.
 \item
   The dispatcher reads two properties and otherwise defaults to
-  Jonker-Volgenant, which the regime grid supports across most of the
-  structures it covers. Over the small square cells with most of the matrix
-  forbidden, scaled auction is quicker in most of them, at a median of about
-  three times and as much as ten where the costs are also heavily tied. Fitting
-  a rule to this grid would score it on the measurements that chose it, so the
-  default stands and every solver stays reachable by name.
+  Jonker-Volgenant, at a median 1.06x of the cell's
+  fastest solver over most of the regime grid. Where the finite costs are
+  heavily tied it takes a median 3.92x and as much as
+  10.41x, behind \texttt{network\_simplex} and
+  \texttt{csflow}. Fitting a rule to this grid would score it on
+  the measurements that chose it, so the default stands.
 \item
   Matching on observed covariates cannot address unmeasured confounding, which
   the sensitivity analysis quantifies rather than removes.
 \end{itemize}
-
-Two extensions follow. Pricing a general flow arc from the potentials at the
-nodes it joins would carry the loop from the unit-capacity assignment to every
-design the flow model compiles, and with it to \texttt{full\_match()}. A bound tighter
-than a ball would extend the pricer past the dimension it stops paying at.
 
 couplr is available on CRAN and developed at
 \texttt{https://github.com/gcol33/couplr}, with documentation at

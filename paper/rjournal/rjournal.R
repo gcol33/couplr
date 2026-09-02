@@ -67,6 +67,11 @@ solve_factor  <- eval(formals(couplr:::estimate_dense_solve_mb)$solve_factor)
 matrix_factor <- eval(formals(couplr:::estimate_dense_matrix_mb)$overhead_factor)
 mem_sizes <- sort(unique(memory$n_total[memory$arm == "dense" &
                                         memory$status == "ok"]))
+## The ratios are read from 5,000 units up. At 2,000 the matrix holds 7 MB of
+## cells against a session floor of about 146 MB, so the peak over that floor is
+## mostly fixed cost and the ratio measures the session rather than the solve.
+## The prose states the exclusion, and the 2,000-unit row is in the shipped CSV.
+mem_small <- mem_sizes[mem_sizes < 5000]
 mem_sizes <- mem_sizes[mem_sizes >= 5000]
 mem_over_matrix <- function(arm) {
   over <- vapply(mem_sizes, function(n) mem_at(arm, n, "over_baseline_mb"),
@@ -215,6 +220,16 @@ mem_matrix <- mem_at("dense_matrix", mem_n, "matrix_mb")
 mem_ratio  <- mem_over("dense_matrix") / mem_matrix
 mem_solve_ratio <- mem_over("dense") / mem_matrix
 
+## The size whose solve peak sits closest to what the guard assumes, and the
+## megabytes between the two there. The sentence below states the sign, so a
+## re-measurement that moves the peak under the multiplier needs it read again.
+mem_solve_ratios <- mem_over_matrix("dense")
+mem_tight   <- which.max(mem_solve_ratios)
+mem_tight_n <- format(mem_sizes[mem_tight], big.mark = ",", trim = TRUE)
+mem_tight_x <- mem_solve_ratios[mem_tight]
+mem_tight_mb <- abs(mem_tight_x - solve_factor) *
+  mem_at("dense_matrix", mem_sizes[mem_tight], "matrix_mb")
+
 
 ## ----path-table, echo=FALSE---------------------------------------------------
 knitr::kable(
@@ -222,13 +237,13 @@ knitr::kable(
     `Problem size` = ilab[match(pth$n_total, isz)],
     `As a path` = sprintf("%.3g s", pth$warm_wall),
     `Independently` = sprintf("%.3g s", pth$cold_wall),
-    `Cold/path` = sprintf("%.2fx", pth$wall_speedup),
+    `Wall ratio` = sprintf("%.2fx", pth$wall_speedup),
     `Solve-time ratio` = sprintf("%.2fx", pth$speedup),
     `Rounds` = sprintf("%d / %d", pth$warm_rounds, pth$cold_rounds),
     check.names = FALSE
   ),
   align = "lrrrrr", booktabs = TRUE,
-  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Cold/path is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
+  caption = "A caliper sweep solved as one warm-started path against the same values solved independently, end-to-end wall clock for the whole sweep on a single core of an Apple M4 Pro. Wall ratio is the independent sweep's time over the warm-started path's, so a value above one is the path running faster. Solve-time ratio is the same comparison on the seconds the solver reports for itself, summed over the points, which excludes the R-level work both sides do. Rounds is the pricing rounds each side took, summed over the sweep."
 )
 
 
@@ -356,13 +371,36 @@ reg_rect <- reg_def[reg_def$shape %in% c("500 x 1500", "500 x 5000",
                                          "1500 x 4500", "1000 x 10000"), ]
 reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
-reg_worst <- regime[which.max(regime$ratio), ]
 x <- function(v) sprintf("%.2fx", v)
 ## A cell has no `picked_s` exactly where the solver the rule named was not
 ## itself in that cell's panel, which is the large tier's reduced panel.
 off_panel <- regime[is.na(regime$picked_s), ]
 reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
 ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
+
+## The one cost regime the default is behind in, read as a regime rather than
+## as the single cell that happens to be worst inside it, against the rest of
+## the grid in the same measure.
+reg_tied <- reg_def[reg_def$regime == "tied", ]
+reg_rest <- reg_def[reg_def$regime != "tied", ]
+tied_win <- sort(table(reg_tied$best_method), decreasing = TRUE)
+
+## What the removed rules cost is a comparison with the solver each named, not
+## with the panel's best, so the two are timed against the default over the
+## cells the rule fired in. Joined on the cell keys rather than on row order.
+regres <- read.csv("data/regime-results.csv", stringsAsFactors = FALSE)
+head_to_head <- function(df, named, against = "jv") {
+  keys <- c("tier", "regime", "pattern", "n_rows", "n_cols")
+  m <- merge(df[df$method == named,   c(keys, "median_s")],
+             df[df$method == against, c(keys, "median_s")],
+             by = keys, suffixes = c(".named", ".against"))
+  m <- m[is.finite(m$median_s.named) & is.finite(m$median_s.against), ]
+  median(m$median_s.named / m$median_s.against)
+}
+h2h_rect <- head_to_head(regres[regres$n_cols >= 3 * regres$n_rows, ], "sap")
+h2h_sp   <- head_to_head(
+  regres[regres$pattern %in% c("random_25", "random_05",
+                               "random_01", "block_4"), ], "lapmod")
 
 
 ## ----love, fig.height=2.6, fig.pos="H", fig.cap="Absolute standardised mean differences on the eight LaLonde NSW covariates, before and after one-to-one optimal Mahalanobis matching with pooled within-group covariance. couplr, MatchIt and optmatch agree to three decimal places after matching, so a single matched point is shown per covariate. The dashed line marks the conventional 0.1 threshold. The indicator for Black respondents starts far outside the plotted range at 1.757 and remains at 1.053 after matching, a residual imbalance that no one-to-one matcher can resolve on this data.", fig.alt="A dot plot with eight covariates on the vertical axis and absolute standardised mean difference on the horizontal axis. For each covariate an open circle marks the value before matching and a filled square the value after matching, joined by a grey line. Every covariate moves left toward zero. Five of the eight land below the dashed 0.1 threshold, married and 1974 earnings sit just above it near 0.12 and 0.13, and the indicator for Black respondents remains far to the right at 1.05."----
@@ -472,22 +510,24 @@ knitr::kable(
 ## ----capability, echo=FALSE---------------------------------------------------
 cap <- data.frame(
   Feature = c("Per-variable calipers from a named vector",
-              "Rectangular cost matrix as solver entry point",
+              "User-supplied cost matrix accepted",
+              "Pair matching solved as an assignment",
               "Sparse cost support",
               "k-best assignments",
               "Bottleneck (minimax) assignment",
               "Rosenbaum sensitivity bounds",
               "Public dual-potential verifier",
               "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "full match", "no", "no", "no", "no", "no",
+  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
+             "19 solvers"),
+  MatchIt = c("yes", "yes", "via full match", "yes", "no", "no", "no", "no",
               "via optmatch"),
-  optmatch = c("partial", "full match", "yes", "no", "no", "no", "gap bound",
-               "5 algorithms"),
+  optmatch = c("partial", "yes", "via full match", "yes", "no", "no", "no",
+               "gap bound", "5 algorithms"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects, All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed."
 )
 

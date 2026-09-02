@@ -1,6 +1,6 @@
 ---
 title: "couplr: Optimal Matching with Verifiable Certificates and Column Generation"
-date: "2026-09-01"
+date: "2026-09-02"
 abstract: >
   Matching two groups of units so that the total cost of the chosen pairs is as
   small as possible is the linear assignment problem, which sits underneath
@@ -47,10 +47,10 @@ header-includes:
   - \renewcommand{\bottomfraction}{0.9}
   - \renewcommand{\textfraction}{0.06}
   - \renewcommand{\floatpagefraction}{0.75}
-  - \setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
-  - \setlength{\floatsep}{7pt plus 2pt minus 2pt}
-  - \setlength{\intextsep}{7pt plus 2pt minus 2pt}
-  - \setlength{\bibsep}{0pt plus 0.3ex}
+  - \setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+  - \setlength{\floatsep}{6pt plus 2pt minus 2pt}
+  - \setlength{\intextsep}{6pt plus 2pt minus 2pt}
+  - \setlength{\bibsep}{0pt}
 bibliography: RJreferences.bib
 ---
 
@@ -120,6 +120,11 @@ solve_factor  <- eval(formals(couplr:::estimate_dense_solve_mb)$solve_factor)
 matrix_factor <- eval(formals(couplr:::estimate_dense_matrix_mb)$overhead_factor)
 mem_sizes <- sort(unique(memory$n_total[memory$arm == "dense" &
                                         memory$status == "ok"]))
+## The ratios are read from 5,000 units up. At 2,000 the matrix holds 7 MB of
+## cells against a session floor of about 146 MB, so the peak over that floor is
+## mostly fixed cost and the ratio measures the session rather than the solve.
+## The prose states the exclusion, and the 2,000-unit row is in the shipped CSV.
+mem_small <- mem_sizes[mem_sizes < 5000]
 mem_sizes <- mem_sizes[mem_sizes >= 5000]
 mem_over_matrix <- function(arm) {
   over <- vapply(mem_sizes, function(n) mem_at(arm, n, "over_baseline_mb"),
@@ -645,9 +650,14 @@ entry points, each returning an object in the same family. `ps_match()` estimate
 a propensity score [@RosenbaumRubin1983] and matches on it, with the caliper
 expressed in standard deviations of the linear predictor. Where the constraints
 admit it, `full_match()` assigns every unit to a matched group of variable size,
-so no unit is discarded. The default solves the corresponding minimum-cost flow
-problem with Johnson potentials [@Johnson1977]; a two-pass greedy heuristic is
-reached by asking for it, under `method = "greedy"`. `cem_match()` implements coarsened exact matching
+so no unit is discarded. Every group it builds holds exactly one unit of the
+smaller side and between `min_controls` and `max_controls` of the larger, which
+is the variable-ratio design rather than the full matching of
+@HansenKlopfer2006: that admits one-to-many and many-to-one groups in the same
+solution, and an optimum over the two together can be strictly cheaper than the
+best solution of either shape alone. The default solves the corresponding
+minimum-cost flow problem with Johnson potentials [@Johnson1977]; a two-pass
+greedy heuristic is reached by asking for it, under `method = "greedy"`. `cem_match()` implements coarsened exact matching
 [@IacusKingPorro2012], and `subclass_match()` divides the sample into
 propensity-score subclasses, returning subclass weights for the average
 treatment effect on the treated or on the whole sample.
@@ -699,14 +709,15 @@ $$\text{common flow duals} \rightarrow \text{certificates}
 Underneath the designs of the previous section there is one object. It has
 nodes, each carrying a signed supply, and arcs, each carrying a cost and a
 capacity range. As Table \@ref(tab:designs) sets out, a one-to-one match, a
-k-to-one match, matching with replacement and a full match differ in the bounds
-their arcs receive, not in the code that solves them. Formulating full matching as a minimum-cost flow problem is established
+k-to-one match, matching with replacement and a variable-ratio grouping differ
+in the bounds their arcs receive, not in the code that solves them. Stating a
+matching design as a minimum-cost flow problem is established
 [@HansenKlopfer2006]; what the flow model contributes here is that every
 design in the package that a flow can represent compiles into it, so one
 solver and one certificate serve all of them, with the warm-start machinery
 shared where the public interface exposes it. Those are the
 six rows of the table: one-to-one, k-to-one, with replacement, blocked and
-exact, full matching, and fine and refined balance. The designs that sit
+exact, variable-ratio grouping, and fine and refined balance. The designs that sit
 outside it sit outside because their answer is not a flow: `cem_match()`
 coarsens and strata are read off directly, `subclass_match()` cuts the
 propensity score into subclasses, and the moment constraints of
@@ -723,7 +734,7 @@ many networks are built, rather than in which solver runs.
 | k-to-one matching | Capacitated bipartite flow, treated supply k |
 | Matching with replacement | Control capacities above one |
 | Blocked and exact matching | Independent networks per stratum |
-| Full matching | Lower and upper capacitated circulation |
+| Variable-ratio grouping | Lower and upper capacitated circulation |
 | Fine and refined balance | Category nodes with capacity bounds |
 
 Compiling a design, solving it, and checking the answer stay three separate
@@ -1022,8 +1033,8 @@ few.
 Sparsity and aspect ratio carried rules of their own, sending a mostly
 forbidden matrix to `lapmod` and a wide one to shortest augmenting paths. Both
 were slower than the default in the regime they were written for, so both were
-removed; Table \@ref(tab:regimes) is the measurement, and both solvers stay
-reachable by name.
+removed; the regime grid behind Table \@ref(tab:regimes) is the measurement, and
+both solvers stay reachable by name.
 
 
 Rule 2 reads the entries, and so does the rejection of `NaN` inputs that runs
@@ -1232,6 +1243,16 @@ mem_over <- function(arm, n = mem_n) mem_at(arm, n, "over_baseline_mb")
 mem_matrix <- mem_at("dense_matrix", mem_n, "matrix_mb")
 mem_ratio  <- mem_over("dense_matrix") / mem_matrix
 mem_solve_ratio <- mem_over("dense") / mem_matrix
+
+## The size whose solve peak sits closest to what the guard assumes, and the
+## megabytes between the two there. The sentence below states the sign, so a
+## re-measurement that moves the peak under the multiplier needs it read again.
+mem_solve_ratios <- mem_over_matrix("dense")
+mem_tight   <- which.max(mem_solve_ratios)
+mem_tight_n <- format(mem_sizes[mem_tight], big.mark = ",", trim = TRUE)
+mem_tight_x <- mem_solve_ratios[mem_tight]
+mem_tight_mb <- abs(mem_tight_x - solve_factor) *
+  mem_at("dense_matrix", mem_sizes[mem_tight], "matrix_mb")
 ```
 
 At `r mem_lab` the dense path peaks `r sprintf("%.0f", mem_over("dense"))` MB
@@ -1253,9 +1274,20 @@ peak of the solve at `r solve_factor` times them, and `memory_mode = "auto"`
 compares the second against available memory. Neither multiplier is fitted to
 one cell. Across `r mem_size_list` units the solve peaked at
 `r mem_solve_list` times the cell bytes and the matrix at `r mem_matrix_list`
-times them, so each default sits above the largest of those rather than at any
-one of them. That is the direction the guard has to err in, since it exists to
-refuse a solve that will not fit rather than to predict where the peak lands.
+times them. Both ratios are read from `r format(min(mem_sizes), big.mark = ",")`
+units up: at `r format(mem_small, big.mark = ",")` the matrix holds
+`r sprintf("%.0f", mem_at("dense_matrix", mem_small, "matrix_mb"))` MB of cells
+against a session floor near
+`r sprintf("%.0f", mem_at("baseline", mem_small, "peak_rss_mb"))` MB, so what
+the peak measures there is the session rather than the solve, and both
+multipliers are exceeded on it. The matrix default bounds every one of the
+sizes it is read against. The largest solve
+peak, at `r mem_tight_n` units, reached `r sprintf("%.1f", mem_tight_x)` times
+the cells against the `r solve_factor` the guard assumes, so at that size the
+estimate came in `r sprintf("%.0f", mem_tight_mb)` MB under the peak it is meant
+to bound. The guard exists to refuse a solve that will not fit rather than to
+predict where a peak lands, so the multiplier has to sit above the ratios it is
+read against, and at this size it does not.
 Every arm and size is in the supplementary material.
 
 ```{=latex}
@@ -1487,13 +1519,36 @@ reg_rect <- reg_def[reg_def$shape %in% c("500 x 1500", "500 x 5000",
                                          "1500 x 4500", "1000 x 10000"), ]
 reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
-reg_worst <- regime[which.max(regime$ratio), ]
 x <- function(v) sprintf("%.2fx", v)
 ## A cell has no `picked_s` exactly where the solver the rule named was not
 ## itself in that cell's panel, which is the large tier's reduced panel.
 off_panel <- regime[is.na(regime$picked_s), ]
 reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
 ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
+
+## The one cost regime the default is behind in, read as a regime rather than
+## as the single cell that happens to be worst inside it, against the rest of
+## the grid in the same measure.
+reg_tied <- reg_def[reg_def$regime == "tied", ]
+reg_rest <- reg_def[reg_def$regime != "tied", ]
+tied_win <- sort(table(reg_tied$best_method), decreasing = TRUE)
+
+## What the removed rules cost is a comparison with the solver each named, not
+## with the panel's best, so the two are timed against the default over the
+## cells the rule fired in. Joined on the cell keys rather than on row order.
+regres <- read.csv("data/regime-results.csv", stringsAsFactors = FALSE)
+head_to_head <- function(df, named, against = "jv") {
+  keys <- c("tier", "regime", "pattern", "n_rows", "n_cols")
+  m <- merge(df[df$method == named,   c(keys, "median_s")],
+             df[df$method == against, c(keys, "median_s")],
+             by = keys, suffixes = c(".named", ".against"))
+  m <- m[is.finite(m$median_s.named) & is.finite(m$median_s.against), ]
+  median(m$median_s.named / m$median_s.against)
+}
+h2h_rect <- head_to_head(regres[regres$n_cols >= 3 * regres$n_rows, ], "sap")
+h2h_sp   <- head_to_head(
+  regres[regres$pattern %in% c("random_25", "random_05",
+                               "random_01", "block_4"), ], "lapmod")
 ```
 
 Over the `r nrow(regime)` cells the dispatcher picked the fastest solver of the
@@ -1504,16 +1559,28 @@ solver the dispatcher named was not among those it is read against; on the
 `r nrow(ncs_in)` cells of that rule whose panel does hold its solver the median
 is `r x(median(ncs_in$ratio))`. Elsewhere the two sides are separate timings of
 one solver and scatter by a few percent either way. The two rules that were
-removed can be read off the same table. Over the `r nrow(reg_rect)` cells with
+removed can be read off the same grid. Over the `r nrow(reg_rect)` cells with
 at least three columns per row, where the rectangular rule used to fire, the
 default takes a median
 `r x(median(reg_rect$ratio))`; over the `r nrow(reg_sp)` cells with more than
-half the entries forbidden, `r x(median(reg_sp$ratio))`. Neither is a regime the
-default needs help in. Where it is furthest behind, at
-`r x(max(regime$ratio))`, the winner is `r reg_worst$best_method` on a
-`r reg_worst$shape` problem with heavily tied costs, which is a structure no
-rule in the table reads and none was added for: fitting one to this grid would
-score it on the measurements that chose it.
+half the entries forbidden, `r x(median(reg_sp$ratio))`. Timed against the
+solver each rule named rather than against the panel's best, `sap` takes a
+median `r x(h2h_rect)` of the default's time on the wide cells and `lapmod`
+`r x(h2h_sp)` of it on the sparse ones, so in each case the rule was naming the
+slower of the two.
+
+Where the default is behind, it is behind in one cost regime. Over the
+`r nrow(reg_tied)` cells whose finite costs are heavily tied it takes a median
+`r x(median(reg_tied$ratio))` of the fastest solver in the cell and as much as
+`r x(max(reg_tied$ratio))`; over the remaining `r nrow(reg_rest)` cells of the
+rule the median is `r x(median(reg_rest$ratio))` and the worst
+`r x(max(reg_rest$ratio))`. The solvers that win the tied cells are
+`` `r names(tied_win)[1]` `` in `r as.integer(tied_win)[1]` of them and
+`` `r names(tied_win)[2]` `` in `r as.integer(tied_win)[2]`, both of them the
+flow formulations that Figure \@ref(fig:solver-bench) puts last on dense uniform
+costs. No rule in the table reads how tied the costs are and
+none was added for it: fitting one to this grid would score it on the
+measurements that chose it.
 
 The full grid, every solver in every cell, is in the supplementary material.
 
@@ -1581,7 +1648,7 @@ three decimal places, so one matched point is plotted. Marginals could still
 hide different assignments, so we score all three on one objective: the same
 Mahalanobis distance matrix, summed over each package's chosen pairs. Each matches all `r lal_obj$n_pairs[lal_obj$package == "couplr"]` treated
 units, at a total distance of `r sprintf("%.3f", lal_obj$total_cost[lal_obj$package == "couplr"])` for couplr against `r sprintf("%.3f", lal_obj$total_cost[lal_obj$package == "optmatch"])` for both
-alternatives, a relative difference of $3 \times 10^{-6}$. That is agreement
+alternatives, a relative difference of `r sprintf("$%.0f \\times 10^{-6}$", 1e6 * abs(diff(range(lal_obj$total_cost))) / min(lal_obj$total_cost))`. That is agreement
 on the objective to the precision reported here rather than a demonstration
 that all three attain the same minimum, and separating those two readings is
 what a certificate is for: couplr's matching comes back certified optimal for
@@ -1722,23 +1789,25 @@ matching, exact blocking and a cost-matrix entry point, are omitted.
 ```{r capability, echo=FALSE}
 cap <- data.frame(
   Feature = c("Per-variable calipers from a named vector",
-              "Rectangular cost matrix as solver entry point",
+              "User-supplied cost matrix accepted",
+              "Pair matching solved as an assignment",
               "Sparse cost support",
               "k-best assignments",
               "Bottleneck (minimax) assignment",
               "Rosenbaum sensitivity bounds",
               "Public dual-potential verifier",
               "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "19 solvers"),
-  MatchIt = c("yes", "full match", "no", "no", "no", "no", "no",
+  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
+             "19 solvers"),
+  MatchIt = c("yes", "yes", "via full match", "yes", "no", "no", "no", "no",
               "via optmatch"),
-  optmatch = c("partial", "full match", "yes", "no", "no", "no", "gap bound",
-               "5 algorithms"),
+  optmatch = c("partial", "yes", "via full match", "yes", "no", "no", "no",
+               "gap bound", "5 algorithms"),
   check.names = FALSE
 )
 knitr::kable(
   cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. optmatch's calipers threshold one distance object at a time, so a per-variable set requires combining objects. All three handle unequal group sizes; the second row records the formulation each reaches the solver with, couplr a rectangular cost matrix directly, optmatch's pairmatch() through fullmatch(), and MatchIt through optmatch::fullmatch(). The verifier row records whether a package exports dual potentials together with a function checking the optimality conditions against a returned solution. optmatch reports a gap instead: the exceedances attribute of a fullmatch() result is documented as an upper bound, not necessarily sharp, on how far the returned sum of distances exceeds the least possible sum over feasible solutions. Its node prices travel in an MCFSolutions attribute fullmatch()'s documentation does not describe, and the function scoring a primal against them is not exported. That row was assessed on 2026-08-26 and the others on 2026-08-09, both against MatchIt 4.7.2 and optmatch 0.10.8."
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed."
 )
 ```
 
@@ -1749,25 +1818,18 @@ knitr::kable(
 
 # Summary and discussion
 
-We built couplr on the observation that one optimisation problem sits
-underneath a set of tasks R currently treats as unrelated. Making the
-assignment problem the organising object, rather than a hidden step inside a
-matching function, is what lets one package serve a causal-inference user
-starting from covariates and an operations-research user starting from a cost
-matrix. Three consequences follow. Every flow-representable design compiles
-into one flow model, so node potentials come back from all of them; those
-potentials turn a reported status into a certificate; and a certificate is what
-makes it safe to solve a problem that was never built, since a loop growing a
-restricted graph needs a statement about the complete one to know when to stop.
+Making the assignment problem the organising object, rather than a hidden step
+inside a matching function, is what lets one package serve a causal-inference
+user starting from covariates and an operations-research user starting from a
+cost matrix. Every flow-representable design compiles into one flow model, so
+node potentials come back from all of them, those potentials turn a reported
+status into a certificate, and the certificate is what makes it safe to solve a
+problem that was never built.
 
-What that architecture buys is measurable. At `r ilab[6]` the restricted graph
-settled at `r share[6]` of the complete pair count, returned a certified
-optimum, and ran `r sprintf("%.1f", imp_at("lazy", 50000) / imp_at("implicit", 50000))`
-times faster than traversing the complete graph lazily. A sweep of
-`r n_path_values` caliper values solved as one warm-started path cost a median
-`r sprintf("%.2f", 1 / median(pth$wall_speedup))` of solving each point independently, and
-across the `r nrow(regime)` cells of the solver-regime grid the dispatcher ran
-at a median `r x(median(regime$ratio))` of the cell's fastest measured solver.
+What that architecture buys is measurable: at `r ilab[6]` the restricted graph
+settled at `r share[6]` of the complete pair count and returned a certified
+optimum, and over the `r nrow(regime)` cells of the regime grid the dispatcher
+ran at a median `r x(median(regime$ratio))` of the cell's fastest solver.
 
 couplr has five limitations:
 
@@ -1778,27 +1840,21 @@ couplr has five limitations:
   arc has a reduced cost from the potentials at its ends.
 - The lazy cost path covers one-to-one matching without replacement under
   Jonker-Volgenant and auction with the built-in metrics. Replacement, a ratio
-  above one, `cardinality_match()` and a user-supplied distance function, which
-  expects one call over both matrices rather than one per pair, build the dense
-  matrix.
+  above one, `cardinality_match()` and a user-supplied distance function build
+  the dense matrix.
 - `cardinality_match()` answers a moment-constrained problem by branch and
-  bound under a node and time limit, so a run can stop with a gap rather than a
-  certificate and reports which it reached. Fine and refined balance, which the
-  network represents directly, is answered certified.
+  bound under node and time limits, so a run can stop with a gap rather than a
+  certificate and reports which it reached. Fine and refined balance is
+  answered certified.
 - The dispatcher reads two properties and otherwise defaults to
-  Jonker-Volgenant, which the regime grid supports across most of the
-  structures it covers. Over the small square cells with most of the matrix
-  forbidden, scaled auction is quicker in most of them, at a median of about
-  three times and as much as ten where the costs are also heavily tied. Fitting
-  a rule to this grid would score it on the measurements that chose it, so the
-  default stands and every solver stays reachable by name.
+  Jonker-Volgenant, at a median `r x(median(reg_rest$ratio))` of the cell's
+  fastest solver over most of the regime grid. Where the finite costs are
+  heavily tied it takes a median `r x(median(reg_tied$ratio))` and as much as
+  `r x(max(reg_tied$ratio))`, behind `` `r names(tied_win)[1]` `` and
+  `` `r names(tied_win)[2]` ``. Fitting a rule to this grid would score it on
+  the measurements that chose it, so the default stands.
 - Matching on observed covariates cannot address unmeasured confounding, which
   the sensitivity analysis quantifies rather than removes.
-
-Two extensions follow. Pricing a general flow arc from the potentials at the
-nodes it joins would carry the loop from the unit-capacity assignment to every
-design the flow model compiles, and with it to `full_match()`. A bound tighter
-than a ball would extend the pricer past the dimension it stops paying at.
 
 couplr is available on CRAN and developed at
 `https://github.com/gcol33/couplr`, with documentation at

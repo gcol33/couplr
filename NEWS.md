@@ -42,6 +42,22 @@
   `n` by `n` cost matrix is `O(n^2.5 * log(n * C))`. The previous `O(n^3 log C)`
   did not match the bound in the source it cites.
 
+## Documentation
+
+* **`full_match()` is documented as the variable-ratio design it solves.** Every
+  group it builds holds exactly one unit of the smaller side, the side chosen
+  once for the whole solution, and between `min_controls` and `max_controls` of
+  the larger. That is narrower than full matching in the sense of Hansen and
+  Klopfer (2006), which admits one-to-many and many-to-one groups in the same
+  solution, and the difference is not cosmetic: on the 3 by 3 distance matrix
+  with rows at 0, 10, 10 and columns at 0, 0, 10, `full_match()` returns a total
+  within-group distance of 10 and reports `status = "optimal"`, while
+  `optmatch::fullmatch()` returns 0 by pairing one left unit with two right ones
+  and two left units with the remaining right one. The gap grows without bound
+  with the spread. `status = "optimal"` means optimal for the design described
+  in `?full_match`, and the manual, the vignettes and the article now say which
+  design that is. Solving the wider problem is not in this release.
+
 ## Improvements
 
 * **`verify_assignment()` decides its conditions in exact arithmetic and says
@@ -121,6 +137,27 @@
   `min_reduced_cost` to say which case a result is in.
 
 ## Bug fixes
+
+* **The ball-tree pricing bound now covers the cost source's own evaluation.**
+  The bound has to sit below the number `raw_distance()` returns, since the
+  reduced costs a prune is read against are built from it. The tree measures
+  `||L' d||` as a sum of squares; under Mahalanobis the source measures
+  `d' A d` by row sums, whose terms cancel along the directions `A` is small
+  in, so its rounding is bounded relative to `|d|' |A| |d|` rather than to
+  `d' A d`. The allowance charged for the tree's own arithmetic and for the
+  algebraic gap `||L L' - A||_F ||L^-1||_F^2`, and nothing for that rounding;
+  the algebraic term is also exactly zero whenever `L L'` reconstructs the
+  stored `A`, which it does in about two draws in five of a poorly conditioned
+  sample. Measured against the shipped arithmetic the floor could sit
+  5.0e-7 above a member's cost, about 500 times the default `1e-9`
+  certification tolerance, so a node holding a genuine violator could price
+  above `-tol` and be skipped with `certified_optimal` still `TRUE`. It also
+  reached `max_suboptimality`, which is read off the bounds of the skipped
+  subtrees. `BallTree` now carries `|sym(inv_cov)|` and charges
+  `gamma_{n_vars + 3} * |d|' |A| |d|` over the node's box, taken on the squared
+  distance and applied to both sides of the ball. A NaN cost floor is reported
+  as no bound rather than as an unreachable node, so a descent reads the node
+  instead of skipping it.
 
 * **The ball-tree pricing bound holds under offset coordinates and poor
   conditioning.** The pricing loop compares each tree node against a bound on

@@ -64,6 +64,53 @@ std::vector<double> spd_matrix(int64_t n, std::mt19937& rng) {
     return a;
 }
 
+// An orthogonal matrix by Gram-Schmidt on a random one, row-major, each row a
+// basis vector.
+std::vector<double> random_orthogonal(int64_t n, std::mt19937& rng) {
+    std::normal_distribution<double> norm(0.0, 1.0);
+    std::vector<double> q(static_cast<std::size_t>(n * n));
+    for (double& x : q) x = norm(rng);
+    for (int64_t i = 0; i < n; ++i) {
+        double* row = &q[static_cast<std::size_t>(i * n)];
+        for (int64_t k = 0; k < i; ++k) {
+            const double* prev = &q[static_cast<std::size_t>(k * n)];
+            double dot = 0.0;
+            for (int64_t m = 0; m < n; ++m) dot += row[m] * prev[m];
+            for (int64_t m = 0; m < n; ++m) row[m] -= dot * prev[m];
+        }
+        double nrm = 0.0;
+        for (int64_t m = 0; m < n; ++m) nrm += row[m] * row[m];
+        nrm = std::sqrt(nrm);
+        for (int64_t m = 0; m < n; ++m) row[m] /= nrm;
+    }
+    return q;
+}
+
+// sum_k lam_k q_k q_k', with lam spanning `cond` orders of magnitude in
+// decreasing order, so the last row of `q` is the direction the matrix is
+// smallest in and the one a quadratic form cancels hardest along.
+std::vector<double> conditioned_spd(int64_t n, const std::vector<double>& q,
+                                    double scale, double cond) {
+    std::vector<double> lam(static_cast<std::size_t>(n));
+    for (int64_t k = 0; k < n; ++k) {
+        const double t = n == 1 ? 0.0
+                                : static_cast<double>(k) /
+                                      static_cast<double>(n - 1);
+        lam[static_cast<std::size_t>(k)] = scale * std::pow(cond, -t);
+    }
+    std::vector<double> a(static_cast<std::size_t>(n * n), 0.0);
+    for (int64_t k = 0; k < n; ++k) {
+        const double* qk = &q[static_cast<std::size_t>(k * n)];
+        for (int64_t i = 0; i < n; ++i) {
+            for (int64_t j = 0; j < n; ++j) {
+                a[static_cast<std::size_t>(i * n + j)] +=
+                    lam[static_cast<std::size_t>(k)] * qk[i] * qk[j];
+            }
+        }
+    }
+    return a;
+}
+
 struct SourceSpec {
     int64_t nrow = 12;
     int64_t ncol = 200;
@@ -220,7 +267,8 @@ TEST_CASE("Ball tree - node_cost_lo is under every admissible member's cost") {
                     lap::whiten_point(tree, src.left_row(i), q.data());
                 for (int32_t id = 0; id < tree.n_nodes(); ++id) {
                     const double lo =
-                        lap::node_cost_lo(tree, src, q.data(), q_g, id);
+                        lap::node_cost_lo(tree, src, q.data(), q_g,
+                                          src.left_row(i), id);
                     for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
                          t < tree.hi[static_cast<std::size_t>(id)]; ++t) {
                         const int64_t j = static_cast<int64_t>(
@@ -258,7 +306,7 @@ TEST_CASE("Ball tree - an out verdict never leaves a member in") {
         const double* x = src.left_row(i);
         for (int32_t id = 0; id < tree.n_nodes(); ++id) {
             const bool d_out =
-                lap::node_distance_out(tree, src, q.data(), q_g, id);
+                lap::node_distance_out(tree, src, q.data(), q_g, x, id);
             const bool c_out = lap::node_caliper_out(tree, src, x, id);
             if (d_out) ++distance_fired;
             if (c_out) ++caliper_fired;
@@ -440,4 +488,91 @@ TEST_CASE("Ball tree - the shapes a split cannot cut") {
             if (tree.is_leaf(id)) REQUIRE(tree.radius[static_cast<std::size_t>(id)] == 0.0);
         }
     }
+}
+
+// The bound has to hold against the number the source returns, not against the
+// exact distance. The tree measures ||L' d|| as a sum of squares; the source
+// measures d' A d by row sums, whose terms cancel along the directions A is
+// small in, so the two disagree by more than the tree's geometry accounts for
+// unless the source's own evaluation is charged for. This searches where they
+// disagree most: coordinates far from the origin, a covariance spanning ten
+// orders of magnitude, tightly clustered controls, and queries displaced along
+// the covariance's smallest direction. The comparison is exact, since every
+// step of the floor is rounded down.
+TEST_CASE("Ball tree - the cost floor holds under offset coordinates and a "
+          "poorly conditioned covariance") {
+    const int64_t n_vars = 3;
+    const int64_t nrow = 24;
+    const int64_t ncol = 96;
+    int64_t checked = 0;
+
+    for (std::uint32_t seed = 1; seed <= 60; ++seed) {
+        std::mt19937 rng(seed);
+        std::uniform_real_distribution<double> unif(0.0, 1.0);
+        std::normal_distribution<double> norm(0.0, 1.0);
+
+        const std::vector<double> q_orth = random_orthogonal(n_vars, rng);
+        const double scale = std::pow(10.0, 6.0 + 6.0 * unif(rng));
+        const double cond = std::pow(10.0, 9.0 + 4.0 * unif(rng));
+        std::vector<double> inv_cov = conditioned_spd(n_vars, q_orth, scale, cond);
+
+        // The controls sit in a tight cluster a long way from the coordinate
+        // origin, which is what forces the whitening to cancel.
+        const double offset = std::pow(10.0, 6.0 + 4.0 * unif(rng));
+        std::vector<double> base(static_cast<std::size_t>(n_vars));
+        for (int64_t k = 0; k < n_vars; ++k) base[static_cast<std::size_t>(k)] =
+            offset + norm(rng);
+
+        const double spread = std::pow(10.0, -9.0 + 3.0 * unif(rng));
+        std::vector<double> right(static_cast<std::size_t>(ncol * n_vars));
+        for (int64_t j = 0; j < ncol; ++j) {
+            for (int64_t k = 0; k < n_vars; ++k) {
+                right[static_cast<std::size_t>(j * n_vars + k)] =
+                    base[static_cast<std::size_t>(k)] + spread * norm(rng);
+            }
+        }
+
+        // Queries displaced along the smallest eigendirection, which is the
+        // last row of the orthogonal factor.
+        const double* small_dir = &q_orth[static_cast<std::size_t>((n_vars - 1) * n_vars)];
+        std::vector<double> left(static_cast<std::size_t>(nrow * n_vars));
+        for (int64_t i = 0; i < nrow; ++i) {
+            const double step = std::pow(10.0, -7.0 + 7.0 * unif(rng));
+            const double jitter = std::pow(10.0, -12.0 + 3.0 * unif(rng));
+            for (int64_t k = 0; k < n_vars; ++k) {
+                left[static_cast<std::size_t>(i * n_vars + k)] =
+                    base[static_cast<std::size_t>(k)] + step * small_dir[k] +
+                    jitter * norm(rng);
+            }
+        }
+
+        const lap::LazyCostMatrix src(std::move(left), std::move(right), n_vars,
+                                      lap::DistanceMetric::Mahalanobis,
+                                      std::move(inv_cov), kInf,
+                                      std::vector<lap::CaliperSpec>{}, false);
+        const lap::BallTree tree = lap::build_ball_tree(src, 8);
+        if (tree.empty()) continue;
+
+        std::vector<double> q(static_cast<std::size_t>(n_vars));
+        for (int64_t i = 0; i < src.nrow; ++i) {
+            const double* x = src.left_row(i);
+            const double q_g = lap::whiten_point(tree, x, q.data());
+            for (int32_t id = 0; id < tree.n_nodes(); ++id) {
+                const double lo =
+                    lap::node_cost_floor(tree, src, q.data(), q_g, x, id);
+                if (!std::isfinite(lo)) continue;
+                for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
+                     t < tree.hi[static_cast<std::size_t>(id)]; ++t) {
+                    const int64_t j = static_cast<int64_t>(
+                        tree.perm[static_cast<std::size_t>(t)]);
+                    double cost = 0.0;
+                    if (!src.admissible(i, j, cost)) continue;
+                    ++checked;
+                    REQUIRE(lo <= cost);
+                }
+            }
+        }
+    }
+
+    REQUIRE(checked > 100000);
 }

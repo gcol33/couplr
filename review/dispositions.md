@@ -50,6 +50,23 @@ It keeps the two distinguishing contributions and drops the overbroad claim. App
 to `rjournal.Rmd`. The body sweep over "provably", "proof", "exact" and "certified"
 landed with the rest of batch A on 2026-08-25; see batch A below.
 
+**Title revised 2026-09-01:**
+
+> couplr: Optimal Matching with Verifiable Certificates and Column Generation
+
+The second half now names the method the article derives. "Certified implicit edge
+generation" states the loop as column generation over the pair variables, citing
+Lubbecke and Desrosiers (2005), and solves a restricted master problem, so the
+standard term for the method is the one the article already argues in. "Sparse"
+describes how dense a graph is, and the article keeps it for that: the sparsity
+dispatch rule, `lapmod`, and the sparse-matching literature in section 2.
+
+The reviewer's objection in 1.1 was to "Provably Optimal", which route 2 settled.
+"Sparse Edge Generation" came from the original title and was carried into the
+suggestion unchanged rather than argued for, and "Verifiable Certificates" is
+untouched, so this does not reopen 1.1. The body sweep moving the method sense of
+"sparse" onto "restricted" and "column generation" landed the same day.
+
 ### D2. The `orlin` solver
 
 Not raised in the review. `R/trace_orlin.R:1-20` records that the production

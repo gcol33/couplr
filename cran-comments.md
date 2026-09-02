@@ -110,7 +110,8 @@ minor rather than a patch version.
 ## Test environments
 
 * local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
-* win-builder: r-devel, r-release
+* win-builder r-devel (2026-08-31 r90457 ucrt): 1 NOTE
+* win-builder r-release (4.6.1): 1 NOTE
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)
 

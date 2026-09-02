@@ -267,3 +267,26 @@ test_that("min_controls counts right units whichever side is larger", {
     expect_gte(sum(grp$side == "right"), 2)
   }
 })
+
+test_that("full_match() refuses negative distances rather than mis-solving them", {
+  # A cheapest edge cover is inclusion-minimal only under non-negative costs.
+  # With -100 on the diagonal and -1 off it the solve takes all four arcs and
+  # the minimality prune then drops the diagonal, returning the off-diagonal
+  # pairing at -2 and reporting status "optimal" against a full matching that
+  # costs -200.
+  left  <- data.frame(id = c("a", "b"), x = c(0, 1))
+  right <- data.frame(id = c("c", "d"), x = c(0, 1))
+  neg <- function(lm, rm) {
+    outer(lm[, 1], rm[, 1], function(u, v) ifelse(u == v, -100, -1))
+  }
+  expect_error(full_match(left, right, vars = "x", distance = neg),
+               "non-negative distances")
+
+  # A shifted version of the same function is accepted and solved.
+  shifted <- function(lm, rm) {
+    outer(lm[, 1], rm[, 1], function(u, v) ifelse(u == v, 0, 99))
+  }
+  ok <- full_match(left, right, vars = "x", distance = shifted)
+  expect_identical(ok$status, "optimal")
+  expect_equal(sum(ok$groups$side == "left"), 2)
+})

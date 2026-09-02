@@ -471,9 +471,18 @@ CertificateReport certify_assignment_impl(const Source& src,
     // The shifted duals of the derivation on max_suboptimality. Clamped at zero
     // because a feasible primal cannot sit below the optimum, so a negative
     // total is rounding in the two objective sums and not a solution better
-    // than optimal. A NaN objective carries through, since a bound taken from
-    // an infeasible primal would be a number standing for nothing.
-    {
+    // than optimal.
+    //
+    // The bound answers "how much can a feasible solution beat this one by",
+    // which is a question about a feasible candidate. A partial matching has a
+    // real objective and is not feasible, so the arithmetic below still
+    // produces a number for it, and that number reads as a guarantee the
+    // candidate cannot carry: a zero-cost problem with an uncovered row and
+    // zero duals reported max_suboptimality = 0 beside primal_feasible = false.
+    // No bound is reported unless the primal is feasible.
+    if (!rep.primal_feasible) {
+        rep.max_suboptimality = std::numeric_limits<double>::quiet_NaN();
+    } else {
         const double eps = std::max(0.0, -rep.certified_reduced_cost_floor);
         const double s = sign_condition_applies ? std::max(0.0, rep.max_v) : 0.0;
         const double bound = rep.duality_gap +

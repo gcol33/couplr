@@ -92,14 +92,19 @@
 
 0 errors | 0 warnings | 1 note
 
-The note is the incoming-feasibility one, reporting days since the last update.
-This is ten days after 1.6.1 rather than the usual longer gap. The release
-carries two correctness fixes found in review: a ball-tree pricing bound that
-could report `certified_optimal = TRUE` for a matching a skipped subtree would
-have improved, and `full_match()` solving a narrower design than its
-documentation described. It also carries three breaking changes, which is why
-it is a minor rather than a patch version. I am happy to hold the submission if
-you would prefer the full interval.
+The note is the incoming-feasibility one, reporting seven updates in the past
+six months. That is more than I would like, and 1.6.1 was published ten days
+ago.
+
+What is in this one: two correctness fixes found in review. The ball-tree
+pricing bound could report `certified_optimal = TRUE` for a matching that a
+subtree it skipped would have improved, and `full_match()` solved a narrower
+design than its documentation described. Both are wrong answers returned
+without saying they were wrong, which is why I am not holding them for a
+longer interval. The three breaking changes are why this is a minor rather
+than a patch version.
+
+If you would rather I wait, I am happy to withdraw and resubmit later.
 
 ## Test environments
 

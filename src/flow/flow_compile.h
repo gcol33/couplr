@@ -95,26 +95,6 @@ private:
     int64_t           times_;
 };
 
-// Transposed view of a cost source. Full matching makes the smaller side the
-// group centres, so an instance with more left units than right ones is
-// compiled from the transpose and mapped back on read.
-class TransposedOracle final : public CostOracle {
-public:
-    explicit TransposedOracle(const CostOracle& base) : base_(base) {}
-
-    double  at(int64_t i, int64_t j) const override { return base_.at(j, i); }
-    bool    allowed(int64_t i, int64_t j) const override { return base_.allowed(j, i); }
-    int64_t nrow() const override { return base_.ncol(); }
-    int64_t ncol() const override { return base_.nrow(); }
-
-    bool admissible(int64_t i, int64_t j, double& cost) const override {
-        return base_.admissible(j, i, cost);
-    }
-
-private:
-    const CostOracle& base_;
-};
-
 // A design's shape, with no costs behind it. Which network a design compiles
 // to, and which of the caller's units each node stands for, are decided by the
 // row and column counts alone, so a caller that only needs the routing decision
@@ -208,10 +188,6 @@ struct CompiledFullMatch {
 
     bool        bounds_feasible = true;
     std::string reason;
-
-    // Group centres are the smaller side. When transposed, row nodes carry
-    // right units and column nodes carry left units.
-    bool    transposed   = false;
 
     // True when both group shapes are admissible, which is min_controls == 1.
     // The network is then an edge cover over the pairs rather than one centre

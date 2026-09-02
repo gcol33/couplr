@@ -461,3 +461,50 @@ test_that("build_cost_matrix applies weights", {
   # With weights, x differences are multiplied by sqrt(4) = 2
   expect_true(is.numeric(result))
 })
+
+test_that("the distance-object path honours the design the caller asked for", {
+  # match_couples() validated replace and ratio and then dropped them, so a
+  # precomputed distance object silently solved 1:1 without replacement. The
+  # two interfaces are the same designs reached through different doors and
+  # have to answer the same question.
+  left  <- data.frame(id = paste0("L", 1:2), x = c(0, 10))
+  right <- data.frame(id = paste0("R", 1:4), x = c(0.1, 0.2, 10.1, 10.2))
+  d <- compute_distances(left, right, vars = "x")
+
+  from_df  <- match_couples(left, right, vars = "x", ratio = 2)
+  from_obj <- match_couples(d, ratio = 2)
+  expect_equal(nrow(from_obj$pairs), nrow(from_df$pairs))
+  expect_equal(sort(from_obj$pairs$right_id), sort(from_df$pairs$right_id))
+  expect_equal(as.vector(table(from_obj$pairs$left_id)), c(2L, 2L))
+
+  rep_df  <- match_couples(left, right, vars = "x", replace = TRUE)
+  rep_obj <- match_couples(d, replace = TRUE)
+  expect_equal(nrow(rep_obj$pairs), nrow(rep_df$pairs))
+
+  # The distances are fixed when the object is built, so naming a
+  # representation would read as a setting that did something.
+  expect_error(match_couples(d, memory_mode = "lazy"), "precomputed distance object")
+})
+
+test_that("a stored block variable is applied, as compute_distances() says it will be", {
+  # compute_distances(block_id = ) prints that blocking will be applied during
+  # matching and stores the column. The matching path accepted ignore_blocks
+  # and never read the stored value, so every cross-block pair stayed
+  # admissible and the note was false.
+  left  <- data.frame(id = paste0("L", 1:4), x = c(0, 1, 10, 11),
+                      s = c("a", "a", "b", "b"), stringsAsFactors = FALSE)
+  right <- data.frame(id = paste0("R", 1:4), x = c(0.1, 1.1, 10.1, 11.1),
+                      s = c("a", "b", "a", "b"), stringsAsFactors = FALSE)
+  d <- suppressMessages(compute_distances(left, right, vars = "x", block_id = "s"))
+
+  m <- match_couples(d)
+  ls <- setNames(left$s, left$id)
+  rs <- setNames(right$s, right$id)
+  expect_true(all(ls[m$pairs$left_id] == rs[m$pairs$right_id]))
+
+  # Without blocking the nearest partner crosses the strata, so the two
+  # answers differ and the flag is doing something.
+  free <- match_couples(d, ignore_blocks = TRUE)
+  expect_false(identical(sort(paste(free$pairs$left_id, free$pairs$right_id)),
+                         sort(paste(m$pairs$left_id, m$pairs$right_id))))
+})

@@ -306,7 +306,6 @@ void compile_full_matching_symmetric(const CostOracle& costs,
 
     const int64_t cap = std::min<int64_t>(max_controls,
                                           std::max<int64_t>(n_left, n_right));
-    out.transposed   = false;
     out.n_centres    = n_left;
     out.n_units      = n_right;
     out.max_capacity = cap;
@@ -360,11 +359,14 @@ CompiledFullMatch compile_full_matching(const CostOracle&                      c
         return out;
     }
 
-    // Group centres are the smaller side, so a centre always has units to
-    // absorb and the capacity bounds are read the way the caller wrote them.
-    out.transposed = (n_left > n_right);
-    out.n_centres  = out.transposed ? n_right : n_left;
-    out.n_units    = out.transposed ? n_left  : n_right;
+    // min_controls and max_controls count right units, so the centres are the
+    // left side whichever side holds more. Making the smaller side the centres
+    // turns the bounds into bounds on left units instead: on six left units,
+    // two right ones and min_controls = 2 that returns two groups holding one
+    // right unit each and reports them optimal. An orientation that cannot
+    // meet the bound is refused below rather than answered in the other one.
+    out.n_centres = n_left;
+    out.n_units   = n_right;
 
     // A centre cannot absorb more units than exist, so the requested upper
     // bound is clamped before it is compared with the lower one.
@@ -380,22 +382,14 @@ CompiledFullMatch compile_full_matching(const CostOracle&                      c
         return out;
     }
 
-    std::unique_ptr<CostOracle> transposed_view;
-    const CostOracle*           centre_costs = &costs;
-    if (out.transposed) {
-        transposed_view = std::unique_ptr<CostOracle>(new TransposedOracle(costs));
-        centre_costs    = transposed_view.get();
-    }
-
     // Every unit is placed, which is what makes this full matching rather than
     // a subset selection, so the flow the source injects is the unit count.
-    Skeleton s = open_bipartite(*centre_costs);
+    Skeleton s = open_bipartite(costs);
     s.b.add_source_arcs(s.row_base, s.n_rows, min_controls, out.max_capacity);
     s.b.add_sink_arcs(s.col_base, s.n_cols, 0, 1);
     s.b.inject_at_source(out.n_units);
 
     out.design = close_bipartite(s, out.n_units);
-    if (transposed_view) out.design.owned.push_back(std::move(transposed_view));
     return out;
 }
 

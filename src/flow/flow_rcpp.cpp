@@ -645,7 +645,6 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
         std::vector<lap::CategoryConstraint>());
 
     Rcpp::List shape = Rcpp::List::create(
-        Rcpp::Named("transposed") = design.transposed,
         Rcpp::Named("symmetric") = design.symmetric,
         Rcpp::Named("n_centres") = count_to_r(design.n_centres),
         Rcpp::Named("n_units") = count_to_r(design.n_units),

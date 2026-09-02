@@ -460,3 +460,24 @@ test_that("every dispatch rule is reachable and exactly one fires", {
     c("tiny", "no_cost_scale", "default")
   )
 })
+
+test_that("no suboptimality bound is reported for an infeasible candidate", {
+  # "the most any feasible solution can beat this one by" has no answer when
+  # the candidate is not feasible. On a zero-cost problem with an uncovered
+  # row and zero duals the two objectives agree at zero, and the bound came
+  # back as 0 beside primal_feasible = FALSE, which reads as a guarantee.
+  cm <- matrix(0, 3, 3)
+  partial <- c(1L, 2L, 0L)
+  v <- verify_assignment(partial, cost = cm,
+                         duals = list(u = rep(0, 3), v = rep(0, 3)))
+  expect_false(v$primal_feasible)
+  expect_true(v$structurally_valid_matching)
+  expect_false(v$all_rows_matched)
+  expect_true(is.na(v$max_suboptimality))
+
+  # The complete matching on the same problem still reports a bound.
+  full <- verify_assignment(c(1L, 2L, 3L), cost = cm,
+                            duals = list(u = rep(0, 3), v = rep(0, 3)))
+  expect_true(full$primal_feasible)
+  expect_equal(full$max_suboptimality, 0)
+})

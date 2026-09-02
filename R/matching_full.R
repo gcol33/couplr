@@ -304,6 +304,21 @@ full_match <- function(left, right, vars,
                                    sigma = sigma, memory_mode = memory_mode,
                                    caller_supports_lazy = FALSE)
 
+  # The reduction to an edge cover needs costs that do not reward extra
+  # arcs: a cheapest cover is inclusion-minimal only when no arc is worth
+  # keeping for its own sake. Under a negative cost the cheapest cover takes
+  # every negative arc and the minimality prune then removes arcs the
+  # objective wanted, so the answer is not the cheapest full matching. Every
+  # built-in metric is non-negative; a custom distance function need not be.
+  finite_costs <- cost_matrix[is.finite(cost_matrix)]
+  if (length(finite_costs) && min(finite_costs) < 0) {
+    stop("full_match() needs non-negative distances: the cheapest edge ",
+         "cover is a full matching only when no arc is worth keeping for ",
+         "its own sake. The smallest distance here is ",
+         format(min(finite_costs)), ". Shift the custom distance so its ",
+         "smallest value is zero.", call. = FALSE)
+  }
+
   # --- Caliper ---
   caliper_val <- NULL
   if (!is.null(caliper_sd)) {

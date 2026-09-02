@@ -7,6 +7,7 @@ output:
     toc: true
     number_sections: true
     latex_engine: pdflatex
+bibliography: ../RJreferences.bib
 header-includes:
   - \usepackage{booktabs}
   - \usepackage{longtable}
@@ -967,3 +968,5 @@ many-to-one matched sets in the same solution. couplr states it as an edge cover
 over the admissible pairs: a cheapest cover is inclusion-minimal, a minimal
 cover is a disjoint union of stars, and such a union covering every unit is a
 full matching.
+
+# References

@@ -34,22 +34,33 @@ fi
 
 # --- freshness -------------------------------------------------------------
 
+# Every number in the article is computed from data/, so an output older than a
+# refreshed CSV describes an earlier measurement while passing a check that only
+# reads the source. The newest input decides, not rjournal.Rmd alone.
+newest_input="$here/rjournal.Rmd"
+for src in "$here/RJreferences.bib" "$here"/data/*; do
+  [ -f "$src" ] || continue
+  [ "$src" -nt "$newest_input" ] && newest_input="$src"
+done
+
 for built in rjournal.pdf rjournal.html rjournal.tex; do
   if [ ! -f "$here/$built" ]; then
     echo "missing build output: $built" >&2
     echo "run: Rscript -e 'rmarkdown::render(\"rjournal.Rmd\", output_format = \"all\")'" >&2
     exit 1
   fi
-  if [ "$here/rjournal.Rmd" -nt "$here/$built" ]; then
-    echo "$built is older than rjournal.Rmd" >&2
+  if [ "$newest_input" -nt "$here/$built" ]; then
+    echo "$built is older than $(basename "$newest_input")" >&2
     echo "run: Rscript -e 'rmarkdown::render(\"rjournal.Rmd\", output_format = \"all\")'" >&2
     exit 1
   fi
 done
 
 sup="$here/supplementary/couplr-supplementary"
-if [ ! -f "$sup.pdf" ] || [ "$sup.Rmd" -nt "$sup.pdf" ]; then
-  echo "supplementary PDF missing or older than its source" >&2
+sup_newest="$sup.Rmd"
+[ "$here/RJreferences.bib" -nt "$sup_newest" ] && sup_newest="$here/RJreferences.bib"
+if [ ! -f "$sup.pdf" ] || [ "$sup_newest" -nt "$sup.pdf" ]; then
+  echo "supplementary PDF missing or older than $(basename "$sup_newest")" >&2
   echo "run: Rscript -e 'rmarkdown::render(\"couplr-supplementary.Rmd\")' in supplementary/" >&2
   exit 1
 fi

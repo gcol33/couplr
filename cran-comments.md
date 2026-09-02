@@ -15,11 +15,32 @@
   written for. Both solvers stay reachable by name.
 
 * `memory_mode = "auto"` sizes the solve rather than the cost matrix. A dense
-  solve peaks at 7 to 10 times the raw cell bytes, against the 4 the guard
+  solve peaks at 7.2 to 10.5 times the raw cell bytes, against the 4 the guard
   assumed, so it could start a solve on a machine it did not fit. The guard
   switches to the lazy path earlier than it did.
 
 ### Bug fixes
+
+* The ball-tree pricing bound now covers the cost source's own evaluation. The
+  bound has to sit below the number the distance routine returns, since the
+  reduced costs a prune is read against are built from it. The tree measures a
+  sum of squares while the source evaluates a quadratic form by row sums, and
+  the allowance charged nothing for the latter's rounding. The floor could sit
+  5e-7 above a member's cost, about 500 times the default 1e-9 tolerance, so a
+  node holding a genuine violator could be skipped with `certified_optimal`
+  still `TRUE`.
+
+* `full_match()` solved a narrower design than it documented. It fixed the
+  group centres to the globally smaller side, so a matched set holding one unit
+  of the larger side could not form. It is stated as an edge cover now and
+  agrees with `optmatch::fullmatch()` on 80 random instances. Only
+  `min_controls = 1` was affected.
+
+* The dense-solve guard's multiplier now covers every peak it is read against.
+  `estimate_dense_solve_mb()` defaulted `solve_factor` to 10 while a dense
+  one-to-one solve peaked at 10.5, 7.2 and 8.8 times the raw cell bytes at
+  5,000, 10,000 and 20,000 units, so at the first of those the estimate came in
+  about 20 MB under the peak it exists to bound. The default is 12.
 
 * `verify_assignment()` certified a matching that left rows unmatched under its
   default arithmetic. The numerical conclusion asked for primal feasibility, and
@@ -39,7 +60,6 @@
   range whose resolution cannot order those pairs is refused with `"jv"` and
   `"auction"` named instead of answered.
 
-
 * Under `memory_mode = "lazy"` and `"implicit"` the reported distance for a
   matched pair was recomputed in R from a second copy of the metric's formula,
   agreeing with the solver's own evaluation to rounding and not to the last
@@ -56,6 +76,14 @@
   condition is the sign of `c_ij - u_i - v_j`, which has an exact answer, and
   the new `arithmetic` argument takes `"auto"`, `"exact"` and `"double"`.
 
+* The certificate reports `max_suboptimality` and
+  `certified_reduced_cost_floor`, so a caller reads what the returned answer can
+  still be beaten by rather than only whether the check passed.
+
+* `estimate_dense_matrix_mb()` and `estimate_dense_solve_mb()` are exported.
+  Both were documented and reachable only through `:::`, while the memory-mode
+  documentation and the guard itself are written around them.
+
 * The edge-generation loop reads its seed width off the number of columns
   instead of using a fixed five, which settles it in two rounds instead of four
   to seven on the sizes measured.
@@ -64,16 +92,18 @@
 
 0 errors | 0 warnings | 1 note
 
-The note is the incoming-feasibility one, reporting the number of updates in
-the past six months. After 1.6.1 I said I would leave a longer gap, and this
-submission is fourteen days after it. The release carries a correctness fix to
-a result the package returned without saying it was wrong, and three breaking
-changes, which is why it is a minor rather than a patch version.
+The note is the incoming-feasibility one, reporting days since the last update.
+This is ten days after 1.6.1 rather than the usual longer gap. The release
+carries two correctness fixes found in review: a ball-tree pricing bound that
+could report `certified_optimal = TRUE` for a matching a skipped subtree would
+have improved, and `full_match()` solving a narrower design than its
+documentation described. It also carries three breaking changes, which is why
+it is a minor rather than a patch version. I am happy to hold the submission if
+you would prefer the full interval.
 
 ## Test environments
 
-* local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0 (0 errors, 0
-  warnings, 1 note)
+* local: Windows 11 x64, R 4.6.0 ucrt, Rtools45 g++ 14.3.0
 * win-builder: r-devel, r-release
 * GitHub Actions: macOS-latest, windows-latest, ubuntu-latest
   (devel, release, oldrel-1)

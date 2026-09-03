@@ -83,11 +83,16 @@ beat this one by, in the cost unit. It adds to the duality gap the
 slack the dual conditions were allowed: \code{n_rows} times the depth the
 reduced costs were permitted below zero, plus, where the sign
 condition applies, \code{n_cols} times the height the column duals were
-permitted above it. Zero when the conditions hold with no slack at
-all, which is what \code{certified_optimal} reports. \code{NA} when
-\code{primal_feasible} is \code{FALSE}: the quantity is what a feasible
-solution can beat this one by, and there is no answer for a
-candidate that is not one.
+permitted above it, plus an envelope for each objective's own
+rounding. Compensated summation buys back the accumulation error
+rather than removing it, so each sum is charged
+\verb{(2u + gamma_n^2)} times the sum of its terms' magnitudes and the
+assembly is rounded outward at every step. The number is an upper
+bound in double arithmetic and not an estimate of one. It is zero
+only where every one of those terms is exactly zero, which is what
+\code{certified_optimal} reports. \code{NA} when \code{primal_feasible} is
+\code{FALSE}: the quantity is what a feasible solution can beat this
+one by, and there is no answer for a candidate that is not one.
 \item \code{certified_reduced_cost_floor} — numeric; the lower bound proved for
 the reduced cost of every admissible pair, the ones never evaluated
 included. Equal to \code{min_reduced_cost} when every pair was visited,

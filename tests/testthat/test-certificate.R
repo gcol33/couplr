@@ -481,3 +481,25 @@ test_that("no suboptimality bound is reported for an infeasible candidate", {
   expect_true(full$primal_feasible)
   expect_equal(full$max_suboptimality, 0)
 })
+
+test_that("the suboptimality bound carries the objectives own rounding", {
+  # max_suboptimality is assembled from two compensated sums. Compensated
+  # summation buys back the accumulation error rather than removing it, so a
+  # bound that ignored the sums' own envelope was an estimate presented as a
+  # bound. On costs near 1e6 the envelope is the 2u * sum|term| scale.
+  set.seed(1)
+  m <- matrix(runif(400, 1, 1e6), 20, 20)
+  v <- verify_assignment(assignment(m, method = "jv"), cost = m)
+  expect_true(v$certified_optimal)
+  expect_gt(v$max_suboptimality, 0)
+  # Loose enough not to pin the constant, tight enough to catch an envelope
+  # that has gone from ulps to something visible in the objective.
+  expect_lt(v$max_suboptimality, 1e-6 * abs(v$primal_objective))
+
+  # Where every term is exactly zero the bound is exactly zero: rounding
+  # outward on a zero term would report slack the arithmetic proved absent.
+  z <- verify_assignment(c(1L, 2L, 3L), cost = matrix(0, 3, 3),
+                         duals = list(u = rep(0, 3), v = rep(0, 3)))
+  expect_identical(z$max_suboptimality, 0)
+  expect_true(z$certified_optimal)
+})

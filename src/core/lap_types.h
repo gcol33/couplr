@@ -10,6 +10,24 @@
 
 namespace lap {
 
+namespace detail {
+
+// gamma_k in the standard floating-point sense: the factor a quantity
+// accumulated over k rounded operations can be wrong by, relative to the sum
+// of the magnitudes. Saturates rather than going negative when k*eps reaches
+// one. Lives here because the ball tree charges it for the cost source's
+// quadratic form and the certificate charges it for its compensated sums,
+// and the two headers meet in the same translation unit.
+inline double gamma_of(int64_t k) {
+    const double e = 0.5 * std::numeric_limits<double>::epsilon();
+    const double d = static_cast<double>(k) * e;
+    if (!(d < 1.0)) return std::numeric_limits<double>::infinity();
+    return d / (1.0 - d);
+}
+
+}  // namespace detail
+
+
 // Constants
 constexpr double BIG = 1e100;   // Used for forbidden edges
 constexpr double TOL = 1e-12;   // Tolerance for zero comparisons

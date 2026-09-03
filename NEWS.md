@@ -161,6 +161,16 @@ one asked, so the version that reaches CRAN is this one.
 
 ## Bug fixes
 
+* **`max_suboptimality` is an upper bound rather than an estimate of one.**
+  It is assembled from the primal and dual objectives, each a Neumaier
+  compensated sum, and compensated summation buys back the accumulation
+  error rather than removing it. The bound charged nothing for that and the
+  assembly used ordinary arithmetic. Each sum now carries an envelope of
+  `(2u + gamma_n^2)` times the sum of its terms' magnitudes, both enter the
+  bound, and every step of the assembly is rounded outward. An exactly zero
+  bound stays exactly zero. The exact-arithmetic path is unchanged: it
+  concludes from exactly decided sign tests and never compares objectives.
+
 * **The ball-tree allowance for the cost source's own evaluation was counted
   off the wrong loop.** The term added in 1.7.0 has the right form, an
   absolute slack on the squared distance bounded by the entrywise

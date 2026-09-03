@@ -40,6 +40,7 @@
 // poisons a minimum or a sum beyond recovery.
 #pragma once
 
+#include "lap_types.h"
 #include "lap_cost_source.h"
 #include "lap_exact.h"
 #include "lap_neighbours.h"
@@ -73,11 +74,32 @@ inline void compensated_add(double& sum, double& comp, double x) {
 }
 
 struct CompensatedSum {
-    double sum = 0.0;
-    double comp = 0.0;
+    double  sum = 0.0;
+    double  comp = 0.0;
+    // What the sum's own rounding is charged against. Neumaier's error is
+    // bounded by (2u + O(n^2 u^2)) times the sum of the magnitudes, so both
+    // the magnitudes and the term count have to be carried to state it.
+    double  abs_sum = 0.0;
+    int64_t n_terms = 0;
 
-    void add(double x) { compensated_add(sum, comp, x); }
+    void add(double x) {
+        compensated_add(sum, comp, x);
+        abs_sum += std::fabs(x);
+        ++n_terms;
+    }
     double value() const { return sum + comp; }
+
+    // An upper bound on |value() - exact|, rounded away from zero. The
+    // O(n^2 u^2) term is charged as gamma_n^2, which dominates it and is
+    // negligible beside 2u at any term count a solve reaches.
+    double envelope() const {
+        const double u = 0.5 * std::numeric_limits<double>::epsilon();
+        const double g = gamma_of(n_terms);
+        const double rel = 2.0 * u + g * g;
+        if (!(abs_sum > 0.0)) return 0.0;
+        return std::nextafter(rel * abs_sum,
+                              std::numeric_limits<double>::infinity());
+    }
 };
 
 }  // namespace detail
@@ -384,6 +406,9 @@ CertificateReport certify_assignment_impl(const Source& src,
     // any feasible solution. An unmatched row costs nothing and leaves the sum
     // meaningful, so the objective is reported for a partial matching even
     // though no conclusion may be drawn from it.
+    // Infinity until the sum runs, so a bound assembled without one reports
+    // no bound rather than a smaller number than it can justify.
+    double env_primal = std::numeric_limits<double>::infinity();
     if (rep.structurally_valid_matching) {
         detail::CompensatedSum primal;
         for (int64_t i = 0; i < nrow; ++i) {
@@ -392,6 +417,7 @@ CertificateReport certify_assignment_impl(const Source& src,
             primal.add(src.at(i, j));
         }
         rep.primal_objective = primal.value();
+        env_primal = primal.envelope();
     }
 
     // ---- dual feasibility ----
@@ -430,6 +456,7 @@ CertificateReport certify_assignment_impl(const Source& src,
     for (int64_t i = 0; i < nrow; ++i) dual.add(u[static_cast<std::size_t>(i)]);
     for (int64_t j = 0; j < ncol; ++j) dual.add(v[static_cast<std::size_t>(j)]);
     rep.dual_objective = dual.value();
+    const double env_dual = dual.envelope();
 
     // ---- complementary slackness ----
     double max_matched_slack = 0.0;
@@ -483,11 +510,25 @@ CertificateReport certify_assignment_impl(const Source& src,
     if (!rep.primal_feasible) {
         rep.max_suboptimality = std::numeric_limits<double>::quiet_NaN();
     } else {
+        const double inf = std::numeric_limits<double>::infinity();
+        // The gap is a difference of two compensated sums, and compensated
+        // summation buys back the accumulation error rather than removing it.
+        // Each sum's own envelope is charged here, so the number reported is an
+        // upper bound in double arithmetic and not an estimate of one. Every
+        // step of the assembly is rounded up, for the same reason.
         const double eps = std::max(0.0, -rep.certified_reduced_cost_floor);
         const double s = sign_condition_applies ? std::max(0.0, rep.max_v) : 0.0;
-        const double bound = rep.duality_gap +
-                             static_cast<double>(nrow) * eps +
-                             static_cast<double>(ncol) * s;
+        // Adding nothing costs nothing: rounding up on a zero term would
+        // turn an exactly zero bound into a denormal and report slack
+        // where the arithmetic proved none.
+        const auto add_up = [inf](double acc, double term) {
+            return term > 0.0 ? std::nextafter(acc + term, inf) : acc;
+        };
+        double bound = rep.duality_gap;
+        bound = add_up(bound, static_cast<double>(nrow) * eps);
+        bound = add_up(bound, static_cast<double>(ncol) * s);
+        bound = add_up(bound, env_primal);
+        bound = add_up(bound, env_dual);
         rep.max_suboptimality =
             std::isnan(bound) ? bound : (bound > 0.0 ? bound : 0.0);
     }

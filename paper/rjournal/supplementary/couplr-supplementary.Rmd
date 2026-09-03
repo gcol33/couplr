@@ -338,12 +338,23 @@ Write $n$ for the rows and $m$ for the columns.
   $\bar{C}_{ij} \ge -\epsilon$ with the bound's own error already
   taken out rather than assumed away.
 
+- The two objective sums' own rounding. $\delta$ is a difference of the primal
+  and dual objectives, accumulated over $n$ and over $n + m$ terms. Compensated
+  summation buys back the accumulation error and does not remove it, so each
+  sum carries an envelope of its own. With $u$ the unit roundoff, Neumaier's
+  bound is $\bigl(2u + O(n^2u^2)\bigr)\sum_k |x_k|$, charged here as
+  $\bigl(2u + \gamma_n^2\bigr)\sum_k |x_k|$, which dominates it.
+
 Taken together the complete optimum is at least
 $\sum_i u_i + \sum_j v_j - n\epsilon$, and the returned matching's excess
-over it is at most $\delta + n\epsilon$ under the first two, with the third
-and fourth entering as conditions that must hold rather than as further slack:
-the sign condition is checked, and the tree allowance is subtracted before any
-prune fires.
+over it is at most $\delta + n\epsilon$ plus the two envelopes, with the third
+and fourth counts entering as conditions that must hold rather than as further
+slack: the sign condition is checked, and the tree allowance is subtracted
+before any prune fires. Every step of that assembly is rounded away from zero,
+so what is reported is an upper bound in double arithmetic and not an estimate
+of one. On a $20 \times 20$ instance with costs near $10^6$ the envelopes are
+the whole of it, about $1.2 \times 10^{-9}$ against an objective of
+$2.1 \times 10^6$.
 
 At $\epsilon = 10^{-9}$ and the largest shape in the article's benchmark,
 16,667 rows, $n\epsilon$ is $2 \times 10^{-5}$ in the cost units.

@@ -296,16 +296,6 @@ inline double whiten_point(const BallTree& tree, const double* x, double* out) {
 
 namespace detail {
 
-// gamma_k in the standard floating-point sense, saturating rather than going
-// negative when k*eps reaches one, which a covariate count could only do at a
-// dimension no tree would be built at.
-inline double gamma_of(int64_t k) {
-    const double e = 0.5 * std::numeric_limits<double>::epsilon();
-    const double d = static_cast<double>(k) * e;
-    if (!(d < 1.0)) return std::numeric_limits<double>::infinity();
-    return d / (1.0 - d);
-}
-
 // The relative allowance the tree lowers every bound by.
 //
 // The geometric part is gamma_{n_vars + 3}: a sum of n_vars squares, the

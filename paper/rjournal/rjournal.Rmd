@@ -1553,7 +1553,8 @@ h2h_sp   <- head_to_head(
 Over the `r nrow(regime)` cells the dispatcher picked the fastest solver of the
 panel in `r reg_fast` of them, at a median `r x(median(regime$ratio))` of the
 cell's best time. Where a cell reads below `1.00x` the two sides are separate
-timings of one solver and scatter by a few percent either way. The two rules that were
+timings of the same solver, and the lowest in the grid is
+`r x(min(regime$ratio))`. The two rules that were
 removed can be read off the same grid. Over the `r nrow(reg_rect)` cells with
 at least three columns per row, where the rectangular rule used to fire, the
 default takes a median

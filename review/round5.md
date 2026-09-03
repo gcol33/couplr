@@ -94,11 +94,18 @@ rendered literally; the file had no `bibliography:` field.
    n = 2 and 6.30 eps at n = 3 where `gamma_{n+3}` is about 5 eps and 6 eps,
    so the earlier constant was exceeded by found instances rather than
    merely loose. No article number moves.
-2. **Outward rounding.** The bound combines compensated sums under ordinary
-   floating point and clamps at zero, so it is a numerical estimate rather than
-   a directed-rounding certificate. Either compute it outward-rounded or say
-   "certified within x cost units" and reserve "exactly certified" for the
-   exact path.
+2. **DONE** (`572f460`). Each objective now carries an envelope of
+   `(2u + gamma_n^2) * sum |x_k|`, which dominates Neumaier's
+   `(2u + O(n^2 u^2))`, both enter `max_suboptimality`, and the assembly is
+   rounded outward at every step. Adding a zero term is not rounded, so a
+   bound the arithmetic proved exactly zero stays zero. On a 20 by 20
+   instance with costs near 1e6 the envelopes are the whole bound, about
+   1.2e-9 against an objective of 2.1e6.
+
+   The review's premise did not extend to the exact path, which needed
+   nothing: it concludes from exactly decided sign tests on `c - u - v` plus
+   primal feasibility and reports the gap only as a cross-check. No
+   relabelling was needed, so "certified" stands as written.
 3. **Regime-grid denominator.** The large-tier panel excludes `hk01` while
    dispatch selects it on binary cells, so those ratios compare against a panel
    the numerator is not in. The article states the reason; the review wants the

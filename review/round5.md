@@ -206,28 +206,62 @@ two decimals (below).
 1. Decide what the article should claim about the edge-generation margin, and
    what page 20 gives up so it has slack. Both are decisions the numbers
    cannot make.
-2. Freeze the code, then run the bench **once**. Budget eleven hours:
-   ten for the six stages that took 9h59m on 2026-09-03, plus `regimes`, which
-   items 3 and 4 put back into the run and which took 4h37m the last time it
-   was measured, less the half hour item 6 adds to `scaling`.
+2. Freeze the code, then run the bench **once**, and as the whole suite:
+   `FRESH=1 sh paper/run_bench_suite.sh`, no stage list. Budget eleven hours.
 3. Sync, re-render both formats, rebuild the zip, confirm 20 pages.
 4. `check_win_devel()` on the 1.7.1 tarball.
 5. CRAN, not before 2026-09-06. Then the R Journal, once CRAN serves 1.7.1.
 
-`regimes` is in the final run now, and it was not in the six. Its outputs
-changed shape twice — the panel gained a solver and every run gained a
-certificate — so neither document renders against a grid measured before
-`466f3b8`. A run at `858c645` was taken on 2026-09-03 to unblock rendering; its
+The run is the whole suite rather than the six stages that reach the ball tree,
+for two reasons. `regimes` has to be in it: items 3 and 4 changed the shape of
+its outputs, so neither document renders against a grid measured before
+`466f3b8`. `lalonde` and `figure` have to be in it because
+`logs/ENVIRONMENT.txt` is one stamp for the whole run, and leaving them out is
+what "the benchmarks do not correspond to an immutable released source state"
+describes. They cost minutes: `benchmark-table.csv` is 148 rows at `times = 5`,
+165 seconds of timed work by its own medians, and `lalonde` is 185 treated
+against 429 controls.
+
+A `regimes` run at `858c645` was taken on 2026-09-03 to unblock rendering. Its
 stamp is not the release commit, so it is a baseline and not the run that
 ships.
 
-### One thing the re-run surfaced that is not in the list above
+### Item 8, the edge-generation margin, with what the two runs say
 
-Every deterministic quantity reproduces exactly: `edges_evaluated` at all six
-sizes and `distances_x_med` at all seven clouds are byte-identical to the
-shipped CSVs. The wall-clock ratios are not. `speedup_med` moved 25 to 40
-percent on five of seven clouds, and `heavy_tailed` went from 1.04 to 0.77,
-which is the loop losing to the lazy path. The article quotes that range to
-two decimals and builds a sentence on which side of 1 it falls. That is the
-review's item 8 arriving with evidence, and it should be decided before the
-final run rather than after it.
+Every deterministic quantity reproduces exactly: `seeds`, `rounds_min`,
+`rounds_max`, `graph_pct_med` and `distances_x_med` are byte-identical across
+the two runs at all seven clouds, as are `edges_evaluated` at all six sizes.
+The wall-clock ratio is not. Against the per-seed spread inside the shipped run
+itself, five of the seven re-run medians fall outside the whole range:
+
+    cloud          seed range, 5 seeds   shipped   re-run
+    contested          3.18 - 3.22        3.19      4.47   outside
+    lattice_ties       1.67 - 1.77        1.72      1.38   outside
+    gaussian           1.70 - 2.05        1.95      1.48   outside
+    clustered          1.76 - 2.11        1.87      1.41   outside
+    heavy_tailed       0.98 - 1.08        1.04      0.77   outside
+    shell              4.26 - 6.86        5.29      4.39   inside
+    shifted           10.60 - 11.56      10.83     10.83   inside
+
+The two that reproduced are the two with the widest seed spread, so the spread
+across seeds is not the uncertainty and an interval built from it would look
+precise while excluding a value the same code produced on the same machine two
+days later. Both runs are the same Mac and the same R.
+
+What that does not establish is that the quantity is unstable. The shipped
+stamp reads `3a083b1 17 modified paths`, so the run 1.04x comes from was taken
+on a dirty tree of unknown object freshness, and on this machine a stale object
+has already made an unchanged path measure 5.4x slower. The defensible claim is
+narrower: **nothing in hand supports two decimals**, since the only two runs
+available disagree by 25 to 40 percent while their seed spreads are a few
+percent.
+
+So the article should not carry a two-decimal point estimate, and should not
+carry a clause that appears or vanishes with which side of 1 the low end lands
+on. Whole numbers, and the low end stated as what both runs agree on: on the
+heavy-tailed cloud there is no margin either way. The paragraph does not lean
+on the ratio; its claims are the deterministic quantities above.
+
+Comparing this baseline against the final run settles the rest for free. Both
+are cleaned builds on the same machine, so if their `speedup_med` agree, the
+shipped run's dirty tree was the cause and a decimal can go back.

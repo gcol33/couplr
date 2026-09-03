@@ -151,10 +151,13 @@ if (QUICK) {
 }
 if (length(TIER_ARG)) tiers <- tiers[TIER_ARG]
 
-## The instance seed is a function of everything that defines the instance, so
-## the same cell regenerates the same problems in any session and two cells
-## never share a draw.
-instance_seed <- function(tier, regime, pattern, n_rows, n_cols, instance) {
+## A cell seed is a function of everything that defines the cell and the
+## instance inside it, so the same cell regenerates the same problems in any
+## session and two cells never share a draw. It is a different quantity from
+## `bench_common.R`'s `instance_seed()`, which draws one size of the scaling
+## problem, and carries a different name rather than shadowing it on the order
+## the two happen to be defined in.
+cell_seed <- function(tier, regime, pattern, n_rows, n_cols, instance) {
   key <- paste(tier, regime, pattern, n_rows, n_cols, instance, sep = "|")
   ## A 32-bit digest of the key, so the seed is stable across platforms without
   ## depending on a hashing package.
@@ -298,8 +301,8 @@ for (tier_name in names(tiers)) {
         flush.console()
 
         for (instance in seq_len(tier$instances)) {
-          seed <- instance_seed(tier_name, regime, pattern, n_rows, n_cols,
-                                instance)
+          seed <- cell_seed(tier_name, regime, pattern, n_rows, n_cols,
+                            instance)
           todo <- Filter(function(x) !have_run(tier_name, regime, pattern,
                                                n_rows, n_cols, instance,
                                                x$method), tier$panel)

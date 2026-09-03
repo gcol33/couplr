@@ -170,6 +170,14 @@ struct BallTree {
     // the node's box, and it is absolute on the squared distance. Empty and
     // zero for the metrics the source sums non-negative terms for, where no
     // cancellation arises.
+    //
+    // src_quad_rel is gamma_{2 n_vars + 2}, counted off the loop the source
+    // runs rather than off the tree's: the inner row product recomputes its own
+    // differences, so each of its terms carries one subtraction and the length
+    // n_vars accumulation, (1 + delta)(1 + theta_n) = (1 + theta_{n+1}); the
+    // outer sum multiplies by d_a, itself one subtraction, and accumulates over
+    // n_vars terms again, so a term of the double sum carries
+    // (1 + delta)(1 + theta_{n+1})(1 + theta_n) = (1 + theta_{2n+2}).
     std::vector<double> abs_inv_cov;  // |sym(inv_cov)|, n_vars * n_vars
     double src_quad_rel = 0.0;
 
@@ -400,7 +408,7 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
                                      a[static_cast<std::size_t>(j * n_vars + i)]));
             }
         }
-        tree.src_quad_rel = detail::gamma_of(n_vars + 3);
+        tree.src_quad_rel = detail::gamma_of(2 * n_vars + 2);
     }
 
     tree.n_vars = n_vars;

@@ -214,8 +214,9 @@ answer for more work rather than a different answer.
 
 Every bound is lowered by an allowance before it is compared, so a subtree is
 discarded only where it clears the threshold by more than the bound can be
-wrong. The allowance has a relative part and an absolute one, and both are
-needed.
+wrong. The allowance has three parts, and each covers a different arithmetic:
+a relative part and an absolute one for the tree's own, and a third for the
+cost source's, which is what a prune is finally read against.
 
 The relative part covers the rounding of the centre distance and the radius,
 each a sum of squares and a square root, and for Mahalanobis the residual
@@ -236,6 +237,72 @@ by the standard error bound on the dot products forming the whitened
 displacement. No relative allowance can cover that term, since the whitened
 coordinates are formed before the difference the distance is taken over and
 their rounding does not shrink as two points approach.
+
+Both parts above are the tree's own arithmetic, and a prune is not read against
+the tree's number. It is read against the number the cost source returns, and
+the two are different computations of the same quantity. The tree accumulates
+$\|L^\top d\|^2$ as a sum of squares, whose terms are non-negative. The source
+evaluates $d^\top A d$ by row sums,
+$$
+\sum_{a} d_a \sum_{b} A_{ab}\, d_b ,
+$$
+whose terms are not. A third part of the allowance covers that evaluation.
+
+Write $\gamma_k = k\varepsilon / (1 - k\varepsilon)$ with $\varepsilon$ the unit
+roundoff, and take the standard model in which each operation contributes a
+factor $1 + \delta$ with $|\delta| \le \varepsilon$. The source recomputes its
+own differences inside the inner loop, so a term of the inner product carries
+one subtraction and the length-$n$ accumulation,
+$(1 + \delta)(1 + \theta_n) = 1 + \theta_{n+1}$. The outer sum multiplies by
+$d_a$, itself formed by one subtraction, and accumulates over $n$ terms again,
+so a term of the double sum carries
+$(1 + \delta)(1 + \theta_{n+1})(1 + \theta_n) = 1 + \theta_{2n+2}$. Summing the
+term-wise bounds,
+$$
+\bigl|\,\mathrm{fl}(d^\top A d) - d^\top A d\,\bigr|
+\;\le\; \gamma_{2n+2}\, |d|^\top |A|\, |d| ,
+$$
+with $|d|$ and $|A|$ taken entrywise.
+
+The right-hand side is $|d|^\top |A| |d|$ and not $d^\top A d$, and that is the
+whole difficulty. Where $A$ carries off-diagonal entries of mixed sign the row
+sums cancel, and the ratio $|d|^\top |A| |d| \,/\, d^\top A d$ grows without
+bound as $d$ runs along a direction $A$ is small in. No relative allowance on
+the distance can hold an error of that shape. The residual term above does not
+reach it either: $E$ is exactly zero whenever $LL^\top$ reproduces $A$ in the
+working precision, which is the ordinary case, so the part of the allowance
+that appears to scale with conditioning usually contributes nothing at all.
+
+A node is bounded by its box. For a column $x$ the node holds and a row $q$ the
+displacement is $d = q - x$, so componentwise
+$|d_a| \le m_a := \max\bigl(|q_a - \ell_a|,\, |q_a - h_a|\bigr)$ over the box
+$[\ell, h]$. Every entry of $|A|$ is non-negative, so the bound is monotone in
+each $|d_a|$ and
+$$
+s(S) \;=\; \gamma_{2n+2}\, m^\top |A|\, m
+$$
+holds for every column the node carries at once.
+
+$s$ is absolute on the squared distance, so it is applied there and the root
+retaken: the near side becomes $\sqrt{\max(0,\, d_{\text{lo}}^2 - s)}$ and the
+far side $\sqrt{d_{\text{hi}}^2 + s}$, each operation rounded away from the
+bound it widens. Every cost-level question the pricer asks is answered from
+that pair, so no caller can decide against the geometric bound alone.
+
+For a metric whose squared distance is a sum of non-negative terms, the
+Euclidean family among them, no cancellation arises: the relative error of that
+sum is at most $\gamma_n$ and the tree's relative part already carries it.
+There $s$ is zero and the geometric bound stands unwidened.
+
+The index is worth stating precisely because it is not the tree's. An earlier
+version of this allowance charged $\gamma_{n+3}$, the count that belongs to the
+tree's sum of squares, for the source's double sum. Random search over
+symmetric $A$ with mixed signs and a wide spectrum reaches a realised error of
+$5.38\varepsilon\,|d|^\top|A||d|$ at $n = 2$ and $6.30\varepsilon$ at $n = 3$,
+against a $\gamma_{n+3}$ of about $5\varepsilon$ and $6\varepsilon$: the earlier
+constant is not merely loose in the worst case but exceeded by instances a
+search finds. At $\gamma_{2n+2}$, $6\varepsilon$ and $8\varepsilon$ here, both
+sit inside the allowance.
 
 A subtree that does not clear the threshold is descended into, which costs the
 evaluations the bound would have saved and not the edge, so an allowance set

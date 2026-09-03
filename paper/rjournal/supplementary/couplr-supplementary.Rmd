@@ -62,8 +62,9 @@ were taken under, and summary and worst-case views of each one, and names the
 script that produced each so any of them can be re-measured. It also carries the
 parts of the software design the article points at: the object model, the C++
 organisation and the dependency footprint, the proof of the sentinel-padding
-lemma the article states, the glossary behind the solver figure's labels, and
-the outcome analysis the article points at.
+lemma the article states, the glossary behind the solver figure's labels, the
+feature comparison with MatchIt and optmatch, and the outcome analysis the
+article points at.
 
 Every cell of every measurement is in the CSV files listed below, which ship
 with the submission under `data/`. The tables here select from those files; they
@@ -1050,8 +1051,33 @@ who only wants to match pays for none of them.
 
 # How the feature comparison was read
 
-Each entry of the feature table in the article was read from the alternatives'
-own source and documentation rather than from their prose descriptions, against
+```{r capability, echo=FALSE}
+cap <- data.frame(
+  Feature = c("Per-variable calipers from a named vector",
+              "User-supplied cost matrix accepted",
+              "Pair matching solved as an assignment",
+              "Sparse cost support",
+              "k-best assignments",
+              "Bottleneck (minimax) assignment",
+              "Rosenbaum sensitivity bounds",
+              "Public dual-potential verifier",
+              "User-selectable assignment algorithm"),
+  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
+             "19 solvers"),
+  MatchIt = c("yes", "yes", "via full match", "yes", "no", "no", "no", "no",
+              "via optmatch"),
+  optmatch = c("partial", "yes", "via full match", "yes", "no", "no", "no",
+               "gap bound", "5 algorithms"),
+  check.names = FALSE
+)
+kb(
+  cap, align = "lccc",
+  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. Rows where all three offer the feature, covariate distance, propensity-score matching and exact blocking, are omitted. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch()."
+)
+```
+
+Each entry was read from the alternatives' own source and documentation rather
+than from their prose descriptions, against
 MatchIt 4.7.2 and optmatch 0.10.8. The verifier row was assessed on 2026-08-26
 and the rest on 2026-08-09.
 

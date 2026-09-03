@@ -171,7 +171,7 @@ near-optimal. \CRANpkg{cobalt} [@cobalt] supplies balance diagnostics across
 packages. What these expose is the matching design; the assignment problem
 underneath is reached through a solver argument at most, and alternative optima
 and a bottleneck objective sit outside all of them. Statements about other
-packages here and in Table \@ref(tab:capability) were assessed on 2026-08-09
+packages here and in the supplementary material's feature table were assessed on 2026-08-09
 against \CRANpkg{MatchIt} 4.7.2, \CRANpkg{optmatch} 0.10.8, \CRANpkg{Matching} 4.10-15 and
 \CRANpkg{designmatch} 0.5.5, and against the reference manuals of
 \CRANpkg{rcbalance} 1.8.8 and \CRANpkg{quickmatch} 0.2.3 on 2026-08-26.
@@ -200,7 +200,7 @@ cost matrix is left to the caller. Among the matching-specific interfaces
 surveyed, none exposes assignment or flow potentials together with a function
 that verifies optimality against them. \CRANpkg{optmatch} states bounds in
 their place, an `exceedances` attribute and a solver tolerance, both described
-with the capability table below.
+in the supplementary material.
 
 The second concerns size. Sparse matching is a developed literature, and what
 its methods have in common is that the sparse network is settled before the
@@ -1784,39 +1784,19 @@ materialising and traversing the matrix.
 
 ### Feature coverage
 
-Table \@ref(tab:capability) lists where the three packages differ.
-Rows where all three offer the feature, covariate distance, propensity-score
-matching, exact blocking and a cost-matrix entry point, are omitted.
-
-```{r capability, echo=FALSE}
-cap <- data.frame(
-  Feature = c("Per-variable calipers from a named vector",
-              "User-supplied cost matrix accepted",
-              "Pair matching solved as an assignment",
-              "Sparse cost support",
-              "k-best assignments",
-              "Bottleneck (minimax) assignment",
-              "Rosenbaum sensitivity bounds",
-              "Public dual-potential verifier",
-              "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
-             "19 solvers"),
-  MatchIt = c("yes", "yes", "via full match", "yes", "no", "no", "no", "no",
-              "via optmatch"),
-  optmatch = c("partial", "yes", "via full match", "yes", "no", "no", "no",
-               "gap bound", "5 algorithms"),
-  check.names = FALSE
-)
-knitr::kable(
-  cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed."
-)
-```
-
-```{=latex}
-\FloatBarrier
-```
-
+All three packages offer covariate distances, propensity-score matching, exact
+blocking and a cost-matrix entry point. Where they differ is in what the
+assignment layer exposes. k-best assignments, a bottleneck objective, Rosenbaum
+sensitivity bounds and a public dual-potential verifier are in couplr and in
+neither alternative, with optmatch reporting a gap bound in place of the last of
+these. couplr solves a pair match as the rectangular assignment directly, where
+`optmatch::pairmatch()` and MatchIt's optimal method route it through
+`fullmatch()`, and it exposes nineteen solvers where optmatch exposes five. The
+comparison is of the assignment layer alone, and omits areas where the
+alternatives lead, among them the breadth of designs reachable through a single
+MatchIt call and the maturity of optmatch's full matching. The supplementary
+material gives the full table, what each entry was read from, and the versions
+assessed.
 
 # Summary and discussion
 

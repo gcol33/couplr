@@ -217,9 +217,15 @@
 #' }
 #' This is faster but does not guarantee globally optimal results.
 #'
-#' Weights are computed so that within each group, the total weight of right
-#' units equals the total weight of left units (which is 1). For a group with
-#' 1 left and k right units, each right unit receives weight 1/k.
+#' Every left unit carries weight 1, and the right units of a group share a
+#' total weight equal to the number of left units in that group, so the two
+#' sides of a group weigh the same. A group holding one left unit and k right
+#' units therefore gives each right unit \code{1/k}; a group holding k left
+#' units and one right unit gives that right unit \code{k}. \code{"greedy"}
+#' builds one left unit per group and produces only the first shape.
+#' \code{"optimal"} at \code{min_controls = 1} centres a group on whichever
+#' side is larger, so both arise; above one the centres are the left units and
+#' the first shape is the only one.
 #'
 #' @examples
 #' set.seed(42)
@@ -391,9 +397,9 @@ full_match <- function(left, right, vars,
       matched_left_idx <- c(matched_left_idx, left_in_g)
       matched_right_idx <- c(matched_right_idx, right_in_g)
 
-      # Weights: the smaller side gets weight 1, the larger side gets
-      # weight (n_small / n_large) so total weights balance.
-      # Standard convention: left weight = 1, right weight = n_left / n_right
+      # Every left unit weighs 1, and the group's right units share a total
+      # weight equal to the number of left units, so the two sides of a group
+      # weigh the same whichever side the group is centred on.
       left_weight <- 1.0
       right_weight <- n_left_in_group / n_right_in_group
       groups_rows[[length(groups_rows) + 1L]] <- tibble::tibble(

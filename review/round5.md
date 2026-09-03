@@ -97,10 +97,24 @@ rendered literally; the file had no `bibliography:` field.
 4. **Correctness oracle in the regime benchmark** is the median total across
    solvers, which a majority can get wrong. Report feasibility, recomputed
    objective and certificate per run instead.
-5. **Architecture claims.** "Every design compiles into one flow model" is
-   broader than the code: 1:1 and fixed-ratio lower to assignment engines,
-   replacement is separable, cardinality is branch and bound. A narrower claim
-   is still a strong one.
+5. **Architecture claims: mostly does not hold, one part fixed.** The article
+   says "Every **flow-representable** matching design compiles into one
+   internal flow model" in both the abstract and the body, and the flow
+   compilation section names the designs that sit outside and why
+   (`cem_match()`, `subclass_match()`, `cardinality_match()`). It is a claim
+   about compilation, and it is accurate: `.couples_design()` calls
+   `lap_flow_compile_couples()` for every design including 1:1, which is
+   what makes the potentials available; the solve is then lowered to an
+   assignment engine. The article also names `verify_assignment()` and
+   `verify_flow()` separately, so it does not claim one certificate serves
+   all.
+
+   The one sub-claim that did hold is fixed: "a caliper or a distance ceiling
+   is checked before a distance is computed" was true of a per-variable
+   caliper, which `node_caliper_out()` reads off the node's covariate box,
+   and false of a general `max_distance`, which needs the tree's distance
+   bound and is evaluated pair by pair where the metric admits no ball
+   bound. The sentence now distinguishes the two.
 6. **Scaling headline** rests on one instance at n = 50,000.
 7. **Weight semantics** for the k:1 star shape are undocumented.
 

@@ -851,9 +851,9 @@ omitted pair, so the exact conclusion of the certification section is not
 reachable from a scan assembled that way, and the certificate reports that as
 its arithmetic.
 
-Constraints tighten the loop rather than complicating it, since a caliper or a
-distance ceiling is checked before a distance is computed and removes pairs from
-the set to be priced.
+Constraints tighten the loop rather than complicating it: a caliper is read on
+the covariates and a distance ceiling against the tree's bound, so pairs
+leave the set unpriced.
 
 Two neighbours are worth separating from this. \citet{Abeywickrama2021} also decline
 to build a complete cost matrix, deferring exact edge costs behind an

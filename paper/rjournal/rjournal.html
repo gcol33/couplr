@@ -3365,9 +3365,9 @@ ask whether anything prices below <span class="math inline">\(-\epsilon\)</span>
 omitted pair, so the exact conclusion of the certification section is not
 reachable from a scan assembled that way, and the certificate reports that as
 its arithmetic.</p>
-<p>Constraints tighten the loop rather than complicating it, since a caliper or a
-distance ceiling is checked before a distance is computed and removes pairs from
-the set to be priced.</p>
+<p>Constraints tighten the loop rather than complicating it: a caliper is read on
+the covariates and a distance ceiling against the tree’s bound, so pairs
+leave the set unpriced.</p>
 <p>Two neighbours are worth separating from this. <span class="citation" data-cites="Abeywickrama2021">Abeywickrama et al. (<a href="#ref-Abeywickrama2021" role="doc-biblioref">2021</a>)</span> also decline
 to build a complete cost matrix, deferring exact edge costs behind an
 inexpensive, application-specific lower bound, so what they save is

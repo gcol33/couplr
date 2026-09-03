@@ -290,3 +290,29 @@ test_that("full_match() refuses negative distances rather than mis-solving them"
   expect_identical(ok$status, "optimal")
   expect_equal(sum(ok$groups$side == "left"), 2)
 })
+
+test_that("a group centred on a right unit weighs it by the leaves it carries", {
+  # More left units than right, so at min_controls = 1 the groups are centred
+  # on the right units and a group is k left units around one right unit. Every
+  # left unit weighs 1 and the group's right unit weighs k, so the two sides of
+  # a group weigh the same.
+  set.seed(2)
+  left  <- data.frame(id = paste0("L", 1:9), age = runif(9, 20, 70))
+  right <- data.frame(id = paste0("R", 1:3), age = runif(3, 20, 70))
+  res <- full_match(left, right, vars = "age")
+  expect_identical(res$status, "optimal")
+
+  g <- res$groups
+  expect_true(all(g$weight[g$side == "left"] == 1))
+  for (gid in unique(g$group_id)) {
+    grp <- g[g$group_id == gid, ]
+    n_left  <- sum(grp$side == "left")
+    n_right <- sum(grp$side == "right")
+    expect_equal(sum(grp$weight[grp$side == "right"]), n_left)
+    expect_equal(grp$weight[grp$side == "right"],
+                 rep(n_left / n_right, n_right))
+  }
+
+  # The fixture has to hold the shape the test is about.
+  expect_true(any(tapply(g$side, g$group_id, function(s) sum(s == "left")) > 1))
+})

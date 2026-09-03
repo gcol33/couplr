@@ -138,9 +138,15 @@ left unit, respecting \code{max_controls}
 }
 This is faster but does not guarantee globally optimal results.
 
-Weights are computed so that within each group, the total weight of right
-units equals the total weight of left units (which is 1). For a group with
-1 left and k right units, each right unit receives weight 1/k.
+Every left unit carries weight 1, and the right units of a group share a
+total weight equal to the number of left units in that group, so the two
+sides of a group weigh the same. A group holding one left unit and k right
+units therefore gives each right unit \code{1/k}; a group holding k left
+units and one right unit gives that right unit \code{k}. \code{"greedy"}
+builds one left unit per group and produces only the first shape.
+\code{"optimal"} at \code{min_controls = 1} centres a group on whichever
+side is larger, so both arise; above one the centres are the left units and
+the first shape is the only one.
 }
 \examples{
 set.seed(42)

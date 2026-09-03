@@ -106,13 +106,39 @@ rendered literally; the file had no `bibliography:` field.
    nothing: it concludes from exactly decided sign tests on `c - u - v` plus
    primal feasibility and reports the gap only as a cross-check. No
    relabelling was needed, so "certified" stands as written.
-3. **Regime-grid denominator.** The large-tier panel excludes `hk01` while
-   dispatch selects it on binary cells, so those ratios compare against a panel
-   the numerator is not in. The article states the reason; the review wants the
-   selected solver always in the panel, which is a re-measurement.
-4. **Correctness oracle in the regime benchmark** is the median total across
-   solvers, which a majority can get wrong. Report feasibility, recomputed
-   objective and certificate per run instead.
+3. **DONE** (`466f3b8`). Nine of the forty-five large cells dispatched to
+   `hk01` against a panel that did not time it, and read 0.02x to 0.25x with
+   an empty `picked_ratio`. `hk01` is in both tiers now under the condition it
+   was already guarded by, and the grid stops rather than record a cell whose
+   dispatched solver its panel does not hold; the article asserts the same
+   property at render time and no longer explains a reduced panel. On the
+   quick grid the `no_cost_scale` rule reads a median picked ratio of 1.00 and
+   a worst of 1.03, where before it had none.
+
+   Reading the shipped grid to write that sentence turned up a second thing:
+   over the 180 cells whose panel did hold their solver, the lowest ratio is
+   0.59x, against a sentence claiming the two sides "scatter by a few percent
+   either way". A direct A/B on beast puts `"auto"` within 1% of the solver it
+   names, so 0.59x is the harness and not the dispatcher, and it is probably
+   the resume: `regime-runs.csv` skips rows already in it, so two solvers of
+   one cell can come from two sessions. The final run is `FRESH=1`, which is
+   one session by construction. The article reads the minimum off the grid
+   now (`858c645`) rather than asserting a magnitude.
+4. **DONE** (`466f3b8`). Each instance gets one optimal dual solution from
+   `assignment_duals()`, and every solver's matching is certified against it:
+   feasibility, the objective recomputed from the matching rather than the
+   total the solver reported, the duality gap, and the bound on what a
+   feasible solution can beat it by. Optimal duals are shared by all optimal
+   solutions, so one dual solution serves the whole cell and the verdict is
+   against the instance's own optimum. The certificate is taken outside every
+   timed section, so no reported time moves; measured cost is about 0.1 s per
+   instance and per solve at the largest shape.
+
+   On a 500 by 500 lognormal instance it separates `auction_scaled` at a gap
+   of 5.6e-7 from nine solvers certified exact, which is the finding the
+   median oracle reached by majority. The supplement's section is written
+   from the certificate columns, so it will not render against a grid measured
+   before them.
 5. **Architecture claims: mostly does not hold, one part fixed.** The article
    says "Every **flow-representable** matching design compiles into one
    internal flow model" in both the abstract and the body, and the flow
@@ -131,8 +157,26 @@ rendered literally; the file had no `bibliography:` field.
    and false of a general `max_distance`, which needs the tree's distance
    bound and is evaluated pair by pair where the metric admits no ball
    bound. The sentence now distinguishes the two.
-6. **Scaling headline** rests on one instance at n = 50,000.
-7. **Weight semantics** for the k:1 star shape are undocumented.
+6. **DONE** (`b6ef068`). The table's largest size carried one instance and one
+   repetition, so the n = 50,000 figure was a single run with no spread, and
+   n = 20,000 carried two. Both go to three, the fewest that gives a median
+   rather than a pair; the large sizes still drop repetitions rather than
+   instances, since a repetition measures the clock and is the steadier of the
+   two. The lazy path had the same shape in the same paragraph, one run per
+   size, with the equivalence claim resting on one draw; it now times the
+   three instances the dense table uses and checks the pairing on all three.
+   The cost is one optmatch timeout at each of the two sizes, about half an
+   hour.
+7. **DONE** (`e3937ac`). The weighting was documented for one group shape,
+   "the total weight of right units equals the total weight of left units
+   (which is 1)". At `min_controls = 1` a group is centred on whichever side
+   is larger, so a problem with more left units than right gives groups of k
+   left units around one right unit, where each side totals k and the right
+   unit weighs k. The rule that covers both is the one the code implements:
+   every left unit weighs 1, and a group's right units share a total equal to
+   the number of left units in it. The comment beside the computation said the
+   smaller side gets weight 1, which is the opposite of what runs on that
+   shape. A test pins it and checks its fixture produces the shape.
 
 ## Consequences
 
@@ -154,15 +198,28 @@ closing out, with a floor of 2026-09-06 (1.6.1 was published 2026-08-23 and
 
 ### Order of work from here
 
-1. Settle items 3 and 4. They are benchmark methodology, so they decide what
-   the final run has to measure.
-2. Land items 6 and 7 and anything else touching code.
-3. Freeze the code, then run the bench **once**. Budget ten hours:
-   `implicit_grid` alone took 8h17m on 2026-09-03, against an estimate of
-   1h10m in the round-4 handoff.
-4. Sync, re-render both formats, rebuild the zip, confirm 20 pages.
-5. `check_win_devel()` on the 1.7.1 tarball.
-6. CRAN, not before 2026-09-06. Then the R Journal, once CRAN serves 1.7.1.
+Items 3, 4, 6 and 7 are closed. What is left before the freeze is a decision
+rather than an edit: the article quotes `speedup_med` to two decimals and
+builds a sentence on which side of 1 it falls, and that number is not stable to
+two decimals (below).
+
+1. Decide what the article should claim about the edge-generation margin, and
+   what page 20 gives up so it has slack. Both are decisions the numbers
+   cannot make.
+2. Freeze the code, then run the bench **once**. Budget eleven hours:
+   ten for the six stages that took 9h59m on 2026-09-03, plus `regimes`, which
+   items 3 and 4 put back into the run and which took 4h37m the last time it
+   was measured, less the half hour item 6 adds to `scaling`.
+3. Sync, re-render both formats, rebuild the zip, confirm 20 pages.
+4. `check_win_devel()` on the 1.7.1 tarball.
+5. CRAN, not before 2026-09-06. Then the R Journal, once CRAN serves 1.7.1.
+
+`regimes` is in the final run now, and it was not in the six. Its outputs
+changed shape twice — the panel gained a solver and every run gained a
+certificate — so neither document renders against a grid measured before
+`466f3b8`. A run at `858c645` was taken on 2026-09-03 to unblock rendering; its
+stamp is not the release commit, so it is a baseline and not the run that
+ships.
 
 ### One thing the re-run surfaced that is not in the list above
 

@@ -56,7 +56,7 @@ script_for() {
 outputs_for() {
   case "$1" in
     scaling)       echo "paper/scaling-results.csv paper/scaling-runs.csv" ;;
-    scaling_lazy)  echo "paper/scaling-lazy-results.csv" ;;
+    scaling_lazy)  echo "paper/scaling-lazy-results.csv paper/scaling-lazy-runs.csv" ;;
     implicit)      echo "paper/implicit-results.csv paper/implicit-equivalence.csv" ;;
     path)          echo "paper/path-results.csv paper/path-points.csv" ;;
     regimes)       echo "paper/regime-runs.csv paper/regime-cells.csv paper/regime-results.csv paper/regime-verdict.csv" ;;

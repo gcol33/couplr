@@ -1767,12 +1767,12 @@ while couplr's dispatcher sends this problem to Jonker-Volgenant. Reading the
 margin as a faster inner loop would need a benchmark holding the formulation
 fixed across packages, which this one does not.
 
-The lazy path removes the memory ceiling as well. The same $n = 50{,}000$ match
-under `memory_mode = "lazy"` completes in
-`r sprintf("%.0f", lazy$elapsed_s[lazy$n_total == 50000])` seconds without ever
+The lazy path removes the memory ceiling as well. The same $n = 50{,}000$
+problems under `memory_mode = "lazy"` take a median
+`r sprintf("%.0f", lazy$median_s[lazy$n_total == 50000])` seconds without ever
 building the distance matrix, returning the assignment the dense path returns.
-At $n = 20{,}000$ it takes
-`r sprintf("%.1f", lazy$elapsed_s[lazy$n_total == 20000])` seconds against
+At $n = 20{,}000$ the median is
+`r sprintf("%.1f", lazy$median_s[lazy$n_total == 20000])` seconds against
 `r sprintf("%.1f", scaling$median_s[scaling$n_total == 20000 & scaling$package == "couplr"])`
 for the dense path, so on these problems recomputing distances is cheaper than
 materialising and traversing the matrix.

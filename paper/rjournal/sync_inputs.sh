@@ -22,6 +22,7 @@ lalonde-results.csv
 scaling-results.csv
 scaling-runs.csv
 scaling-lazy-results.csv
+scaling-lazy-runs.csv
 implicit-results.csv
 implicit-equivalence.csv
 path-results.csv

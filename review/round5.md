@@ -203,9 +203,8 @@ rather than an edit: the article quotes `speedup_med` to two decimals and
 builds a sentence on which side of 1 it falls, and that number is not stable to
 two decimals (below).
 
-1. Decide what the article should claim about the edge-generation margin, and
-   what page 20 gives up so it has slack. Both are decisions the numbers
-   cannot make.
+1. **DONE.** What the article claims about the edge-generation margin, and what
+   page 20 gives up so it has slack. Both are recorded at the end of this file.
 2. Freeze the code, then run the bench **once**, and as the whole suite:
    `FRESH=1 sh paper/run_bench_suite.sh`, no stage list. Budget eleven hours.
 3. Sync, re-render both formats, rebuild the zip, confirm 20 pages.
@@ -265,3 +264,24 @@ on the ratio; its claims are the deterministic quantities above.
 Comparing this baseline against the final run settles the rest for free. Both
 are cleaned builds on the same machine, so if their `speedup_med` agree, the
 shipped run's dirty tree was the cause and a decimal can go back.
+
+### Both decisions, applied
+
+**The margin.** The paragraph's last sentence carries whole numbers read off
+the grid, and states the low end as what both runs agree on: about 11x on the
+displaced treated group, and none at all on the heavy-tailed cloud, where the
+two paths are within measurement of each other. `ig_note` is gone. The reading
+is asserted at render time, `ig_slow_x` within a factor of two of parity, since
+a median wall-clock ratio does not resolve the two paths there. The contested
+core's sentence quoted the same quantity to one decimal, and 3.19 against 4.47
+does not support one decimal either; it reads "several times faster" now, under
+an assertion that the ratio exceeds two.
+
+**Page 20.** The capability table moves to the supplement, into the section
+that already carried what every one of its entries was read from. The article
+keeps a paragraph naming what differs, and the balance the caption carried
+about where the alternatives lead. Measured on a render against the `858c645`
+regime baseline, page 20 goes from 10.0 to 19.5 lines of slack at 20 pages, and
+the supplement absorbs the table at 17. A control render, the same data with the
+previous Rmd, ends page 20 on the same line as the shipped PDF, so the gain is
+the move and not the new grid.

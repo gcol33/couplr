@@ -81,10 +81,19 @@ rendered literally; the file had no `bibliography:` field.
 
 ## Open, not yet acted on
 
-1. **The ball-tree proof does not derive `source_quadform_slack`.** Supplement
-   §4 still argues the older residual and whitening-error bound. The term is
-   real and reaches the binary. This is the largest remaining item and is
-   mathematical writing, not a code fix.
+1. **DONE, and it was a code fix as well** (`c34fd32`). The section derives
+   the source term now: the bound, why it is entrywise `|d|'|A||d|` rather
+   than relative to `d'Ad`, the maximisation over the node's box, and the
+   directed rounding when the slack is applied on the squared distance.
+
+   Deriving it showed the constant was wrong. The term charged
+   `gamma_{n+3}`, the count belonging to the tree's sum of squares, for the
+   source's double sum; the source recomputes its differences inside the
+   inner loop, so the right constant is `gamma_{2n+2}`. Against a long
+   double reference, random search reaches a realised error of 5.38 eps at
+   n = 2 and 6.30 eps at n = 3 where `gamma_{n+3}` is about 5 eps and 6 eps,
+   so the earlier constant was exceeded by found instances rather than
+   merely loose. No article number moves.
 2. **Outward rounding.** The bound combines compensated sums under ordinary
    floating point and clamps at zero, so it is a numerical estimate rather than
    a directed-rounding certificate. Either compute it outward-rounded or say

@@ -161,6 +161,21 @@ one asked, so the version that reaches CRAN is this one.
 
 ## Bug fixes
 
+* **The ball-tree allowance for the cost source's own evaluation was counted
+  off the wrong loop.** The term added in 1.7.0 has the right form, an
+  absolute slack on the squared distance bounded by the entrywise
+  `|d|' |A| |d|` rather than relative to `d' A d`, and the wrong constant: it
+  charged `gamma_{n+3}`, the count belonging to the tree's own sum of
+  squares, for the source's double sum. The source recomputes its
+  differences inside the inner loop, so a term of the double sum carries
+  `(1+delta)(1+theta_{n+1})(1+theta_n) = (1+theta_{2n+2})`, and the constant
+  is `gamma_{2n+2}`. This is not only a loose worst case: random search over
+  symmetric matrices with mixed signs reaches a realised error of
+  5.38 eps at n = 2 and 6.30 eps at n = 3 against a `gamma_{n+3}` of about
+  5 eps and 6 eps, so the earlier constant is exceeded by instances a search
+  finds. No pruning decision moves on the article's instances: the
+  edge-generation counts are byte-identical at every size measured.
+
 * **`match_couples()` on a precomputed distance object honours the design it
   was given.** The branch validated `replace` and `ratio` and then forwarded
   neither, along with `certify`, so a call naming a ratio or replacement was

@@ -680,70 +680,86 @@ cat(sprintf("The per-cell medians and quartiles behind this table are in `regime
             nrow(regime_runs)))
 ```
 
-## Do the solvers agree
+## Is every matching optimal
 
-Every solver in a cell solves the same instance, so their totals have to agree.
-Each run below is compared against the median total of its own cell, and a run
-counts as off that median where the difference exceeds $10^{-6}$ of it.
+A solver is right when the matching it returns is optimal for the instance it
+was given, which is a question about that instance and not about what the rest
+of the panel returned. One optimal dual solution is computed per instance with
+`assignment_duals()`, and every solver's matching on that instance is certified
+against it by `verify_assignment()`. Optimal duals are shared by all optimal
+solutions of a linear program, so one dual solution serves every solver in the
+cell. Each solve carries whether its matching is feasible, the objective
+recomputed from the matching it returned rather than the total it reported, and
+the duality gap, which is the amount by which a feasible solution can beat it.
 
-```{r regime-agreement, results="asis"}
-ok <- regime_runs[regime_runs$status == "ok" & !is.na(regime_runs$total_cost), ]
-akey <- paste(ok$tier, ok$regime, ok$pattern, ok$n_rows, ok$n_cols, ok$instance)
-ok$ref <- ave(ok$total_cost, akey, FUN = median)
-ok$rel <- abs(ok$total_cost - ok$ref) / pmax(1, abs(ok$ref))
-n_solv <- length(unique(ok$method))
-per_inst <- tapply(ok$method, akey, function(x) length(unique(x)))
-off <- ok[ok$rel > 1e-6, ]
-agree <- setdiff(unique(ok$method), unique(off$method))
+```{r regime-certificates, results="asis"}
+## A certificate is a property of the solve, so it is read once per
+## (cell, instance, solver) and not once per timed repetition.
+cok  <- regime_runs[regime_runs$status == "ok", ]
+skey <- paste(cok$tier, cok$regime, cok$pattern, cok$n_rows, cok$n_cols,
+              cok$instance, cok$method)
+cert <- cok[!duplicated(skey) & !is.na(cok$certified_optimal), ]
+cert$rel_gap <- cert$duality_gap / pmax(1, abs(cert$objective))
+
+n_solv <- length(unique(cert$method))
+off    <- cert[!cert$certified_optimal, ]
 off_names <- sort(unique(off$method))
-n_off <- length(off_names)
-off_tail <- if (n_off == 0) {
-  "Every solver returns the cell median exactly on every run."
-} else {
-  sprintf("%d of the %d solvers return the cell median exactly on every run%s",
-          length(agree), n_solv,
-          if (n_off == 1) ", and the one that does not is below."
-          else sprintf(", and the %d that do not are below.", n_off))
-}
-cat(sprintf("%d instances carry %d to %d solvers each. %s\n\n",
-            length(per_inst), min(per_inst), max(per_inst), off_tail))
+n_off  <- length(off_names)
+n_infeasible <- sum(!cert$primal_feasible)
 
-## The paragraph after the table names the solvers and agrees with their
-## number, so a re-measurement that moves one cannot leave it reading Both.
-off_lead <- if (n_off == 1) {
-  sprintf("`%s` is a scaling method, and it deviates", off_names)
+## Both sentences are built from the counts, so a re-measurement that moves one
+## cannot leave the prose reading for a number that is no longer there.
+feasible_sentence <- if (n_infeasible == 0) {
+  "Every one returns a feasible matching."
 } else {
-  sprintf("%s are scaling methods, and both deviate",
-          paste(sprintf("`%s`", off_names), collapse = " and "))
+  sprintf("%d of them return a matching that is not feasible.", n_infeasible)
 }
-off_size <- if (n_off == 1) {
-  "The deviation is not a property of the regime"
+optimal_sentence <- if (n_off == 0) {
+  "Every one is certified optimal."
 } else {
-  paste("The size of the deviations differs by orders of magnitude, and",
-        "neither is a property of the regime")
+  sprintf("%d of the %d solvers are certified optimal on every solve; the %s below %s not.",
+          n_solv - n_off, n_solv,
+          if (n_off == 1) "one" else sprintf("%d", n_off),
+          if (n_off == 1) "is" else "are")
 }
+cat(sprintf("%d solves across %d solvers carry a certificate. %s %s\n\n",
+            nrow(cert), n_solv, feasible_sentence, optimal_sentence))
 ```
 
-```{r regime-agreement-table}
+```{r regime-certificates-table}
 if (nrow(off)) {
+  fam <- unique(bench_tab[, c("method", "family")])
   os <- do.call(rbind, lapply(split(off, off$method), function(g) data.frame(
     Solver = g$method[1],
-    `Runs` = sum(ok$method == g$method[1]),
-    `Runs off the median` = nrow(g),
-    `Regimes` = paste(sort(unique(g$regime)), collapse = ", "),
-    `Worst relative difference` = sprintf("%.3g", max(g$rel)),
+    Family = fam$family[match(g$method[1], fam$method)],
+    Solves = sum(cert$method == g$method[1]),
+    `Not certified` = nrow(g),
+    Regimes = paste(sort(unique(g$regime)), collapse = ", "),
+    `Worst gap, relative` = sprintf("%.3g", max(g$rel_gap)),
     check.names = FALSE)))
-  kb(os[order(-os$`Runs off the median`), ],
-     caption = "The solvers whose total differed from the median total of a cell they ran in.",
-     align = "lrrlr")
+  kb(os[order(-os$`Not certified`), ],
+     caption = "The solvers whose matching the certificate could not call optimal, and how far above the instance's optimum it was.",
+     align = "llrrlr")
 }
 ```
 
-`r off_lead` on the lognormal regime alone, so the rounding a scaling step
-applies over a cost range that wide may be what separates it from the rest.
-`r off_size`: the remaining solvers return one common total on every cell of
-it. Whether a particular matching is
-optimal for the matrix as supplied is what `verify_assignment()` answers.
+```{r regime-certificates-close, results="asis"}
+if (n_off == 0) {
+  cat("Nothing in the grid returns a matching a cheaper one exists for.\n\n")
+} else {
+  named <- paste(sprintf("`%s`", off_names), collapse = " and ")
+  regs  <- sort(unique(off$regime))
+  cat(sprintf("%s %s a matching above the optimum only on the %s regime%s, and every other matching on those cells certifies optimal.",
+              named, if (n_off == 1) "returns" else "return",
+              paste(sprintf("`%s`", regs), collapse = " and "),
+              if (length(regs) == 1) "" else "s"))
+  if (identical(regs, "heavy_tailed")) {
+    cat(" The rounding a scaling step applies over a cost range that wide may be what separates it from the rest.")
+  }
+  cat(sprintf(" The worst gap is %s of the objective, small against the numbers involved and still a matching a cheaper one exists for.\n\n",
+              sprintf("%.3g", max(off$rel_gap))))
+}
+```
 
 \FloatBarrier
 

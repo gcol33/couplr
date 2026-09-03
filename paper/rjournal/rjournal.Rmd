@@ -1478,7 +1478,8 @@ crossing and `r sum(regime$tier == "large")` the large-tier subset. We generate 
 several independent instances and time each instance several times, and every
 solver in the panel sees the same instance. We time the solver `"auto"` selects
 as a solver of its own, so its number carries the probing pass the rules cost,
-and we read it against the fastest named solver in the same cell.
+and we read it against the fastest named solver in the same cell, whose panel
+holds every solver the rules can name on it.
 
 ```{r regimes, echo=FALSE}
 rule_lab <- c(tiny = "at most 8 by 8",
@@ -1501,7 +1502,7 @@ by_rule <- by_rule[order(-by_rule$Cells), ]
 
 knitr::kable(
   by_rule, align = "llrrrr", booktabs = TRUE, row.names = FALSE,
-  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver. The large tier times a reduced panel that omits the special-purpose solvers, so a cell whose dispatched solver is not in it reads below 1.00x."
+  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver."
 )
 ```
 
@@ -1520,11 +1521,9 @@ reg_rect <- reg_def[is_wide(reg_def$shape), ]
 reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
 x <- function(v) sprintf("%.2fx", v)
-## A cell has no `picked_s` exactly where the solver the rule named was not
-## itself in that cell's panel, which is the large tier's reduced panel.
-off_panel <- regime[is.na(regime$picked_s), ]
-reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
-ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
+## Every cell's panel holds the solver its rule named, so a cell always has a
+## `picked_s`. The benchmark refuses to record one that does not.
+stopifnot(!anyNA(regime$picked_s))
 
 ## The one cost regime the default is behind in, read as a regime rather than
 ## as the single cell that happens to be worst inside it, against the rest of
@@ -1553,12 +1552,8 @@ h2h_sp   <- head_to_head(
 
 Over the `r nrow(regime)` cells the dispatcher picked the fastest solver of the
 panel in `r reg_fast` of them, at a median `r x(median(regime$ratio))` of the
-cell's best time. A cell reads below `1.00x` for one of two reasons. The large
-tier times a reduced panel, so on its `r nrow(off_panel)` binary cells the
-solver the dispatcher named was not among those it is read against. On the
-`r nrow(ncs_in)` cells of that rule whose panel does hold its solver the median
-is `r x(median(ncs_in$ratio))`. Elsewhere the two sides are separate timings of
-one solver and scatter by a few percent either way. The two rules that were
+cell's best time. Where a cell reads below `1.00x` the two sides are separate
+timings of one solver and scatter by a few percent either way. The two rules that were
 removed can be read off the same grid. Over the `r nrow(reg_rect)` cells with
 at least three columns per row, where the rectangular rule used to fire, the
 default takes a median

@@ -71,6 +71,14 @@ make_data <- function(n_total, seed) {
 ## whichever script generates it.
 bench_seed <- function(n_total) 20260515 + n_total
 
+## Instance 1 of every size is the problem the earlier single-instance table was
+## measured on, so further instances extend that record rather than replacing it
+## with an unrelated draw. It lives here because more than one script times the
+## same instances of the same size and they have to be the same draws.
+instance_seed <- function(n_total, instance) {
+  bench_seed(n_total) + (instance - 1L) * 1000003L
+}
+
 covars <- c("v1", "v2", "v3", "v4", "v5", "v6", "b1", "b2")
 form   <- as.formula(paste("treat ~", paste(covars, collapse = " + ")))
 

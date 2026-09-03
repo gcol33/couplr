@@ -67,12 +67,14 @@ argv  <- commandArgs(TRUE)
 QUICK <- any(argv == "--quick")
 
 ## ---- benchmark grid ----
-## Instances first, repetitions inside them. The large sizes carry fewer of
-## both: at 20000 a single optmatch solve is minutes, and a second instance
-## there costs more than the spread it would report is worth.
+## Instances first, repetitions inside them. Every size carries at least three
+## instances, so no reported time is a single draw and the bracket beside it is
+## problem-to-problem variation everywhere in the table. The large sizes drop
+## repetitions rather than instances: a repetition measures the clock, which is
+## the steadier of the two, and at 20000 a single optmatch solve is minutes.
 grid <- data.frame(
   n_total   = c(500L, 2000L, 5000L, 10000L, 20000L, 50000L),
-  instances = c(   5L,   5L,    5L,     3L,     2L,     1L),
+  instances = c(   5L,   5L,    5L,     3L,     3L,     3L),
   reps      = c(   3L,   3L,    2L,     2L,     1L,     1L)
 )
 if (QUICK) {
@@ -82,13 +84,6 @@ TIMEOUT_S <- 600  # per run
 
 ## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
 source(file.path(repo_root, "paper", "bench_common.R"))
-
-## Instance 1 of every size is the problem the earlier single-instance table was
-## measured on, so the new rows extend that record rather than replacing it with
-## an unrelated draw.
-instance_seed <- function(n_total, instance) {
-  bench_seed(n_total) + (instance - 1L) * 1000003L
-}
 
 ## ---- per-package callables ----
 ## memory_mode is pinned to "dense" so all three packages are timed on the same

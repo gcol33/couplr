@@ -136,6 +136,41 @@ rendered literally; the file had no `bibliography:` field.
 
 ## Consequences
 
-CRAN and the R Journal submission are both held. The two API defects are
-counterexamples to the paper's own claim, so the release is 1.7.1 rather than
-1.7.0 and the article's numbers are rebased on it.
+The release is **1.7.1**, not 1.7.0: `v1.7.0` is a public tag on `985019a`,
+which carries two of the defects above, and a released version has to be an
+immutable identity.
+
+**Both the CRAN upload and the R Journal submission are held** on this review
+closing out, with a floor of 2026-09-06 (1.6.1 was published 2026-08-23 and
+`R CMD check` reports seven updates in six months).
+
+### State at the end of the 2026-09-03 session
+
+    DESCRIPTION   1.7.1
+    article       20 pages          supplement 17 pages
+    R suite       FAIL 0
+    R CMD check   0 errors, 0 warnings, 1 note, on the 1.7.1 tarball
+    win-builder   1 NOTE on r-devel and r-release, but on the 1.7.0 tarball
+
+### Order of work from here
+
+1. Settle items 3 and 4. They are benchmark methodology, so they decide what
+   the final run has to measure.
+2. Land items 6 and 7 and anything else touching code.
+3. Freeze the code, then run the bench **once**. Budget ten hours:
+   `implicit_grid` alone took 8h17m on 2026-09-03, against an estimate of
+   1h10m in the round-4 handoff.
+4. Sync, re-render both formats, rebuild the zip, confirm 20 pages.
+5. `check_win_devel()` on the 1.7.1 tarball.
+6. CRAN, not before 2026-09-06. Then the R Journal, once CRAN serves 1.7.1.
+
+### One thing the re-run surfaced that is not in the list above
+
+Every deterministic quantity reproduces exactly: `edges_evaluated` at all six
+sizes and `distances_x_med` at all seven clouds are byte-identical to the
+shipped CSVs. The wall-clock ratios are not. `speedup_med` moved 25 to 40
+percent on five of seven clouds, and `heavy_tailed` went from 1.04 to 0.77,
+which is the loop losing to the lazy path. The article quotes that range to
+two decimals and builds a sentence on which side of 1 it falls. That is the
+review's item 8 arriving with evidence, and it should be decided before the
+final run rather than after it.

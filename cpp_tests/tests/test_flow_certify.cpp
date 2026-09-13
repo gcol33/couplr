@@ -727,13 +727,18 @@ TEST_CASE("Assignment certificate - suboptimality bound",
     const std::vector<int> match = {0, 1};
     const std::vector<double> v = {0.0, 0.0};
 
-    SECTION("zero when the conditions hold with no slack") {
+    SECTION("only the objectives' rounding when the conditions hold with no slack") {
+        // The gap and the dual slack are both zero, so what remains is the two
+        // compensated sums' envelopes, (2u + gamma_n^2) * sum |x| each, over
+        // objectives of magnitude 3: positive, and a few ulps of 3.
         const std::vector<double> u = {1.0, 2.0};
         const lap::CertificateReport rep =
             lap::certify_assignment(cost, match, u, v, TOL);
         REQUIRE(rep.certified_optimal);
         REQUIRE(rep.certified_reduced_cost_floor == 0.0);
-        REQUIRE(rep.max_suboptimality == 0.0);
+        REQUIRE(rep.duality_gap == 0.0);
+        REQUIRE(rep.max_suboptimality > 0.0);
+        REQUIRE(rep.max_suboptimality < 16.0 * std::numeric_limits<double>::epsilon() * 3.0);
     }
 
     SECTION("the depth the reduced costs reach, once per row") {

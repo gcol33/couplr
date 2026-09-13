@@ -402,7 +402,6 @@ TEST_CASE("compile_full_matching - centres are the left side when it is smaller"
 
     REQUIRE(full.bounds_feasible);
     REQUIRE_FALSE(full.symmetric);
-    REQUIRE_FALSE(full.transposed);
     REQUIRE(full.n_centres == 3);
     REQUIRE(full.n_units == 8);
     REQUIRE(full.max_capacity == 8);
@@ -432,8 +431,11 @@ TEST_CASE("compile_full_matching - centres are the left side when it is smaller"
     REQUIRE(prob.blocks[0].costs->at(1, 5) == Approx(cost.at(1, 5)));
 }
 
-TEST_CASE("compile_full_matching - orientation transposes when left is larger",
+TEST_CASE("compile_full_matching - a larger left side keeps the left units as centres",
           "[flow][compile][full_match]") {
+    // The bounds count right units, so eight left centres each needing two of
+    // three right units cannot be met, and the instance is refused rather than
+    // answered with the right units as centres.
     lap::CostMatrix cost(8, 3);
     for (int64_t i = 0; i < 8; ++i) {
         for (int64_t j = 0; j < 3; ++j) cost.at(i, j) = static_cast<double>(i * 3 + j);
@@ -442,33 +444,12 @@ TEST_CASE("compile_full_matching - orientation transposes when left is larger",
 
     lap::CompiledFullMatch full = lap::compile_full_matching(oracle, 2, 5, NO_CATEGORIES);
 
-    REQUIRE(full.bounds_feasible);
+    REQUIRE_FALSE(full.bounds_feasible);
+    REQUIRE(full.reason == "fewer units than min_controls for every centre");
     REQUIRE_FALSE(full.symmetric);
-    REQUIRE(full.transposed);
-    REQUIRE(full.n_centres == 3);
-    REQUIRE(full.n_units == 8);
-    REQUIRE(full.max_capacity == 5);
-
-    const lap::FlowProblem& prob = full.design.problem;
-    require_well_formed(prob);
-
-    REQUIRE(prob.n_nodes == 2 + 3 + 8);
-    REQUIRE(full.design.n_rows == 3);
-    REQUIRE(full.design.n_cols == 8);
-
-    // Row nodes carry right units, column nodes carry left units, so the block
-    // reads the transpose of the caller's matrix.
-    const lap::CostOracle* src = prob.blocks[0].costs;
-    REQUIRE(src->nrow() == 3);
-    REQUIRE(src->ncol() == 8);
-    for (int64_t i = 0; i < 3; ++i) {
-        for (int64_t j = 0; j < 8; ++j) {
-            REQUIRE(src->at(i, j) == Approx(cost.at(j, i)));
-            REQUIRE(src->allowed(i, j) == cost.allowed(j, i));
-        }
-    }
-
-    for (int i = 0; i < 3; ++i) REQUIRE(prob.arcs[i].upper == 5);
+    REQUIRE(full.n_centres == 8);
+    REQUIRE(full.n_units == 3);
+    REQUIRE(full.max_capacity == 3);
 }
 
 TEST_CASE("compile_full_matching - capacity clamps to the unit count",
@@ -934,7 +915,7 @@ TEST_CASE("compiled full matching places every unit", "[flow][compile][solve]") 
         REQUIRE(res.total_cost == Approx(0.0));
     }
 
-    SECTION("the transposed orientation reaches the same optimum") {
+    SECTION("the other orientation is refused, not transposed") {
         auto upright = make_cost({
             {0, 0, 10, 10},
             {10, 10, 0, 0}
@@ -952,15 +933,13 @@ TEST_CASE("compiled full matching places every unit", "[flow][compile][solve]") 
             lap::compile_full_matching(upright_oracle, 2, lap::FLOW_INF_CAP, NO_CATEGORIES);
         lap::CompiledFullMatch b =
             lap::compile_full_matching(turned_oracle, 2, lap::FLOW_INF_CAP, NO_CATEGORIES);
-        REQUIRE_FALSE(a.transposed);
-        REQUIRE(b.transposed);
+        REQUIRE(a.bounds_feasible);
+        REQUIRE_FALSE(b.bounds_feasible);
 
         lap::FlowResult res_a = lap::solve_min_cost_flow(a.design.problem);
-        lap::FlowResult res_b = lap::solve_min_cost_flow(b.design.problem);
         REQUIRE(res_a.status == "optimal");
-        REQUIRE(res_b.status == "optimal");
-        REQUIRE(res_b.total_cost == Approx(res_a.total_cost));
-        REQUIRE(res_b.flow_sent == res_a.flow_sent);
+        REQUIRE(res_a.total_cost == Approx(0.0));
+        REQUIRE(res_a.flow_sent == 4);
     }
 
     SECTION("a lower bound above one forces the larger groups") {

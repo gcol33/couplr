@@ -70,6 +70,10 @@ lalonde   <- read.csv("data/lalonde-per-covariate.csv", stringsAsFactors = FALSE
 lal_obj   <- read.csv("data/lalonde-results.csv", stringsAsFactors = FALSE)
 scaling   <- read.csv("data/scaling-results.csv", stringsAsFactors = FALSE)
 lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
+## The lazy-path sentences index one median per size; a missing column or row
+## would otherwise knit as an empty string.
+stopifnot("median_s" %in% names(lazy),
+          sum(lazy$n_total == 20000) == 1, sum(lazy$n_total == 50000) == 1)
 imp       <- read.csv("data/implicit-results.csv", stringsAsFactors = FALSE)
 equiv     <- read.csv("data/implicit-equivalence.csv", stringsAsFactors = FALSE)
 pth       <- read.csv("data/path-results.csv", stringsAsFactors = FALSE)

@@ -239,8 +239,8 @@ CompiledDesign compile_k_cardinality(const CostOracle&                      cost
 
 // Full matching: every unit joins a group built around a centre absorbing
 // between min_controls and max_controls units, at minimum total distance. The
-// centres are the smaller side, and their lower bound is emitted as an arc
-// lower bound for the solver to transform.
+// centres are the left units, and their lower bound is emitted as an arc lower
+// bound for the solver to transform.
 CompiledFullMatch compile_full_matching(const CostOracle&                      costs,
                                         int64_t                                min_controls,
                                         int64_t                                max_controls,

@@ -97,8 +97,7 @@ struct CompensatedSum {
         const double g = gamma_of(n_terms);
         const double rel = 2.0 * u + g * g;
         if (!(abs_sum > 0.0)) return 0.0;
-        return std::nextafter(rel * abs_sum,
-                              std::numeric_limits<double>::infinity());
+        return next_up(rel * abs_sum);
     }
 };
 
@@ -510,7 +509,6 @@ CertificateReport certify_assignment_impl(const Source& src,
     if (!rep.primal_feasible) {
         rep.max_suboptimality = std::numeric_limits<double>::quiet_NaN();
     } else {
-        const double inf = std::numeric_limits<double>::infinity();
         // The gap is a difference of two compensated sums, and compensated
         // summation buys back the accumulation error rather than removing it.
         // Each sum's own envelope is charged here, so the number reported is an
@@ -521,8 +519,8 @@ CertificateReport certify_assignment_impl(const Source& src,
         // Adding nothing costs nothing: rounding up on a zero term would
         // turn an exactly zero bound into a denormal and report slack
         // where the arithmetic proved none.
-        const auto add_up = [inf](double acc, double term) {
-            return term > 0.0 ? std::nextafter(acc + term, inf) : acc;
+        const auto add_up = [](double acc, double term) {
+            return term > 0.0 ? next_up(acc + term) : acc;
         };
         double bound = rep.duality_gap;
         bound = add_up(bound, static_cast<double>(nrow) * eps);

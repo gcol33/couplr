@@ -576,3 +576,61 @@ TEST_CASE("Ball tree - the cost floor holds under offset coordinates and a "
 
     REQUIRE(checked > 100000);
 }
+
+// The slack a node visit charges is src_quad_coef * ||r||^2. It has to cover
+// gamma_{2n+2} * r' |A| r over the node's box, the bound with the full row
+// products in it, for every query and node: that is the inequality the prune
+// rests on, checked here in long double so the reference is not itself the
+// rounding it is compared against.
+TEST_CASE("Ball tree - the source slack covers the full quadratic form over the box") {
+    int64_t checked = 0;
+    for (std::uint32_t seed = 1; seed <= 40; ++seed) {
+        for (int64_t n_vars = 1; n_vars <= 8; ++n_vars) {
+            std::mt19937 rng(seed * 97u + static_cast<std::uint32_t>(n_vars));
+            std::uniform_real_distribution<double> unif(0.0, 1.0);
+            const std::vector<double> q_orth = random_orthogonal(n_vars, rng);
+            const double scale = std::pow(10.0, -3.0 + 9.0 * unif(rng));
+            const double cond = std::pow(10.0, 12.0 * unif(rng));
+            std::vector<double> inv_cov = conditioned_spd(n_vars, q_orth, scale, cond);
+            const std::vector<double> a = inv_cov;
+
+            const lap::LazyCostMatrix src(random_coords(16, n_vars, rng),
+                                          random_coords(128, n_vars, rng), n_vars,
+                                          lap::DistanceMetric::Mahalanobis,
+                                          std::move(inv_cov), kInf,
+                                          std::vector<lap::CaliperSpec>{}, false);
+            const lap::BallTree tree = lap::build_ball_tree(src, 4);
+            if (tree.empty()) continue;
+
+            const long double g = static_cast<long double>(
+                lap::detail::gamma_of(2 * n_vars + 2));
+            for (int64_t i = 0; i < src.nrow; ++i) {
+                const double* x = src.left_row(i);
+                for (int32_t id = 0; id < tree.n_nodes(); ++id) {
+                    const double* blo = tree.node_box_lo(id);
+                    const double* bhi = tree.node_box_hi(id);
+                    std::vector<long double> r(static_cast<std::size_t>(n_vars));
+                    for (int64_t k = 0; k < n_vars; ++k) {
+                        const long double lo = std::fabs(static_cast<long double>(x[k]) - blo[k]);
+                        const long double hi = std::fabs(static_cast<long double>(x[k]) - bhi[k]);
+                        r[static_cast<std::size_t>(k)] = lo > hi ? lo : hi;
+                    }
+                    long double quad = 0.0L;
+                    for (int64_t p = 0; p < n_vars; ++p) {
+                        for (int64_t q = 0; q < n_vars; ++q) {
+                            const long double apq = std::fabs(
+                                0.5L * (static_cast<long double>(a[static_cast<std::size_t>(p * n_vars + q)]) +
+                                        a[static_cast<std::size_t>(q * n_vars + p)]));
+                            quad += r[static_cast<std::size_t>(p)] * apq *
+                                    r[static_cast<std::size_t>(q)];
+                        }
+                    }
+                    const double slack = lap::source_quadform_slack(tree, x, id);
+                    ++checked;
+                    REQUIRE(static_cast<long double>(slack) >= g * quad);
+                }
+            }
+        }
+    }
+    REQUIRE(checked > 10000);
+}

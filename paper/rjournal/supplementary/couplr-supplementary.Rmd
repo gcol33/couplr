@@ -278,11 +278,21 @@ A node is bounded by its box. For a column $x$ the node holds and a row $q$ the
 displacement is $d = q - x$, so componentwise
 $|d_a| \le m_a := \max\bigl(|q_a - \ell_a|,\, |q_a - h_a|\bigr)$ over the box
 $[\ell, h]$. Every entry of $|A|$ is non-negative, so the bound is monotone in
-each $|d_a|$ and
+each $|d_a|$, and $|A|$ is symmetric, so
 $$
-s(S) \;=\; \gamma_{2n+2}\, m^\top |A|\, m
+|d|^\top |A|\, |d| \;\le\; m^\top |A|\, m \;\le\; \lambda_{\max}(|A|)\, \|m\|^2
+\;\le\; \rho\, \|m\|^2, \qquad \rho = \max_a \sum_b |A_{ab}| ,
 $$
-holds for every column the node carries at once.
+the last step because no eigenvalue of a matrix exceeds its largest absolute
+row sum. $\rho$ depends on neither the row nor the node and is formed once when
+the tree is built, so
+$$
+s(S) \;=\; \gamma_{2n+2}\, \rho\, (1 + \gamma_{2n+6})\, \|m\|^2
+$$
+holds for every column the node carries at once, and a node visit pays one pass
+over the $n$ covariates for it. The factor $1 + \gamma_{2n+6}$ covers the
+rounding in forming $\rho$, $\|m\|^2$ and their product, so $s$ is an upper
+bound in double arithmetic.
 
 $s$ is absolute on the squared distance, so it is applied there and the root
 retaken: the near side becomes $\sqrt{\max(0,\, d_{\text{lo}}^2 - s)}$ and the

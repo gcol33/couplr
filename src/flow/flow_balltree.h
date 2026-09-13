@@ -145,7 +145,7 @@ struct BallTree {
     // would understate it by the conditioning of A. That residual is the
     // algebraic gap only, and it is frequently zero because L L' reconstructs
     // the stored A exactly; what the source's own evaluation rounds by is
-    // charged separately, by src_quad_rel below.
+    // charged separately, by src_quad_coef below.
     double bound_rel = 0.0;
 
     // Whitening a point is an absolute-error operation: the coordinates are
@@ -166,20 +166,26 @@ struct BallTree {
     // d_a * sum_b A_ab d_b, whose terms cancel when d runs along a direction A
     // is small in, so its error is bounded relative to |d|' |A| |d| rather
     // than to d' A d and no relative allowance on the distance can hold it.
-    // The bound is src_quad_rel * |d|' |A| |d|, with the products taken over
-    // the node's box, and it is absolute on the squared distance. Empty and
-    // zero for the metrics the source sums non-negative terms for, where no
-    // cancellation arises.
-    //
-    // src_quad_rel is gamma_{2 n_vars + 2}, counted off the loop the source
-    // runs rather than off the tree's: the inner row product recomputes its own
-    // differences, so each of its terms carries one subtraction and the length
-    // n_vars accumulation, (1 + delta)(1 + theta_n) = (1 + theta_{n+1}); the
-    // outer sum multiplies by d_a, itself one subtraction, and accumulates over
-    // n_vars terms again, so a term of the double sum carries
+    // The error is at most gamma_{2 n_vars + 2} * |d|' |A| |d|, counted off the
+    // loop the source runs rather than off the tree's: the inner row product
+    // recomputes its own differences, so each of its terms carries one
+    // subtraction and the length n_vars accumulation,
+    // (1 + delta)(1 + theta_n) = (1 + theta_{n+1}); the outer sum multiplies by
+    // d_a, itself one subtraction, and accumulates over n_vars terms again, so
+    // a term of the double sum carries
     // (1 + delta)(1 + theta_{n+1})(1 + theta_n) = (1 + theta_{2n+2}).
-    std::vector<double> abs_inv_cov;  // |sym(inv_cov)|, n_vars * n_vars
-    double src_quad_rel = 0.0;
+    //
+    // Over a node, |d_k| is at most the query's reach r_k to the node's box
+    // along variable k, and |d|' |A| |d| <= r' |A| r <= rho(|A|) ||r||^2, since
+    // |A| is non-negative and symmetric. rho(|A|) is at most the largest row
+    // sum of |A|, which does not depend on the query, so the bound a node visit
+    // pays for is src_quad_coef * ||r||^2, one pass over the variables.
+    // src_quad_coef carries gamma_{2n+2} and that row sum, both widened by
+    // (1 + gamma_{2n+6}) for the rounding in the row sum (n + 1 operations),
+    // in ||r||^2 (n + 2), in the product with it (1) and in forming the
+    // coefficient itself (2). Zero for the metrics the source sums non-negative
+    // terms for, where no cancellation arises.
+    double src_quad_coef = 0.0;
 
     bool empty() const { return lo.empty(); }
     int32_t n_nodes() const { return static_cast<int32_t>(lo.size()); }
@@ -387,18 +393,20 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
                     l[static_cast<std::size_t>(m * n_vars + k)];
             }
         }
-        // The matrix the source's row sums are taken over, entrywise absolute,
-        // which is what bounds those sums' rounding.
+        // The largest row sum of |sym(inv_cov)|, the matrix the source's row
+        // sums are taken over, entrywise absolute.
         const std::vector<double>& a = src.inv_cov();
-        tree.abs_inv_cov.assign(static_cast<std::size_t>(n_vars * n_vars), 0.0);
+        double row_max = 0.0;
         for (int64_t i = 0; i < n_vars; ++i) {
+            double row = 0.0;
             for (int64_t j = 0; j < n_vars; ++j) {
-                tree.abs_inv_cov[static_cast<std::size_t>(i * n_vars + j)] =
-                    std::fabs(0.5 * (a[static_cast<std::size_t>(i * n_vars + j)] +
-                                     a[static_cast<std::size_t>(j * n_vars + i)]));
+                row += std::fabs(0.5 * (a[static_cast<std::size_t>(i * n_vars + j)] +
+                                        a[static_cast<std::size_t>(j * n_vars + i)]));
             }
+            if (!(row <= row_max)) row_max = row;
         }
-        tree.src_quad_rel = detail::gamma_of(2 * n_vars + 2);
+        tree.src_quad_coef = detail::gamma_of(2 * n_vars + 2) * row_max *
+                             (1.0 + detail::gamma_of(2 * n_vars + 6));
     }
 
     tree.n_vars = n_vars;
@@ -564,22 +572,16 @@ inline double box_reach(const double* q_original, const double* blo,
 // terms are non-negative, where the sum cannot cancel.
 inline double source_quadform_slack(const BallTree& tree, const double* q_original,
                                     int32_t id) {
-    if (tree.abs_inv_cov.empty()) return 0.0;
+    if (!(tree.src_quad_coef > 0.0)) return 0.0;
     const int64_t n = tree.n_vars;
     const double* blo = tree.node_box_lo(id);
     const double* bhi = tree.node_box_hi(id);
-    double s = 0.0;
-    for (int64_t a = 0; a < n; ++a) {
-        const double ma = box_reach(q_original, blo, bhi, a);
-        if (!(ma > 0.0)) continue;
-        const double* ar = &tree.abs_inv_cov[static_cast<std::size_t>(a * n)];
-        double row = 0.0;
-        for (int64_t b = 0; b < n; ++b) {
-            row += ar[b] * box_reach(q_original, blo, bhi, b);
-        }
-        s += ma * row;
+    double r2 = 0.0;
+    for (int64_t k = 0; k < n; ++k) {
+        const double r = box_reach(q_original, blo, bhi, k);
+        r2 += r * r;
     }
-    return tree.src_quad_rel * s;
+    return tree.src_quad_coef * r2;
 }
 
 // The ball's bounds carried across to the distance the SOURCE reports. The
@@ -587,14 +589,13 @@ inline double source_quadform_slack(const BallTree& tree, const double* q_origin
 // re-applied, each step rounded away from the bound it is widening.
 inline BallBounds widen_for_source(const BallBounds& b, double slack) {
     if (!(slack > 0.0)) return b;
-    const double inf = std::numeric_limits<double>::infinity();
     BallBounds out = b;
-    double lo2 = std::nextafter(b.d_lo * b.d_lo, -inf);
-    lo2 = std::nextafter(lo2 - slack, -inf);
-    out.d_lo = lo2 > 0.0 ? std::nextafter(std::sqrt(lo2), -inf) : 0.0;
-    double hi2 = std::nextafter(b.d_hi * b.d_hi, inf);
-    hi2 = std::nextafter(hi2 + slack, inf);
-    out.d_hi = std::nextafter(std::sqrt(hi2), inf);
+    double lo2 = detail::next_down(b.d_lo * b.d_lo);
+    lo2 = detail::next_down(lo2 - slack);
+    out.d_lo = lo2 > 0.0 ? detail::next_down(std::sqrt(lo2)) : 0.0;
+    double hi2 = detail::next_up(b.d_hi * b.d_hi);
+    hi2 = detail::next_up(hi2 + slack);
+    out.d_hi = detail::next_up(std::sqrt(hi2));
     return out;
 }
 
@@ -614,10 +615,9 @@ inline BallBounds node_bounds_for_source(const BallTree& tree,
 inline double cost_lo_of(const LazyCostMatrix& src, const BallBounds& b) {
     // metric_cost_of is monotone in the distance, so a bound on the distance
     // carries to a bound on the cost, and its own rounding is one step.
-    const double inf = std::numeric_limits<double>::infinity();
     const double c = src.is_negated() ? -metric_cost_of(src.metric(), b.d_hi)
                                       : metric_cost_of(src.metric(), b.d_lo);
-    return std::nextafter(c, -inf);
+    return detail::next_down(c);
 }
 
 // Whether max_distance forbids every column the node holds. The comparison is
@@ -629,8 +629,7 @@ inline bool distance_out_of(const LazyCostMatrix& src, const BallBounds& b) {
     // metric_cost_of is one more rounded operation on a bound already read as
     // low as it goes, so it is stepped down once more before a comparison whose
     // true answer would rule the node out.
-    const double inf = std::numeric_limits<double>::infinity();
-    return std::nextafter(metric_cost_of(src.metric(), b.d_lo), -inf) > limit;
+    return detail::next_down(metric_cost_of(src.metric(), b.d_lo)) > limit;
 }
 
 // The same two questions from a node rather than from a ball already measured.
@@ -659,7 +658,6 @@ inline bool node_caliper_out(const BallTree& tree, const LazyCostMatrix& src,
     if (cals.empty()) return false;
     const double* blo = tree.node_box_lo(id);
     const double* bhi = tree.node_box_hi(id);
-    const double inf = std::numeric_limits<double>::infinity();
     for (const CaliperSpec& cal : cals) {
         const std::size_t k = static_cast<std::size_t>(cal.var_index);
         const double x = q_original[k];
@@ -667,8 +665,8 @@ inline bool node_caliper_out(const BallTree& tree, const LazyCostMatrix& src,
         // box holds coordinates copied rather than computed. Widening the
         // window by one representable step on each side puts the rounding on
         // the side that declines to prune.
-        const double hi_edge = std::nextafter(x + cal.threshold, inf);
-        const double lo_edge = std::nextafter(x - cal.threshold, -inf);
+        const double hi_edge = detail::next_up(x + cal.threshold);
+        const double lo_edge = detail::next_down(x - cal.threshold);
         if (blo[k] > hi_edge) return true;
         if (bhi[k] < lo_edge) return true;
     }

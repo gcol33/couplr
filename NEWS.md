@@ -154,10 +154,21 @@ one asked, so the version that reaches CRAN is this one.
   can beat the returned one by, in the cost unit -- and
   `certified_reduced_cost_floor`, the lower bound proved for the reduced cost of
   every admissible pair. Conditions that hold with no slack put the bound at
-  zero. A proof assembled by a pricer that pruned puts one tolerance per row
+  the rounding of the two objective sums. A proof assembled by a pricer that pruned puts one tolerance per row
   there instead, because a skipped subtree is known only by the bound it was
   skipped against, and `certified_reduced_cost_floor` sits below
   `min_reduced_cost` to say which case a result is in.
+
+* **A ball-tree descent pays less at each node it reads.** The allowance for
+  the cost source's own rounding is charged as `gamma_{2n+2}` times the largest
+  row sum of `|A|` times `||r||^2`, with `r` the query's reach to the node's
+  box. The row sum is fixed when the tree is built, so a node costs one pass
+  over the covariates where the entrywise `r' |A| r` it bounds cost
+  `n_vars^2` products. The outward rounding steps are read off the
+  representation instead of calling `nextafter()`, and return the same bits.
+  The edges evaluated are unchanged at every size of the article's implicit
+  benchmark, and an implicit solve at n = 20,000 went from 10.6 s to 8.3 s on
+  the machine it was timed on (#52).
 
 ## Bug fixes
 
@@ -230,9 +241,8 @@ one asked, so the version that reaches CRAN is this one.
   certification tolerance, so a node holding a genuine violator could price
   above `-tol` and be skipped with `certified_optimal` still `TRUE`. It also
   reached `max_suboptimality`, which is read off the bounds of the skipped
-  subtrees. `BallTree` now carries `|sym(inv_cov)|` and charges
-  `gamma_{n_vars + 3} * |d|' |A| |d|` over the node's box, taken on the squared
-  distance and applied to both sides of the ball. A NaN cost floor is reported
+  subtrees. The allowance now charges that rounding over the node's box, taken
+  on the squared distance and applied to both sides of the ball. A NaN cost floor is reported
   as no bound rather than as an unreachable node, so a descent reads the node
   instead of skipping it.
 

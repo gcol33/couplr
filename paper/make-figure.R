@@ -113,7 +113,7 @@ save_results <- function(results, path) {
   df <- do.call(rbind, results)
   df$family <- method_family[df$method]
   df$label  <- method_labels[df$method]
-  df <- df[order(df$method, df$n), c("method", "label", "family", "n", "median_ms")]
+  df <- df[order(df$method, df$n), c("method", "label", "family", "n", "min_ms")]
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   write.csv(df, path, row.names = FALSE)
   invisible(df)
@@ -126,23 +126,34 @@ record_result <- function(result) {
   }
 }
 
-bench_one <- function(method, n, times, cost_mat) {
-  tryCatch({
+## The solvers at one size are timed against each other in one microbenchmark
+## call, which interleaves their repetitions in random order, so anything else
+## the machine does is spread over the solvers rather than landing on one. The
+## untimed first call per solver both warms it up and drops a solver that
+## refuses the problem. A solver's time is its fastest repetition, the one least
+## disturbed.
+bench_many <- function(methods, n, times, cost_mat) {
+  ok <- Filter(function(method) tryCatch({
     invisible(assignment(cost_mat, method = method))
-    mb <- microbenchmark(assignment(cost_mat, method = method),
-                         times = times, unit = "ms")
-    data.frame(method = method, n = n, median_ms = summary(mb)$median,
-               stringsAsFactors = FALSE)
+    TRUE
   }, error = function(e) {
     message("  SKIP ", method, " n=", n, ": ", conditionMessage(e))
-    NULL
-  })
+    FALSE
+  }), methods)
+  if (!length(ok)) return(list())
+  exprs <- setNames(lapply(ok, function(method)
+    bquote(assignment(cost_mat, method = .(method)))), ok)
+  mb <- microbenchmark(list = exprs, times = times, unit = "ms")
+  s <- summary(mb)
+  lapply(ok, function(method)
+    data.frame(method = method, n = n, min_ms = s$min[s$expr == method],
+               stringsAsFactors = FALSE))
 }
 
 results <- list()
 if (file.exists(BENCHMARK_TABLE)) {
   old <- read.csv(BENCHMARK_TABLE, stringsAsFactors = FALSE)
-  old <- old[, c("method", "n", "median_ms")]
+  old <- old[, c("method", "n", "min_ms")]
   results <- unname(split(old, seq_len(nrow(old))))
   cat("Loaded ", length(results), " existing benchmark rows from ",
       BENCHMARK_TABLE, "\n", sep = "")
@@ -153,28 +164,19 @@ has_result <- function(method, n) {
   any(vapply(results, function(x) x$method == method && x$n == n, logical(1)))
 }
 
-cat("--- General methods ---\n"); flush.console()
+## The general solvers and the dispatcher share each size's uniform integer
+## matrix, so they are timed together on it.
+cat("--- General methods and the dispatcher ---\n"); flush.console()
 for (n in general_sizes) {
   set.seed(SEED)
   cost <- matrix(sample.int(MAX_COST, n * n, replace = TRUE), n, n)
-  for (m in general_methods) {
+  methods <- Filter(function(m) {
     max_n <- method_max_n[m]
-    if (!is.na(max_n) && n > max_n) next
-    if (has_result(m, n)) next
-    cat(sprintf("  n=%3d  %s\n", n, m)); flush.console()
-    r <- bench_one(m, n, TIMES, cost)
-    record_result(r)
-  }
-}
-
-cat("--- Auto method ---\n"); flush.console()
-for (n in general_sizes) {
-  set.seed(SEED)
-  cost <- matrix(sample.int(MAX_COST, n * n, replace = TRUE), n, n)
-  if (has_result("auto", n)) next
-  cat(sprintf("  n=%3d  auto\n", n)); flush.console()
-  r <- bench_one("auto", n, TIMES, cost)
-  record_result(r)
+    (is.na(max_n) || n <= max_n) && !has_result(m, n)
+  }, c(general_methods, "auto"))
+  if (!length(methods)) next
+  cat(sprintf("  n=%4d  %s\n", n, paste(methods, collapse = " "))); flush.console()
+  for (r in bench_many(methods, n, TIMES, cost)) record_result(r)
 }
 
 cat("--- Bruteforce (n <= 8) ---\n"); flush.console()
@@ -183,8 +185,7 @@ for (n in small_sizes) {
   cost <- matrix(sample.int(MAX_COST, n * n, replace = TRUE), n, n)
   if (has_result("bruteforce", n)) next
   cat(sprintf("  n=%d  bruteforce\n", n)); flush.console()
-  r <- bench_one("bruteforce", n, TIMES, cost)
-  record_result(r)
+  for (r in bench_many("bruteforce", n, TIMES, cost)) record_result(r)
 }
 
 cat("--- HK-01 (binary costs) ---\n"); flush.console()
@@ -193,8 +194,7 @@ for (n in binary_sizes) {
   cost <- matrix(sample(0L:1L, n * n, replace = TRUE), n, n)
   if (has_result("hk01", n)) next
   cat(sprintf("  n=%3d  hk01\n", n)); flush.console()
-  r <- bench_one("hk01", n, TIMES, cost)
-  record_result(r)
+  for (r in bench_many("hk01", n, TIMES, cost)) record_result(r)
 }
 
 df <- save_results(results, BENCHMARK_TABLE)
@@ -268,7 +268,7 @@ build_panel_a <- function(spec, show_y, show_x_lab, show_tag) {
   lw_vals[lbls[1]] <- 0.425
   if ("Bruteforce" %in% lbls) lw_vals["Bruteforce"] <- 1.4
 
-  g <- ggplot(d, aes(x = n, y = median_ms,
+  g <- ggplot(d, aes(x = n, y = min_ms,
                      linetype = label, linewidth = label, group = label)) +
     geom_line(colour = spec$colour, na.rm = TRUE) +
     scale_x_log10(breaks = x_breaks, labels = x_lbls,
@@ -279,7 +279,7 @@ build_panel_a <- function(spec, show_y, show_x_lab, show_tag) {
     scale_linewidth_manual(values = lw_vals) +
     labs(title = spec$title,
          x = if (show_x_lab) "problem size, n" else NULL,
-         y = if (show_y)     "median solve time" else NULL,
+         y = if (show_y)     "solve time" else NULL,
          tag = if (show_tag) "(a)" else NULL) +
     guides(
       linetype = guide_legend(

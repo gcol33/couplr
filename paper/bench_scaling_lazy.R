@@ -34,13 +34,17 @@ out_csv   <- file.path(paper_dir, "scaling-lazy-results.csv")
 
 SIZES <- c(20000L, 50000L)
 EQUIV_SIZE <- 5000L   # small enough that the dense path is cheap to run twice
+TIMEOUT_S <- 3600
+
+solve_mode <- function(d, mode) {
+  tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
+  match_couples(left = tr, right = ct, vars = covars,
+                distance = "mahalanobis", method = "jv", memory_mode = mode)
+}
 
 time_match <- function(d, mode) {
-  tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
   t0 <- proc.time()[["elapsed"]]
-  m <- match_couples(left = tr, right = ct, vars = covars,
-                     distance = "mahalanobis", method = "jv",
-                     memory_mode = mode)
+  m <- solve_mode(d, mode)
   t1 <- proc.time()[["elapsed"]]
   list(elapsed = t1 - t0, total_cost = sum(m$pairs$distance),
        n_pairs = nrow(m$pairs), right_id = m$pairs$right_id)
@@ -114,11 +118,22 @@ for (n_total in SIZES) {
     }
     seed <- instance_seed(n_total, instance)
     d <- make_data(n_total, seed = seed)
-    r <- time_match(d, "lazy")
-    cat(sprintf("  i%d %.2f s, %d pairs\n", instance, r$elapsed, r$n_pairs))
+    ## One repetition, as `bench_scaling.R` takes for the dense path at these
+    ## sizes, through the same probe-then-time path.
+    timed <- time_rounds(list(lazy = function() {
+      m <- solve_mode(d, "lazy")
+      list(total_cost = sum(m$pairs$distance), n_pairs = nrow(m$pairs))
+    }), reps = 1L, timeout_s = TIMEOUT_S)
+    if (timed$runs$status[1] != "ok") {
+      stop(sprintf("lazy solve at n_total = %d, instance %d: %s", n_total,
+                   instance, timed$runs$status[1]), call. = FALSE)
+    }
+    r <- timed$values$lazy
+    elapsed <- arm_seconds(timed$runs$seconds, timed$runs$status)
+    cat(sprintf("  i%d %.2f s, %d pairs\n", instance, elapsed, r$n_pairs))
     flush.console()
     new <- data.frame(n_total = n_total, instance = instance, seed = seed,
-                      memory_mode = "lazy", elapsed_s = round(r$elapsed, 3),
+                      memory_mode = "lazy", elapsed_s = round(elapsed, 3),
                       total_cost = r$total_cost, n_pairs = r$n_pairs,
                       stringsAsFactors = FALSE)
     runs <- if (nrow(runs)) rbind(runs, new) else new

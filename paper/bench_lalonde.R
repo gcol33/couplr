@@ -68,6 +68,9 @@ optmatch_call <- function() {
 cat("warm-up ...\n"); flush.console()
 invisible(couplr_call()); invisible(matchit_call()); invisible(optmatch_call())
 
+## microbenchmark interleaves the three calls in random order, so anything else
+## the machine does is spread over the packages; each package's time is its
+## fastest repetition, the one least disturbed.
 cat("microbenchmark (5 reps each) ...\n"); flush.console()
 mb <- microbenchmark(
   couplr   = couplr_call(),
@@ -180,7 +183,7 @@ print(rbind(couplr = sc_couplr, MatchIt = sc_matchit, optmatch = sc_optmatch))
 ## ---- write results ----
 results <- data.frame(
   package = c("couplr", "MatchIt", "optmatch"),
-  median_ms = round(mb_summary$median, 1),
+  min_ms = round(mb_summary$min, 1),
   n_pairs = c(sc_couplr[["n_pairs"]], sc_matchit[["n_pairs"]],
               sc_optmatch[["n_pairs"]]),
   total_cost = round(c(sc_couplr[["total_cost"]], sc_matchit[["total_cost"]],
@@ -192,7 +195,7 @@ results <- data.frame(
                    mean(abs(smd_matchit), na.rm = TRUE),
                    mean(abs(smd_optmatch), na.rm = TRUE))
 )
-results$median_ms    <- round(results$median_ms,    1)
+results$min_ms       <- round(results$min_ms,       1)
 results$max_abs_smd  <- round(results$max_abs_smd,  3)
 results$mean_abs_smd <- round(results$mean_abs_smd, 3)
 

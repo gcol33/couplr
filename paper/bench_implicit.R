@@ -72,9 +72,9 @@ if (any(commandArgs(TRUE) == "--quick")) {
   TIMEOUT_S   <- 60
 }
 
-## ---- one timed cell ---------------------------------------------------------
-## Returns the timing, the answer, and, for the implicit arm, the certificate
-## and the pair counts the loop kept for itself.
+## ---- the arms of a size ----------------------------------------------------
+## Each arm returns the answer, and, for the implicit arm, the certificate and
+## the pair counts the loop kept for itself; its time is taken by `time_rounds()`.
 ## The arms, as (representation, solver) pairs. Reading the table sideways is
 ## what separates the two: `dense` and `lazy` are one solver over two
 ## representations, `dense` and `dense_csflow` are one representation under two
@@ -88,24 +88,21 @@ mode_spec <- list(
   dense_csflow = list(memory_mode = "dense",    method = "csflow")
 )
 
-time_match <- function(d, mode) {
+REPS <- 3L
+
+## One arm's solve, returning what the table reads off it. Only this summary
+## crosses back from the probe's child, not the matching object.
+solve_arm <- function(d, mode) {
   spec <- mode_spec[[mode]]
   tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
   args <- list(left = tr, right = ct, vars = covars,
                distance = "mahalanobis", memory_mode = spec$memory_mode)
   if (!is.null(spec$method)) args$method <- spec$method
-
-  ## The solve and everything read off it happen in one bounded call, so the
-  ## matching itself never crosses back: only the summary below does.
-  res <- bounded_call(function() {
-    t0 <- proc.time()[["elapsed"]]
-    m  <- do.call(match_couples, args)
-    elapsed <- proc.time()[["elapsed"]] - t0
+  function() {
+    m    <- do.call(match_couples, args)
     cert <- m$certificate
     srch <- m$search
     list(
-      elapsed     = elapsed,
-      status      = "ok",
       total_cost  = sum(m$pairs$distance),
       n_pairs     = nrow(m$pairs),
       right_id    = m$pairs$right_id,
@@ -116,16 +113,26 @@ time_match <- function(d, mode) {
       edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
       n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds
     )
-  }, TIMEOUT_S)
-
-  if (!res$ok) {
-    return(list(elapsed = NA_real_, status = res$status, total_cost = NA_real_,
-                n_pairs = NA_integer_, right_id = NULL,
-                certified = NA, duality_gap = NA_real_,
-                candidate_edges = NA_real_, possible_edges = NA_real_,
-                edges_evaluated = NA_real_, n_rounds = NA_integer_))
   }
-  res$value
+}
+
+## The arms of one size, timed against each other in rounds. Each arm's result
+## carries its status and its fastest repetition as `elapsed`.
+time_arms <- function(d, modes) {
+  timed <- time_rounds(setNames(lapply(modes, function(mode) solve_arm(d, mode)),
+                                modes), REPS, TIMEOUT_S)
+  lapply(setNames(modes, modes), function(mode) {
+    rows <- timed$runs[timed$runs$arm == mode, ]
+    v <- timed$values[[mode]]
+    if (is.null(v)) {
+      return(list(elapsed = NA_real_, status = rows$status[1], total_cost = NA_real_,
+                  n_pairs = NA_integer_, right_id = NULL,
+                  certified = NA, duality_gap = NA_real_,
+                  candidate_edges = NA_real_, possible_edges = NA_real_,
+                  edges_evaluated = NA_real_, n_rounds = NA_integer_))
+    }
+    c(list(elapsed = arm_seconds(rows$seconds, rows$status), status = "ok"), v)
+  })
 }
 
 ## ---- resume-safe accumulators ----------------------------------------------
@@ -176,14 +183,13 @@ for (n_total in SIZES) {
     c("lazy", "implicit")
   }
 
-  held <- list()
+  for (mode in modes[vapply(modes, function(m) have_cell(n_total, m), logical(1))]) {
+    cat(sprintf("  %-8s already in %s, skipped\n", mode, basename(out_csv)))
+  }
+  modes <- modes[!vapply(modes, function(m) have_cell(n_total, m), logical(1))]
+  held <- if (length(modes)) time_arms(d, modes) else list()
   for (mode in modes) {
-    if (have_cell(n_total, mode)) {
-      cat(sprintf("  %-8s already in %s, skipped\n", mode, basename(out_csv)))
-      next
-    }
-    r <- time_match(d, mode)
-    held[[mode]] <- r
+    r <- held[[mode]]
     if (identical(r$status, "ok")) {
       cat(sprintf("  %-8s %8.2f s  %d pairs  cost %.6f\n",
                   mode, r$elapsed, r$n_pairs, r$total_cost))

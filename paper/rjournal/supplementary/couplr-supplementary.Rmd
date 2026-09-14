@@ -103,6 +103,15 @@ already holds, so a run that is interrupted continues where it stopped. Moving
 the CSV aside forces a full re-measurement. `paper/run_bench_suite.sh` runs all
 of them in order on one machine, which is how the numbers here were produced.
 
+Every timing follows one procedure. Each arm, whether a solver, a package or a
+memory mode, is first run once in a forked child process, untimed: that run is
+held to the stage's time budget, and its result is what the tables report. The
+timed repetitions then run in the benchmark's own process, in rounds that time
+every arm once in an order that rotates from round to round, and an arm's time
+on a problem is its fastest repetition. The clock is not read inside the child,
+because on this machine a 500 by 1500 Jonker-Volgenant solve took 3.7 ms of user
+time in the parent process and 7.3 ms in most forked children.
+
 The scripts load couplr from a source checkout with `pkgload::load_all()` and
 write their CSVs under `paper/`, so they run from a clone of the package
 repository rather than from the submission archive:
@@ -548,11 +557,11 @@ varies problem size on square dense integer costs, which is the last rule's
 regime and no other. This grid varies the properties the rules are stated over.
 
 A cell is a cost regime, a forbidden pattern and a shape. Each cell is generated
-as several independent instances, each instance is timed several times, and
-every solver in the panel sees the same instance. The timing a cell reports for
-a solver is the median across its instances, where each instance contributes the
-median of its own repetitions, so the spread is between problems rather than
-between repetitions of one problem. A solver that errored or timed out on a cell
+as several independent instances, each instance is timed several times with the
+whole panel interleaved, and every solver in the panel sees the same instance.
+The timing a cell reports for a solver is the median across its instances, where
+each instance contributes the fastest of its own repetitions, so the spread is
+between problems rather than between repetitions of one problem. A solver that errored or timed out on a cell
 has no row there.
 
 ```{r regime-design}
@@ -967,7 +976,7 @@ kb(data.frame(Units = format(sres$n_total, big.mark = ","),
                                    sprintf("%.2fx", sres$max_s / sres$min_s), "-"),
               Outcome = sub(":.*$", "", sres$status),
               check.names = FALSE),
-   caption = "Every size and package of the scaling benchmark. Max over min is the spread across all repetitions of that cell, so it carries both the between-instance and the within-instance variation.",
+   caption = "Every size and package of the scaling benchmark. Min, max and max over min are taken across instances, each instance timed as the fastest of its repetitions.",
    align = "llrrrrrrl")
 ```
 

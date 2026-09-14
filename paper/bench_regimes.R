@@ -57,16 +57,6 @@ suppressPackageStartupMessages({
   pkgload::load_all(repo_root, quiet = TRUE)
 })
 
-## A 500-row instance solves in single-digit milliseconds, which `proc.time()`
-## cannot resolve. microbenchmark reads the platform's high-resolution counter
-## and returns each repetition separately, which is what the raw rows hold.
-HAVE_MB <- requireNamespace("microbenchmark", quietly = TRUE)
-if (!HAVE_MB) {
-  warning("microbenchmark is not installed; timings fall back to proc.time(), ",
-          "whose resolution is coarse against a millisecond solve.",
-          call. = FALSE)
-}
-
 ## Single-core wall-clock, matching the rest of the paper's timings.
 blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
@@ -128,7 +118,7 @@ tiers <- list(
     regimes   = names(cost_regimes),
     patterns  = names(forbidden_patterns),
     panel     = panel,
-    instances = 3L, reps = 3L, timeout_s = 120
+    instances = 3L, reps = 5L, timeout_s = 120
   ),
   large = list(
     shapes    = list(c(1500L, 1500L), c(1500L, 4500L), c(1000L, 10000L)),
@@ -136,7 +126,7 @@ tiers <- list(
                   "metric_clustered"),
     patterns  = c("none", "random_25", "random_01"),
     panel     = fast_panel,
-    instances = 2L, reps = 2L, timeout_s = 600
+    instances = 2L, reps = 3L, timeout_s = 600
   )
 )
 
@@ -167,13 +157,10 @@ cell_seed <- function(tier, regime, pattern, n_rows, n_cols, instance) {
   as.integer(s)
 }
 
-## ---- one instance, one solver, `reps` timed runs -----------------------------
-## The first call is untimed: it establishes that the solver accepts the problem,
-## records what it returns, and pays whatever allocation the first call pays.
-## The repetitions are then timed on a clock with sub-millisecond resolution,
-## because a 500-row instance solves in single-digit milliseconds and
-## `proc.time()` cannot resolve that. Each repetition is written out on its own
-## row.
+## ---- one instance, the whole panel ------------------------------------------
+## The panel is timed through `time_rounds()`, so every solver on an instance is
+## probed once in a child and then timed in rounds with the rest of the panel,
+## and each repetition is written out on its own row.
 ##
 ## The probe returns the matching itself, and the matching is certified in the
 ## parent against `duals`, the instance's own optimal dual solution. That is
@@ -182,71 +169,52 @@ cell_seed <- function(tier, regime, pattern, n_rows, n_cols, instance) {
 ## reports the amount by which any feasible solution can beat it. A solver is
 ## therefore measured against the optimum of the instance it was given, not
 ## against what the rest of the panel happened to return, and a majority
-## returning the same wrong number cannot make it the reference.
-##
-## The certificate is taken outside `bounded_call`, so the solver's budget still
-## bounds the solve alone, and outside every timed section, so nothing it costs
-## enters a reported time.
+## returning the same wrong number cannot make it the reference. The certificate
+## is taken outside every timed section, so nothing it costs enters a reported
+## time.
 CERT_NA <- list(objective = NA_real_, duality_gap = NA_real_,
                 max_suboptimality = NA_real_, certified_optimal = NA,
                 primal_feasible = NA, all_rows_matched = NA,
                 structurally_valid = NA)
 
-measure <- function(cost, method, reps, timeout_s, duals) {
-  failed <- function(status) c(list(seconds = NA_real_, status = status,
-                                    total_cost = NA_real_,
-                                    n_matched = NA_integer_), CERT_NA)
+certify_run <- function(method, cost, match, duals) {
+  if (is.null(duals)) return(CERT_NA)
+  cv <- tryCatch(verify_assignment(match, cost = cost, duals = duals),
+                 error = function(e) {
+                   ## A stage measured in hours does not end on one certificate,
+                   ## and a run without one is not silently a run that passed:
+                   ## it is written out with no verdict and the reason is said
+                   ## here.
+                   cat(sprintf("  ! %s could not be certified: %s\n",
+                               method, conditionMessage(e)))
+                   NULL
+                 })
+  if (is.null(cv)) return(CERT_NA)
+  list(objective = cv$primal_objective, duality_gap = cv$duality_gap,
+       max_suboptimality = cv$max_suboptimality,
+       certified_optimal = cv$certified_optimal,
+       primal_feasible = cv$primal_feasible,
+       all_rows_matched = cv$all_rows_matched,
+       structurally_valid = cv$structurally_valid_matching)
+}
 
-  probe <- bounded_call(function() {
-    t0 <- proc.time()[["elapsed"]]
+solve_panel <- function(cost, methods, reps, timeout_s, duals) {
+  arms <- setNames(lapply(methods, function(method) function() {
     res <- assignment(cost, method = method)
-    list(seconds = proc.time()[["elapsed"]] - t0,
-         total_cost = res$total_cost, match = as.integer(res$match))
-  }, timeout_s)
-  if (!probe$ok) return(failed(probe$status))
-
-  matched <- probe$value$match
-  cert <- if (is.null(duals)) CERT_NA else {
-    cv <- tryCatch(verify_assignment(matched, cost = cost, duals = duals),
-                   error = function(e) {
-                     ## A stage measured in hours does not end on one
-                     ## certificate, and a run without one is not silently a
-                     ## run that passed: it is written out with no verdict and
-                     ## the reason is said here.
-                     cat(sprintf("  ! %s could not be certified: %s\n",
-                                 method, conditionMessage(e)))
-                     NULL
-                   })
-    if (is.null(cv)) CERT_NA else
-      list(objective = cv$primal_objective, duality_gap = cv$duality_gap,
-           max_suboptimality = cv$max_suboptimality,
-           certified_optimal = cv$certified_optimal,
-           primal_feasible = cv$primal_feasible,
-           all_rows_matched = cv$all_rows_matched,
-           structurally_valid = cv$structurally_valid_matching)
-  }
-
-  ## The probe established that one solve fits the budget, so the repetitions
-  ## get that budget once each, and a solver whose cost varies between runs is
-  ## still bounded.
-  timed <- bounded_call(function() {
-    if (HAVE_MB) {
-      mb <- microbenchmark::microbenchmark(assignment(cost, method = method),
-                                           times = reps, unit = "s")
-      as.numeric(mb$time) / 1e9
-    } else {
-      vapply(seq_len(reps), function(i) {
-        t0 <- proc.time()[["elapsed"]]
-        invisible(assignment(cost, method = method))
-        proc.time()[["elapsed"]] - t0
-      }, numeric(1))
+    list(total_cost = res$total_cost, match = as.integer(res$match))
+  }), methods)
+  tr <- time_rounds(arms, reps, timeout_s)
+  lapply(setNames(methods, methods), function(method) {
+    rows <- tr$runs[tr$runs$arm == method, ]
+    v <- tr$values[[method]]
+    if (is.null(v)) {
+      return(c(list(seconds = rows$seconds, status = rows$status,
+                    total_cost = NA_real_, n_matched = NA_integer_), CERT_NA))
     }
-  }, reps * timeout_s + 10)
-  if (!timed$ok) return(failed(timed$status))
-
-  c(list(seconds = timed$value, status = rep("ok", length(timed$value)),
-         total_cost = probe$value$total_cost,
-         n_matched = sum(matched > 0L)), cert)
+    c(list(seconds = rows$seconds, status = rows$status,
+           total_cost = v$total_cost, n_matched = sum(v$match > 0L)),
+      certify_run(method, cost, v$match, duals))
+  })
 }
 
 ## ---- resume-safe accumulators ----------------------------------------------
@@ -372,9 +340,12 @@ for (tier_name in names(tiers)) {
             }
           }
 
+          panel_runs <- solve_panel(prob$cost,
+                                    vapply(todo, function(x) x$method, character(1)),
+                                    tier$reps, tier$timeout_s, duals)
           for (entry in todo) {
             method <- entry$method
-            got <- measure(prob$cost, method, tier$reps, tier$timeout_s, duals)
+            got <- panel_runs[[method]]
             secs <- got$seconds
             ok <- got$status == "ok"
             new <- data.frame(
@@ -406,7 +377,7 @@ for (tier_name in names(tiers)) {
               if (is.na(got$certified_optimal[1])) "  (no verdict)" else
                 sprintf("  NOT OPTIMAL, gap %.3g", got$duality_gap)
             cat(sprintf("  i%d %-15s %s%s\n", instance, method,
-                        if (any(ok)) sprintf("%9.4f s", median(secs[ok]))
+                        if (any(ok)) sprintf("%9.4f s", arm_seconds(secs, got$status))
                         else got$status[1], verdict_note))
             flush.console()
           }
@@ -427,13 +398,12 @@ ok <- runs[runs$status == "ok", ]
 cell_key <- function(df) paste(df$tier, df$regime, df$pattern, df$n_rows,
                                df$n_cols, sep = "|")
 
-## An instance's time for a method is the median of its repetitions; a method's
-## time in a cell is the median across instances, with the quartiles reported
-## beside it. That is the order the review asks for: repetitions inside
-## instances, spread across instances.
+## An instance's time for a method is the fastest of its repetitions; a
+## method's time in a cell is the median across instances, with the quartiles
+## reported beside it. Repetitions inside instances, spread across instances.
 per_instance <- aggregate(seconds ~ tier + regime + pattern + n_rows + n_cols +
                             instance + method + auto_method + auto_rule,
-                          data = ok, FUN = median)
+                          data = ok, FUN = min)
 
 summ <- do.call(rbind, lapply(split(per_instance, list(cell_key(per_instance),
                                                        per_instance$method),

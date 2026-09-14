@@ -41,6 +41,91 @@ bounded_call <- function(fn, timeout_s) {
   list(ok = TRUE, value = value)
 }
 
+## ============================================================================
+## Timing arms against each other
+## ============================================================================
+## A timing taken inside the child `bounded_call()` forks is not a timing of the
+## solve. On the bench machine a 500 x 1500 `jv` solve took 3.7 ms of user time
+## in the parent and 7.3 ms in most forked children, with the system time
+## unchanged, so the child runs the same code at about half speed; and a spin
+## before timing inside the child still left a fifth of the children slow. The
+## same repetitions timed in the parent, straight after an untimed forked call,
+## were slow in 1 block of 80. So the fork keeps the one job it is needed for,
+## stopping a solve that outruns its budget, and the clock is read in the
+## parent.
+##
+## Each arm is therefore probed once in a child: that solve is untimed, it
+## establishes that the arm fits the budget, and what it returns is what the
+## caller reads off the solve. A solve is deterministic, so a repetition takes
+## the time its probe took and is run in the parent without a second budget.
+##
+## An arm's time on one problem is the fastest of its repetitions, the one least
+## disturbed by anything else the machine did; spread across problems is a
+## different quantity, the problems themselves varying, and stays a median and
+## quartiles. Arms that are compared are timed in rounds: a round times every arm
+## once, in an order that rotates from one round to the next, so a disturbance
+## is spread over the arms rather than falling whole on one of them.
+##
+## The clock is microbenchmark's nanosecond counter, around the call alone.
+if (!requireNamespace("microbenchmark", quietly = TRUE)) {
+  stop("the benchmarks read microbenchmark::get_nanotime(); install microbenchmark",
+       call. = FALSE)
+}
+
+## `arms` is a named list of functions of no argument, each one solve. Returns
+## `runs`, one row per arm and repetition with `arm`, `rep`, `seconds` and
+## `status`, and `values`, what each arm's probe returned, so a caller reads a
+## solve's result without solving it again. An arm whose probe fails carries one
+## row with the probe's status and is not timed. `probes`, named as `arms`, is
+## what the child runs in place of the arm when the probe measures more than the
+## solve, a heap high-water mark for one, that the timed repetitions should not
+## pay for.
+time_rounds <- function(arms, reps, timeout_s, probes = arms) {
+  stopifnot(is.list(arms), length(arms) > 0, !is.null(names(arms)),
+            !anyDuplicated(names(arms)), reps >= 1,
+            identical(sort(names(probes)), sort(names(arms))))
+  arm_names <- names(arms)
+  values <- setNames(vector("list", length(arm_names)), arm_names)
+  status <- setNames(character(length(arm_names)), arm_names)
+  for (a in arm_names) {
+    got <- bounded_call(probes[[a]], timeout_s)
+    status[[a]] <- if (got$ok) "ok" else got$status
+    if (got$ok && !is.null(got$value)) values[a] <- list(got$value)
+  }
+
+  timed <- arm_names[status == "ok"]
+  seconds <- matrix(NA_real_, nrow = reps, ncol = length(timed),
+                    dimnames = list(NULL, timed))
+  for (r in seq_len(reps)) {
+    if (!length(timed)) break
+    turn <- (seq_along(timed) + r - 2L) %% length(timed) + 1L
+    for (a in timed[turn]) {
+      fn <- arms[[a]]
+      t0 <- microbenchmark::get_nanotime()
+      fn()
+      seconds[r, a] <- (microbenchmark::get_nanotime() - t0) / 1e9
+    }
+  }
+
+  runs <- do.call(rbind, lapply(arm_names, function(a) {
+    if (status[[a]] == "ok") {
+      data.frame(arm = a, rep = seq_len(reps), seconds = seconds[, a],
+                 status = "ok", stringsAsFactors = FALSE)
+    } else {
+      data.frame(arm = a, rep = 1L, seconds = NA_real_, status = status[[a]],
+                 stringsAsFactors = FALSE)
+    }
+  }))
+  list(runs = runs, values = values)
+}
+
+## One arm's time on one problem: its fastest successful repetition, or NA when
+## none succeeded.
+arm_seconds <- function(seconds, status) {
+  ok <- status == "ok" & is.finite(seconds)
+  if (any(ok)) min(seconds[ok]) else NA_real_
+}
+
 ## 6 continuous (age-like, educ-like, two-earnings-like, two extras),
 ## 2 binary (race / nodegree-like). Treated shifted slightly to make
 ## the matching problem non-degenerate. Treated:control = 1:2.
@@ -70,6 +155,14 @@ make_data <- function(n_total, seed) {
 ## Seed is derived from the size, so a given size always yields the same data
 ## whichever script generates it.
 bench_seed <- function(n_total) 20260515 + n_total
+
+## Instance 1 of every size is the problem the earlier single-instance table was
+## measured on, so further instances extend that record rather than replacing it
+## with an unrelated draw. It lives here because more than one script times the
+## same instances of the same size and they have to be the same draws.
+instance_seed <- function(n_total, instance) {
+  bench_seed(n_total) + (instance - 1L) * 1000003L
+}
 
 covars <- c("v1", "v2", "v3", "v4", "v5", "v6", "b1", "b2")
 form   <- as.formula(paste("treat ~", paste(covars, collapse = " + ")))

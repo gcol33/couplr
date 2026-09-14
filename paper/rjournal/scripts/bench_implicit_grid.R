@@ -118,50 +118,74 @@ quietly <- function(expr) {
   })
 }
 
-run_mode <- function(cl, mode, max_distance, timeout_s = TIMEOUT_S) {
+REPS <- 3L
+
+mode_args <- function(cl, mode, max_distance) {
   args <- list(left = cl$left, right = cl$right, vars = cl$vars,
                distance = "mahalanobis", memory_mode = mode,
                check_costs = FALSE)
   if (is.finite(max_distance)) args$max_distance <- max_distance
   if (mode != "implicit") args$method <- "jv"
+  args
+}
 
-  ## The solve and everything read off it happen in one bounded call, so the
-  ## matching itself never crosses back: only the summary below does.
-  res <- bounded_call(function() {
-    gc(reset = TRUE, verbose = FALSE)
-    t0 <- proc.time()[["elapsed"]]
-    m <- quietly(do.call(match_couples, args))
-    elapsed <- proc.time()[["elapsed"]] - t0
-    ## R's own heap high-water mark over the call. It is not the process peak,
-    ## since the solver's C++ workspace is invisible to gc(), and
-    ## paper/bench_memory.R measures that separately; this is the part of the
-    ## footprint R owns.
-    heap_mb <- sum(gc(verbose = FALSE)[, "max used"] * c(56, 8)) / 1e6
-    cert <- m$certificate; srch <- m$search
-    list(
-      status = "ok", elapsed = elapsed, heap_mb = heap_mb,
-      n_pairs = nrow(m$pairs), total_cost = sum(m$pairs$distance),
-      certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
-      duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
-      n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds,
-      seed_width      = if (is.null(srch)) NA_real_ else srch$seed_width,
-      candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
-      possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
-      edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
-      max_arc = if (nrow(m$pairs)) max(m$pairs$distance) else NA_real_,
-      right_id = m$pairs$right_id
-    )
-  }, timeout_s)
+## The solve and everything read off it, as one call run in a child, so the
+## matching itself never crosses back: only the summary below does.
+measure_mode <- function(args) function() {
+  gc(reset = TRUE, verbose = FALSE)
+  m <- quietly(do.call(match_couples, args))
+  ## R's own heap high-water mark over the call. It is not the process peak,
+  ## since the solver's C++ workspace is invisible to gc(), and
+  ## paper/bench_memory.R measures that separately; this is the part of the
+  ## footprint R owns.
+  heap_mb <- sum(gc(verbose = FALSE)[, "max used"] * c(56, 8)) / 1e6
+  cert <- m$certificate; srch <- m$search
+  list(
+    status = "ok", elapsed = NA_real_, heap_mb = heap_mb,
+    n_pairs = nrow(m$pairs), total_cost = sum(m$pairs$distance),
+    certified   = if (is.null(cert)) NA else isTRUE(cert$certified_optimal),
+    duality_gap = if (is.null(cert)) NA_real_ else cert$duality_gap,
+    n_rounds        = if (is.null(srch)) NA_integer_ else srch$n_rounds,
+    seed_width      = if (is.null(srch)) NA_real_ else srch$seed_width,
+    candidate_edges = if (is.null(srch)) NA_real_ else srch$candidate_edges,
+    possible_edges  = if (is.null(srch)) NA_real_ else srch$possible_edges,
+    edges_evaluated = if (is.null(srch)) NA_real_ else srch$edges_evaluated,
+    max_arc = if (nrow(m$pairs)) max(m$pairs$distance) else NA_real_,
+    right_id = m$pairs$right_id
+  )
+}
 
-  if (!res$ok) {
-    return(list(status = res$status, elapsed = NA_real_, heap_mb = NA_real_,
-                n_pairs = NA_integer_, total_cost = NA_real_,
-                certified = NA, duality_gap = NA_real_, n_rounds = NA_integer_,
-                seed_width = NA_real_, candidate_edges = NA_real_,
-                possible_edges = NA_real_, edges_evaluated = NA_real_,
-                max_arc = NA_real_, right_id = NULL))
-  }
+failed_mode <- function(status) {
+  list(status = status, elapsed = NA_real_, heap_mb = NA_real_,
+       n_pairs = NA_integer_, total_cost = NA_real_,
+       certified = NA, duality_gap = NA_real_, n_rounds = NA_integer_,
+       seed_width = NA_real_, candidate_edges = NA_real_,
+       possible_edges = NA_real_, edges_evaluated = NA_real_,
+       max_arc = NA_real_, right_id = NULL)
+}
+
+## An untimed solve, for the questions the grid asks before it times anything.
+run_mode <- function(cl, mode, max_distance, timeout_s = TIMEOUT_S) {
+  res <- bounded_call(measure_mode(mode_args(cl, mode, max_distance)), timeout_s)
+  if (!res$ok) return(failed_mode(res$status))
   res$value
+}
+
+## The timed modes of one cell against each other in rounds. The probe carries
+## the heap measurement and the summary; the repetitions time the solve alone.
+time_modes <- function(cl, modes, max_distance) {
+  args <- lapply(setNames(modes, modes), function(mode) mode_args(cl, mode, max_distance))
+  timed <- time_rounds(
+    arms = lapply(args, function(a) function() { quietly(do.call(match_couples, a)); NULL }),
+    reps = REPS, timeout_s = TIMEOUT_S,
+    probes = lapply(args, measure_mode))
+  lapply(setNames(modes, modes), function(mode) {
+    rows <- timed$runs[timed$runs$arm == mode, ]
+    v <- timed$values[[mode]]
+    if (is.null(v)) return(failed_mode(rows$status[1]))
+    v$elapsed <- arm_seconds(rows$seconds, rows$status)
+    v
+  })
 }
 
 ## The tightest caliper the problem still admits a complete matching under.
@@ -265,14 +289,12 @@ for (sweep_name in names(sweeps)) {
         flush.console()
       }
 
-      imp <- run_mode(cl, "implicit", caliper_value)
-      lazy <- run_mode(cl, "lazy", caliper_value)
-
-      dense <- if (cell$n_total <= DENSE_MAX_N) {
-        run_mode(cl, "dense", caliper_value)
-      } else {
-        NULL
-      }
+      timed <- time_modes(cl, c("implicit", "lazy",
+                                if (cell$n_total <= DENSE_MAX_N) "dense"),
+                          caliper_value)
+      imp <- timed$implicit
+      lazy <- timed$lazy
+      dense <- timed$dense
 
       equal <- NA; gap <- NA_real_
       if (!is.null(dense) && identical(dense$status, "ok") &&

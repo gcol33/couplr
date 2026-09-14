@@ -67,13 +67,16 @@ argv  <- commandArgs(TRUE)
 QUICK <- any(argv == "--quick")
 
 ## ---- benchmark grid ----
-## Instances first, repetitions inside them. The large sizes carry fewer of
-## both: at 20000 a single optmatch solve is minutes, and a second instance
-## there costs more than the spread it would report is worth.
+## Instances first, repetitions inside them. Every size carries at least three
+## instances, so no reported time is a single draw and the bracket beside it is
+## problem-to-problem variation everywhere in the table. The large sizes drop
+## repetitions rather than instances: a repetition measures what else the
+## machine was doing, which a solve lasting minutes averages over anyway, and at
+## 20000 a single optmatch solve is minutes.
 grid <- data.frame(
   n_total   = c(500L, 2000L, 5000L, 10000L, 20000L, 50000L),
-  instances = c(   5L,   5L,    5L,     3L,     2L,     1L),
-  reps      = c(   3L,   3L,    2L,     2L,     1L,     1L)
+  instances = c(   5L,   5L,    5L,     3L,     3L,     3L),
+  reps      = c(   5L,   5L,    3L,     3L,     1L,     1L)
 )
 if (QUICK) {
   grid <- data.frame(n_total = c(300L, 600L), instances = 2L, reps = 2L)
@@ -82,13 +85,6 @@ TIMEOUT_S <- 600  # per run
 
 ## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
 source(file.path(repo_root, "paper", "bench_common.R"))
-
-## Instance 1 of every size is the problem the earlier single-instance table was
-## measured on, so the new rows extend that record rather than replacing it with
-## an unrelated draw.
-instance_seed <- function(n_total, instance) {
-  bench_seed(n_total) + (instance - 1L) * 1000003L
-}
 
 ## ---- per-package callables ----
 ## memory_mode is pinned to "dense" so all three packages are timed on the same
@@ -113,17 +109,6 @@ optmatch_call <- function(d) {
 callables <- list(couplr = couplr_call, optmatch = optmatch_call,
                   MatchIt = matchit_call)
 
-## ---- timed call: returns list(elapsed_s, status) ----
-time_one <- function(fn, d, timeout_s) {
-  got <- bounded_call(function() {
-    t0 <- proc.time()[["elapsed"]]
-    .x <- fn(d)
-    proc.time()[["elapsed"]] - t0
-  }, timeout_s)
-  if (!got$ok) return(list(elapsed = NA_real_, status = got$status))
-  list(elapsed = got$value, status = "ok")
-}
-
 ## ---- resume-safe accumulators ----------------------------------------------
 runs <- if (file.exists(runs_csv)) {
   read.csv(runs_csv, stringsAsFactors = FALSE)
@@ -144,10 +129,10 @@ summarise_runs <- function(runs) {
   do.call(rbind, lapply(split(runs, list(runs$n_total, runs$package),
                               drop = TRUE), function(g) {
     ok <- g[g$status == "ok", ]
-    ## One number per instance -- the median of its repetitions -- so the
+    ## One number per instance -- the fastest of its repetitions -- so the
     ## quartiles below are taken over instances and not over repetitions.
     per_instance <- if (nrow(ok)) {
-      vapply(split(ok$seconds, ok$instance), median, numeric(1))
+      vapply(split(ok$seconds, ok$instance), min, numeric(1))
     } else {
       numeric(0)
     }
@@ -186,36 +171,38 @@ for (i in seq_len(nrow(grid))) {
 
   for (instance in seq_len(instances)) {
     seed <- instance_seed(n_total, instance)
-    d <- NULL
-    for (pkg in names(callables)) {
-      if (have_run(n_total, pkg, instance)) {
-        cat(sprintf("  i%d %-8s : already recorded, skipping\n", instance, pkg))
-        next
-      }
-      if (is.null(d)) d <- make_data(n_total, seed = seed)
-      fn <- callables[[pkg]]
-      ## Warm-up at small n only: at large n it would cost a second full solve.
-      if (n_total <= 2000) invisible(try(fn(d), silent = TRUE))
+    pkgs <- Filter(function(pkg) !have_run(n_total, pkg, instance), names(callables))
+    for (pkg in setdiff(names(callables), pkgs)) {
+      cat(sprintf("  i%d %-8s : already recorded, skipping\n", instance, pkg))
+    }
+    if (!length(pkgs)) next
+    d <- make_data(n_total, seed = seed)
 
-      times <- numeric(0); statuses <- character(0)
-      for (r in seq_len(reps)) {
-        tr <- time_one(fn, d, TIMEOUT_S)
-        times <- c(times, tr$elapsed); statuses <- c(statuses, tr$status)
-        if (tr$status != "ok") break   # a failure repeats, and costs the timeout again
-      }
+    ## Warm-up at small n only: at large n it would cost a second full solve.
+    if (n_total <= 2000) {
+      for (pkg in pkgs) invisible(try(callables[[pkg]](d), silent = TRUE))
+    }
+    arms <- setNames(lapply(pkgs, function(pkg) {
+      fn <- callables[[pkg]]
+      function() { fn(d); NULL }
+    }), pkgs)
+    timed <- time_rounds(arms, reps, TIMEOUT_S)$runs
+
+    for (pkg in pkgs) {
+      tr <- timed[timed$arm == pkg, ]
       runs <- rbind(runs, data.frame(
         n_total = n_total, package = pkg, instance = instance, seed = seed,
-        rep = seq_along(times), seconds = round(times, 4), status = statuses,
+        rep = tr$rep, seconds = round(tr$seconds, 4), status = tr$status,
         stringsAsFactors = FALSE
       ))
-      ok <- statuses == "ok"
+      ok <- tr$status == "ok"
       cat(sprintf("  i%d %-8s : %s\n", instance, pkg,
-                  if (any(ok)) sprintf("median %.3f s of %d rep(s)",
-                                       median(times[ok]), sum(ok))
-                  else statuses[1]))
-      flush.console()
-      write_partial()
+                  if (any(ok)) sprintf("fastest %.3f s of %d rep(s)",
+                                       arm_seconds(tr$seconds, tr$status), sum(ok))
+                  else tr$status[1]))
     }
+    flush.console()
+    write_partial()
   }
 }
 

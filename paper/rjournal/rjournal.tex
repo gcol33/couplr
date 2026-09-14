@@ -41,7 +41,7 @@ near-optimal. \CRANpkg{cobalt} \citep{cobalt} supplies balance diagnostics acros
 packages. What these expose is the matching design; the assignment problem
 underneath is reached through a solver argument at most, and alternative optima
 and a bottleneck objective sit outside all of them. Statements about other
-packages here and in Table \ref{tab:capability} were assessed on 2026-08-09
+packages here and in the supplementary material's feature table were assessed on 2026-08-09
 against \CRANpkg{MatchIt} 4.7.2, \CRANpkg{optmatch} 0.10.8, \CRANpkg{Matching} 4.10-15 and
 \CRANpkg{designmatch} 0.5.5, and against the reference manuals of
 \CRANpkg{rcbalance} 1.8.8 and \CRANpkg{quickmatch} 0.2.3 on 2026-08-26.
@@ -70,7 +70,7 @@ cost matrix is left to the caller. Among the matching-specific interfaces
 surveyed, none exposes assignment or flow potentials together with a function
 that verifies optimality against them. \CRANpkg{optmatch} states bounds in
 their place, an \texttt{exceedances} attribute and a solver tolerance, both described
-with the capability table below.
+in the supplementary material.
 
 The second concerns size. Sparse matching is a developed literature, and what
 its methods have in common is that the sparse network is settled before the
@@ -126,7 +126,7 @@ optimisation architecture, its implementation and the measurements follow for a
 reader interested in where the certificates and the column generation come
 from.
 
-Results were produced with couplr version 1.7.0.
+Results were produced with couplr version 1.7.1.
 
 \section{The core assignment engine}\label{the-core-assignment-engine}
 
@@ -221,7 +221,7 @@ verify_assignment(assignment(cost), cost)
 #>     matched arcs tight     TRUE    (max slack 0.000e+00)
 #>     unmatched columns free TRUE    (max |v_j| 0.000e+00)
 #>   duality_gap              0.000000e+00
-#>   max_suboptimality        0.000000e+00
+#>   max_suboptimality        1.330997e-16
 #>   certified_optimal        TRUE 
 #>   arithmetic               exact, no tolerance
 #> 
@@ -1048,19 +1048,19 @@ the definition of the mode rather than a choice.
 
 \begin{table}
 
-\caption{\label{tab:implicit-table}One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and the scaling table below carries dense timings at the two largest sizes. Every cell returned the same total distance.}
+\caption{\label{tab:implicit-table}One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro, the fastest of three repetitions with the arms interleaved. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and the scaling table below carries dense timings at the two largest sizes. Every cell returned the same total distance.}
 \centering
 \begin{tabular}[t]{lrrrrrr}
 \toprule
 Problem size & dense & lazy & implicit & Graph built & Distances & Rounds\\
 \midrule
-167 + 333 & 21 ms & 8 ms & 11 ms & 16.22\% & 2.00 & 2\\
-667 + 1,333 & 161 ms & 53 ms & 59 ms & 4.95\% & 2.00 & 2\\
-1,667 + 3,333 & 901 ms & 350 ms & 310 ms & 2.16\% & 1.96 & 2\\
-3,333 + 6,667 & 3.17 s & 1.59 s & 1.15 s & 1.17\% & 1.88 & 2\\
-6,667 + 13,333 & not run & 6.38 s & 4.1 s & 0.63\% & 1.71 & 2\\
+167 + 333 & 11 ms & 3 ms & 6 ms & 16.22\% & 2.00 & 2\\
+667 + 1,333 & 106 ms & 46 ms & 54 ms & 4.95\% & 2.00 & 2\\
+1,667 + 3,333 & 672 ms & 338 ms & 312 ms & 2.16\% & 1.96 & 2\\
+3,333 + 6,667 & 2.78 s & 1.55 s & 1.17 s & 1.17\% & 1.88 & 2\\
+6,667 + 13,333 & not run & 6.25 s & 4.23 s & 0.63\% & 1.71 & 2\\
 \addlinespace
-16,667 + 33,333 & not run & 61.9 s & 21.3 s & 0.29\% & 1.42 & 2\\
+16,667 + 33,333 & not run & 60.8 s & 22.2 s & 0.29\% & 1.42 & 2\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1073,11 +1073,11 @@ evaluations, so at eight covariates it computes more distances than one full
 sweep would. And it is still the fastest arm at four of the six sizes, because
 what it avoids is not the arithmetic but the graph. At
 16,667 + 33,333 it finishes in
-21 seconds against
-62 for the lazy path. At the two
+22 seconds against
+61 for the lazy path. At the two
 smallest sizes the lazy path is faster; at 667 + 1,333 it takes
-53 ms against
-59 ms, which is where the
+46 ms against
+54 ms, which is where the
 loop's fixed costs are still visible against a problem this size.
 
 Every run in the table settled in 2 rounds, one seed and one sweep
@@ -1089,9 +1089,9 @@ than an assignment of the same cost.
 
 The implicit column is a representation and a solver at once, so comparing it
 with the dense column reads both differences together. At 3,333 + 6,667 the
-materialised matrix takes 3.17 seconds
-under Jonker-Volgenant and 4.15
-under the flow solver the restricted master belongs to, against 1.15 for the loop, so what the loop
+materialised matrix takes 2.78 seconds
+under Jonker-Volgenant and 3.7
+under the flow solver the restricted master belongs to, against 1.17 for the loop, so what the loop
 saves is not what a change of solver would give. We give the decomposition in
 the supplementary material.
 
@@ -1110,9 +1110,9 @@ distance is nearly equal. Across the 20 cells that grid holds, the loop settled 
 the complete pair count, at 0.24 to
 6.67 times that count in distance evaluations.
 All 20 cells certified, at a largest absolute duality gap of 3.64e-12, and 18 of the 18 cells small enough to run the dense
-path beside the loop returned the same pairing unit by unit. The margin over the lazy path is where the clouds separate: it runs from
-10.83x on the displaced treated group to
-1.04x on the heavy-tailed cloud.
+path beside the loop returned the same pairing unit by unit. The margin over the lazy path is where the clouds separate: about
+10x on the displaced treated group, and none at all on
+the heavy-tailed cloud, where the two paths are within measurement of each other.
 
 Two rounds is what an ordinary cloud costs and it is not what the loop is
 bounded by, so the grid's hostile cell is worth reading on its own. In the
@@ -1120,7 +1120,7 @@ contested core, where every treated unit's nearest controls are the same few,
 the duals travel a long way before they stop pricing pairs in. At 10,000 units it takes 9
 to 10 rounds, ends holding 73 percent of the complete pair count rather than a
 fraction of one percent, and evaluates 6.7 times that count in distances. It still certifies,
-and it is still 3.2 times faster than the
+and it is still several times faster than the
 lazy path on this cloud. What it shows is the worst case of the previous
 section happening: the graph the loop ends up holding is most of the one it
 set out to avoid, and it has paid for the rounds that built it.
@@ -1134,24 +1134,24 @@ expression, so we run each arm as a fresh R session that loads what it needs, ru
 one matching and exits, measured from outside. A session that loaded the same
 packages and matched nothing is the floor each arm is read against.
 
-At 6,667 + 13,333 the dense path peaks 6256 MB
-above that floor, the lazy path 22 MB and the
-loop 128 MB, against
-27429 MB for \CRANpkg{optmatch} and
-8641 MB for \CRANpkg{MatchIt}. Two readings follow. The loop is not the smallest of the three: the lazy path
-holds 22 MB against the loop's 128 MB, since it stores no graph at all
+At 6,667 + 13,333 the dense path peaks 6150 MB
+above that floor, the lazy path 23 MB and the
+loop 129 MB, against
+27419 MB for \CRANpkg{optmatch} and
+8640 MB for \CRANpkg{MatchIt}. Two readings follow. The loop is not the smallest of the three: the lazy path
+holds 23 MB against the loop's 129 MB, since it stores no graph at all
 while the loop stores the candidate set it has built. What the loop buys over
 it here is time, and the ceiling both of them remove is the dense path's. The
 second reading is the guard's. Building the matrix and stopping there accounts
-for 1093 MB on a matrix whose entries
-occupy 711 MB, so holding it costs 1.5 times its cells and solving over it costs 8.8 times them. That gap is preparation copies
+for 1095 MB on a matrix whose entries
+occupy 711 MB, so holding it costs 1.5 times its cells and solving over it costs 8.6 times them. That gap is preparation copies
 and the solver's own workspace, and it is what the automatic mode has to read:
 a guard sized on the matrix would let a dense solve start on a machine it does
 not fit. \texttt{estimate\_dense\_matrix\_mb()} estimates the matrix at
 4 times the raw cell bytes and \texttt{estimate\_dense\_solve\_mb()} the
 peak of the solve at 12 times them, and \texttt{memory\_mode\ =\ "auto"}
 compares the second against available memory. Neither multiplier is fitted to one cell: across 5,000, 10,000 and 20,000 units the
-solve peaked at 10.5, 7.2 and 8.8 times the cell bytes and the matrix at
+solve peaked at 10.5, 7.2 and 8.6 times the cell bytes and the matrix at
 1.8, 1.7 and 1.5 times them, and both defaults sit above every one of those. Both ratios are read from 5,000
 units up: at 2,000 the matrix holds
 7 MB of cells
@@ -1189,10 +1189,10 @@ the saving is the warm start rather than the sweep's shared setup.
 \toprule
 Problem size & As a path & Independently & Wall ratio & Solve-time ratio & Rounds\\
 \midrule
-167 + 333 & 0.059 s & 0.139 s & 2.36x & 2.75x & 22 / 40\\
-667 + 1,333 & 0.534 s & 1.09 s & 2.05x & 2.06x & 23 / 40\\
-1,667 + 3,333 & 3.1 s & 6.44 s & 2.08x & 2.08x & 21 / 40\\
-6,667 + 13,333 & 44.1 s & 89.1 s & 2.02x & 2.02x & 21 / 40\\
+167 + 333 & 0.061 s & 0.142 s & 2.33x & 2.70x & 22 / 40\\
+667 + 1,333 & 0.581 s & 1.16 s & 2.00x & 2.01x & 23 / 40\\
+1,667 + 3,333 & 3.27 s & 6.73 s & 2.06x & 2.06x & 21 / 40\\
+6,667 + 13,333 & 46.3 s & 93.1 s & 2.01x & 2.01x & 21 / 40\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1215,12 +1215,13 @@ one optimum equal totals do not make the matchings equal.
 
 \subsection{Solver portfolio and automatic dispatch}\label{solver-portfolio-and-automatic-dispatch}
 
-Figure \ref{fig:solver-bench} reports median wall-clock solve time against
+Figure \ref{fig:solver-bench} reports wall-clock solve time against
 problem size for all nineteen solvers, grouped by family. We draw costs as
-integers uniformly from \([1, 10{,}000]\) on square matrices and report medians of
-five replicates on a single core of an Apple M4 Pro. The slower families are
+integers uniformly from \([1, 10{,}000]\) on square matrices, time the solvers of
+a size interleaved with five repetitions each, and report each solver's fastest
+repetition, on a single core of an Apple M4 Pro. The slower families are
 capped at smaller sizes so that the scalable solvers can be measured to
-\(n = 5000\) within a reasonable budget. We measured all timings in this section on 2026-09-01 under R 4.5.3 with couplr 1.7.0 at commit 3a083b1,
+\(n = 5000\) within a reasonable budget. We measured all timings in this section on 2026-09-14 under R 4.5.3 with couplr 1.7.1 at commit 2b850df,
 \CRANpkg{optmatch} 0.10.8 and \CRANpkg{MatchIt} 4.7.2.
 
 \begin{figure}
@@ -1229,7 +1230,7 @@ capped at smaller sizes so that the scalable solvers can be measured to
 
 }
 
-\caption{Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs.}\label{fig:solver-bench}
+\caption{Wall-clock solve time, the fastest of five interleaved repetitions, against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs.}\label{fig:solver-bench}
 \end{figure}
 
 Jonker-Volgenant with its warm start is the fastest general-purpose solver at
@@ -1267,48 +1268,46 @@ crossing and 45 the large-tier subset. We generate each cell as
 several independent instances and time each instance several times, and every
 solver in the panel sees the same instance. We time the solver \texttt{"auto"} selects
 as a solver of its own, so its number carries the probing pass the rules cost,
-and we read it against the fastest named solver in the same cell.
+and we read it against the fastest named solver in the same cell, whose panel
+holds every solver the rules can name on it.
 
 \begin{table}
 
-\caption{\label{tab:regimes}Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver. The large tier times a reduced panel that omits the special-purpose solvers, so a cell whose dispatched solver is not in it reads below 1.00x.}
+\caption{\label{tab:regimes}Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver.}
 \centering
 \begin{tabular}[t]{llrrrr}
 \toprule
 Rule & Solver & Cells & Fastest & Median & Worst\\
 \midrule
-no earlier rule applies & jv & 144 & 59 & 1.14x & 10.41x\\
-no cost scale to exploit & hk01 & 45 & 34 & 1.00x & 2.18x\\
+no earlier rule applies & jv & 144 & 70 & 1.03x & 10.55x\\
+no cost scale to exploit & hk01 & 45 & 44 & 0.99x & 2.25x\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Over the 189 cells the dispatcher picked the fastest solver of the
-panel in 93 of them, at a median 1.07x of the
-cell's best time. A cell reads below \texttt{1.00x} for one of two reasons. The large
-tier times a reduced panel, so on its 9 binary cells the
-solver the dispatcher named was not among those it is read against. On the
-36 cells of that rule whose panel does hold its solver the median
-is 1.01x. Elsewhere the two sides are separate timings of
-one solver and scatter by a few percent either way. The two rules that were
+panel in 114 of them, at a median 1.02x of the
+cell's best time. Where a cell reads below \texttt{1.00x} the two sides are separate
+timings of the same solver, and the lowest in the grid is
+0.91x. The two rules that were
 removed can be read off the same grid. Over the 96 cells with
 at least three columns per row, where the rectangular rule used to fire, the
 default takes a median
-1.04x; over the 96 cells with more than
-half the entries forbidden, 1.23x. Timed against the
+1.03x; over the 96 cells with more than
+half the entries forbidden, 1.03x. Timed against the
 solver each rule named rather than against the panel's best, \texttt{sap} takes a
-median 1.41x of the default's time on the wide cells and \texttt{lapmod}
-1.09x of it on the sparse ones, so in each case the rule was naming the
+median 1.31x of the default's time on the wide cells and \texttt{lapmod}
+1.12x of it on the sparse ones, so in each case the rule was naming the
 slower of the two.
 
 Where the default is behind, it is behind in one cost regime. Over the
 18 cells whose finite costs are heavily tied it takes a median
-3.92x of the fastest solver in the cell and as much as
-10.41x; over the remaining 126 cells of the
-rule the median is 1.06x and the worst
-3.90x. The solvers that win the tied cells are
-\texttt{network\_simplex} in 9 of them and
-\texttt{csflow} in 5, both of them the
+3.97x of the fastest solver in the cell and as much as
+10.55x; over the remaining 126 cells of the
+rule the median is 1.03x and the worst
+4.22x. The solvers that win the tied cells are
+\texttt{network\_simplex} in 10 of them and
+\texttt{auction\_scaled} in 4, both of them the
 flow formulations that Figure \ref{fig:solver-bench} puts last on dense uniform
 costs. No rule in the table reads how tied the costs are and
 none was added for it: fitting one to this grid would score it on the
@@ -1364,44 +1363,44 @@ same eight-covariate structure, at six sizes with a one-to-two ratio of treated
 to control units, so every problem here is rectangular. Every package in this
 comparison materialises the distance matrix, so we time couplr with
 \texttt{memory\_mode\ =\ "dense"}. We generate each size as several independent
-instances with the timing repetitions inside them, and the table reports the
-median and the interquartile range across instances. Repetitions of one matrix
-measure the clock, and what varies between problems is what a reader wants to
-know.
+instances and time the three packages on each in interleaved rounds. An
+instance's time is its fastest repetition, since repetitions of one solve differ
+only by what else the machine was doing, and the table reports the median and
+the interquartile range across instances, which is what varies between problems.
 
 \begin{table}
 
-\caption{\label{tab:scaling}One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance. The 50,000 row carries one instance and is a single run rather than a median, so no range is reported for it. Fewer than four instances back the bracket at 10,000 (3) and 20,000 (2), so there it is the spread of those runs rather than a quartile estimate. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the 600-second cap.}
+\caption{\label{tab:scaling}One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets; an instance's time is the fastest of its repetitions, taken with the packages interleaved.  Fewer than four instances back the bracket at 10,000 (3), 20,000 (3) and 50,000 (3), so there it is the spread of those runs rather than a quartile estimate. The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the 600-second cap.}
 \centering
 \begin{tabular}[t]{lrrr}
 \toprule
 Problem size & couplr & optmatch & MatchIt\\
 \midrule
-167 + 333 & 20 ms (20-21) & 116 ms (116-121) & 138 ms (136-139)\\
-667 + 1,333 & 152 ms (141-164) & 1.75 s (1.67-1.76) & 2.27 s (2.24-2.29)\\
-1,667 + 3,333 & 788 ms (778-814) & 12.8 s (12.7-12.8) & 16.2 s (16.2-16.2)\\
-3,333 + 6,667 & 3.15 s (3.1-3.22) & 60.5 s (59.8-60.6) & 75.3 s (74.6-75.5)\\
-6,667 + 13,333 & 11.6 s (11.1-12) & 286 s (283-290) & int overflow\\
+167 + 333 & 10 ms (10-10) & 97 ms (96-97) & 118 ms (116-118)\\
+667 + 1,333 & 114 ms (114-117) & 1.6 s (1.53-1.63) & 2.05 s (2.01-2.08)\\
+1,667 + 3,333 & 683 ms (680-747) & 12 s (11.9-12) & 14.9 s (14.9-15)\\
+3,333 + 6,667 & 2.87 s (2.86-2.96) & 58.3 s (57.6-58.4) & 71.3 s (70.4-71.3)\\
+6,667 + 13,333 & 12.9 s (11.7-13.3) & 285 s (280-291) & int overflow\\
 \addlinespace
-16,667 + 33,333 & 75.7 s & timeout & timeout\\
+16,667 + 33,333 & 78.7 s (77.3-79.1) & timeout & timeout\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The margin widens with problem size. couplr is about
-6 times faster than \CRANpkg{optmatch} at
-\(n = 500\) and 25 times faster at
+10 times faster than \CRANpkg{optmatch} at
+\(n = 500\) and 22 times faster at
 \(n = 20{,}000\), where it finishes in
-11.6 seconds against
-4.8 minutes.
+12.9 seconds against
+4.7 minutes.
 \CRANpkg{MatchIt} runs
-7
+12
 to
-24
+25
 times slower up to \(n = 10{,}000\), which is the largest size it completes before
 \texttt{matchit(method\ =\ "optimal")} aborts inside the \CRANpkg{optmatch} back end with
 an integer-size overflow. At \(n = 50{,}000\) couplr finishes in
-76
+79
 seconds and both alternatives exceed the 600-second cap.
 
 We compare three workflows on one task, from data frame to matched pairs, and
@@ -1412,13 +1411,13 @@ while couplr's dispatcher sends this problem to Jonker-Volgenant. Reading the
 margin as a faster inner loop would need a benchmark holding the formulation
 fixed across packages, which this one does not.
 
-The lazy path removes the memory ceiling as well. The same \(n = 50{,}000\) match
-under \texttt{memory\_mode\ =\ "lazy"} completes in
-62 seconds without ever
+The lazy path removes the memory ceiling as well. The same \(n = 50{,}000\)
+problems under \texttt{memory\_mode\ =\ "lazy"} take a median
+61 seconds without ever
 building the distance matrix, returning the assignment the dense path returns.
-At \(n = 20{,}000\) it takes
-6.4 seconds against
-11.6
+At \(n = 20{,}000\) the median is
+7.0 seconds against
+12.9
 for the dense path, so on these problems recomputing distances is cheaper than
 materialising and traversing the matrix.
 
@@ -1426,33 +1425,19 @@ materialising and traversing the matrix.
 
 \subsubsection{Feature coverage}\label{feature-coverage}
 
-Table \ref{tab:capability} lists where the three packages differ.
-Rows where all three offer the feature, covariate distance, propensity-score
-matching, exact blocking and a cost-matrix entry point, are omitted.
-
-\begin{table}
-
-\caption{\label{tab:capability}Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed.}
-\centering
-\begin{tabular}[t]{lccc}
-\toprule
-Feature & couplr & MatchIt & optmatch\\
-\midrule
-Per-variable calipers from a named vector & yes & yes & partial\\
-User-supplied cost matrix accepted & yes & yes & yes\\
-Pair matching solved as an assignment & yes & via full match & via full match\\
-Sparse cost support & yes & yes & yes\\
-k-best assignments & yes & no & no\\
-\addlinespace
-Bottleneck (minimax) assignment & yes & no & no\\
-Rosenbaum sensitivity bounds & yes & no & no\\
-Public dual-potential verifier & yes & no & gap bound\\
-User-selectable assignment algorithm & 19 solvers & via optmatch & 5 algorithms\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\FloatBarrier
+All three packages offer covariate distances, propensity-score matching, exact
+blocking and a cost-matrix entry point. Where they differ is in what the
+assignment layer exposes. k-best assignments, a bottleneck objective, Rosenbaum
+sensitivity bounds and a public dual-potential verifier are in couplr and in
+neither alternative, with optmatch reporting a gap bound in place of the last of
+these. couplr solves a pair match as the rectangular assignment directly, where
+\texttt{optmatch::pairmatch()} and MatchIt's optimal method route it through
+\texttt{fullmatch()}, and it exposes nineteen solvers where optmatch exposes five. The
+comparison is of the assignment layer alone, and omits areas where the
+alternatives lead, among them the breadth of designs reachable through a single
+MatchIt call and the maturity of optmatch's full matching. The supplementary
+material gives the full table, what each entry was read from, and the versions
+assessed.
 
 \section{Summary and discussion}\label{summary-and-discussion}
 
@@ -1483,11 +1468,11 @@ couplr has five limitations:
   answered certified.
 \item
   The dispatcher reads two properties and otherwise defaults to
-  Jonker-Volgenant, at a median 1.06x of the cell's
+  Jonker-Volgenant, at a median 1.03x of the cell's
   fastest solver over most of the regime grid. Where the finite costs are
-  heavily tied it takes a median 3.92x and as much as
-  10.41x, behind \texttt{network\_simplex} and
-  \texttt{csflow}. Fitting a rule to this grid would score it on
+  heavily tied it takes a median 3.97x and as much as
+  10.55x, behind \texttt{network\_simplex} and
+  \texttt{auction\_scaled}. Fitting a rule to this grid would score it on
   the measurements that chose it, so we leave the default as it is.
 \item
   Matching on observed covariates cannot address unmeasured confounding, which

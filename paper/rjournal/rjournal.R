@@ -18,6 +18,10 @@ lalonde   <- read.csv("data/lalonde-per-covariate.csv", stringsAsFactors = FALSE
 lal_obj   <- read.csv("data/lalonde-results.csv", stringsAsFactors = FALSE)
 scaling   <- read.csv("data/scaling-results.csv", stringsAsFactors = FALSE)
 lazy      <- read.csv("data/scaling-lazy-results.csv", stringsAsFactors = FALSE)
+## The lazy-path sentences index one median per size; a missing column or row
+## would otherwise knit as an empty string.
+stopifnot("median_s" %in% names(lazy),
+          sum(lazy$n_total == 20000) == 1, sum(lazy$n_total == 50000) == 1)
 imp       <- read.csv("data/implicit-results.csv", stringsAsFactors = FALSE)
 equiv     <- read.csv("data/implicit-equivalence.csv", stringsAsFactors = FALSE)
 pth       <- read.csv("data/path-results.csv", stringsAsFactors = FALSE)
@@ -181,7 +185,7 @@ knitr::kable(
              implicit = secs("implicit"), `Graph built` = share,
              `Distances` = dists, Rounds = rounds, check.names = FALSE),
   align = "lrrrrrr", booktabs = TRUE,
-  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and the scaling table below carries dense timings at the two largest sizes. Every cell returned the same total distance."
+  caption = "One-to-one optimal Mahalanobis matching by memory mode, wall-clock seconds on a single core of an Apple M4 Pro, the fastest of three repetitions with the arms interleaved. Graph built is the arcs the implicit loop ended up holding as a share of the complete problem's. Distances is its evaluations over all rounds as a multiple of the complete pair count, so a pair priced twice counts twice. All three arms were timed in one session; the dense arm was run at the four sizes where its pairing can be compared against the loop's, and the scaling table below carries dense timings at the two largest sizes. Every cell returned the same total distance."
 )
 
 
@@ -215,14 +219,14 @@ ig_slow    <- cloud_lab[[ig_clouds$cloud[which.min(ig_clouds$speedup_med)]]]
 ig_slow_x  <- min(ig_clouds$speedup_med)
 ig_fast    <- cloud_lab[[ig_clouds$cloud[which.max(ig_clouds$speedup_med)]]]
 ig_fast_x  <- max(ig_clouds$speedup_med)
-## A ratio below one is the loop losing, and the sentence says so only where
-## that happens rather than carrying the caveat unconditionally.
-ig_note    <- if (ig_slow_x < 1) {
-  ", where a ratio below one is the loop losing to the lazy path"
-} else ""
+## The slowest cloud is reported as no margin either way. That reading holds
+## while the ratio stays within a factor of two of parity; a median wall-clock
+## ratio does not resolve the difference between the two paths there.
+stopifnot(ig_slow_x > 0.5, ig_slow_x < 1.5)
 ## The cell built to be hostile to the loop, reported in the text beside the
 ## ordinary clouds so the worst case is not left as a statement about a bound.
 ig_cont    <- igrid[igrid$sweep == "cloud" & igrid$cloud == "contested", ][1, ]
+stopifnot(ig_cont$speedup_med > 2)
 ig_dims    <- igrid[igrid$sweep == "dimension", ]
 ig_dim_rng <- range(ig_dims$dim)
 
@@ -264,7 +268,7 @@ knitr::kable(
 )
 
 
-## ----solver-bench, fig.height=4.2, fig.cap="Median wall-clock solve time against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs.", fig.alt="Five panels of log-log line plots showing solve time in milliseconds against problem size n from 4 to 5000. Solve time rises with problem size in every panel. The Jonker-Volgenant panel reaches n equals 5000 in roughly one second, the fastest of the families. Auction, cost-scaling and flow-based solvers are one to three orders of magnitude slower at matched sizes and stop at n equals 1000 or 2000. The dashed dispatcher line lies on top of the fastest solver in each panel."----
+## ----solver-bench, fig.height=4.2, fig.cap="Wall-clock solve time, the fastest of five interleaved repetitions, against problem size for the nineteen assignment solvers in couplr, grouped by algorithm family on shared log-log axes. The two special-purpose solvers in the Other panel run on their own inputs and are not comparable to the rest: HK-01 is timed on binary cost matrices, and Brute-F only up to n = 8. The dashed grey line repeated in every panel is the automatic dispatcher on the uniform integer costs.", fig.alt="Five panels of log-log line plots showing solve time in milliseconds against problem size n from 4 to 5000. Solve time rises with problem size in every panel. The Jonker-Volgenant panel reaches n equals 5000 in roughly one second, the fastest of the families. Auction, cost-scaling and flow-based solvers are one to three orders of magnitude slower at matched sizes and stop at n equals 1000 or 2000. The dashed dispatcher line lies on top of the fastest solver in each panel."----
 fam_map <- c(
   "JV / Augmenting path"  = "JV / augmenting path",
   "Auction"               = "Auction",
@@ -325,8 +329,8 @@ key$xend  <- 10^(lx[1] + 0.16 * diff(lx))
 key$xtext <- 10^(lx[1] + 0.185 * diff(lx))
 key$y     <- 10^(ly[2] - (0.050 + 0.126 * key$k) * diff(ly))
 
-ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
-  geom_line(data = auto_all, aes(n, median_ms), inherit.aes = FALSE, colour = "grey45", linetype = "dashed", linewidth = 0.65) + geom_line(linewidth = 0.75) +
+ggplot(solvers, aes(n, min_ms, colour = label, linetype = label)) +
+  geom_line(data = auto_all, aes(n, min_ms), inherit.aes = FALSE, colour = "grey45", linetype = "dashed", linewidth = 0.65) + geom_line(linewidth = 0.75) +
   geom_segment(data = key, aes(x = x, xend = xend, y = y, yend = y,
                                colour = label, linetype = label),
                linewidth = 0.75, inherit.aes = FALSE) +
@@ -341,7 +345,7 @@ ggplot(solvers, aes(n, median_ms, colour = label, linetype = label)) +
                 limits = y_lim, expand = expansion(mult = c(0.02, 0.02))) +
   scale_colour_manual(values = pal, guide = "none") +
   scale_linetype_manual(values = lt, guide = "none") +
-  labs(x = "problem size, n", y = "median solve time") +
+  labs(x = "problem size, n", y = "solve time") +
   theme_minimal(base_size = 13) +
   theme(
     panel.grid.minor = element_blank(),
@@ -375,7 +379,7 @@ by_rule <- by_rule[order(-by_rule$Cells), ]
 
 knitr::kable(
   by_rule, align = "llrrrr", booktabs = TRUE, row.names = FALSE,
-  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver. The large tier times a reduced panel that omits the special-purpose solvers, so a cell whose dispatched solver is not in it reads below 1.00x."
+  caption = "Each dispatch rule over the cells of the regime grid where it fired. Solver is what the rule selects. Fastest counts the cells where that solver was also the quickest of the panel. Median and worst are the time the dispatched solver took over the time the cell's fastest named solver took, so 1.00x is a rule that picked the best available solver."
 )
 
 
@@ -394,11 +398,9 @@ reg_rect <- reg_def[is_wide(reg_def$shape), ]
 reg_sp   <- reg_def[reg_def$pattern %in% c("random_25", "random_05",
                                            "random_01", "block_4"), ]
 x <- function(v) sprintf("%.2fx", v)
-## A cell has no `picked_s` exactly where the solver the rule named was not
-## itself in that cell's panel, which is the large tier's reduced panel.
-off_panel <- regime[is.na(regime$picked_s), ]
-reg_ncs   <- regime[regime$auto_rule == "no_cost_scale", ]
-ncs_in    <- reg_ncs[!is.na(reg_ncs$picked_s), ]
+## Every cell's panel holds the solver its rule named, so a cell always has a
+## `picked_s`. The benchmark refuses to record one that does not.
+stopifnot(!anyNA(regime$picked_s))
 
 ## The one cost regime the default is behind in, read as a regime rather than
 ## as the single cell that happens to be worst inside it, against the rest of
@@ -531,34 +533,9 @@ few_txt <- if (length(few) == 0) "" else sprintf(
 knitr::kable(
   tab, align = "lrrr", booktabs = TRUE,
   caption = paste(
-    "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets and the timing repetitions taken inside each instance.",
+    "One-to-one optimal Mahalanobis matching, wall-clock time by problem size. Treated to control ratio 1:2, eight covariates, pooled within-group covariance, single core with single-threaded BLAS on an Apple M4 Pro. Each cell is the median over independently generated instances of that size, with the interquartile range across instances in brackets; an instance's time is the fastest of its repetitions, taken with the packages interleaved.",
     single_txt,
     few_txt,
     "The optmatch option max.problem.size was set to Inf for the two largest sizes. int overflow marks an integer-size overflow inside the optmatch back end reached through MatchIt; timeout marks a run exceeding the 600-second cap.")
-)
-
-
-## ----capability, echo=FALSE---------------------------------------------------
-cap <- data.frame(
-  Feature = c("Per-variable calipers from a named vector",
-              "User-supplied cost matrix accepted",
-              "Pair matching solved as an assignment",
-              "Sparse cost support",
-              "k-best assignments",
-              "Bottleneck (minimax) assignment",
-              "Rosenbaum sensitivity bounds",
-              "Public dual-potential verifier",
-              "User-selectable assignment algorithm"),
-  couplr = c("yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
-             "19 solvers"),
-  MatchIt = c("yes", "yes", "via full match", "yes", "no", "no", "no", "no",
-              "via optmatch"),
-  optmatch = c("partial", "yes", "via full match", "yes", "no", "no", "no",
-               "gap bound", "5 algorithms"),
-  check.names = FALSE
-)
-knitr::kable(
-  cap, align = "lccc", booktabs = TRUE,
-  caption = "Selected assignment-layer features, omitting areas where the alternatives lead, among them the breadth of designs reachable through a single MatchIt call and the maturity of optmatch's full matching. All three accept a user-supplied cost matrix; the third row records what a pair match reaches the solver as, couplr the rectangular assignment directly and the other two through fullmatch(). The supplementary material gives what each entry was read from, and the versions assessed."
 )
 

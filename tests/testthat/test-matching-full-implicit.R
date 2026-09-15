@@ -89,19 +89,13 @@ test_that("bounds no assignment can meet are refused before the loop runs", {
   expect_equal(res$info$n_groups, 0L)
 })
 
-test_that("the greedy method and a custom distance decline the implicit mode", {
+test_that("the greedy method and the lazy mode are declined", {
   left <- full_match_units(10, 2, 13)
   right <- full_match_units(20, 2, 14)
   expect_error(
     full_match(left, right, vars = c("X1", "X2"), method = "greedy",
                memory_mode = "implicit"),
     "not supported"
-  )
-  expect_error(
-    full_match(left, right, vars = c("X1", "X2"), memory_mode = "implicit",
-               distance = function(l, r) as.matrix(stats::dist(rbind(l, r)))[
-                 seq_len(nrow(l)), nrow(l) + seq_len(nrow(r))]),
-    "requires a built-in distance metric"
   )
   expect_error(
     full_match(left, right, vars = c("X1", "X2"), memory_mode = "lazy"),

@@ -111,17 +111,20 @@ and provide helpful warnings before matching (default: TRUE)}
 \code{distance = "mahalanobis"}.}
 
 \item{memory_mode}{One of "auto" (default), "dense", "lazy" or "implicit".
-"auto" warns (or, when \code{method} is \code{"jv"}/\code{"auction"} with a built-in
-distance metric, switches) when the dense cost matrix would consume a large
+"auto" warns (or, when \code{method} is \code{"jv"}/\code{"auction"}, switches) when the dense cost matrix would consume a large
 fraction of free system RAM. "lazy" computes each pairwise distance from
 the underlying feature data as the solver needs it, instead of
-allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, including
+allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"}, including
 \code{replace = TRUE}, where each left unit's cheapest partners are found one
 row at a time, and \code{ratio > 1}, where the left units' covariates are
 replicated rather than their rows of distances, and not yet for
-\code{method = "greedy"} or custom distance functions (blocking via \code{block_id}
-is the other option that reduces memory, by solving smaller
-sub-problems). When the constraints admit no complete matching, the
+\code{method = "greedy"} (blocking via \code{block_id} is the other option that
+reduces memory, by solving smaller sub-problems). A custom distance
+function is called on a block of left units against every right unit,
+the same contract the dense path calls it under, with the block sized so
+the matrix it returns stays near a million cells; each matched pair is
+then evaluated again alone, and a distance that depends on the other units
+in its call is an error. When the constraints admit no complete matching, the
 largest matching they admit, cheapest among those, is found by the
 edge-generation loop over the same specification, as the dense path finds
 it by padding. Where the metric carries a ball

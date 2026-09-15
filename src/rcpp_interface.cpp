@@ -32,7 +32,7 @@ Rcpp::List solve_ramshaw_tarjan_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_push_relabel_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_duals_impl(Rcpp::NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_duals_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                    std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                    SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                     double max_distance, Rcpp::List calipers,
                                     Rcpp::CharacterVector var_names, bool maximize);
 Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
@@ -42,11 +42,11 @@ Rcpp::List probe_cost_matrix_impl(SEXP cost);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_jv_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                              SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector var_names, bool maximize);
 Rcpp::List solve_auction_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                   std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                   SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                    double max_distance, Rcpp::List calipers,
                                    Rcpp::CharacterVector var_names, bool maximize,
                                    Rcpp::Nullable<double> eps);
@@ -87,7 +87,7 @@ Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::NumericVector potential, double tol);
 Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      Rcpp::NumericMatrix right_mat,
-                                     std::string distance,
+                                     SEXP distance,
                                      Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                      double max_distance, Rcpp::List calipers,
                                      Rcpp::CharacterVector vars, std::string design,
@@ -95,12 +95,12 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      double keep_per_row, double width, double tol,
                                      double max_rounds, bool certify);
 Rcpp::List replace_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                             std::string distance,
+                             SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars, double per_row);
 SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              std::string distance,
+                              SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector vars);
@@ -126,7 +126,7 @@ Rcpp::List implicit_dense_impl(Rcpp::NumericMatrix cost, bool maximize,
                                double keep_per_row, double width, double tol,
                                double max_rounds, bool certify);
 Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              std::string distance,
+                              SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector vars, bool maximize,
@@ -136,7 +136,7 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
 // Forward decl for the design path (implemented in flow/flow_path_rcpp.cpp)
 Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
                                 Rcpp::NumericMatrix right_mat,
-                                std::string distance,
+                                SEXP distance,
                                 Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                 Rcpp::NumericVector values, Rcpp::List calipers,
                                 Rcpp::CharacterVector vars, bool maximize,
@@ -212,7 +212,7 @@ Rcpp::List lap_solve_jv(NumericMatrix cost, bool maximize) {
 
 // [[Rcpp::export]]
 Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                 std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                 SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                  double max_distance, Rcpp::List calipers,
                                  Rcpp::CharacterVector var_names, bool maximize) {
   return solve_jv_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
@@ -222,7 +222,7 @@ Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatr
 // [[Rcpp::export]]
 Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat,
                                             Rcpp::NumericMatrix right_mat,
-                                            std::string metric,
+                                            SEXP metric,
                                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                             Rcpp::IntegerVector rows,
                                             Rcpp::IntegerVector cols) {
@@ -231,14 +231,14 @@ Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat,
 
 // [[Rcpp::export]]
 double cpp_lazy_distance_sd(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                            std::string metric,
+                            SEXP metric,
                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
   return lazy_distance_sd_impl(left_mat, right_mat, metric, inv_cov);
 }
 
 // [[Rcpp::export]]
 Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                      std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                      SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                       double max_distance, Rcpp::List calipers,
                                       Rcpp::CharacterVector var_names, bool maximize,
                                       Rcpp::Nullable<double> eps = R_NilValue) {
@@ -256,7 +256,7 @@ Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match
 
 // [[Rcpp::export]]
 Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                            std::string distance,
+                            SEXP distance,
                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                             double max_distance, Rcpp::List calipers,
                             Rcpp::CharacterVector vars,
@@ -280,7 +280,7 @@ Rcpp::List lap_hall_witness_dense(Rcpp::NumericMatrix cost) {
 
 // [[Rcpp::export]]
 Rcpp::List lap_hall_witness_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                 std::string distance,
+                                 SEXP distance,
                                  Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                  double max_distance, Rcpp::List calipers,
                                  Rcpp::CharacterVector vars) {
@@ -426,7 +426,7 @@ Rcpp::List lap_solve_jv_duals(Rcpp::NumericMatrix cost, bool maximize) {
 // [[Rcpp::export]]
 Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat,
                                        Rcpp::NumericMatrix right_mat,
-                                       std::string metric,
+                                       SEXP metric,
                                        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                        double max_distance, Rcpp::List calipers,
                                        Rcpp::CharacterVector var_names, bool maximize) {
@@ -476,7 +476,7 @@ Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
 
 // [[Rcpp::export]]
 SEXP lap_pricing_session(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                         std::string distance,
+                         SEXP distance,
                          Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                          double max_distance, Rcpp::List calipers,
                          Rcpp::CharacterVector vars) {
@@ -519,7 +519,7 @@ double lap_implicit_seed_width(double ncol) {
 
 // [[Rcpp::export]]
 Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                            std::string distance,
+                            SEXP distance,
                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                             double max_distance, Rcpp::List calipers,
                             Rcpp::CharacterVector vars, double per_row) {
@@ -530,7 +530,7 @@ Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix ri
 // [[Rcpp::export]]
 Rcpp::List lap_design_implicit(Rcpp::NumericMatrix left_mat,
                                Rcpp::NumericMatrix right_mat,
-                               std::string distance,
+                               SEXP distance,
                                Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                double max_distance, Rcpp::List calipers,
                                Rcpp::CharacterVector vars, std::string design,
@@ -581,7 +581,7 @@ Rcpp::List lap_implicit_dense(Rcpp::NumericMatrix cost, bool maximize = false,
 
 // [[Rcpp::export]]
 Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                             std::string distance,
+                             SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars, bool maximize = false,
@@ -596,7 +596,7 @@ Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
 // [[Rcpp::export]]
 Rcpp::List lap_match_path_lazy(Rcpp::NumericMatrix left_mat,
                                Rcpp::NumericMatrix right_mat,
-                               std::string distance,
+                               SEXP distance,
                                Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                Rcpp::NumericVector values, Rcpp::List calipers,
                                Rcpp::CharacterVector vars, bool maximize = false,

@@ -1,10 +1,15 @@
 // src/core/lap_utils_rcpp.cpp - Rcpp utility functions
 #include "lap_utils_rcpp.h"
 
+#include "lap_cost_source.h"
+
 #include <sstream>
 #include <cctype>   // std::tolower
 
 // ------------------------- adapter conversions -------------------------
+
+static std::vector<lap::CaliperSpec> calipers_from_r(Rcpp::List calipers,
+                                                     const Rcpp::CharacterVector& var_names);
 
 lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost) {
   const int64_t n = cost.nrow();
@@ -40,7 +45,7 @@ static lap::DistanceMetric metric_from_string(const std::string& metric) {
 Rcpp::NumericVector lazy_pair_distances_impl(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,
-    const std::string& metric,
+    SEXP metric,
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
     const Rcpp::IntegerVector& rows,
     const Rcpp::IntegerVector& cols) {
@@ -50,48 +55,107 @@ Rcpp::NumericVector lazy_pair_distances_impl(
   // No calipers and no distance cut: these pairs are the ones a solve already
   // chose, so nothing is being filtered, and maximize is false so the distance
   // comes back in the sign it was computed in.
-  lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+  const LazySource source = rcpp_lazy_source(
       left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(),
       Rcpp::CharacterVector::create(), false);
 
   Rcpp::NumericVector out(rows.size());
-  for (R_xlen_t k = 0; k < rows.size(); ++k) {
-    const int64_t i = static_cast<int64_t>(rows[k]) - 1;
-    const int64_t j = static_cast<int64_t>(cols[k]) - 1;
-    if (i < 0 || i >= cm.nrow || j < 0 || j >= cm.ncol) {
-      LAP_ERROR("lazy_pair_distances_impl: pair index out of range");
+  std::visit([&](const auto& cm) {
+    for (R_xlen_t k = 0; k < rows.size(); ++k) {
+      const int64_t i = static_cast<int64_t>(rows[k]) - 1;
+      const int64_t j = static_cast<int64_t>(cols[k]) - 1;
+      if (i < 0 || i >= cm.nrow || j < 0 || j >= cm.ncol) {
+        LAP_ERROR("lazy_pair_distances_impl: pair index out of range");
+      }
+      double c = 0.0;
+      out[k] = cost_if_allowed(cm, i, j, c) ? c : NA_REAL;
     }
-    out[k] = cm.at(i, j);
-  }
+  }, source);
   return out;
+}
+
+LazySource rcpp_lazy_source(const Rcpp::NumericMatrix& left_mat,
+                            const Rcpp::NumericMatrix& right_mat,
+                            SEXP distance,
+                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                            double max_distance,
+                            Rcpp::List calipers,
+                            const Rcpp::CharacterVector& var_names,
+                            bool maximize) {
+  if (Rf_isFunction(distance)) {
+    return LazySource(std::in_place_type<lap::CallbackCostSource>,
+                      Rcpp::Function(distance), left_mat, right_mat, max_distance,
+                      calipers_from_r(calipers, var_names), maximize);
+  }
+  Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
+  if (inv_cov.isNotNull()) {
+    Rcpp::NumericMatrix ic(inv_cov.get());
+    if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
+  }
+  return LazySource(std::in_place_type<lap::LazyCostMatrix>,
+                    rcpp_to_lazy_cost_matrix(left_mat, right_mat,
+                                             Rcpp::as<std::string>(distance),
+                                             inv_cov_arg, max_distance, calipers,
+                                             var_names, maximize));
 }
 
 double lazy_distance_sd_impl(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,
-    const std::string& metric,
+    SEXP metric,
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
-  const lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+  const LazySource source = rcpp_lazy_source(
       left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(),
       Rcpp::CharacterVector::create(), false);
 
   // Welford's update, which keeps the variance from the difference of two
-  // large sums, in the extended precision R's own var() accumulates in.
+  // large sums, in the extended precision R's own var() accumulates in. A
+  // distance that is not a finite number is left out, as sd() is taken over
+  // the finite entries of a matrix.
   long double count = 0.0L;
   long double mean = 0.0L;
   long double ss = 0.0L;
-  for (int64_t i = 0; i < cm.nrow; ++i) {
-    if ((i & 63) == 0) Rcpp::checkUserInterrupt();
-    for (int64_t j = 0; j < cm.ncol; ++j) {
-      const long double x = cm.at(i, j);
-      count += 1.0L;
-      const long double delta = x - mean;
-      mean += delta / count;
-      ss += delta * (x - mean);
+  std::visit([&](const auto& cm) {
+    for (int64_t i = 0; i < cm.nrow; ++i) {
+      if ((i & 63) == 0) Rcpp::checkUserInterrupt();
+      for (int64_t j = 0; j < cm.ncol; ++j) {
+        double c = 0.0;
+        if (!cost_if_allowed(cm, i, j, c)) continue;
+        const long double x = c;
+        count += 1.0L;
+        const long double delta = x - mean;
+        mean += delta / count;
+        ss += delta * (x - mean);
+      }
     }
-  }
+  }, source);
   if (count < 2.0L) return NA_REAL;
   return static_cast<double>(std::sqrt(ss / (count - 1.0L)));
+}
+
+static std::vector<lap::CaliperSpec> calipers_from_r(Rcpp::List calipers,
+                                                     const Rcpp::CharacterVector& var_names) {
+  std::vector<lap::CaliperSpec> caliper_specs;
+  if (calipers.size() > 0) {
+    // An empty R list() has no `names` attribute at all (calipers.names()
+    // returns R_NilValue), so only construct/read the CharacterVector when
+    // there is at least one element -- converting a NULL SEXP to
+    // CharacterVector throws "Not compatible with STRSXP".
+    Rcpp::CharacterVector caliper_names = calipers.names();
+    for (int k = 0; k < calipers.size(); ++k) {
+      std::string name = Rcpp::as<std::string>(caliper_names[k]);
+      int64_t var_index = -1;
+      for (int64_t vi = 0; vi < var_names.size(); ++vi) {
+        if (Rcpp::as<std::string>(var_names[vi]) == name) { var_index = vi; break; }
+      }
+      if (var_index < 0) {
+        LAP_ERROR("rcpp_to_lazy_cost_matrix: caliper variable '%s' not found in vars", name.c_str());
+      }
+      double threshold = Rcpp::as<double>(calipers[k]);
+      caliper_specs.push_back(lap::CaliperSpec{var_index, threshold});
+    }
+  }
+  return caliper_specs;
 }
 
 lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
@@ -142,26 +206,7 @@ lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     }
   }
 
-  std::vector<lap::CaliperSpec> caliper_specs;
-  if (calipers.size() > 0) {
-    // An empty R list() has no `names` attribute at all (calipers.names()
-    // returns R_NilValue), so only construct/read the CharacterVector when
-    // there is at least one element -- converting a NULL SEXP to
-    // CharacterVector throws "Not compatible with STRSXP".
-    Rcpp::CharacterVector caliper_names = calipers.names();
-    for (int k = 0; k < calipers.size(); ++k) {
-      std::string name = Rcpp::as<std::string>(caliper_names[k]);
-      int64_t var_index = -1;
-      for (int64_t vi = 0; vi < var_names.size(); ++vi) {
-        if (Rcpp::as<std::string>(var_names[vi]) == name) { var_index = vi; break; }
-      }
-      if (var_index < 0) {
-        LAP_ERROR("rcpp_to_lazy_cost_matrix: caliper variable '%s' not found in vars", name.c_str());
-      }
-      double threshold = Rcpp::as<double>(calipers[k]);
-      caliper_specs.push_back(lap::CaliperSpec{var_index, threshold});
-    }
-  }
+  std::vector<lap::CaliperSpec> caliper_specs = calipers_from_r(calipers, var_names);
 
   return lap::LazyCostMatrix(std::move(left_flat), std::move(right_flat), p,
                              metric_from_string(metric), std::move(inv_cov_flat),

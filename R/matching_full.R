@@ -149,7 +149,7 @@
 #' @param memory_mode One of "auto" (default), "dense" or "implicit". "auto"
 #'   warns if the dense cost matrix would consume a large fraction of free
 #'   system RAM. "dense" skips the RAM check entirely. "implicit" solves
-#'   \code{method = "optimal"} over a built-in distance metric without building
+#'   \code{method = "optimal"} without building
 #'   the pair set: the flow is solved over a growing subset of pairs, the pairs
 #'   it omits are priced against the flow's node potentials, and the subset
 #'   grows until none prices below zero, so the groups are optimal over every
@@ -391,6 +391,11 @@ full_match <- function(left, right, vars,
         solved <- list(status = compiled$status)
         read <- .full_match_groups(compiled, compiled$flow, min_controls)
         potentials <- .full_match_potentials(compiled, compiled$potential)
+        if (is.function(cost_matrix$distance)) {
+          placed <- as.numeric(compiled$flow) > 0
+          lazy_pair_distances(cost_matrix, compiled$block$row[placed],
+                              compiled$block$col[placed])
+        }
         if (!is.null(compiled$certificate)) {
           certificate <- .new_flow_certificate(compiled$certificate, knobs$tol)
         }

@@ -212,7 +212,7 @@ Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector matc
 }
 
 Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                             std::string distance,
+                             SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars,
@@ -231,7 +231,7 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
 
         // The lazy source bakes the maximize negation into at() itself
         // (negate = maximize), so it is already the internal minimization.
-        const lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+        const LazySource source = rcpp_lazy_source(
             left_mat, right_mat, distance, inv_cov_arg, max_distance,
             calipers, vars, maximize);
 
@@ -239,8 +239,10 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
         const std::vector<double> u0 = duals_to_internal(u, maximize);
         const std::vector<double> v0 = duals_to_internal(v, maximize);
 
-        lap::CertificateReport rep = lap::certify_assignment(
-            cm, m0, u0, v0, tol, arithmetic_from_string(arithmetic));
+        lap::CertificateReport rep = std::visit([&](const auto& cm) {
+            return lap::certify_assignment(cm, m0, u0, v0, tol,
+                                           arithmetic_from_string(arithmetic));
+        }, source);
         restore_certificate_sign(rep, maximize);
 
         return certificate_report_to_list(rep);

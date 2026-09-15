@@ -329,11 +329,6 @@ test_that("the designs the loop does not solve are declined", {
                   method = "greedy"),
     "does not support memory_mode = \"implicit\""
   )
-  expect_error(
-    match_couples(left, right, vars = vars, memory_mode = "implicit",
-                  distance = function(l, r) as.matrix(dist(rbind(l, r)))),
-    "requires a built-in distance metric"
-  )
 })
 
 test_that("blocking and the loop are alternatives, not a combination", {

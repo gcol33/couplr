@@ -81,8 +81,8 @@
 #' @param batch_fraction Fraction of the remaining pairs the heuristic deletes
 #'   per iteration (default: 0.1). Reaches `engine = "heuristic"` only.
 #' @param memory_mode One of "auto" (default), "dense" or "implicit". "implicit"
-#'   solves the flow and branch and bound engines over a built-in distance
-#'   metric without building the pair set: every network solve is taken over
+#'   solves the flow and branch and bound engines without building the pair
+#'   set: every network solve is taken over
 #'   the pairs generated so far, the pairs it omits are priced against its
 #'   potentials with the multipliers folded in, and the ones pricing below zero
 #'   are added and the solve repeated, so each solve is optimal over every pair.

@@ -69,7 +69,7 @@ Rcpp::List hall_witness_dense_impl(Rcpp::NumericMatrix cost) {
 }
 
 Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                                  std::string distance,
+                                  SEXP distance,
                                   Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                   double max_distance, Rcpp::List calipers,
                                   Rcpp::CharacterVector vars) {
@@ -87,10 +87,12 @@ Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMat
         // maximize = false: LazyCostMatrix::allowed() applies the calipers and
         // the max_distance cut, and the flag only flips the sign that at()
         // reports. Admissibility, and so feasibility, is the same either way.
-        lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+        const LazySource source = rcpp_lazy_source(
             left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars, false);
 
-        return hall_witness_to_list(lap::hall_witness(cm));
+        return std::visit([](const auto& cm) {
+            return hall_witness_to_list(lap::hall_witness(cm));
+        }, source);
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());

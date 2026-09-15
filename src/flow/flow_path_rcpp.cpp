@@ -129,7 +129,7 @@ Rcpp::List path_to_r(const lap::PathResult& res, int64_t nrow, bool maximize) {
 
 Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
                                 Rcpp::NumericMatrix right_mat,
-                                std::string distance,
+                                SEXP distance,
                                 Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                 Rcpp::NumericVector values, Rcpp::List calipers,
                                 Rcpp::CharacterVector vars, bool maximize,
@@ -140,44 +140,38 @@ Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
             Rcpp::stop("design path: no values, so there is no path");
         }
 
-        // Only Mahalanobis reads an inverse covariance; every other metric
-        // passes NULL, and a 0 x 0 matrix says the same thing.
-        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
-        if (inv_cov.isNotNull()) {
-            Rcpp::NumericMatrix ic(inv_cov.get());
-            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
-        }
-
         const std::vector<double> sweep(values.begin(), values.end());
 
         // The source is built at the first value and moved from there. It is
         // one object across the path, which is what lets the oracle the
         // compiled problem points at, and the tree the loop prices with, be
         // built once as well.
-        lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
-            left_mat, right_mat, distance, inv_cov_arg, sweep[0], calipers, vars,
-            maximize);
-
-        lap::require_rows_fit_cols(static_cast<int>(cm.nrow),
-                                   static_cast<int>(cm.ncol));
-
-        lap::SourceOracle<lap::LazyCostMatrix> oracle(cm);
-        lap::CompiledDesign design =
-            lap::compile_one_to_one(oracle, std::vector<lap::CategoryConstraint>());
-        lap::CandidateSet cand(cm.nrow, cm.ncol);
+        LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
+                                             sweep[0], calipers, vars, maximize);
 
         lap::PathOptions opts;
         opts.implicit = implicit_options_from_r(keep_per_row, width, tol,
                                                 max_rounds, certify);
 
-        const lap::PathResult res = lap::solve_path(
-            cm, design.problem, cand, sweep,
-            [](lap::LazyCostMatrix& src, lap::FlowProblem&, double v) {
-                src.set_max_distance(v);
-            },
-            opts);
+        return std::visit([&](auto& cm) {
+            using Source = std::decay_t<decltype(cm)>;
+            lap::require_rows_fit_cols(static_cast<int>(cm.nrow),
+                                       static_cast<int>(cm.ncol));
 
-        return path_to_r(res, cm.nrow, maximize);
+            lap::SourceOracle<Source> oracle(cm);
+            lap::CompiledDesign design =
+                lap::compile_one_to_one(oracle, std::vector<lap::CategoryConstraint>());
+            lap::CandidateSet cand(cm.nrow, cm.ncol);
+
+            const lap::PathResult res = lap::solve_path(
+                cm, design.problem, cand, sweep,
+                [](Source& src, lap::FlowProblem&, double v) {
+                    src.set_max_distance(v);
+                },
+                opts);
+
+            return path_to_r(res, cm.nrow, maximize);
+        }, source);
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());

@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <memory>
+#include <variant>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -224,58 +226,60 @@ Rcpp::List implicit_dense_impl(Rcpp::NumericMatrix cost, bool maximize,
 // tree over the columns where the metric carries a ball bound, a read of the row
 // where it does not. The kept columns are the smallest under (cost, column),
 // which is the order a sort of the row's costs leaves ties in.
+namespace {
+
+template <class Source>
+Rcpp::List replace_body(const Source& src, int64_t k) {
+    const int width = static_cast<int>(std::min<int64_t>(k, src.ncol));
+    lap::RowSearch<Source> search(src);
+    lap::detail::RowTopK keep(src.nrow, width);
+    lap::RowScanWork work;
+    lap::cheapest_per_row(src, search, keep, work);
+
+    std::vector<int> rows, cols;
+    std::vector<double> costs;
+    keep.emit([&](int32_t i, int32_t j, double c) {
+        rows.push_back(i + 1);
+        cols.push_back(j + 1);
+        costs.push_back(c);
+    });
+    // emit() hands a row's columns over in column order; the dense path lists a
+    // row's partners cheapest first, ties by column.
+    std::vector<std::size_t> order(rows.size());
+    for (std::size_t t = 0; t < order.size(); ++t) order[t] = t;
+    std::stable_sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) {
+        if (rows[a] != rows[b]) return rows[a] < rows[b];
+        if (costs[a] != costs[b]) return costs[a] < costs[b];
+        return cols[a] < cols[b];
+    });
+    Rcpp::IntegerVector out_rows(static_cast<R_xlen_t>(order.size()));
+    Rcpp::IntegerVector out_cols(static_cast<R_xlen_t>(order.size()));
+    Rcpp::NumericVector out_cost(static_cast<R_xlen_t>(order.size()));
+    for (std::size_t t = 0; t < order.size(); ++t) {
+        out_rows[static_cast<R_xlen_t>(t)] = rows[order[t]];
+        out_cols[static_cast<R_xlen_t>(t)] = cols[order[t]];
+        out_cost[static_cast<R_xlen_t>(t)] = costs[order[t]];
+    }
+    return Rcpp::List::create(
+        Rcpp::Named("rows") = out_rows,
+        Rcpp::Named("cols") = out_cols,
+        Rcpp::Named("distance") = out_cost,
+        Rcpp::Named("edges_evaluated") = static_cast<double>(work.n_evaluated));
+}
+
+}  // namespace
+
 Rcpp::List replace_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                             std::string distance,
+                             SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars, double per_row) {
     try {
-        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
-        if (inv_cov.isNotNull()) {
-            Rcpp::NumericMatrix ic(inv_cov.get());
-            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
-        }
-        const lap::LazyCostMatrix src = rcpp_to_lazy_cost_matrix(
-            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars,
-            false);
+        const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
+                                                   max_distance, calipers, vars, false);
         const int64_t k = implicit_knob_from_r(per_row, "per_row");
         if (k < 1) Rcpp::stop("replacement matching: per_row must be at least 1");
-        const int width = static_cast<int>(std::min<int64_t>(k, src.ncol));
-
-        lap::RowSearch<lap::LazyCostMatrix> search(src);
-        lap::detail::RowTopK keep(src.nrow, width);
-        lap::RowScanWork work;
-        lap::cheapest_per_row(src, search, keep, work);
-
-        std::vector<int> rows, cols;
-        std::vector<double> costs;
-        keep.emit([&](int32_t i, int32_t j, double c) {
-            rows.push_back(i + 1);
-            cols.push_back(j + 1);
-            costs.push_back(c);
-        });
-        // emit() hands a row's columns over in column order; the dense path lists
-        // a row's partners cheapest first, ties by column.
-        std::vector<std::size_t> order(rows.size());
-        for (std::size_t t = 0; t < order.size(); ++t) order[t] = t;
-        std::stable_sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) {
-            if (rows[a] != rows[b]) return rows[a] < rows[b];
-            if (costs[a] != costs[b]) return costs[a] < costs[b];
-            return cols[a] < cols[b];
-        });
-        Rcpp::IntegerVector out_rows(static_cast<R_xlen_t>(order.size()));
-        Rcpp::IntegerVector out_cols(static_cast<R_xlen_t>(order.size()));
-        Rcpp::NumericVector out_cost(static_cast<R_xlen_t>(order.size()));
-        for (std::size_t t = 0; t < order.size(); ++t) {
-            out_rows[static_cast<R_xlen_t>(t)] = rows[order[t]];
-            out_cols[static_cast<R_xlen_t>(t)] = cols[order[t]];
-            out_cost[static_cast<R_xlen_t>(t)] = costs[order[t]];
-        }
-        return Rcpp::List::create(
-            Rcpp::Named("rows") = out_rows,
-            Rcpp::Named("cols") = out_cols,
-            Rcpp::Named("distance") = out_cost,
-            Rcpp::Named("edges_evaluated") = static_cast<double>(work.n_evaluated));
+        return std::visit([k](const auto& src) { return replace_body(src, k); }, source);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }
@@ -295,13 +299,19 @@ Rcpp::List replace_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
 
 namespace {
 
-struct PricingSession {
-    lap::LazyCostMatrix src;
-    lap::RowSearch<lap::LazyCostMatrix> search;
+template <class Source>
+struct PricingSessionOf {
+    Source src;
+    lap::RowSearch<Source> search;
     lap::CandidateSet cand;
 
-    explicit PricingSession(lap::LazyCostMatrix s)
+    explicit PricingSessionOf(Source s)
         : src(std::move(s)), search(src), cand(src.nrow, src.ncol) {}
+};
+
+struct PricingSession {
+    std::variant<std::unique_ptr<PricingSessionOf<lap::LazyCostMatrix>>,
+                 std::unique_ptr<PricingSessionOf<lap::CallbackCostSource>>> held;
 };
 
 PricingSession& session_from(SEXP session) {
@@ -325,20 +335,22 @@ Rcpp::List pairs_to_r(const std::vector<lap::CandidateSet::Pair>& pairs) {
 }  // namespace
 
 SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              std::string distance,
+                              SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector vars) {
     try {
-        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
-        if (inv_cov.isNotNull()) {
-            Rcpp::NumericMatrix ic(inv_cov.get());
-            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
+        LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
+                                             max_distance, calipers, vars, false);
+        std::unique_ptr<PricingSession> session(new PricingSession());
+        if (auto* lazy = std::get_if<lap::LazyCostMatrix>(&source)) {
+            session->held = std::make_unique<PricingSessionOf<lap::LazyCostMatrix>>(
+                std::move(*lazy));
+        } else {
+            session->held = std::make_unique<PricingSessionOf<lap::CallbackCostSource>>(
+                std::move(std::get<lap::CallbackCostSource>(source)));
         }
-        lap::LazyCostMatrix src = rcpp_to_lazy_cost_matrix(
-            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars,
-            false);
-        return Rcpp::XPtr<PricingSession>(new PricingSession(std::move(src)), true);
+        return Rcpp::XPtr<PricingSession>(session.release(), true);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }
@@ -346,21 +358,23 @@ SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
 }
 
 // Each row's `width` cheapest admissible columns, added to the session's
-// candidate set and returned with their costs: the k-nearest seed.
+// candidate set and returned: the k-nearest seed.
 Rcpp::List pricing_session_seed_impl(SEXP session, double width) {
     try {
-        PricingSession& s = session_from(session);
         const int64_t w = implicit_knob_from_r(width, "width");
         if (w < 1) Rcpp::stop("pricing session: width must be at least 1");
-        lap::detail::RowTopK keep(s.src.nrow, static_cast<int>(std::min<int64_t>(w, s.src.ncol)));
-        lap::RowScanWork work;
-        lap::cheapest_per_row(s.src, s.search, keep, work);
-        std::vector<lap::CandidateSet::Pair> want;
-        keep.emit([&](int32_t i, int32_t j, double) { want.emplace_back(i, j); });
-        s.cand.note_evaluated(work.n_evaluated);
-        Rcpp::List out = pairs_to_r(s.cand.add_pairs(want));
-        out.push_back(static_cast<double>(work.n_evaluated), "n_evaluated");
-        return out;
+        return std::visit([w](auto& s) {
+            lap::detail::RowTopK keep(s->src.nrow,
+                                      static_cast<int>(std::min<int64_t>(w, s->src.ncol)));
+            lap::RowScanWork work;
+            lap::cheapest_per_row(s->src, s->search, keep, work);
+            std::vector<lap::CandidateSet::Pair> want;
+            keep.emit([&](int32_t i, int32_t j, double) { want.emplace_back(i, j); });
+            s->cand.note_evaluated(work.n_evaluated);
+            Rcpp::List out = pairs_to_r(s->cand.add_pairs(want));
+            out.push_back(static_cast<double>(work.n_evaluated), "n_evaluated");
+            return out;
+        }, session_from(session).held);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }
@@ -374,26 +388,25 @@ Rcpp::List pricing_session_price_impl(SEXP session, Rcpp::NumericVector u,
                                       Rcpp::NumericVector v, double keep_per_row,
                                       double tol) {
     try {
-        PricingSession& s = session_from(session);
-        if (u.size() != s.src.nrow || v.size() != s.src.ncol) {
-            Rcpp::stop("pricing session: %d row duals and %d column duals for a "
-                       "%d x %d source", static_cast<int>(u.size()),
-                       static_cast<int>(v.size()), static_cast<int>(s.src.nrow),
-                       static_cast<int>(s.src.ncol));
-        }
-        const std::vector<double> uu(u.begin(), u.end());
-        const std::vector<double> vv(v.begin(), v.end());
-        const lap::BlockPricing priced = s.search.price(
-            s.src, uu, vv, s.cand,
-            static_cast<int>(implicit_knob_from_r(keep_per_row, "keep_per_row")), tol);
-        const std::vector<lap::CandidateSet::Pair> added =
-            s.cand.add_pairs(lap::violator_pairs(priced.violators));
-        Rcpp::List out = pairs_to_r(added);
-        out.push_back(priced.min_reduced_cost, "min_reduced_cost");
-        out.push_back(priced.proven_floor, "proven_floor");
-        out.push_back(static_cast<double>(priced.n_violators), "n_violators");
-        out.push_back(static_cast<double>(priced.n_evaluated), "n_evaluated");
-        return out;
+        const int keep = static_cast<int>(implicit_knob_from_r(keep_per_row, "keep_per_row"));
+        return std::visit([&](auto& s) {
+            if (u.size() != s->src.nrow || v.size() != s->src.ncol) {
+                Rcpp::stop("pricing session: %d row duals and %d column duals for a "
+                           "%d x %d source", static_cast<int>(u.size()),
+                           static_cast<int>(v.size()), static_cast<int>(s->src.nrow),
+                           static_cast<int>(s->src.ncol));
+            }
+            const std::vector<double> uu(u.begin(), u.end());
+            const std::vector<double> vv(v.begin(), v.end());
+            const lap::BlockPricing priced =
+                s->search.price(s->src, uu, vv, s->cand, keep, tol);
+            Rcpp::List out = pairs_to_r(s->cand.add_pairs(lap::violator_pairs(priced.violators)));
+            out.push_back(priced.min_reduced_cost, "min_reduced_cost");
+            out.push_back(priced.proven_floor, "proven_floor");
+            out.push_back(static_cast<double>(priced.n_violators), "n_violators");
+            out.push_back(static_cast<double>(priced.n_evaluated), "n_evaluated");
+            return out;
+        }, session_from(session).held);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }
@@ -404,45 +417,48 @@ Rcpp::List pricing_session_price_impl(SEXP session, Rcpp::NumericVector u,
 // admissibility test applied: NA where a pair is not admissible.
 Rcpp::NumericVector pricing_session_cost_impl(SEXP session, Rcpp::IntegerVector i,
                                               Rcpp::IntegerVector j) {
-    PricingSession& s = session_from(session);
     if (i.size() != j.size()) Rcpp::stop("pricing session: i and j differ in length");
-    Rcpp::NumericVector out(i.size());
-    for (R_xlen_t t = 0; t < i.size(); ++t) {
-        const int64_t a = static_cast<int64_t>(i[t]) - 1;
-        const int64_t b = static_cast<int64_t>(j[t]) - 1;
-        if (a < 0 || a >= s.src.nrow || b < 0 || b >= s.src.ncol) {
-            Rcpp::stop("pricing session: pair index out of range");
+    return std::visit([&](auto& s) {
+        Rcpp::NumericVector out(i.size());
+        for (R_xlen_t t = 0; t < i.size(); ++t) {
+            const int64_t a = static_cast<int64_t>(i[t]) - 1;
+            const int64_t b = static_cast<int64_t>(j[t]) - 1;
+            if (a < 0 || a >= s->src.nrow || b < 0 || b >= s->src.ncol) {
+                Rcpp::stop("pricing session: pair index out of range");
+            }
+            double c = 0.0;
+            out[t] = lap::cost_if_allowed(s->src, a, b, c) ? c : NA_REAL;
         }
-        double c = 0.0;
-        out[t] = s.src.admissible(a, b, c) ? c : NA_REAL;
-    }
-    return out;
+        return out;
+    }, session_from(session).held);
 }
 
 // The smallest and largest admissible distance over every pair and how many
 // pairs are admissible, in one pass holding three numbers.
 Rcpp::List pricing_session_range_impl(SEXP session) {
-    PricingSession& s = session_from(session);
-    double lo = R_PosInf;
-    double hi = R_NegInf;
-    double count = 0.0;
-    for (int64_t i = 0; i < s.src.nrow; ++i) {
-        if ((i & 63) == 0) Rcpp::checkUserInterrupt();
-        for (int64_t j = 0; j < s.src.ncol; ++j) {
-            double c = 0.0;
-            if (!s.src.admissible(i, j, c)) continue;
-            if (c < lo) lo = c;
-            if (c > hi) hi = c;
-            count += 1.0;
+    return std::visit([](auto& s) {
+        double lo = R_PosInf;
+        double hi = R_NegInf;
+        double count = 0.0;
+        for (int64_t i = 0; i < s->src.nrow; ++i) {
+            if ((i & 63) == 0) Rcpp::checkUserInterrupt();
+            for (int64_t j = 0; j < s->src.ncol; ++j) {
+                double c = 0.0;
+                if (!lap::cost_if_allowed(s->src, i, j, c)) continue;
+                if (c < lo) lo = c;
+                if (c > hi) hi = c;
+                count += 1.0;
+            }
         }
-    }
-    s.cand.note_evaluated(static_cast<int64_t>(count));
-    return Rcpp::List::create(Rcpp::Named("min") = lo, Rcpp::Named("max") = hi,
-                              Rcpp::Named("n_admissible") = count);
+        s->cand.note_evaluated(static_cast<int64_t>(count));
+        return Rcpp::List::create(Rcpp::Named("min") = lo, Rcpp::Named("max") = hi,
+                                  Rcpp::Named("n_admissible") = count);
+    }, session_from(session).held);
 }
 
 double pricing_session_evaluated_impl(SEXP session) {
-    return static_cast<double>(session_from(session).cand.edges_evaluated());
+    return std::visit([](auto& s) { return static_cast<double>(s->cand.edges_evaluated()); },
+                      session_from(session).held);
 }
 
 double implicit_seed_width_impl(double ncol) {
@@ -451,33 +467,22 @@ double implicit_seed_width_impl(double ncol) {
 }
 
 Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              std::string distance,
+                              SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector vars, bool maximize,
                               double keep_per_row, double width, double tol,
                               double max_rounds, bool certify) {
     try {
-        // Only Mahalanobis reads an inverse covariance; every other metric
-        // passes NULL, and a 0 x 0 matrix says the same thing. Same handling as
-        // certify_lazy_impl(), for the same reason.
-        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
-        if (inv_cov.isNotNull()) {
-            Rcpp::NumericMatrix ic(inv_cov.get());
-            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
-        }
-
-        // The lazy source bakes the calipers, the max_distance cut and the
-        // maximize negation into at()/allowed() at construction, so it is
-        // already the internal minimization.
-        const lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
-            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers,
-            vars, maximize);
-
-        return run_implicit(cm, implicit_options_from_r(keep_per_row, width, tol,
-                                                        max_rounds, certify),
-                            maximize);
-
+        // The source bakes the calipers, the max_distance cut and the maximize
+        // negation into at()/allowed() at construction, so it is already the
+        // internal minimization.
+        const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
+                                                   max_distance, calipers, vars, maximize);
+        const lap::ImplicitOptions opts =
+            implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
+        return std::visit([&](const auto& cm) { return run_implicit(cm, opts, maximize); },
+                          source);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }

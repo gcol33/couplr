@@ -923,13 +923,15 @@ reduced cost that admits a pair here is a property of the solution the master
 has just returned, so the loop stops on a statement about the complete graph
 rather than on the grades running out.
 
-The mode is available on `match_couples()` and `assignment()`, and it is
-requested rather than selected: `memory_mode = "auto"` does not choose it,
-because the worst case above is a real one. Its scope is the unit-capacity assignment. A full match's column nodes carry
-capacities above one, so a column dual there is not the assignment dual this
-pricer reads. A general flow arc does carry a reduced cost of its own, from
-the potentials at the nodes it joins, so pricing one is available in
-principle; it is this implementation that stops at the assignment. How small a graph the loop
+The mode is available on `match_couples()`, `assignment()`, `full_match()` and
+`cardinality_match()`, and it is requested rather than selected:
+`memory_mode = "auto"` does not choose it, because the worst case above is a
+real one. A design other than the assignment carries column capacities above
+one, so its column potentials are not the assignment duals above; its omitted
+pairs are priced against the potentials themselves instead, since a pair arc
+carries a reduced cost from the nodes it joins. A master short of its flow is
+extended by the pairs crossing the residual cut its excess still reaches, and
+when none cross, the flow placed is the maximum over every pair. How small a graph the loop
 ends up holding, how many pricing rounds it takes and how it behaves on
 geometries built to be hostile to it are measured in the empirical
 evaluation.
@@ -1812,17 +1814,10 @@ cost matrix.
 
 
 
-couplr has five limitations:
+couplr has four limitations:
 
-- The edge-generation loop's scope is the unit-capacity assignment: a full
-  match's column nodes carry capacities above one, so its column duals are not
-  the duals the pricer reads and `full_match()` has no implicit path. That is a
-  limit of this implementation rather than of the method, since a general flow
-  arc has a reduced cost from the potentials at its ends.
-- The lazy cost path covers one-to-one matching without replacement under
-  Jonker-Volgenant and auction with the built-in metrics. Replacement, a ratio
-  above one, `cardinality_match()` and a user-supplied distance function build
-  the dense matrix.
+- The lazy and implicit cost paths cover the built-in metrics. A user-supplied
+  distance function builds the dense matrix.
 - `cardinality_match()` answers a moment-constrained problem by branch and
   bound under node and time limits, so a run can stop with a gap rather than a
   certificate and reports which it reached. Fine and refined balance is

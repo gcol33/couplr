@@ -719,7 +719,8 @@ cok  <- regime_runs[regime_runs$status == "ok", ]
 skey <- paste(cok$tier, cok$regime, cok$pattern, cok$n_rows, cok$n_cols,
               cok$instance, cok$method)
 cert <- cok[!duplicated(skey) & !is.na(cok$certified_optimal), ]
-cert$rel_gap <- cert$duality_gap / pmax(1, abs(cert$objective))
+cert$rel_gap <- ifelse(cert$objective != 0,
+                       cert$duality_gap / abs(cert$objective), NA_real_)
 
 n_solv <- length(unique(cert$method))
 off    <- cert[!cert$certified_optimal, ]
@@ -755,7 +756,7 @@ if (nrow(off)) {
     Solves = sum(cert$method == g$method[1]),
     `Not certified` = nrow(g),
     Regimes = paste(sort(unique(g$regime)), collapse = ", "),
-    `Worst gap, relative` = sprintf("%.3g", max(g$rel_gap)),
+    `Worst gap, relative` = sprintf("%.3g", max(g$rel_gap, na.rm = TRUE)),
     check.names = FALSE)))
   kb(os[order(-os$`Not certified`), ],
      caption = "The solvers whose matching the certificate could not call optimal, and how far above the instance's optimum it was.",
@@ -777,7 +778,7 @@ if (n_off == 0) {
     cat(" The rounding a scaling step applies over a cost range that wide may be what separates it from the rest.")
   }
   cat(sprintf(" The worst gap is %s of the objective, small against the numbers involved and still a matching a cheaper one exists for.\n\n",
-              sprintf("%.3g", max(off$rel_gap))))
+              sprintf("%.3g", max(off$rel_gap, na.rm = TRUE))))
 }
 ```
 

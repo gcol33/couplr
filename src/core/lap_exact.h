@@ -38,6 +38,7 @@
 
 #include <cfloat>
 #include <cmath>
+#include <limits>
 
 namespace lap {
 namespace exact {
@@ -51,6 +52,16 @@ inline double two_sum(double a, double b, double& err) {
     const double b_virtual = s - a;
     err = (a - (s - b_virtual)) + (b - b_virtual);
     return s;
+}
+
+// a + b rounded toward +infinity: the smallest double not below the exact sum.
+// Two-sum returns the part that rounding to nearest lost, which is at most half
+// an ulp of the rounded sum, so a positive remainder is covered by one step up.
+// An overflowed sum is +/-infinity with a NaN remainder and is returned as is.
+inline double sum_round_up(double a, double b) {
+    double err = 0.0;
+    const double s = two_sum(a, b, err);
+    return err > 0.0 ? std::nextafter(s, std::numeric_limits<double>::infinity()) : s;
 }
 
 // Sign of c - u - v, exactly: -1, 0 or +1.

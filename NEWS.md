@@ -172,6 +172,27 @@ one asked, so the version that reaches CRAN is this one.
 
 ## Bug fixes
 
+* **The auction solvers return an optimal assignment on real-valued costs.**
+  `"auction"`, `"auction_gs"` and `"auction_scaled"` stopped bidding at a final
+  epsilon of `min(1e-6, 1/n^2)` and reported the result as optimal. That
+  assignment is only within `n * epsilon` of the optimum, and on real-valued
+  costs no fixed epsilon closes the gap. Across the regime grid,
+  `"auction_scaled"` returned a matching above the optimum on 7 of 406 solves,
+  by at most 1.23e-05. Costs closer to the epsilon fare worse: on log-normal
+  matrices scaled to a median of 1e-3, all 27 solves across the three variants
+  at 500 by 500, 500 by 1500 and 1500 by 1500 missed. The bidding now hands its
+  assignment and prices to a repair step. It corrects the prices into exact
+  column potentials by label-correcting shortest paths and cancels every
+  cheaper reassignment it finds on the way. Labels are rounded toward
+  +infinity, so a cancelled cycle is negative in exact arithmetic and a
+  zero-cost cycle cannot be cancelled forever. The dense and lazy paths share
+  the step. Adding uniform, integer, heavy-tailed, tied and metric costs at
+  those three shapes, 34 of 162 auction solves failed the certificate before
+  and none after. Outside the small-cost matrices the step adds 2 to 29
+  percent to the solve time. Where the costs sit below the
+  final epsilon the final prices carry little information and the repair does
+  most of the work, at 9 to 20 times the time.
+
 * **`max_suboptimality` is an upper bound rather than an estimate of one.**
   It is assembled from the primal and dual objectives, each a Neumaier
   compensated sum, and compensated summation buys back the accumulation

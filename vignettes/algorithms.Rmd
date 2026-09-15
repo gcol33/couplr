@@ -600,6 +600,8 @@ ggraph(g, layout = "manual", x = layout$x, y = layout$y) +
 
 **Why epsilon matters**: Without epsilon, two workers could bid infinitely against each other, each raising the price by 0. The epsilon ensures progress.
 
+It also costs exactness. Bidding stops at an assignment within $n\epsilon$ of the optimum, which is optimal on integer costs once $\epsilon < 1/n$ but not on real-valued ones, where two assignments can differ by less than any fixed $n\epsilon$. couplr's auctions therefore finish with a repair step: shortest paths over the final prices turn them into exact dual potentials, and any cheaper reassignment found on the way is applied, so the matching returned is optimal.
+
 **Complexity**: $O(n^2 \log(nC) / \epsilon)$ where $C$ is the cost range.
 
 couplr offers three Auction variants:

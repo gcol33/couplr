@@ -18,8 +18,14 @@
 
 #include <Rcpp.h>
 
+#include "../core/lap_error.h"
+#include "../core/lap_lazy_types.h"
+#include "../core/lap_utils_rcpp.h"
+#include "flow_candidates.h"
 #include "flow_certify.h"
 #include "flow_compile.h"
+#include "flow_implicit.h"
+#include "flow_implicit_rcpp.h"
 #include "flow_oracle.h"
 #include "flow_problem.h"
 #include "flow_push_relabel.h"
@@ -634,6 +640,48 @@ Rcpp::List flow_trace_push_relabel_impl(Rcpp::NumericMatrix cost, bool maximize)
         Rcpp::Named("status")    = res.status);
 }
 
+namespace {
+
+// What a compiled full matching is, beside its arcs: the orientation and the
+// bounds the reading step needs, and where its nodes sit.
+Rcpp::List full_match_shape_to_r(const lap::CompiledFullMatch& design) {
+    return Rcpp::List::create(
+        Rcpp::Named("symmetric") = design.symmetric,
+        Rcpp::Named("n_centres") = count_to_r(design.n_centres),
+        Rcpp::Named("n_units") = count_to_r(design.n_units),
+        Rcpp::Named("min_controls") = count_to_r(design.min_controls),
+        Rcpp::Named("max_capacity") = count_to_r(design.max_capacity),
+        Rcpp::Named("flow_required") = count_to_r(design.design.flow_required));
+}
+
+Rcpp::List full_match_layout_to_r(const lap::CompiledFullMatch& design) {
+    return Rcpp::List::create(
+        Rcpp::Named("source_node") = static_cast<int>(lap::FLOW_SOURCE) + 1,
+        Rcpp::Named("sink_node") = static_cast<int>(lap::FLOW_SINK) + 1,
+        Rcpp::Named("row_base") = static_cast<int>(design.design.row_base) + 1,
+        Rcpp::Named("n_rows") = static_cast<int>(design.design.n_rows),
+        Rcpp::Named("col_base") = static_cast<int>(design.design.col_base) + 1,
+        Rcpp::Named("n_cols") = static_cast<int>(design.design.n_cols));
+}
+
+// The pairs block 0 became arcs for, 1-based, with the index of the first one.
+Rcpp::List block_to_r(const lap::FlowProblem& prob, int64_t first_arc) {
+    const lap::BlockArcRange& blk = prob.block_arcs.at(0);
+    Rcpp::IntegerVector block_row(static_cast<R_xlen_t>(blk.n_arcs));
+    Rcpp::IntegerVector block_col(static_cast<R_xlen_t>(blk.n_arcs));
+    for (int64_t k = 0; k < blk.n_arcs; ++k) {
+        block_row[static_cast<R_xlen_t>(k)] = blk.rc[static_cast<std::size_t>(k)].first + 1;
+        block_col[static_cast<R_xlen_t>(k)] = blk.rc[static_cast<std::size_t>(k)].second + 1;
+    }
+    return Rcpp::List::create(
+        Rcpp::Named("first_arc") = static_cast<double>(first_arc + 1),
+        Rcpp::Named("n_arcs") = static_cast<double>(blk.n_arcs),
+        Rcpp::Named("row") = block_row,
+        Rcpp::Named("col") = block_col);
+}
+
+}  // namespace
+
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls,
                                         double max_controls) {
@@ -644,13 +692,7 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
         count_from_r(max_controls, "max_controls"),
         std::vector<lap::CategoryConstraint>());
 
-    Rcpp::List shape = Rcpp::List::create(
-        Rcpp::Named("symmetric") = design.symmetric,
-        Rcpp::Named("n_centres") = count_to_r(design.n_centres),
-        Rcpp::Named("n_units") = count_to_r(design.n_units),
-        Rcpp::Named("min_controls") = count_to_r(design.min_controls),
-        Rcpp::Named("max_capacity") = count_to_r(design.max_capacity),
-        Rcpp::Named("flow_required") = count_to_r(design.design.flow_required));
+    Rcpp::List shape = full_match_shape_to_r(design);
 
     if (!design.bounds_feasible) {
         return Rcpp::List::create(
@@ -682,16 +724,6 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
         supply[v] = static_cast<double>(prob.supply[static_cast<std::size_t>(v)]);
     }
 
-    const lap::BlockArcRange& blk = prob.block_arcs.at(0);
-    Rcpp::IntegerVector block_row(static_cast<R_xlen_t>(blk.n_arcs));
-    Rcpp::IntegerVector block_col(static_cast<R_xlen_t>(blk.n_arcs));
-    for (int64_t k = 0; k < blk.n_arcs; ++k) {
-        block_row[static_cast<R_xlen_t>(k)] =
-            blk.rc[static_cast<std::size_t>(k)].first + 1;
-        block_col[static_cast<R_xlen_t>(k)] =
-            blk.rc[static_cast<std::size_t>(k)].second + 1;
-    }
-
     return Rcpp::List::create(
         Rcpp::Named("bounds_feasible") = true,
         Rcpp::Named("reason") = design.reason,
@@ -704,16 +736,96 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
             Rcpp::Named("lower") = lower,
             Rcpp::Named("upper") = upper,
             Rcpp::Named("cost") = arc_cost),
-        Rcpp::Named("block") = Rcpp::List::create(
-            Rcpp::Named("first_arc") = static_cast<double>(blk.first_arc + 1),
-            Rcpp::Named("n_arcs") = static_cast<double>(blk.n_arcs),
-            Rcpp::Named("row") = block_row,
-            Rcpp::Named("col") = block_col),
-        Rcpp::Named("layout") = Rcpp::List::create(
-            Rcpp::Named("source_node") = static_cast<int>(lap::FLOW_SOURCE) + 1,
-            Rcpp::Named("sink_node") = static_cast<int>(lap::FLOW_SINK) + 1,
-            Rcpp::Named("row_base") = static_cast<int>(design.design.row_base) + 1,
-            Rcpp::Named("n_rows") = static_cast<int>(design.design.n_rows),
-            Rcpp::Named("col_base") = static_cast<int>(design.design.col_base) + 1,
-            Rcpp::Named("n_cols") = static_cast<int>(design.design.n_cols)));
+        Rcpp::Named("block") = block_to_r(prob, prob.block_arcs.at(0).first_arc),
+        Rcpp::Named("layout") = full_match_layout_to_r(design));
+}
+
+// A full matching over a lazy cost source, solved by generating the pairs its
+// flow turns out to need. What comes back has the dense binding's shape where
+// the two describe the same thing -- the block's pairs, the flow on them and the
+// layout -- so R reads the groups one way. The difference is that the block
+// holds the pairs the search generated rather than every admissible pair, so
+// its flow is returned beside it, and the problem's own arcs stay in C++.
+Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
+                                         Rcpp::NumericMatrix right_mat,
+                                         std::string distance,
+                                         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                         double max_distance, Rcpp::List calipers,
+                                         Rcpp::CharacterVector vars,
+                                         double min_controls, double max_controls,
+                                         double keep_per_row, double width, double tol,
+                                         double max_rounds, bool certify) {
+    try {
+        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
+        if (inv_cov.isNotNull()) {
+            Rcpp::NumericMatrix ic(inv_cov.get());
+            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
+        }
+        const lap::LazyCostMatrix src = rcpp_to_lazy_cost_matrix(
+            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars,
+            false);
+        const lap::SourceOracle<lap::LazyCostMatrix> oracle(src);
+        lap::CompiledFullMatch design = lap::compile_full_matching(
+            oracle, count_from_r(min_controls, "min_controls"),
+            count_from_r(max_controls, "max_controls"),
+            std::vector<lap::CategoryConstraint>());
+
+        Rcpp::List shape = full_match_shape_to_r(design);
+        if (!design.bounds_feasible) {
+            return Rcpp::List::create(
+                Rcpp::Named("bounds_feasible") = false,
+                Rcpp::Named("reason") = design.reason,
+                Rcpp::Named("shape") = shape);
+        }
+
+        lap::CandidateSet cand(src.nrow, src.ncol);
+        const lap::ImplicitOptions opts =
+            implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
+        const lap::DesignResult res =
+            lap::solve_implicit_design(src, design.design.problem, cand, opts);
+        const lap::FlowProblem& prob = design.design.problem;
+
+        const lap::BlockArcRange& blk = prob.block_arcs.at(0);
+        Rcpp::NumericVector block_flow(static_cast<R_xlen_t>(blk.n_arcs));
+        for (int64_t k = 0; k < blk.n_arcs; ++k) {
+            const std::size_t a = static_cast<std::size_t>(blk.first_arc + k);
+            block_flow[static_cast<R_xlen_t>(k)] =
+                a < res.flow.size() ? static_cast<double>(res.flow[a]) : 0.0;
+        }
+
+        Rcpp::RObject certificate = R_NilValue;
+        if (certify && !res.flow.empty() && res.flow_certificate.tolerance > 0.0) {
+            Rcpp::List cert = certificate_to_r(res.flow_certificate);
+            cert.push_back(res.flow_certificate.certified_optimal, "master_certified");
+            cert.push_back(res.omitted_min_reduced_cost, "omitted_min_reduced_cost");
+            cert.push_back(res.omitted_proven_floor, "omitted_proven_floor");
+            cert.push_back(res.price_tol, "omitted_tolerance");
+            cert.push_back(res.max_flow_certified, "max_flow_certified");
+            cert["certified_optimal"] = res.certified;
+            certificate = cert;
+        }
+
+        return Rcpp::List::create(
+            Rcpp::Named("bounds_feasible") = true,
+            Rcpp::Named("reason") = design.reason,
+            Rcpp::Named("shape") = shape,
+            Rcpp::Named("status") = res.status,
+            Rcpp::Named("total_cost") = res.total_cost,
+            Rcpp::Named("block") = block_to_r(prob, 0),
+            Rcpp::Named("flow") = block_flow,
+            Rcpp::Named("potential") = Rcpp::NumericVector(res.potential.begin(),
+                                                           res.potential.end()),
+            Rcpp::Named("layout") = full_match_layout_to_r(design),
+            Rcpp::Named("certificate") = certificate,
+            Rcpp::Named("search") = Rcpp::List::create(
+                Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),
+                Rcpp::Named("candidate_edges") = static_cast<double>(res.candidate_edges),
+                Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
+                Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),
+                Rcpp::Named("n_rounds") = static_cast<double>(res.rounds.size()),
+                Rcpp::Named("rounds") = implicit_rounds_to_r(res.rounds, false)));
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
+    }
+    return Rcpp::List();
 }

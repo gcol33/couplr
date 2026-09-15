@@ -130,6 +130,16 @@ Rcpp::NumericVector lazy_pair_distances_impl(
     const Rcpp::IntegerVector& rows,
     const Rcpp::IntegerVector& cols);
 
+// The sample standard deviation of the distance over every pair, read in one
+// pass and held in two running sums, which is what a caliper stated in standard
+// deviations of the distance needs when the pairs are never stored. NA when
+// there are fewer than two pairs.
+double lazy_distance_sd_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
+
 // Convert a pure lap::LapResult to the standard Rcpp result list.
 // Assignment is shifted 0-based -> 1-based (0 = unmatched) and the total is
 // recomputed from original_cost via compute_total_cost for cross-solver

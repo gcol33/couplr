@@ -7,6 +7,7 @@
 
 #include "core/lap_certify.h"
 #include "core/lap_error.h"
+#include "core/lap_lazy_types.h"
 #include "core/lap_types.h"
 #include "flow/flow_candidates.h"
 #include "flow/flow_compile.h"
@@ -721,5 +722,200 @@ TEST_CASE("A problem the loop cannot price is refused rather than solved",
         opts.max_rounds = 0;
         REQUIRE_THROWS_AS(lap::solve_implicit_assignment(c, d.problem, cand, opts),
                           lap::DimensionException);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// designs other than the assignment
+// ---------------------------------------------------------------------------
+
+namespace {
+
+lap::CostMatrix nonnegative_cost(int64_t nr, int64_t nc, std::mt19937& rng) {
+    std::uniform_real_distribution<double> unif(0.0, 20.0);
+    lap::CostMatrix c(nr, nc);
+    for (int64_t i = 0; i < nr; ++i) {
+        for (int64_t j = 0; j < nc; ++j) c.at(i, j) = unif(rng);
+    }
+    return c;
+}
+
+// One compiled design over `oracle`, solved with every admissible pair an arc.
+struct DenseDesign {
+    bool    bounds_feasible = false;
+    int64_t flow_sent = 0;
+    int64_t flow_required = 0;
+    double  total_cost = 0.0;
+    std::string status;
+};
+
+DenseDesign dense_full_match(const lap::CostOracle& oracle, int64_t min_c, int64_t max_c) {
+    lap::CompiledFullMatch fm = lap::compile_full_matching(oracle, min_c, max_c, {});
+    DenseDesign out;
+    out.bounds_feasible = fm.bounds_feasible;
+    if (!fm.bounds_feasible) return out;
+    const lap::FlowResult res = lap::solve_min_cost_flow(fm.design.problem);
+    lap::implicit_detail::placed_value(fm.design.problem, res.flow, out.flow_sent,
+                                       out.flow_required);
+    out.total_cost = res.total_cost;
+    out.status = res.status;
+    return out;
+}
+
+template <class Source>
+void require_design_agrees(const Source& src, int64_t min_c, int64_t max_c,
+                           const std::string& label) {
+    INFO(label << ", min_controls " << min_c << ", max_controls " << max_c);
+    lap::SourceOracle<Source> oracle(src);
+    const DenseDesign dense = dense_full_match(oracle, min_c, max_c);
+    if (!dense.bounds_feasible) return;
+
+    lap::CompiledFullMatch fm = lap::compile_full_matching(oracle, min_c, max_c, {});
+    lap::CandidateSet cand(src.nrow, src.ncol);
+    lap::ImplicitOptions opts;
+    opts.width = 2;
+    opts.max_rounds = 400;
+    const lap::DesignResult res =
+        lap::solve_implicit_design(src, fm.design.problem, cand, opts);
+
+    REQUIRE(res.status == dense.status);
+    REQUIRE(res.flow_sent == dense.flow_sent);
+    REQUIRE(res.total_cost == Approx(dense.total_cost).margin(1e-9));
+    REQUIRE(res.max_flow_certified);
+    if (res.status == "optimal") REQUIRE(res.certified);
+    REQUIRE(res.omitted_proven_floor >= -res.price_tol);
+    // The point of the loop: a design this size does not need every pair.
+    REQUIRE(res.candidate_edges <= src.nrow * src.ncol);
+}
+
+}  // namespace
+
+TEST_CASE("A full matching grown from nothing reaches the dense optimum",
+          "[flow][implicit][design]") {
+    std::mt19937 rng(4401u);
+    const std::vector<std::pair<int64_t, int64_t>> shapes = {
+        {6, 15}, {15, 6}, {10, 10}, {12, 40}, {40, 12}};
+    for (const auto& shape : shapes) {
+        for (int rep = 0; rep < 3; ++rep) {
+            const lap::CostMatrix c = nonnegative_cost(shape.first, shape.second, rng);
+            const std::string label = std::to_string(shape.first) + " x " +
+                                      std::to_string(shape.second) + " rep " +
+                                      std::to_string(rep);
+            require_design_agrees(c, 1, lap::FLOW_INF_CAP, label);
+            require_design_agrees(c, 1, 3, label);
+            require_design_agrees(c, 2, lap::FLOW_INF_CAP, label);
+            require_design_agrees(c, 2, 4, label);
+        }
+    }
+}
+
+TEST_CASE("A full matching that cannot place every unit is the dense partial answer",
+          "[flow][implicit][design]") {
+    // Forbidden pairs leave units no group can take, so the flow falls short.
+    // Which units go unplaced is a choice with a cost, and the loop has to reach
+    // both the dense solve's value and its cost, certifying the value by the
+    // residual cut over the complete source.
+    std::mt19937 rng(4402u);
+    int partial_seen = 0;
+    for (int rep = 0; rep < 12; ++rep) {
+        const int64_t nr = 8 + rep % 3;
+        const int64_t nc = 20 + rep;
+        lap::CostMatrix c = nonnegative_cost(nr, nc, rng);
+        forbid_random(c, rng, nr * nc * 7 / 10);
+        const std::string label = "forbidden rep " + std::to_string(rep);
+        lap::SourceOracle<lap::CostMatrix> oracle(c);
+        for (int64_t min_c : {int64_t{1}, int64_t{2}}) {
+            const DenseDesign dense = dense_full_match(oracle, min_c, 3);
+            if (dense.status == "partial") ++partial_seen;
+            require_design_agrees(c, min_c, 3, label);
+        }
+    }
+    REQUIRE(partial_seen > 0);
+}
+
+TEST_CASE("A full matching over a lazy source reaches the dense optimum through both trees",
+          "[flow][implicit][design]") {
+    // Coordinates and a distance cut, so the rows' cheapest columns come off the
+    // tree over the columns and, when the smaller side of a cut is the columns,
+    // the columns' cheapest rows come off the tree over the rows.
+    std::mt19937 rng(4403u);
+    std::normal_distribution<double> gauss(0.0, 1.0);
+    for (int rep = 0; rep < 6; ++rep) {
+        const int64_t n_vars = 2 + rep % 3;
+        const int64_t nr = 30 + 7 * rep;
+        const int64_t nc = rep % 2 == 0 ? 3 * nr : nr / 3;
+        std::vector<double> left(static_cast<std::size_t>(nr * n_vars));
+        std::vector<double> right(static_cast<std::size_t>(nc * n_vars));
+        for (double& x : left) x = gauss(rng);
+        for (double& x : right) x = gauss(rng);
+        const lap::DistanceMetric metric =
+            rep % 3 == 0 ? lap::DistanceMetric::Mahalanobis : lap::DistanceMetric::Euclidean;
+        std::vector<double> inv_cov;
+        if (metric == lap::DistanceMetric::Mahalanobis) {
+            inv_cov.assign(static_cast<std::size_t>(n_vars * n_vars), 0.0);
+            for (int64_t k = 0; k < n_vars; ++k) {
+                inv_cov[static_cast<std::size_t>(k * n_vars + k)] = 1.0 + 0.5 * k;
+            }
+            inv_cov[1] = inv_cov[static_cast<std::size_t>(n_vars)] = 0.3;
+        }
+        const double cut = rep < 3 ? std::numeric_limits<double>::infinity() : 1.2;
+        const lap::LazyCostMatrix src(std::move(left), std::move(right), n_vars, metric,
+                                      std::move(inv_cov), cut, {}, false);
+        const std::string label = "lazy rep " + std::to_string(rep);
+        require_design_agrees(src, 1, lap::FLOW_INF_CAP, label);
+        require_design_agrees(src, 1, 4, label);
+        if (nc >= 2 * nr) require_design_agrees(src, 2, 5, label);
+    }
+}
+
+TEST_CASE("A transposed lazy source measures every pair to the bit",
+          "[flow][implicit][design]") {
+    std::mt19937 rng(4404u);
+    std::normal_distribution<double> gauss(0.0, 3.0);
+    const int64_t n_vars = 3;
+    std::vector<double> left(12 * n_vars), right(9 * n_vars);
+    for (double& x : left) x = gauss(rng);
+    for (double& x : right) x = gauss(rng);
+    std::vector<double> inv_cov = {2.0, 0.4, -0.3, 0.4, 1.5, 0.2, -0.3, 0.2, 1.0};
+    const lap::LazyCostMatrix src(left, right, n_vars, lap::DistanceMetric::Mahalanobis,
+                                  inv_cov, 4.0, {lap::CaliperSpec{1, 2.5}}, false);
+    const lap::LazyCostMatrix t = src.transposed();
+    REQUIRE(t.nrow == src.ncol);
+    REQUIRE(t.ncol == src.nrow);
+    for (int64_t i = 0; i < src.nrow; ++i) {
+        for (int64_t j = 0; j < src.ncol; ++j) {
+            double a = 0.0, b = 0.0;
+            const bool ok_a = src.admissible(i, j, a);
+            const bool ok_b = t.admissible(j, i, b);
+            REQUIRE(ok_a == ok_b);
+            if (ok_a) REQUIRE(a == b);
+        }
+    }
+}
+
+TEST_CASE("A variable-ratio design runs the same rounds", "[flow][implicit][design]") {
+    std::mt19937 rng(4405u);
+    for (int rep = 0; rep < 5; ++rep) {
+        const lap::CostMatrix c = nonnegative_cost(8, 30 + rep, rng);
+        lap::SourceOracle<lap::CostMatrix> oracle(c);
+
+        lap::CompiledDesign dense_design = lap::compile_variable_ratio(oracle, 1, 3, {});
+        const lap::FlowResult dense = lap::solve_min_cost_flow(dense_design.problem);
+        int64_t dense_sent = 0, dense_required = 0;
+        lap::implicit_detail::placed_value(dense_design.problem, dense.flow, dense_sent,
+                                           dense_required);
+
+        lap::CompiledDesign design = lap::compile_variable_ratio(oracle, 1, 3, {});
+        lap::CandidateSet cand(c.nrow, c.ncol);
+        lap::ImplicitOptions opts;
+        opts.width = 1;
+        opts.max_rounds = 200;
+        const lap::DesignResult res = lap::solve_implicit_design(c, design.problem, cand, opts);
+
+        INFO("rep " << rep);
+        REQUIRE(res.status == dense.status);
+        REQUIRE(res.flow_sent == dense_sent);
+        REQUIRE(res.total_cost == Approx(dense.total_cost).margin(1e-9));
+        REQUIRE(res.certified);
     }
 }

@@ -85,6 +85,15 @@ Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::NumericVector lower, Rcpp::NumericVector upper,
                              Rcpp::NumericVector cost, Rcpp::NumericVector flow,
                              Rcpp::NumericVector potential, double tol);
+Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
+                                         Rcpp::NumericMatrix right_mat,
+                                         std::string distance,
+                                         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                         double max_distance, Rcpp::List calipers,
+                                         Rcpp::CharacterVector vars,
+                                         double min_controls, double max_controls,
+                                         double keep_per_row, double width, double tol,
+                                         double max_rounds, bool certify);
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls, double max_controls);
 Rcpp::List flow_compile_couples_impl(std::string design, double n_rows,
@@ -199,6 +208,13 @@ Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat,
                                             Rcpp::IntegerVector rows,
                                             Rcpp::IntegerVector cols) {
   return lazy_pair_distances_impl(left_mat, right_mat, metric, inv_cov, rows, cols);
+}
+
+// [[Rcpp::export]]
+double cpp_lazy_distance_sd(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                            std::string metric,
+                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
+  return lazy_distance_sd_impl(left_mat, right_mat, metric, inv_cov);
 }
 
 // [[Rcpp::export]]
@@ -437,6 +453,23 @@ Rcpp::List lap_flow_certify(int n_nodes, Rcpp::NumericVector supply,
 Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
                                        double min_controls, double max_controls) {
   return flow_compile_full_match_impl(cost, min_controls, max_controls);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_full_match_implicit(Rcpp::NumericMatrix left_mat,
+                                   Rcpp::NumericMatrix right_mat,
+                                   std::string distance,
+                                   Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                   double max_distance, Rcpp::List calipers,
+                                   Rcpp::CharacterVector vars,
+                                   double min_controls, double max_controls,
+                                   double keep_per_row = 5.0, double width = 0.0,
+                                   double tol = 1e-9, double max_rounds = 60.0,
+                                   bool certify = true) {
+  return flow_full_match_implicit_impl(left_mat, right_mat, distance, inv_cov,
+                                       max_distance, calipers, vars, min_controls,
+                                       max_controls, keep_per_row, width, tol,
+                                       max_rounds, certify);
 }
 
 // [[Rcpp::export]]

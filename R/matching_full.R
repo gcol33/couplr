@@ -146,14 +146,17 @@
 #' @param method Matching algorithm: \code{"optimal"} (default) uses min-cost
 #'   max-flow to find the globally optimal group assignment minimizing total
 #'   distance; \code{"greedy"} uses a fast two-pass heuristic.
-#' @param memory_mode One of "auto" (default) or "dense". "auto" warns if the
-#'   dense cost matrix would consume a large fraction of free system RAM.
-#'   `full_match()` uses a different (min-cost-flow) solver backend than
-#'   `match_couples()`/`assignment()`, so `memory_mode = "lazy"` is not
-#'   available here yet and errors if requested. `memory_mode = "implicit"`
-#'   errors for a further reason: a full matching's column nodes carry
-#'   capacities above one, so a column dual is not the assignment dual the
-#'   pricing loop reads. "dense" skips the RAM check entirely.
+#' @param memory_mode One of "auto" (default), "dense" or "implicit". "auto"
+#'   warns if the dense cost matrix would consume a large fraction of free
+#'   system RAM. "dense" skips the RAM check entirely. "implicit" solves
+#'   \code{method = "optimal"} over a built-in distance metric without building
+#'   the pair set: the flow is solved over a growing subset of pairs, the pairs
+#'   it omits are priced against the flow's node potentials, and the subset
+#'   grows until none prices below zero, so the groups are optimal over every
+#'   pair; a \code{search} element records what that cost. Under "implicit"
+#'   \code{caliper_sd} reads every pair's distance once to take its standard
+#'   deviation, holding two running sums rather than the distances. "lazy" is
+#'   not available here: a flow solved over every pair holds every pair.
 #'
 #' @return An S3 object of class \code{c("full_matching_result", "couplr_result")}
 #'   containing:
@@ -181,7 +184,14 @@
 #'     \code{\link{verify_flow}}, checking the solved flow and its potentials
 #'     against the optimality conditions. \code{status} says what the solver
 #'     terminated on; this says what was checked. Present for
-#'     \code{method = "optimal"} only.}
+#'     \code{method = "optimal"} only. Under \code{memory_mode = "implicit"}
+#'     the check covers the pairs the flow was solved over, and
+#'     \code{omitted_proven_floor} bounds the reduced cost of every pair it
+#'     omitted; \code{certified_optimal} holds both together.}
+#'   \item{search}{Under \code{memory_mode = "implicit"}: the seed width, the
+#'     pairs generated (\code{candidate_edges}) against the pairs there are
+#'     (\code{possible_edges}), the distances computed
+#'     (\code{edges_evaluated}) and one row per round.}
 #' }
 #'
 #' @details
@@ -301,76 +311,127 @@ full_match <- function(left, right, vars,
   r_ids <- as.character(right[[right_id]])
 
   # --- Distance matrix ---
-  # full_match() uses a different (min-cost-flow group-matching) C++ backend
-  # that has not been made lazy-aware; caller_supports_lazy = FALSE keeps
-  # memory_mode = "auto" from ever promoting to lazy here, and makes an
-  # explicit memory_mode = "lazy" request fail clearly instead of returning
-  # a lazy_cost_spec this function cannot consume.
+  # "lazy" is refused here: a flow solved over every pair holds every pair.
+  # "implicit" states the problem as a specification the design loop solves
+  # without building it, which only the optimal flow can consume.
   cost_matrix <- build_cost_matrix(left, right, vars, distance, weights, scale,
                                    sigma = sigma, memory_mode = memory_mode,
-                                   caller_supports_lazy = FALSE)
+                                   caller_supports_lazy = FALSE,
+                                   caller_supports_implicit =
+                                     identical(method, "optimal"))
+  implicit <- is_lazy_cost_spec(cost_matrix)
 
   # The reduction to an edge cover needs costs that do not reward extra
   # arcs: a cheapest cover is inclusion-minimal only when no arc is worth
   # keeping for its own sake. Under a negative cost the cheapest cover takes
   # every negative arc and the minimality prune then removes arcs the
   # objective wanted, so the answer is not the cheapest full matching. Every
-  # built-in metric is non-negative; a custom distance function need not be.
-  finite_costs <- cost_matrix[is.finite(cost_matrix)]
-  if (length(finite_costs) && min(finite_costs) < 0) {
-    stop("full_match() needs non-negative distances: the cheapest edge ",
-         "cover is a full matching only when no arc is worth keeping for ",
-         "its own sake. The smallest distance here is ",
-         format(min(finite_costs)), ". Shift the custom distance so its ",
-         "smallest value is zero.", call. = FALSE)
+  # built-in metric is non-negative; a custom distance function need not be,
+  # and a specification is only ever built for a built-in metric.
+  if (!implicit) {
+    finite_costs <- cost_matrix[is.finite(cost_matrix)]
+    if (length(finite_costs) && min(finite_costs) < 0) {
+      stop("full_match() needs non-negative distances: the cheapest edge ",
+           "cover is a full matching only when no arc is worth keeping for ",
+           "its own sake. The smallest distance here is ",
+           format(min(finite_costs)), ". Shift the custom distance so its ",
+           "smallest value is zero.", call. = FALSE)
+    }
   }
+
+  n_left <- if (implicit) cost_matrix$n_left else nrow(cost_matrix)
+  n_right <- if (implicit) cost_matrix$n_right else ncol(cost_matrix)
 
   # --- Caliper ---
   caliper_val <- NULL
   if (!is.null(caliper_sd)) {
-    finite_dists <- cost_matrix[is.finite(cost_matrix)]
-    if (length(finite_dists) > 1) {
-      caliper_val <- caliper_sd * stats::sd(finite_dists)
+    if (implicit) {
+      pooled_sd <- cpp_lazy_distance_sd(cost_matrix$left_mat, cost_matrix$right_mat,
+                                        cost_matrix$distance,
+                                        lazy_cost_spec_inv_cov(cost_matrix))
+      if (!is.na(pooled_sd)) caliper_val <- caliper_sd * pooled_sd
+    } else {
+      finite_dists <- cost_matrix[is.finite(cost_matrix)]
+      if (length(finite_dists) > 1) {
+        caliper_val <- caliper_sd * stats::sd(finite_dists)
+      }
     }
   } else if (!is.null(caliper)) {
     caliper_val <- caliper
   }
 
-  # Apply caliper: set distances beyond caliper to Inf
+  # A distance beyond the caliper is no pair: Inf in a matrix, the source's
+  # distance cut in a specification, which rules it out by the same test.
   if (!is.null(caliper_val)) {
-    cost_matrix[cost_matrix > caliper_val] <- Inf
+    if (implicit) {
+      cost_matrix$max_distance <- caliper_val
+    } else {
+      cost_matrix[cost_matrix > caliper_val] <- Inf
+    }
   }
-
-  n_left <- nrow(cost_matrix)
-  n_right <- ncol(cost_matrix)
 
   potentials <- NULL
   certificate <- NULL
+  search <- NULL
 
   if (method == "optimal") {
-    # --- Optimal full matching, compiled and solved as a flow ---
-    compiled <- lap_flow_compile_full_match(
-      cost_matrix, as.numeric(min_controls),
-      if (is.infinite(max_controls)) Inf else as.numeric(max_controls)
-    )
+    if (implicit) {
+      # --- Optimal full matching, grown pair by pair over the specification ---
+      knobs <- .implicit_defaults()
+      compiled <- lap_full_match_implicit(
+        cost_matrix$left_mat, cost_matrix$right_mat, cost_matrix$distance,
+        lazy_cost_spec_inv_cov(cost_matrix), cost_matrix$max_distance,
+        lazy_cost_spec_calipers(cost_matrix), cost_matrix$vars,
+        as.numeric(min_controls),
+        if (is.infinite(max_controls)) Inf else as.numeric(max_controls),
+        knobs$keep_per_row, knobs$width, knobs$tol, knobs$max_rounds, TRUE
+      )
 
-    if (isTRUE(compiled$bounds_feasible)) {
-      solved <- .flow_solve(.flow_problem(
-        n_nodes = compiled$problem$n_nodes,
-        supply = compiled$problem$supply,
-        arcs = tibble::tibble(tail = compiled$problem$tail,
-                              head = compiled$problem$head,
-                              lower = compiled$problem$lower,
-                              upper = compiled$problem$upper,
-                              cost = compiled$problem$cost)
-      ))
-      read <- .full_match_groups(compiled, solved$flow, min_controls)
-      potentials <- .full_match_potentials(compiled, solved$potential)
-      certificate <- verify_flow(solved)
+      if (isTRUE(compiled$bounds_feasible)) {
+        solved <- list(status = compiled$status)
+        read <- .full_match_groups(compiled, compiled$flow, min_controls)
+        potentials <- .full_match_potentials(compiled, compiled$potential)
+        if (!is.null(compiled$certificate)) {
+          certificate <- .new_flow_certificate(compiled$certificate, knobs$tol)
+        }
+        search <- list(
+          seed_width      = as.integer(compiled$search$seed_width),
+          candidate_edges = as.numeric(compiled$search$candidate_edges),
+          possible_edges  = as.numeric(compiled$search$possible_edges),
+          edges_evaluated = as.numeric(compiled$search$edges_evaluated),
+          n_rounds        = as.integer(compiled$search$n_rounds),
+          rounds          = tibble::as_tibble(compiled$search$rounds)
+        )
+      } else {
+        solved <- NULL
+        read <- list(group_of_left = integer(n_left),
+                     group_of_right = integer(n_right), n_groups = 0L)
+      }
     } else {
-      solved <- NULL
-      read <- list(group_of_left = integer(n_left),
-                   group_of_right = integer(n_right), n_groups = 0L)
+      # --- Optimal full matching, compiled and solved as a flow ---
+      compiled <- lap_flow_compile_full_match(
+        cost_matrix, as.numeric(min_controls),
+        if (is.infinite(max_controls)) Inf else as.numeric(max_controls)
+      )
+
+      if (isTRUE(compiled$bounds_feasible)) {
+        solved <- .flow_solve(.flow_problem(
+          n_nodes = compiled$problem$n_nodes,
+          supply = compiled$problem$supply,
+          arcs = tibble::tibble(tail = compiled$problem$tail,
+                                head = compiled$problem$head,
+                                lower = compiled$problem$lower,
+                                upper = compiled$problem$upper,
+                                cost = compiled$problem$cost)
+        ))
+        read <- .full_match_groups(compiled, solved$flow, min_controls)
+        potentials <- .full_match_potentials(compiled, solved$potential)
+        certificate <- verify_flow(solved)
+      } else {
+        solved <- NULL
+        read <- list(group_of_left = integer(n_left),
+                     group_of_right = integer(n_right), n_groups = 0L)
+      }
     }
 
     # group_of_left / group_of_right: 1-based group IDs, 0 = unmatched
@@ -561,6 +622,7 @@ full_match <- function(left, right, vars,
   # truncate.
   if (!is.null(potentials)) result$potentials <- potentials
   if (!is.null(certificate)) result$certificate <- certificate
+  if (!is.null(search)) result$search <- search
 
   structure(result, class = c("full_matching_result", "couplr_result"))
 }

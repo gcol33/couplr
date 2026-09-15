@@ -25,6 +25,10 @@ cpp_lazy_pair_distances <- function(left_mat, right_mat, metric, inv_cov, rows, 
     .Call(`_couplr_cpp_lazy_pair_distances`, left_mat, right_mat, metric, inv_cov, rows, cols)
 }
 
+cpp_lazy_distance_sd <- function(left_mat, right_mat, metric, inv_cov) {
+    .Call(`_couplr_cpp_lazy_distance_sd`, left_mat, right_mat, metric, inv_cov)
+}
+
 cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps = NULL) {
     .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps)
 }
@@ -155,6 +159,10 @@ lap_flow_certify <- function(n_nodes, supply, tail, head, lower, upper, cost, fl
 
 lap_flow_compile_full_match <- function(cost, min_controls, max_controls) {
     .Call(`_couplr_lap_flow_compile_full_match`, cost, min_controls, max_controls)
+}
+
+lap_full_match_implicit <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, min_controls, max_controls, keep_per_row = 5.0, width = 0.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
+    .Call(`_couplr_lap_full_match_implicit`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, min_controls, max_controls, keep_per_row, width, tol, max_rounds, certify)
 }
 
 lap_flow_compile_couples <- function(design, n_rows, n_cols, ratio = 1.0) {

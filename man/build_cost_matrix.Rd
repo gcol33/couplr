@@ -28,17 +28,16 @@ the same specification marked for the edge-generation loop, which solves
 it without building the pair set at all.}
 
 \item{caller_supports_lazy}{Whether the calling code path can actually
-consume a \code{lazy_cost_spec} result. Defaults to \code{TRUE}; callers whose
-downstream solve path has not been made lazy-aware (e.g. \code{full_match()},
-which uses an entirely different min-cost-flow backend) pass \code{FALSE} so
-\code{memory_mode = "auto"} never promotes to lazy for them, and an explicit
+consume a \code{lazy_cost_spec} result for a solve over every pair. Defaults
+to \code{TRUE}; a caller with no such solve (e.g. \code{full_match()}, whose flow
+over every pair would hold every pair) passes \code{FALSE} so
+\code{memory_mode = "auto"} never promotes to lazy for it, and an explicit
 \code{memory_mode = "lazy"} request errors clearly instead of returning a
 \code{lazy_cost_spec} the caller cannot use.}
 
-\item{caller_supports_implicit}{Whether the calling path's design is the one
-the edge-generation loop solves. Defaults to whatever the caller says
-about lazy, since the loop reads the same specification; a path that
-consumes a spec but compiles to another network passes \code{FALSE}.}
+\item{caller_supports_implicit}{Whether the calling path's design is one the
+edge-generation loop solves. Defaults to whatever the caller says about
+lazy, since the loop reads the same specification.}
 }
 \value{
 Numeric matrix of distances with optional scaling/weights applied.

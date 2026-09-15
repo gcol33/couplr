@@ -31,6 +31,12 @@ regime-runs.csv
 regime-cells.csv
 regime-results.csv
 regime-verdict.csv
+dispatch-validation-runs.csv
+dispatch-validation-results.csv
+dispatch-validation-verdict.csv
+dispatch-validation-2-runs.csv
+dispatch-validation-2-results.csv
+dispatch-validation-2-verdict.csv
 implicit-grid-runs.csv
 implicit-grid-results.csv
 memory-results.csv"
@@ -43,6 +49,7 @@ bench_implicit.R
 bench_implicit_grid.R
 bench_memory.R
 bench_regimes.R
+bench_dispatch_validation.R
 bench_path.R
 bench_lalonde.R
 make-figure.R

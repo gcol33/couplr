@@ -36,16 +36,22 @@
   list(
     id        = "few_costs",
     method    = "auction_scaled",
-    condition = paste("at most 32 distinct finite values, and at most half as",
-                      "many as the longer side has units"),
+    condition = paste("at most 32 distinct finite values, at most half as many",
+                      "as the longer side has units, and at most 1.25 columns",
+                      "per row"),
     reason    = paste("few cost levels tie many of a row's cheapest columns,",
-                      "which epsilon-scaling bids settle in coarse phases"),
+                      "which epsilon-scaling bids settle in coarse phases on a",
+                      "problem close to square"),
     # The second bound is what makes the levels few: a row with at least twice
     # as many columns as there are levels repeats a cost, so a small matrix of
     # continuous costs, whose distinct count is only its cell count, is not
-    # read as tied.
+    # read as tied. The third keeps the rule to shapes the auction does not
+    # have to pad far: a rectangular problem is solved over dummy rows that
+    # carry no ties to settle.
     test      = function(n, m, probe) {
-      isTRUE(probe$n_distinct <= 32) && isTRUE(probe$n_distinct <= max(n, m) / 2)
+      isTRUE(probe$n_distinct <= 32) &&
+        isTRUE(probe$n_distinct <= max(n, m) / 2) &&
+        max(n, m) <= 1.25 * min(n, m)
     }
   ),
   list(

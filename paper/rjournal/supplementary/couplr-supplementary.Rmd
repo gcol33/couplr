@@ -25,6 +25,9 @@ regime_runs    <- d("regime-runs.csv")
 regime_cells   <- d("regime-cells.csv")
 regime_results <- d("regime-results.csv")
 regime_verdict <- d("regime-verdict.csv")
+dval_files     <- c(`1` = "dispatch-validation", `2` = "dispatch-validation-2")
+dval_results   <- lapply(dval_files, function(f) d(paste0(f, "-results.csv")))
+dval_verdict   <- lapply(dval_files, function(f) d(paste0(f, "-verdict.csv")))
 igrid_runs     <- d("implicit-grid-runs.csv")
 igrid          <- d("implicit-grid-results.csv")
 memory         <- d("memory-results.csv")
@@ -92,6 +95,7 @@ if (length(env)) {
 | Section | Script | Files |
 |---|---|---|
 | Solver selection across regimes | `scripts/bench_regimes.R` | `regime-runs.csv`, `regime-cells.csv`, `regime-results.csv`, `regime-verdict.csv` |
+| The few-costs rule on independent grids | `scripts/bench_dispatch_validation.R` | `dispatch-validation-runs.csv`, `dispatch-validation-results.csv`, `dispatch-validation-verdict.csv`, and the same three for grid 2 as `dispatch-validation-2-*.csv` |
 | The edge-generation loop | `scripts/bench_implicit_grid.R` | `implicit-grid-runs.csv`, `implicit-grid-results.csv` |
 | Peak memory | `scripts/bench_memory.R` | `memory-results.csv` |
 | Representation against solver | `scripts/bench_implicit.R` | `implicit-results.csv` |
@@ -797,6 +801,70 @@ if (n_off == 0) {
   cat(sprintf(" The worst gap is %s of the objective, small against the numbers involved and still a matching a cheaper one exists for.\n\n",
               sprintf("%.3g", max(off$rel_gap, na.rm = TRUE))))
 }
+```
+
+## A rule on few distinct costs, on a grid it was not chosen on
+
+The regime grid puts the default furthest from the best solver where the finite
+costs take few distinct values. A rule chosen by reading those cells and scored
+on the same cells would be scored on the measurements that chose it, so a rule,
+`few_costs`, was fixed before it was scored, and it is scored on a grid
+generated independently of the regime grid. Each instance draws a given number
+of distinct integer levels at random spacing between 1 and 100,000, in uneven
+shares, at level counts where the rule fires and where it does not, on shapes
+and admissibility patterns the regime grid does not use and from seeds keyed
+apart from its own. The decision was stated with the rule: it is kept when,
+over the cells it fires on, the median time of `auction_scaled` over the median
+time of `jv` has a median below 1 and no cell above 1.5, every other cell still
+dispatches to `jv`, and every solve certifies optimal.
+
+Two versions were stated, each scored on its own grid. The first sends a
+matrix whose finite entries take at most 32 distinct values, and at most half
+as many as its longer side has units, to `auction_scaled`. The second adds that
+the problem has at most 1.25 columns per row, and was fixed after the first
+grid had run. Its grid shares no shape, admissibility pattern, level count or
+seed key with the first grid, so the cells that prompted the bound do not score
+it.
+
+```{r dispatch-validation-verdict, results="asis"}
+for (g in names(dval_verdict)) {
+  v <- dval_verdict[[g]][1, ]
+  cat(sprintf(paste0("Grid %s scored the rule \"%s\" at commit `%s`. It fired on %d cells ",
+                     "and not on %d. Over the cells it fired on, `auction_scaled` took a ",
+                     "median %.2fx of the time of `jv`, and at worst %.2fx. %s %s ",
+                     "This version is %s.\n\n"),
+              g, v$condition, v$commit, v$fire_cells, v$control_cells, v$median_ratio,
+              v$worst_ratio,
+              if (isTRUE(v$controls_dispatch_jv)) "Every cell it did not fire on dispatched to `jv`."
+              else "Some cell it did not fire on dispatched to a solver other than `jv`.",
+              if (isTRUE(v$all_certified)) "Every solve certified optimal."
+              else "Not every solve certified optimal.",
+              if (isTRUE(v$adopted)) "kept" else "not kept"))
+}
+```
+
+```{r dispatch-validation-cells}
+keys <- c("levels", "pattern", "n_rows", "n_cols")
+by_shape <- do.call(rbind, lapply(names(dval_results), function(g) {
+  r <- dval_results[[g]]
+  cmp <- merge(r[r$method == "auction_scaled", c(keys, "auto_rule", "median_s")],
+               r[r$method == "jv", c(keys, "median_s")],
+               by = keys, suffixes = c(".as", ".jv"))
+  fire <- cmp[cmp$auto_rule == "few_costs", ]
+  fire$ratio <- fire$median_s.as / fire$median_s.jv
+  fire$shape <- sprintf("%d x %d", fire$n_rows, fire$n_cols)
+  do.call(rbind, lapply(split(fire, fire$shape), function(s) data.frame(
+    Grid = g,
+    Shape = s$shape[1],
+    Cells = nrow(s),
+    Slower = sum(s$ratio > 1),
+    `Median ratio` = sprintf("%.2fx", stats::median(s$ratio)),
+    `Worst ratio` = sprintf("%.2fx", max(s$ratio)),
+    check.names = FALSE)))
+}))
+kb(by_shape,
+   caption = "The few-costs rule on each validation grid, by shape, over the cells where it fired. Ratio is the median time of auction\\_scaled over the median time of jv in a cell, both timed as named solvers; Slower counts the cells above 1.",
+   align = "llrrrr")
 ```
 
 \FloatBarrier

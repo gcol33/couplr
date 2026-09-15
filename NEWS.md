@@ -233,6 +233,21 @@ one asked, so the version that reaches CRAN is this one.
   finds. No pruning decision moves on the article's instances: the
   edge-generation counts are byte-identical at every size measured.
 
+* **Every number in the ball tree's allowance is now an upper bound in double
+  arithmetic.** Three pieces were computed as estimates. The factorization
+  residual `E = L L' - A` was read off the rounded product, which reports zero
+  whenever `L L'` reproduces `A` in working precision while the stored factor's
+  exact residual is not zero; each entry now carries the rounding of its inner
+  product. `||L^-1||_F` was read off a computed inverse whose own error was
+  unbounded; it is now bounded through the residual `R = I - L X` as
+  `||X||_F / (1 - ||R||_F)`, and a factor whose inverse fails that test takes
+  no tree. And the sums combining the allowance with the centre distance and
+  radius were rounded to nearest with nothing charged for it; both parts of
+  the allowance now carry that rounding. The tests compare the complete violating-edge set
+  against the grid scan at extreme scales, place columns on the doubles either
+  side of a caliper edge, and place reduced costs one dual step either side of
+  `-tol` (#46).
+
 * **`match_couples()` on a precomputed distance object honours the design it
   was given.** The branch validated `replace` and `ratio` and then forwarded
   neither, along with `certify`, so a call naming a ratio or replacement was

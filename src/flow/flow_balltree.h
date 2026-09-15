@@ -309,66 +309,101 @@ namespace detail {
 //
 // The Mahalanobis part is the factorization residual. The tree measures
 // ||L' d||^2 where the source measures d' A d, and the difference is d' E d
-// with E = L L' - A. Over every direction that ratio is bounded by
-// ||E||_2 / lambda_min(A), which is at most ||E||_F * ||L^-1||_F^2 because
-// A^-1 = L^-T L^-1. Taking that ratio on the squared quantity and applying it
-// to the distance is conservative, since a relative error r on a square is a
-// relative error below r on its root for r below one.
+// with E = L L' - A, L the factor as stored. Over every direction that ratio is
+// bounded by ||E||_2 / lambda_min(A), which is at most ||E||_F * ||L^-1||_F^2
+// because A^-1 = L^-T L^-1. Taking that ratio on the squared quantity and
+// applying it to the distance is conservative, since a relative error r on a
+// square is a relative error below r on its root for r below one.
+//
+// Both factors are themselves computed, and each is bounded from above rather
+// than estimated. An entry of E is formed by an inner product and a
+// symmetrization, whose rounding is added to the entry's computed magnitude.
+// ||L^-1||_F is read off X, the computed inverse, through the residual
+// R = I - L X: L^-1 = X (I - R)^-1, so ||L^-1||_F <= ||X||_F / (1 - ||R||_F)
+// whenever ||R||_F < 1. A factor whose inverse cannot be verified that way
+// gets an infinite allowance, which is no tree.
 inline double bound_allowance(const LazyCostMatrix& src,
                               const std::vector<double>& factor,
                               int64_t n_vars) {
+    constexpr double kInf = std::numeric_limits<double>::infinity();
     double rel = gamma_of(n_vars + 3);
     if (src.metric() != DistanceMetric::Mahalanobis || factor.empty()) {
         return rel;
     }
+    const auto at = [&factor, n_vars](int64_t row, int64_t col) {
+        return factor[static_cast<std::size_t>(row * n_vars + col)];
+    };
 
     const std::vector<double>& a = src.inv_cov();
+    const double g_dot = gamma_of(n_vars + 1);
+    const double g_sym = gamma_of(2);
     double num = 0.0;
     for (int64_t i = 0; i < n_vars; ++i) {
         for (int64_t j = 0; j < n_vars; ++j) {
             // factor holds L' upper triangular, so (L L')_ij is the inner
             // product of columns i and j of L', over the rows both reach.
             double lij = 0.0;
+            double lij_abs = 0.0;
             const int64_t stop = i < j ? i : j;
             for (int64_t k = 0; k <= stop; ++k) {
-                lij += factor[static_cast<std::size_t>(k * n_vars + i)] *
-                       factor[static_cast<std::size_t>(k * n_vars + j)];
+                lij += at(k, i) * at(k, j);
+                lij_abs += std::fabs(at(k, i)) * std::fabs(at(k, j));
             }
             const double aij = 0.5 * (a[static_cast<std::size_t>(i * n_vars + j)] +
                                       a[static_cast<std::size_t>(j * n_vars + i)]);
-            const double d = lij - aij;
-            num += d * d;
+            double d = next_up(std::fabs(lij - aij));
+            d = next_up(d + next_up(g_dot * next_up(lij_abs)));
+            d = next_up(d + next_up(g_sym * std::fabs(aij)));
+            num = next_up(num + next_up(d * d));
         }
     }
 
-    // ||A^-1||_2 is at most ||L^-1||_F^2, from A^-1 = L^-T L^-1. L is the lower
-    // factor, held transposed in `factor`, and inverting it is a forward
-    // substitution over the covariate count rather than over the sample.
+    // X = L^-1 by forward substitution. L is the lower factor, held transposed
+    // in `factor`, so L_ik = at(k, i).
     std::vector<double> inv(static_cast<std::size_t>(n_vars * n_vars), 0.0);
     for (int64_t j = 0; j < n_vars; ++j) {
         for (int64_t i = j; i < n_vars; ++i) {
-            const double dii = factor[static_cast<std::size_t>(i * n_vars + i)];
-            if (!(std::fabs(dii) > 0.0)) {
-                return std::numeric_limits<double>::infinity();
-            }
+            const double dii = at(i, i);
+            if (!(std::fabs(dii) > 0.0)) return kInf;
             if (i == j) {
                 inv[static_cast<std::size_t>(i * n_vars + j)] = 1.0 / dii;
                 continue;
             }
             double s = 0.0;
             for (int64_t k = j; k < i; ++k) {
-                s += factor[static_cast<std::size_t>(k * n_vars + i)] *
-                     inv[static_cast<std::size_t>(k * n_vars + j)];
+                s += at(k, i) * inv[static_cast<std::size_t>(k * n_vars + j)];
             }
             inv[static_cast<std::size_t>(i * n_vars + j)] = -s / dii;
         }
     }
-    double inv_sq = 0.0;
-    for (std::size_t t = 0; t < inv.size(); ++t) inv_sq += inv[t] * inv[t];
 
-    const double resid = std::sqrt(num) * inv_sq;
-    if (!std::isfinite(resid)) return std::numeric_limits<double>::infinity();
-    return rel + resid;
+    double r_sq = 0.0;
+    double x_sq = 0.0;
+    for (int64_t i = 0; i < n_vars; ++i) {
+        for (int64_t j = 0; j < n_vars; ++j) {
+            const double xij = inv[static_cast<std::size_t>(i * n_vars + j)];
+            x_sq = next_up(x_sq + next_up(xij * xij));
+            double lx = 0.0;
+            double lx_abs = 0.0;
+            for (int64_t k = j; k <= i; ++k) {
+                const double term = at(k, i) * inv[static_cast<std::size_t>(k * n_vars + j)];
+                lx += term;
+                lx_abs += std::fabs(term);
+            }
+            const double rij = (i == j ? 1.0 : 0.0) - lx;
+            double e = next_up(std::fabs(rij));
+            e = next_up(e + next_up(gamma_of(n_vars + 2) * next_up(lx_abs + 1.0)));
+            r_sq = next_up(r_sq + next_up(e * e));
+        }
+    }
+    const double r_norm = next_up(std::sqrt(r_sq));
+    if (!(r_norm < 1.0)) return kInf;
+    const double one_less = next_down(1.0 - r_norm);
+    const double inv_sq = next_up(next_up(x_sq / one_less) / one_less);
+
+    const double resid = next_up(next_up(std::sqrt(num)) * inv_sq);
+    if (!std::isfinite(resid)) return kInf;
+    return next_up(rel + resid);
 }
 
 }  // namespace detail
@@ -412,8 +447,20 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
     tree.n_vars = n_vars;
     tree.n_units = static_cast<int32_t>(src.ncol);
     tree.leaf_size = leaf_size > 0 ? leaf_size : 1;
-    tree.bound_rel = detail::bound_allowance(src, tree.factor, n_vars);
-    tree.bound_abs_coef = detail::gamma_of(n_vars + 2);
+    // Both parts also carry the rounding of the sums node_ball_bounds() forms
+    // them into, so a node visit needs no directed rounding of its own. Those
+    // sums take at most eight rounded operations over the centre distance, the
+    // radius and the absolute slack, so their error is at most gamma_8 times
+    // the sum of those magnitudes, and gamma_8 is added to the relative part
+    // and multiplied into the absolute one. The coefficient on g(x) is also
+    // widened by g's own rounding, a sum of products of absolute values over
+    // the factor's rows, squared and summed again under one square root.
+    const double g_combine = detail::gamma_of(8);
+    tree.bound_rel = detail::next_up(
+        detail::bound_allowance(src, tree.factor, n_vars) + g_combine);
+    tree.bound_abs_coef = detail::next_up(
+        detail::gamma_of(n_vars + 2) * (1.0 + detail::gamma_of(3 * n_vars + 4)) *
+        (1.0 + g_combine));
 
     // The midpoint of the controls' own bounding box, which is the origin that
     // makes the largest |x - origin| over them as small as it can be.
@@ -546,6 +593,8 @@ inline BallBounds node_ball_bounds(const BallTree& tree, const double* q_whitene
     // residual; the absolute part covers the whitening of the query and of the
     // controls the node's geometry was built from, whose rounding does not
     // shrink as the two points approach each other.
+    // The rounding of the sums below is already in both allowances; see
+    // build_ball_tree().
     const double rel = tree.bound_rel;
     const double abs_slack = tree.bound_abs_coef * (q_g + 2.0 * tree.g_max);
     const double dc_lo = dc - rel * dc;

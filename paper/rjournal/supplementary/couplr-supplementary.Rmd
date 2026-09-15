@@ -226,7 +226,9 @@ Every bound is lowered by an allowance before it is compared, so a subtree is
 discarded only where it clears the threshold by more than the bound can be
 wrong. The allowance has three parts, and each covers a different arithmetic:
 a relative part and an absolute one for the tree's own, and a third for the
-cost source's, which is what a prune is finally read against.
+cost source's, which is what a prune is finally read against. The relative and
+absolute parts also carry the rounding of the sums that apply them to the
+centre distance and radius, at most $\gamma_8$ of those magnitudes.
 
 The relative part covers the rounding of the centre distance and the radius,
 each a sum of squares and a square root, and for Mahalanobis the residual
@@ -236,6 +238,21 @@ conditioning of $A$ governs: from $A^{-1} = L^{-\top} L^{-1}$ the ratio is at
 most $\|E\|_F \|L^{-1}\|_F^2$, and that is the form the allowance carries. A
 residual measured against the size of $A$ alone would understate it by exactly
 the conditioning, and understate it most where the geometry is hardest.
+
+Both factors are computed, so each is bounded from above rather than estimated.
+An entry of $E$ is formed as $\mathrm{fl}(LL^\top)_{ij} - A_{ij}$, and the
+rounding of that inner product, at most
+$\gamma_{n+1} \sum_k |L_{ik}|\,|L_{jk}|$, is added to the entry's magnitude:
+$E$ is the residual of the stored factor in exact arithmetic, which the working
+precision can report as zero when it is not. $\|L^{-1}\|_F$ is read off the
+computed inverse $X$ through the residual $R = I - LX$. Since
+$L^{-1} = X(I - R)^{-1}$,
+$$
+\|L^{-1}\|_F \;\le\; \frac{\|X\|_F}{1 - \|R\|_F}
+\qquad \text{whenever } \|R\|_F < 1,
+$$
+with $\|R\|_F$ itself bounded above over the rounding of $LX$. A factor whose
+computed inverse fails that test takes no tree.
 
 The absolute part covers the whitened coordinates themselves. A tree forms them
 once per point and differences them afterwards, where the distance the cost
@@ -279,9 +296,9 @@ whole difficulty. Where $A$ carries off-diagonal entries of mixed sign the row
 sums cancel, and the ratio $|d|^\top |A| |d| \,/\, d^\top A d$ grows without
 bound as $d$ runs along a direction $A$ is small in. No relative allowance on
 the distance can hold an error of that shape. The residual term above does not
-reach it either: $E$ is exactly zero whenever $LL^\top$ reproduces $A$ in the
-working precision, which is the ordinary case, so the part of the allowance
-that appears to scale with conditioning usually contributes nothing at all.
+reach it either: it scales with the rounding of the factorization, which is a
+few units of roundoff relative to $|L||L|^\top$, and not with the cancellation
+in the source's row sums.
 
 A node is bounded by its box. For a column $x$ the node holds and a row $q$ the
 displacement is $d = q - x$, so componentwise

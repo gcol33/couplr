@@ -323,13 +323,13 @@ TEST_CASE("Tree pricing - the same answer as the grid scan") {
     for (const Case& c : cases) run_case(c);
 }
 
-TEST_CASE("Tree pricing - the grid scan is matched at extreme scales") {
-    // The bound is arithmetic over coordinates, so the cases that can break it
-    // are the ones where the arithmetic is worst: coordinates whose exponent
-    // sits far from one, differences that survive only in the trailing bits of
-    // a large translation, and a covariance whose Cholesky factor is barely
-    // defined. A prune that fires where the grid scan finds a violator shows up
-    // here as a disagreement, because both pricers see the same source.
+namespace {
+
+// The bound is arithmetic over coordinates, so the cases that can break it are
+// the ones where the arithmetic is worst: coordinates whose exponent sits far
+// from one, differences that survive only in the trailing bits of a large
+// translation, and a covariance whose Cholesky factor is barely defined.
+std::vector<Case> hostile_cases() {
     std::vector<Case> cases;
 
     for (int e = -150; e <= 150; e += 50) {
@@ -382,28 +382,161 @@ TEST_CASE("Tree pricing - the grid scan is matched at extreme scales") {
         cases.push_back(ill);
     }
 
-    for (const Case& c : cases) {
-        std::mt19937 rng(c.seed);
-        const lap::LazyCostMatrix src = make_source(c, rng);
-        lap::BallTree tree = lap::build_ball_tree(src, c.leaf_size);
-        // An ill-conditioned covariance may leave no Cholesky factor at all,
-        // which is the scan rather than a failure.
-        if (tree.empty()) continue;
+    return cases;
+}
 
-        std::vector<double> u, v;
-        make_duals(src, c, rng, u, v);
+void run_hostile(const Case& c) {
+    std::mt19937 rng(c.seed);
+    const lap::LazyCostMatrix src = make_source(c, rng);
+    lap::BallTree tree = lap::build_ball_tree(src, c.leaf_size);
+    // An ill-conditioned covariance may leave no Cholesky factor at all,
+    // which is the scan rather than a failure.
+    if (tree.empty()) return;
 
-        const std::vector<lap::CandidateSet::Pair> pairs = candidate_pairs(c, rng);
-        lap::CandidateSet cand_block = make_candidates(c, pairs);
-        lap::CandidateSet cand_tree = make_candidates(c, pairs);
+    std::vector<double> u, v;
+    make_duals(src, c, rng, u, v);
 
-        const lap::BlockPricing block =
-            lap::price_block(src, u, v, cand_block, c.keep_per_row, kTol);
-        const lap::BlockPricing from_tree =
-            lap::price_tree(src, tree, u, v, cand_tree, c.keep_per_row, kTol);
+    const std::vector<lap::CandidateSet::Pair> pairs = candidate_pairs(c, rng);
+    lap::CandidateSet cand_block = make_candidates(c, pairs);
+    lap::CandidateSet cand_tree = make_candidates(c, pairs);
 
-        compare(block, from_tree, c.label);
+    const lap::BlockPricing block =
+        lap::price_block(src, u, v, cand_block, c.keep_per_row, kTol);
+    const lap::BlockPricing from_tree =
+        lap::price_tree(src, tree, u, v, cand_tree, c.keep_per_row, kTol);
+
+    compare(block, from_tree, c.label);
+}
+
+}  // namespace
+
+TEST_CASE("Tree pricing - the grid scan is matched at extreme scales") {
+    // A prune that fires where the grid scan finds a violator shows up here as
+    // a disagreement, because both pricers see the same source.
+    for (const Case& c : hostile_cases()) run_hostile(c);
+}
+
+TEST_CASE("Tree pricing - every violator survives at extreme scales") {
+    // Keeping more pairs per row than there are columns makes the kept set the
+    // complete violating-edge set, so the comparison is over every pair the
+    // grid scan finds below -tol rather than over the cheapest few.
+    for (Case c : hostile_cases()) {
+        c.keep_per_row = static_cast<int>(c.ncol);
+        c.dual_scale = 2.0;
+        c.label += ", every violator kept";
+        run_hostile(c);
     }
+}
+
+TEST_CASE("Tree pricing - a caliper edge at adjacent representable doubles") {
+    // One row, and columns placed on the doubles around the ends of its
+    // caliper window, one per leaf so a leaf's box is the column itself. The
+    // source admits a column when the rounded |x - y| is at most the threshold,
+    // and the tree rules a leaf out on a window widened by one step, so a
+    // column on either side of an edge has to be priced the same way by both.
+    constexpr int64_t n_vars = 2;
+    constexpr double x0 = 0.3;
+    constexpr double t = 0.7;
+    std::mt19937 rng(71);
+    std::uniform_real_distribution<double> unif(-1.0, 1.0);
+
+    std::vector<double> right;
+    for (double edge : {x0 + t, x0 - t}) {
+        double y = edge;
+        for (int s = 0; s < 6; ++s) y = lap::detail::next_down(y);
+        for (int s = 0; s < 13; ++s) {
+            right.push_back(y);
+            right.push_back(unif(rng));
+            y = lap::detail::next_up(y);
+        }
+    }
+    for (int s = 0; s < 60; ++s) {
+        right.push_back(x0 + 3.0 * unif(rng));
+        right.push_back(unif(rng));
+    }
+    const int64_t ncol = static_cast<int64_t>(right.size()) / n_vars;
+
+    const lap::LazyCostMatrix src(std::vector<double>{x0, 0.0}, std::move(right), n_vars,
+                                  lap::DistanceMetric::Euclidean, {}, kInf,
+                                  {lap::CaliperSpec{0, t}}, false);
+    lap::BallTree tree = lap::build_ball_tree(src, 1);
+    REQUIRE_FALSE(tree.empty());
+
+    // Every admissible pair a violator, so admissibility alone decides the set.
+    const std::vector<double> u(1, 10.0);
+    const std::vector<double> v(static_cast<std::size_t>(ncol), 0.0);
+    lap::CandidateSet cand_block(1, ncol);
+    lap::CandidateSet cand_tree(1, ncol);
+    const lap::BlockPricing block =
+        lap::price_block(src, u, v, cand_block, static_cast<int>(ncol), kTol);
+    const lap::BlockPricing from_tree =
+        lap::price_tree(src, tree, u, v, cand_tree, static_cast<int>(ncol), kTol);
+
+    // Both edges have to cut the placed columns, or the case tests nothing.
+    for (int64_t first : {int64_t{0}, int64_t{13}}) {
+        int64_t admitted = 0;
+        for (int64_t j = first; j < first + 13; ++j) {
+            double c = 0.0;
+            if (src.admissible(0, j, c)) ++admitted;
+        }
+        INFO("edge starting at column " << first);
+        REQUIRE(admitted > 0);
+        REQUIRE(admitted < 13);
+    }
+    compare(block, from_tree, "caliper edges");
+}
+
+TEST_CASE("Tree pricing - reduced costs on the doubles around -tol") {
+    // Each row holds columns whose reduced cost is exactly -tol and the values
+    // one step of the column dual either side of it: only the one below is a
+    // violator. The tolerance is a power of two, so -tol is a reduced cost the
+    // subtraction can land on exactly. Every other column is priced well above
+    // zero, so the subtrees holding the placed columns are the ones whose
+    // bounds sit at the threshold.
+    constexpr int64_t nrow = 5;
+    constexpr int64_t n_vars = 2;
+    constexpr int64_t ncol = 200;
+    std::mt19937 rng(72);
+    std::vector<double> left = random_coords(nrow, n_vars, rng);
+    std::vector<double> right = random_coords(ncol, n_vars, rng);
+    const lap::LazyCostMatrix src(std::move(left), std::move(right), n_vars,
+                                  lap::DistanceMetric::Euclidean, {}, kInf, {}, false);
+    lap::BallTree tree = lap::build_ball_tree(src, 4);
+    REQUIRE_FALSE(tree.empty());
+
+    const double tol = std::ldexp(1.0, -30);
+    const std::vector<double> u(static_cast<std::size_t>(nrow), 1.0);
+    std::vector<double> v(static_cast<std::size_t>(ncol), -5.0);
+    for (int64_t i = 0; i < nrow; ++i) {
+        const double ui = u[static_cast<std::size_t>(i)];
+        for (int k = 0; k < 9; ++k) {
+            const int64_t j = 7 + i * 37 + k * 3;
+            double c = 0.0;
+            REQUIRE(src.admissible(i, j, c));
+            double vj = c - ui + tol;
+            for (int step = 0; step < 64 && c - ui - vj != -tol; ++step) {
+                vj = (c - ui - vj) < -tol ? lap::detail::next_down(vj)
+                                          : lap::detail::next_up(vj);
+            }
+            REQUIRE(c - ui - vj == -tol);
+            if (k % 3 == 0) vj = lap::detail::next_up(vj);
+            if (k % 3 == 2) vj = lap::detail::next_down(vj);
+            const double cbar = c - ui - vj;
+            if (k % 3 == 0) REQUIRE(cbar < -tol);
+            if (k % 3 == 2) REQUIRE(cbar > -tol);
+            v[static_cast<std::size_t>(j)] = vj;
+        }
+    }
+
+    lap::CandidateSet cand_block(nrow, ncol);
+    lap::CandidateSet cand_tree(nrow, ncol);
+    const lap::BlockPricing block =
+        lap::price_block(src, u, v, cand_block, static_cast<int>(ncol), tol);
+    const lap::BlockPricing from_tree =
+        lap::price_tree(src, tree, u, v, cand_tree, static_cast<int>(ncol), tol);
+
+    REQUIRE(block.n_violators >= nrow * 3);
+    compare(block, from_tree, "reduced costs around -tol");
 }
 
 TEST_CASE("Tree pricing - a tie at the keep boundary is settled the same way") {

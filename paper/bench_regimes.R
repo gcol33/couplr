@@ -91,6 +91,8 @@ panel <- list(
   list(method = "lapmod",          applies = function(p) TRUE),
   list(method = "ramshaw_tarjan",  applies = function(p) TRUE),
   list(method = "hungarian",       applies = function(p) TRUE),
+  list(method = "auction",         applies = function(p) TRUE),
+  list(method = "auction_gs",      applies = function(p) TRUE),
   list(method = "auction_scaled",  applies = function(p) TRUE),
   list(method = "csa",             applies = function(p) TRUE),
   list(method = "csflow",          applies = function(p) TRUE),
@@ -478,7 +480,8 @@ if (!nrow(certified)) {
   cat(sprintf("%d of %d solves certify optimal\n",
               sum(certified$certified_optimal), nrow(certified)))
   if (nrow(bad)) {
-    bad$rel_gap <- bad$duality_gap / pmax(1, abs(bad$objective))
+    bad$rel_gap <- ifelse(bad$objective != 0,
+                          bad$duality_gap / abs(bad$objective), NA_real_)
     print(utils::head(bad[order(-bad$rel_gap),
                           c("tier", "regime", "pattern", "n_rows", "n_cols",
                             "instance", "method", "objective", "duality_gap",

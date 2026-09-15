@@ -2,11 +2,14 @@
 // Pure C++ Auction LAP solver - NO Rcpp dependencies
 //
 // All public variants (basic, Gauss-Seidel, scaled) run one shared
-// epsilon-scaling forward-auction core. Epsilon-scaling is what makes the
-// auction exact rather than merely epsilon-optimal: a single fixed epsilon
-// leaves a duality-gap slack of up to n*eps, so a coarse epsilon returns a
-// suboptimal assignment on closely-spaced costs. Scaling epsilon down to a tiny
-// final value drives that slack below the smallest achievable cost gap.
+// epsilon-scaling forward-auction core. The bidding ends on an assignment that
+// is epsilon-optimal under the final prices, within n*eps of the optimum, and
+// on real-valued costs no fixed final epsilon closes that gap: two assignments
+// can differ by less than any n*eps. The core therefore hands its assignment
+// and prices to repair_eps_optimal() (core/lap_eps_repair.h), which corrects
+// the prices into exact column potentials and cancels any cheaper reassignment
+// it finds on the way. Epsilon-scaling supplies prices close enough that the
+// correction is short; the repair supplies the optimality.
 //
 // Rectangular problems (n < m) are padded to a square graph with dummy rows.
 // The padding matters for correctness, not just balance: with warm-started
@@ -30,6 +33,7 @@
 #include "../core/lap_error.h"
 #include "../core/lap_utils.h"
 #include "../core/lap_cost_view.h"
+#include "../core/lap_eps_repair.h"
 #include <vector>
 #include <limits>
 #include <algorithm>
@@ -37,8 +41,8 @@
 
 namespace lap {
 
-// Terminal epsilon small enough that n*eps stays below the smallest achievable
-// cost gap on realistic inputs, lifting the auction from eps-optimal to exact.
+// Terminal epsilon of the bidding. It sets how far the final prices can be from
+// exact potentials, and so how much correcting the repair has left to do.
 static inline double default_eps_final(int n) {
     return std::min(1e-6, 1.0 / (static_cast<double>(n) * static_cast<double>(n)));
 }
@@ -163,6 +167,8 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
 
         if (epsilon <= eps_final) break;
     }
+
+    detail::repair_eps_optimal(work,row_ptr, cols, i_of_j, a_of_i, price);
 
     return AuctionCoreResult<CostSourceT>{std::move(a_of_i), iter};
 }

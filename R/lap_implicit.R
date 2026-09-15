@@ -194,21 +194,6 @@
   out
 }
 
-# Hall's witness in one sentence, for a caller who asked for a matching rather
-# than for a solve: which side could not be matched, and how few partners it has
-# between all of its units.
-.witness_reason <- function(witness) {
-  if (is.null(witness) || is.null(witness$rows)) {
-    return("no complete matching exists over the admissible pairs.")
-  }
-  side <- if (isTRUE(witness$transposed)) c("right", "left") else c("left", "right")
-  plural <- function(n) if (n == 1L) "" else "s"
-  sprintf("%d %s unit%s have %d admissible %s unit%s between them%s",
-          length(witness$rows), side[1], plural(length(witness$rows)),
-          length(witness$cols), side[2], plural(length(witness$cols)),
-          if (isTRUE(witness$verified)) ", checked against every pair." else ".")
-}
-
 # The mode a lazy specification is solved in: what the caller asked assignment()
 # for, and otherwise what the specification was built for. "auto" and "dense"
 # both mean "however this specification was built" -- a materialized matrix is

@@ -12,6 +12,10 @@
   arc_bounds = NULL
 )
 }
+\arguments{
+\item{cost}{A matrix of distances, or a \code{balance_pair_pool} naming the pairs
+to carry and the distance range over every admissible pair.}
+}
 \value{
 A list with \code{problem}, a \code{couplr_flow_problem}, and \code{index}, holding
 the arc ranges and the units and cells behind each arc.

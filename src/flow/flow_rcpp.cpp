@@ -654,14 +654,14 @@ Rcpp::List full_match_shape_to_r(const lap::CompiledFullMatch& design) {
         Rcpp::Named("flow_required") = count_to_r(design.design.flow_required));
 }
 
-Rcpp::List full_match_layout_to_r(const lap::CompiledFullMatch& design) {
+Rcpp::List design_layout_to_r(const lap::CompiledDesign& design) {
     return Rcpp::List::create(
         Rcpp::Named("source_node") = static_cast<int>(lap::FLOW_SOURCE) + 1,
         Rcpp::Named("sink_node") = static_cast<int>(lap::FLOW_SINK) + 1,
-        Rcpp::Named("row_base") = static_cast<int>(design.design.row_base) + 1,
-        Rcpp::Named("n_rows") = static_cast<int>(design.design.n_rows),
-        Rcpp::Named("col_base") = static_cast<int>(design.design.col_base) + 1,
-        Rcpp::Named("n_cols") = static_cast<int>(design.design.n_cols));
+        Rcpp::Named("row_base") = static_cast<int>(design.row_base) + 1,
+        Rcpp::Named("n_rows") = static_cast<int>(design.n_rows),
+        Rcpp::Named("col_base") = static_cast<int>(design.col_base) + 1,
+        Rcpp::Named("n_cols") = static_cast<int>(design.n_cols));
 }
 
 // The pairs block 0 became arcs for, 1-based, with the index of the first one.
@@ -737,24 +737,27 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
             Rcpp::Named("upper") = upper,
             Rcpp::Named("cost") = arc_cost),
         Rcpp::Named("block") = block_to_r(prob, prob.block_arcs.at(0).first_arc),
-        Rcpp::Named("layout") = full_match_layout_to_r(design));
+        Rcpp::Named("layout") = design_layout_to_r(design.design));
 }
 
-// A full matching over a lazy cost source, solved by generating the pairs its
-// flow turns out to need. What comes back has the dense binding's shape where
-// the two describe the same thing -- the block's pairs, the flow on them and the
-// layout -- so R reads the groups one way. The difference is that the block
-// holds the pairs the search generated rather than every admissible pair, so
-// its flow is returned beside it, and the problem's own arcs stay in C++.
-Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
-                                         Rcpp::NumericMatrix right_mat,
-                                         std::string distance,
-                                         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                                         double max_distance, Rcpp::List calipers,
-                                         Rcpp::CharacterVector vars,
-                                         double min_controls, double max_controls,
-                                         double keep_per_row, double width, double tol,
-                                         double max_rounds, bool certify) {
+// A design over a lazy cost source, solved by generating the pairs its flow
+// turns out to need. `design` names the compiler: "full_match" takes
+// min_controls and max_controls as its two parameters, "one_to_one" takes
+// none, and is what recovers the largest cheapest matching when no complete one
+// exists. What comes back has the dense binding's shape where the two describe
+// the same thing -- the block's pairs, the flow on them and the layout -- so R
+// reads either one way. The block holds the pairs the search generated rather
+// than every admissible pair, so its flow is returned beside it, and the
+// problem's own arcs stay in C++.
+Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
+                                     Rcpp::NumericMatrix right_mat,
+                                     std::string distance,
+                                     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                     double max_distance, Rcpp::List calipers,
+                                     Rcpp::CharacterVector vars, std::string design,
+                                     double first, double second,
+                                     double keep_per_row, double width, double tol,
+                                     double max_rounds, bool certify) {
     try {
         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
         if (inv_cov.isNotNull()) {
@@ -765,25 +768,34 @@ Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
             left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars,
             false);
         const lap::SourceOracle<lap::LazyCostMatrix> oracle(src);
-        lap::CompiledFullMatch design = lap::compile_full_matching(
-            oracle, count_from_r(min_controls, "min_controls"),
-            count_from_r(max_controls, "max_controls"),
-            std::vector<lap::CategoryConstraint>());
+        const std::vector<lap::CategoryConstraint> none;
 
-        Rcpp::List shape = full_match_shape_to_r(design);
-        if (!design.bounds_feasible) {
-            return Rcpp::List::create(
-                Rcpp::Named("bounds_feasible") = false,
-                Rcpp::Named("reason") = design.reason,
-                Rcpp::Named("shape") = shape);
+        lap::CompiledDesign compiled;
+        Rcpp::RObject shape = R_NilValue;
+        if (design == "full_match") {
+            lap::CompiledFullMatch fm = lap::compile_full_matching(
+                oracle, count_from_r(first, "min_controls"),
+                count_from_r(second, "max_controls"), none);
+            shape = full_match_shape_to_r(fm);
+            if (!fm.bounds_feasible) {
+                return Rcpp::List::create(
+                    Rcpp::Named("bounds_feasible") = false,
+                    Rcpp::Named("reason") = fm.reason,
+                    Rcpp::Named("shape") = shape);
+            }
+            compiled = std::move(fm.design);
+        } else if (design == "one_to_one") {
+            compiled = lap::compile_one_to_one(oracle, none);
+        } else {
+            Rcpp::stop("flow model: no implicit compiler for design '%s'", design.c_str());
         }
 
         lap::CandidateSet cand(src.nrow, src.ncol);
         const lap::ImplicitOptions opts =
             implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
         const lap::DesignResult res =
-            lap::solve_implicit_design(src, design.design.problem, cand, opts);
-        const lap::FlowProblem& prob = design.design.problem;
+            lap::solve_implicit_design(src, compiled.problem, cand, opts);
+        const lap::FlowProblem& prob = compiled.problem;
 
         const lap::BlockArcRange& blk = prob.block_arcs.at(0);
         Rcpp::NumericVector block_flow(static_cast<R_xlen_t>(blk.n_arcs));
@@ -807,15 +819,17 @@ Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
 
         return Rcpp::List::create(
             Rcpp::Named("bounds_feasible") = true,
-            Rcpp::Named("reason") = design.reason,
+            Rcpp::Named("reason") = "",
             Rcpp::Named("shape") = shape,
             Rcpp::Named("status") = res.status,
             Rcpp::Named("total_cost") = res.total_cost,
+            Rcpp::Named("flow_sent") = static_cast<double>(res.flow_sent),
+            Rcpp::Named("flow_required") = static_cast<double>(res.flow_required),
             Rcpp::Named("block") = block_to_r(prob, 0),
             Rcpp::Named("flow") = block_flow,
             Rcpp::Named("potential") = Rcpp::NumericVector(res.potential.begin(),
                                                            res.potential.end()),
-            Rcpp::Named("layout") = full_match_layout_to_r(design),
+            Rcpp::Named("layout") = design_layout_to_r(compiled),
             Rcpp::Named("certificate") = certificate,
             Rcpp::Named("search") = Rcpp::List::create(
                 Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),

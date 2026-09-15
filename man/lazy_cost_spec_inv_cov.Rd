@@ -12,6 +12,8 @@ p x p inverse covariance matrix, or NULL if distance != "mahalanobis".
 \description{
 Mirrors compute_distance_matrix()'s pooled within-group covariance logic
 exactly (R/matching_distance.R) -- computed once in R rather than
-reimplemented in C++, so the two code paths can't drift apart.
+reimplemented in C++, so the two code paths can't drift apart. A spec whose
+rows were reshaped carries the matrix its units defined as \code{inv_cov}, and
+that is returned as it is.
 }
 \keyword{internal}

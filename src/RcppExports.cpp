@@ -571,9 +571,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// lap_full_match_implicit
-Rcpp::List lap_full_match_implicit(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, double min_controls, double max_controls, double keep_per_row, double width, double tol, double max_rounds, bool certify);
-RcppExport SEXP _couplr_lap_full_match_implicit(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP min_controlsSEXP, SEXP max_controlsSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
+// lap_pricing_session
+SEXP lap_pricing_session(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars);
+RcppExport SEXP _couplr_lap_pricing_session(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -584,14 +584,123 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type vars(varsSEXP);
-    Rcpp::traits::input_parameter< double >::type min_controls(min_controlsSEXP);
-    Rcpp::traits::input_parameter< double >::type max_controls(max_controlsSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_session(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_pricing_seed
+Rcpp::List lap_pricing_seed(SEXP session, double width);
+RcppExport SEXP _couplr_lap_pricing_seed(SEXP sessionSEXP, SEXP widthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type session(sessionSEXP);
+    Rcpp::traits::input_parameter< double >::type width(widthSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_seed(session, width));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_pricing_price
+Rcpp::List lap_pricing_price(SEXP session, Rcpp::NumericVector u, Rcpp::NumericVector v, double keep_per_row, double tol);
+RcppExport SEXP _couplr_lap_pricing_price(SEXP sessionSEXP, SEXP uSEXP, SEXP vSEXP, SEXP keep_per_rowSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type session(sessionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type u(uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< double >::type keep_per_row(keep_per_rowSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_price(session, u, v, keep_per_row, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_pricing_cost
+Rcpp::NumericVector lap_pricing_cost(SEXP session, Rcpp::IntegerVector i, Rcpp::IntegerVector j);
+RcppExport SEXP _couplr_lap_pricing_cost(SEXP sessionSEXP, SEXP iSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type session(sessionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type i(iSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_cost(session, i, j));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_pricing_range
+Rcpp::List lap_pricing_range(SEXP session);
+RcppExport SEXP _couplr_lap_pricing_range(SEXP sessionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type session(sessionSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_range(session));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_pricing_evaluated
+double lap_pricing_evaluated(SEXP session);
+RcppExport SEXP _couplr_lap_pricing_evaluated(SEXP sessionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type session(sessionSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_pricing_evaluated(session));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_implicit_seed_width
+double lap_implicit_seed_width(double ncol);
+RcppExport SEXP _couplr_lap_implicit_seed_width(SEXP ncolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type ncol(ncolSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_implicit_seed_width(ncol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_replace_lazy
+Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, double per_row);
+RcppExport SEXP _couplr_lap_replace_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP per_rowSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type vars(varsSEXP);
+    Rcpp::traits::input_parameter< double >::type per_row(per_rowSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_replace_lazy(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, per_row));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lap_design_implicit
+Rcpp::List lap_design_implicit(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, std::string design, double first, double second, double keep_per_row, double width, double tol, double max_rounds, bool certify);
+RcppExport SEXP _couplr_lap_design_implicit(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP designSEXP, SEXP firstSEXP, SEXP secondSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type vars(varsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type design(designSEXP);
+    Rcpp::traits::input_parameter< double >::type first(firstSEXP);
+    Rcpp::traits::input_parameter< double >::type second(secondSEXP);
     Rcpp::traits::input_parameter< double >::type keep_per_row(keep_per_rowSEXP);
     Rcpp::traits::input_parameter< double >::type width(widthSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type max_rounds(max_roundsSEXP);
     Rcpp::traits::input_parameter< bool >::type certify(certifySEXP);
-    rcpp_result_gen = Rcpp::wrap(lap_full_match_implicit(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, min_controls, max_controls, keep_per_row, width, tol, max_rounds, certify));
+    rcpp_result_gen = Rcpp::wrap(lap_design_implicit(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, design, first, second, keep_per_row, width, tol, max_rounds, certify));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1008,7 +1117,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_flow_solve", (DL_FUNC) &_couplr_lap_flow_solve, 14},
     {"_couplr_lap_flow_certify", (DL_FUNC) &_couplr_lap_flow_certify, 10},
     {"_couplr_lap_flow_compile_full_match", (DL_FUNC) &_couplr_lap_flow_compile_full_match, 3},
-    {"_couplr_lap_full_match_implicit", (DL_FUNC) &_couplr_lap_full_match_implicit, 14},
+    {"_couplr_lap_pricing_session", (DL_FUNC) &_couplr_lap_pricing_session, 7},
+    {"_couplr_lap_pricing_seed", (DL_FUNC) &_couplr_lap_pricing_seed, 2},
+    {"_couplr_lap_pricing_price", (DL_FUNC) &_couplr_lap_pricing_price, 5},
+    {"_couplr_lap_pricing_cost", (DL_FUNC) &_couplr_lap_pricing_cost, 3},
+    {"_couplr_lap_pricing_range", (DL_FUNC) &_couplr_lap_pricing_range, 1},
+    {"_couplr_lap_pricing_evaluated", (DL_FUNC) &_couplr_lap_pricing_evaluated, 1},
+    {"_couplr_lap_implicit_seed_width", (DL_FUNC) &_couplr_lap_implicit_seed_width, 1},
+    {"_couplr_lap_replace_lazy", (DL_FUNC) &_couplr_lap_replace_lazy, 8},
+    {"_couplr_lap_design_implicit", (DL_FUNC) &_couplr_lap_design_implicit, 15},
     {"_couplr_lap_flow_compile_couples", (DL_FUNC) &_couplr_lap_flow_compile_couples, 4},
     {"_couplr_lap_flow_trace_assignment", (DL_FUNC) &_couplr_lap_flow_trace_assignment, 2},
     {"_couplr_lap_flow_trace_push_relabel", (DL_FUNC) &_couplr_lap_flow_trace_push_relabel, 2},

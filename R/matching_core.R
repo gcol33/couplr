@@ -123,15 +123,15 @@
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
 }
 
-# Lazy-cost-spec counterpart of .solve_with_partial_feasibility(). Row/col
-# pruning is not implemented for lazy specs (would need an O(n*m) scan --
-# exactly what lazy mode exists to avoid); instead the FULL problem is
-# solved directly, and an InfeasibleException from the solver is treated the
-# same way a fully-infeasible dense submatrix is: everyone unmatched, no
-# hard error. This is a real, coarser fallback than the dense path, which
-# prunes and then recovers the maximum-cardinality minimum-cost matching by
-# sentinel padding; both steps need the materialized matrix a lazy cost
-# source exists to avoid, so neither is available here.
+# Lazy-cost-spec counterpart of .solve_with_partial_feasibility(). The whole
+# problem is put to the solver first. When the constraints admit no complete
+# matching -- the lazy solver throws, or the implicit loop answers with Hall's
+# witness -- the answer is the one the dense path reaches by pruning and
+# sentinel padding: the largest matching the constraints admit, and the
+# cheapest among those. Here it is the one-to-one design solved by the design
+# loop over the same specification, whose shortfall is a maximum flow certified
+# by a residual cut over every admissible pair and whose cost is priced against
+# its potentials, so no pair set is built on the way to it either.
 .solve_lazy_with_partial_feasibility <- function(cost_matrix, solver_fn,
                                                  solver_params = list()) {
   mode <- lazy_cost_spec_mode(cost_matrix)
@@ -147,28 +147,14 @@
     error = function(e) e
   )
 
-  if (inherits(res, "error")) {
-    warning("memory_mode = \"", mode, "\" found no feasible full matching under ",
-            "the current constraints (", conditionMessage(res), "). Recovering ",
-            "the partial matching needs the materialized cost matrix that this ",
-            "mode exists to avoid, so all units are reported unmatched. Use ",
-            "memory_mode = \"dense\" for the maximum-cardinality minimum-cost ",
-            "partial matching, or relax max_distance/calipers.", call. = FALSE)
-    return(list(result = NULL, matched_rows = integer(0), matched_cols = integer(0)))
-  }
-
-  # The implicit path answers infeasibility with Hall's witness instead of an
-  # exception: the rows that could not be matched, the columns they can reach,
-  # and the check that no arc set over this source does better. The outcome is
-  # the same one the error branch above reports, and the reason is the witness.
-  if (identical(res$status, "infeasible")) {
-    warning("memory_mode = \"", mode, "\" found no complete matching under the ",
-            "current constraints: ", .witness_reason(res$witness),
-            " Recovering the partial matching needs the materialized cost ",
-            "matrix this mode exists to avoid, so all units are reported ",
-            "unmatched. Use memory_mode = \"dense\" for the ",
-            "maximum-cardinality minimum-cost partial matching, or relax ",
-            "max_distance/calipers.", call. = FALSE)
+  if (inherits(res, "error") || identical(res$status, "infeasible")) {
+    partial <- .lazy_partial_matching(cost_matrix)
+    # Hall's witness still says why no complete matching exists, beside the
+    # largest one that does.
+    if (!inherits(res, "error") && !is.null(res$witness)) {
+      partial$result$witness <- res$witness
+    }
+    return(partial)
   }
 
   match_vec <- as.integer(res$match)
@@ -176,6 +162,39 @@
   matched_cols <- match_vec[matched_rows]
 
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
+}
+
+# The maximum-cardinality minimum-cost matching of a specification, by the
+# design loop over its one-to-one network. The rows and columns come back in
+# the specification's own indices, which is what the design maps read.
+.lazy_partial_matching <- function(spec) {
+  knobs <- .implicit_defaults()
+  raw <- lap_design_implicit(spec$left_mat, spec$right_mat, spec$distance,
+                             lazy_cost_spec_inv_cov(spec), spec$max_distance,
+                             lazy_cost_spec_calipers(spec), spec$vars,
+                             "one_to_one", 0, 0, knobs$keep_per_row, knobs$width,
+                             knobs$tol, knobs$max_rounds, TRUE)
+  placed <- as.numeric(raw$flow) > 0
+  matched_rows <- as.integer(raw$block$row[placed])
+  matched_cols <- as.integer(raw$block$col[placed])
+  if (!length(matched_rows)) {
+    warning("No valid pairs found after applying constraints", call. = FALSE)
+  }
+
+  result <- list(
+    match = NULL,
+    status = raw$status,
+    method_used = "implicit",
+    search = list(
+      seed_width      = as.integer(raw$search$seed_width),
+      candidate_edges = as.numeric(raw$search$candidate_edges),
+      possible_edges  = as.numeric(raw$search$possible_edges),
+      edges_evaluated = as.numeric(raw$search$edges_evaluated),
+      n_rounds        = as.integer(raw$search$n_rounds),
+      rounds          = tibble::as_tibble(raw$search$rounds)
+    )
+  )
+  list(result = result, matched_rows = matched_rows, matched_cols = matched_cols)
 }
 
 # ==============================================================================
@@ -216,10 +235,23 @@
 
 # The matrix the compiled design is solved from: the caller's costs read through
 # the design's maps. A design that did not reshape its input is solved from the
-# matrix itself, which for a lazy cost spec is the only form it has.
+# matrix itself. A lazy cost spec is reshaped by reading its feature rows through
+# the same maps, which replicates k:1 rows at the cost of their covariates rather
+# than of their pairs. Its inverse covariance is taken before that, from the
+# units themselves: the pooled covariance of replicated rows is a different
+# matrix, and the distance is the one the caller's units define.
 .couples_costs <- function(cost_matrix, plan) {
   if (!isTRUE(plan$reshaped)) {
     return(cost_matrix)
+  }
+  if (is_lazy_cost_spec(cost_matrix)) {
+    spec <- cost_matrix
+    spec$inv_cov <- lazy_cost_spec_inv_cov(cost_matrix)
+    spec$left_mat <- cost_matrix$left_mat[plan$row_unit, , drop = FALSE]
+    spec$right_mat <- cost_matrix$right_mat[plan$col_unit, , drop = FALSE]
+    spec$n_left <- nrow(spec$left_mat)
+    spec$n_right <- nrow(spec$right_mat)
+    return(spec)
   }
   cost_matrix[plan$row_unit, plan$col_unit, drop = FALSE]
 }
@@ -352,23 +384,12 @@
 
   # --- Replacement matching, one row at a time ---
   if (identical(plan$route, "separable")) {
-    if (is_lazy_cost_spec(cost_matrix)) {
-      stop("replace = TRUE does not support memory_mode = \"",
-           lazy_cost_spec_mode(cost_matrix), "\" yet; use ",
-           "memory_mode = \"dense\".", call. = FALSE)
-    }
     return(.couples_replace(
       cost_matrix, left, right, left_ids, right_ids, vars, ratio, plan
     ))
   }
 
   # --- 1:1 and k:1 matching, as the assignment the design lowers to ---
-  if (isTRUE(plan$reshaped) && is_lazy_cost_spec(cost_matrix)) {
-    stop("ratio > 1 does not support memory_mode = \"",
-         lazy_cost_spec_mode(cost_matrix), "\" yet; use ",
-         "memory_mode = \"dense\".", call. = FALSE)
-  }
-
   # Drop rows/cols with no allowed edges so the LAP solver sees a feasible
   # submatrix; the dropped indices return as unmatched. Without this filter
   # the C++ solvers raise "Infeasible: row N has no allowed edges" instead
@@ -433,58 +454,52 @@
 #' The compiled design gives every column capacity for every row, so the rows
 #' never compete and the optimum of the whole network is each row's own cheapest
 #' columns. `plan$per_row` is how many of them a row takes: the requested ratio,
-#' or the column count when there are fewer columns than that.
+#' or the column count when there are fewer columns than that. A lazy cost spec
+#' is answered one row at a time in C++, through the same row search the
+#' implicit loop seeds with, so no row of costs is ever held in R.
 #'
 #' @return List with pairs tibble, unmatched list, and info list.
 #' @keywords internal
 .couples_replace <- function(cost_matrix, left, right,
                              left_ids, right_ids, vars, ratio = 1L, plan) {
-  n_left <- nrow(cost_matrix)
   k <- plan$per_row
-  all_pairs <- list()
 
-  for (i in seq_len(n_left)) {
-    row_costs <- cost_matrix[i, ]
-    ordered_cols <- order(row_costs)[seq_len(k)]
-    ordered_dists <- row_costs[ordered_cols]
-
-    valid <- .is_valid_cost(ordered_dists)
-    if (any(valid)) {
-      cols <- ordered_cols[valid]
-      dists <- ordered_dists[valid]
-
-      pair_df <- tibble::tibble(
-        left_id = rep(left_ids[i], length(cols)),
-        right_id = right_ids[cols],
-        distance = dists
-      )
-
-      # Add variable differences
-      for (v in vars) {
-        pair_df[[paste0(".", v, "_diff")]] <- left[[v]][i] - right[[v]][cols]
-      }
-
-      all_pairs[[length(all_pairs) + 1]] <- pair_df
-    }
-  }
-
-  if (length(all_pairs) > 0) {
-    pairs <- dplyr::bind_rows(all_pairs)
+  if (is_lazy_cost_spec(cost_matrix)) {
+    found <- lap_replace_lazy(cost_matrix$left_mat, cost_matrix$right_mat,
+                              cost_matrix$distance,
+                              lazy_cost_spec_inv_cov(cost_matrix),
+                              cost_matrix$max_distance,
+                              lazy_cost_spec_calipers(cost_matrix),
+                              cost_matrix$vars, k)
+    rows <- as.integer(found$rows)
+    cols <- as.integer(found$cols)
+    dists <- as.numeric(found$distance)
   } else {
-    pairs <- tibble::tibble(
-      left_id = character(0), right_id = character(0), distance = numeric(0)
-    )
+    per_row <- lapply(seq_len(nrow(cost_matrix)), function(i) {
+      row_costs <- cost_matrix[i, ]
+      ordered_cols <- order(row_costs)[seq_len(k)]
+      ordered_dists <- row_costs[ordered_cols]
+      valid <- .is_valid_cost(ordered_dists)
+      list(cols = ordered_cols[valid], dists = ordered_dists[valid])
+    })
+    counts <- vapply(per_row, function(x) length(x$cols), integer(1))
+    rows <- rep.int(seq_along(per_row), counts)
+    cols <- as.integer(unlist(lapply(per_row, `[[`, "cols")))
+    dists <- as.numeric(unlist(lapply(per_row, `[[`, "dists")))
   }
 
-  # Unmatched: left units with no valid match
-  matched_left_ids <- unique(pairs$left_id)
-  matched_right_ids <- unique(pairs$right_id)
+  pairs <- if (length(rows)) {
+    .pairs_tibble(left, right, left_ids, right_ids, rows, cols, dists, vars)
+  } else {
+    tibble::tibble(left_id = character(0), right_id = character(0),
+                   distance = numeric(0))
+  }
 
   list(
     pairs = pairs,
     unmatched = list(
-      left = setdiff(left_ids, matched_left_ids),
-      right = setdiff(right_ids, matched_right_ids)
+      left = setdiff(left_ids, unique(pairs$left_id)),
+      right = setdiff(right_ids, unique(pairs$right_id))
     ),
     info = list(
       n_matched = nrow(pairs),
@@ -969,10 +984,16 @@
 #'   fraction of free system RAM. "lazy" computes each pairwise distance from
 #'   the underlying feature data as the solver needs it, instead of
 #'   allocating the full n_left x n_right matrix; supported for `method =
-#'   "jv"`/`"auction"` with a built-in distance metric, and not yet for
-#'   `replace = TRUE`, `ratio > 1`, `method = "greedy"`, or custom distance
-#'   functions (blocking via `block_id` is the other option that reduces
-#'   memory, by solving smaller sub-problems). Where the metric carries a ball
+#'   "jv"`/`"auction"` with a built-in distance metric, including
+#'   `replace = TRUE`, where each left unit's cheapest partners are found one
+#'   row at a time, and `ratio > 1`, where the left units' covariates are
+#'   replicated rather than their rows of distances, and not yet for
+#'   `method = "greedy"` or custom distance functions (blocking via `block_id`
+#'   is the other option that reduces memory, by solving smaller
+#'   sub-problems). When the constraints admit no complete matching, the
+#'   largest matching they admit, cheapest among those, is found by the
+#'   edge-generation loop over the same specification, as the dense path finds
+#'   it by padding. Where the metric carries a ball
 #'   bound, the column set is held in a ball tree and a subtree whose bound
 #'   cannot beat the current threshold is discarded without being read:
 #'   `"mahalanobis"` always, the metrics linear in the covariates up to six of
@@ -980,7 +1001,7 @@
 #'   factor, and a higher-dimensional linear metric read the columns instead. "implicit" states the problem
 #'   over every pair and solves it over a fraction of them, generating the pairs
 #'   the answer turns out to need and proving that the ones it never generated
-#'   could not have improved it; same requirements as "lazy", and 1:1 only. On
+#'   could not have improved it; same requirements as "lazy". On
 #'   the eight-covariate problem the benchmarks use it leads "lazy" from 5,000
 #'   units upward, by 1.1x at 5,000 rising to 3.1x at 50,000, and loses below
 #'   that where the loop's fixed costs are still visible; what it buys at every

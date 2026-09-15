@@ -161,8 +161,40 @@ lap_flow_compile_full_match <- function(cost, min_controls, max_controls) {
     .Call(`_couplr_lap_flow_compile_full_match`, cost, min_controls, max_controls)
 }
 
-lap_full_match_implicit <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, min_controls, max_controls, keep_per_row = 5.0, width = 0.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
-    .Call(`_couplr_lap_full_match_implicit`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, min_controls, max_controls, keep_per_row, width, tol, max_rounds, certify)
+lap_pricing_session <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars) {
+    .Call(`_couplr_lap_pricing_session`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars)
+}
+
+lap_pricing_seed <- function(session, width) {
+    .Call(`_couplr_lap_pricing_seed`, session, width)
+}
+
+lap_pricing_price <- function(session, u, v, keep_per_row, tol) {
+    .Call(`_couplr_lap_pricing_price`, session, u, v, keep_per_row, tol)
+}
+
+lap_pricing_cost <- function(session, i, j) {
+    .Call(`_couplr_lap_pricing_cost`, session, i, j)
+}
+
+lap_pricing_range <- function(session) {
+    .Call(`_couplr_lap_pricing_range`, session)
+}
+
+lap_pricing_evaluated <- function(session) {
+    .Call(`_couplr_lap_pricing_evaluated`, session)
+}
+
+lap_implicit_seed_width <- function(ncol) {
+    .Call(`_couplr_lap_implicit_seed_width`, ncol)
+}
+
+lap_replace_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, per_row) {
+    .Call(`_couplr_lap_replace_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, per_row)
+}
+
+lap_design_implicit <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, design, first = 0.0, second = 0.0, keep_per_row = 5.0, width = 0.0, tol = 1e-9, max_rounds = 60.0, certify = TRUE) {
+    .Call(`_couplr_lap_design_implicit`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, design, first, second, keep_per_row, width, tol, max_rounds, certify)
 }
 
 lap_flow_compile_couples <- function(design, n_rows, n_cols, ratio = 1.0) {

@@ -27,7 +27,8 @@ cardinality_match(
   node_limit = 500L,
   method = "auto",
   max_iter = 100L,
-  batch_fraction = 0.1
+  batch_fraction = 0.1,
+  memory_mode = "auto"
 )
 }
 \arguments{
@@ -103,6 +104,16 @@ unopened so the reported bound still covers the whole tree.}
 
 \item{batch_fraction}{Fraction of the remaining pairs the heuristic deletes
 per iteration (default: 0.1). Reaches \code{engine = "heuristic"} only.}
+
+\item{memory_mode}{One of "auto" (default), "dense" or "implicit". "implicit"
+solves the flow and branch and bound engines over a built-in distance
+metric without building the pair set: every network solve is taken over
+the pairs generated so far, the pairs it omits are priced against its
+potentials with the multipliers folded in, and the ones pricing below zero
+are added and the solve repeated, so each solve is optimal over every pair.
+The distance range the tier weights are built on is read in one pass over
+the pairs. The result carries a \code{search} record. "auto" never selects it,
+and the heuristic engine does not take it.}
 }
 \value{
 A \code{matching_result} object. Beyond the fields every matching carries

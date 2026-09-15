@@ -85,15 +85,34 @@ Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::NumericVector lower, Rcpp::NumericVector upper,
                              Rcpp::NumericVector cost, Rcpp::NumericVector flow,
                              Rcpp::NumericVector potential, double tol);
-Rcpp::List flow_full_match_implicit_impl(Rcpp::NumericMatrix left_mat,
-                                         Rcpp::NumericMatrix right_mat,
-                                         std::string distance,
-                                         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                                         double max_distance, Rcpp::List calipers,
-                                         Rcpp::CharacterVector vars,
-                                         double min_controls, double max_controls,
-                                         double keep_per_row, double width, double tol,
-                                         double max_rounds, bool certify);
+Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
+                                     Rcpp::NumericMatrix right_mat,
+                                     std::string distance,
+                                     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                     double max_distance, Rcpp::List calipers,
+                                     Rcpp::CharacterVector vars, std::string design,
+                                     double first, double second,
+                                     double keep_per_row, double width, double tol,
+                                     double max_rounds, bool certify);
+Rcpp::List replace_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                             std::string distance,
+                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                             double max_distance, Rcpp::List calipers,
+                             Rcpp::CharacterVector vars, double per_row);
+SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                              std::string distance,
+                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                              double max_distance, Rcpp::List calipers,
+                              Rcpp::CharacterVector vars);
+Rcpp::List pricing_session_seed_impl(SEXP session, double width);
+Rcpp::List pricing_session_price_impl(SEXP session, Rcpp::NumericVector u,
+                                      Rcpp::NumericVector v, double keep_per_row,
+                                      double tol);
+Rcpp::NumericVector pricing_session_cost_impl(SEXP session, Rcpp::IntegerVector i,
+                                              Rcpp::IntegerVector j);
+Rcpp::List pricing_session_range_impl(SEXP session);
+double pricing_session_evaluated_impl(SEXP session);
+double implicit_seed_width_impl(double ncol);
 Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
                                         double min_controls, double max_controls);
 Rcpp::List flow_compile_couples_impl(std::string design, double n_rows,
@@ -456,20 +475,73 @@ Rcpp::List lap_flow_compile_full_match(Rcpp::NumericMatrix cost,
 }
 
 // [[Rcpp::export]]
-Rcpp::List lap_full_match_implicit(Rcpp::NumericMatrix left_mat,
-                                   Rcpp::NumericMatrix right_mat,
-                                   std::string distance,
-                                   Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                                   double max_distance, Rcpp::List calipers,
-                                   Rcpp::CharacterVector vars,
-                                   double min_controls, double max_controls,
-                                   double keep_per_row = 5.0, double width = 0.0,
-                                   double tol = 1e-9, double max_rounds = 60.0,
-                                   bool certify = true) {
-  return flow_full_match_implicit_impl(left_mat, right_mat, distance, inv_cov,
-                                       max_distance, calipers, vars, min_controls,
-                                       max_controls, keep_per_row, width, tol,
-                                       max_rounds, certify);
+SEXP lap_pricing_session(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                         std::string distance,
+                         Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                         double max_distance, Rcpp::List calipers,
+                         Rcpp::CharacterVector vars) {
+  return pricing_session_new_impl(left_mat, right_mat, distance, inv_cov,
+                                  max_distance, calipers, vars);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_pricing_seed(SEXP session, double width) {
+  return pricing_session_seed_impl(session, width);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_pricing_price(SEXP session, Rcpp::NumericVector u,
+                             Rcpp::NumericVector v, double keep_per_row,
+                             double tol) {
+  return pricing_session_price_impl(session, u, v, keep_per_row, tol);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector lap_pricing_cost(SEXP session, Rcpp::IntegerVector i,
+                                     Rcpp::IntegerVector j) {
+  return pricing_session_cost_impl(session, i, j);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_pricing_range(SEXP session) {
+  return pricing_session_range_impl(session);
+}
+
+// [[Rcpp::export]]
+double lap_pricing_evaluated(SEXP session) {
+  return pricing_session_evaluated_impl(session);
+}
+
+// [[Rcpp::export]]
+double lap_implicit_seed_width(double ncol) {
+  return implicit_seed_width_impl(ncol);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                            std::string distance,
+                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                            double max_distance, Rcpp::List calipers,
+                            Rcpp::CharacterVector vars, double per_row) {
+  return replace_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
+                           calipers, vars, per_row);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_design_implicit(Rcpp::NumericMatrix left_mat,
+                               Rcpp::NumericMatrix right_mat,
+                               std::string distance,
+                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                               double max_distance, Rcpp::List calipers,
+                               Rcpp::CharacterVector vars, std::string design,
+                               double first = 0.0, double second = 0.0,
+                               double keep_per_row = 5.0, double width = 0.0,
+                               double tol = 1e-9, double max_rounds = 60.0,
+                               bool certify = true) {
+  return flow_design_implicit_impl(left_mat, right_mat, distance, inv_cov,
+                                   max_distance, calipers, vars, design, first,
+                                   second, keep_per_row, width, tol, max_rounds,
+                                   certify);
 }
 
 // [[Rcpp::export]]

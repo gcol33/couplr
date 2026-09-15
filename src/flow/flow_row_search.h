@@ -114,4 +114,15 @@ struct RowSearch<LazyCostMatrix> {
     }
 };
 
+// Every row's `keep.capacity()` cheapest admissible columns, one query per row
+// to whatever `search` holds. Rows are slots of `keep` by their own index.
+template <class Source>
+void cheapest_per_row(const Source& src, RowSearch<Source>& search,
+                      detail::RowTopK& keep, RowScanWork& work) {
+    const std::vector<char> skip(static_cast<std::size_t>(src.ncol > 0 ? src.ncol : 0), 0);
+    for (int64_t i = 0; i < src.nrow; ++i) {
+        search.cheapest_outside(src, i, skip, keep, i, work);
+    }
+}
+
 }  // namespace lap

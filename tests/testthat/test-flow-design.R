@@ -115,12 +115,16 @@ test_that("a lazy cost source stays whole on the design that does not reshape it
 
   expect_equal(sum(lazy$pairs$distance), sum(dense$pairs$distance))
 
-  # The designs that reshape their input need the matrix that lazy mode exists
-  # to avoid.
-  expect_error(match_couples(left, right, vars = "x", ratio = 2L,
-                             memory_mode = "lazy", check_costs = FALSE),
-               "does not support memory_mode")
-  expect_error(match_couples(left, right, vars = "x", replace = TRUE,
-                             memory_mode = "lazy", check_costs = FALSE),
-               "does not support memory_mode")
+  # The designs that reshape their input read the specification through the
+  # design's maps rather than a matrix, and reach the dense answer.
+  for (args in list(list(ratio = 2L), list(replace = TRUE))) {
+    lazy_k <- do.call(match_couples, c(list(left, right, vars = "x",
+                                            memory_mode = "lazy",
+                                            check_costs = FALSE), args))
+    dense_k <- do.call(match_couples, c(list(left, right, vars = "x",
+                                             memory_mode = "dense",
+                                             check_costs = FALSE), args))
+    expect_equal(sum(lazy_k$pairs$distance), sum(dense_k$pairs$distance))
+    expect_equal(nrow(lazy_k$pairs), nrow(dense_k$pairs))
+  }
 })

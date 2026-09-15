@@ -96,6 +96,34 @@ one asked, so the version that reaches CRAN is this one.
   covariates and `max_controls = 5` the loop held 12,762 of 120,000 pairs and
   returned the dense solve's groups (#47).
 
+* **`memory_mode = "lazy"` and `"implicit"` reach `replace = TRUE`,
+  `ratio > 1` and `cardinality_match()`.** All three built the dense matrix.
+  Replacement matching is each left unit's own cheapest partners, so it is now
+  one query per unit to the same row search the implicit loop seeds with, a
+  tree over the right units where the metric carries a ball bound. A ratio
+  above one replicates the left units' covariates instead of their rows of
+  distances, with the inverse covariance taken from the units before
+  replication. `cardinality_match(memory_mode = "implicit")` solves its
+  balance network over generated pairs: the network always carries its full
+  budget through its slack arcs, so each solve is a flow and the pairs it omits
+  are priced against its potentials with the Lagrangian multipliers folded in,
+  added, and solved again, warm, with their arcs appended so every branching
+  bound already placed keeps its index; the distance range the tier weights are
+  built on is read in one pass. A pricing session holding the source, its tree
+  and the candidate set persists across the search's solves. On 25 left units
+  whose region-A partners sit behind 300 nearer region-B units, fine balance
+  on region reaches the dense matched set and certifies (#48).
+
+* **A lazy or implicit match that admits no complete matching returns the
+  largest one it admits.** Both modes reported every unit unmatched with a
+  warning, because the dense path's pruning and sentinel padding need the
+  matrix. The one-to-one design is now solved by the design loop over the same
+  specification, which reaches the maximum-cardinality minimum-cost matching
+  the dense path returns. Under `"implicit"` Hall's witness is still attached,
+  saying why no complete matching exists. A `match_path()` point too tight for
+  a complete matching carries the same largest matching, with status
+  `"partial"` and its total, beside the witness.
+
 * **`estimate_dense_matrix_mb()` and `estimate_dense_solve_mb()` are
   exported.** Both were documented and reachable only through `:::`, while
   the memory-mode documentation and the package's own guard are written

@@ -393,19 +393,42 @@
   defaults
 }
 
+# The pairs a balance network carries arcs for, and the distance range the tier
+# weights are built against. A matrix gives every admissible cell, in the
+# column-major order `which()` reads them in. A pool built elsewhere gives the
+# pairs it holds together with the smallest and largest admissible distance over
+# every pair, which is what keeps the weights valid for the complete problem
+# while the network carries only some of its pairs.
+.balance_pair_pool <- function(cost) {
+  if (inherits(cost, "balance_pair_pool")) {
+    return(cost)
+  }
+  cost <- as.matrix(cost)
+  if (!is.numeric(cost)) {
+    stop("`cost` must be a numeric matrix of distances.", call. = FALSE)
+  }
+  valid <- .is_valid_cost(cost)
+  cell <- which(valid, arr.ind = TRUE)
+  structure(list(n_left = nrow(cost), n_right = ncol(cost),
+                 left = as.integer(cell[, 1L]), right = as.integer(cell[, 2L]),
+                 distance = as.numeric(cost[valid]),
+                 min = if (any(valid)) min(cost[valid]) else NA_real_,
+                 max = if (any(valid)) max(cost[valid]) else NA_real_),
+            class = "balance_pair_pool")
+}
+
 #' Compile a balance design into a flow problem
 #'
+#' @param cost A matrix of distances, or a `balance_pair_pool` naming the pairs
+#'   to carry and the distance range over every admissible pair.
 #' @return A list with `problem`, a `couplr_flow_problem`, and `index`, holding
 #'   the arc ranges and the units and cells behind each arc.
 #' @keywords internal
 .balance_flow_problem <- function(cost, hier, codes = NULL, tiers = NULL,
                                   arc_bounds = NULL) {
-  cost <- as.matrix(cost)
-  if (!is.numeric(cost)) {
-    stop("`cost` must be a numeric matrix of distances.", call. = FALSE)
-  }
-  n_left <- nrow(cost)
-  n_right <- ncol(cost)
+  pool <- .balance_pair_pool(cost)
+  n_left <- pool$n_left
+  n_right <- pool$n_right
   n_levels <- hier$n_levels
   n_fine <- hier$n_cats[[n_levels + 1L]]
 
@@ -433,9 +456,9 @@
   # that the cheapest admissible pair costs nothing, which keeps every arc cost
   # non-negative for a shortest-path search and leaves the ordering of matchings
   # at equal cardinality untouched.
-  valid <- .is_valid_cost(cost)
-  shift <- if (any(valid)) min(cost[valid]) else 0
-  d_max <- if (any(valid)) max(cost[valid]) - shift else 0
+  any_admissible <- is.finite(pool$min)
+  shift <- if (any_admissible) pool$min else 0
+  d_max <- if (any_admissible) pool$max - shift else 0
 
   if (is.null(tiers)) {
     tiers <- .balance_tiers(n_levels, total_budget, min(n_left, n_right), d_max)
@@ -493,10 +516,9 @@
   add_arcs("unit_left", layout$node_tc(n_levels, code_left),
            layout$node_left(seq_len(n_left)), 0, bounds$left_unit, 0)
 
-  cell <- which(valid, arr.ind = TRUE)
-  pair_left <- as.integer(cell[, 1L])
-  pair_right <- as.integer(cell[, 2L])
-  pair_cost <- as.numeric(cost[valid]) - shift
+  pair_left <- as.integer(pool$left)
+  pair_right <- as.integer(pool$right)
+  pair_cost <- as.numeric(pool$distance) - shift
   add_arcs("pair", layout$node_left(pair_left), layout$node_right(pair_right),
            0, bounds$pair, pair_cost)
 
@@ -593,6 +615,36 @@
   )
 
   list(problem = problem, index = index)
+}
+
+# The network with more pairs. Their arcs go on the end of the arc list, so
+# every arc already there keeps its index, and with it every bound a search has
+# already placed on one; the pair class is the range those new indices extend.
+.balance_add_pairs <- function(built, left, right, distance) {
+  k <- length(left)
+  if (!k) {
+    return(built)
+  }
+  index <- built$index
+  problem <- built$problem
+  layout <- index$layout
+  first <- index$n_arcs + 1L
+  added <- tibble::tibble(tail = layout$node_left(left),
+                          head = layout$node_right(right),
+                          lower = 0,
+                          upper = as.numeric(index$bounds$pair),
+                          cost = as.numeric(distance) - index$cost_shift)
+  arcs <- rbind(problem$arcs, added)
+
+  index$ranges$pair <- c(index$ranges$pair, seq.int(first, first + k - 1L))
+  index$pair_left <- c(index$pair_left, as.integer(left))
+  index$pair_right <- c(index$pair_right, as.integer(right))
+  index$pair_cost <- c(index$pair_cost, added$cost)
+  index$pair_key <- index$pair_left + (index$pair_right - 1L) * index$n_left
+  index$n_arcs <- nrow(arcs)
+
+  list(problem = .flow_problem(problem$n_nodes, problem$supply, arcs),
+       index = index)
 }
 
 # A matching stated either as one right index per left unit, with 0 for

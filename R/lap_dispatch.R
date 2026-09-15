@@ -34,6 +34,21 @@
     test      = function(n, m, probe) isTRUE(probe$constant) || isTRUE(probe$binary)
   ),
   list(
+    id        = "few_costs",
+    method    = "auction_scaled",
+    condition = paste("at most 32 distinct finite values, and at most half as",
+                      "many as the longer side has units"),
+    reason    = paste("few cost levels tie many of a row's cheapest columns,",
+                      "which epsilon-scaling bids settle in coarse phases"),
+    # The second bound is what makes the levels few: a row with at least twice
+    # as many columns as there are levels repeats a cost, so a small matrix of
+    # continuous costs, whose distinct count is only its cell count, is not
+    # read as tied.
+    test      = function(n, m, probe) {
+      isTRUE(probe$n_distinct <= 32) && isTRUE(probe$n_distinct <= max(n, m) / 2)
+    }
+  ),
+  list(
     id        = "default",
     method    = "jv",
     condition = "no earlier rule applies",

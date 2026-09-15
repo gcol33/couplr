@@ -80,6 +80,10 @@
 #'       than setting up a general solver;
 #'     \item finite entries all equal, or all either 0 or 1: `"hk01"`, which
 #'       exploits the absence of a real cost scale;
+#'     \item finite entries taking at most 32 distinct values, and at most
+#'       half as many as the longer side has units: `"auction_scaled"`, whose
+#'       epsilon-scaling phases settle the ties few cost levels leave among a
+#'       row's cheapest columns;
 #'     \item everything else: `"jv"`.
 #'   }
 #'   Sparsity and aspect ratio used to divert the choice to `"lapmod"` and
@@ -162,16 +166,16 @@
 #' round of what the master held, what priced out and what each step cost.
 #'
 #' @details
-#' `method = "auto"` selects an algorithm based on problem size/shape and data
-#' characteristics:
+#' `method = "auto"` selects an algorithm based on problem size and the costs:
 #' \itemize{
 #'   \item Very small (n <= 8 and m <= 8): `"bruteforce"` — exact enumeration
 #'   \item Binary/constant costs: `"hk01"` — specialized for 0/1 costs
-#'   \item Sparse (>50\% NA/Inf): `"lapmod"` — sparse JV variant, at every size
-#'   \item Very rectangular (m >= 3n): `"sap"` — handles rectangular well
-#'   \item Otherwise: `"jv"` — fastest general-purpose solver at every size
+#'   \item At most 32 distinct finite values, and at most half as many as the
+#'     longer side has units: `"auction_scaled"`
+#'   \item Otherwise: `"jv"`
 #' }
-#' The other solvers are available by naming them explicitly.
+#' [explain_dispatch()] reports which rule fired and why. The other solvers are
+#' available by naming them explicitly.
 #'
 #' @section Integer conversion for bit-scaling:
 #'

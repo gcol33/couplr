@@ -28,8 +28,16 @@
 ##      600 x 660 and 800 x 1000, and 40 and 120, which do not; 600 x 900 and
 ##      500 x 1000, past the column bound, where no k fires; complete, 75%
 ##      finite, 15% finite and five disconnected blocks. No shape, pattern, level
-##      count or seed key is shared with grid 1 or with the regime grid.
+##      count or seed key is shared with grid 1 or with the regime grid. Not
+##      kept: over the 64 cells it fired on, `auction_scaled` took a median 0.13
+##      of the time of `jv` and was quicker in 61, but 2.62 times it at worst,
+##      on an 800 x 1000 matrix with 15% of its entries finite, and 1.95 times it
+##      on a 600 x 660 one in five blocks, both at 28 levels and both solved by
+##      `jv` in about 5 to 12 ms.
 ##
+## Neither version is in the dispatch table, and this script is not a suite
+## stage: a version runs only at the commit holding its rule, 85eefde for grid 1
+## and 853f91f for grid 2.
 ## Decision, stated with each version before its grid ran. Over the cells where `"auto"` fires the
 ## rule, take each cell's median time of `auction_scaled` over its median time
 ## of `jv`, the solver the default would have named, both timed as named solvers
@@ -53,7 +61,6 @@
 ##
 ## Reproducible via:  Rscript paper/bench_dispatch_validation.R --grid=2
 ##                    Rscript paper/bench_dispatch_validation.R --grid=2 --quick
-## Grid 1 runs at commit 85eefde, the commit holding the rule it was stated for.
 
 repo_root <- if (file.exists("DESCRIPTION")) {
   normalizePath(".", winslash = "/", mustWork = TRUE)

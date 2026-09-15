@@ -77,6 +77,25 @@ one asked, so the version that reaches CRAN is this one.
 
 ## Improvements
 
+* **`full_match()` takes `memory_mode = "implicit"`.** The edge-generation
+  loop solved only the one-to-one assignment, because it read assignment
+  duals, and a full matching's column nodes carry capacities above one. It now
+  runs any design compiled onto one block of pair arcs. An omitted pair sits at
+  its lower bound of zero, so it is priced against the flow's own node
+  potentials, `cost + pi(row) - pi(column)`, and the flow is optimal over every
+  pair once none prices below zero. A master that falls short of its flow is
+  answered by a maximum-flow cut instead of Hall's condition: the pairs that
+  could raise the flow leave the residual set its excess still reaches, a
+  round adds the cheapest of them (per row inside the set, or per column
+  outside it, whichever side is smaller, the latter through a tree over the
+  rows), and when there are none the flow placed is the maximum over every
+  admissible pair. `caliper` becomes the source's distance cut and `caliper_sd`
+  reads every pair's distance once, in two running sums. The result carries
+  the certificate over the pairs held together with `omitted_proven_floor` for
+  the pairs omitted, and a `search` record. On 200 by 600 units with five
+  covariates and `max_controls = 5` the loop held 12,762 of 120,000 pairs and
+  returned the dense solve's groups (#47).
+
 * **`estimate_dense_matrix_mb()` and `estimate_dense_solve_mb()` are
   exported.** Both were documented and reachable only through `:::`, while
   the memory-mode documentation and the package's own guard are written
@@ -315,6 +334,19 @@ one asked, so the version that reaches CRAN is this one.
   scan found 24; it now finds all 24. The caliper comparison in
   `distance_out_of()` also read an unrounded distance and now steps outward like
   its sibling.
+
+* **A flow that cannot place every unit is the cheapest flow of the value it
+  places.** The solver searches from one excess node at a time and serves
+  them in node order, so when not every excess can be placed, which ones were
+  was decided by that order rather than by cost: two units competing for one
+  deficit over arcs costing 10 and 1 placed the unit costing 10 when its node
+  came first. A shortfall is now re-solved as the problem with a super source
+  and sink, asked for exactly the value placed and warm from the flow reached,
+  which is the maximum-cardinality-then-minimum-cost answer "partial" names. A
+  warm-started solve that falls short is first solved again cold: its slackness
+  repair can leave balance at nodes that conserve flow, and such a flow is not
+  a partial flow of the problem. This reaches `full_match()` whenever a caliper
+  or the bounds leave units out, and every other design reporting `"partial"`.
 
 * **`method = "csa"` no longer returns a suboptimal assignment on a wide cost
   range.** Cost scaling runs on integers, and the conversion scaled the largest

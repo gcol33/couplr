@@ -143,6 +143,22 @@ test_that("a solve that cannot place every unit says so rather than reporting op
   expect_identical(couplr:::.flow_solve(blocked)$status, "infeasible")
 })
 
+test_that("a solve that falls short places the cheapest flow of its value", {
+  # Two nodes with a unit each and one deficit node reachable from both, over
+  # arcs costing 10 and 1. Only one unit can be placed, and it is the one over
+  # the arc costing 1 whichever order the arcs and nodes are given in.
+  for (dear_first in c(TRUE, FALSE)) {
+    arcs <- data.frame(tail = c(1, 2), head = c(3, 3), lower = 0, upper = 1,
+                       cost = c(10, 1))
+    if (!dear_first) arcs <- arcs[2:1, ]
+    short <- couplr:::.flow_solve(list(n_nodes = 4, supply = c(1, 1, -1, -1),
+                                       arcs = arcs))
+    expect_identical(short$status, "partial")
+    expect_equal(short$flow_sent, 1)
+    expect_equal(short$total_cost, 1)
+  }
+})
+
 test_that("stopping on the augmentation cap is not optimality", {
   capped <- couplr:::.flow_solve(flow_fixture(), max_augmentations = 1)
 

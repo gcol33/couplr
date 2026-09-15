@@ -339,10 +339,6 @@ test_that("the designs the loop does not solve are declined", {
     "does not support memory_mode = \"implicit\""
   )
   expect_error(
-    full_match(left, right, vars = vars, memory_mode = "implicit"),
-    "not supported"
-  )
-  expect_error(
     match_couples(left, right, vars = vars, memory_mode = "implicit",
                   distance = function(l, r) as.matrix(dist(rbind(l, r)))),
     "requires a built-in distance metric"

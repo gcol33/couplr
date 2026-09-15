@@ -66,6 +66,34 @@ Rcpp::NumericVector lazy_pair_distances_impl(
   return out;
 }
 
+double lazy_distance_sd_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    const std::string& metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
+  const lap::LazyCostMatrix cm = rcpp_to_lazy_cost_matrix(
+      left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(),
+      Rcpp::CharacterVector::create(), false);
+
+  // Welford's update, which keeps the variance from the difference of two
+  // large sums, in the extended precision R's own var() accumulates in.
+  long double count = 0.0L;
+  long double mean = 0.0L;
+  long double ss = 0.0L;
+  for (int64_t i = 0; i < cm.nrow; ++i) {
+    if ((i & 63) == 0) Rcpp::checkUserInterrupt();
+    for (int64_t j = 0; j < cm.ncol; ++j) {
+      const long double x = cm.at(i, j);
+      count += 1.0L;
+      const long double delta = x - mean;
+      mean += delta / count;
+      ss += delta * (x - mean);
+    }
+  }
+  if (count < 2.0L) return NA_REAL;
+  return static_cast<double>(std::sqrt(ss / (count - 1.0L)));
+}
+
 lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,

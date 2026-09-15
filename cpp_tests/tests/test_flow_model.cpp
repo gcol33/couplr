@@ -401,6 +401,105 @@ TEST_CASE("Flow validation accepts problems that are merely infeasible",
     }
 }
 
+namespace {
+
+// The cheapest among the maximum flows of a problem whose arcs are all [0, 1],
+// by enumerating every 0/1 flow. A supply node may send up to its supply, a
+// demand node absorb up to its demand, and every other node conserves.
+struct BruteShort {
+    int64_t value = 0;
+    double  cost  = 0.0;
+};
+
+BruteShort brute_short_flow(const lap::FlowProblem& prob) {
+    const std::size_t m = prob.arcs.size();
+    BruteShort best;
+    best.value = -1;
+    for (std::uint32_t mask = 0; mask < (std::uint32_t{1} << m); ++mask) {
+        std::vector<int64_t> out(static_cast<std::size_t>(prob.n_nodes), 0);
+        double cost = 0.0;
+        for (std::size_t a = 0; a < m; ++a) {
+            if (!((mask >> a) & 1u)) continue;
+            out[static_cast<std::size_t>(prob.arcs[a].tail)] += 1;
+            out[static_cast<std::size_t>(prob.arcs[a].head)] -= 1;
+            cost += prob.arcs[a].cost;
+        }
+        bool ok = true;
+        int64_t value = 0;
+        for (int32_t v = 0; v < prob.n_nodes && ok; ++v) {
+            const int64_t s = prob.supply[static_cast<std::size_t>(v)];
+            const int64_t o = out[static_cast<std::size_t>(v)];
+            if (s > 0) { ok = o >= 0 && o <= s; value += o; }
+            else if (s < 0) ok = o <= 0 && o >= s;
+            else ok = o == 0;
+        }
+        if (!ok) continue;
+        if (value > best.value || (value == best.value && cost < best.cost)) {
+            best.value = value;
+            best.cost = cost;
+        }
+    }
+    return best;
+}
+
+}  // namespace
+
+TEST_CASE("A flow that falls short is the cheapest flow of its value",
+          "[flow][solve][infeasible]") {
+    SECTION("two excess nodes competing for one deficit node, in either order") {
+        for (bool dear_first : {true, false}) {
+            lap::FlowProblem prob;
+            prob.n_nodes = 4;
+            prob.supply = {1, 1, -1, -1};
+            if (dear_first) {
+                prob.arcs.emplace_back(0, 2, 0, 1, 10.0);
+                prob.arcs.emplace_back(1, 2, 0, 1, 1.0);
+            } else {
+                prob.arcs.emplace_back(1, 2, 0, 1, 1.0);
+                prob.arcs.emplace_back(0, 2, 0, 1, 10.0);
+            }
+            prob.expanded = true;
+            const lap::FlowResult res = lap::solve_min_cost_flow(prob);
+            INFO("dearer arc first: " << dear_first);
+            REQUIRE(res.status == "partial");
+            REQUIRE(res.flow_sent == 1);
+            REQUIRE(res.total_cost == Approx(1.0));
+        }
+    }
+
+    SECTION("random short problems against enumeration") {
+        std::mt19937 rng(20260915u);
+        std::uniform_int_distribution<int> node(0, 6);
+        std::uniform_int_distribution<int> price(0, 9);
+        int checked_short = 0;
+        for (int rep = 0; rep < 400; ++rep) {
+            lap::FlowProblem prob;
+            prob.n_nodes = 7;
+            prob.supply = {2, 1, 1, 0, -1, -1, -2};
+            const int n_arcs = 6 + rep % 5;
+            for (int a = 0; a < n_arcs; ++a) {
+                int t = node(rng);
+                int h = node(rng);
+                while (h == t) h = node(rng);
+                prob.arcs.emplace_back(t, h, 0, 1, static_cast<double>(price(rng)));
+            }
+            prob.expanded = true;
+            const BruteShort brute = brute_short_flow(prob);
+            const lap::FlowResult res = lap::solve_min_cost_flow(prob);
+            INFO("rep " << rep << " status " << res.status);
+            REQUIRE(res.flow_sent == brute.value);
+            REQUIRE(res.total_cost == Approx(brute.cost));
+            if (res.status == "partial") ++checked_short;
+
+            const lap::FlowCertificate cert =
+                lap::certify_flow(prob, res.flow, res.potential, 1e-9);
+            REQUIRE(cert.dual_feasible);
+            REQUIRE(cert.complementary_slackness);
+        }
+        REQUIRE(checked_short > 50);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // expansion
 // ---------------------------------------------------------------------------

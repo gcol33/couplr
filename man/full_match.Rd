@@ -60,14 +60,17 @@ of the pooled distance distribution rather than absolute units.}
 max-flow to find the globally optimal group assignment minimizing total
 distance; \code{"greedy"} uses a fast two-pass heuristic.}
 
-\item{memory_mode}{One of "auto" (default) or "dense". "auto" warns if the
-dense cost matrix would consume a large fraction of free system RAM.
-\code{full_match()} uses a different (min-cost-flow) solver backend than
-\code{match_couples()}/\code{assignment()}, so \code{memory_mode = "lazy"} is not
-available here yet and errors if requested. \code{memory_mode = "implicit"}
-errors for a further reason: a full matching's column nodes carry
-capacities above one, so a column dual is not the assignment dual the
-pricing loop reads. "dense" skips the RAM check entirely.}
+\item{memory_mode}{One of "auto" (default), "dense" or "implicit". "auto"
+warns if the dense cost matrix would consume a large fraction of free
+system RAM. "dense" skips the RAM check entirely. "implicit" solves
+\code{method = "optimal"} over a built-in distance metric without building
+the pair set: the flow is solved over a growing subset of pairs, the pairs
+it omits are priced against the flow's node potentials, and the subset
+grows until none prices below zero, so the groups are optimal over every
+pair; a \code{search} element records what that cost. Under "implicit"
+\code{caliper_sd} reads every pair's distance once to take its standard
+deviation, holding two running sums rather than the distances. "lazy" is
+not available here: a flow solved over every pair holds every pair.}
 }
 \value{
 An S3 object of class \code{c("full_matching_result", "couplr_result")}
@@ -96,7 +99,14 @@ representative of the dual, in the gauge the solver fixes. Present for
 \code{\link{verify_flow}}, checking the solved flow and its potentials
 against the optimality conditions. \code{status} says what the solver
 terminated on; this says what was checked. Present for
-\code{method = "optimal"} only.}
+\code{method = "optimal"} only. Under \code{memory_mode = "implicit"}
+the check covers the pairs the flow was solved over, and
+\code{omitted_proven_floor} bounds the reduced cost of every pair it
+omitted; \code{certified_optimal} holds both together.}
+\item{search}{Under \code{memory_mode = "implicit"}: the seed width, the
+pairs generated (\code{candidate_edges}) against the pairs there are
+(\code{possible_edges}), the distances computed
+(\code{edges_evaluated}) and one row per round.}
 }
 }
 \description{

@@ -229,9 +229,9 @@ resolve_memory_mode <- function(n, m,
   if (identical(memory_mode, "implicit")) {
     if (!solver_supports_implicit) {
       stop("memory_mode = \"implicit\" is not supported for this method/path ",
-           "yet: the edge-generation loop solves a 1:1 matching over a ",
-           "built-in distance metric, whose network is one bipartite block ",
-           "carrying one unit per left unit.", call. = FALSE)
+           "yet: the edge-generation loop solves match_couples() one-to-one and ",
+           "full_match(method = \"optimal\") over a built-in distance metric.",
+           call. = FALSE)
     }
     return("implicit")
   }

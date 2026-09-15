@@ -79,6 +79,37 @@
 // arithmetic and not in floating point, so both can round a few ulps below zero
 // at once. Where the invariant says the price cannot be negative, rounding is
 // the only thing that could have made it so, and it is read as rounding.
+//
+// ---------------------------------------------------------------------------
+// A shortfall is settled over a super source
+// ---------------------------------------------------------------------------
+//
+// Searching from one excess node at a time places a maximum flow, and the
+// potentials keep every residual arc non-negative, so the flow is the cheapest
+// one for the balances it met. It is not yet the cheapest flow of its value:
+// which excess nodes were served was decided by the order they were searched
+// from. Two excess nodes competing for one deficit node over arcs costing 10 and
+// 1 are served in node order, and the arc costing 10 is the one placed when its
+// tail comes first.
+//
+// Minimum cost among flows of the value placed is the problem with a super
+// source joined to every excess node by an arc as wide as its excess and a super
+// sink joined from every deficit node, asked for exactly that value. When a
+// solve falls short it is re-solved in that form, warm from the flow it
+// reached: the super arcs start at what each node sent or received, and the two
+// super nodes take the potential that leaves every arc to an unserved node, or
+// from an unfilled one, priced at or above zero. The re-solve prices the
+// exchanges the search order left out and places them, and it cannot fall short
+// itself, since the flow it starts from already has the value it is asked for.
+//
+// That flow has to be a flow of the problem, short only at the nodes the lower
+// bounds left an excess or a deficit at. A cold start has that shape, since its
+// balances are the lower bounds' own and a search only moves balance between an
+// excess and a deficit node. A warm start does not: the slackness repair
+// saturates or empties arcs wherever the potentials say, which leaves balance
+// at nodes that conserve flow in the problem, and a solve that cannot place it
+// all stops with those nodes still out of balance. So a warm solve that falls
+// short is solved again cold, and only the cold answer is settled.
 #include "flow_solve.h"
 
 #include "../core/lap_certify.h"
@@ -188,6 +219,84 @@ std::string derive_status(int64_t flow_sent, int64_t flow_required, bool no_path
     if (!no_path)                   return "iteration_limit";
     if (flow_sent == 0)             return "infeasible";
     return "partial";
+}
+
+// The cheapest flow of the value `short_flow` placed, over the problem with a
+// super source and sink attached; see the header comment. `short_flow` and
+// `short_pi` are replaced by the re-solved flow and potentials, and false is
+// returned, leaving both untouched, when the re-solve does not place the value
+// it was asked for.
+bool settle_shortfall(const FlowProblem& prob, const FlowOptions& opts,
+                      std::vector<int64_t>& short_flow, std::vector<double>& short_pi,
+                      double& total_cost) {
+    const int32_t N = prob.n_nodes;
+    const int64_t n_arcs = static_cast<int64_t>(prob.arcs.size());
+
+    // Balances left by the lower bounds alone, which is what the super arcs are
+    // as wide as, and the balances the reached flow leaves unmet.
+    std::vector<int64_t> d0(prob.supply.begin(), prob.supply.end());
+    std::vector<int64_t> left(prob.supply.begin(), prob.supply.end());
+    for (int64_t a = 0; a < n_arcs; ++a) {
+        const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
+        d0[static_cast<std::size_t>(arc.tail)] -= arc.lower;
+        d0[static_cast<std::size_t>(arc.head)] += arc.lower;
+        const int64_t fa = short_flow[static_cast<std::size_t>(a)];
+        left[static_cast<std::size_t>(arc.tail)] -= fa;
+        left[static_cast<std::size_t>(arc.head)] += fa;
+    }
+
+    const int32_t s_star = N;
+    const int32_t t_star = N + 1;
+
+    FlowProblem aug;
+    aug.n_nodes = N + 2;
+    aug.supply.assign(static_cast<std::size_t>(N) + 2, 0);
+    aug.arcs = prob.arcs;
+    aug.expanded = true;
+    aug.warm_flow = short_flow;
+
+    double pi_s = -std::numeric_limits<double>::infinity();
+    double pi_t = std::numeric_limits<double>::infinity();
+    int64_t value = 0;
+    for (int32_t v = 0; v < N; ++v) {
+        const std::size_t sv = static_cast<std::size_t>(v);
+        aug.supply[sv] = prob.supply[sv] - d0[sv];
+        if (d0[sv] > 0) {
+            const int64_t sent = d0[sv] - left[sv];
+            value += sent;
+            aug.arcs.emplace_back(s_star, v, 0, d0[sv], 0.0);
+            aug.warm_flow.push_back(sent);
+            if (left[sv] > 0 && short_pi[sv] > pi_s) pi_s = short_pi[sv];
+        } else if (d0[sv] < 0) {
+            const int64_t received = -d0[sv] + left[sv];
+            aug.arcs.emplace_back(v, t_star, 0, -d0[sv], 0.0);
+            aug.warm_flow.push_back(received);
+            if (left[sv] < 0 && short_pi[sv] < pi_t) pi_t = short_pi[sv];
+        }
+    }
+    aug.supply[static_cast<std::size_t>(s_star)] = value;
+    aug.supply[static_cast<std::size_t>(t_star)] = -value;
+
+    aug.warm_potential.assign(short_pi.begin(), short_pi.end());
+    aug.warm_potential.push_back(std::isfinite(pi_s) ? pi_s : 0.0);
+    aug.warm_potential.push_back(std::isfinite(pi_t) ? pi_t : 0.0);
+
+    FlowOptions aug_opts = opts;
+    aug_opts.trace = nullptr;
+    aug_opts.max_augmentations = 0;
+    aug_opts.return_potentials = true;
+    const FlowResult settled = solve_min_cost_flow(aug, aug_opts);
+    if (settled.status != "optimal") return false;
+
+    short_flow.assign(settled.flow.begin(), settled.flow.begin() + n_arcs);
+    short_pi.assign(settled.potential.begin(), settled.potential.begin() + N);
+    detail::CompensatedSum total;
+    for (int64_t a = 0; a < n_arcs; ++a) {
+        total.add(prob.arcs[static_cast<std::size_t>(a)].cost *
+                  static_cast<double>(short_flow[static_cast<std::size_t>(a)]));
+    }
+    total_cost = total.value();
+    return true;
 }
 
 }  // namespace
@@ -340,6 +449,8 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
             }
         }
     }
+
+    const bool started_warm = warm && residual_nonneg;
 
     if (!residual_nonneg) {
         // f sits at the lower bound on every arc here, so the residual graph
@@ -694,6 +805,16 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         total.add(arc.cost * static_cast<double>(fa));
     }
     out.total_cost = total.value();
+
+    if (no_path && !interrupted && out.flow_sent < out.flow_required) {
+        if (started_warm) {
+            FlowProblem cold = prob;
+            cold.warm_flow.clear();
+            cold.warm_potential.clear();
+            return solve_min_cost_flow(cold, opts);
+        }
+        if (out.flow_sent > 0) settle_shortfall(prob, opts, out.flow, pi, out.total_cost);
+    }
 
     if (opts.return_potentials) {
         out.potential.assign(static_cast<std::size_t>(n_nodes), 0.0);

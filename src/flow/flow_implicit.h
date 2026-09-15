@@ -31,9 +31,12 @@
 // columns that can repair them, or reports that no arc set over this source
 // admits a complete matching and says why.
 //
-// Scope is the unit-capacity bipartite assignment: one block, every row
-// carrying one unit, every column at most one. That is the design Hall's
-// condition answers feasibility for and the LP lap_certify.h certifies.
+// The assignment -- one block, every row carrying one unit, every column at
+// most one -- is the design Hall's condition answers feasibility for and the LP
+// lap_certify.h certifies, and solve_implicit_assignment() runs it. Any other
+// design compiled onto one block of pair arcs runs the same rounds through
+// solve_implicit_design(), which prices against the flow's own potentials and
+// answers a shortfall with a maximum-flow cut; see the section above it.
 #pragma once
 
 #include "../core/lap_certify.h"
@@ -54,6 +57,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -140,8 +144,8 @@ struct ImplicitOptions {
 // state a trace layer reads, so it is a record rather than a private counter.
 struct ImplicitRound {
     enum class Kind {
-        priced,    // the master was feasible and its omitted pairs were priced
-        reseeded   // the master came back short and the deficient rows grew
+        priced,    // the master's omitted pairs were priced
+        reseeded   // the master came back short and the arc set grew toward it
     };
 
     int64_t round = 0;
@@ -168,16 +172,30 @@ struct ImplicitRound {
     // How far the master's own potentials sat off the tight face before
     // tighten_matched_duals() put them back on it. A cold master leaves it at
     // rounding; a warm one is free to leave it anywhere, which is what the
-    // projection is there for.
+    // projection is there for. Zero for a design, whose potentials are priced
+    // as they come.
     double matched_slack = 0.0;
 };
 
-struct ImplicitResult {
-    // From solver_status_values(). The loop either matches every row, reports
-    // "infeasible" with the witness saying no arc set over this source could,
-    // or hits a limit: its own max_rounds, or a master that ran out of
-    // augmentations, both reported as "iteration_limit".
+// What every run of the loop reports about the search, whatever the design.
+struct ImplicitSearch {
+    // From solver_status_values().
     std::string status = "infeasible";
+
+    std::vector<ImplicitRound> rounds;
+
+    // What the search cost, in the terms the public surface reports.
+    int64_t seed_width      = 0;   // columns the first round gave a row
+    int64_t candidate_edges = 0;   // pairs the candidate set ended up holding
+    int64_t possible_edges  = 0;   // nrow * ncol
+    int64_t edges_evaluated = 0;   // pairs a cost was computed for, all rounds
+};
+
+struct ImplicitResult : ImplicitSearch {
+    // The loop either matches every row, reports "infeasible" with the witness
+    // saying no arc set over this source could, or hits a limit: its own
+    // max_rounds, or a master that ran out of augmentations, both reported as
+    // "iteration_limit".
 
     // One column per row, -1 unmatched, and the duals the last master produced.
     // Empty when no master ever reached a matching.
@@ -191,14 +209,6 @@ struct ImplicitResult {
     // Meaningful when the status is "optimal".
     CertificateReport certificate;
     bool certified = false;
-
-    std::vector<ImplicitRound> rounds;
-
-    // What the search cost, in the terms the public surface reports.
-    int64_t seed_width      = 0;   // columns the first round gave a row
-    int64_t candidate_edges = 0;   // pairs the candidate set ended up holding
-    int64_t possible_edges  = 0;   // nrow * ncol
-    int64_t edges_evaluated = 0;   // pairs a cost was computed for, all rounds
 
     // Why no arc set over this source admits a complete matching, and the
     // witness re-checked against the full source. Populated exactly when the
@@ -247,34 +257,43 @@ double matched_slack(const Source& src, const std::vector<int>& match,
     return worst;
 }
 
+// The width a reseed gives a row after `reseeds` earlier reseeds: the first
+// width, doubled by each of them and held at the number of columns there are.
+inline int64_t ladder_width(int64_t first, int64_t reseeds, int64_t cap) {
+    int64_t w = first;
+    for (int64_t k = 0; k < reseeds; ++k) w = std::min<int64_t>(w * 2, cap);
+    return w;
+}
+
+// The checks every entry point runs on the block it is handed: one bipartite
+// block backed by `src`, pair arcs carrying at most one unit, and knobs that
+// let a round change the master it read.
 template <class Source>
-void require_shape(const Source& src, const FlowProblem& prob,
+void require_block(const Source& src, const FlowProblem& prob,
                    const CandidateSet& cand, const ImplicitOptions& opts,
-                   bool expect_expanded) {
+                   bool expect_expanded, const char* who) {
+    const std::string name(who);
     if (src.nrow <= 0 || src.ncol <= 0) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: source is " +
-                            std::to_string(src.nrow) + " x " + std::to_string(src.ncol) +
-                            ", which names no pair to generate");
+        LAP_THROW_DIMENSION(name + ": source is " + std::to_string(src.nrow) + " x " +
+                            std::to_string(src.ncol) + ", which names no pair to generate");
     }
     if (prob.blocks.size() != 1u) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: " +
-                            std::to_string(prob.blocks.size()) +
+        LAP_THROW_DIMENSION(name + ": " + std::to_string(prob.blocks.size()) +
                             " bipartite blocks, and the loop prices one");
     }
     const BipartiteBlock& blk = prob.blocks[0];
     if (blk.costs == nullptr) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: the block has no cost source");
+        LAP_THROW_DIMENSION(name + ": the block has no cost source");
     }
     if (blk.costs->nrow() != src.nrow || blk.costs->ncol() != src.ncol) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: the block is " +
-                            std::to_string(blk.costs->nrow()) + " x " +
-                            std::to_string(blk.costs->ncol()) + ", the source is " +
+        LAP_THROW_DIMENSION(name + ": the block is " + std::to_string(blk.costs->nrow()) +
+                            " x " + std::to_string(blk.costs->ncol()) + ", the source is " +
                             std::to_string(src.nrow) + " x " + std::to_string(src.ncol));
     }
     if (blk.lower != 0 || blk.upper != 1) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: block arcs are bounded [" +
-                            std::to_string(blk.lower) + ", " + std::to_string(blk.upper) +
-                            "], and an assignment's pairs carry at most one unit");
+        LAP_THROW_DIMENSION(name + ": block arcs are bounded [" + std::to_string(blk.lower) +
+                            ", " + std::to_string(blk.upper) +
+                            "], and a pair the loop adds carries at most one unit");
     }
     // A problem that has never been expanded holds no arcs, so the candidate
     // set is what its arc set is about to be. One that has holds the last
@@ -282,19 +301,38 @@ void require_shape(const Source& src, const FlowProblem& prob,
     // master was solved over. Which of the two a caller has is the difference
     // between starting and continuing, and it is not something to infer.
     if (expect_expanded && !prob.expanded) {
-        LAP_THROW_DIMENSION("continue_implicit_assignment: the problem is not "
-                            "expanded, so there is no master to continue from");
+        LAP_THROW_DIMENSION(name + ": the problem is not expanded, so there is no "
+                            "master to continue from");
     }
     if (!expect_expanded && prob.expanded) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: the problem is already "
-                            "expanded, so its arc set is not the candidate set's");
+        LAP_THROW_DIMENSION(name + ": the problem is already expanded, so its arc "
+                            "set is not the candidate set's");
     }
     if (cand.nrow() != src.nrow || cand.ncol() != src.ncol) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: candidate set is " +
-                            std::to_string(cand.nrow()) + " x " +
-                            std::to_string(cand.ncol()) + ", source is " +
+        LAP_THROW_DIMENSION(name + ": candidate set is " + std::to_string(cand.nrow()) +
+                            " x " + std::to_string(cand.ncol()) + ", source is " +
                             std::to_string(src.nrow) + " x " + std::to_string(src.ncol));
     }
+    if (opts.keep_per_row < 1) {
+        LAP_THROW_DIMENSION(name + ": keep_per_row " + std::to_string(opts.keep_per_row) +
+                            " adds no pair, so a pricing round cannot change the "
+                            "master it priced");
+    }
+    if (opts.width < 0) {
+        LAP_THROW_DIMENSION(name + ": width " + std::to_string(opts.width) +
+                            " adds no column to a deficient row");
+    }
+    if (opts.max_rounds < 1) {
+        LAP_THROW_DIMENSION(name + ": max_rounds " + std::to_string(opts.max_rounds) +
+                            " runs no round");
+    }
+}
+
+template <class Source>
+void require_shape(const Source& src, const FlowProblem& prob,
+                   const CandidateSet& cand, const ImplicitOptions& opts,
+                   bool expect_expanded) {
+    require_block(src, prob, cand, opts, expect_expanded, "solve_implicit_assignment");
     // Hall's condition answers feasibility for a row-perfect matching, so the
     // required flow has to be one unit per row. A design asking for fewer is a
     // different feasibility question and is not this loop's. The units are
@@ -310,21 +348,121 @@ void require_shape(const Source& src, const FlowProblem& prob,
                             std::to_string(src.nrow) + " rows, and the loop matches "
                             "every row");
     }
-    if (opts.keep_per_row < 1) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: keep_per_row " +
-                            std::to_string(opts.keep_per_row) +
-                            " adds no pair, so a pricing round cannot change the "
-                            "master it priced");
+}
+
+// What a policy did with a master that came back short of its flow.
+enum class ShortfallAnswer {
+    proceed,    // no arc over the source can place more: price what was placed
+    reseeded,   // the arc set grew; solve the master again
+    decided     // the answer is final and has been written
+};
+
+// The rounds themselves, over a problem whose arcs are already the ones the
+// candidate set names. Every entry point runs this body; what separates them is
+// whether those arcs were placed by this call or left behind by the last one,
+// and the policy, which is what separates one design from another:
+//
+//   on_shortfall(master, cand, reseeds, rec)  a master short of its flow
+//   duals(master, rec)                        the u, v the pricer reads
+//   price_tol(master)                         the threshold it reads them at
+//   finish(master, cand, priced, rec)         the answer, once nothing prices in
+//
+// `search` is whatever the source can be asked about a row without reading it,
+// and it is a parameter rather than a local because it depends on the columns'
+// geometry alone. A path over caliper values moves the cut and leaves the
+// geometry where it is, so one structure serves every point.
+template <class Source, class Policy>
+void run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
+                RowSearch<Source>& search, const ImplicitOptions& opts,
+                Policy& policy, ImplicitSearch& out) {
+    out.possible_edges = src.nrow * src.ncol;
+
+    FlowOptions flow_opts = opts.flow;
+    flow_opts.return_potentials = true;
+
+    // Every exit leaves the problem holding the master it stopped on. That is
+    // what makes the loop resumable: a caller with a further question about the
+    // same arcs -- the next point of a path -- puts it warm rather than cold.
+    const auto carry = [&prob](const FlowResult& master) {
+        prob.warm_flow      = master.flow;
+        prob.warm_potential = master.potential;
+    };
+
+    int64_t reseeds = 0;
+    bool decided = false;
+    for (int64_t round = 1; round <= opts.max_rounds; ++round) {
+        ImplicitRound rec;
+        rec.round = round;
+        rec.candidate_pairs = cand.n_arcs();
+        rec.block_arcs = prob.block_arcs[0].n_arcs;
+
+        const Clock::time_point t_master = Clock::now();
+        const FlowResult master = solve_min_cost_flow(prob, flow_opts);
+        rec.master_seconds = seconds_since(t_master);
+        rec.master_status  = master.status;
+        rec.flow_sent      = master.flow_sent;
+        rec.flow_required  = master.flow_required;
+        rec.master_cost    = master.total_cost;
+        carry(master);
+
+        // A master that ran out of augmentations has not answered the question,
+        // so nothing downstream can be read off it.
+        if (master.status == "iteration_limit") {
+            out.rounds.push_back(rec);
+            out.status = master.status;
+            decided = true;
+            break;
+        }
+
+        if (master.flow_sent < master.flow_required) {
+            rec.kind = ImplicitRound::Kind::reseeded;
+            const ShortfallAnswer answer = policy.on_shortfall(master, cand, reseeds, rec);
+            if (answer == ShortfallAnswer::reseeded) {
+                out.rounds.push_back(rec);
+                ++reseeds;
+                continue;
+            }
+            if (answer == ShortfallAnswer::decided) {
+                out.rounds.push_back(rec);
+                decided = true;
+                break;
+            }
+            rec.kind = ImplicitRound::Kind::priced;
+        }
+
+        policy.duals(master, rec);
+
+        const Clock::time_point t_price = Clock::now();
+        const BlockPricing priced = search.price(src, policy.u(), policy.v(), cand,
+                                                 opts.keep_per_row,
+                                                 policy.price_tol(master));
+        rec.pricing_seconds  += seconds_since(t_price);
+        rec.min_reduced_cost = priced.min_reduced_cost;
+        rec.n_violators      = priced.n_violators;
+        rec.n_evaluated     += priced.n_evaluated;
+
+        if (priced.n_violators == 0) {
+            // Nothing the master omits prices below the threshold, so the duals
+            // are feasible for every pair of the complete problem, and the
+            // policy writes the answer and whatever certifies it.
+            policy.finish(master, cand, priced, rec);
+            out.status = master.status;
+            out.rounds.push_back(rec);
+            decided = true;
+            break;
+        }
+
+        const std::vector<CandidateSet::Pair> added =
+            cand.add_pairs(violator_pairs(priced.violators));
+        rec.pairs_added += static_cast<int64_t>(added.size());
+        rec.arcs_added  += add_block_arcs(prob, 0, added);
+        out.rounds.push_back(rec);
     }
-    if (opts.width < 0) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: width " +
-                            std::to_string(opts.width) +
-                            " adds no column to a deficient row");
-    }
-    if (opts.max_rounds < 1) {
-        LAP_THROW_DIMENSION("solve_implicit_assignment: max_rounds " +
-                            std::to_string(opts.max_rounds) + " runs no round");
-    }
+
+    if (!decided) out.status = "iteration_limit";
+
+    out.candidate_edges = cand.n_arcs();
+    out.edges_evaluated = cand.edges_evaluated();
 }
 
 }  // namespace implicit_detail
@@ -364,165 +502,95 @@ void tighten_matched_duals(const Source& src, const std::vector<int>& match,
 
 namespace implicit_detail {
 
-// The rounds themselves, over a problem whose arcs are already the ones the
-// candidate set names. Both entry points below run this body; what separates
-// them is whether those arcs were placed by this call or left behind by the
-// last one.
-//
-// `search` is whatever the source can be asked about a row without reading it,
-// and it is a parameter rather than a local because it depends on the columns'
-// geometry alone. A path over caliper values moves the cut and leaves the
-// geometry where it is, so one structure serves every point.
+// The unit-capacity assignment. A short master is Hall's question, answered by
+// a witness or by the columns that can repair it; the duals are the assignment
+// LP's, read off the potentials and put on its tight face; and the answer is
+// certified against that LP.
 template <class Source>
-ImplicitResult run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
-                          RowSearch<Source>& search, const ImplicitOptions& opts) {
-    ImplicitResult out;
-    out.possible_edges = src.nrow * src.ncol;
+struct AssignmentPolicy {
+    const Source& src;
+    FlowProblem& prob;
+    RowSearch<Source>& search;
+    const ImplicitOptions& opts;
+    ImplicitResult& out;
+    int64_t first_width;
+    AssignmentDuals duals_;
 
-    FlowOptions flow_opts = opts.flow;
-    flow_opts.return_potentials = true;
+    AssignmentPolicy(const Source& s, FlowProblem& p, RowSearch<Source>& rs,
+                     const ImplicitOptions& o, ImplicitResult& r)
+        : src(s), prob(p), search(rs), opts(o), out(r),
+          first_width(o.width > 0 ? o.width : implicit_seed_width(s.ncol)) {
+        out.seed_width = first_width;
+    }
 
-    // Every exit leaves the problem holding the master it stopped on. That is
-    // what makes the loop resumable: a caller with a further question about the
-    // same arcs -- the next point of a path -- puts it warm rather than cold.
-    const auto carry = [&prob](const FlowResult& master) {
-        prob.warm_flow      = master.flow;
-        prob.warm_potential = master.potential;
-    };
+    ShortfallAnswer on_shortfall(const FlowResult&, CandidateSet& cand, int64_t reseeds,
+                                 ImplicitRound& rec) {
+        const int width = static_cast<int>(ladder_width(first_width, reseeds, src.ncol));
+        const Clock::time_point t_seed = Clock::now();
+        FeasibilityRound seeded = feasibility_round(src, cand, width, search);
+        rec.pricing_seconds = seconds_since(t_seed);
+        rec.n_evaluated = seeded.n_evaluated;
 
-    // The ladder, over the deficient rows alone. A feasibility round costs the
-    // same per row whatever width it keeps, so a deficiency that survives a
-    // round is cheaper to attack wider than to attack again at the same width.
-    int width = opts.width > 0
-                    ? opts.width
-                    : static_cast<int>(implicit_seed_width(src.ncol));
-    out.seed_width = width;
-
-    bool decided = false;
-    for (int64_t round = 1; round <= opts.max_rounds; ++round) {
-        ImplicitRound rec;
-        rec.round = round;
-        rec.candidate_pairs = cand.n_arcs();
-        rec.block_arcs = prob.block_arcs[0].n_arcs;
-
-        const Clock::time_point t_master = Clock::now();
-        const FlowResult master = solve_min_cost_flow(prob, flow_opts);
-        rec.master_seconds = seconds_since(t_master);
-        rec.master_status  = master.status;
-        rec.flow_sent      = master.flow_sent;
-        rec.flow_required  = master.flow_required;
-        rec.master_cost    = master.total_cost;
-
-        // A master that ran out of augmentations has not answered the question,
-        // so nothing downstream can be read off it.
-        if (master.status == "iteration_limit") {
-            rec.kind = ImplicitRound::Kind::priced;
-            out.rounds.push_back(rec);
-            out.status = master.status;
-            carry(master);
-            decided = true;
-            break;
+        if (seeded.status == FeasibilityRound::Status::infeasible) {
+            out.status = "infeasible";
+            out.witness = std::move(seeded.witness);
+            out.witness_certified = seeded.certified;
+            return ShortfallAnswer::decided;
         }
-
-        if (master.flow_sent < master.flow_required) {
-            rec.kind = ImplicitRound::Kind::reseeded;
-
-            const Clock::time_point t_seed = Clock::now();
-            FeasibilityRound seeded = feasibility_round(src, cand, width, search);
-            rec.pricing_seconds = seconds_since(t_seed);
-            rec.n_evaluated = seeded.n_evaluated;
-
-            carry(master);
-
-            if (seeded.status == FeasibilityRound::Status::infeasible) {
-                out.rounds.push_back(rec);
-                out.status = "infeasible";
-                out.witness = std::move(seeded.witness);
-                out.witness_certified = seeded.certified;
-                decided = true;
-                break;
-            }
-            if (seeded.status == FeasibilityRound::Status::feasible) {
-                // Hall says the restricted arcs admit a row-perfect matching
-                // and the master placed fewer units than it has rows. Both read
-                // the same arc set, so one of them is wrong about it, and that
-                // is not a statement about the candidate set to carry on from.
-                LAP_THROW("solve_implicit_assignment: the master placed " +
-                          std::to_string(master.flow_sent) + " of " +
-                          std::to_string(master.flow_required) +
-                          " units over an arc set Hall's condition calls feasible");
-            }
-
-            rec.pairs_added = static_cast<int64_t>(seeded.added.size());
-            rec.arcs_added  = add_block_arcs(prob, 0, seeded.added);
-            out.rounds.push_back(rec);
-            width = static_cast<int>(
-                std::min<int64_t>(static_cast<int64_t>(width) * 2, src.ncol));
-            continue;
+        if (seeded.status == FeasibilityRound::Status::feasible) {
+            // Hall says the restricted arcs admit a row-perfect matching and the
+            // master placed fewer units than it has rows. Both read the same arc
+            // set, so one of them is wrong about it, and that is not a statement
+            // about the candidate set to carry on from.
+            LAP_THROW("solve_implicit_assignment: the master placed " +
+                      std::to_string(rec.flow_sent) + " of " +
+                      std::to_string(rec.flow_required) +
+                      " units over an arc set Hall's condition calls feasible");
         }
+        rec.pairs_added = static_cast<int64_t>(seeded.added.size());
+        rec.arcs_added  = add_block_arcs(prob, 0, seeded.added);
+        return ShortfallAnswer::reseeded;
+    }
 
-        // The master is feasible, so its potentials are duals to price with,
-        // once they are on the face the assignment LP asks for.
-        AssignmentDuals duals = map_assignment_duals(
-            prob, layout_of(prob, 0), master.flow, master.potential,
-            AssignmentEquality::Rows);
-        if (!duals.ok()) {
+    // The master is feasible, so its potentials are duals to price with, once
+    // they are on the face the assignment LP asks for.
+    void duals(const FlowResult& master, ImplicitRound& rec) {
+        duals_ = map_assignment_duals(prob, layout_of(prob, 0), master.flow,
+                                      master.potential, AssignmentEquality::Rows);
+        if (!duals_.ok()) {
             LAP_THROW("solve_implicit_assignment: the master placed its required "
                       "flow over unit-capacity arcs and the flow does not read "
                       "back as an assignment");
         }
-        rec.matched_slack = matched_slack(src, duals.match, duals.u, duals.v);
-        tighten_matched_duals(src, duals.match, duals.u, duals.v);
-
-        const Clock::time_point t_price = Clock::now();
-        const BlockPricing priced =
-            search.price(src, duals.u, duals.v, cand, opts.keep_per_row, opts.tol);
-        rec.pricing_seconds  = seconds_since(t_price);
-        rec.min_reduced_cost = priced.min_reduced_cost;
-        rec.n_violators      = priced.n_violators;
-        rec.n_evaluated      = priced.n_evaluated;
-
-        carry(master);
-
-        if (priced.n_violators == 0) {
-            // Nothing the master omits prices below -tol, so the duals are
-            // feasible for every pair of the complete problem. The certificate
-            // is that scan and a scan over the master's own pairs, which costs
-            // the candidates rather than the grid.
-            if (opts.certify) {
-                const ReducedCostScan held = scan_reduced_costs(
-                    CandidateGraph<Source>(src, cand), duals.u, duals.v, opts.tol);
-                cand.note_evaluated(held.n_admissible);
-                rec.n_evaluated += held.n_admissible;
-
-                out.certificate = certify_assignment(
-                    src, duals.match, duals.u, duals.v, opts.tol,
-                    merge_scans(held, omitted_scan(priced)));
-                out.certified = out.certificate.certified_optimal;
-            }
-            out.status = master.status;
-            out.match = duals.match;
-            out.u = duals.u;
-            out.v = duals.v;
-            out.total_cost = master.total_cost;
-            out.rounds.push_back(rec);
-            decided = true;
-            break;
-        }
-
-        const std::vector<CandidateSet::Pair> added =
-            cand.add_pairs(violator_pairs(priced.violators));
-        rec.pairs_added = static_cast<int64_t>(added.size());
-        rec.arcs_added  = add_block_arcs(prob, 0, added);
-        out.rounds.push_back(rec);
+        rec.matched_slack = matched_slack(src, duals_.match, duals_.u, duals_.v);
+        tighten_matched_duals(src, duals_.match, duals_.u, duals_.v);
     }
 
-    if (!decided) out.status = "iteration_limit";
+    const std::vector<double>& u() const { return duals_.u; }
+    const std::vector<double>& v() const { return duals_.v; }
+    double price_tol(const FlowResult&) const { return opts.tol; }
 
-    out.candidate_edges = cand.n_arcs();
-    out.edges_evaluated = cand.edges_evaluated();
-    return out;
-}
+    // The certificate is the omitted scan and a scan over the master's own
+    // pairs, which costs the candidates rather than the grid.
+    void finish(const FlowResult& master, CandidateSet& cand, const BlockPricing& priced,
+                ImplicitRound& rec) {
+        if (opts.certify) {
+            const ReducedCostScan held = scan_reduced_costs(
+                CandidateGraph<Source>(src, cand), duals_.u, duals_.v, opts.tol);
+            cand.note_evaluated(held.n_admissible);
+            rec.n_evaluated += held.n_admissible;
+
+            out.certificate = certify_assignment(
+                src, duals_.match, duals_.u, duals_.v, opts.tol,
+                merge_scans(held, omitted_scan(priced)));
+            out.certified = out.certificate.certified_optimal;
+        }
+        out.match = duals_.match;
+        out.u = duals_.u;
+        out.v = duals_.v;
+        out.total_cost = master.total_cost;
+    }
+};
 
 }  // namespace implicit_detail
 
@@ -549,7 +617,10 @@ ImplicitResult start_implicit_assignment(const Source& src, FlowProblem& prob,
                                          const ImplicitOptions& opts = ImplicitOptions()) {
     implicit_detail::require_shape(src, prob, cand, opts, /*expect_expanded=*/false);
     expand_block_subset(prob, 0, cand);
-    return implicit_detail::run_rounds(src, prob, cand, search, opts);
+    ImplicitResult out;
+    implicit_detail::AssignmentPolicy<Source> policy(src, prob, search, opts, out);
+    implicit_detail::run_rounds(src, prob, cand, search, opts, policy, out);
+    return out;
 }
 
 // Put the same question to a problem a previous call already answered: its
@@ -568,7 +639,10 @@ ImplicitResult continue_implicit_assignment(const Source& src, FlowProblem& prob
                                             RowSearch<Source>& search,
                                             const ImplicitOptions& opts = ImplicitOptions()) {
     implicit_detail::require_shape(src, prob, cand, opts, /*expect_expanded=*/true);
-    return implicit_detail::run_rounds(src, prob, cand, search, opts);
+    ImplicitResult out;
+    implicit_detail::AssignmentPolicy<Source> policy(src, prob, search, opts, out);
+    implicit_detail::run_rounds(src, prob, cand, search, opts, policy, out);
+    return out;
 }
 
 // One problem, one answer, and the row structure built here because nothing
@@ -580,6 +654,373 @@ ImplicitResult solve_implicit_assignment(const Source& src,
                                          const ImplicitOptions& opts = ImplicitOptions()) {
     RowSearch<Source> search(src);
     return start_implicit_assignment(src, prob, cand, search, opts);
+}
+
+// ---------------------------------------------------------------------------
+// Any design with one block of pair arcs
+// ---------------------------------------------------------------------------
+//
+// A compiled design other than the assignment -- a full matching, a ratio, a
+// variable ratio -- is the same three-layer network with other bounds on the
+// source and sink arcs, and its pair arcs are still [0, 1] over one cost source.
+// Two things change, and neither is the pricing.
+//
+// The duals are the potentials themselves. An arc from row node r to column node
+// c reduces to cost + pi(r) - pi(c), which is the pricer's c - u_i - v_j with
+// u_i = -pi(row_i) and v_j = pi(col_j). A pair the master omits sits at its
+// lower bound of zero, so the complete problem is optimal exactly when no
+// omitted pair prices below zero against the master's potentials: every arc
+// the master holds already satisfies its own slackness, and the omitted ones
+// are the only arcs left to ask.
+//
+// Feasibility is a maximum flow rather than a matching of every row. A master
+// short of its flow leaves some nodes with excess, and the nodes it can still
+// reach in the residual graph form a set R holding no deficit node, since a
+// deficit inside R would be an augmenting path. An omitted pair could raise the
+// flow only by leaving R: a row inside it and a column outside. So a round asks
+// for exactly those pairs, the cheapest `width` per row inside R, or per column
+// outside it when that side is the smaller, and when there are none the flow the
+// master placed is the maximum over every arc the source admits, not only over
+// the ones it holds. The master's potentials leave every residual arc priced at
+// or above zero, and the solver settles a shortfall as the cheapest flow of its
+// value, so pricing the omitted pairs then decides the cost of that maximum
+// flow the way it decides the cost of a complete one.
+
+// The source with its rows and columns exchanged, which is what a question about
+// a column's cheapest rows is put to. The primary template wraps any source; a
+// LazyCostMatrix is transposed into another one, so the question reaches the
+// tree its specialisation builds over the rows.
+template <class Source>
+struct TransposedSource {
+    const Source* src = nullptr;
+    int64_t nrow = 0;
+    int64_t ncol = 0;
+
+    explicit TransposedSource(const Source& s) : src(&s), nrow(s.ncol), ncol(s.nrow) {}
+
+    double at(int64_t i, int64_t j) const { return src->at(j, i); }
+    bool allowed(int64_t i, int64_t j) const { return src->allowed(j, i); }
+    bool admissible(int64_t i, int64_t j, double& cost) const {
+        return cost_if_allowed(*src, j, i, cost);
+    }
+};
+
+template <class Source>
+struct Transposition {
+    using type = TransposedSource<Source>;
+    static type of(const Source& s) { return type(s); }
+};
+
+template <>
+struct Transposition<LazyCostMatrix> {
+    using type = LazyCostMatrix;
+    static LazyCostMatrix of(const LazyCostMatrix& s) { return s.transposed(); }
+};
+
+struct DesignResult : ImplicitSearch {
+    // Aligned to the problem's arcs, which `prob` holds after the call, and one
+    // potential per node in the solver's gauge. Empty when no master was solved.
+    std::vector<int64_t> flow;
+    std::vector<double>  potential;
+    double  total_cost    = 0.0;
+    int64_t flow_sent     = 0;
+    int64_t flow_required = 0;
+
+    // The master's own certificate, over the arcs it holds.
+    FlowCertificate flow_certificate;
+
+    // The omitted pairs, priced against the same potentials at `price_tol`. The
+    // floor bounds every omitted admissible pair, the ones a pruning pricer
+    // never evaluated included.
+    double omitted_min_reduced_cost = std::numeric_limits<double>::infinity();
+    double omitted_proven_floor     = std::numeric_limits<double>::infinity();
+    double price_tol = 0.0;
+
+    // Whether the flow placed is the maximum over every pair the source admits:
+    // true when it met the required flow, and when a short master's residual
+    // cut had no admissible pair crossing it.
+    bool max_flow_certified = false;
+
+    // The master's certificate holds and no omitted pair prices below
+    // -price_tol, so the flow is optimal for the complete problem.
+    bool certified = false;
+};
+
+namespace implicit_detail {
+
+// Which nodes a flow can still reach from the excess it left unplaced, over the
+// residual graph of the arcs the problem holds.
+inline std::vector<char> residual_reach(const FlowProblem& prob,
+                                        const std::vector<int64_t>& flow) {
+    const int32_t n = prob.n_nodes;
+    const std::size_t n_arcs = prob.arcs.size();
+    std::vector<int64_t> left(prob.supply.begin(), prob.supply.end());
+    std::vector<int32_t> deg(static_cast<std::size_t>(n) + 1, 0);
+    for (std::size_t a = 0; a < n_arcs; ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        left[static_cast<std::size_t>(arc.tail)] -= flow[a];
+        left[static_cast<std::size_t>(arc.head)] += flow[a];
+        ++deg[static_cast<std::size_t>(arc.tail) + 1];
+        ++deg[static_cast<std::size_t>(arc.head) + 1];
+    }
+    for (int32_t v = 0; v < n; ++v) {
+        deg[static_cast<std::size_t>(v) + 1] += deg[static_cast<std::size_t>(v)];
+    }
+    std::vector<std::size_t> adj(2 * n_arcs);
+    std::vector<int32_t> cursor(deg.begin(), deg.end() - 1);
+    for (std::size_t a = 0; a < n_arcs; ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        adj[static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.tail)]++)] = a;
+        adj[static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.head)]++)] = a;
+    }
+
+    std::vector<char> reached(static_cast<std::size_t>(n), 0);
+    std::vector<int32_t> queue;
+    for (int32_t v = 0; v < n; ++v) {
+        if (left[static_cast<std::size_t>(v)] > 0) {
+            reached[static_cast<std::size_t>(v)] = 1;
+            queue.push_back(v);
+        }
+    }
+    for (std::size_t q = 0; q < queue.size(); ++q) {
+        const int32_t v = queue[q];
+        for (int32_t k = deg[static_cast<std::size_t>(v)];
+             k < deg[static_cast<std::size_t>(v) + 1]; ++k) {
+            const std::size_t a = adj[static_cast<std::size_t>(k)];
+            const FlowArc& arc = prob.arcs[a];
+            int32_t to = -1;
+            if (arc.tail == v && flow[a] < arc.upper) to = arc.head;
+            else if (arc.head == v && flow[a] > arc.lower) to = arc.tail;
+            if (to < 0 || reached[static_cast<std::size_t>(to)]) continue;
+            reached[static_cast<std::size_t>(to)] = 1;
+            queue.push_back(to);
+        }
+    }
+    return reached;
+}
+
+// The flow a problem's lower bounds require and the part of it `flow` places,
+// counted from the problem rather than from the start a solve was given. A solve
+// reports both relative to its starting flow, which a warm start moves.
+inline void placed_value(const FlowProblem& prob, const std::vector<int64_t>& flow,
+                         int64_t& sent, int64_t& required) {
+    std::vector<int64_t> d0(prob.supply.begin(), prob.supply.end());
+    std::vector<int64_t> left(prob.supply.begin(), prob.supply.end());
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        d0[static_cast<std::size_t>(arc.tail)] -= arc.lower;
+        d0[static_cast<std::size_t>(arc.head)] += arc.lower;
+        left[static_cast<std::size_t>(arc.tail)] -= flow[a];
+        left[static_cast<std::size_t>(arc.head)] += flow[a];
+    }
+    required = 0;
+    int64_t unplaced = 0;
+    for (std::size_t v = 0; v < d0.size(); ++v) {
+        if (d0[v] > 0) required += d0[v];
+        if (left[v] > 0) unplaced += left[v];
+    }
+    sent = required - unplaced;
+}
+
+template <class Source>
+struct DesignPolicy {
+    using TSource = typename Transposition<Source>::type;
+
+    const Source& src;
+    FlowProblem& prob;
+    RowSearch<Source>& search;
+    const ImplicitOptions& opts;
+    DesignResult& out;
+
+    // Built the first time a round asks a column for its cheapest rows.
+    std::unique_ptr<TSource> t_src;
+    std::unique_ptr<RowSearch<TSource>> t_search;
+
+    std::vector<double> u_, v_;
+
+    DesignPolicy(const Source& s, FlowProblem& p, RowSearch<Source>& rs,
+                 const ImplicitOptions& o, DesignResult& r)
+        : src(s), prob(p), search(rs), opts(o), out(r) {
+        out.seed_width = o.width > 0 ? o.width : implicit_seed_width(s.ncol);
+    }
+
+    int64_t width_for(int64_t dim, int64_t reseeds) const {
+        const int64_t first = opts.width > 0 ? opts.width : implicit_seed_width(dim);
+        return ladder_width(first, reseeds, dim);
+    }
+
+    ShortfallAnswer on_shortfall(const FlowResult& master, CandidateSet& cand,
+                                 int64_t reseeds, ImplicitRound& rec) {
+        const Clock::time_point t_cut = Clock::now();
+        const BipartiteBlock& blk = prob.blocks[0];
+        const std::vector<char> reached = residual_reach(prob, master.flow);
+
+        std::vector<int32_t> rows_in;
+        for (int64_t i = 0; i < src.nrow; ++i) {
+            if (reached[static_cast<std::size_t>(blk.row_base + i)]) {
+                rows_in.push_back(static_cast<int32_t>(i));
+            }
+        }
+        std::vector<int32_t> cols_out;
+        for (int64_t j = 0; j < src.ncol; ++j) {
+            if (!reached[static_cast<std::size_t>(blk.col_base + j)]) {
+                cols_out.push_back(static_cast<int32_t>(j));
+            }
+        }
+
+        std::vector<CandidateSet::Pair> want;
+        RowScanWork work;
+        if (!rows_in.empty() && !cols_out.empty()) {
+            if (rows_in.size() <= cols_out.size()) {
+                // Each row inside R, over the columns outside it that the row
+                // does not already hold.
+                std::vector<char> skip(static_cast<std::size_t>(src.ncol), 0);
+                for (int64_t j = 0; j < src.ncol; ++j) {
+                    skip[static_cast<std::size_t>(j)] =
+                        reached[static_cast<std::size_t>(blk.col_base + j)];
+                }
+                const int width = static_cast<int>(width_for(src.ncol, reseeds));
+                detail::RowTopK keep(static_cast<int64_t>(rows_in.size()), width);
+                for (std::size_t t = 0; t < rows_in.size(); ++t) {
+                    const int64_t i = rows_in[t];
+                    for (const int32_t* p = cand.row_begin(i); p != cand.row_end(i); ++p) {
+                        skip[static_cast<std::size_t>(*p)] = 1;
+                    }
+                    search.cheapest_outside(src, i, skip, keep, static_cast<int64_t>(t), work);
+                    for (const int32_t* p = cand.row_begin(i); p != cand.row_end(i); ++p) {
+                        skip[static_cast<std::size_t>(*p)] =
+                            reached[static_cast<std::size_t>(blk.col_base + *p)];
+                    }
+                }
+                keep.emit([&](int32_t t, int32_t j, double) {
+                    want.emplace_back(rows_in[static_cast<std::size_t>(t)], j);
+                });
+            } else {
+                // Each column outside R, over the rows inside it that do not
+                // already hold the column.
+                if (!t_search) {
+                    t_src.reset(new TSource(Transposition<Source>::of(src)));
+                    t_search.reset(new RowSearch<TSource>(*t_src));
+                }
+                std::vector<std::vector<int32_t>> holders(static_cast<std::size_t>(src.ncol));
+                for (int64_t i = 0; i < src.nrow; ++i) {
+                    for (const int32_t* p = cand.row_begin(i); p != cand.row_end(i); ++p) {
+                        holders[static_cast<std::size_t>(*p)].push_back(static_cast<int32_t>(i));
+                    }
+                }
+                std::vector<char> skip(static_cast<std::size_t>(src.nrow), 0);
+                for (int64_t i = 0; i < src.nrow; ++i) {
+                    skip[static_cast<std::size_t>(i)] =
+                        !reached[static_cast<std::size_t>(blk.row_base + i)];
+                }
+                const int width = static_cast<int>(width_for(src.nrow, reseeds));
+                detail::RowTopK keep(static_cast<int64_t>(cols_out.size()), width);
+                for (std::size_t t = 0; t < cols_out.size(); ++t) {
+                    const int32_t j = cols_out[t];
+                    for (int32_t i : holders[static_cast<std::size_t>(j)]) {
+                        skip[static_cast<std::size_t>(i)] = 1;
+                    }
+                    t_search->cheapest_outside(*t_src, j, skip, keep,
+                                               static_cast<int64_t>(t), work);
+                    for (int32_t i : holders[static_cast<std::size_t>(j)]) {
+                        skip[static_cast<std::size_t>(i)] =
+                            !reached[static_cast<std::size_t>(blk.row_base + i)];
+                    }
+                }
+                keep.emit([&](int32_t t, int32_t i, double) {
+                    want.emplace_back(i, cols_out[static_cast<std::size_t>(t)]);
+                });
+            }
+        }
+        cand.note_evaluated(work.n_evaluated);
+        rec.n_evaluated = work.n_evaluated;
+        rec.pricing_seconds = seconds_since(t_cut);
+
+        if (want.empty()) {
+            out.max_flow_certified = true;
+            return ShortfallAnswer::proceed;
+        }
+        const std::vector<CandidateSet::Pair> added = cand.add_pairs(want);
+        rec.pairs_added = static_cast<int64_t>(added.size());
+        rec.arcs_added  = add_block_arcs(prob, 0, added);
+        out.max_flow_certified = false;
+        return ShortfallAnswer::reseeded;
+    }
+
+    void duals(const FlowResult& master, ImplicitRound&) {
+        const BipartiteBlock& blk = prob.blocks[0];
+        u_.resize(static_cast<std::size_t>(src.nrow));
+        v_.resize(static_cast<std::size_t>(src.ncol));
+        for (int64_t i = 0; i < src.nrow; ++i) {
+            u_[static_cast<std::size_t>(i)] =
+                -master.potential[static_cast<std::size_t>(blk.row_base + i)];
+        }
+        for (int64_t j = 0; j < src.ncol; ++j) {
+            v_[static_cast<std::size_t>(j)] =
+                master.potential[static_cast<std::size_t>(blk.col_base + j)];
+        }
+        if (master.flow_sent == master.flow_required) out.max_flow_certified = true;
+    }
+
+    const std::vector<double>& u() const { return u_; }
+    const std::vector<double>& v() const { return v_; }
+
+    // A reduced cost is a cost and two potentials, so the resolution it has is
+    // set by the largest of them, which is the scale certify_flow() reads every
+    // arc against.
+    double price_tol(const FlowResult& master) const {
+        double scale = 1.0;
+        for (double p : master.potential) scale = std::max(scale, std::abs(p));
+        return opts.tol * scale;
+    }
+
+    void finish(const FlowResult& master, CandidateSet&, const BlockPricing& priced,
+                ImplicitRound&) {
+        out.flow = master.flow;
+        out.potential = master.potential;
+        out.total_cost = master.total_cost;
+        placed_value(prob, master.flow, out.flow_sent, out.flow_required);
+        out.omitted_min_reduced_cost = priced.min_reduced_cost;
+        out.omitted_proven_floor = priced.proven_floor;
+        out.price_tol = price_tol(master);
+        if (opts.certify) {
+            out.flow_certificate =
+                certify_flow(prob, master.flow, master.potential, opts.tol);
+            out.certified = out.flow_certificate.certified_optimal &&
+                            !(priced.proven_floor < -out.price_tol);
+        }
+    }
+};
+
+}  // namespace implicit_detail
+
+// Solve a compiled design with one block of [0, 1] pair arcs backed by `src`,
+// over the complete implicit problem, by growing `cand` until the pairs it
+// holds carry an optimal flow for all of them. `prob` is unexpanded, and is left
+// holding the last master solved.
+template <class Source>
+DesignResult solve_implicit_design(const Source& src, FlowProblem& prob,
+                                   CandidateSet& cand, RowSearch<Source>& search,
+                                   const ImplicitOptions& opts = ImplicitOptions()) {
+    implicit_detail::require_block(src, prob, cand, opts, /*expect_expanded=*/false,
+                                   "solve_implicit_design");
+    expand_block_subset(prob, 0, cand);
+    DesignResult out;
+    implicit_detail::DesignPolicy<Source> policy(src, prob, search, opts, out);
+    implicit_detail::run_rounds(src, prob, cand, search, opts, policy, out);
+    if (out.flow.empty() && !prob.warm_flow.empty()) {
+        out.flow = prob.warm_flow;
+        out.potential = prob.warm_potential;
+    }
+    return out;
+}
+
+template <class Source>
+DesignResult solve_implicit_design(const Source& src, FlowProblem& prob,
+                                   CandidateSet& cand,
+                                   const ImplicitOptions& opts = ImplicitOptions()) {
+    RowSearch<Source> search(src);
+    return solve_implicit_design(src, prob, cand, search, opts);
 }
 
 }  // namespace lap

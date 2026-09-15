@@ -131,6 +131,15 @@ public:
     // and the caller that sweeps is the one that knows which it is doing.
     void set_max_distance(double d) { max_distance_ = d; }
 
+    // The same problem with its rows and columns exchanged. Every distance the
+    // source measures is a function of the difference of two points, and
+    // negating that difference changes none of them, calipers included, so
+    // transposed().at(j, i) is at(i, j) to the bit.
+    LazyCostMatrix transposed() const {
+        return LazyCostMatrix(right_, left_, n_vars_, metric_, inv_cov_, max_distance_,
+                              calipers_, negate_);
+    }
+
     const double* left_row(int64_t i) const {
         return &left_[static_cast<size_t>(i * n_vars_)];
     }

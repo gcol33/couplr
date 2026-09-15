@@ -3,8 +3,8 @@
 # ==============================================================================
 # src/solvers/solve_csa.cpp runs the epsilon-scaling auction: the same
 # epsilon-scaling outer loop as solve_auction_scaled_impl, with alpha = 7 and
-# eps_final = min(1e-6, 1/n^2), around the same bid-by-reduced-cost inner loop
-# that lowers a price by gamma + eps. Goldberg-Kennedy's cost-scaling
+# the epsilon schedule read off the costs, around the same bid-by-reduced-cost
+# inner loop that lowers a price by gamma + eps. Goldberg-Kennedy's cost-scaling
 # assignment discharges excess with push and relabel on a residual graph
 # instead; assignment(method = "push_relabel") runs that inner loop.
 #
@@ -22,8 +22,9 @@ trace_csa <- function(cost, maximize = FALSE, ...) {
     "Epsilon-scaling auction (Bertsekas & Eckstein 1988), which is what ",
     "assignment(method = \"csa\") dispatches: the same solver as ",
     "method = \"auction_scaled\". The outer structure is cost scaling - a large ",
-    "eps for big moves, refined toward eps < 1/n where an eps-optimal answer on ",
-    "integer costs is optimal - and the inner loop is the auction, where an ",
+    "eps for big moves, refined toward a terminal eps set by the spacing of the ",
+    "cheapest costs, after which a repair step makes the assignment optimal - ",
+    "and the inner loop is the auction, where an ",
     "unassigned person bids and the price of the object it takes falls by the ",
     "bid margin plus eps. Goldberg-Kennedy's cost-scaling assignment keeps that ",
     "outer structure and discharges excess with push and relabel instead; ",

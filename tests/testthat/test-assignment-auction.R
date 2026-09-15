@@ -95,6 +95,27 @@ test_that("the lazy auction certifies optimal on distances finer than its final 
   expect_true(verify_assignment(res, dense)$certified_optimal)
 })
 
+test_that("the auction's bids are unchanged when every cost is multiplied by a constant", {
+  set.seed(13)
+  for (gen in list(function(k) runif(k), function(k) rlnorm(k, sdlog = 3),
+                   function(k) as.double(sample.int(5L, k, replace = TRUE)))) {
+    cost <- matrix(gen(80 * 80), 80, 80)
+    base <- couplr:::lap_solve_auction_gs(cost, maximize = FALSE)
+    scaled <- couplr:::lap_solve_auction_gs(cost * 2^20, maximize = FALSE)
+    expect_identical(scaled$match, base$match)
+    expect_identical(scaled$bids, base$bids)
+  }
+})
+
+test_that("the auction certifies optimal on a rectangular problem at a large cost magnitude", {
+  set.seed(14)
+  cost <- matrix(runif(60 * 120), 60, 120) * 1e8
+  for (method in c("auction", "auction_gs", "csa")) {
+    res <- assignment(cost, method = method)
+    expect_true(verify_assignment(res, cost)$certified_optimal, info = method)
+  }
+})
+
 test_that("auction_scaled errors on forbidden row", {
   M <- matrix(1, 4, 6)
   M[4,] <- NA

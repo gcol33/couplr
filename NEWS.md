@@ -313,11 +313,16 @@ one asked, so the version that reaches CRAN is this one.
   disagreed with the optimum in 40 of 40 replicates, once returning 77329.983
   against an optimum of 0.0013427418.
 
-  `"csa"` now reads the costs as supplied. It runs the epsilon-scaling core
-  that `"auction_scaled"` runs at its default schedule, and that core ends in
-  the repair step described under the auction solvers above, which returns an
-  optimal assignment on real-valued costs without converting them to integers.
-  There is no resolution to lose, so no cost range is refused.
+  `"csa"` now reads the costs as supplied and runs Goldberg and Kennedy's
+  CSA-Q, which the earlier code did not implement: it was an epsilon-scaling
+  auction on the rounded costs. Each refine divides epsilon by 10, clears the
+  matching and discharges the rows from a stack by double-push, and the
+  fourth-best heuristic keeps each row's three cheapest arcs so that most
+  double-pushes skip the scan of the row. The phases share the epsilon-scaling
+  core of the auction solvers and end in the repair step described under them
+  above, which returns an optimal assignment on real-valued costs without
+  converting them to integers. There is no resolution to lose, so no cost
+  range is refused.
 
   `verify_assignment()` returned `FALSE` on every one of the wrong answers, so
   a caller who verified was never misled; a caller who read `status` was.

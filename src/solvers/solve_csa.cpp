@@ -2,15 +2,18 @@
 // Cost-scaling assignment entry point - NO Rcpp dependencies
 
 #include "solve_csa.h"
-#include "solve_auction.h"
 
 namespace lap {
 
-LapResult solve_csa(const CostMatrix& cost, bool maximize) {
-    return solve_auction_scaled_params(cost, maximize,
-                                       /*initial_epsilon_factor=*/1.0,
-                                       /*alpha=*/7.0,
-                                       /*final_epsilon=*/-1.0);
+// Goldberg and Kennedy chose a scale factor of 10 and report running times
+// within a factor of 2 for factors between 4 and 40.
+static constexpr double CSA_SCALE_FACTOR = 10.0;
+
+LapResult solve_csa(const CostMatrix& cost, bool maximize, EpsilonScalingStats* stats) {
+    EpsilonScalingOptions options;
+    options.alpha = CSA_SCALE_FACTOR;
+    options.row_search = RowSearch::FourthBest;
+    return solve_epsilon_scaling(cost, maximize, options, stats);
 }
 
 }  // namespace lap

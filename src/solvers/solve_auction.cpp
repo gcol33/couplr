@@ -22,6 +22,8 @@
 //   - solve_auction        : queue drain, default schedule
 //   - solve_auction_gs     : Gauss-Seidel sweep, default schedule
 //   - solve_auction_scaled : queue drain with a caller-chosen alpha schedule
+//   - solve_csa            : Goldberg-Kennedy CSA-Q, queue drain with alpha 10
+//                            and the fourth-best row search (solve_csa.cpp)
 //
 // The dense (CostMatrix) and lazy (LazyCostMatrix) entry points share one
 // templated bidding loop, auction_core_impl<CostSourceT>. Dense padding
@@ -124,49 +126,60 @@ static EpsilonSchedule epsilon_schedule(const CostSourceT& work, int real_rows,
     return EpsilonSchedule{max_abs_cost, eps_start, eps_final};
 }
 
-template <typename CostSourceT>
 struct AuctionCoreResult {
     std::vector<int> a_of_i;  // padded size n: person -> object (0-based)
     long long iter;
+    long long row_scans;
 };
 
-// Shared epsilon-scaling forward-auction bidding loop. `work` must already be
+// Number of arcs whose partial reduced cost the fourth-best heuristic ranks
+// on a scan; it keeps all but the last.
+static constexpr int KTH_BEST = 4;
+
+// Shared epsilon-scaling bidding loop. `work` must already be
 // square, padded, and "prepared" (forbidden reads as BIG via at(), negated
 // if the caller wants maximize) -- CostMatrix via prepare_for_solve(), or a
 // LazyCostMatrix/PaddedCostView<LazyCostMatrix> which bake that in at
 // construction. Returns the assignment over ALL padded rows; callers extract
 // the real (unpadded) rows and verify/report using their own original-cost
 // object.
+//
+// A bid is Goldberg and Kennedy's double-push with implicit row prices: the
+// row takes its cheapest column w, displacing w's holder onto the stack, and
+// w's price drops to the row's second-cheapest reduced cost less eps. Prices
+// never rise, within a phase or across phases, which is what lets the
+// fourth-best search keep a row's cached arcs between its bids.
 template <typename CostSourceT>
-static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
-                                                         int real_rows,
-                                                         bool gauss_seidel,
-                                                         double initial_epsilon_factor,
-                                                         double alpha,
-                                                         double final_epsilon) {
+static AuctionCoreResult auction_core_impl(const CostSourceT& work, int real_rows,
+                                           const EpsilonScalingOptions& options) {
     const int n = static_cast<int>(work.nrow);
     const int m = static_cast<int>(work.ncol);
+    const double inf = std::numeric_limits<double>::infinity();
 
     ensure_each_row_has_option(work);
     std::vector<int64_t> row_ptr;
     std::vector<int> cols;
     build_allowed(work, row_ptr, cols);
 
-    const EpsilonSchedule schedule =
-        epsilon_schedule(work, real_rows, row_ptr, cols, initial_epsilon_factor);
+    const EpsilonSchedule schedule = epsilon_schedule(work, real_rows, row_ptr, cols,
+                                                      options.initial_epsilon_factor);
     const double max_abs_cost = schedule.max_abs_cost;
+    const double alpha = options.alpha;
     double epsilon = schedule.start;
-    const double eps_final = (final_epsilon > 0.0) ? final_epsilon : schedule.terminal;
+    const double eps_final =
+        (options.final_epsilon > 0.0) ? options.final_epsilon : schedule.terminal;
     const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
 
     std::vector<double> price(m, 0.0);
     std::vector<int> a_of_i(n, -1), i_of_j(m, -1);
+    long long row_scans = 0;
 
     // Minimize reduced cost (cost - price); the bidder decreases the winning
     // object's price so contenders see it as more expensive.
     auto find_best = [&](int i, double& best_rc, double& second_rc, int& best_j) {
-        best_rc = std::numeric_limits<double>::infinity();
-        second_rc = std::numeric_limits<double>::infinity();
+        ++row_scans;
+        best_rc = inf;
+        second_rc = inf;
         best_j = -1;
         for (int64_t k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
             int j = cols[k];
@@ -176,6 +189,72 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
         }
     };
 
+    // Fourth-best cache: per row, the adjacency positions of up to
+    // KTH_BEST - 1 arcs in ascending order of reduced cost at the last scan,
+    // and the KTH_BEST-th smallest reduced cost then (inf when the row has no
+    // more arcs than it keeps, so the cache holds the whole row).
+    const bool fourth_best = options.row_search == RowSearch::FourthBest;
+    std::vector<int64_t> kept_arc(fourth_best ? static_cast<size_t>(n) * (KTH_BEST - 1) : 0);
+    std::vector<int> kept_count(fourth_best ? n : 0, 0);
+    std::vector<double> kth_rc(fourth_best ? n : 0, inf);
+
+    auto scan_keep = [&](int i, double& best_rc, double& second_rc, int& best_j) {
+        ++row_scans;
+        double rank_rc[KTH_BEST];
+        int64_t rank_arc[KTH_BEST];
+        int held = 0;
+        for (int64_t k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+            const double rc = work.at(i, cols[k]) - price[cols[k]];
+            if (held == KTH_BEST && rc >= rank_rc[KTH_BEST - 1]) continue;
+            int p = (held < KTH_BEST) ? held++ : KTH_BEST - 1;
+            while (p > 0 && rank_rc[p - 1] > rc) {
+                rank_rc[p] = rank_rc[p - 1];
+                rank_arc[p] = rank_arc[p - 1];
+                --p;
+            }
+            rank_rc[p] = rc;
+            rank_arc[p] = k;
+        }
+        const int keep = std::min(held, KTH_BEST - 1);
+        const size_t base = static_cast<size_t>(i) * (KTH_BEST - 1);
+        for (int q = 0; q < keep; ++q) kept_arc[base + q] = rank_arc[q];
+        kept_count[i] = keep;
+        kth_rc[i] = (held == KTH_BEST) ? rank_rc[KTH_BEST - 1] : inf;
+
+        best_rc = rank_rc[0];
+        best_j = cols[rank_arc[0]];
+        second_rc = (held >= 2) ? rank_rc[1] : inf;
+    };
+
+    auto find_best_kept = [&](int i, double& best_rc, double& second_rc, int& best_j) {
+        const int keep = kept_count[i];
+        if (keep > 0) {
+            const size_t base = static_cast<size_t>(i) * (KTH_BEST - 1);
+            const double bound = kth_rc[i];
+            best_rc = inf;
+            second_rc = inf;
+            int64_t best_k = -1;
+            int at_or_below = 0;
+            for (int q = 0; q < keep; ++q) {
+                const int64_t k = kept_arc[base + q];
+                const double rc = work.at(i, cols[k]) - price[cols[k]];
+                if (rc <= bound) ++at_or_below;
+                if (rc < best_rc || (rc == best_rc && k < best_k)) {
+                    second_rc = best_rc;
+                    best_rc = rc;
+                    best_k = k;
+                } else if (rc < second_rc) {
+                    second_rc = rc;
+                }
+            }
+            if (at_or_below >= 2 || bound == inf) {
+                best_j = cols[best_k];
+                return;
+            }
+        }
+        scan_keep(i, best_rc, second_rc, best_j);
+    };
+
     double eps_cur = eps_final;
     const long long max_iter = static_cast<long long>(n) * m * 200 + 1000;
     long long iter = 0;
@@ -183,7 +262,8 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
     auto bid_person = [&](int i) -> int {
         double best_rc, second_rc;
         int best_j;
-        find_best(i, best_rc, second_rc, best_j);
+        if (fourth_best) find_best_kept(i, best_rc, second_rc, best_j);
+        else find_best(i, best_rc, second_rc, best_j);
         if (best_j < 0) LAP_THROW_INFEASIBLE("Person has no valid objects");
 
         double gamma;
@@ -212,7 +292,7 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
         std::fill(a_of_i.begin(), a_of_i.end(), -1);
         std::fill(i_of_j.begin(), i_of_j.end(), -1);
 
-        if (!gauss_seidel) {
+        if (!options.gauss_seidel) {
             std::vector<int> queue;
             queue.reserve(n);
             for (int i = 0; i < n; ++i) queue.push_back(i);
@@ -243,7 +323,7 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
 
     detail::repair_eps_optimal(work,row_ptr, cols, i_of_j, a_of_i, price);
 
-    return AuctionCoreResult<CostSourceT>{std::move(a_of_i), iter};
+    return AuctionCoreResult{std::move(a_of_i), iter, row_scans};
 }
 
 // Run the bidding core and name a guard trip correctly.
@@ -256,16 +336,11 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
 // [[1, Inf], [1, Inf]] is -- so the matching is checked here, on the path
 // that already failed. A run that converged pays nothing for this.
 template <typename CostSourceT, typename OriginalT>
-static AuctionCoreResult<CostSourceT> run_auction_core(const CostSourceT& work,
-                                                       const OriginalT& original,
-                                                       bool gauss_seidel,
-                                                       double initial_epsilon_factor,
-                                                       double alpha,
-                                                       double final_epsilon) {
+static AuctionCoreResult run_auction_core(const CostSourceT& work,
+                                          const OriginalT& original,
+                                          const EpsilonScalingOptions& options) {
     try {
-        return auction_core_impl(work, static_cast<int>(original.nrow), gauss_seidel,
-                                 initial_epsilon_factor,
-                                 alpha, final_epsilon);
+        return auction_core_impl(work, static_cast<int>(original.nrow), options);
     } catch (const ConvergenceException&) {
         if (!has_valid_matching_view(original)) {
             LAP_THROW_INFEASIBLE("Could not find full matching: the allowed "
@@ -275,23 +350,17 @@ static AuctionCoreResult<CostSourceT> run_auction_core(const CostSourceT& work,
     }
 }
 
-// Shared epsilon-scaling forward-auction core (dense CostMatrix).
-//   initial_epsilon_factor : multiplies the starting epsilon
-//   alpha                  : epsilon reduction factor per phase (> 1)
-//   final_epsilon          : terminal epsilon (<= 0 selects epsilon_schedule())
-//   gauss_seidel           : false drains a queue of unmatched persons; true
-//                            sweeps all persons each round until none move
+// Shared epsilon-scaling core (dense CostMatrix); see EpsilonScalingOptions.
 // Returns a LapResult over the ORIGINAL (unpadded) rows.
 static LapResult auction_core(const CostMatrix& cost, bool maximize,
-                              double initial_epsilon_factor, double alpha,
-                              double final_epsilon, bool gauss_seidel,
-                              long long* out_bids = nullptr) {
+                              EpsilonScalingOptions options,
+                              EpsilonScalingStats* stats = nullptr) {
     const int n0 = static_cast<int>(cost.nrow);
     const int m0 = static_cast<int>(cost.ncol);
 
     if (n0 == 0) return LapResult({}, 0.0, "optimal");
     lap::require_rows_fit_cols(n0, m0);
-    if (alpha <= 1.0) alpha = 7.0;
+    if (options.alpha <= 1.0) options.alpha = 7.0;
 
     // Pad rectangular problems to square with dummy rows (see file header).
     const bool needs_padding = (n0 < m0);
@@ -327,9 +396,8 @@ static LapResult auction_core(const CostMatrix& cost, bool maximize,
     // Prepare working costs (negated if maximize, forbidden excluded via mask).
     CostMatrix work = prepare_for_solve(base, maximize);
 
-    auto core = run_auction_core(work, cost, gauss_seidel,
-                                 initial_epsilon_factor, alpha, final_epsilon);
-    if (out_bids != nullptr) *out_bids = core.iter;
+    auto core = run_auction_core(work, cost, options);
+    if (stats != nullptr) *stats = EpsilonScalingStats{core.iter, core.row_scans};
 
     // Verify the ORIGINAL rows and total on the ORIGINAL costs.
     std::vector<int> assignment(n0, -1);
@@ -349,22 +417,18 @@ static LapResult auction_core(const CostMatrix& cost, bool maximize,
 // Lazy cost-source variant. `cost` is already "prepared" (negate/caliper/
 // max_distance baked in at construction) -- no prepare_for_solve() step.
 static LapResult auction_core_lazy(const LazyCostMatrix& cost,
-                                   double initial_epsilon_factor, double alpha,
-                                   double final_epsilon, bool gauss_seidel,
-                                   long long* out_bids = nullptr) {
+                                   EpsilonScalingOptions options) {
     const int64_t n0 = cost.nrow;
     const int64_t m0 = cost.ncol;
 
     if (n0 == 0) return LapResult({}, 0.0, "optimal");
     lap::require_rows_fit_cols(n0, m0);
-    if (alpha <= 1.0) alpha = 7.0;
+    if (options.alpha <= 1.0) options.alpha = 7.0;
 
     const bool needs_padding = (n0 < m0);
 
     if (!needs_padding) {
-        auto core = run_auction_core(cost, cost, gauss_seidel,
-                                     initial_epsilon_factor, alpha, final_epsilon);
-        if (out_bids != nullptr) *out_bids = core.iter;
+        auto core = run_auction_core(cost, cost, options);
 
         std::vector<int> assignment(static_cast<size_t>(n0), -1);
         double total = 0.0;
@@ -399,9 +463,7 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
     if (cost.is_negated()) dummy_cost = -dummy_cost;
 
     PaddedCostView<LazyCostMatrix> padded(cost, n0, dummy_cost);
-    auto core = run_auction_core(padded, cost, gauss_seidel,
-                                 initial_epsilon_factor, alpha, final_epsilon);
-    if (out_bids != nullptr) *out_bids = core.iter;
+    auto core = run_auction_core(padded, cost, options);
 
     std::vector<int> assignment(static_cast<size_t>(n0), -1);
     double total = 0.0;
@@ -418,20 +480,33 @@ static LapResult auction_core_lazy(const LazyCostMatrix& cost,
     return LapResult(std::move(assignment), total, "optimal");
 }
 
+LapResult solve_epsilon_scaling(const CostMatrix& cost, bool maximize,
+                                const EpsilonScalingOptions& options,
+                                EpsilonScalingStats* stats) {
+    return auction_core(cost, maximize, options, stats);
+}
+
+// An explicit epsilon becomes the terminal epsilon (the requested precision).
+static EpsilonScalingOptions terminal_epsilon_options(double eps_in) {
+    EpsilonScalingOptions options;
+    if (std::isfinite(eps_in) && eps_in > 0.0) options.final_epsilon = eps_in;
+    return options;
+}
+
 // Basic auction algorithm (queue drain, epsilon-scaled)
 LapResult solve_auction(const CostMatrix& cost, bool maximize, double eps_in) {
-    // An explicit epsilon becomes the terminal epsilon (the requested precision).
-    double final_eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : -1.0;
-    return auction_core(cost, maximize, /*initial_epsilon_factor=*/1.0, /*alpha=*/7.0,
-                        final_eps, /*gauss_seidel=*/false);
+    return auction_core(cost, maximize, terminal_epsilon_options(eps_in));
 }
 
 // Gauss-Seidel auction algorithm (sweep discipline, epsilon-scaled)
 LapResult solve_auction_gs(const CostMatrix& cost, bool maximize, double eps_in,
                            long long* out_bids) {
-    double final_eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : -1.0;
-    return auction_core(cost, maximize, /*initial_epsilon_factor=*/1.0, /*alpha=*/7.0,
-                        final_eps, /*gauss_seidel=*/true, out_bids);
+    EpsilonScalingOptions options = terminal_epsilon_options(eps_in);
+    options.gauss_seidel = true;
+    EpsilonScalingStats stats;
+    LapResult result = auction_core(cost, maximize, options, &stats);
+    if (out_bids != nullptr) *out_bids = stats.bids;
+    return result;
 }
 
 // Scaled-epsilon auction with custom parameters (queue drain)
@@ -439,8 +514,11 @@ LapResult solve_auction_scaled_params(const CostMatrix& cost, bool maximize,
                                        double initial_epsilon_factor,
                                        double alpha,
                                        double final_epsilon) {
-    return auction_core(cost, maximize, initial_epsilon_factor, alpha,
-                        final_epsilon, /*gauss_seidel=*/false);
+    EpsilonScalingOptions options;
+    options.initial_epsilon_factor = initial_epsilon_factor;
+    options.alpha = alpha;
+    options.final_epsilon = final_epsilon;
+    return auction_core(cost, maximize, options);
 }
 
 // Scaled-epsilon auction. Maps the named schedule to a numeric alpha and
@@ -461,9 +539,7 @@ LapResult solve_auction_scaled(const CostMatrix& cost, bool maximize,
 // `maximize` is baked into `cost` at construction; `eps_in` becomes the
 // terminal epsilon, matching solve_auction()'s dense contract.
 LapResult solve_auction(const LazyCostMatrix& cost, double eps_in) {
-    double final_eps = (std::isfinite(eps_in) && eps_in > 0.0) ? eps_in : -1.0;
-    return auction_core_lazy(cost, /*initial_epsilon_factor=*/1.0, /*alpha=*/7.0,
-                             final_eps, /*gauss_seidel=*/false);
+    return auction_core_lazy(cost, terminal_epsilon_options(eps_in));
 }
 
 }  // namespace lap

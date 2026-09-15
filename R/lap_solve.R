@@ -48,11 +48,12 @@
 #'
 #'   **Advanced solvers:**
 #'   \itemize{
-#'     \item `"csa"` — Cost scaling: epsilon starts at the span of the costs
-#'       and is divided by 7 each phase around the auction bid, the same solver
-#'       as `"auction_scaled"` at its default schedule. Real-valued costs are
-#'       read as supplied; the final epsilon-optimal assignment is repaired to
-#'       an optimal one
+#'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling assignment (CSA-Q):
+#'       epsilon starts at the span of the costs and is divided by 10 each
+#'       refine, rows are discharged from a stack by double-push, and each row
+#'       keeps its three cheapest arcs between scans (the fourth-best
+#'       heuristic). Real-valued costs are read as supplied; the final
+#'       epsilon-optimal assignment is repaired to an optimal one
 #'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
 #'       slackness. On a graph of `V` vertices and `E` edges the bound is
 #'       O(sqrt(V) * E * log(V * C)), which for an `n` by `n` cost matrix is

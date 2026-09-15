@@ -1,34 +1,29 @@
 # ==============================================================================
 # The trace for the "csa" production method
 # ==============================================================================
-# src/solvers/solve_csa.cpp runs the epsilon-scaling auction: the same
-# epsilon-scaling outer loop as solve_auction_scaled_impl, with alpha = 7 and
-# the epsilon schedule read off the costs, around the same bid-by-reduced-cost
-# inner loop that lowers a price by gamma + eps. Goldberg-Kennedy's cost-scaling
-# assignment discharges excess with push and relabel on a residual graph
-# instead; assignment(method = "push_relabel") runs that inner loop.
-#
-# A trace shows what the production solver does, so this one shares
-# trace_auction_scaled's body and states in its meta block which of the two
-# inner loops ran.
+# src/solvers/solve_csa.cpp runs Goldberg and Kennedy's CSA-Q. Its
+# double-push with implicit row prices moves the same prices and matches as
+# the auction bid (their Fig. 4), over a stack of active rows with epsilon
+# divided by 10 each refine. The fourth-best heuristic changes how a row finds
+# its two cheapest arcs, not which ones it finds, so the states it passes
+# through are trace_auction_scaled's at alpha = 10.
 # ==============================================================================
 
 #' @keywords internal
 #' @noRd
 trace_csa <- function(cost, maximize = FALSE, ...) {
-  out <- trace_auction_scaled(cost, maximize = maximize, ...)
+  out <- trace_auction_scaled(cost, maximize = maximize, alpha = 10, ...)
   out$meta$algorithm <- "csa"
   out$meta$description <- paste0(
-    "Epsilon-scaling auction (Bertsekas & Eckstein 1988), which is what ",
-    "assignment(method = \"csa\") dispatches: the same solver as ",
-    "method = \"auction_scaled\". The outer structure is cost scaling - a large ",
-    "eps for big moves, refined toward a terminal eps set by the spacing of the ",
-    "cheapest costs, after which a repair step makes the assignment optimal - ",
-    "and the inner loop is the auction, where an ",
-    "unassigned person bids and the price of the object it takes falls by the ",
-    "bid margin plus eps. Goldberg-Kennedy's cost-scaling assignment keeps that ",
-    "outer structure and discharges excess with push and relabel instead; ",
-    "lap_animate(cost, method = \"push_relabel\") shows that inner loop."
+    "Cost-scaling assignment CSA-Q (Goldberg & Kennedy 1995). Each refine ",
+    "divides eps by 10, clears the matching and makes every row active. An ",
+    "active row is taken from a stack and double-pushed: it takes its cheapest ",
+    "column, the row holding that column becomes active, and the column's ",
+    "price falls to the row's second-cheapest reduced cost less eps. A row ",
+    "keeps its three cheapest arcs between scans and rescans only when fewer ",
+    "than two of them are still below the fourth-smallest reduced cost of the ",
+    "last scan. After the last refine a repair step makes the assignment ",
+    "optimal."
   )
   out
 }

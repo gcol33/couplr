@@ -628,15 +628,15 @@ The next algorithm makes epsilon-scaling systematic.
 
 ### Cost-Scaling Algorithm / CSA (1995)
 
-Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon automatically?
+Andrew Goldberg and Robert Kennedy applied the push-relabel method for minimum-cost flow to assignment.
 
-**The idea**: Start with $\epsilon = \max(c_{ij})$. In each phase, halve epsilon and refine the current solution. After $O(\log C)$ phases, epsilon is essentially zero: optimality.
+**The idea**: Start with $\epsilon$ at the span of the costs. Each phase (a *refine*) divides epsilon by 10, clears the matching, and discharges the unmatched rows from a stack by *double-push*: the row takes its cheapest column, the row that held it becomes unmatched, and the column's price drops to the row's second-cheapest reduced cost less epsilon. Prices only fall, so a row keeps its three cheapest columns between scans and rescans its full row only when fewer than two of them are still below the fourth-cheapest value it saw. After $O(\log C)$ phases the assignment is within $n\epsilon$ of optimal, and a repair step closes the remaining gap.
 
 ```{r csa-diagram, fig.width=9, fig.height=4, echo=FALSE, fig.alt="CSA algorithm showing epsilon-scaling phases converging to optimal solution"}
 # CSA visualization: epsilon scaling progression
 phases <- data.frame(
   phase = 1:5,
-  epsilon = c(100, 50, 25, 12, 6),
+  epsilon = c(100, 10, 1, 0.1, 0.01),
   x = 1:5
 )
 
@@ -662,10 +662,10 @@ ggplot(phases) +
   annotate("segment", x = 1, xend = 5, y = 0.9, yend = 0.9,
            arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
            linewidth = 1, color = col_text) +
-  annotate("text", x = 3, y = 0.98, label = "epsilon halves each phase -> precision improves",
+  annotate("text", x = 3, y = 0.98, label = "epsilon divided by 10 each phase -> precision improves",
            size = 3.8, color = col_text) +
   labs(title = "CSA: Systematic Epsilon-Scaling",
-       subtitle = "Each phase halves epsilon and refines the assignment until optimal") +
+       subtitle = "Each phase divides epsilon by 10 and refines the assignment") +
   theme_diagram() +
   coord_fixed(ratio = 1.5, xlim = c(0.3, 5.7), ylim = c(0, 1.15))
 ```

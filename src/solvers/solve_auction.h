@@ -8,6 +8,37 @@
 
 namespace lap {
 
+// How a bidder finds its cheapest and second-cheapest columns.
+//   FullScan   : scan the row's adjacency list on every bid.
+//   FourthBest : Goldberg-Kennedy's k-th best heuristic with k = 4. A scan
+//                keeps the row's three cheapest arcs and the fourth-smallest
+//                partial reduced cost K. Prices only fall, so an arc left out
+//                stays at or above K, and while two kept arcs are still at or
+//                below K they are the row's two cheapest.
+enum class RowSearch { FullScan, FourthBest };
+
+// Parameters of the epsilon-scaling core shared by the auction solvers and
+// the cost-scaling assignment solver.
+struct EpsilonScalingOptions {
+    double initial_epsilon_factor = 1.0;  // multiplies the starting epsilon
+    double alpha = 7.0;                   // epsilon divisor per phase (> 1)
+    double final_epsilon = -1.0;          // <= 0 reads it off the costs
+    bool gauss_seidel = false;            // false: LIFO stack of active rows
+    RowSearch row_search = RowSearch::FullScan;
+};
+
+// Work counters of one solve.
+struct EpsilonScalingStats {
+    long long bids = 0;       // bids (double-push operations), all phases
+    long long row_scans = 0;  // full scans of a row's adjacency list
+};
+
+// Solve LAP with the epsilon-scaling core under explicit options.
+// Throws as the auction solvers below.
+LapResult solve_epsilon_scaling(const CostMatrix& cost, bool maximize,
+                                const EpsilonScalingOptions& options,
+                                EpsilonScalingStats* stats = nullptr);
+
 // Solve LAP using basic auction algorithm
 // Parameters:
 //   cost: Cost matrix (row-major, with mask for forbidden edges)

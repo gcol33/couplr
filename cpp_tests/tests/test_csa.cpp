@@ -6,6 +6,9 @@
 #include "core/lap_types.h"
 #include "core/lap_error.h"
 #include "solvers/solve_csa.h"
+#include "solvers/solve_jv.h"
+
+#include <random>
 
 using Catch::Approx;
 
@@ -215,5 +218,81 @@ TEST_CASE("CSA solver - assignment validity", "[csa][validity]") {
             REQUIRE(!used[j]);
             used[j] = true;
         }
+    }
+}
+
+// A matrix of uniform costs on [0, 1); `degree` > 0 allows only that many
+// random columns per row plus the diagonal, which keeps it feasible.
+static lap::CostMatrix random_cost(int n, int m, unsigned seed, int degree = 0) {
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<double> unit(0.0, 1.0);
+    std::uniform_int_distribution<int> col(0, m - 1);
+    lap::CostMatrix cost(n, m);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) cost.at(i, j) = unit(rng);
+    }
+    if (degree > 0) {
+        for (int i = 0; i < n; ++i) {
+            std::vector<bool> keep(m, false);
+            keep[i] = true;
+            for (int d = 0; d < degree; ++d) keep[col(rng)] = true;
+            for (int j = 0; j < m; ++j) {
+                if (!keep[j]) cost.forbid(i, j);
+            }
+        }
+    }
+    return cost;
+}
+
+static void require_same_bids_fewer_scans(const lap::CostMatrix& cost, bool maximize) {
+    lap::EpsilonScalingStats kept, scanned;
+    auto csa = lap::solve_csa(cost, maximize, &kept);
+
+    lap::EpsilonScalingOptions full;
+    full.alpha = 10.0;
+    full.row_search = lap::RowSearch::FullScan;
+    auto reference = lap::solve_epsilon_scaling(cost, maximize, full, &scanned);
+
+    REQUIRE(csa.assignment == reference.assignment);
+    REQUIRE(kept.bids == scanned.bids);
+    REQUIRE(scanned.row_scans == scanned.bids);
+    REQUIRE(kept.row_scans < scanned.row_scans);
+
+    auto jv = lap::solve_jv(cost, maximize);
+    REQUIRE(csa.total_cost == Approx(jv.total_cost).margin(1e-9));
+}
+
+TEST_CASE("CSA solver - fourth-best search bids as a full scan does", "[csa][fourth_best]") {
+    // Prices only fall, so the two cheapest of the kept arcs are the row's two
+    // cheapest while both sit at or below the fourth-smallest reduced cost of
+    // the last scan. On costs without ties the double-pushes are then the same
+    // ones a full scan makes, with fewer scans.
+    SECTION("dense square") {
+        require_same_bids_fewer_scans(random_cost(150, 150, 11), false);
+    }
+    SECTION("dense rectangular") {
+        require_same_bids_fewer_scans(random_cost(60, 140, 12), false);
+    }
+    SECTION("maximize") {
+        require_same_bids_fewer_scans(random_cost(120, 120, 13), true);
+    }
+    SECTION("sparse rows, some holding no more arcs than the cache keeps") {
+        require_same_bids_fewer_scans(random_cost(200, 200, 14, 3), false);
+    }
+}
+
+TEST_CASE("CSA solver - optimal on heavily tied integer costs", "[csa][fourth_best]") {
+    // Ties at the fourth-smallest reduced cost can change which of two equally
+    // cheap columns a row takes, so only the optimum is compared.
+    std::mt19937 rng(15);
+    std::uniform_int_distribution<int> small(0, 5);
+    for (int n : {20, 80, 160}) {
+        lap::CostMatrix cost(n, n);
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) cost.at(i, j) = small(rng);
+        }
+        auto csa = lap::solve_csa(cost, false);
+        auto jv = lap::solve_jv(cost, false);
+        REQUIRE(csa.total_cost == Approx(jv.total_cost).margin(1e-9));
     }
 }

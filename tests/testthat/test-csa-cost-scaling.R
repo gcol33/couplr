@@ -1,6 +1,6 @@
 # Cost scaling on real-valued costs.
 #
-# `"csa"` reads the costs as supplied: the epsilon-scaling bid ends on an
+# `"csa"` reads the costs as supplied: its last refine ends on an
 # epsilon-optimal assignment and the repair step makes it optimal, so neither
 # an offset far from the origin nor a range spanning many orders of magnitude
 # changes the answer.

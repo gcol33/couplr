@@ -41,10 +41,87 @@
 
 namespace lap {
 
-// Terminal epsilon of the bidding. It sets how far the final prices can be from
-// exact potentials, and so how much correcting the repair has left to do.
-static inline double default_eps_final(int n) {
-    return std::min(1e-6, 1.0 / (static_cast<double>(n) * static_cast<double>(n)));
+// A bid ends its phase within eps of the best price; the terminal eps is set to
+// this fraction of the typical spacing among a row's cheapest distinct costs.
+static constexpr double EPS_FINAL_OF_ROW_GAP = 1e-2;
+static constexpr int ROW_GAP_VALUES = 4;
+
+struct EpsilonSchedule {
+    double max_abs_cost;  // over every row, dummy rows included
+    double start;
+    double terminal;
+};
+
+// Start and terminal epsilon of the bidding, both read off the costs, so that
+// multiplying every cost by a constant or adding one to all of them leaves the
+// bids unchanged.
+//
+// The start is the span of the real rows' costs. The end is a fraction of the
+// median, over real rows, of the mean gap between a row's four smallest
+// distinct costs. Bidding stops on prices within eps of exact potentials, and
+// what the repair then has to correct grows with how many of a row's options
+// sit within eps of the one it holds. That count is set by how closely costs
+// crowd the bottom of a row, not by their range: a heavy-tailed row spans
+// orders of magnitude more than the gaps between its cheapest entries. Dummy
+// rows padding a rectangular problem are constant along the row and are left
+// out of both.
+//
+// The end is floored at four ulps of the largest cost magnitude. A bid forms a
+// reduced cost at that magnitude, a dummy row's included, and an eps below its
+// spacing is lost in the rounding: the bidder cannot tell columns apart and
+// prices fall in steps the reduced costs do not register.
+template <typename CostSourceT>
+static EpsilonSchedule epsilon_schedule(const CostSourceT& work, int real_rows,
+                                        const std::vector<int64_t>& row_ptr,
+                                        const std::vector<int>& cols,
+                                        double initial_epsilon_factor) {
+    const int n = static_cast<int>(work.nrow);
+    double max_abs_cost = 0.0;
+    double lo = std::numeric_limits<double>::infinity();
+    double hi = -std::numeric_limits<double>::infinity();
+    std::vector<double> row_gaps;
+    row_gaps.reserve(static_cast<size_t>(real_rows));
+
+    for (int i = 0; i < n; ++i) {
+        const bool real = i < real_rows;
+        double smallest[ROW_GAP_VALUES];
+        int held = 0;
+        for (int64_t k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
+            const double c = work.at(i, cols[k]);
+            if (!std::isfinite(c)) continue;
+            if (std::abs(c) > max_abs_cost) max_abs_cost = std::abs(c);
+            if (!real) continue;
+            if (c < lo) lo = c;
+            if (c > hi) hi = c;
+
+            bool seen = false;
+            for (int q = 0; q < held && !seen; ++q) seen = (smallest[q] == c);
+            if (seen || (held == ROW_GAP_VALUES && c >= smallest[held - 1])) continue;
+            int p = (held < ROW_GAP_VALUES) ? held++ : ROW_GAP_VALUES - 1;
+            while (p > 0 && smallest[p - 1] > c) {
+                smallest[p] = smallest[p - 1];
+                --p;
+            }
+            smallest[p] = c;
+        }
+        if (real && held >= 2) {
+            row_gaps.push_back((smallest[held - 1] - smallest[0]) / (held - 1));
+        }
+    }
+
+    const double span = (hi > lo) ? hi - lo : 1.0;
+    double row_gap = span;
+    if (!row_gaps.empty()) {
+        auto mid = row_gaps.begin() + static_cast<std::ptrdiff_t>(row_gaps.size() / 2);
+        std::nth_element(row_gaps.begin(), mid, row_gaps.end());
+        row_gap = *mid;
+    }
+
+    const double ulp = std::nextafter(max_abs_cost, std::numeric_limits<double>::infinity())
+                       - max_abs_cost;
+    const double eps_final = std::max(row_gap * EPS_FINAL_OF_ROW_GAP, 4.0 * ulp);
+    const double eps_start = std::max(span * initial_epsilon_factor, eps_final);
+    return EpsilonSchedule{max_abs_cost, eps_start, eps_final};
 }
 
 template <typename CostSourceT>
@@ -62,6 +139,7 @@ struct AuctionCoreResult {
 // object.
 template <typename CostSourceT>
 static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
+                                                         int real_rows,
                                                          bool gauss_seidel,
                                                          double initial_epsilon_factor,
                                                          double alpha,
@@ -74,16 +152,11 @@ static AuctionCoreResult<CostSourceT> auction_core_impl(const CostSourceT& work,
     std::vector<int> cols;
     build_allowed(work, row_ptr, cols);
 
-    double max_abs_cost = 0.0;
-    for (int i = 0; i < n; ++i) {
-        for (int64_t k = row_ptr[i]; k < row_ptr[i + 1]; ++k) {
-            double c = std::abs(work.at(i, cols[k]));
-            if (std::isfinite(c) && c > max_abs_cost) max_abs_cost = c;
-        }
-    }
-
-    double epsilon = std::max(1.0, max_abs_cost * initial_epsilon_factor);
-    const double eps_final = (final_epsilon > 0.0) ? final_epsilon : default_eps_final(n);
+    const EpsilonSchedule schedule =
+        epsilon_schedule(work, real_rows, row_ptr, cols, initial_epsilon_factor);
+    const double max_abs_cost = schedule.max_abs_cost;
+    double epsilon = schedule.start;
+    const double eps_final = (final_epsilon > 0.0) ? final_epsilon : schedule.terminal;
     const double price_bound = std::max(1e12, max_abs_cost * n * 1000.0);
 
     std::vector<double> price(m, 0.0);
@@ -190,7 +263,8 @@ static AuctionCoreResult<CostSourceT> run_auction_core(const CostSourceT& work,
                                                        double alpha,
                                                        double final_epsilon) {
     try {
-        return auction_core_impl(work, gauss_seidel, initial_epsilon_factor,
+        return auction_core_impl(work, static_cast<int>(original.nrow), gauss_seidel,
+                                 initial_epsilon_factor,
                                  alpha, final_epsilon);
     } catch (const ConvergenceException&) {
         if (!has_valid_matching_view(original)) {
@@ -204,7 +278,7 @@ static AuctionCoreResult<CostSourceT> run_auction_core(const CostSourceT& work,
 // Shared epsilon-scaling forward-auction core (dense CostMatrix).
 //   initial_epsilon_factor : multiplies the starting epsilon
 //   alpha                  : epsilon reduction factor per phase (> 1)
-//   final_epsilon          : terminal epsilon (<= 0 selects default_eps_final)
+//   final_epsilon          : terminal epsilon (<= 0 selects epsilon_schedule())
 //   gauss_seidel           : false drains a queue of unmatched persons; true
 //                            sweeps all persons each round until none move
 // Returns a LapResult over the ORIGINAL (unpadded) rows.

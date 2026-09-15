@@ -63,7 +63,8 @@ LapResult solve_auction_gs(const CostMatrix& cost, bool maximize = false, double
 //   maximize: If true, find maximum weight matching (costs negated internally)
 //   initial_epsilon_factor: Multiplier for initial epsilon (default 1.0)
 //   alpha: Epsilon reduction factor each phase (default 7.0)
-//   final_epsilon: Stopping epsilon (if <= 0, uses 1e-6 or 1/(n²), whichever is smaller)
+//   final_epsilon: Stopping epsilon (if <= 0, a hundredth of the typical gap between a
+//                  row's cheapest distinct costs; see epsilon_schedule())
 //
 // Returns:
 //   LapResult with 0-based assignment and total cost (using original costs)

@@ -16,8 +16,10 @@
 #
 #   --- Setup ---
 #   * Prices p[j] start at 0 (and are kept across phases).
-#   * Initial epsilon eps_init = max(1, max(|cost|) * initial_epsilon_factor).
-#   * Final epsilon eps_final = min(1e-6, 1/n^2) unless overridden.
+#   * Initial epsilon eps_init = span of the finite costs * initial_epsilon_factor.
+#   * Final epsilon eps_final = 1/100 of the median, over rows, of the mean gap
+#     between a row's four smallest distinct costs, and at least four ulps of
+#     the largest cost magnitude, unless overridden.
 #   * Use the "minimize cost - price" formulation that the production code
 #     uses: person i prefers the column with the smallest reduced cost
 #     rc[i,j] = c[i,j] - p[j]. When person i wins column j*, the price p[j*]
@@ -64,10 +66,11 @@ trace_auction_scaled <- function(cost,
     }
   }
 
-  # Epsilon schedule (matches solve_auction_scaled_params exactly)
+  # Epsilon schedule (matches epsilon_schedule() in solve_auction.cpp)
   max_abs_cost <- vc$scale
-  eps_init <- max(1, max_abs_cost * initial_epsilon_factor)
-  eps_final <- if (is.null(final_epsilon)) min(1e-6, 1 / (n * n))
+  sched <- auction_epsilon_schedule(cost_signed, finite_mask, initial_epsilon_factor)
+  eps_init <- sched$start
+  eps_final <- if (is.null(final_epsilon)) sched$terminal
                else as.numeric(final_epsilon)
   if (!is.finite(eps_final) || eps_final <= 0) {
     stop("`final_epsilon` must be a positive finite number.", call. = FALSE)
@@ -279,3 +282,20 @@ trace_auction_scaled <- function(cost,
 }
 
 register_trace("auction_scaled", trace_auction_scaled)
+
+# Start and terminal epsilon read off the costs, as epsilon_schedule() in
+# src/solvers/solve_auction.cpp computes them for a square problem.
+auction_epsilon_schedule <- function(cost, finite_mask, initial_epsilon_factor) {
+  vals <- cost[finite_mask]
+  max_abs <- if (length(vals)) max(abs(vals)) else 0
+  span <- if (length(vals) && max(vals) > min(vals)) max(vals) - min(vals) else 1
+  gaps <- vapply(seq_len(nrow(cost)), function(i) {
+    v <- utils::head(sort(unique(cost[i, finite_mask[i, ]])), 4L)
+    if (length(v) < 2L) NA_real_ else (v[length(v)] - v[1L]) / (length(v) - 1L)
+  }, numeric(1))
+  gaps <- gaps[!is.na(gaps)]
+  row_gap <- if (length(gaps)) sort(gaps)[length(gaps) %/% 2L + 1L] else span
+  ulp <- if (max_abs > 0) 2^(floor(log2(max_abs)) - 52) else 2^-1074
+  terminal <- max(row_gap / 100, 4 * ulp)
+  list(start = max(span * initial_epsilon_factor, terminal), terminal = terminal)
+}

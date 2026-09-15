@@ -188,10 +188,25 @@ one asked, so the version that reaches CRAN is this one.
   zero-cost cycle cannot be cancelled forever. The dense and lazy paths share
   the step. Adding uniform, integer, heavy-tailed, tied and metric costs at
   those three shapes, 34 of 162 auction solves failed the certificate before
-  and none after. Outside the small-cost matrices the step adds 2 to 29
-  percent to the solve time. Where the costs sit below the
-  final epsilon the final prices carry little information and the repair does
-  most of the work, at 9 to 20 times the time.
+  and none after.
+
+  The epsilon schedule is read off the costs instead of fixed. Bidding starts
+  at the span of the costs and ends at a hundredth of the typical spacing of
+  each row's cheapest costs, the median over rows of the mean gap between its
+  four smallest distinct values, and never below four ulps of the largest cost
+  magnitude. The fixed final epsilon of `min(1e-6, 1/n^2)` sat far below that
+  spacing on some matrices and far above it on others. On costs scaled to a
+  median of 1e-3 it left most of the work to the repair. On a 1000 by 2000
+  problem whose largest costs reach 1e6 it was finer than the spacing of the
+  padding rows' reduced costs, near 1e10, so their bids no longer registered.
+  Uniform, heavy-tailed and offset costs of that kind each ran 15 minutes
+  without finishing and now take 0.5, 6.9 and 0.55 seconds. Against the fixed
+  schedule on nine cost regimes, square, rectangular and half-sparse, at 300
+  and 1000 rows with three instances each, uniform costs scaled to 1e-6 went
+  from 24.1 to 0.36 seconds at 1000 by 2000 and log-normal costs scaled to
+  1e-3 from 2.5 to 0.11 seconds at 1000 by 1000. Rectangular problems take 0.3
+  to 0.8 times as long, and the median over instances is at most 1.07 times
+  the fixed schedule in every cell. Every solve certified.
 
 * **`max_suboptimality` is an upper bound rather than an estimate of one.**
   It is assembled from the primal and dual objectives, each a Neumaier

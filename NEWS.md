@@ -77,6 +77,20 @@ one asked, so the version that reaches CRAN is this one.
 
 ## Improvements
 
+* **A dispatch rule for heavily tied costs was tested and not added (#50).**
+  The regime grid puts `method = "auto"` furthest from the best solver where
+  the finite costs take few distinct values. A rule sending such a matrix to
+  `"auction_scaled"` was fixed, with its acceptance criterion, before it was
+  scored on a grid generated apart from the regime grid: over the cells it
+  fires on, a median time ratio against `"jv"` below 1 and no cell above 1.5.
+  The first version, at most 32 distinct values, was quicker in all 42 square
+  cells and up to 52 times slower on problems with ten columns per row. The
+  second, bounded to at most 1.25 columns per row and scored on a second,
+  disjoint grid, took a median 0.13 of the time of `"jv"` over 64 cells, but
+  2.6 times it in the worst. Neither is in the dispatch table, and
+  `"auction_scaled"` remains available by name for tied costs.
+  `paper/bench_dispatch_validation.R` holds both grids and their verdicts.
+
 * **`full_match()` takes `memory_mode = "implicit"`.** The edge-generation
   loop solved only the one-to-one assignment, because it read assignment
   duals, and a full matching's column nodes carry capacities above one. It now

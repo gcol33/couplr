@@ -444,21 +444,20 @@ test_that("every dispatch rule is reachable and exactly one fires", {
   set.seed(115)
   probes <- list(cert_problem(4, 4), cert_problem(20, 20, kind = "binary"),
                  cert_problem(20, 20), cert_problem(10, 40),
-                 cert_problem(30, 30, sparsity = 0.7),
-                 matrix(sample(c(2, 5, 9), 900, replace = TRUE), 30, 30))
+                 cert_problem(30, 30, sparsity = 0.7))
   fired <- character(0)
   for (cost in probes) {
     ex <- explain_dispatch(cost)
     expect_equal(sum(ex$considered$fired), 1L)
     fired <- c(fired, ex$rule)
   }
-  expect_setequal(fired, c("tiny", "no_cost_scale", "few_costs", "default"))
+  expect_setequal(fired, c("tiny", "no_cost_scale", "default"))
 
-  # Every rule in the table is reachable: the four that fired above are the
-  # four the table holds.
+  # Every rule in the table is reachable: the three that fired above are the
+  # three the table holds.
   expect_setequal(
     vapply(couplr:::.dispatch_rules, function(r) r$id, character(1)),
-    c("tiny", "no_cost_scale", "few_costs", "default")
+    c("tiny", "no_cost_scale", "default")
   )
 })
 

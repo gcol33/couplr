@@ -1581,9 +1581,15 @@ rule the median is `r x(median(reg_rest$ratio))` and the worst
 `` `r names(tied_win)[1]` `` in `r as.integer(tied_win)[1]` of them and
 `` `r names(tied_win)[2]` `` in `r as.integer(tied_win)[2]`, both of them the
 flow formulations that Figure \@ref(fig:solver-bench) puts last on dense uniform
-costs. No rule in the table reads how tied the costs are and
-none was added for it: fitting one to this grid would score it on the
-measurements that chose it.
+costs. No rule in the table reads how tied the costs are. Fitting one to this
+grid would score it on the measurements that chose it, so we fixed a rule that
+sends few distinct cost levels to epsilon-scaling auction before scoring it, on
+a grid generated apart from this one, with the criterion stated in advance. It
+was quicker on square problems and slower than the criterion allowed on
+rectangular ones. A second version bounded to near-square problems, scored on a
+second independent grid, was quicker in nearly every cell it fired on and still
+slower than allowed in two. Neither was kept. Both grids are in the
+supplementary material.
 
 The full grid, every solver in every cell, is in the supplementary material.
 
@@ -1825,8 +1831,9 @@ couplr has three limitations:
   fastest solver over most of the regime grid. Where the finite costs are
   heavily tied it takes a median `r x(median(reg_tied$ratio))` and as much as
   `r x(max(reg_tied$ratio))`, behind `` `r names(tied_win)[1]` `` and
-  `` `r names(tied_win)[2]` ``. Fitting a rule to this grid would score it on
-  the measurements that chose it, so we leave the default as it is.
+  `` `r names(tied_win)[2]` ``. A rule for tied costs, fixed in advance and
+  scored on two grids generated apart from this one, did not meet its stated
+  criterion on either, so the default stays.
 - Matching on observed covariates cannot address unmeasured confounding, which
   the sensitivity analysis quantifies rather than removes.
 

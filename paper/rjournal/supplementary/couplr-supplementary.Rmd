@@ -824,7 +824,9 @@ as many as its longer side has units, to `auction_scaled`. The second adds that
 the problem has at most 1.25 columns per row, and was fixed after the first
 grid had run. Its grid shares no shape, admissibility pattern, level count or
 seed key with the first grid, so the cells that prompted the bound do not score
-it.
+it. Neither version met the criterion, and neither is in the dispatch table:
+`"auto"` sends these problems to `jv`, and `auction_scaled` is available by
+name.
 
 ```{r dispatch-validation-verdict, results="asis"}
 for (g in names(dval_verdict)) {

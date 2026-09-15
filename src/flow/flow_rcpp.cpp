@@ -764,85 +764,85 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
                                                    max_distance, calipers, vars, false);
         return std::visit([&](const auto& src) -> Rcpp::List {
-        using Source = std::decay_t<decltype(src)>;
-        const lap::SourceOracle<Source> oracle(src);
-        const std::vector<lap::CategoryConstraint> none;
+            using Source = std::decay_t<decltype(src)>;
+            const lap::SourceOracle<Source> oracle(src);
+            const std::vector<lap::CategoryConstraint> none;
 
-        lap::CompiledDesign compiled;
-        Rcpp::RObject shape = R_NilValue;
-        if (design == "full_match") {
-            lap::CompiledFullMatch fm = lap::compile_full_matching(
-                oracle, count_from_r(first, "min_controls"),
-                count_from_r(second, "max_controls"), none);
-            shape = full_match_shape_to_r(fm);
-            if (!fm.bounds_feasible) {
-                return Rcpp::List::create(
-                    Rcpp::Named("bounds_feasible") = false,
-                    Rcpp::Named("reason") = fm.reason,
-                    Rcpp::Named("shape") = shape);
+            lap::CompiledDesign compiled;
+            Rcpp::RObject shape = R_NilValue;
+            if (design == "full_match") {
+                lap::CompiledFullMatch fm = lap::compile_full_matching(
+                    oracle, count_from_r(first, "min_controls"),
+                    count_from_r(second, "max_controls"), none);
+                shape = full_match_shape_to_r(fm);
+                if (!fm.bounds_feasible) {
+                    return Rcpp::List::create(
+                        Rcpp::Named("bounds_feasible") = false,
+                        Rcpp::Named("reason") = fm.reason,
+                        Rcpp::Named("shape") = shape);
+                }
+                compiled = std::move(fm.design);
+            } else if (design == "one_to_one") {
+                compiled = lap::compile_one_to_one(oracle, none);
+            } else {
+                Rcpp::stop("flow model: no implicit compiler for design '%s'", design.c_str());
             }
-            compiled = std::move(fm.design);
-        } else if (design == "one_to_one") {
-            compiled = lap::compile_one_to_one(oracle, none);
-        } else {
-            Rcpp::stop("flow model: no implicit compiler for design '%s'", design.c_str());
-        }
 
-        lap::CandidateSet cand(src.nrow, src.ncol);
-        const lap::ImplicitOptions opts =
-            implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
-        const lap::DesignResult res =
-            lap::solve_implicit_design(src, compiled.problem, cand, opts);
-        const lap::FlowProblem& prob = compiled.problem;
-        if (design == "full_match" && lap::min_distance_seen(src) < 0.0) {
-            Rcpp::stop("full_match() needs non-negative distances: the cheapest "
-                       "edge cover is a full matching only when no arc is worth "
-                       "keeping for its own sake, and the distance function "
-                       "returned %g. Shift it so its smallest value is zero.",
-                       lap::min_distance_seen(src));
-        }
+            lap::CandidateSet cand(src.nrow, src.ncol);
+            const lap::ImplicitOptions opts =
+                implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
+            const lap::DesignResult res =
+                lap::solve_implicit_design(src, compiled.problem, cand, opts);
+            const lap::FlowProblem& prob = compiled.problem;
+            if (design == "full_match" && lap::min_distance_seen(src) < 0.0) {
+                Rcpp::stop("full_match() needs non-negative distances: the cheapest "
+                           "edge cover is a full matching only when no arc is worth "
+                           "keeping for its own sake, and the distance function "
+                           "returned %g. Shift it so its smallest value is zero.",
+                           lap::min_distance_seen(src));
+            }
 
-        const lap::BlockArcRange& blk = prob.block_arcs.at(0);
-        Rcpp::NumericVector block_flow(static_cast<R_xlen_t>(blk.n_arcs));
-        for (int64_t k = 0; k < blk.n_arcs; ++k) {
-            const std::size_t a = static_cast<std::size_t>(blk.first_arc + k);
-            block_flow[static_cast<R_xlen_t>(k)] =
-                a < res.flow.size() ? static_cast<double>(res.flow[a]) : 0.0;
-        }
+            const lap::BlockArcRange& blk = prob.block_arcs.at(0);
+            Rcpp::NumericVector block_flow(static_cast<R_xlen_t>(blk.n_arcs));
+            for (int64_t k = 0; k < blk.n_arcs; ++k) {
+                const std::size_t a = static_cast<std::size_t>(blk.first_arc + k);
+                block_flow[static_cast<R_xlen_t>(k)] =
+                    a < res.flow.size() ? static_cast<double>(res.flow[a]) : 0.0;
+            }
 
-        Rcpp::RObject certificate = R_NilValue;
-        if (certify && !res.flow.empty() && res.flow_certificate.tolerance > 0.0) {
-            Rcpp::List cert = certificate_to_r(res.flow_certificate);
-            cert.push_back(res.flow_certificate.certified_optimal, "master_certified");
-            cert.push_back(res.omitted_min_reduced_cost, "omitted_min_reduced_cost");
-            cert.push_back(res.omitted_proven_floor, "omitted_proven_floor");
-            cert.push_back(res.price_tol, "omitted_tolerance");
-            cert.push_back(res.max_flow_certified, "max_flow_certified");
-            cert["certified_optimal"] = res.certified;
-            certificate = cert;
-        }
+            Rcpp::RObject certificate = R_NilValue;
+            if (certify && !res.flow.empty() && res.flow_certificate.tolerance > 0.0) {
+                Rcpp::List cert = certificate_to_r(res.flow_certificate);
+                cert.push_back(res.flow_certificate.certified_optimal, "master_certified");
+                cert.push_back(res.omitted_min_reduced_cost, "omitted_min_reduced_cost");
+                cert.push_back(res.omitted_proven_floor, "omitted_proven_floor");
+                cert.push_back(res.price_tol, "omitted_tolerance");
+                cert.push_back(res.max_flow_certified, "max_flow_certified");
+                cert["certified_optimal"] = res.certified;
+                certificate = cert;
+            }
 
-        return Rcpp::List::create(
-            Rcpp::Named("bounds_feasible") = true,
-            Rcpp::Named("reason") = "",
-            Rcpp::Named("shape") = shape,
-            Rcpp::Named("status") = res.status,
-            Rcpp::Named("total_cost") = res.total_cost,
-            Rcpp::Named("flow_sent") = static_cast<double>(res.flow_sent),
-            Rcpp::Named("flow_required") = static_cast<double>(res.flow_required),
-            Rcpp::Named("block") = block_to_r(prob, 0),
-            Rcpp::Named("flow") = block_flow,
-            Rcpp::Named("potential") = Rcpp::NumericVector(res.potential.begin(),
-                                                           res.potential.end()),
-            Rcpp::Named("layout") = design_layout_to_r(compiled),
-            Rcpp::Named("certificate") = certificate,
-            Rcpp::Named("search") = Rcpp::List::create(
-                Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),
-                Rcpp::Named("candidate_edges") = static_cast<double>(res.candidate_edges),
-                Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
-                Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),
-                Rcpp::Named("n_rounds") = static_cast<double>(res.rounds.size()),
-                Rcpp::Named("rounds") = implicit_rounds_to_r(res.rounds, false)));
+            return Rcpp::List::create(
+                Rcpp::Named("bounds_feasible") = true,
+                Rcpp::Named("reason") = "",
+                Rcpp::Named("shape") = shape,
+                Rcpp::Named("status") = res.status,
+                Rcpp::Named("total_cost") = res.total_cost,
+                Rcpp::Named("flow_sent") = static_cast<double>(res.flow_sent),
+                Rcpp::Named("flow_required") = static_cast<double>(res.flow_required),
+                Rcpp::Named("block") = block_to_r(prob, 0),
+                Rcpp::Named("flow") = block_flow,
+                Rcpp::Named("potential") = Rcpp::NumericVector(res.potential.begin(),
+                                                               res.potential.end()),
+                Rcpp::Named("layout") = design_layout_to_r(compiled),
+                Rcpp::Named("certificate") = certificate,
+                Rcpp::Named("search") = Rcpp::List::create(
+                    Rcpp::Named("seed_width") = static_cast<double>(res.seed_width),
+                    Rcpp::Named("candidate_edges") = static_cast<double>(res.candidate_edges),
+                    Rcpp::Named("possible_edges") = static_cast<double>(res.possible_edges),
+                    Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),
+                    Rcpp::Named("n_rounds") = static_cast<double>(res.rounds.size()),
+                    Rcpp::Named("rounds") = implicit_rounds_to_r(res.rounds, false)));
         }, source);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());

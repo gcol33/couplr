@@ -61,7 +61,7 @@ outputs_for() {
     implicit)      echo "paper/implicit-results.csv paper/implicit-equivalence.csv" ;;
     path)          echo "paper/path-results.csv paper/path-points.csv" ;;
     regimes)       echo "paper/regime-runs.csv paper/regime-cells.csv paper/regime-results.csv paper/regime-verdict.csv" ;;
-    dispatch_validation) echo "paper/dispatch-validation-runs.csv paper/dispatch-validation-results.csv paper/dispatch-validation-verdict.csv" ;;
+    dispatch_validation) echo "paper/dispatch-validation-2-runs.csv paper/dispatch-validation-2-results.csv paper/dispatch-validation-2-verdict.csv" ;;
     implicit_grid) echo "paper/implicit-grid-runs.csv paper/implicit-grid-results.csv" ;;
     memory)        echo "paper/memory-results.csv" ;;
     lalonde)       echo "paper/lalonde-results.csv paper/lalonde-per-covariate.csv" ;;

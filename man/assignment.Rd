@@ -94,10 +94,10 @@ rules need, and the first matching rule wins:
 than setting up a general solver;
 \item finite entries all equal, or all either 0 or 1: \code{"hk01"}, which
 exploits the absence of a real cost scale;
-\item finite entries taking at most 32 distinct values, and at most
-half as many as the longer side has units: \code{"auction_scaled"}, whose
-epsilon-scaling phases settle the ties few cost levels leave among a
-row's cheapest columns;
+\item finite entries taking at most 32 distinct values, at most half
+as many as the longer side has units, on a problem with at most 1.25
+columns per row: \code{"auction_scaled"}, whose epsilon-scaling phases
+settle the ties few cost levels leave among a row's cheapest columns;
 \item everything else: \code{"jv"}.
 }
 Sparsity and aspect ratio used to divert the choice to \code{"lapmod"} and
@@ -196,8 +196,9 @@ using several algorithms. Forbidden edges can be marked as \code{NA} or \code{In
 \itemize{
 \item Very small (n <= 8 and m <= 8): \code{"bruteforce"} — exact enumeration
 \item Binary/constant costs: \code{"hk01"} — specialized for 0/1 costs
-\item At most 32 distinct finite values, and at most half as many as the
-longer side has units: \code{"auction_scaled"}
+\item At most 32 distinct finite values, at most half as many as the
+longer side has units, and at most 1.25 columns per row:
+\code{"auction_scaled"}
 \item Otherwise: \code{"jv"}
 }
 \code{\link[=explain_dispatch]{explain_dispatch()}} reports which rule fired and why. The other solvers are

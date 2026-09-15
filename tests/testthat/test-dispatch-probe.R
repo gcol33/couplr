@@ -113,6 +113,13 @@ test_that("few distinct costs dispatch to auction_scaled, and the tie-break rule
   levels33 <- matrix(sample(rep(1:33, 13))[1:400], 20)
   expect_identical(explain_dispatch(levels33)$rule, "default")
 
+  # Few levels on a wide problem stay with the default: past 1.25 columns per
+  # row the auction solves over dummy rows.
+  wide <- matrix(sample(c(10, 40, 90), 20 * 30, replace = TRUE), 20, 30)
+  expect_identical(explain_dispatch(wide)$rule, "default")
+  near_square <- matrix(sample(c(10, 40, 90), 20 * 25, replace = TRUE), 20, 25)
+  expect_identical(explain_dispatch(near_square)$rule, "few_costs")
+
   # Thirty continuous costs are thirty distinct values without being tied: a
   # row of thirty columns repeats none of them.
   expect_identical(explain_dispatch(matrix(runif(30), 1, 30))$rule, "default")

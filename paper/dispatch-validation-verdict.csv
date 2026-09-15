@@ -1,0 +1,2 @@
+"rule","condition","method","commit","modified_paths","quick","fire_cells","control_cells","median_ratio","worst_ratio","controls_dispatch_jv","all_certified","complete_grid","adopted"
+"few_costs","at most 32 distinct finite values, and at most half as many as the longer side has units","auction_scaled","85eefde",0,FALSE,82,63,0.381,52.116,TRUE,TRUE,TRUE,FALSE

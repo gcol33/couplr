@@ -93,3 +93,32 @@ test_that("NaN costs are still rejected for every method", {
   expect_error(assignment(m, method = "auto"), "NaN")
   expect_error(assignment(m, method = "jv"), "NaN")
 })
+
+test_that("probe counts distinct finite values up to its cap", {
+  expect_equal(couplr:::lap_probe_cost_matrix(matrix(c(3, 1, 2, 1, Inf, 3), 2))$n_distinct, 3)
+  expect_equal(couplr:::lap_probe_cost_matrix(matrix(7L, 4, 4))$n_distinct, 1)
+  expect_equal(couplr:::lap_probe_cost_matrix(matrix(NA_real_, 2, 2))$n_distinct, 0)
+  set.seed(1)
+  levels64 <- matrix(sample(rep(1:64, 4)), 16)
+  expect_equal(couplr:::lap_probe_cost_matrix(levels64)$n_distinct, 64)
+  expect_equal(couplr:::lap_probe_cost_matrix(matrix(runif(400), 20))$n_distinct, 65)
+})
+
+test_that("few distinct costs dispatch to auction_scaled, and the tie-break rules come first", {
+  set.seed(2)
+  tied <- matrix(sample(c(10, 40, 90), 400, replace = TRUE), 20)
+  expect_identical(explain_dispatch(tied)$rule, "few_costs")
+  expect_identical(assignment(tied)$method_used, "auction_scaled")
+
+  levels33 <- matrix(sample(rep(1:33, 13))[1:400], 20)
+  expect_identical(explain_dispatch(levels33)$rule, "default")
+
+  # Thirty continuous costs are thirty distinct values without being tied: a
+  # row of thirty columns repeats none of them.
+  expect_identical(explain_dispatch(matrix(runif(30), 1, 30))$rule, "default")
+  expect_identical(explain_dispatch(matrix(runif(30), 10, 30))$rule, "default")
+
+  binary <- matrix(sample(0:1, 400, replace = TRUE), 20)
+  expect_identical(explain_dispatch(binary)$rule, "no_cost_scale")
+  expect_identical(explain_dispatch(tied[1:6, 1:6])$rule, "tiny")
+})

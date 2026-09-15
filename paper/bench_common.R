@@ -402,3 +402,78 @@ make_cloud <- function(cloud, n_total, dim, seed) {
   list(left = left, right = right, vars = nm,
        cloud = cloud, dim = dim, n_total = n_total, seed = seed)
 }
+
+## ============================================================================
+## Seeds and certified panels for solver grids
+## ============================================================================
+
+## A seed that is a function of the strings and numbers naming a cell and an
+## instance inside it: a 32-bit digest of their concatenation, stable across
+## platforms without a hashing package. Two grids whose keys differ in any part
+## draw different problems.
+key_seed <- function(...) {
+  key <- paste(..., sep = "|")
+  chars <- utf8ToInt(key)
+  s <- 5381
+  for (ch in chars) s <- (s * 33 + ch) %% 2147483647
+  as.integer(s)
+}
+
+## A panel is timed through `time_rounds()`, so every solver on an instance is
+## probed once in a child and then timed in rounds with the rest of the panel,
+## and each repetition is written out on its own row.
+##
+## The probe returns the matching itself, and the matching is certified in the
+## parent against `duals`, the instance's own optimal dual solution. That is
+## what decides whether a run is right: `verify_assignment()` recomputes the
+## objective from the matching, checks the matching is a feasible one, and
+## reports the amount by which any feasible solution can beat it. A solver is
+## therefore measured against the optimum of the instance it was given, not
+## against what the rest of the panel happened to return, and a majority
+## returning the same wrong number cannot make it the reference. The certificate
+## is taken outside every timed section, so nothing it costs enters a reported
+## time.
+CERT_NA <- list(objective = NA_real_, duality_gap = NA_real_,
+                max_suboptimality = NA_real_, certified_optimal = NA,
+                primal_feasible = NA, all_rows_matched = NA,
+                structurally_valid = NA)
+
+certify_run <- function(method, cost, match, duals) {
+  if (is.null(duals)) return(CERT_NA)
+  cv <- tryCatch(verify_assignment(match, cost = cost, duals = duals),
+                 error = function(e) {
+                   ## A stage measured in hours does not end on one certificate,
+                   ## and a run without one is not silently a run that passed:
+                   ## it is written out with no verdict and the reason is said
+                   ## here.
+                   cat(sprintf("  ! %s could not be certified: %s\n",
+                               method, conditionMessage(e)))
+                   NULL
+                 })
+  if (is.null(cv)) return(CERT_NA)
+  list(objective = cv$primal_objective, duality_gap = cv$duality_gap,
+       max_suboptimality = cv$max_suboptimality,
+       certified_optimal = cv$certified_optimal,
+       primal_feasible = cv$primal_feasible,
+       all_rows_matched = cv$all_rows_matched,
+       structurally_valid = cv$structurally_valid_matching)
+}
+
+solve_panel <- function(cost, methods, reps, timeout_s, duals) {
+  arms <- setNames(lapply(methods, function(method) function() {
+    res <- assignment(cost, method = method)
+    list(total_cost = res$total_cost, match = as.integer(res$match))
+  }), methods)
+  tr <- time_rounds(arms, reps, timeout_s)
+  lapply(setNames(methods, methods), function(method) {
+    rows <- tr$runs[tr$runs$arm == method, ]
+    v <- tr$values[[method]]
+    if (is.null(v)) {
+      return(c(list(seconds = rows$seconds, status = rows$status,
+                    total_cost = NA_real_, n_matched = NA_integer_), CERT_NA))
+    }
+    c(list(seconds = rows$seconds, status = rows$status,
+           total_cost = v$total_cost, n_matched = sum(v$match > 0L)),
+      certify_run(method, cost, v$match, duals))
+  })
+}

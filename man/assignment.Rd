@@ -94,6 +94,10 @@ rules need, and the first matching rule wins:
 than setting up a general solver;
 \item finite entries all equal, or all either 0 or 1: \code{"hk01"}, which
 exploits the absence of a real cost scale;
+\item finite entries taking at most 32 distinct values, and at most
+half as many as the longer side has units: \code{"auction_scaled"}, whose
+epsilon-scaling phases settle the ties few cost levels leave among a
+row's cheapest columns;
 \item everything else: \code{"jv"}.
 }
 Sparsity and aspect ratio used to divert the choice to \code{"lapmod"} and
@@ -188,16 +192,16 @@ Solve the linear assignment problem (minimum- or maximum-cost matching)
 using several algorithms. Forbidden edges can be marked as \code{NA} or \code{Inf}.
 }
 \details{
-\code{method = "auto"} selects an algorithm based on problem size/shape and data
-characteristics:
+\code{method = "auto"} selects an algorithm based on problem size and the costs:
 \itemize{
 \item Very small (n <= 8 and m <= 8): \code{"bruteforce"} — exact enumeration
 \item Binary/constant costs: \code{"hk01"} — specialized for 0/1 costs
-\item Sparse (>50\\% NA/Inf): \code{"lapmod"} — sparse JV variant, at every size
-\item Very rectangular (m >= 3n): \code{"sap"} — handles rectangular well
-\item Otherwise: \code{"jv"} — fastest general-purpose solver at every size
+\item At most 32 distinct finite values, and at most half as many as the
+longer side has units: \code{"auction_scaled"}
+\item Otherwise: \code{"jv"}
 }
-The other solvers are available by naming them explicitly.
+\code{\link[=explain_dispatch]{explain_dispatch()}} reports which rule fired and why. The other solvers are
+available by naming them explicitly.
 }
 \section{Integer conversion for bit-scaling}{
 

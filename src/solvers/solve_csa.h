@@ -1,19 +1,16 @@
 // src/solvers/solve_csa.h
-// Pure C++ Goldberg-Kennedy Cost-Scaling Assignment (CSA) Algorithm - NO Rcpp dependencies
+// Cost-scaling assignment entry point - NO Rcpp dependencies
 #pragma once
 
 #include "../core/lap_types.h"
 
 namespace lap {
 
-// Solve LAP using Goldberg-Kennedy Cost-Scaling Algorithm
-// Reference: Goldberg & Kennedy (1995) "An efficient cost scaling algorithm
-//            for the assignment problem"
-// Complexity: O(sqrt(n) * m * log(nC)) where m = number of edges, C = max cost
-//
-// CSA uses epsilon-scaling auction approach. For minimization, we find objects
-// with minimum reduced cost (c_ij - price_j) and decrease prices to maintain
-// epsilon-complementary slackness.
+// Solve LAP by epsilon-scaling: a large epsilon for coarse moves, divided by 7
+// each phase, around the forward-auction bid. This is the core behind
+// solve_auction_scaled_params() at its default schedule, including the repair
+// that turns the final epsilon-optimal assignment into an optimal one, so
+// real-valued costs are solved as supplied.
 //
 // Parameters:
 //   cost: Cost matrix (row-major, with mask for forbidden edges)

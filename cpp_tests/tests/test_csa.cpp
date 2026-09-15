@@ -95,8 +95,8 @@ TEST_CASE("CSA solver - rectangular matrices", "[csa][rectangular]") {
 
 TEST_CASE("CSA solver - fractional costs are optimal", "[csa][fractional]") {
     // Epsilon-scaling termination only guarantees optimality for integer costs;
-    // solve_csa scales fractional costs to integers first. This pins the case
-    // where competing assignments differ by less than the scaling epsilon.
+    // the repair after the bidding makes the result optimal on real costs. This
+    // pins the case where competing assignments differ by less than 1e-6.
     SECTION("near-tied fractional 3x3") {
         auto cost = make_cost({
             {0.0000010, 0.0000020, 0.0000030},

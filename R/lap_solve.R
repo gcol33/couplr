@@ -48,14 +48,11 @@
 #'
 #'   **Advanced solvers:**
 #'   \itemize{
-#'     \item `"csa"` — 'Goldberg-Kennedy' cost-scaling, often fastest for
-#'       medium-large problems. Runs on integers, so a real-valued matrix is
-#'       converted first: the smallest allowed cost is shifted to zero and the
-#'       span is scaled to at most 1e9 before rounding, which leaves a complete
-#'       assignment's optimum where it was. A matrix whose span its resolution
-#'       cannot order, one whose smallest entries round together at the bottom
-#'       of that span, is refused with `"jv"` and `"auction"` named instead of
-#'       being answered from a collapsed ordering
+#'     \item `"csa"` — Cost scaling: epsilon starts at the span of the costs
+#'       and is divided by 7 each phase around the auction bid, the same solver
+#'       as `"auction_scaled"` at its default schedule. Real-valued costs are
+#'       read as supplied; the final epsilon-optimal assignment is repaired to
+#'       an optimal one
 #'     \item `"gabow_tarjan"` — 'Gabow-Tarjan' bit-scaling with complementary
 #'       slackness. On a graph of `V` vertices and `E` edges the bound is
 #'       O(sqrt(V) * E * log(V * C)), which for an `n` by `n` cost matrix is

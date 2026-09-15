@@ -298,12 +298,11 @@ one asked, so the version that reaches CRAN is this one.
   disagreed with the optimum in 40 of 40 replicates, once returning 77329.983
   against an optimum of 0.0013427418.
 
-  The conversion now shifts the smallest allowed cost to zero and scales the
-  span rather than the magnitude, which is what a complete assignment is
-  invariant under, at a span sized from the instance and capped at 1e9. Costs
-  offset from the origin are unaffected by the offset. A range the resolution
-  cannot order is refused, naming `"jv"` and `"auction"`, rather than answered
-  from a collapsed ordering.
+  `"csa"` now reads the costs as supplied. It runs the epsilon-scaling core
+  that `"auction_scaled"` runs at its default schedule, and that core ends in
+  the repair step described under the auction solvers above, which returns an
+  optimal assignment on real-valued costs without converting them to integers.
+  There is no resolution to lose, so no cost range is refused.
 
   `verify_assignment()` returned `FALSE` on every one of the wrong answers, so
   a caller who verified was never misled; a caller who read `status` was.

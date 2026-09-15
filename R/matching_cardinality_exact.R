@@ -76,6 +76,19 @@
 # including every early stop.
 # ==============================================================================
 
+# Generation. A search over a specification rather than a matrix solves every
+# node over the pairs it has generated so far. The network always carries its
+# full budget, since a category that cannot fill it with pairs pays slack, so a
+# node's solve is always a flow and the only question about the pairs it omits is
+# price: a pair arc left out sits at its lower bound of zero, so the solve is
+# optimal for the network holding every pair once no omitted pair prices below
+# zero against its potentials. The multipliers decompose into a row part and a
+# column part, so they fold into those potentials and the pricer reads the
+# distances as they are. Pairs that price in are appended to the network and the
+# node is solved again, warm; the arcs already there keep their indices, so
+# every bound the search placed on one stands. The certificate a node reports
+# is the solve's own, together with the floor under every omitted pair.
+
 # The reasons the node loop stops, in the order they are checked. Anything
 # outside this set is a name nobody defined, and is refused where it is written
 # rather than where it is read.
@@ -143,10 +156,45 @@
     return(NULL)
   }
   arcs <- problem$arcs
-  if (length(flow) != nrow(arcs)) {
+  if (length(flow) > nrow(arcs)) {
     return(NULL)
   }
+  # Pairs generated since the flow was solved sit on the end of the arc list,
+  # and a pair nobody placed flow on starts at its lower bound.
+  if (length(flow) < nrow(arcs)) {
+    flow <- c(flow, arcs$lower[seq.int(length(flow) + 1L, nrow(arcs))])
+  }
   pmin(pmax(flow, arcs$lower), arcs$upper)
+}
+
+# The index a search should read now. A generating search appends pairs as it
+# goes, and the index handed to it at the start does not hold them.
+.cardinality_current_index <- function(index) {
+  if (is.null(index$gen)) index else index$gen$built$index
+}
+
+# The omitted pairs a node's solve prices below zero, added to the session's
+# candidate set, with the floor over every omitted pair and the tolerance it was
+# read at. A pair arc costs d - shift + sum_r lambda_r (u_ri - w_rj - b_r) and
+# reduces by pi(left_i) - pi(right_j), which the pricer reads as d - u_i - v_j.
+.cardinality_price_omitted <- function(gen, index, potential, coefs, lambda, tol) {
+  layout <- index$layout
+  pi_left <- potential[layout$node_left(seq_len(index$n_left))]
+  pi_right <- potential[layout$node_right(seq_len(index$n_right))]
+  row_part <- numeric(index$n_left)
+  col_part <- numeric(index$n_right)
+  coefs <- .as_moment_coefficient_list(coefs)
+  for (r in seq_along(coefs)) {
+    if (is.null(lambda) || lambda[[r]] == 0) next
+    row_part <- row_part + lambda[[r]] * (coefs[[r]]$u - coefs[[r]]$b)
+    col_part <- col_part - lambda[[r]] * coefs[[r]]$w
+  }
+  u <- index$cost_shift - row_part - pi_left
+  v <- pi_right - col_part
+  tolerance <- tol * max(1, abs(potential))
+  priced <- lap_pricing_price(gen$session, u, v, gen$keep_per_row, tolerance)
+  list(i = as.integer(priced$i), j = as.integer(priced$j),
+       proven_floor = priced$proven_floor, tolerance = tolerance)
 }
 
 # Seconds left of a budget stated as an absolute elapsed time, which is what a
@@ -221,36 +269,73 @@
                               lambda = NULL, edits = NULL, cost = NULL,
                               tol = 1e-9, warm = NULL, time_limit = Inf) {
   node <- .cardinality_as_node(problem, index)
-  index <- node$index
-  base <- .cardinality_edit_problem(node$problem, edits)
-
-  arc_cost <- .cardinality_repriced_cost(index, base$arcs$cost, coefs, lambda)
-  solve_problem <- base
-  if (!identical(arc_cost, base$arcs$cost)) {
-    solve_problem$arcs$cost <- arc_cost
+  gen <- node$index$gen
+  if (!is.null(gen)) {
+    node <- gen$built
   }
+  started <- proc.time()[["elapsed"]]
+  omitted <- NULL
 
-  solved <- .flow_solve(solve_problem,
-                        warm_flow = .cardinality_warm_flow(warm$flow,
-                                                           solve_problem),
-                        warm_potential = warm$potential,
-                        time_limit = time_limit)
-  if (identical(solved$status, "interrupted")) {
-    return(list(status = "interrupted",
-                flow = as.numeric(solved$flow),
-                potential = as.numeric(solved$potential),
-                integral = FALSE,
-                certificate = NULL,
-                certified = FALSE,
-                audit = NULL,
-                audit_ok = FALSE,
-                read = NULL,
-                objective = NA_real_,
-                relaxed = NA_real_,
-                problem = base))
+  repeat {
+    index <- node$index
+    base <- .cardinality_edit_problem(node$problem, edits)
+
+    arc_cost <- .cardinality_repriced_cost(index, base$arcs$cost, coefs, lambda)
+    solve_problem <- base
+    if (!identical(arc_cost, base$arcs$cost)) {
+      solve_problem$arcs$cost <- arc_cost
+    }
+
+    remaining <- if (is.finite(time_limit)) {
+      max(0, time_limit - (proc.time()[["elapsed"]] - started))
+    } else {
+      Inf
+    }
+    solved <- .flow_solve(solve_problem,
+                          warm_flow = .cardinality_warm_flow(warm$flow,
+                                                             solve_problem),
+                          warm_potential = warm$potential,
+                          time_limit = remaining)
+    if (identical(solved$status, "interrupted")) {
+      return(list(status = "interrupted",
+                  flow = as.numeric(solved$flow),
+                  potential = as.numeric(solved$potential),
+                  integral = FALSE,
+                  certificate = NULL,
+                  certified = FALSE,
+                  audit = NULL,
+                  audit_ok = FALSE,
+                  read = NULL,
+                  objective = NA_real_,
+                  relaxed = NA_real_,
+                  problem = base,
+                  index = index))
+    }
+    if (is.null(gen) || isTRUE(edits$closed) ||
+        .cardinality_no_flow(solved$status)) {
+      break
+    }
+    omitted <- .cardinality_price_omitted(gen, index, as.numeric(solved$potential),
+                                          coefs, lambda, tol)
+    if (!length(omitted$i)) {
+      break
+    }
+    gen$built <- .balance_add_pairs(gen$built, omitted$i, omitted$j,
+                                    lap_pricing_cost(gen$session, omitted$i,
+                                                     omitted$j))
+    node <- gen$built
+    warm <- list(flow = as.numeric(solved$flow),
+                 potential = as.numeric(solved$potential))
   }
   flow <- as.numeric(solved$flow)
   certificate <- verify_flow(solved, tol = tol)
+  if (!is.null(omitted)) {
+    certificate$master_certified <- certificate$certified_optimal
+    certificate$omitted_proven_floor <- omitted$proven_floor
+    certificate$omitted_tolerance <- omitted$tolerance
+    certificate$certified_optimal <- isTRUE(certificate$certified_optimal) &&
+      !(omitted$proven_floor < -omitted$tolerance)
+  }
 
   read <- .balance_flow_read(index, flow)
   audit <- .balance_flow_audit(base, index, flow, cost = cost,
@@ -267,7 +352,8 @@
        read = read,
        objective = sum(base$arcs$cost * flow),
        relaxed = sum(arc_cost * flow),
-       problem = base)
+       problem = base,
+       index = index)
 }
 
 # The value of every moment row on a matched set. Zero or below is satisfied.
@@ -513,7 +599,11 @@
   used <- match(left + (right - 1L) * index$n_left, index$pair_key)
   bound <- numeric(length(pair))
   bound[used] <- 1
-  .cardinality_add_edit(.cardinality_no_edits(), pair, bound, bound)
+  edits <- .cardinality_add_edit(.cardinality_no_edits(), pair, bound, bound)
+  # Every pair the set does not use is barred, the ones never generated
+  # included, so no pair is priced into this solve.
+  edits$closed <- TRUE
+  edits
 }
 
 # The left unit, or the pair, whose contribution to a relaxed row is largest. A
@@ -674,7 +764,8 @@
       if (!is.null(subset)) {
         seed <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol,
                                   edits = .cardinality_pin_pairs(
-                                    index, subset$left, subset$right),
+                                    .cardinality_current_index(index),
+                                    subset$left, subset$right),
                                   warm = root_warm,
                                   time_limit = .cardinality_remaining(deadline))
         root_solves <- root_solves + 1L
@@ -845,12 +936,19 @@
       # and a subtree still worth opening.
       relaxed <- dual$relaxed
       g <- .cardinality_violations(coefs, relaxed$read)
-      pick <- .cardinality_branch_pick(index, relaxed$read, coefs, g,
+      pick <- .cardinality_branch_pick(.cardinality_current_index(index),
+                                       relaxed$read, coefs, g,
                                        dual$lambda, env$active$fixed_units,
                                        env$active$fixed_pairs, branch)
       if (is.null(pick)) {
         # Every pair arc is decided, so the node's matched set is determined and
-        # is either the incumbent already or infeasible for a moment row.
+        # is either the incumbent already or infeasible for a moment row. A
+        # generating search has decided only the pairs it generated, and the
+        # subtree using the others is left unexamined, so its bound no longer
+        # covers the whole tree.
+        if (!is.null(index$gen)) {
+          env$bound_certified <- FALSE
+        }
         env$active <- NULL
         next
       }
@@ -883,7 +981,7 @@
     identical(env$incumbent$status, "optimal") &&
     best_possible <= n_pairs
 
-  structure(list(index = index,
+  structure(list(index = .cardinality_current_index(index),
                  solution = env$incumbent,
                  objective = env$best,
                  bound = bound,
@@ -1115,7 +1213,16 @@ print.cardinality_report <- function(x, ...) {
                                node_limit = 500L, time_limit = Inf,
                                should_stop = NULL, tol = 1e-9) {
   hier <- .refined_hierarchy(left, right, refined, exact = exact)
-  built <- .balance_flow_problem(cost, hier)
+  gen <- NULL
+  if (is_lazy_cost_spec(cost)) {
+    gen <- .cardinality_generator(cost)
+    built <- .balance_flow_problem(gen$pool, hier)
+    built$index$gen <- gen
+    gen$built <- built
+    cost <- NULL
+  } else {
+    built <- .balance_flow_problem(cost, hier)
+  }
   specs <- .moment_specs(moments = moments, max_std_diff = max_std_diff,
                          vars = vars, left = left, right = right)
   coefs <- lapply(specs, .moment_coefficients, left = left, right = right)
@@ -1126,5 +1233,41 @@ print.cardinality_report <- function(x, ...) {
                                    time_limit = time_limit,
                                    should_stop = should_stop, cost = cost,
                                    tol = tol)
-  .cardinality_report(run, specs = specs, tol = tol)
+  report <- .cardinality_report(run, specs = specs, tol = tol)
+  if (!is.null(gen)) {
+    report$search <- list(
+      seed_width      = as.integer(gen$seed_width),
+      candidate_edges = as.numeric(length(gen$built$index$pair_left)),
+      possible_edges  = as.numeric(gen$pool$n_left) * gen$pool$n_right,
+      edges_evaluated = as.numeric(lap_pricing_evaluated(gen$session))
+    )
+  }
+  report
+}
+
+# The pricing session a search over a specification generates pairs from, and
+# the pool its network starts with: each left unit's cheapest admissible right
+# units, at the seed width the implicit loop uses, together with the smallest
+# and largest admissible distance over every pair, read in one pass, which the
+# tier weights have to be built against.
+.cardinality_generator <- function(spec) {
+  session <- lap_pricing_session(spec$left_mat, spec$right_mat, spec$distance,
+                                 lazy_cost_spec_inv_cov(spec), spec$max_distance,
+                                 lazy_cost_spec_calipers(spec), spec$vars)
+  range <- lap_pricing_range(session)
+  seed_width <- lap_implicit_seed_width(spec$n_right)
+  seed <- lap_pricing_seed(session, seed_width)
+  distance <- lap_pricing_cost(session, seed$i, seed$j)
+  some <- range$n_admissible > 0
+  gen <- new.env(parent = emptyenv())
+  gen$session <- session
+  gen$seed_width <- seed_width
+  gen$keep_per_row <- .implicit_defaults()$keep_per_row
+  gen$pool <- structure(list(n_left = spec$n_left, n_right = spec$n_right,
+                             left = as.integer(seed$i), right = as.integer(seed$j),
+                             distance = as.numeric(distance),
+                             min = if (some) range$min else NA_real_,
+                             max = if (some) range$max else NA_real_),
+                        class = "balance_pair_pool")
+  gen
 }

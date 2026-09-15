@@ -378,10 +378,10 @@ full_match <- function(left, right, vars,
     if (implicit) {
       # --- Optimal full matching, grown pair by pair over the specification ---
       knobs <- .implicit_defaults()
-      compiled <- lap_full_match_implicit(
+      compiled <- lap_design_implicit(
         cost_matrix$left_mat, cost_matrix$right_mat, cost_matrix$distance,
         lazy_cost_spec_inv_cov(cost_matrix), cost_matrix$max_distance,
-        lazy_cost_spec_calipers(cost_matrix), cost_matrix$vars,
+        lazy_cost_spec_calipers(cost_matrix), cost_matrix$vars, "full_match",
         as.numeric(min_controls),
         if (is.infinite(max_controls)) Inf else as.numeric(max_controls),
         knobs$keep_per_row, knobs$width, knobs$tol, knobs$max_rounds, TRUE

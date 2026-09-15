@@ -115,10 +115,16 @@ and provide helpful warnings before matching (default: TRUE)}
 distance metric, switches) when the dense cost matrix would consume a large
 fraction of free system RAM. "lazy" computes each pairwise distance from
 the underlying feature data as the solver needs it, instead of
-allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, and not yet for
-\code{replace = TRUE}, \code{ratio > 1}, \code{method = "greedy"}, or custom distance
-functions (blocking via \code{block_id} is the other option that reduces
-memory, by solving smaller sub-problems). Where the metric carries a ball
+allocating the full n_left x n_right matrix; supported for \code{method = "jv"}/\code{"auction"} with a built-in distance metric, including
+\code{replace = TRUE}, where each left unit's cheapest partners are found one
+row at a time, and \code{ratio > 1}, where the left units' covariates are
+replicated rather than their rows of distances, and not yet for
+\code{method = "greedy"} or custom distance functions (blocking via \code{block_id}
+is the other option that reduces memory, by solving smaller
+sub-problems). When the constraints admit no complete matching, the
+largest matching they admit, cheapest among those, is found by the
+edge-generation loop over the same specification, as the dense path finds
+it by padding. Where the metric carries a ball
 bound, the column set is held in a ball tree and a subtree whose bound
 cannot beat the current threshold is discarded without being read:
 \code{"mahalanobis"} always, the metrics linear in the covariates up to six of
@@ -126,7 +132,7 @@ them. \code{"manhattan"} and \code{"chebyshev"}, a covariance with no Cholesky
 factor, and a higher-dimensional linear metric read the columns instead. "implicit" states the problem
 over every pair and solves it over a fraction of them, generating the pairs
 the answer turns out to need and proving that the ones it never generated
-could not have improved it; same requirements as "lazy", and 1:1 only. On
+could not have improved it; same requirements as "lazy". On
 the eight-covariate problem the benchmarks use it leads "lazy" from 5,000
 units upward, by 1.1x at 5,000 rising to 3.1x at 50,000, and loses below
 that where the loop's fixed costs are still visible; what it buys at every

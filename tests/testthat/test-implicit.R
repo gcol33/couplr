@@ -250,7 +250,7 @@ test_that("an infeasible caliper is reported with the witness, not an error", {
     loop <- match_couples(left, right, vars = c("x", "y", "z"),
                           max_distance = 1e-6, memory_mode = "implicit",
                           check_costs = FALSE),
-    "no complete matching"
+    "No valid pairs"
   )
 
   expect_equal(loop$status, "infeasible")
@@ -324,15 +324,6 @@ test_that("the designs the loop does not solve are declined", {
   right <- implicit_units(40, 5516)
   vars <- c("x", "y", "z")
 
-  expect_error(
-    match_couples(left, right, vars = vars, memory_mode = "implicit", ratio = 2),
-    "ratio > 1 does not support memory_mode = \"implicit\""
-  )
-  expect_error(
-    match_couples(left, right, vars = vars, memory_mode = "implicit",
-                  replace = TRUE),
-    "replace = TRUE does not support memory_mode = \"implicit\""
-  )
   expect_error(
     match_couples(left, right, vars = vars, memory_mode = "implicit",
                   method = "greedy"),

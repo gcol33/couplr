@@ -80,6 +80,15 @@
 #'   `engine = "heuristic"` only.
 #' @param batch_fraction Fraction of the remaining pairs the heuristic deletes
 #'   per iteration (default: 0.1). Reaches `engine = "heuristic"` only.
+#' @param memory_mode One of "auto" (default), "dense" or "implicit". "implicit"
+#'   solves the flow and branch and bound engines over a built-in distance
+#'   metric without building the pair set: every network solve is taken over
+#'   the pairs generated so far, the pairs it omits are priced against its
+#'   potentials with the multipliers folded in, and the ones pricing below zero
+#'   are added and the solve repeated, so each solve is optimal over every pair.
+#'   The distance range the tier weights are built on is read in one pass over
+#'   the pairs. The result carries a `search` record. "auto" never selects it,
+#'   and the heuristic engine does not take it.
 #'
 #' @return A `matching_result` object. Beyond the fields every matching carries
 #'   it holds:
@@ -209,11 +218,17 @@ cardinality_match <- function(left, right, vars,
                               node_limit = 500L,
                               method = "auto",
                               max_iter = 100L,
-                              batch_fraction = 0.1) {
+                              batch_fraction = 0.1,
+                              memory_mode = "auto") {
 
   engine <- match.arg(engine)
 
   if (identical(engine, "heuristic")) {
+    if (identical(memory_mode, "implicit")) {
+      stop("engine = \"heuristic\" does not support memory_mode = \"implicit\": ",
+           "its pruning loop starts from a complete match over the cost matrix. ",
+           "Use engine = \"flow\" or \"branch_bound\".", call. = FALSE)
+    }
     .cardinality_reject_args(
       list(fine = !missing(fine), refined = !missing(refined),
            refined_exact = !missing(refined_exact),
@@ -302,7 +317,9 @@ cardinality_match <- function(left, right, vars,
   }
 
   cost <- build_cost_matrix(left, right, vars, distance, weights, scale,
-                            sigma = sigma, memory_mode = "dense")
+                            sigma = sigma, memory_mode = memory_mode,
+                            caller_supports_lazy = FALSE,
+                            caller_supports_implicit = TRUE)
   cost <- apply_all_constraints(cost, left, right, vars,
                                 max_distance, calipers)
 
@@ -362,6 +379,9 @@ cardinality_match <- function(left, right, vars,
     cardinality = report,
     status = report$status
   )
+  if (!is.null(report$search)) {
+    result$search <- report$search
+  }
   if (isTRUE(report$certified)) {
     result$certificate <- list(
       certified_optimal = TRUE,

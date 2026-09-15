@@ -22,6 +22,8 @@ List with pairs tibble, unmatched list, and info list.
 The compiled design gives every column capacity for every row, so the rows
 never compete and the optimum of the whole network is each row's own cheapest
 columns. \code{plan$per_row} is how many of them a row takes: the requested ratio,
-or the column count when there are fewer columns than that.
+or the column count when there are fewer columns than that. A lazy cost spec
+is answered one row at a time in C++, through the same row search the
+implicit loop seeds with, so no row of costs is ever held in R.
 }
 \keyword{internal}

@@ -5,7 +5,8 @@ utils::globalVariables(c(".data", "solution_id", "total_cost",
                         "lap_flow_solve", "lap_flow_certify",
                         "lap_flow_compile_full_match",
                         "lap_flow_compile_couples",
-                        "lap_implicit_dense", "lap_implicit_lazy"))
+                        "lap_implicit_dense", "lap_implicit_lazy",
+                        "lap_design_implicit", "lap_replace_lazy"))
 
 #' Validate and prepare cost data
 #'

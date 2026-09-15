@@ -38,6 +38,8 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <type_traits>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -751,7 +753,7 @@ Rcpp::List flow_compile_full_match_impl(Rcpp::NumericMatrix cost,
 // problem's own arcs stay in C++.
 Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      Rcpp::NumericMatrix right_mat,
-                                     std::string distance,
+                                     SEXP distance,
                                      Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                      double max_distance, Rcpp::List calipers,
                                      Rcpp::CharacterVector vars, std::string design,
@@ -759,15 +761,11 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      double keep_per_row, double width, double tol,
                                      double max_rounds, bool certify) {
     try {
-        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
-        if (inv_cov.isNotNull()) {
-            Rcpp::NumericMatrix ic(inv_cov.get());
-            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
-        }
-        const lap::LazyCostMatrix src = rcpp_to_lazy_cost_matrix(
-            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, vars,
-            false);
-        const lap::SourceOracle<lap::LazyCostMatrix> oracle(src);
+        const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
+                                                   max_distance, calipers, vars, false);
+        return std::visit([&](const auto& src) -> Rcpp::List {
+        using Source = std::decay_t<decltype(src)>;
+        const lap::SourceOracle<Source> oracle(src);
         const std::vector<lap::CategoryConstraint> none;
 
         lap::CompiledDesign compiled;
@@ -796,6 +794,13 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
         const lap::DesignResult res =
             lap::solve_implicit_design(src, compiled.problem, cand, opts);
         const lap::FlowProblem& prob = compiled.problem;
+        if (design == "full_match" && lap::min_distance_seen(src) < 0.0) {
+            Rcpp::stop("full_match() needs non-negative distances: the cheapest "
+                       "edge cover is a full matching only when no arc is worth "
+                       "keeping for its own sake, and the distance function "
+                       "returned %g. Shift it so its smallest value is zero.",
+                       lap::min_distance_seen(src));
+        }
 
         const lap::BlockArcRange& blk = prob.block_arcs.at(0);
         Rcpp::NumericVector block_flow(static_cast<R_xlen_t>(blk.n_arcs));
@@ -838,6 +843,7 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                 Rcpp::Named("edges_evaluated") = static_cast<double>(res.edges_evaluated),
                 Rcpp::Named("n_rounds") = static_cast<double>(res.rounds.size()),
                 Rcpp::Named("rounds") = implicit_rounds_to_r(res.rounds, false)));
+        }, source);
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }

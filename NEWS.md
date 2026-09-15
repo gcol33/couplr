@@ -114,6 +114,22 @@ one asked, so the version that reaches CRAN is this one.
   whose region-A partners sit behind 300 nearer region-B units, fine balance
   on region reaches the dense matched set and certifies (#48).
 
+* **A user-supplied distance function runs on the lazy and implicit paths.**
+  Both refused a function, on the grounds that calling it per pair from C++
+  would pay an R call per pair. It is now called on a block of left units
+  against every right unit, the same two-matrix contract the dense path calls
+  it under, with the block sized so the matrix it returns stays near a million
+  cells, and a few blocks kept. Every path that takes a specification takes
+  one carrying a function: Jonker-Volgenant and auction under `"lazy"`, the
+  implicit loop, `full_match()`, `cardinality_match()`, replacement and ratio
+  designs, `match_path()` and `verify_assignment()`. No ball bound exists for
+  an opaque function, so pricing reads every omitted pair; what the loop buys
+  there is the memory ceiling and the sparse master. A transposed problem asks
+  the function its original question, so an asymmetric distance keeps its
+  direction. The certificate assumes a pair's distance does not depend on the
+  other units in its call, so each matched pair is evaluated again alone and a
+  disagreement is an error naming the pair (#49).
+
 * **A lazy or implicit match that admits no complete matching returns the
   largest one it admits.** Both modes reported every unit unmatched with a
   warning, because the dense path's pruning and sentinel padding need the

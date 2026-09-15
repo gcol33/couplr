@@ -85,14 +85,18 @@ test_that("assignment() errors clearly for methods that don't support memory_mod
               "does not support memory_mode")
 })
 
-test_that("memory_mode = \"lazy\" errors for a custom distance function", {
+test_that("memory_mode = \"lazy\" states a custom distance function without calling it", {
   left <- data.frame(id = 1:4, x = rnorm(4))
   right <- data.frame(id = 5:8, x = rnorm(4))
-  custom_dist <- function(l, r) as.matrix(dist(rbind(l, r)))[seq_len(nrow(l)), -seq_len(nrow(l))]
+  calls <- 0L
+  custom_dist <- function(l, r) {
+    calls <<- calls + 1L
+    abs(outer(l[, 1], r[, 1], "-"))
+  }
 
-  expect_error(
-    build_cost_matrix(left, right, vars = "x", distance = custom_dist,
-                      memory_mode = "lazy"),
-    "custom distance functions"
-  )
+  spec <- build_cost_matrix(left, right, vars = "x", distance = custom_dist,
+                            memory_mode = "lazy")
+  expect_true(is_lazy_cost_spec(spec))
+  expect_identical(spec$distance, custom_dist)
+  expect_equal(calls, 0L)
 })

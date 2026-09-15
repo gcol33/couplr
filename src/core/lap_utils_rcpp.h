@@ -7,6 +7,8 @@
 #include <utility>
 #include "lap_types.h"
 #include "lap_lazy_types.h"
+#include "lap_callback_source.h"
+#include <variant>
 
 // Error macro using Rcpp::stop for proper C++ stack unwinding
 // (Rf_error uses longjmp which skips destructors, causing memory leaks)
@@ -117,6 +119,22 @@ lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     const Rcpp::CharacterVector& var_names,
     bool maximize);
 
+// The cost source a lazy specification describes: a LazyCostMatrix for a
+// built-in metric named by a string, a CallbackCostSource for a user's R
+// function. `inv_cov` of 0 x 0 is the same as NULL. Every binding that solves a
+// specification builds its source here and visits it, so a solver templated on
+// the source concept serves both.
+using LazySource = std::variant<lap::LazyCostMatrix, lap::CallbackCostSource>;
+
+LazySource rcpp_lazy_source(const Rcpp::NumericMatrix& left_mat,
+                            const Rcpp::NumericMatrix& right_mat,
+                            SEXP distance,
+                            Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                            double max_distance,
+                            Rcpp::List calipers,
+                            const Rcpp::CharacterVector& var_names,
+                            bool maximize);
+
 // The distance of specific matched pairs, evaluated by the same code the lazy
 // solve evaluated them with. The R side needs these to report a pair's distance
 // and must not recompute them from the formula: a second implementation of the
@@ -125,7 +143,7 @@ lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
 Rcpp::NumericVector lazy_pair_distances_impl(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,
-    const std::string& metric,
+    SEXP metric,
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
     const Rcpp::IntegerVector& rows,
     const Rcpp::IntegerVector& cols);
@@ -137,7 +155,7 @@ Rcpp::NumericVector lazy_pair_distances_impl(
 double lazy_distance_sd_impl(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,
-    const std::string& metric,
+    SEXP metric,
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
 
 // Convert a pure lap::LapResult to the standard Rcpp result list.

@@ -234,25 +234,14 @@ build_cost_matrix <- function(left, right, vars, distance = "euclidean",
   left_mat <- extract_matching_vars(left, vars)
   right_mat <- extract_matching_vars(right, vars)
 
-  # A custom distance FUNCTION can never be lazy: it expects to be called
-  # once on the whole (left_mat, right_mat) pair and return a full matrix,
-  # and calling it per-cell from C++ would mean per-cell R callbacks --
-  # prohibitively slow at any scale that would motivate lazy mode. Resolve
-  # against "dense" only for this case, before the RAM probe even runs;
-  # a later `memory_mode = "lazy"` request against a custom function is a
-  # hard, explicit error, not a silent dense fallback.
-  distance_is_function <- is.function(distance)
-  if (distance_is_function && memory_mode %in% c("lazy", "implicit")) {
-    stop("memory_mode = \"", memory_mode, "\" requires a built-in distance ",
-         "metric; custom distance functions cannot be evaluated one pair at a ",
-         "time at scale (R call overhead per pair is prohibitive). Use ",
-         "memory_mode = \"dense\".", call. = FALSE)
-  }
-
+  # A custom distance FUNCTION reaches the lazy and implicit paths through a
+  # cost source that calls it on a block of left rows against every right unit
+  # and keeps a few of those blocks, which is the contract the dense path
+  # already calls it under, with the R call paid per block rather than per pair.
   resolved <- resolve_memory_mode(
     nrow(left_mat), nrow(right_mat), memory_mode,
-    solver_supports_lazy = !distance_is_function && caller_supports_lazy,
-    solver_supports_implicit = !distance_is_function && caller_supports_implicit
+    solver_supports_lazy = caller_supports_lazy,
+    solver_supports_implicit = caller_supports_implicit
   )
 
   # Validate and normalize weights

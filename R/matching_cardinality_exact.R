@@ -1234,6 +1234,9 @@ print.cardinality_report <- function(x, ...) {
                                    should_stop = should_stop, cost = cost,
                                    tol = tol)
   report <- .cardinality_report(run, specs = specs, tol = tol)
+  if (!is.null(gen) && is.function(gen$spec$distance)) {
+    lazy_pair_distances(gen$spec, report$pairs$left, report$pairs$right)
+  }
   if (!is.null(gen)) {
     report$search <- list(
       seed_width      = as.integer(gen$seed_width),
@@ -1260,6 +1263,7 @@ print.cardinality_report <- function(x, ...) {
   distance <- lap_pricing_cost(session, seed$i, seed$j)
   some <- range$n_admissible > 0
   gen <- new.env(parent = emptyenv())
+  gen$spec <- spec
   gen$session <- session
   gen$seed_width <- seed_width
   gen$keep_per_row <- .implicit_defaults()$keep_per_row

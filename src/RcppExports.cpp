@@ -58,14 +58,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_lap_solve_jv_lazy
-Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
+Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
 RcppExport SEXP _couplr_cpp_lap_solve_jv_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -76,14 +76,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_lazy_pair_distances
-Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, Rcpp::IntegerVector rows, Rcpp::IntegerVector cols);
+Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, Rcpp::IntegerVector rows, Rcpp::IntegerVector cols);
 RcppExport SEXP _couplr_cpp_lazy_pair_distances(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP rowsSEXP, SEXP colsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type rows(rowsSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type cols(colsSEXP);
@@ -92,28 +92,28 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_lazy_distance_sd
-double cpp_lazy_distance_sd(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
+double cpp_lazy_distance_sd(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
 RcppExport SEXP _couplr_cpp_lazy_distance_sd(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     rcpp_result_gen = Rcpp::wrap(cpp_lazy_distance_sd(left_mat, right_mat, metric, inv_cov));
     return rcpp_result_gen;
 END_RCPP
 }
 // cpp_lap_solve_auction_lazy
-Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize, Rcpp::Nullable<double> eps);
+Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize, Rcpp::Nullable<double> eps);
 RcppExport SEXP _couplr_cpp_lap_solve_auction_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -142,14 +142,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_certify_lazy
-Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic);
+Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, Rcpp::IntegerVector match, Rcpp::NumericVector u, Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic);
 RcppExport SEXP _couplr_lap_certify_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP matchSEXP, SEXP uSEXP, SEXP vSEXP, SEXP maximizeSEXP, SEXP tolSEXP, SEXP arithmeticSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -190,14 +190,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_hall_witness_lazy
-Rcpp::List lap_hall_witness_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars);
+Rcpp::List lap_hall_witness_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars);
 RcppExport SEXP _couplr_lap_hall_witness_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -486,14 +486,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_lap_solve_jv_duals_lazy
-Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
+Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector var_names, bool maximize);
 RcppExport SEXP _couplr_cpp_lap_solve_jv_duals_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP var_namesSEXP, SEXP maximizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -572,14 +572,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_pricing_session
-SEXP lap_pricing_session(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars);
+SEXP lap_pricing_session(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars);
 RcppExport SEXP _couplr_lap_pricing_session(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -662,14 +662,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_replace_lazy
-Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, double per_row);
+Rcpp::List lap_replace_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, double per_row);
 RcppExport SEXP _couplr_lap_replace_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP per_rowSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -680,14 +680,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_design_implicit
-Rcpp::List lap_design_implicit(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, std::string design, double first, double second, double keep_per_row, double width, double tol, double max_rounds, bool certify);
+Rcpp::List lap_design_implicit(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, std::string design, double first, double second, double keep_per_row, double width, double tol, double max_rounds, bool certify);
 RcppExport SEXP _couplr_lap_design_implicit(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP designSEXP, SEXP firstSEXP, SEXP secondSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -760,14 +760,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_implicit_lazy
-Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, bool maximize, double keep_per_row, double width, double tol, double max_rounds, bool certify);
+Rcpp::List lap_implicit_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, Rcpp::CharacterVector vars, bool maximize, double keep_per_row, double width, double tol, double max_rounds, bool certify);
 RcppExport SEXP _couplr_lap_implicit_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP maximizeSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
@@ -783,14 +783,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // lap_match_path_lazy
-Rcpp::List lap_match_path_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, Rcpp::NumericVector values, Rcpp::List calipers, Rcpp::CharacterVector vars, bool maximize, double keep_per_row, double width, double tol, double max_rounds, bool certify);
+Rcpp::List lap_match_path_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, Rcpp::NumericVector values, Rcpp::List calipers, Rcpp::CharacterVector vars, bool maximize, double keep_per_row, double width, double tol, double max_rounds, bool certify);
 RcppExport SEXP _couplr_lap_match_path_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP valuesSEXP, SEXP calipersSEXP, SEXP varsSEXP, SEXP maximizeSEXP, SEXP keep_per_rowSEXP, SEXP widthSEXP, SEXP tolSEXP, SEXP max_roundsSEXP, SEXP certifySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type values(valuesSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);

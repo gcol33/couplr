@@ -1,0 +1,2 @@
+"grid","rule","condition","method","commit","modified_paths","quick","fire_cells","control_cells","median_ratio","worst_ratio","controls_dispatch_jv","all_certified","complete_grid","adopted"
+"2","few_costs","at most 32 distinct finite values, at most half as many as the longer side has units, and at most 1.25 columns per row","auction_scaled","853f91f",0,FALSE,64,80,0.127,2.615,TRUE,TRUE,TRUE,FALSE

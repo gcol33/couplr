@@ -1,149 +1,149 @@
 "method","label","family","n","min_ms"
 "auction","Auction","Auction",10,0.028126
-"auction","Auction","Auction",25,0.038253
-"auction","Auction","Auction",50,0.078556
-"auction","Auction","Auction",100,0.332305
-"auction","Auction","Auction",200,1.383053
-"auction","Auction","Auction",500,9.435248
-"auction","Auction","Auction",1000,39.463279
-"auction_gs","Auction-GS","Auction",10,0.044403
-"auction_gs","Auction-GS","Auction",25,0.056416
-"auction_gs","Auction-GS","Auction",50,0.101598
-"auction_gs","Auction-GS","Auction",100,0.358176
-"auction_gs","Auction-GS","Auction",200,1.463413
-"auction_gs","Auction-GS","Auction",500,10.166442
-"auction_gs","Auction-GS","Auction",1000,41.687119
-"auction_scaled","Auction-S","Auction",10,0.028126
-"auction_scaled","Auction-S","Auction",25,0.037679
-"auction_scaled","Auction-S","Auction",50,0.079868
-"auction_scaled","Auction-S","Auction",100,0.318939
-"auction_scaled","Auction-S","Auction",200,1.367678
-"auction_scaled","Auction-S","Auction",500,9.47756
-"auction_scaled","Auction-S","Auction",1000,39.650895
-"auto","auto","Auto",10,0.031939
-"auto","auto","Auto",25,0.035834
-"auto","auto","Auto",50,0.050553
-"auto","auto","Auto",100,0.116645
-"auto","auto","Auto",200,0.604996
-"auto","auto","Auto",500,3.676552
-"auto","auto","Auto",1000,16.989006
-"auto","auto","Auto",2000,86.050144
-"auto","auto","Auto",5000,763.71397
-"bruteforce","Brute-F","Special-purpose",4,0.024641
-"bruteforce","Brute-F","Special-purpose",6,0.027921
-"bruteforce","Brute-F","Special-purpose",8,0.203811
-"csa","CSA","Cost scaling",10,0.028085
-"csa","CSA","Cost scaling",25,0.040139
-"csa","CSA","Cost scaling",50,0.089831
-"csa","CSA","Cost scaling",100,0.344195
-"csa","CSA","Cost scaling",200,1.44894
-"csa","CSA","Cost scaling",500,9.593385
-"csa","CSA","Cost scaling",1000,39.904931
-"csa","CSA","Cost scaling",2000,186.688211
-"csa","CSA","Cost scaling",5000,1383.87956
-"csflow","CS-flow","Flow-based",10,0.031447
-"csflow","CS-flow","Flow-based",25,0.053013
-"csflow","CS-flow","Flow-based",50,0.13899
-"csflow","CS-flow","Flow-based",100,0.713195
-"csflow","CS-flow","Flow-based",200,3.157451
-"csflow","CS-flow","Flow-based",500,18.988904
-"csflow","CS-flow","Flow-based",1000,87.343612
-"cycle_cancel","Cycle-C","Flow-based",10,0.039196
-"cycle_cancel","Cycle-C","Flow-based",25,0.095653
-"cycle_cancel","Cycle-C","Flow-based",50,0.37843
-"cycle_cancel","Cycle-C","Flow-based",100,2.451103
-"cycle_cancel","Cycle-C","Flow-based",200,18.313593
-"cycle_cancel","Cycle-C","Flow-based",500,260.052176
-"cycle_cancel","Cycle-C","Flow-based",1000,2043.45148
-"gabow_tarjan","Gabow-T","Cost scaling",10,0.070479
-"gabow_tarjan","Gabow-T","Cost scaling",25,0.221441
-"gabow_tarjan","Gabow-T","Cost scaling",50,0.669448
-"gabow_tarjan","Gabow-T","Cost scaling",100,3.886677
-"gabow_tarjan","Gabow-T","Cost scaling",200,15.68701
-"gabow_tarjan","Gabow-T","Cost scaling",500,133.962129
-"gabow_tarjan","Gabow-T","Cost scaling",1000,631.325339
-"hk01","HK-01","Special-purpose",10,0.025748
-"hk01","HK-01","Special-purpose",25,0.030996
-"hk01","HK-01","Special-purpose",50,0.046535
-"hk01","HK-01","Special-purpose",100,0.117219
-"hk01","HK-01","Special-purpose",200,0.557682
-"hk01","HK-01","Special-purpose",500,3.491191
-"hk01","HK-01","Special-purpose",1000,14.307811
-"hk01","HK-01","Special-purpose",2000,55.849339
-"hk01","HK-01","Special-purpose",5000,414.282901
-"hungarian","Hungarian","Classical",10,0.026158
-"hungarian","Hungarian","Classical",25,0.032677
-"hungarian","Hungarian","Classical",50,0.07626
-"hungarian","Hungarian","Classical",100,0.284007
-"hungarian","Hungarian","Classical",200,1.341561
-"hungarian","Hungarian","Classical",500,7.065653
-"hungarian","Hungarian","Classical",1000,32.023911
-"hungarian","Hungarian","Classical",2000,172.655346
-"jv","JV","JV / Augmenting path",10,0.025748
-"jv","JV","JV / Augmenting path",25,0.029602
-"jv","JV","JV / Augmenting path",50,0.046535
-"jv","JV","JV / Augmenting path",100,0.108773
-"jv","JV","JV / Augmenting path",200,0.575927
-"jv","JV","JV / Augmenting path",500,3.682497
-"jv","JV","JV / Augmenting path",1000,16.924308
-"jv","JV","JV / Augmenting path",2000,86.194464
-"jv","JV","JV / Augmenting path",5000,759.623031
-"lapmod","LAPMOD","JV / Augmenting path",10,0.028618
-"lapmod","LAPMOD","JV / Augmenting path",25,0.039975
-"lapmod","LAPMOD","JV / Augmenting path",50,0.107051
-"lapmod","LAPMOD","JV / Augmenting path",100,0.362563
-"lapmod","LAPMOD","JV / Augmenting path",200,1.865828
-"lapmod","LAPMOD","JV / Augmenting path",500,9.761034
-"lapmod","LAPMOD","JV / Augmenting path",1000,46.56001
-"lapmod","LAPMOD","JV / Augmenting path",2000,272.497849
-"lapmod","LAPMOD","JV / Augmenting path",5000,2004.461833
-"munkres","Munkres","Classical",10,0.027388
-"munkres","Munkres","Classical",25,0.054612
-"munkres","Munkres","Classical",50,0.242802
-"munkres","Munkres","Classical",100,2.882997
-"munkres","Munkres","Classical",200,23.04036
-"munkres","Munkres","Classical",500,524.66101
-"network_simplex","Net-S","Flow-based",10,0.068142
-"network_simplex","Net-S","Flow-based",25,0.0943
-"network_simplex","Net-S","Flow-based",50,0.333453
-"network_simplex","Net-S","Flow-based",100,1.431843
-"network_simplex","Net-S","Flow-based",200,7.916198
-"network_simplex","Net-S","Flow-based",500,78.874078
-"network_simplex","Net-S","Flow-based",1000,829.098228
-"push_relabel","Push-R","Flow-based",10,0.041861
-"push_relabel","Push-R","Flow-based",25,0.096473
-"push_relabel","Push-R","Flow-based",50,0.322752
-"push_relabel","Push-R","Flow-based",100,1.695883
-"push_relabel","Push-R","Flow-based",200,5.466243
-"push_relabel","Push-R","Flow-based",500,75.004662
-"push_relabel","Push-R","Flow-based",1000,266.466257
-"ramshaw_tarjan","Ramshaw","Rectangular / general",10,0.029807
-"ramshaw_tarjan","Ramshaw","Rectangular / general",25,0.046658
-"ramshaw_tarjan","Ramshaw","Rectangular / general",50,0.121893
-"ramshaw_tarjan","Ramshaw","Rectangular / general",100,0.508113
-"ramshaw_tarjan","Ramshaw","Rectangular / general",200,2.347496
-"ramshaw_tarjan","Ramshaw","Rectangular / general",500,12.705367
-"ramshaw_tarjan","Ramshaw","Rectangular / general",1000,54.713926
-"sap","SAP","JV / Augmenting path",10,0.03075
-"sap","SAP","JV / Augmenting path",25,0.052808
-"sap","SAP","JV / Augmenting path",50,0.139974
-"sap","SAP","JV / Augmenting path",100,0.720083
-"sap","SAP","JV / Augmenting path",200,3.164462
-"sap","SAP","JV / Augmenting path",500,19.099686
-"sap","SAP","JV / Augmenting path",1000,86.44112
-"sap","SAP","JV / Augmenting path",2000,415.510687
-"sap_dense","SAP-D","JV / Augmenting path",10,0.030586
-"sap_dense","SAP-D","JV / Augmenting path",25,0.043706
-"sap_dense","SAP-D","JV / Augmenting path",50,0.10496
-"sap_dense","SAP-D","JV / Augmenting path",100,0.387819
-"sap_dense","SAP-D","JV / Augmenting path",200,1.788625
-"sap_dense","SAP-D","JV / Augmenting path",500,9.348697
-"sap_dense","SAP-D","JV / Augmenting path",1000,43.840521
+"auction","Auction","Auction",25,0.036285
+"auction","Auction","Auction",50,0.074784
+"auction","Auction","Auction",100,0.313691
+"auction","Auction","Auction",200,1.172231
+"auction","Auction","Auction",500,9.154111
+"auction","Auction","Auction",1000,35.387305
+"auction_gs","Auction-GS","Auction",10,0.044444
+"auction_gs","Auction-GS","Auction",25,0.05617
+"auction_gs","Auction-GS","Auction",50,0.09963
+"auction_gs","Auction-GS","Auction",100,0.35014
+"auction_gs","Auction-GS","Auction",200,1.284038
+"auction_gs","Auction-GS","Auction",500,10.246269
+"auction_gs","Auction-GS","Auction",1000,37.063344
+"auction_scaled","Auction-S","Auction",10,0.02829
+"auction_scaled","Auction-S","Auction",25,0.036695
+"auction_scaled","Auction-S","Auction",50,0.073841
+"auction_scaled","Auction-S","Auction",100,0.292043
+"auction_scaled","Auction-S","Auction",200,1.17424
+"auction_scaled","Auction-S","Auction",500,9.130249
+"auction_scaled","Auction-S","Auction",1000,35.462171
+"auto","auto","Auto",10,0.032636
+"auto","auto","Auto",25,0.035916
+"auto","auto","Auto",50,0.051783
+"auto","auto","Auto",100,0.119269
+"auto","auto","Auto",200,0.586259
+"auto","auto","Auto",500,3.526287
+"auto","auto","Auto",1000,16.497949
+"auto","auto","Auto",2000,84.252663
+"auto","auto","Auto",5000,754.261256
+"bruteforce","Brute-F","Special-purpose",4,0.025133
+"bruteforce","Brute-F","Special-purpose",6,0.027347
+"bruteforce","Brute-F","Special-purpose",8,0.200531
+"csa","CSA","Cost scaling",10,0.028495
+"csa","CSA","Cost scaling",25,0.042968
+"csa","CSA","Cost scaling",50,0.086797
+"csa","CSA","Cost scaling",100,0.347598
+"csa","CSA","Cost scaling",200,0.97703
+"csa","CSA","Cost scaling",500,7.412964
+"csa","CSA","Cost scaling",1000,27.024699
+"csa","CSA","Cost scaling",2000,114.32932
+"csa","CSA","Cost scaling",5000,866.759147
+"csflow","CS-flow","Flow-based",10,0.031365
+"csflow","CS-flow","Flow-based",25,0.052726
+"csflow","CS-flow","Flow-based",50,0.135587
+"csflow","CS-flow","Flow-based",100,0.727094
+"csflow","CS-flow","Flow-based",200,3.213539
+"csflow","CS-flow","Flow-based",500,18.869184
+"csflow","CS-flow","Flow-based",1000,84.502312
+"cycle_cancel","Cycle-C","Flow-based",10,0.039319
+"cycle_cancel","Cycle-C","Flow-based",25,0.096555
+"cycle_cancel","Cycle-C","Flow-based",50,0.3772
+"cycle_cancel","Cycle-C","Flow-based",100,2.551922
+"cycle_cancel","Cycle-C","Flow-based",200,18.282023
+"cycle_cancel","Cycle-C","Flow-based",500,259.323524
+"cycle_cancel","Cycle-C","Flow-based",1000,2041.216652
+"gabow_tarjan","Gabow-T","Cost scaling",10,0.070028
+"gabow_tarjan","Gabow-T","Cost scaling",25,0.212339
+"gabow_tarjan","Gabow-T","Cost scaling",50,0.683142
+"gabow_tarjan","Gabow-T","Cost scaling",100,3.840265
+"gabow_tarjan","Gabow-T","Cost scaling",200,15.593694
+"gabow_tarjan","Gabow-T","Cost scaling",500,133.563896
+"gabow_tarjan","Gabow-T","Cost scaling",1000,626.754167
+"hk01","HK-01","Special-purpose",10,0.026281
+"hk01","HK-01","Special-purpose",25,0.031365
+"hk01","HK-01","Special-purpose",50,0.048421
+"hk01","HK-01","Special-purpose",100,0.115784
+"hk01","HK-01","Special-purpose",200,0.476297
+"hk01","HK-01","Special-purpose",500,3.351668
+"hk01","HK-01","Special-purpose",1000,13.858984
+"hk01","HK-01","Special-purpose",2000,54.107864
+"hk01","HK-01","Special-purpose",5000,399.310357
+"hungarian","Hungarian","Classical",10,0.026855
+"hungarian","Hungarian","Classical",25,0.033087
+"hungarian","Hungarian","Classical",50,0.076424
+"hungarian","Hungarian","Classical",100,0.279046
+"hungarian","Hungarian","Classical",200,1.323808
+"hungarian","Hungarian","Classical",500,6.965162
+"hungarian","Hungarian","Classical",1000,31.586892
+"hungarian","Hungarian","Classical",2000,171.186808
+"jv","JV","JV / Augmenting path",10,0.025666
+"jv","JV","JV / Augmenting path",25,0.029725
+"jv","JV","JV / Augmenting path",50,0.045059
+"jv","JV","JV / Augmenting path",100,0.110659
+"jv","JV","JV / Augmenting path",200,0.546899
+"jv","JV","JV / Augmenting path",500,3.552527
+"jv","JV","JV / Augmenting path",1000,16.448421
+"jv","JV","JV / Augmenting path",2000,84.278165
+"jv","JV","JV / Augmenting path",5000,748.855242
+"lapmod","LAPMOD","JV / Augmenting path",10,0.028167
+"lapmod","LAPMOD","JV / Augmenting path",25,0.039934
+"lapmod","LAPMOD","JV / Augmenting path",50,0.103361
+"lapmod","LAPMOD","JV / Augmenting path",100,0.366376
+"lapmod","LAPMOD","JV / Augmenting path",200,1.872511
+"lapmod","LAPMOD","JV / Augmenting path",500,9.773744
+"lapmod","LAPMOD","JV / Augmenting path",1000,47.099857
+"lapmod","LAPMOD","JV / Augmenting path",2000,274.983638
+"lapmod","LAPMOD","JV / Augmenting path",5000,2020.036052
+"munkres","Munkres","Classical",10,0.027921
+"munkres","Munkres","Classical",25,0.055637
+"munkres","Munkres","Classical",50,0.245713
+"munkres","Munkres","Classical",100,2.859135
+"munkres","Munkres","Classical",200,23.08136
+"munkres","Munkres","Classical",500,525.643001
+"network_simplex","Net-S","Flow-based",10,0.068347
+"network_simplex","Net-S","Flow-based",25,0.095325
+"network_simplex","Net-S","Flow-based",50,0.331608
+"network_simplex","Net-S","Flow-based",100,1.404332
+"network_simplex","Net-S","Flow-based",200,7.95974
+"network_simplex","Net-S","Flow-based",500,79.247178
+"network_simplex","Net-S","Flow-based",1000,841.719053
+"push_relabel","Push-R","Flow-based",10,0.040713
+"push_relabel","Push-R","Flow-based",25,0.098769
+"push_relabel","Push-R","Flow-based",50,0.31939
+"push_relabel","Push-R","Flow-based",100,1.692644
+"push_relabel","Push-R","Flow-based",200,5.550293
+"push_relabel","Push-R","Flow-based",500,76.092269
+"push_relabel","Push-R","Flow-based",1000,267.815198
+"ramshaw_tarjan","Ramshaw","Rectangular / general",10,0.031201
+"ramshaw_tarjan","Ramshaw","Rectangular / general",25,0.049692
+"ramshaw_tarjan","Ramshaw","Rectangular / general",50,0.127387
+"ramshaw_tarjan","Ramshaw","Rectangular / general",100,0.534435
+"ramshaw_tarjan","Ramshaw","Rectangular / general",200,2.365413
+"ramshaw_tarjan","Ramshaw","Rectangular / general",500,12.777281
+"ramshaw_tarjan","Ramshaw","Rectangular / general",1000,55.344834
+"sap","SAP","JV / Augmenting path",10,0.031324
+"sap","SAP","JV / Augmenting path",25,0.053833
+"sap","SAP","JV / Augmenting path",50,0.142352
+"sap","SAP","JV / Augmenting path",100,0.755712
+"sap","SAP","JV / Augmenting path",200,3.219484
+"sap","SAP","JV / Augmenting path",500,18.600962
+"sap","SAP","JV / Augmenting path",1000,84.871107
+"sap","SAP","JV / Augmenting path",2000,404.444705
+"sap_dense","SAP-D","JV / Augmenting path",10,0.030627
+"sap_dense","SAP-D","JV / Augmenting path",25,0.0451
+"sap_dense","SAP-D","JV / Augmenting path",50,0.103443
+"sap_dense","SAP-D","JV / Augmenting path",100,0.363424
+"sap_dense","SAP-D","JV / Augmenting path",200,1.737785
+"sap_dense","SAP-D","JV / Augmenting path",500,9.199621
+"sap_dense","SAP-D","JV / Augmenting path",1000,43.063694
 "ssap_bucket","SSAP-B","Cost scaling",10,0.085362
-"ssap_bucket","SSAP-B","Cost scaling",25,0.224475
-"ssap_bucket","SSAP-B","Cost scaling",50,0.816105
-"ssap_bucket","SSAP-B","Cost scaling",100,4.032473
-"ssap_bucket","SSAP-B","Cost scaling",200,23.719361
-"ssap_bucket","SSAP-B","Cost scaling",500,289.451267
-"ssap_bucket","SSAP-B","Cost scaling",1000,2241.034006
-"ssap_bucket","SSAP-B","Cost scaling",2000,18102.07318
+"ssap_bucket","SSAP-B","Cost scaling",25,0.225131
+"ssap_bucket","SSAP-B","Cost scaling",50,0.83804
+"ssap_bucket","SSAP-B","Cost scaling",100,3.990366
+"ssap_bucket","SSAP-B","Cost scaling",200,23.889921
+"ssap_bucket","SSAP-B","Cost scaling",500,292.279652
+"ssap_bucket","SSAP-B","Cost scaling",1000,2289.148162
+"ssap_bucket","SSAP-B","Cost scaling",2000,18549.243206

@@ -150,9 +150,10 @@ cost is evaluated from the underlying feature data as the solver requests it,
 so the footprint follows the covariates rather than the pairs: 100,000 units
 on 100 covariates hold as 80 MB of features where the dense matrix needs
 80 GB. Lazy evaluation covers Jonker–Volgenant and auction with the built-in
-metrics, calipers, and `max_distance`, and returns the same assignment as the
-dense path. The default `"auto"` weighs the estimated dense footprint against
-available system memory and switches before an oversized allocation.
+metrics, calipers, `max_distance`, and a user-supplied distance function,
+and returns the same assignment as the dense path. The default `"auto"`
+weighs the estimated dense footprint against available system memory and
+switches before an oversized allocation.
 
 ![(a) Median wall-clock solve time versus problem size $n$ for all 19
 assignment solvers in `couplr`, arranged as five small-multiple panels
@@ -231,8 +232,8 @@ Table \ref{tab:scaling} reports median wall-clock time on synthetic
 problems with the same eight-covariate structure, at six sizes from
 $n = 500$ to $n = 50{,}000$ with treated:control = 1:2. The margin widens
 with problem size: `couplr` is $9\times$ faster than `optmatch` at
-$n = 500$ and $24\times$ faster at $n = 20{,}000$, where it finishes in
-$11.4$ seconds against $4.7$ minutes, and $11\times$ to $24\times$ faster
+$n = 500$ and $23\times$ faster at $n = 20{,}000$, where it finishes in
+$12.6$ seconds against $4.8$ minutes, and $11\times$ to $24\times$ faster
 than `MatchIt` up to $n = 10{,}000$, the largest size `MatchIt` completes
 before `MatchIt::matchit(method = "optimal")` aborts inside the `optmatch`
 backend with an integer-size overflow. At $n = 50{,}000$ `couplr` completes
@@ -246,7 +247,7 @@ path returns (`paper/bench_scaling_lazy.R`).
 Table: 1-to-1 optimal Mahalanobis matching, median wall-clock by problem
 size. Treated:control = 1:2; eight covariates; pooled within-group
 covariance; single core, single-threaded BLAS, on an Apple M4 Pro.
-Median of 5 / 5 / 3 / 3 / 1 / 1 replicates respectively for the rows;
+Median of 5 / 5 / 5 / 3 / 3 / 3 instances respectively for the rows;
 `optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$. `couplr` is
 timed with `memory_mode = "dense"`, so all three packages materialize the
 distance matrix; the lazy path is reported in the text.
@@ -259,12 +260,12 @@ exceeding the $300$-second cap. Reproducible from
 
 | Problem size ($n_t + n_c$) | `couplr` |  `optmatch`  |   `MatchIt`  |
 | :------------------------- | -------: | -----------: | -----------: |
-| $167 + 333$                |   11 ms  |        99 ms |       117 ms |
-| $667 + 1{,}333$            |  144 ms  |       1.70 s |       2.12 s |
-| $1{,}667 + 3{,}333$        |  742 ms  |       12.9 s |       15.7 s |
-| $3{,}333 + 6{,}667$        |  3.08 s  |       59.3 s |       73.4 s |
-| $6{,}667 + 13{,}333$       |  11.4 s  |        280 s | int overflow |
-| $16{,}667 + 33{,}333$      |  78.5 s  |      timeout |      timeout |
+| $167 + 333$                |   11 ms  |        98 ms |       115 ms |
+| $667 + 1{,}333$            |  114 ms  |       1.64 s |       2.03 s |
+| $1{,}667 + 3{,}333$        |  679 ms  |       12.0 s |       14.8 s |
+| $3{,}333 + 6{,}667$        |  2.93 s  |       58.5 s |       71.2 s |
+| $6{,}667 + 13{,}333$       |  12.6 s  |        289 s | int overflow |
+| $16{,}667 + 33{,}333$      |  78.8 s  |      timeout |      timeout |
 
 Table \ref{tab:capability} summarises feature coverage.
 

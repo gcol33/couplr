@@ -144,12 +144,11 @@ a Creative Commons Attribution 4.0 International License (CC BY
   dense assignment, sparse and rectangular variants, k-best
   (<xref alt="Murty, 1968" rid="ref-Murty1968" ref-type="bibr">Murty,
   1968</xref>), bottleneck, min-cost flow, and entropy-regularized
-  transport, with an automatic dispatcher. To our knowledge,
-  <monospace>couplr</monospace> provides the first publicly available
-  open-source implementation of the Gabow–Tarjan bit-scaling assignment
-  algorithm
+  transport, with an automatic dispatcher. We are not aware of a prior
+  publicly available open-source implementation of the Gabow–Tarjan
+  bit-scaling assignment algorithm
   (<xref alt="Gabow &amp; Tarjan, 1989" rid="ref-GabowTarjan1989" ref-type="bibr">Gabow
-  &amp; Tarjan, 1989</xref>) in any language; the algorithm’s
+  &amp; Tarjan, 1989</xref>); the algorithm’s
   <inline-formula><alternatives>
   <tex-math><![CDATA[O(\sqrt{n}\, m \log(n\,C_{\max}))]]></tex-math>
   <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>O</mml:mi><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:msqrt><mml:mi>n</mml:mi></mml:msqrt><mml:mspace width="0.167em"></mml:mspace><mml:mi>m</mml:mi><mml:mi>log</mml:mi><mml:mo>&#8289;</mml:mo><mml:mo stretchy="false" form="prefix">(</mml:mo><mml:mi>n</mml:mi><mml:mspace width="0.167em"></mml:mspace><mml:msub><mml:mi>C</mml:mi><mml:mi>max</mml:mi><mml:mo>&#8289;</mml:mo></mml:msub><mml:mo stretchy="false" form="postfix">)</mml:mo><mml:mo stretchy="false" form="postfix">)</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
@@ -292,11 +291,12 @@ a Creative Commons Attribution 4.0 International License (CC BY
   so the footprint follows the covariates rather than the pairs: 100,000
   units on 100 covariates hold as 80 MB of features where the dense
   matrix needs 80 GB. Lazy evaluation covers Jonker–Volgenant and
-  auction with the built-in metrics, calipers, and
-  <monospace>max_distance</monospace>, and returns the same assignment
-  as the dense path. The default <monospace>&quot;auto&quot;</monospace>
-  weighs the estimated dense footprint against available system memory
-  and switches before an oversized allocation.</p>
+  auction with the built-in metrics, calipers,
+  <monospace>max_distance</monospace>, and a user-supplied distance
+  function, and returns the same assignment as the dense path. The
+  default <monospace>&quot;auto&quot;</monospace> weighs the estimated
+  dense footprint against available system memory and switches before an
+  oversized allocation.</p>
   <fig>
     <caption><p>(a) Median wall-clock solve time versus problem size
     <inline-formula><alternatives>
@@ -321,15 +321,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mo stretchy="false" form="prefix">|</mml:mo><mml:mi>S</mml:mi><mml:mi>M</mml:mi><mml:mi>D</mml:mi><mml:mo stretchy="false" form="prefix">|</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
     to three decimal places, so a single matched point per covariate is
     shown. Five of the eight covariates fall below the 0.1 balance
-    threshold (dashed line); <monospace>married</monospace> and
-    <monospace>re74</monospace> sit just above at
-    <inline-formula><alternatives>
-    <tex-math><![CDATA[0.124]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>0.124</mml:mn></mml:math></alternatives></inline-formula>
-    and <inline-formula><alternatives>
-    <tex-math><![CDATA[0.128]]></tex-math>
-    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>0.128</mml:mn></mml:math></alternatives></inline-formula>,
-    and the <monospace>race_Black</monospace> indicator is reduced from
+    threshold (dashed line), <monospace>married</monospace> and
+    <monospace>re74</monospace> just above it; the
+    <monospace>race_Black</monospace> indicator is reduced from
     <inline-formula><alternatives>
     <tex-math><![CDATA[1.757]]></tex-math>
     <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>1.757</mml:mn></mml:math></alternatives></inline-formula>
@@ -434,17 +428,17 @@ matched &lt;- join_matched(m, treated, control)</code>
   <tex-math><![CDATA[n = 500]]></tex-math>
   <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>500</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>
   and <inline-formula><alternatives>
-  <tex-math><![CDATA[24\times]]></tex-math>
-  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>24</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
+  <tex-math><![CDATA[23\times]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>23</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
   faster at <inline-formula><alternatives>
   <tex-math><![CDATA[n = 20{,}000]]></tex-math>
   <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mi>n</mml:mi><mml:mo>=</mml:mo><mml:mn>20</mml:mn><mml:mo>,</mml:mo><mml:mn>000</mml:mn></mml:mrow></mml:math></alternatives></inline-formula>,
   where it finishes in <inline-formula><alternatives>
-  <tex-math><![CDATA[11.4]]></tex-math>
-  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>11.4</mml:mn></mml:math></alternatives></inline-formula>
+  <tex-math><![CDATA[12.6]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>12.6</mml:mn></mml:math></alternatives></inline-formula>
   seconds against <inline-formula><alternatives>
-  <tex-math><![CDATA[4.7]]></tex-math>
-  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>4.7</mml:mn></mml:math></alternatives></inline-formula>
+  <tex-math><![CDATA[4.8]]></tex-math>
+  <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mn>4.8</mml:mn></mml:math></alternatives></inline-formula>
   minutes, and <inline-formula><alternatives>
   <tex-math><![CDATA[11\times]]></tex-math>
   <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>11</mml:mn><mml:mo>×</mml:mo></mml:mrow></mml:math></alternatives></inline-formula>
@@ -487,7 +481,7 @@ matched &lt;- join_matched(m, treated, control)</code>
       <p>1-to-1 optimal Mahalanobis matching, median wall-clock by
       problem size. Treated:control = 1:2; eight covariates; pooled
       within-group covariance; single core, single-threaded BLAS, on an
-      Apple M4 Pro. Median of 5 / 5 / 3 / 3 / 1 / 1 replicates
+      Apple M4 Pro. Median of 5 / 5 / 5 / 3 / 3 / 3 instances
       respectively for the rows;
       <monospace>optmatch_max_problem_size</monospace> set to
       <monospace>Inf</monospace> for <inline-formula><alternatives>
@@ -526,46 +520,46 @@ matched &lt;- join_matched(m, treated, control)</code>
           <tex-math><![CDATA[167 + 333]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>167</mml:mn><mml:mo>+</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
           <td align="right">11 ms</td>
-          <td align="right">99 ms</td>
-          <td align="right">117 ms</td>
+          <td align="right">98 ms</td>
+          <td align="right">115 ms</td>
         </tr>
         <tr>
           <td align="left"><inline-formula><alternatives>
           <tex-math><![CDATA[667 + 1{,}333]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
-          <td align="right">144 ms</td>
-          <td align="right">1.70 s</td>
-          <td align="right">2.12 s</td>
+          <td align="right">114 ms</td>
+          <td align="right">1.64 s</td>
+          <td align="right">2.03 s</td>
         </tr>
         <tr>
           <td align="left"><inline-formula><alternatives>
           <tex-math><![CDATA[1{,}667 + 3{,}333]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
-          <td align="right">742 ms</td>
-          <td align="right">12.9 s</td>
-          <td align="right">15.7 s</td>
+          <td align="right">679 ms</td>
+          <td align="right">12.0 s</td>
+          <td align="right">14.8 s</td>
         </tr>
         <tr>
           <td align="left"><inline-formula><alternatives>
           <tex-math><![CDATA[3{,}333 + 6{,}667]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>3</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn><mml:mo>+</mml:mo><mml:mn>6</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
-          <td align="right">3.08 s</td>
-          <td align="right">59.3 s</td>
-          <td align="right">73.4 s</td>
+          <td align="right">2.93 s</td>
+          <td align="right">58.5 s</td>
+          <td align="right">71.2 s</td>
         </tr>
         <tr>
           <td align="left"><inline-formula><alternatives>
           <tex-math><![CDATA[6{,}667 + 13{,}333]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>6</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>13</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
-          <td align="right">11.4 s</td>
-          <td align="right">280 s</td>
+          <td align="right">12.6 s</td>
+          <td align="right">289 s</td>
           <td align="right">int overflow</td>
         </tr>
         <tr>
           <td align="left"><inline-formula><alternatives>
           <tex-math><![CDATA[16{,}667 + 33{,}333]]></tex-math>
           <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mrow><mml:mn>16</mml:mn><mml:mo>,</mml:mo><mml:mn>667</mml:mn><mml:mo>+</mml:mo><mml:mn>33</mml:mn><mml:mo>,</mml:mo><mml:mn>333</mml:mn></mml:mrow></mml:math></alternatives></inline-formula></td>
-          <td align="right">78.5 s</td>
+          <td align="right">78.8 s</td>
           <td align="right">timeout</td>
           <td align="right">timeout</td>
         </tr>

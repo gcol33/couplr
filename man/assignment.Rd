@@ -40,17 +40,22 @@ entries are treated as forbidden assignments.}
 \itemize{
 \item \code{"auction"} — 'Bertsekas' auction with adaptive epsilon
 \item \code{"auction_gs"} — 'Gauss-Seidel' variant, good for spatial structure
-\item \code{"auction_scaled"} — 'Epsilon-scaling', fastest for large dense problems
+\item \code{"auction_scaled"} — 'Epsilon-scaling' auction, bidding at a
+decreasing sequence of epsilon values. Not chosen by \code{"auto"}; a rule
+sending heavily tied costs to it was tested and did not meet its
+criterion, and it remains available by name for tied costs
 }
 
 \strong{Specialized solvers:}
 \itemize{
-\item \code{"sap"} — Shortest augmenting path over the shared flow model,
-handles sparsity well. \code{"ssp"} is accepted as a second spelling of this
-method and resolves to \code{"sap"}.
+\item \code{"sap"} — Shortest augmenting path over the shared flow model's
+network. \code{"ssp"} is accepted as a second spelling of this method and
+resolves to \code{"sap"}.
 \item \code{"sap_dense"} — Shortest augmenting path with a linear scan in place
 of a heap, O(n * m^2), suited to a dense cost matrix
-\item \code{"lapmod"} — Sparse JV variant, faster when >50\\% entries are NA/Inf
+\item \code{"lapmod"} — 'Jonker-Volgenant' over the finite entries alone,
+stored row by row (CSR). Written for sparse input; see below for why
+\code{"auto"} does not divert sparse matrices to it
 \item \code{"hk01"} — 'Hopcroft-Karp' for binary (0/1) or constant costs.
 Constant costs make every perfect matching optimal. On a \verb{\{0,1\}} matrix
 the search runs over the zero-cost edges alone, where a perfect matching

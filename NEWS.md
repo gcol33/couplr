@@ -246,6 +246,13 @@ one asked, so the version that reaches CRAN is this one.
   The edges evaluated are unchanged at every size of the article's implicit
   benchmark, and an implicit solve at n = 20,000 went from 10.6 s to 8.3 s on
   the machine it was timed on (#52).
+* **Solver documentation describes what each method implements (#58).** The
+  `?assignment` notes, the `"The Algorithm Collection"` vignette and the
+  sparsity note in `summary()` of a distance object no longer describe
+  `"lapmod"`, `"sap"` and `"auction_scaled"` by speed claims the regime grid
+  did not bear out. The vignette's timing plots are drawn from the package's
+  measured solver benchmark, shipped as `inst/extdata/solver-benchmark.csv`,
+  in place of illustrative numbers.
 
 ## Bug fixes
 

@@ -326,8 +326,10 @@ full_match <- function(left, right, vars,
   # keeping for its own sake. Under a negative cost the cheapest cover takes
   # every negative arc and the minimality prune then removes arcs the
   # objective wanted, so the answer is not the cheapest full matching. Every
-  # built-in metric is non-negative; a custom distance function need not be,
-  # and a specification is only ever built for a built-in metric.
+  # built-in metric is non-negative; a custom distance function need not be.
+  # A matrix is checked here. A lazy specification, which can carry a
+  # user-supplied function, is checked in the implicit solve
+  # (src/flow/flow_rcpp.cpp), where its distances are first evaluated.
   if (!implicit) {
     finite_costs <- cost_matrix[is.finite(cost_matrix)]
     if (length(finite_costs) && min(finite_costs) < 0) {

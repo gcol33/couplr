@@ -26,17 +26,22 @@
 #'   \itemize{
 #'     \item `"auction"` — 'Bertsekas' auction with adaptive epsilon
 #'     \item `"auction_gs"` — 'Gauss-Seidel' variant, good for spatial structure
-#'     \item `"auction_scaled"` — 'Epsilon-scaling', fastest for large dense problems
+#'     \item `"auction_scaled"` — 'Epsilon-scaling' auction, bidding at a
+#'       decreasing sequence of epsilon values. Not chosen by `"auto"`; a rule
+#'       sending heavily tied costs to it was tested and did not meet its
+#'       criterion, and it remains available by name for tied costs
 #'   }
 #'
 #'   **Specialized solvers:**
 #'   \itemize{
-#'     \item `"sap"` — Shortest augmenting path over the shared flow model,
-#'       handles sparsity well. `"ssp"` is accepted as a second spelling of this
-#'       method and resolves to `"sap"`.
+#'     \item `"sap"` — Shortest augmenting path over the shared flow model's
+#'       network. `"ssp"` is accepted as a second spelling of this method and
+#'       resolves to `"sap"`.
 #'     \item `"sap_dense"` — Shortest augmenting path with a linear scan in place
 #'       of a heap, O(n * m^2), suited to a dense cost matrix
-#'     \item `"lapmod"` — Sparse JV variant, faster when >50\% entries are NA/Inf
+#'     \item `"lapmod"` — 'Jonker-Volgenant' over the finite entries alone,
+#'       stored row by row (CSR). Written for sparse input; see below for why
+#'       `"auto"` does not divert sparse matrices to it
 #'     \item `"hk01"` — 'Hopcroft-Karp' for binary (0/1) or constant costs.
 #'       Constant costs make every perfect matching optimal. On a `{0,1}` matrix
 #'       the search runs over the zero-cost edges alone, where a perfect matching

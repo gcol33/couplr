@@ -44,9 +44,8 @@ trace_lapmod <- function(cost, maximize = FALSE, ...) {
     "LAPMOD. The sparse-input variant of Jonker-Volgenant (1987): identical ",
     "three pre-stages (column reduction, reduction transfer, augmenting row ",
     "reduction) and the same Dijkstra shortest-augmenting-path main loop as ",
-    "method = \"jv\". The production C++ implementation uses CSR storage to ",
-    "exploit sparsity; for matrices with >50% forbidden entries and n > 100 ",
-    "this is faster than dense JV, but the algorithmic trace is the same."
+    "method = \"jv\". The production C++ implementation stores only the ",
+    "finite entries (CSR), so the algorithmic trace is the same."
   )
   out
 }

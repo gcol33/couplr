@@ -392,8 +392,9 @@ summary.distance_object <- function(object, ...) {
   cat("  Forbidden pairs: ", n_inf, " (", round(pct_inf, 1), "%)\n", sep = "")
 
   if (pct_inf > 50) {
-    cat("  Note: >50% forbidden - method = \"lapmod\" handles this many\n")
-    cat("        forbidden edges faster than general-purpose solvers\n")
+    cat("  Note: >50% forbidden. method = \"lapmod\" and \"sap\" store only the\n")
+    cat("        finite pairs; \"jv\" matched their times on the package's\n")
+    cat("        sparse benchmarks, so method = \"auto\" does not divert on it\n")
   }
 
   invisible(object)

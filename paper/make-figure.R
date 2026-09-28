@@ -24,6 +24,9 @@ SEED     <- 42L
 
 BENCHMARK_TABLE <- file.path(repo_root, "paper", "benchmark-table.csv")
 BENCHMARK_FIGURE <- file.path(repo_root, "paper", "figures", "benchmark.png")
+## The algorithms vignette draws its timing plots from the same measurement,
+## shipped with the package so it renders without the paper directory.
+PACKAGE_TABLE <- file.path(repo_root, "inst", "extdata", "solver-benchmark.csv")
 
 # ---------- metadata -------------------------------------------------------
 
@@ -115,7 +118,11 @@ save_results <- function(results, path) {
   df$label  <- method_labels[df$method]
   df <- df[order(df$method, df$n), c("method", "label", "family", "n", "min_ms")]
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  write.csv(df, path, row.names = FALSE)
+  ## A binary connection keeps the line endings LF on every platform, so a
+  ## rebuild on Windows changes only the rows that moved.
+  con <- file(path, "wb")
+  on.exit(close(con))
+  write.csv(df, con, row.names = FALSE)
   invisible(df)
 }
 
@@ -199,6 +206,8 @@ for (n in binary_sizes) {
 
 df <- save_results(results, BENCHMARK_TABLE)
 cat("Saved ", BENCHMARK_TABLE, "\n", sep = ""); flush.console()
+save_results(results, PACKAGE_TABLE)
+cat("Saved ", PACKAGE_TABLE, "\n", sep = ""); flush.console()
 
 # Keep the figure layout independent of the benchmark run by plotting only from
 # the persisted table.

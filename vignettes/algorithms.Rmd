@@ -32,6 +32,23 @@ has_widgets <- requireNamespace("htmlwidgets", quietly = TRUE)
 
 library(couplr)
 library(tibble)
+
+# Solve times from the package's solver benchmark: uniform integer costs on
+# square matrices, the fastest of five interleaved repetitions per solver and
+# size, in milliseconds.
+solver_bench <- read.csv(
+  system.file("extdata", "solver-benchmark.csv", package = "couplr"),
+  stringsAsFactors = FALSE
+)
+bench_ms <- function(method, n) {
+  solver_bench$min_ms[solver_bench$method == method & solver_bench$n == n]
+}
+bench_ratio <- function(slow, fast, n) bench_ms(slow, n) / bench_ms(fast, n)
+race_n <- 500
+race_methods <- c(munkres = "Munkres", network_simplex = "Network Simplex",
+                  auction = "Auction", csa = "CSA", hungarian = "Hungarian",
+                  jv = "Jonker-Volgenant")
+race_ms <- vapply(names(race_methods), bench_ms, numeric(1), n = race_n)
 if (has_viz) {
   library(ggplot2)
   library(ggraph)
@@ -84,11 +101,11 @@ theme_diagram <- function() {
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R packages still use nothing else.
 
-couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods we have not found in another R package (Network Simplex, Ramshaw-Tarjan) and Gabow-Tarjan bit-scaling assignment, for which we are not aware of a prior publicly available open-source implementation.
+couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignment()` plus `bottleneck_assignment()` for min-max problems), including methods we have not found in another R package (Network Simplex, Ramshaw-Tarjan) and Gabow-Tarjan bit-scaling assignment. A search of CRAN, PyPI, GitHub and six graph libraries in September 2026 found no earlier open-source implementation of Gabow-Tarjan for the assignment problem.
 
 ### Who This Vignette Is For
 
-**Audience**: Researchers curious about optimization algorithms, developers choosing the right method for their problem, anyone wondering why modern algorithms beat Hungarian by 20x or more.
+**Audience**: Researchers curious about optimization algorithms, developers choosing the right method for their problem, anyone wondering why modern algorithms beat the textbook Hungarian method by two orders of magnitude.
 
 **Prerequisites**:
 
@@ -100,7 +117,7 @@ couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignmen
 
 **What You'll Learn**:
 
-- Why Hungarian is slow and how later algorithms improved it
+- Why the textbook Hungarian method is slow and how later algorithms improved it
 
 - How primal-dual, auction, and network flow approaches work
 
@@ -112,34 +129,33 @@ couplr implements **20 algorithms** (19 sum-cost solvers callable via `assignmen
 
 ## The Race
 
-But first: the same problem, five different solutions.
+But first: the same problem, six different solutions.
 
-```{r the-race, echo=FALSE, fig.width=9, fig.height=5, fig.alt="Five algorithms solving the same 400x400 assignment problem with dramatically different speeds"}
-# Pre-computed timing data for 400x400 dense matrix
+```{r the-race, echo=FALSE, fig.width=9, fig.height=5, fig.alt="Six algorithms solving the same 500 by 500 assignment problem, from Munkres, the slowest, to Jonker-Volgenant, the fastest"}
 race_data <- data.frame(
-  algorithm = factor(c("Hungarian", "Jonker-Volgenant", "Auction", "CSA", "Network Simplex"),
-                     levels = c("Hungarian", "Jonker-Volgenant", "Auction", "CSA", "Network Simplex")),
-  time_ms = c(180, 12, 18, 8, 35),
-  year = c(1955, 1987, 1988, 1995, 1997)
+  algorithm = factor(unname(race_methods), levels = unname(race_methods)),
+  time_ms = unname(race_ms)
 )
 
-ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algorithm)) +
+ggplot(race_data, aes(x = algorithm, y = time_ms, fill = algorithm)) +
   geom_col(width = 0.7) +
-  geom_text(aes(label = paste0(time_ms, " ms")),
+  geom_text(aes(label = sprintf("%.1f ms", time_ms)),
             hjust = -0.1, size = 5, fontface = "bold") +
-  geom_text(aes(label = paste0("(", year, ")")),
-            hjust = -0.1, vjust = 2.5, size = 3.5) +
   scale_fill_manual(values = c(
+    "Munkres" = "#8c3b00",
     "Hungarian" = "#d9534f",
     "Jonker-Volgenant" = "#5bc0de",
     "Auction" = "#f0ad4e",
     "CSA" = "#5cb85c",
     "Network Simplex" = "#428bca"
   )) +
+  scale_y_log10(expand = expansion(mult = c(0, 0.3))) +
   coord_flip(clip = "off") +
   labs(
-    title = "Same Problem, Same Answer, 22x Speed Difference",
-    subtitle = "400 x 400 dense cost matrix, median of 5 runs",
+    title = sprintf("Same Problem, Same Answer, %.0fx Speed Difference",
+                    max(race_ms) / min(race_ms)),
+    subtitle = sprintf("%d x %d uniform integer costs, fastest of 5 runs, log scale",
+                       race_n, race_n),
     x = NULL,
     y = "Time (milliseconds)"
   ) +
@@ -153,23 +169,20 @@ ggplot(race_data, aes(x = reorder(algorithm, -time_ms), y = time_ms, fill = algo
     panel.grid.major.y = element_blank(),
     panel.grid.minor = element_blank(),
     plot.margin = margin(10, 60, 10, 10)
-  ) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.3)))
+  )
 ```
 
-When you run five different assignment algorithms on identical input, they all find the same optimal answer, but the fastest finishes **22 times quicker** than the slowest.
+When you run six assignment algorithms on identical input, they all find the same optimal answer, but the fastest finishes **`r round(max(race_ms) / min(race_ms))` times quicker** than the slowest.
 
-The slowest happens to be Hungarian, the algorithm everyone learns in textbooks. CSA, the fastest here, came out four decades later. That gap represents years of algorithmic refinement that most production software never adopted.
+The slowest is Munkres's matrix form of the Hungarian method, the version usually taught, which runs in $O(n^4)$. couplr's `"hungarian"` solves the same problem by shortest augmenting paths in $O(n^3)$ and takes `r sprintf("%.1f", bench_ratio("hungarian", "jv", race_n))` times as long as Jonker-Volgenant, the fastest here, which came out three decades after Munkres.
 
-Why would anyone need five ways to solve the same problem? Because they don't all behave the same under different conditions. The Hungarian method that handles a 100x100 matrix without complaint becomes painfully slow at 1000x1000. The Auction algorithm that dominates large dense problems stumbles on small sparse ones. Different matrix sizes, different sparsity patterns, different cost distributions: each situation favors a different algorithm.
-
-couplr gives you all of them, and it picks the right one automatically.
+Why keep so many? Each was designed for a different kind of input, and each can be named with `method =`. On the package's benchmarks most of those designs do not turn into speed on ordinary inputs, so `method = "auto"` uses three rules: exhaustive enumeration for problems at most 8 by 8, Hopcroft-Karp when the finite costs are all equal or all 0 or 1, and Jonker-Volgenant for everything else.
 
 ---
 
 ## Watch It Run
 
-A bar chart of timings tells you which algorithm finished first; it does not tell you why. The same Hungarian primal-dual that takes 22x as long as CSA on a 400x400 problem is also the one with the cleanest pedagogical story --- and you only see that story when you watch the matching evolve step by step.
+A bar chart of timings tells you which algorithm finished first; it does not tell you why. The Hungarian method, the slowest family in the race, is also the one with the cleanest pedagogical story --- and you only see that story when you watch the matching evolve step by step.
 
 `lap_animate(cost, method = "...")` does exactly that. Each animated method has a reference R implementation that emits a state trace at every algorithmic event (a bid, a dual update, an augmenting path, a price drop). The trace plays back as an interactive bipartite graph: green edges are matched, orange edges are currently being explored, red dashed edges lie on the alternating path being built. Dual potentials, where the algorithm has them, are printed next to the nodes.
 
@@ -480,7 +493,7 @@ ggplot(steps) +
 
 3. **Augmentation**: For any remaining unmatched rows, use Dijkstra-style shortest path search.
 
-**Complexity**: Still $O(n^3)$, but with a much smaller constant. Often 10-50x faster than Hungarian in practice.
+**Complexity**: Still $O(n^3)$, with a smaller constant: on the package's benchmark it takes `r sprintf("%.2f", bench_ratio("jv", "hungarian", 1000))` of the shortest-augmenting-path Hungarian's time at n = 1000.
 
 ```{r jv-example}
 set.seed(123)
@@ -977,7 +990,7 @@ result <- lap_solve(cost, method = "sap")
 cat("Total cost:", round(get_total_cost(result), 2), "\n")
 ```
 
-For very sparse problems, SAP can be orders of magnitude faster than dense algorithms.
+Sparse storage is what these two are written for, but on the regime grid behind the dispatcher neither `"sap"` nor `"lapmod"` was often quicker than `"jv"` on sparse matrices, so `method = "auto"` sends sparse input to `"jv"` and both stay available by name.
 
 `"sap_dense"` runs the same successive-shortest-path search with the opposite
 storage assumption. Its Dijkstra step picks the next column by scanning every
@@ -1090,29 +1103,20 @@ cat("Col duals (v):", result$v, "\n")
 
 You've seen what the algorithms do. Now: how fast?
 
-```{r benchmark-plot, fig.width=9, fig.height=6, echo=FALSE, fig.alt="Runtime comparison of LAP algorithms across problem sizes showing CSA and JV leading"}
-bench_results <- data.frame(
-  method = factor(rep(c("Hungarian", "Jonker-Volgenant", "Auction", "CSA", "Network Simplex"), 4),
-    levels = c("Hungarian", "Jonker-Volgenant", "Auction", "CSA", "Network Simplex")),
-  size = rep(c(100, 200, 400, 800), each = 5),
-  time = c(
-    # n=100
-    5, 1, 3, 2, 3,
-    # n=200
-    35, 4, 8, 5, 12,
-    # n=400
-    250, 25, 30, 20, 80,
-    # n=800
-    2000, 180, 200, 120, 600
-  )
-)
+```{r benchmark-plot, fig.width=9, fig.height=6, echo=FALSE, fig.alt="Solve time against matrix size for six algorithms on dense uniform integer costs, with Jonker-Volgenant fastest at every size"}
+bench_sizes <- c(100, 200, 500, 1000)
+bench_results <- solver_bench[solver_bench$method %in% names(race_methods) &
+                                solver_bench$n %in% bench_sizes, ]
+bench_results$method <- factor(race_methods[bench_results$method],
+                               levels = unname(race_methods))
 
-ggplot(bench_results, aes(x = size, y = time, color = method, group = method)) +
+ggplot(bench_results, aes(x = n, y = min_ms, color = method, group = method)) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 3, aes(shape = method)) +
-  scale_y_log10(labels = function(x) sprintf("%.0f", x)) +
-  scale_x_continuous(breaks = c(100, 200, 400, 800)) +
+  scale_y_log10(labels = function(x) format(x, scientific = FALSE, drop0trailing = TRUE, trim = TRUE)) +
+  scale_x_log10(breaks = bench_sizes) +
   scale_color_manual(values = c(
+    "Munkres" = "#8c3b00",
     "Hungarian" = "#d9534f",
     "Jonker-Volgenant" = "#5bc0de",
     "Auction" = "#f0ad4e",
@@ -1121,7 +1125,7 @@ ggplot(bench_results, aes(x = size, y = time, color = method, group = method)) +
   )) +
   labs(
     title = "Algorithm Scaling: Dense Matrices",
-    subtitle = "Log scale. CSA and JV consistently fastest. Hungarian falls behind.",
+    subtitle = "Uniform integer costs, fastest of 5 runs, log-log scale",
     x = "Matrix Size (n x n)",
     y = "Time (milliseconds, log scale)",
     color = "Algorithm",
@@ -1136,57 +1140,22 @@ ggplot(bench_results, aes(x = size, y = time, color = method, group = method)) +
   )
 ```
 
-**For dense matrices**: CSA and JV are consistently fastest. Hungarian falls behind rapidly. Auction and Network Simplex are solid middle-ground choices.
+**For dense matrices**: Jonker-Volgenant is the fastest at every size shown. At n = 1000, CSA takes `r sprintf("%.1f", bench_ratio("csa", "jv", 1000))` times its time, the shortest-augmenting-path Hungarian `r sprintf("%.1f", bench_ratio("hungarian", "jv", 1000))` times, auction `r sprintf("%.1f", bench_ratio("auction", "jv", 1000))` times, and network simplex, which solves the problem as a general flow, `r round(bench_ratio("network_simplex", "jv", 1000))` times. Munkres stops at the smaller sizes.
 
-```{r sparse-plot, fig.width=8, fig.height=4, echo=FALSE, fig.alt="Sparse algorithm performance showing SAP and LAPMOD outperforming dense algorithms"}
-sparse_results <- data.frame(
-  method = factor(rep(c("JV (dense)", "SAP (sparse)", "LAPMOD (sparse)"), 3),
-    levels = c("JV (dense)", "SAP (sparse)", "LAPMOD (sparse)")),
-  size = rep(c(100, 200, 400), each = 3),
-  time = c(
-    # n=100
-    3, 0.8, 0.7,
-    # n=200
-    15, 2, 1.8,
-    # n=400
-    100, 8, 7
-  )
-)
-
-ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) +
-  geom_line(linewidth = 1.2) +
-  geom_point(size = 3) +
-  scale_x_continuous(breaks = c(100, 200, 400)) +
-  labs(
-    title = "Sparse vs Dense: 80% Forbidden Entries",
-    subtitle = "Sparse algorithms (SAP, LAPMOD) dramatically outperform dense (JV)",
-    x = "Matrix Size (n x n)",
-    y = "Time (milliseconds)",
-    color = "Algorithm"
-  ) +
-  scale_color_manual(values = c("#5bc0de", "#5cb85c", "#f0ad4e")) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    plot.title = element_text(face = "bold", size = 14, colour = "#3E3F3A"),
-    plot.subtitle = element_text(size = 11, colour = "#3E3F3A")
-  )
-```
-
-**For sparse matrices**: SAP and LAPMOD are 10x faster than dense algorithms. Use them.
+**For sparse matrices**: on the regime grid behind the dispatcher, which crosses cost distributions with densities from 60 down to 1 percent of entries finite, Jonker-Volgenant was at or below the best time the sparse solvers reached, which is why `method = "auto"` does not divert on sparsity.
 
 ---
 
 ## Quick Reference
 
-| Algorithm | Complexity | Best For | Method |
+| Algorithm | Complexity | Written For | Method |
 |-----------|------------|----------|--------|
 | Hungarian | $O(n^3)$ | Pedagogy, small $n$ | `"hungarian"` |
 | Jonker-Volgenant | $O(n^3)$ expected | General purpose | `"jv"` |
-| Auction | $O(n^2 \log(nC)/\epsilon)$ | Large dense | `"auction"` |
+| Auction | $O(n^2 \log(nC)/\epsilon)$ | Dense costs | `"auction"` |
 | Auction (Gauss-Seidel) | $O(n^2 \log(nC)/\epsilon)$ | Spatial structure | `"auction_gs"` |
-| Auction (Scaled) | $O(n^2 \log(nC)/\epsilon)$ | Large dense, fastest | `"auction_scaled"` |
-| CSA | $O(n^3)$ amortized | Medium-large dense | `"csa"` |
+| Auction (Scaled) | $O(n^2 \log(nC)/\epsilon)$ | Tied costs | `"auction_scaled"` |
+| CSA | $O(n^3)$ amortized | Dense costs | `"csa"` |
 | Cost-Scaling Flow | $O(n^3 \log(nC))$ | General min-cost flow | `"csflow"` |
 | Gabow-Tarjan | $O(\sqrt{V}\, E \log(VC))$ | Large integer costs | `"gabow_tarjan"` |
 | SAP (dense scan) | $O(n m^2)$ | Dense costs | `"sap_dense"` |
@@ -1195,12 +1164,12 @@ ggplot(sparse_results, aes(x = size, y = time, color = method, group = method)) 
 | Cycle Canceling | $O(n^2 m \cdot C)$ | Theoretical interest | `"cycle_cancel"` |
 | HK01 | $O(n^{2.5})$ | Binary costs only | `"hk01"` |
 | SSAP (Dial) | $O(n^2 + nm)$ | Integer costs, buckets | `"ssap_bucket"` |
-| SAP | $O(n^2 + nm)$ | Sparse (>50% forbidden) | `"sap"` |
-| LAPMOD | $O(n^2 + nm)$ | Sparse (>50% forbidden) | `"lapmod"` |
+| SAP | $O(n^2 + nm)$ | Sparse, via the flow model | `"sap"` |
+| LAPMOD | $O(n^2 + nm)$ | Sparse, CSR storage | `"lapmod"` |
 | Ramshaw-Tarjan | $O(nm \log n)$ | Rectangular matrices | `"ramshaw_tarjan"` |
 | Brute Force | $O(n!)$ | Tiny ($n \leq 8$) | `"bruteforce"` |
 
-Or just use `method = "auto"` and let couplr choose.
+Or use `method = "auto"`, which applies the three rules described under The Race.
 
 ---
 

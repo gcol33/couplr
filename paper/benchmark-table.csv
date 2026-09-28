@@ -139,11 +139,11 @@
 "sap_dense","SAP-D","JV / Augmenting path",200,1.737785
 "sap_dense","SAP-D","JV / Augmenting path",500,9.199621
 "sap_dense","SAP-D","JV / Augmenting path",1000,43.063694
-"ssap_bucket","SSAP-B","Cost scaling",10,0.085362
-"ssap_bucket","SSAP-B","Cost scaling",25,0.225131
-"ssap_bucket","SSAP-B","Cost scaling",50,0.83804
-"ssap_bucket","SSAP-B","Cost scaling",100,3.990366
-"ssap_bucket","SSAP-B","Cost scaling",200,23.889921
-"ssap_bucket","SSAP-B","Cost scaling",500,292.279652
-"ssap_bucket","SSAP-B","Cost scaling",1000,2289.148162
-"ssap_bucket","SSAP-B","Cost scaling",2000,18549.243206
+"ssap_bucket","SSAP-B","JV / Augmenting path",10,0.085362
+"ssap_bucket","SSAP-B","JV / Augmenting path",25,0.225131
+"ssap_bucket","SSAP-B","JV / Augmenting path",50,0.83804
+"ssap_bucket","SSAP-B","JV / Augmenting path",100,3.990366
+"ssap_bucket","SSAP-B","JV / Augmenting path",200,23.889921
+"ssap_bucket","SSAP-B","JV / Augmenting path",500,292.279652
+"ssap_bucket","SSAP-B","JV / Augmenting path",1000,2289.148162
+"ssap_bucket","SSAP-B","JV / Augmenting path",2000,18549.243206

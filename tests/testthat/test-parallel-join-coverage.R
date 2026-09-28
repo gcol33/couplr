@@ -6,11 +6,6 @@
 # matching_parallel.R edge cases
 # ------------------------------------------------------------------------------
 
-test_that("can_parallelize returns TRUE when packages available", {
-  # Both packages should be installed
-  expect_true(couplr:::can_parallelize())
-})
-
 test_that("setup_parallel returns early for FALSE", {
   result <- couplr:::setup_parallel(parallel = FALSE)
   expect_false(result$setup)
@@ -19,6 +14,8 @@ test_that("setup_parallel returns early for FALSE", {
 
 test_that("setup_parallel with TRUE and available packages", {
   skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
   result <- couplr:::setup_parallel(parallel = TRUE, n_workers = 2)
   expect_true(result$setup)
   expect_true(!is.null(result$original_plan))
@@ -42,6 +39,8 @@ test_that("restore_parallel does nothing when setup is FALSE", {
 
 test_that("parallel_lapply uses future when parallel=TRUE", {
   skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
   result <- couplr:::parallel_lapply(1:3, function(x) x^2, parallel = TRUE)
   expect_equal(result, list(1, 4, 9))
 })

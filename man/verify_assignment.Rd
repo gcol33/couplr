@@ -139,8 +139,8 @@ Integer costs and costs drawn on the unit interval have given an exact
 certificate on every instance we have measured, across problem sizes, both
 orientations of a rectangular problem, and every solver. Costs that are
 themselves computed, such as Euclidean distances between covariate vectors,
-have given a numerical one, with matched arcs off by a relative \code{1e-16} to
-\code{1e-15}.
+have given a numerical one, with matched arcs off by \code{2e-17} to \code{8e-15} of
+the median cost.
 
 The check needs dual variables. If \code{x} carries them (as
 \code{\link[=assignment_duals]{assignment_duals()}} results do), they are used. Otherwise they are obtained

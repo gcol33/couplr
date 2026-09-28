@@ -81,8 +81,8 @@
 #' certificate on every instance we have measured, across problem sizes, both
 #' orientations of a rectangular problem, and every solver. Costs that are
 #' themselves computed, such as Euclidean distances between covariate vectors,
-#' have given a numerical one, with matched arcs off by a relative `1e-16` to
-#' `1e-15`.
+#' have given a numerical one, with matched arcs off by `2e-17` to `8e-15` of
+#' the median cost.
 #'
 #' The check needs dual variables. If `x` carries them (as
 #' [assignment_duals()] results do), they are used. Otherwise they are obtained
@@ -208,8 +208,8 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
 
   match_vec <- .certify_extract_match(x)
 
-  if (is.null(duals) && is.list(x) && !is.null(x$u) && !is.null(x$v)) {
-    duals <- list(u = as.numeric(x$u), v = as.numeric(x$v))
+  if (is.null(duals) && is.list(x) && !is.null(x[["u"]]) && !is.null(x[["v"]])) {
+    duals <- list(u = as.numeric(x[["u"]]), v = as.numeric(x[["v"]]))
   }
 
   if (is.null(cost)) {

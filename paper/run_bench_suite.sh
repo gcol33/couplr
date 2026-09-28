@@ -33,7 +33,7 @@ RSCRIPT=${RSCRIPT:-Rscript}
 
 # Order: the three tables the article carries first, so the article can be
 # rebuilt before the supplementary grids have finished.
-ALL="scaling scaling_lazy implicit path regimes implicit_grid memory lalonde figure"
+ALL="scaling scaling_lazy implicit path regimes implicit_grid memory lalonde certificate figure"
 WHICH=${1:-$ALL}
 
 script_for() {
@@ -47,6 +47,7 @@ script_for() {
     implicit_grid) echo "paper/bench_implicit_grid.R" ;;
     memory)        echo "paper/bench_memory.R" ;;
     lalonde)       echo "paper/bench_lalonde.R" ;;
+    certificate)   echo "paper/bench_certificate.R" ;;
     figure)        echo "paper/make-figure.R" ;;
     *)             echo "" ;;
   esac
@@ -65,6 +66,7 @@ outputs_for() {
     implicit_grid) echo "paper/implicit-grid-runs.csv paper/implicit-grid-results.csv" ;;
     memory)        echo "paper/memory-results.csv" ;;
     lalonde)       echo "paper/lalonde-results.csv paper/lalonde-per-covariate.csv" ;;
+    certificate)   echo "paper/certificate-runs.csv paper/certificate-results.csv" ;;
     figure)        echo "paper/benchmark-table.csv paper/figures/benchmark.png" ;;
     *)             echo "" ;;
   esac

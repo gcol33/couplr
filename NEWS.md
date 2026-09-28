@@ -1,3 +1,26 @@
+# couplr 1.7.2
+
+* `verify_assignment()` reads the duals off a solve result by exact name.
+  `x$u` partial-matched the `unmatched` element of an `assignment()` result,
+  so picking up duals from the result depended on no element also
+  partial-matching `v`. No 1.7.1 result carried such an element, so no
+  verdict changed.
+
+* **Solver documentation describes what each method implements (#58).** The
+  `?assignment` notes, the `"The Algorithm Collection"` vignette and the
+  sparsity note in `summary()` of a distance object no longer describe
+  `"lapmod"`, `"sap"` and `"auction_scaled"` by speed claims the regime grid
+  did not bear out. The vignette's timing plots are drawn from the package's
+  measured solver benchmark, shipped as `inst/extdata/solver-benchmark.csv`,
+  in place of illustrative numbers.
+
+* The memory documentation states the measured dense-solve peak range, 7 to
+  11 times the raw cell bytes, instead of per-size multipliers a re-run moves
+  (#59). The README's opening and solver section match the code (#60).
+
+* Tests that need `future` and `future.apply` skip when they are not
+  installed (#53).
+
 # couplr 1.7.1
 
 1.7.0 was tagged but never released. A critical review of the release
@@ -246,13 +269,6 @@ one asked, so the version that reaches CRAN is this one.
   The edges evaluated are unchanged at every size of the article's implicit
   benchmark, and an implicit solve at n = 20,000 went from 10.6 s to 8.3 s on
   the machine it was timed on (#52).
-* **Solver documentation describes what each method implements (#58).** The
-  `?assignment` notes, the `"The Algorithm Collection"` vignette and the
-  sparsity note in `summary()` of a distance object no longer describe
-  `"lapmod"`, `"sap"` and `"auction_scaled"` by speed claims the regime grid
-  did not bear out. The vignette's timing plots are drawn from the package's
-  measured solver benchmark, shipped as `inst/extdata/solver-benchmark.csv`,
-  in place of illustrative numbers.
 
 ## Bug fixes
 

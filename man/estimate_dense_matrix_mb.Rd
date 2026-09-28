@@ -18,10 +18,10 @@ Numeric scalar, the estimated footprint of the matrix in megabytes.
 What the matrix itself costs a process, which is more than the 8 bytes a cell
 occupies: \code{matrix(0, n, m)} at the R level is copied into a
 \code{lap::CostMatrix} (8B data + 4B mask), and the two coexist while garbage
-collection lags. Building the matrix and stopping there peaked at 1.8, 1.7
-and 1.5 times the raw cell bytes at 5,000, 10,000 and 20,000 units on the
-memory benchmark, so the default multiplier is above what has been measured
-rather than fitted to it. \code{n}/\code{m}
+collection lags. Building the matrix and stopping there has peaked at between
+1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
+benchmark, so the default multiplier is above what has been measured rather
+than fitted to it. \code{n}/\code{m}
 are coerced to \code{double} before multiplying so the estimate itself can't
 overflow the way \code{lap::CostMatrix}'s old \code{int} flat-index arithmetic did.
 }

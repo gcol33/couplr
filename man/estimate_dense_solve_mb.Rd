@@ -27,10 +27,11 @@ The multiplier is read off the measurement rather than from an enumeration of
 the copies, which has proved to understate it. On the memory benchmark -- one
 fresh R session per arm, peak resident set taken from outside and read
 against an idle session that loaded the same packages -- a dense one-to-one
-solve peaked at 10.5, 7.2 and 8.8 times the raw matrix bytes at 5,000, 10,000
-and 20,000 units. The default covers the worst of those with headroom, which
-is the direction a guard should err in: it exists to refuse a solve that will
-not fit, not to predict where the peak lands.
+solve has peaked at between 7 and 11 times the raw matrix bytes from 5,000 to
+20,000 units, with the figure at a given size moving between runs. The
+default of 12 sits above every measured peak, which is the direction a guard
+should err in: it exists to refuse a solve that will not fit, not to predict
+where the peak lands.
 }
 \examples{
 estimate_dense_solve_mb(5000, 5000)

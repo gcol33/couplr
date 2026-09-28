@@ -23,8 +23,8 @@ one asked, so the version that reaches CRAN is this one.
 * **The memory guard estimates the solve, not the matrix.** `memory_mode =
   "auto"` compared a dense cost matrix's footprint against available RAM, at
   four times the raw cell bytes. A dense solve peaks well above the matrix it
-  runs on: measured at 9.4, 7.2 and 8.6 times the raw bytes at 5,000, 10,000
-  and 20,000 units, against the 4 the guard assumed, so a solve could be
+  runs on: measured at between 7 and 11 times the raw bytes from 5,000 to
+  20,000 units, against the 4 the guard assumed, so a solve could be
   started on a machine it did not fit. `estimate_dense_solve_mb()` now supplies
   the figure the guard reads, at a multiplier taken from those measurements;
   `estimate_dense_matrix_mb()` keeps its own meaning and is no longer what
@@ -356,10 +356,11 @@ one asked, so the version that reaches CRAN is this one.
 * **The dense-solve guard's multiplier now covers every peak it is read
   against.** `estimate_dense_solve_mb()` defaulted `solve_factor` to 10, and
   on the memory benchmark a dense one-to-one solve peaked at 10.5 times the
-  raw cell bytes at 5,000 units, so at that size the estimate came in about
-  20 MB under the peak it exists to bound. The default is 12, above the
-  10.5, 7.2 and 8.8 measured at 5,000, 10,000 and 20,000 units. The guard
-  refuses a solve that will not fit, so it has to err high.
+  raw cell bytes at 5,000 units in one run, so at that size the estimate came
+  in about 20 MB under the peak it exists to bound. The default is 12, above
+  every peak measured from 5,000 to 20,000 units, which have fallen between 7
+  and 11 times the raw bytes. The guard refuses a solve that will not fit, so
+  it has to err high.
 
 * **The ball-tree pricing bound now covers the cost source's own evaluation.**
   The bound has to sit below the number `raw_distance()` returns, since the

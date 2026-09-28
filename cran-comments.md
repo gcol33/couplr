@@ -15,7 +15,7 @@
   written for. Both solvers stay reachable by name.
 
 * `memory_mode = "auto"` sizes the solve rather than the cost matrix. A dense
-  solve peaks at 7.2 to 10.5 times the raw cell bytes, against the 4 the guard
+  solve peaks at 7 to 11 times the raw cell bytes, against the 4 the guard
   assumed, so it could start a solve on a machine it did not fit. The guard
   switches to the lazy path earlier than it did.
 
@@ -38,9 +38,10 @@
 
 * The dense-solve guard's multiplier now covers every peak it is read against.
   `estimate_dense_solve_mb()` defaulted `solve_factor` to 10 while a dense
-  one-to-one solve peaked at 10.5, 7.2 and 8.8 times the raw cell bytes at
-  5,000, 10,000 and 20,000 units, so at the first of those the estimate came in
-  about 20 MB under the peak it exists to bound. The default is 12.
+  one-to-one solve peaked at 10.5 times the raw cell bytes at 5,000 units in
+  one run, so there the estimate came in about 20 MB under the peak it exists
+  to bound. The default is 12, above every peak measured from 5,000 to 20,000
+  units.
 
 * `verify_assignment()` certified a matching that left rows unmatched under its
   default arithmetic. The numerical conclusion asked for primal feasibility, and

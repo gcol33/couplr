@@ -70,9 +70,10 @@ certificate: \code{"solver"} for the duals as supplied or solved,
 \code{"supplied"} for expansions passed in \code{duals}, \code{"recovered"} for
 potentials recovered from the matching, and \code{"none"} when no exact
 certificate was reached.
-\item \code{exact_u}, \code{exact_v} — on an exact certificate decided by
-expansions, the exact row and column potentials, one row per
-potential whose sum is its value; \code{NULL} otherwise.
+\item \code{exact_u}, \code{exact_v} — on an exact certificate, the row and
+column potentials that decided it, one row per potential whose sum
+is its exact value (a single column when the solver's doubles
+decided it); \code{NULL} when there is no exact certificate.
 \item \code{structurally_valid_matching} — logical; no column claimed twice, no
 forbidden pair matched, no index out of range. Unmatched rows are
 permitted, so this holds for a partial matching.

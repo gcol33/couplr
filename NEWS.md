@@ -16,10 +16,10 @@
   and is still refused, and duals that fail even the numerical reading still
   certify nothing.
 
-* The exact potentials are returned as `exact_u` and `exact_v`, one row per
-  potential whose sum is its exact value, and `duals` accepts that form, so a
-  certificate can be re-checked from the cost matrix alone, in rational
-  arithmetic if wanted. `exact_duals_source` says whether the solver's duals,
+* An exact certificate returns the potentials that decided it as `exact_u`
+  and `exact_v`, one row per potential whose sum is its exact value, and
+  `duals` accepts that form, so a certificate can be re-checked from the cost
+  matrix alone, in rational arithmetic if wanted. `exact_duals_source` says whether the solver's duals,
   expansions supplied by the caller, or recovered potentials decided the exact
   certificate. `n_exact_violations` and `n_exact_untight` keep describing the
   duals given.

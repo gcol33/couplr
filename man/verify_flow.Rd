@@ -69,9 +69,9 @@ was asked, and whether its conditions hold.
 wrong sign exactly, under the potentials given.
 \item \code{exact_potentials_source} - which potentials decided the exact
 certificate: \code{"solver"}, \code{"supplied"}, \code{"recovered"}, or \code{"none"}.
-\item \code{exact_potential} - on an exact certificate decided by expansions,
-the exact node potentials, one row per node whose sum is its value;
-\code{NULL} otherwise.
+\item \code{exact_potential} - on an exact certificate, the node potentials
+that decided it, one row per node whose sum is its exact value;
+\code{NULL} when there is no exact certificate.
 \item \code{tolerance} - the relative \code{tol} as supplied.
 }
 

@@ -589,7 +589,20 @@ CertificateReport certify_assignment_impl(const Source& src,
                             rep.exact_dual_feasible &&
                             rep.exact_cs_matched_tight &&
                             rep.exact_cs_unmatched_free;
-    if (rep.exact_certificate) rep.exact_duals_source = ExactDualsSource::solver;
+    if (rep.exact_certificate) {
+        // The doubles decided it, and they are the potentials returned: an
+        // exact certificate always carries the potentials that decided it, so
+        // re-checking one never depends on which source that was.
+        rep.exact_duals_source = ExactDualsSource::solver;
+        rep.exact_u.resize(u.size());
+        rep.exact_v.resize(v.size());
+        for (std::size_t i = 0; i < u.size(); ++i) {
+            if (u[i] != 0.0) rep.exact_u[i].push_back(u[i]);
+        }
+        for (std::size_t j = 0; j < v.size(); ++j) {
+            if (v[j] != 0.0) rep.exact_v[j].push_back(v[j]);
+        }
+    }
 
     // The doubles missed exactness. Expansions the caller holds are asked
     // next, and they are the duals the exact counts then describe.

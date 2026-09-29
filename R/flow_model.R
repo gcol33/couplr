@@ -356,9 +356,9 @@ print.couplr_flow_problem <- function(x, ...) {
 #'         wrong sign exactly, under the potentials given.
 #'   \item `exact_potentials_source` - which potentials decided the exact
 #'         certificate: `"solver"`, `"supplied"`, `"recovered"`, or `"none"`.
-#'   \item `exact_potential` - on an exact certificate decided by expansions,
-#'         the exact node potentials, one row per node whose sum is its value;
-#'         `NULL` otherwise.
+#'   \item `exact_potential` - on an exact certificate, the node potentials
+#'         that decided it, one row per node whose sum is its exact value;
+#'         `NULL` when there is no exact certificate.
 #'   \item `tolerance` - the relative `tol` as supplied.
 #' }
 #'

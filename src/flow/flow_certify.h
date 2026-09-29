@@ -575,7 +575,7 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
                 finite = std::isfinite(x);
                 if (finite && x != 0.0) as_given[static_cast<std::size_t>(v)].push_back(x);
             }
-            if (finite) try_expansions(as_given, ExactDualsSource::solver, false,
+            if (finite) try_expansions(as_given, ExactDualsSource::solver, true,
                                        exact_pi == nullptr);
         }
         if (!rep.exact_certificate && recover && numerical) {

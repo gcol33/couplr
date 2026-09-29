@@ -16,9 +16,22 @@
 //   7. Repeat until nothing prices below -tol.
 //
 // At that point the duals are feasible for every pair of the complete implicit
-// problem and the restricted answer is optimal for it. That is what separates
-// this from approximate k-nearest matching, which solves the same restricted
-// master and stops at step 2.
+// problem to within tol, and the restricted answer is optimal for it to within
+// n * tol. That is what separates this from approximate k-nearest matching,
+// which solves the same restricted master and stops at step 2.
+//
+// A loop that certifies closes the tolerance as it goes. Each round recovers
+// exact potentials for the master over the pairs it holds, in exact arithmetic
+// (lap_exact_potentials.h), which costs the candidate set and not the grid, and
+// prices the omitted pairs against them at zero: the double pass decides the
+// pairs clear of zero and the exact sign the few within rounding of it, in the
+// same sweep. A pair whose reduced cost is exactly negative goes into the
+// candidate set; when there is none, the potentials are exactly feasible for
+// every admissible pair and the certificate is exact, with no n * tol left in
+// it. Every round still adds a pair the master did not hold, so the loop still
+// terminates. A master the recovery finds not exactly optimal over its own
+// pairs -- the flow solver works in doubles too -- is priced at -tol that
+// round, as a loop that does not certify prices every round.
 //
 // The loop lives in C++ because it owns the FlowProblem, the candidate set and
 // the cost source, none of which have an R representation, and because it
@@ -41,6 +54,7 @@
 
 #include "../core/lap_certify.h"
 #include "../core/lap_cost_source.h"
+#include "../core/lap_exact_potentials.h"
 #include "../core/lap_error.h"
 #include "../core/lap_hall.h"
 #include "flow_candidates.h"
@@ -52,6 +66,7 @@
 #include "flow_solve.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -164,6 +179,9 @@ struct ImplicitRound {
     // stays infinite on a reseed round, which prices nothing.
     double  min_reduced_cost = std::numeric_limits<double>::infinity();
     int64_t n_violators      = 0;
+    // Whether the round priced at zero against exact potentials, or at -tol
+    // against the master's doubles.
+    bool    exact_pricing    = false;
     int64_t n_evaluated      = 0;   // pairs this round computed a cost for
     int64_t pairs_added      = 0;
     int64_t arcs_added       = 0;
@@ -363,8 +381,8 @@ enum class ShortfallAnswer {
 // and the policy, which is what separates one design from another:
 //
 //   on_shortfall(master, cand, reseeds, rec)  a master short of its flow
-//   duals(master, rec)                        the u, v the pricer reads
-//   price_tol(master)                         the threshold it reads them at
+//   duals(master, rec)                        the u, v it reads off the master
+//   price(master, cand, rec)                  the omitted pairs, priced
 //   finish(master, cand, priced, rec)         the answer, once nothing prices in
 //
 // `search` is whatever the source can be asked about a row without reading it,
@@ -433,9 +451,7 @@ void run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
         policy.duals(master, rec);
 
         const Clock::time_point t_price = Clock::now();
-        const BlockPricing priced = search.price(src, policy.u(), policy.v(), cand,
-                                                 opts.keep_per_row,
-                                                 policy.price_tol(master));
+        const BlockPricing priced = policy.price(master, cand, rec);
         rec.pricing_seconds  += seconds_since(t_price);
         rec.min_reduced_cost = priced.min_reduced_cost;
         rec.n_violators      = priced.n_violators;
@@ -502,6 +518,65 @@ void tighten_matched_duals(const Source& src, const std::vector<int>& match,
 
 namespace implicit_detail {
 
+// Exact potentials for the pair arcs, U for the rows and V for the columns, set
+// up to price the pairs a master omits at zero: the violators are the pairs
+// whose reduced cost c - U_i - V_j is exactly negative.
+//
+// The pricer runs in doubles, against potentials rounded up: u_hi >= U and
+// v_hi >= V, so c - u_hi - v_hi is at most the exact reduced cost. Two
+// subtractions in doubles can put a negative value at most 4 eps (|u| + |v|)
+// above itself, so a pair whose exact reduced cost is negative prices below a
+// margin of twice that, and every pair pricing above the margin is exactly
+// non-negative. The pricer therefore takes -margin as its threshold, which
+// admits the pairs within rounding of zero, and the exact sign decides each of
+// those as the pricer reaches it. A pruning pricer's bound is already a lower
+// bound on the exact reduced cost, so a subtree it skips at the margin holds no
+// negative pair either.
+struct ExactPrices {
+    bool ok = false;
+    std::vector<exact::Expansion> U;
+    std::vector<exact::Expansion> V;
+    std::vector<exact::Approximation> ua;
+    std::vector<exact::Approximation> va;
+    std::vector<double> u_hi;
+    std::vector<double> v_hi;
+    double margin = 0.0;
+
+    void set(std::vector<exact::Expansion> rows, std::vector<exact::Expansion> cols) {
+        U = std::move(rows);
+        V = std::move(cols);
+        ua.resize(U.size());
+        va.resize(V.size());
+        u_hi.resize(U.size());
+        v_hi.resize(V.size());
+        double largest_u = 0.0;
+        double largest_v = 0.0;
+        for (std::size_t i = 0; i < U.size(); ++i) {
+            ua[i] = exact::approximate(U[i]);
+            u_hi[i] = detail::next_up(ua[i].value + ua[i].error);
+            largest_u = std::max(largest_u, std::abs(u_hi[i]));
+        }
+        for (std::size_t j = 0; j < V.size(); ++j) {
+            va[j] = exact::approximate(V[j]);
+            v_hi[j] = detail::next_up(va[j].value + va[j].error);
+            largest_v = std::max(largest_v, std::abs(v_hi[j]));
+        }
+        margin = detail::next_up(8.0 * DBL_EPSILON * (largest_u + largest_v));
+        ok = true;
+    }
+
+    template <class Source>
+    BlockPricing price(const Source& src, RowSearch<Source>& search, CandidateSet& cand,
+                       int keep_per_row) const {
+        const auto negative = [this](int64_t i, int64_t j, double c) {
+            const std::size_t si = static_cast<std::size_t>(i);
+            const std::size_t sj = static_cast<std::size_t>(j);
+            return exact::sign_reduced_cost(c, U[si], ua[si], V[sj], va[sj]) < 0;
+        };
+        return search.price(src, u_hi, v_hi, cand, keep_per_row, -margin, negative);
+    }
+};
+
 // The unit-capacity assignment. A short master is Hall's question, answered by
 // a witness or by the columns that can repair it; the duals are the assignment
 // LP's, read off the potentials and put on its tight face; and the answer is
@@ -515,6 +590,7 @@ struct AssignmentPolicy {
     ImplicitResult& out;
     int64_t first_width;
     AssignmentDuals duals_;
+    ExactPrices exact_;
 
     AssignmentPolicy(const Source& s, FlowProblem& p, RowSearch<Source>& rs,
                      const ImplicitOptions& o, ImplicitResult& r)
@@ -566,23 +642,56 @@ struct AssignmentPolicy {
         tighten_matched_duals(src, duals_.match, duals_.u, duals_.v);
     }
 
-    const std::vector<double>& u() const { return duals_.u; }
-    const std::vector<double>& v() const { return duals_.v; }
-    double price_tol(const FlowResult&) const { return opts.tol; }
+    // A loop that certifies prices against the master's exact potentials,
+    // recovered over the pairs it holds; one that does not, or a master the
+    // recovery finds not exactly optimal over its own pairs, prices against its
+    // doubles at -tol.
+    BlockPricing price(const FlowResult&, CandidateSet& cand, ImplicitRound& rec) {
+        exact_.ok = false;
+        if (opts.certify) {
+            const exact::AssignmentPotentials pots = exact::recover_assignment_potentials(
+                CandidateGraph<Source>(src, cand), duals_.match, duals_.v);
+            cand.note_evaluated(pots.n_evaluated);
+            rec.n_evaluated += pots.n_evaluated;
+            if (pots.ok) {
+                exact_.set(pots.u, pots.v);
+                rec.exact_pricing = true;
+                return exact_.price(src, search, cand, opts.keep_per_row);
+            }
+        }
+        return search.price(src, duals_.u, duals_.v, cand, opts.keep_per_row, opts.tol);
+    }
 
     // The certificate is the omitted scan and a scan over the master's own
-    // pairs, which costs the candidates rather than the grid.
+    // pairs, which costs the candidates rather than the grid. When the last
+    // round priced at zero, the same two halves decide it exactly: the pairs
+    // the master holds checked against the exact potentials, and the omitted
+    // ones proven non-negative by the pricing that ended the loop.
     void finish(const FlowResult& master, CandidateSet& cand, const BlockPricing& priced,
                 ImplicitRound& rec) {
         if (opts.certify) {
+            const CandidateGraph<Source> held_graph(src, cand);
             const ReducedCostScan held = scan_reduced_costs(
-                CandidateGraph<Source>(src, cand), duals_.u, duals_.v, opts.tol);
+                held_graph, duals_.u, duals_.v, opts.tol);
             cand.note_evaluated(held.n_admissible);
             rec.n_evaluated += held.n_admissible;
 
+            ExactDuals extra;
+            exact::ExpansionCheck held_exact;
+            if (exact_.ok) {
+                held_exact = exact::check_expansion_duals(held_graph, duals_.match,
+                                                          exact_.U, exact_.V);
+                cand.note_evaluated(held_exact.n_evaluated);
+                rec.n_evaluated += held_exact.n_evaluated;
+                extra.u = &exact_.U;
+                extra.v = &exact_.V;
+                extra.check = &held_exact;
+                extra.source = ExactDualsSource::recovered;
+            }
+
             out.certificate = certify_assignment(
                 src, duals_.match, duals_.u, duals_.v, opts.tol,
-                merge_scans(held, omitted_scan(priced)));
+                merge_scans(held, omitted_scan(priced)), Arithmetic::Auto, extra);
             out.certified = out.certificate.certified_optimal;
         }
         out.match = duals_.match;
@@ -837,6 +946,8 @@ struct DesignPolicy {
     std::unique_ptr<RowSearch<TSource>> t_search;
 
     std::vector<double> u_, v_;
+    exact::ShortestPaths recovered_;
+    ExactPrices exact_;
 
     DesignPolicy(const Source& s, FlowProblem& p, RowSearch<Source>& rs,
                  const ImplicitOptions& o, DesignResult& r)
@@ -962,9 +1073,6 @@ struct DesignPolicy {
         if (master.flow_sent == master.flow_required) out.max_flow_certified = true;
     }
 
-    const std::vector<double>& u() const { return u_; }
-    const std::vector<double>& v() const { return v_; }
-
     // A reduced cost is a cost and two potentials, so the resolution it has is
     // set by the largest of them, which is the scale certify_flow() reads every
     // arc against.
@@ -974,6 +1082,41 @@ struct DesignPolicy {
         return opts.tol * scale;
     }
 
+    // The omitted pairs, priced against the master's exact potentials when the
+    // loop certifies: the shortest-path distances of its residual graph, which
+    // put the row node at -U_i and the column node at V_j in the pricer's
+    // terms, the reading duals() gives the solver's own. A flow the recovery
+    // finds not exactly optimal over its own arcs is priced against the doubles
+    // at the threshold, as a loop that does not certify is every round.
+    BlockPricing price(const FlowResult& master, CandidateSet& cand, ImplicitRound& rec) {
+        exact_.ok = false;
+        recovered_.ok = false;
+        if (opts.certify) {
+            recovered_ = recover_flow_potentials(prob, master.flow, master.potential);
+            if (recovered_.ok) {
+                const BipartiteBlock& blk = prob.blocks[0];
+                std::vector<exact::Expansion> U(static_cast<std::size_t>(src.nrow));
+                std::vector<exact::Expansion> V(static_cast<std::size_t>(src.ncol));
+                for (int64_t i = 0; i < src.nrow; ++i) {
+                    U[static_cast<std::size_t>(i)] = exact::negated(
+                        recovered_.dist[static_cast<std::size_t>(blk.row_base + i)]);
+                }
+                for (int64_t j = 0; j < src.ncol; ++j) {
+                    V[static_cast<std::size_t>(j)] =
+                        recovered_.dist[static_cast<std::size_t>(blk.col_base + j)];
+                }
+                exact_.set(std::move(U), std::move(V));
+                rec.exact_pricing = true;
+                return exact_.price(src, search, cand, opts.keep_per_row);
+            }
+        }
+        return search.price(src, u_, v_, cand, opts.keep_per_row, price_tol(master));
+    }
+
+    // The master is certified over the arcs it holds and the omitted pairs by
+    // their floor. When the round priced at zero, it is certified exactly too:
+    // the master's flow against the potentials that priced it, and the omitted
+    // pairs by the pricing that found none of them below zero.
     void finish(const FlowResult& master, CandidateSet&, const BlockPricing& priced,
                 ImplicitRound&) {
         out.flow = master.flow;
@@ -984,10 +1127,15 @@ struct DesignPolicy {
         out.omitted_proven_floor = priced.proven_floor;
         out.price_tol = price_tol(master);
         if (opts.certify) {
-            out.flow_certificate =
-                certify_flow(prob, master.flow, master.potential, opts.tol);
-            out.certified = out.flow_certificate.certified_optimal &&
-                            !(priced.proven_floor < -out.price_tol);
+            out.flow_certificate = certify_flow(
+                prob, master.flow, master.potential, opts.tol, Arithmetic::Auto,
+                exact_.ok ? &recovered_.dist : nullptr, false,
+                ExactDualsSource::recovered);
+            const bool exact_all = exact_.ok && out.flow_certificate.exact_certificate;
+            out.flow_certificate.conclusion_is_exact = exact_all;
+            out.certified = exact_all ||
+                            (out.flow_certificate.certified_optimal &&
+                             !(priced.proven_floor < -out.price_tol));
         }
     }
 };

@@ -54,10 +54,12 @@ template <class Source>
 struct RowSearch {
     explicit RowSearch(const Source&) {}
 
+    template <class Accept = AcceptAll>
     BlockPricing price(const Source& src, const std::vector<double>& u,
                        const std::vector<double>& v, CandidateSet& cand,
-                       int keep_per_row, double tol) {
-        return price_block(src, u, v, cand, keep_per_row, tol);
+                       int keep_per_row, double tol,
+                       const Accept& accept = Accept()) {
+        return price_block(src, u, v, cand, keep_per_row, tol, accept);
     }
 
     void cheapest_outside(const Source& src, int64_t i,
@@ -96,10 +98,12 @@ struct RowSearch<LazyCostMatrix> {
         if (ball_tree_pays(src)) tree = build_ball_tree(src);
     }
 
+    template <class Accept = AcceptAll>
     BlockPricing price(const LazyCostMatrix& src, const std::vector<double>& u,
                        const std::vector<double>& v, CandidateSet& cand,
-                       int keep_per_row, double tol) {
-        return price_pairs(src, tree, u, v, cand, keep_per_row, tol);
+                       int keep_per_row, double tol,
+                       const Accept& accept = Accept()) {
+        return price_pairs(src, tree, u, v, cand, keep_per_row, tol, accept);
     }
 
     void cheapest_outside(const LazyCostMatrix& src, int64_t i,

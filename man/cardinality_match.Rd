@@ -123,6 +123,17 @@ it holds:
 \code{gap_fraction}, \code{certified}, \code{stopped_on}, \code{n_nodes}, and the state of
 every stated constraint. See \code{\link[=print.cardinality_report]{print.cardinality_report()}}.
 \item \code{certificate} - present when the search certified optimality.
+\item \code{potentials} - the dual potentials of the network solve the
+matched sample came from, a list with elements \code{left} and \code{right}
+holding one value per unit, named by id, in distance terms: the
+reduced cost of a pair is its distance less the two, with the tier
+weights and any moment multipliers already folded in. Under
+\code{engine = "flow"} that solve is the whole problem, and the potentials
+certify the matched sample as its optimum. Under branch and bound it
+is the node the incumbent was read from, with the arcs that node fixed
+and the moment rows priced at its multipliers, and they certify the
+incumbent as that node's optimum; the bound on the whole problem is
+\code{cardinality$best_possible}. Present when that solve was certified.
 \item \code{status} - \code{"optimal"}, \code{"iteration_limit"}, or \code{"heuristic"}.
 \item \code{info$engine} - the engine that answered.
 }

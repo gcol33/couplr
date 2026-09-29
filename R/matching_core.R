@@ -40,6 +40,9 @@
 #   result       — raw solver output for the submatrix (or NULL if degenerate)
 #   matched_rows — 1-based indices into the *original* cost_matrix rows
 #   matched_cols — 1-based indices into the *original* cost_matrix cols
+#   potentials   — the assignment duals of the submatrix, spread over the
+#                  original rows and columns with NA on the ones pruned, or
+#                  NULL when the answer is not the optimum of that LP
 .solve_with_partial_feasibility <- function(cost_matrix, solver_fn,
                                             solver_params = list()) {
   if (is_lazy_cost_spec(cost_matrix)) {
@@ -73,6 +76,7 @@
   )
 
   padded <- NULL
+  greedy_fallback <- FALSE
   if (is.null(res)) {
     padded <- .pad_forbidden(sub, sub_feasible)
     if (!is.null(padded)) {
@@ -99,6 +103,7 @@
                   matched_rows = integer(0),
                   matched_cols = integer(0)))
     }
+    greedy_fallback <- TRUE
     warning("constraints admit no complete matching and the cost range is too ",
             "wide to solve the maximum-cardinality problem exactly; returning ",
             "a greedy partial matching, which is not optimal. Relax ",
@@ -120,7 +125,40 @@
   matched_rows <- orig_rows[matched_sub_rows]
   matched_cols <- orig_cols[matched_sub_cols]
 
-  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
+  # The submatrix is an assignment LP, and its duals are what the matching is
+  # certified against. A padded solve answered a different objective and a
+  # greedy one no objective at all, so neither has them.
+  potentials <- NULL
+  if (is.null(padded) && !greedy_fallback &&
+      !identical(solver_fn, greedy_matching)) {
+    potentials <- .sub_potentials(res, sub, orig_rows, orig_cols,
+                                  dim(cost_matrix))
+  }
+
+  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols,
+       potentials = potentials)
+}
+
+# The assignment duals of `sub`, placed at the original rows and columns it was
+# cut from. A solver that returned none is answered by assignment_duals(): the
+# optimal duals of a linear program are shared by all its optimal solutions, so
+# duals from a second solve are duals for the matching the first one returned.
+.sub_potentials <- function(res, sub, orig_rows, orig_cols, dims) {
+  duals <- .solver_duals(res, transposed = FALSE)
+  if (is.null(duals)) {
+    duals <- tryCatch({
+      d <- assignment_duals(sub)
+      list(u = d$u, v = d$v)
+    }, error = function(e) NULL)
+  }
+  if (is.null(duals)) {
+    return(NULL)
+  }
+  rows <- rep(NA_real_, dims[1])
+  cols <- rep(NA_real_, dims[2])
+  rows[orig_rows] <- duals$u
+  cols[orig_cols] <- duals$v
+  list(rows = rows, cols = cols)
 }
 
 # Lazy-cost-spec counterpart of .solve_with_partial_feasibility(). The whole
@@ -161,7 +199,11 @@
   matched_rows <- which(match_vec > 0L)
   matched_cols <- match_vec[matched_rows]
 
-  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols)
+  duals <- .solver_duals(res, transposed = FALSE)
+  potentials <- if (is.null(duals)) NULL else list(rows = duals$u, cols = duals$v)
+
+  list(result = res, matched_rows = matched_rows, matched_cols = matched_cols,
+       potentials = potentials)
 }
 
 # The maximum-cardinality minimum-cost matching of a specification, by the
@@ -424,12 +466,60 @@
     ),
     info = info
   )
+  out$potentials <- .couples_potentials(solved$potentials, plan,
+                                        left_ids, right_ids)
 
   # The proof and the search record sit at the top level, beside `status`, for
   # the reason `status` does: return_diagnostics = FALSE truncates `info` to
   # three fields, and a certificate that survives only a diagnostic call is not
   # one a caller can rely on.
   .carry_solve_evidence(out, solver_result)
+}
+
+# The solve's duals in the caller's units, named by id. A design that
+# replicates a left unit k times solves k rows for it, one per partner, and
+# each replica carries its own dual. The unit's dual in the k:1 flow LP is
+# their largest: every replica's dual satisfies c_ij - u_r - v_j >= 0 on every
+# admissible pair, so their largest still does, and the pairs the unit is
+# matched to are arcs at their capacity of one, where the LP allows a reduced
+# cost at or below zero. At an exact optimum the replicas' duals coincide.
+.couples_potentials <- function(potentials, plan, left_ids, right_ids) {
+  if (is.null(potentials)) {
+    return(NULL)
+  }
+  by_unit <- function(values, unit, n) {
+    out <- rep(NA_real_, n)
+    known <- !is.na(values)
+    if (any(known)) {
+      best <- tapply(values[known], unit[known], max)
+      out[as.integer(names(best))] <- as.numeric(best)
+    }
+    out
+  }
+  list(
+    left = stats::setNames(by_unit(potentials$rows, plan$row_unit,
+                                   length(left_ids)), as.character(left_ids)),
+    right = stats::setNames(by_unit(potentials$cols, plan$col_unit,
+                                    length(right_ids)), as.character(right_ids))
+  )
+}
+
+# Per-block potentials merged into one pair over every unit. Blocks are
+# separate solves over disjoint units and a pair across two blocks is not
+# admissible, so the blocks' potentials together are a dual solution of the
+# whole problem. A unit whose block has none reads NA.
+.merge_potentials <- function(parts, left_ids, right_ids) {
+  parts <- Filter(Negate(is.null), parts)
+  if (!length(parts)) {
+    return(NULL)
+  }
+  spread <- function(side, ids) {
+    out <- stats::setNames(rep(NA_real_, length(ids)), as.character(ids))
+    values <- unlist(lapply(parts, `[[`, side))
+    out[names(values)] <- values
+    out
+  }
+  list(left = spread("left", left_ids), right = spread("right", right_ids))
 }
 
 # Move what a solve proved about itself onto the matching it produced.
@@ -458,7 +548,14 @@
 #' is answered one row at a time in C++, through the same row search the
 #' implicit loop seeds with, so no row of costs is ever held in R.
 #'
-#' @return List with pairs tibble, unmatched list, and info list.
+#' The LP separates by row, so its duals are explicit. A row's dual is the
+#' cost of the most expensive partner it took, which is its k-th cheapest
+#' admissible cost, and every column's is zero, since no column has a capacity
+#' to price. The pairs taken then reduce to at most zero and the pairs passed
+#' over to at least zero, which are the optimality conditions of the flow LP
+#' with each pair arc carrying at most one unit.
+#'
+#' @return List with pairs tibble, unmatched list, info list, and potentials.
 #' @keywords internal
 .couples_replace <- function(cost_matrix, left, right,
                              left_ids, right_ids, vars, ratio = 1L, plan) {
@@ -495,6 +592,12 @@
                    distance = numeric(0))
   }
 
+  row_dual <- rep(NA_real_, length(left_ids))
+  if (length(rows)) {
+    taken <- tapply(dists, rows, max)
+    row_dual[as.integer(names(taken))] <- as.numeric(taken)
+  }
+
   list(
     pairs = pairs,
     unmatched = list(
@@ -506,6 +609,11 @@
       total_distance = sum(pairs$distance, na.rm = TRUE),
       replace = TRUE,
       ratio = ratio
+    ),
+    potentials = list(
+      left = stats::setNames(row_dual, as.character(left_ids)),
+      right = stats::setNames(numeric(length(right_ids)),
+                              as.character(right_ids))
     )
   )
 }
@@ -672,6 +780,8 @@
     ),
     info = info
   )
+  result$potentials <- .couples_potentials(solved$potentials, plan,
+                                           left_ids, right_ids)
 
   # Check for full matching if required
   if (require_full_matching) {
@@ -805,7 +915,8 @@
       pairs = result$pairs,
       unmatched = result$unmatched,
       info = .blocked_info(result$pairs, length(blocks),
-                           result$block_summary, result$solvers)
+                           result$block_summary, result$solvers),
+      potentials = .merge_potentials(result$potentials, left_ids, right_ids)
     ))
   }
 
@@ -814,6 +925,7 @@
   all_unmatched_left <- character(0)
   all_unmatched_right <- character(0)
   block_summaries <- list()
+  block_potentials <- list()
   solvers <- character(0)
 
   for (block in blocks) {
@@ -870,6 +982,7 @@
     all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
 
     solvers <- c(solvers, block_result$info$solver)
+    block_potentials[[length(block_potentials) + 1]] <- block_result$potentials
 
     # Block summary
     block_summaries[[length(block_summaries) + 1]] <- .block_summary_row(
@@ -908,7 +1021,8 @@
       left = all_unmatched_left,
       right = all_unmatched_right
     ),
-    info = .blocked_info(pairs, length(blocks), block_summary_df, solvers)
+    info = .blocked_info(pairs, length(blocks), block_summary_df, solvers),
+    potentials = .merge_potentials(block_potentials, left_ids, right_ids)
   )
 }
 
@@ -1027,6 +1141,22 @@
 #'     `"heuristic"` when a greedy method ran, either because it was asked for
 #'     or because the constrained path fell back to it, and `"infeasible"` when
 #'     nothing could be matched.
+#'
+#'   - `potentials`: The dual potentials of the design's linear program, a list
+#'     with elements `left` and `right` holding one value per unit, named by
+#'     id. The reduced cost of a pair is its distance minus the two
+#'     potentials: at least zero on every admissible pair the matching left
+#'     out, zero on every pair of a 1:1 matching, and at most zero on the pairs
+#'     of a k:1 or with-replacement matching, whose pair arcs carry at most
+#'     one unit. A left unit's potential on the k:1 design is the largest of
+#'     its replicas'. With replacement the LP separates by row: a left unit's
+#'     potential is the distance to the farthest partner it took and every
+#'     right unit's is zero. A unit with no admissible partner, or in a block
+#'     with none, reads `NA`. Absent for `method = "greedy"` and for a
+#'     constrained problem answered by maximum cardinality, which is not the
+#'     LP the potentials belong to. On the 1:1 design they are the duals
+#'     [verify_assignment()] checks, and a method that returns none has them
+#'     computed by [assignment_duals()].
 #'
 #'   Under `memory_mode = "implicit"` it also carries `certificate`, the checked
 #'   statement of optimality (see [verify_assignment()], which names the

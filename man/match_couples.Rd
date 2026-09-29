@@ -161,6 +161,21 @@ optimal method, \code{"partial"} when constraints left some unmatched,
 \code{"heuristic"} when a greedy method ran, either because it was asked for
 or because the constrained path fell back to it, and \code{"infeasible"} when
 nothing could be matched.
+\item \code{potentials}: The dual potentials of the design's linear program, a list
+with elements \code{left} and \code{right} holding one value per unit, named by
+id. The reduced cost of a pair is its distance minus the two
+potentials: at least zero on every admissible pair the matching left
+out, zero on every pair of a 1:1 matching, and at most zero on the pairs
+of a k:1 or with-replacement matching, whose pair arcs carry at most
+one unit. A left unit's potential on the k:1 design is the largest of
+its replicas'. With replacement the LP separates by row: a left unit's
+potential is the distance to the farthest partner it took and every
+right unit's is zero. A unit with no admissible partner, or in a block
+with none, reads \code{NA}. Absent for \code{method = "greedy"} and for a
+constrained problem answered by maximum cardinality, which is not the
+LP the potentials belong to. On the 1:1 design they are the duals
+\code{\link[=verify_assignment]{verify_assignment()}} checks, and a method that returns none has them
+computed by \code{\link[=assignment_duals]{assignment_duals()}}.
 }
 
 Under \code{memory_mode = "implicit"} it also carries \code{certificate}, the checked

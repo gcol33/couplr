@@ -20,6 +20,7 @@
 
 #include "../core/lap_error.h"
 #include "../core/lap_lazy_types.h"
+#include "../core/lap_rcpp_convert.h"
 #include "../core/lap_utils_rcpp.h"
 #include "flow_candidates.h"
 #include "flow_certify.h"
@@ -205,7 +206,7 @@ std::vector<double> warm_potential_from_r(const Rcpp::NumericVector& warm_potent
 }
 
 Rcpp::List certificate_to_r(const lap::FlowCertificate& cert) {
-    return Rcpp::List::create(
+    Rcpp::List out = Rcpp::List::create(
         Rcpp::Named("primal_feasible") = cert.primal_feasible,
         Rcpp::Named("n_capacity_violations") =
             static_cast<double>(cert.n_capacity_violations),
@@ -223,6 +224,17 @@ Rcpp::List certificate_to_r(const lap::FlowCertificate& cert) {
         Rcpp::Named("duality_gap") = cert.duality_gap,
         Rcpp::Named("certified_optimal") = cert.certified_optimal,
         Rcpp::Named("tolerance") = cert.tolerance);
+    out.push_back(cert.exact_available, "exact_available");
+    out.push_back(cert.exact_certificate, "exact_certificate");
+    out.push_back(static_cast<double>(cert.n_exact_violations), "n_exact_violations");
+    out.push_back(std::string(exact_source_name(cert.exact_potentials_source)),
+                  "exact_potentials_source");
+    out.push_back(cert.exact_potential.empty()
+                      ? Rcpp::RObject(R_NilValue)
+                      : Rcpp::RObject(expansions_to_r(cert.exact_potential)),
+                  "exact_potential");
+    out.push_back(cert.conclusion_is_exact, "conclusion_is_exact");
+    return out;
 }
 
 }  // namespace
@@ -285,7 +297,9 @@ Rcpp::List flow_certify_impl(int n_nodes,
                              Rcpp::NumericVector cost,
                              Rcpp::NumericVector flow,
                              Rcpp::NumericVector potential,
-                             double tol) {
+                             double tol,
+                             std::string arithmetic,
+                             Rcpp::Nullable<Rcpp::NumericMatrix> exact_potential) {
     const lap::FlowProblem prob =
         problem_from_r(n_nodes, supply, tail, head, lower, upper, cost);
 
@@ -310,7 +324,13 @@ Rcpp::List flow_certify_impl(int n_nodes,
     }
 
     std::vector<double> pi(potential.begin(), potential.end());
-    return certificate_to_r(lap::certify_flow(prob, f, pi, tol));
+    std::vector<lap::exact::Expansion> supplied;
+    if (exact_potential.isNotNull()) {
+        supplied = expansions_from_r(Rcpp::NumericMatrix(exact_potential.get()), false);
+    }
+    return certificate_to_r(lap::certify_flow(
+        prob, f, pi, tol, arithmetic_from_string(arithmetic),
+        exact_potential.isNotNull() ? &supplied : nullptr, /*recover=*/true));
 }
 
 // The designs match_couples() offers, compiled and routed. The caller names the

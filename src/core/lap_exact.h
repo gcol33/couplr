@@ -38,7 +38,9 @@
 
 #include <cfloat>
 #include <cmath>
+#include <cstddef>
 #include <limits>
+#include <vector>
 
 namespace lap {
 namespace exact {
@@ -101,6 +103,165 @@ inline int sign_reduced_cost(double c, double u, double v) {
     if (low_b != 0.0) return low_b > 0.0 ? 1 : -1;
     if (low_a != 0.0) return low_a > 0.0 ? 1 : -1;
     return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Expansions
+// ---------------------------------------------------------------------------
+//
+// A value that is a sum of several doubles -- a shortest-path distance over
+// cost entries, a potential derived from one -- is generally not a double
+// itself, and rounding it to one is exactly what costs a certificate its
+// exactness. Such a value is held as a non-overlapping expansion: doubles in
+// increasing order of magnitude, none zero, whose exact sum is the value. The
+// empty expansion is zero. Everything below is Shewchuk's (1997), with zero
+// elimination throughout, so an expansion's length is the number of pieces it
+// needs rather than the number of terms that went into it.
+//
+// The operations are exact whenever no intermediate sum overflows, which at the
+// magnitudes a cost matrix carries is always.
+using Expansion = std::vector<double>;
+
+// fl(a + b) and the part rounding lost, given |a| >= |b| or a == 0. Three flops
+// against two-sum's six, and the precondition is what compress() arranges.
+inline double fast_two_sum(double a, double b, double& err) {
+    const double s = a + b;
+    const double b_virtual = s - a;
+    err = b - b_virtual;
+    return s;
+}
+
+// e + b into `out`. Shewchuk's GROW-EXPANSION: the running sum absorbs each
+// component in turn and every piece rounding lost is set aside, smallest first,
+// so the result is again non-overlapping and increasing. `out` must not alias
+// `e`.
+inline void grow_expansion(const Expansion& e, double b, Expansion& out) {
+    out.clear();
+    double q = b;
+    for (double component : e) {
+        double h = 0.0;
+        q = two_sum(q, component, h);
+        if (h != 0.0) out.push_back(h);
+    }
+    if (q != 0.0) out.push_back(q);
+}
+
+// Shewchuk's COMPRESS: the same value in as few components as it needs. Two
+// passes of fast two-sum, top down and then bottom up, leave a non-adjacent
+// expansion whose largest component approximates the whole to within one unit
+// in its last place. Growing an expansion term by term lengthens it by one per
+// term whatever the value, so a distance summed along a long path is compressed
+// as it goes, which is what keeps its length at the handful of components its
+// value actually spans.
+inline void compress(Expansion& e) {
+    const std::size_t m = e.size();
+    if (m < 2) return;
+    std::vector<double> g(m);
+    std::size_t bottom = m - 1;
+    double q = e[m - 1];
+    for (std::size_t k = m - 1; k-- > 0;) {
+        double small = 0.0;
+        const double big = fast_two_sum(q, e[k], small);
+        if (small != 0.0) {
+            g[bottom--] = big;
+            q = small;
+        } else {
+            q = big;
+        }
+    }
+    g[bottom] = q;
+    std::size_t top = 0;
+    for (std::size_t k = bottom + 1; k < m; ++k) {
+        double small = 0.0;
+        const double big = fast_two_sum(g[k], q, small);
+        if (small != 0.0) e[top++] = small;
+        q = big;
+    }
+    e[top++] = q;
+    e.resize(top);
+    if (e.size() == 1 && e[0] == 0.0) e.clear();
+}
+
+// e + f, exactly and compressed.
+inline Expansion expansion_sum(const Expansion& e, const Expansion& f) {
+    Expansion acc = e;
+    Expansion next;
+    for (double component : f) {
+        grow_expansion(acc, component, next);
+        acc.swap(next);
+    }
+    compress(acc);
+    return acc;
+}
+
+// e + a - b for doubles a and b, exactly and compressed. The shape every
+// potential and every relaxation below takes: a distance plus one cost entry
+// less another.
+inline Expansion add_difference(const Expansion& e, double a, double b) {
+    Expansion once;
+    grow_expansion(e, a, once);
+    Expansion twice;
+    grow_expansion(once, -b, twice);
+    compress(twice);
+    return twice;
+}
+
+inline Expansion negated(const Expansion& e) {
+    Expansion out(e.size());
+    for (std::size_t k = 0; k < e.size(); ++k) out[k] = -e[k];
+    return out;
+}
+
+// The sign of the value, exactly: the largest component carries it, since every
+// smaller one is below half a unit in its last place.
+inline int sign(const Expansion& e) {
+    if (e.empty()) return 0;
+    return e.back() > 0.0 ? 1 : -1;
+}
+
+// The value rounded to a double, and a bound on how far that rounding sits
+// from it. Summing the components smallest first commits one rounding per
+// addition, each at most half a unit in the last place of a partial sum no
+// larger than the sum of the magnitudes, so that sum times the component count
+// times epsilon covers all of them. The bound is what lets a comparison between
+// two expansions be settled in doubles whenever the doubles are clear of each
+// other, and taken exactly only when they are not.
+struct Approximation {
+    double value = 0.0;
+    double error = 0.0;
+};
+
+inline Approximation approximate(const Expansion& e) {
+    Approximation out;
+    double magnitude = 0.0;
+    for (double component : e) {
+        out.value += component;
+        magnitude += std::fabs(component);
+    }
+    if (e.size() > 1) {
+        out.error = static_cast<double>(e.size()) * DBL_EPSILON * magnitude;
+    }
+    return out;
+}
+
+// Sign of c - U - V for a double c and expansions U and V, exactly. The
+// certificate's question once the potentials are expansions rather than
+// doubles; the same filter as sign_reduced_cost() decides the pairs clear of
+// zero from the rounded potentials and their error bounds, and only the rest
+// are expanded.
+inline int sign_reduced_cost(double c, const Expansion& u, const Approximation& ua,
+                             const Expansion& v, const Approximation& va) {
+    const double approx = (c - ua.value) - va.value;
+    const double magnitude = std::fabs(c) + std::fabs(ua.value) + std::fabs(va.value);
+    const double bound = 4.0 * DBL_EPSILON * magnitude + ua.error + va.error;
+    if (approx > bound) return 1;
+    if (approx < -bound) return -1;
+    if (!std::isfinite(approx)) return approx > 0.0 ? 1 : -1;
+
+    Expansion acc;
+    if (c != 0.0) acc.push_back(c);
+    const Expansion total = expansion_sum(expansion_sum(acc, negated(u)), negated(v));
+    return sign(total);
 }
 
 }  // namespace exact

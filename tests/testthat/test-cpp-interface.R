@@ -43,9 +43,11 @@ test_that("lap_solve_jv solves basic problem", {
   result <- lap_solve_jv(cost, maximize = FALSE)
 
   expect_type(result, "list")
-  expect_true("assignment" %in% names(result) ||
-              "match" %in% names(result) ||
-              "perm" %in% names(result))
+  expect_equal(result$match, c(1L, 2L))
+  # The core computes the potentials whether or not anyone asks, and the one
+  # entry point hands them back.
+  expect_length(result$u, 2L)
+  expect_length(result$v, 2L)
 })
 
 test_that("lap_solve_jv handles maximization", {
@@ -268,19 +270,6 @@ test_that("lap_solve_push_relabel solves basic problem", {
   result <- lap_solve_push_relabel(cost, maximize = FALSE)
 
   expect_type(result, "list")
-})
-
-# ------------------------------------------------------------------------------
-# lap_solve_jv_duals tests
-# ------------------------------------------------------------------------------
-
-test_that("lap_solve_jv_duals solves basic problem", {
-  cost <- matrix(c(1, 5, 5, 1), 2, 2)
-
-  result <- lap_solve_jv_duals(cost, maximize = FALSE)
-
-  expect_type(result, "list")
-  expect_true("u" %in% names(result) || "assignment" %in% names(result))
 })
 
 # ------------------------------------------------------------------------------

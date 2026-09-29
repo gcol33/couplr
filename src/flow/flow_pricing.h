@@ -98,6 +98,16 @@ struct BlockPricing {
     int64_t n_evaluated = 0;
 };
 
+// The test a pair has to pass, beyond pricing below -tol, to count as a
+// violator. Every pricer takes one and hands it the pair's cost as it read it,
+// so a caller with a finer question than the double threshold -- the exact sign
+// of the reduced cost against potentials a double cannot hold -- asks it at the
+// point the cost is already in hand, and the double threshold is what keeps it
+// from being asked of anything but the few pairs near zero.
+struct AcceptAll {
+    bool operator()(int64_t, int64_t, double) const { return true; }
+};
+
 // Price every pair the candidate set omits, against duals `u` (length
 // src.nrow) and `v` (length src.ncol).
 //
@@ -108,13 +118,14 @@ struct BlockPricing {
 // An empty result reads as "nothing prices below zero", which is the signal to
 // stop pricing and declare the answer optimal, so a mismatch that returned one
 // would end the loop on a wrong answer.
-template <class Source>
+template <class Source, class Accept = AcceptAll>
 BlockPricing price_block(const Source& src,
                          const std::vector<double>& u,
                          const std::vector<double>& v,
                          CandidateSet& cand,
                          int keep_per_row,
-                         double tol) {
+                         double tol,
+                         const Accept& accept = Accept()) {
     const int64_t nrow = src.nrow;
     const int64_t ncol = src.ncol;
 
@@ -170,7 +181,7 @@ BlockPricing price_block(const Source& src,
                 rmin = cbar;
                 rmin_j = j;
             }
-            if (cbar < -tol) {
+            if (cbar < -tol && accept(i, j, c)) {
                 ++out.n_violators;
                 keep.offer(i, cbar, static_cast<int32_t>(j));
             }

@@ -43,6 +43,9 @@ level.
 objective, how many times its range fits inside the range a double
 orders exactly, and the constant taken off every distance.
 \item \code{total_distance}, \code{pairs} - the matched set itself.
+\item \code{potentials} - the pair potentials of the solve the matched set
+came from, as \code{.cardinality_pair_duals()} reads them, or \code{NULL}
+when that solve was not certified.
 }
 
 Invisibly returns \code{x}.

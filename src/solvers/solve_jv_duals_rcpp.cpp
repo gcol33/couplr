@@ -32,22 +32,26 @@ static Rcpp::List dual_result_to_rcpp(const lap::DualResult& result,
     );
 }
 
-// Rcpp-exported wrapper
-Rcpp::List solve_jv_duals_impl(Rcpp::NumericMatrix cost, bool maximize) {
+// The Jonker-Volgenant core with or without its pre-stages. Both are the same
+// shortest-augmenting-path solve and both return the potentials it computes.
+static Rcpp::List solve_jv_core_rcpp(Rcpp::NumericMatrix cost, bool maximize,
+                                     bool warm_start) {
     try {
-        // Convert to pure C++ types
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
-
-        // Call pure C++ solver
-        lap::DualResult result = lap::solve_jv_duals(cm, maximize);
-
-        // Convert back to Rcpp
+        lap::DualResult result = lap::solve_jv_duals(cm, maximize, warm_start);
         return dual_result_to_rcpp(result, cost);
 
     } catch (const lap::LapException& e) {
         Rcpp::stop(e.what());
     }
 
-    // Should never reach here
     return Rcpp::List();
+}
+
+Rcpp::List solve_jv_duals_impl(Rcpp::NumericMatrix cost, bool maximize) {
+    return solve_jv_core_rcpp(cost, maximize, /*warm_start=*/true);
+}
+
+Rcpp::List solve_hungarian_impl(Rcpp::NumericMatrix cost, bool maximize) {
+    return solve_jv_core_rcpp(cost, maximize, /*warm_start=*/false);
 }

@@ -85,6 +85,7 @@ Rcpp::List implicit_rounds_to_r(const std::vector<lap::ImplicitRound>& rounds,
     Rcpp::NumericVector   flow_sent(n), flow_required(n), master_cost(n);
     Rcpp::NumericVector   master_seconds(n), min_reduced_cost(n), matched_slack(n);
     Rcpp::NumericVector   n_violators(n), n_evaluated(n), pairs_added(n);
+    Rcpp::LogicalVector   exact_pricing(n);
     Rcpp::NumericVector   arcs_added(n), pricing_seconds(n);
     Rcpp::CharacterVector kind(n), master_status(n);
 
@@ -102,6 +103,7 @@ Rcpp::List implicit_rounds_to_r(const std::vector<lap::ImplicitRound>& rounds,
         master_seconds[k]   = r.master_seconds;
         min_reduced_cost[k] = r.min_reduced_cost;
         n_violators[k]      = static_cast<double>(r.n_violators);
+        exact_pricing[k]    = r.exact_pricing;
         n_evaluated[k]      = static_cast<double>(r.n_evaluated);
         pairs_added[k]      = static_cast<double>(r.pairs_added);
         arcs_added[k]       = static_cast<double>(r.arcs_added);
@@ -121,6 +123,7 @@ Rcpp::List implicit_rounds_to_r(const std::vector<lap::ImplicitRound>& rounds,
         Rcpp::Named("master_seconds") = master_seconds,
         Rcpp::Named("min_reduced_cost") = min_reduced_cost,
         Rcpp::Named("n_violators") = n_violators,
+        Rcpp::Named("exact_pricing") = exact_pricing,
         Rcpp::Named("n_evaluated") = n_evaluated,
         Rcpp::Named("pairs_added") = pairs_added,
         Rcpp::Named("arcs_added") = arcs_added,

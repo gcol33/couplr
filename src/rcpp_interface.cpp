@@ -40,11 +40,6 @@ Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List probe_cost_matrix_impl(SEXP cost);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
-Rcpp::List solve_jv_impl(NumericMatrix cost, bool maximize);
-Rcpp::List solve_jv_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
-                              SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                              double max_distance, Rcpp::List calipers,
-                              Rcpp::CharacterVector var_names, bool maximize);
 Rcpp::List solve_auction_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                    SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                    double max_distance, Rcpp::List calipers,
@@ -84,7 +79,9 @@ Rcpp::List flow_certify_impl(int n_nodes, Rcpp::NumericVector supply,
                              Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
                              Rcpp::NumericVector lower, Rcpp::NumericVector upper,
                              Rcpp::NumericVector cost, Rcpp::NumericVector flow,
-                             Rcpp::NumericVector potential, double tol);
+                             Rcpp::NumericVector potential, double tol,
+                             std::string arithmetic,
+                             Rcpp::Nullable<Rcpp::NumericMatrix> exact_potential);
 Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      Rcpp::NumericMatrix right_mat,
                                      SEXP distance,
@@ -207,7 +204,7 @@ Rcpp::List lap_solve_bruteforce(NumericMatrix cost, bool maximize) {
 
 // [[Rcpp::export]]
 Rcpp::List lap_solve_jv(NumericMatrix cost, bool maximize) {
-  return solve_jv_impl(cost, maximize);
+  return solve_jv_duals_impl(cost, maximize);
 }
 
 // [[Rcpp::export]]
@@ -215,8 +212,8 @@ Rcpp::List cpp_lap_solve_jv_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatr
                                  SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                  double max_distance, Rcpp::List calipers,
                                  Rcpp::CharacterVector var_names, bool maximize) {
-  return solve_jv_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
-                            calipers, var_names, maximize);
+  return solve_jv_duals_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
+                                  calipers, var_names, maximize);
 }
 
 // [[Rcpp::export]]
@@ -250,8 +247,9 @@ Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::Numeri
 Rcpp::List lap_certify_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
                              Rcpp::NumericVector u, Rcpp::NumericVector v,
                              bool maximize, double tol,
-                             std::string arithmetic) {
-  return certify_dense_impl(cost, match, u, v, maximize, tol, arithmetic);
+                             std::string arithmetic,
+                             Rcpp::Nullable<Rcpp::List> exact = R_NilValue) {
+  return certify_dense_impl(cost, match, u, v, maximize, tol, arithmetic, exact);
 }
 
 // [[Rcpp::export]]
@@ -262,9 +260,11 @@ Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix ri
                             Rcpp::CharacterVector vars,
                             Rcpp::IntegerVector match, Rcpp::NumericVector u,
                             Rcpp::NumericVector v, bool maximize, double tol,
-                            std::string arithmetic) {
+                            std::string arithmetic,
+                            Rcpp::Nullable<Rcpp::List> exact = R_NilValue) {
   return certify_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
-                           calipers, vars, match, u, v, maximize, tol, arithmetic);
+                           calipers, vars, match, u, v, maximize, tol, arithmetic,
+                           exact);
 }
 
 // [[Rcpp::export]]
@@ -419,22 +419,6 @@ Rcpp::List lap_solve_push_relabel(Rcpp::NumericMatrix cost, bool maximize) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List lap_solve_jv_duals(Rcpp::NumericMatrix cost, bool maximize) {
-  return solve_jv_duals_impl(cost, maximize);
-}
-
-// [[Rcpp::export]]
-Rcpp::List cpp_lap_solve_jv_duals_lazy(Rcpp::NumericMatrix left_mat,
-                                       Rcpp::NumericMatrix right_mat,
-                                       SEXP metric,
-                                       Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                                       double max_distance, Rcpp::List calipers,
-                                       Rcpp::CharacterVector var_names, bool maximize) {
-  return solve_jv_duals_lazy_impl(left_mat, right_mat, metric, inv_cov, max_distance,
-                                  calipers, var_names, maximize);
-}
-
-// [[Rcpp::export]]
 Rcpp::List lap_solve_network_simplex(Rcpp::NumericMatrix cost) {
   return solve_network_simplex_rcpp(cost);
 }
@@ -463,9 +447,11 @@ Rcpp::List lap_flow_certify(int n_nodes, Rcpp::NumericVector supply,
                             Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
                             Rcpp::NumericVector lower, Rcpp::NumericVector upper,
                             Rcpp::NumericVector cost, Rcpp::NumericVector flow,
-                            Rcpp::NumericVector potential, double tol) {
+                            Rcpp::NumericVector potential, double tol,
+                            std::string arithmetic = "auto",
+                            Rcpp::Nullable<Rcpp::NumericMatrix> exact_potential = R_NilValue) {
   return flow_certify_impl(n_nodes, supply, tail, head, lower, upper, cost, flow,
-                           potential, tol);
+                           potential, tol, arithmetic, exact_potential);
 }
 
 // [[Rcpp::export]]

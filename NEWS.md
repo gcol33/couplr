@@ -1,3 +1,69 @@
+# couplr 1.8.0
+
+## Exact certificates on computed distances (#61)
+
+* **`verify_assignment()` certifies exactly on the costs matching is usually
+  run on.** An optimal dual is a sum of cost entries, and on Euclidean or
+  Mahalanobis distances a double often cannot hold one, so the solver's
+  potentials missed exact tightness by a unit in the last place and the
+  certificate fell back to the tolerance. When the duals given pass the
+  numerical reading but not the exact one, the potentials the matching itself
+  determines are now recovered, as shortest-path distances over the cost
+  entries held in exact multi-component arithmetic (Shewchuk 1997), and the
+  conditions are decided on those. On 30 instances of Euclidean costs, square
+  and rectangular in both orientations and under both objectives, every
+  certificate is exact. A matching that is not optimal has no such potentials
+  and is still refused, and duals that fail even the numerical reading still
+  certify nothing.
+
+* The exact potentials are returned as `exact_u` and `exact_v`, one row per
+  potential whose sum is its exact value, and `duals` accepts that form, so a
+  certificate can be re-checked from the cost matrix alone, in rational
+  arithmetic if wanted. `exact_duals_source` says whether the solver's duals,
+  expansions supplied by the caller, or recovered potentials decided the exact
+  certificate. `n_exact_violations` and `n_exact_untight` keep describing the
+  duals given.
+
+* An exact certificate reports `max_suboptimality` as zero: it proves the
+  matching attains the optimum. The double-arithmetic bound with its rounding
+  envelopes is what `arithmetic = "double"` reports.
+
+* **`verify_flow()` has the same two readings** and takes `arithmetic`. The
+  exact one decides the sign of every residual arc's reduced cost, recovering
+  potentials from the flow's residual graph when the ones given miss by
+  rounding, and returns them as `exact_potential`. `full_match()` certifies
+  exactly through it.
+
+## Implicit mode prices at zero (#62)
+
+* **An implicit-mode certificate no longer carries `n * tol`.** Each round of
+  a certifying loop recovers exact potentials for the master over the pairs it
+  holds and prices the omitted pairs at zero against them, the double pass
+  deciding the pairs clear of zero and the exact sign the few within rounding
+  of it, in the same sweep. The loop ends when no omitted pair is exactly
+  negative, and the certificate is then exact over every admissible pair. This
+  holds for `assignment()`, `match_couples()` and `full_match()` under
+  `memory_mode = "implicit"`. A loop that does not certify prices at `-tol` as
+  before. Each round's record says which pricing it used (`exact_pricing`).
+  `cardinality_match()` keeps its numerical certificate over omitted pairs,
+  whose arc costs carry the tier shift and the moment multipliers.
+
+## Potentials on every design (#63)
+
+* `assignment()` results carry `u` and `v` whenever the solver computes
+  optimal duals: `"jv"`, `"hungarian"`, the lazy path and the implicit loop.
+  `verify_assignment()` reads them, so a certificate on such a result costs
+  one pass over the pairs and no second solve.
+
+* `match_couples()` returns `potentials`, one value per unit, named by id, on
+  every design with a linear program: the assignment duals on the 1:1 design,
+  the largest replica dual per unit on k:1, each unit's k-th cheapest cost with
+  replacement, and the blocks' duals merged under blocking. A method that
+  returns none has them computed by `assignment_duals()`.
+
+* `cardinality_match()` returns the potentials of the network solve its
+  matched sample came from, in distance terms with the multipliers folded in.
+
 # couplr 1.7.2
 
 * `verify_assignment()` reads the duals off a solve result by exact name.

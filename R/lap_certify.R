@@ -75,14 +75,26 @@
 #' that subtraction, and a matched arc off by one unit in the last place is
 #' enough to put the exact conclusion out of reach.
 #'
-#' Which of the two an instance supports is a property of the arithmetic that
-#' produced the potentials, so it is worth checking rather than assuming.
-#' Integer costs and costs drawn on the unit interval have given an exact
-#' certificate on every instance we have measured, across problem sizes, both
-#' orientations of a rectangular problem, and every solver. Costs that are
-#' themselves computed, such as Euclidean distances between covariate vectors,
-#' have given a numerical one, with matched arcs off by `2e-17` to `8e-15` of
-#' the median cost.
+#' The exact certificate does not depend on the solver's potentials being
+#' exact. Optimal duals are sums and differences of cost entries, and a double
+#' often cannot hold one: on computed costs such as Euclidean or Mahalanobis
+#' distances the solver's potentials miss exact tightness on some matched arc
+#' by a unit in the last place. When the duals given pass the numerical
+#' reading but not the exact one, exact potentials are recovered from the
+#' matching itself, as shortest-path distances over the cost entries held in
+#' exact multi-component arithmetic (Shewchuk 1997), and the conditions are
+#' decided on those. A matching that is not optimal has no such potentials, so
+#' the recovery cannot certify one; it finds the improving cycle or path
+#' instead, and the numerical reading stands. Duals that fail even the
+#' numerical reading certify nothing, and the check fails on them. The
+#' recovery costs one pass over the admissible pairs.
+#'
+#' Exact potentials generally do not fit in one double each, so they are
+#' returned as `exact_u` and `exact_v`, matrices with one row per potential
+#' whose row sums are the exact values. Summing each row in rational
+#' arithmetic (for example with `gmp::as.bigq`) reproduces them, and passing
+#' them back as `duals` has the conditions checked again from the cost matrix
+#' alone, so the certificate can be re-checked without trusting this code.
 #'
 #' The check needs dual variables. If `x` carries them (as
 #' [assignment_duals()] results do), they are used. Otherwise they are obtained
@@ -102,7 +114,9 @@
 #'   cost specification from [compute_distances()]. Required unless `x` already
 #'   carries one.
 #' @param duals Optional list with elements `u` and `v` giving row and column
-#'   potentials in the orientation of `cost`. Overrides any duals on `x`.
+#'   potentials in the orientation of `cost`. Overrides any duals on `x`. Either
+#'   element may be a matrix with one row per potential, as `exact_u` and
+#'   `exact_v` are, in which case each potential is the exact sum of its row.
 #' @param maximize Logical; whether the assignment maximized rather than
 #'   minimized. Defaults to `FALSE`.
 #' @param tol Numeric tolerance for the feasibility and slackness comparisons of
@@ -132,7 +146,17 @@
 #'         against a tolerance rather than evaluating it, which is what the
 #'         edge-generation loop hands back.
 #'   \item `n_exact_violations`, `n_exact_untight` — pairs failing exact dual
-#'         feasibility, and matched pairs not exactly tight.
+#'         feasibility, and matched pairs not exactly tight, under the duals
+#'         given. Potentials recovered from the matching prove the matching and
+#'         leave these counts describing the duals that missed.
+#'   \item `exact_duals_source` — which potentials decided the exact
+#'         certificate: `"solver"` for the duals as supplied or solved,
+#'         `"supplied"` for expansions passed in `duals`, `"recovered"` for
+#'         potentials recovered from the matching, and `"none"` when no exact
+#'         certificate was reached.
+#'   \item `exact_u`, `exact_v` — on an exact certificate decided by
+#'         expansions, the exact row and column potentials, one row per
+#'         potential whose sum is its value; `NULL` otherwise.
 #'   \item `structurally_valid_matching` — logical; no column claimed twice, no
 #'         forbidden pair matched, no index out of range. Unmatched rows are
 #'         permitted, so this holds for a partial matching.
@@ -160,9 +184,9 @@
 #'         rather than removing it, so each sum is charged
 #'         `(2u + gamma_n^2)` times the sum of its terms' magnitudes and the
 #'         assembly is rounded outward at every step. The number is an upper
-#'         bound in double arithmetic and not an estimate of one. It is zero
-#'         only where every one of those terms is exactly zero, which is what
-#'         `certified_optimal` reports. `NA` when `primal_feasible` is
+#'         bound in double arithmetic and not an estimate of one. An exact
+#'         certificate proves the matching optimal and reports zero. `NA` when
+#'         `primal_feasible` is
 #'         `FALSE`: the quantity is what a feasible solution can beat this
 #'         one by, and there is no answer for a candidate that is not one.
 #'   \item `certified_reduced_cost_floor` — numeric; the lower bound proved for
@@ -211,6 +235,9 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
   if (is.null(duals) && is.list(x) && !is.null(x[["u"]]) && !is.null(x[["v"]])) {
     duals <- list(u = as.numeric(x[["u"]]), v = as.numeric(x[["v"]]))
   }
+  split <- .certify_split_duals(duals)
+  duals <- split$duals
+  exact <- split$exact
 
   if (is.null(cost)) {
     stop("`cost` is required: a certificate is a statement about a specific ",
@@ -218,7 +245,8 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
   }
 
   if (is_lazy_cost_spec(cost)) {
-    return(.certify_lazy(cost, match_vec, duals, maximize, tol, arithmetic))
+    return(.certify_lazy(cost, match_vec, duals, exact, maximize, tol,
+                         arithmetic))
   }
 
   cost <- as.matrix(cost)
@@ -245,6 +273,7 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
     cost <- t(cost)
     match_vec <- inverted
     if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
+    if (!is.null(exact)) exact <- list(u = exact$v, v = exact$u)
   }
 
   if (is.null(duals)) {
@@ -254,11 +283,12 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
 
   report <- lap_certify_dense(cost, as.integer(match_vec),
                               as.numeric(duals$u), as.numeric(duals$v),
-                              maximize, tol, arithmetic)
+                              maximize, tol, arithmetic, exact)
   .new_assignment_certificate(report, transposed = transposed, tol = tol)
 }
 
-.certify_lazy <- function(cost, match_vec, duals, maximize, tol, arithmetic) {
+.certify_lazy <- function(cost, match_vec, duals, exact, maximize, tol,
+                          arithmetic) {
   n <- cost$n_left
   m <- cost$n_right
   if (length(match_vec) != n) {
@@ -273,6 +303,7 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
     match_vec <- .certify_invert_match(match_vec, m)
     cost <- transpose_lazy_cost_spec(cost)
     if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
+    if (!is.null(exact)) exact <- list(u = exact$v, v = exact$u)
   }
 
   if (is.null(duals)) {
@@ -286,8 +317,30 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
                              inv_cov, cost$max_distance, caliper_list,
                              cost$vars, as.integer(match_vec),
                              as.numeric(duals$u), as.numeric(duals$v),
-                             maximize, tol, arithmetic)
+                             maximize, tol, arithmetic, exact)
   .new_assignment_certificate(report, transposed = transposed, tol = tol)
+}
+
+# Duals arrive as doubles, or as expansions: a matrix per side, one row per
+# potential, whose row sums are the exact values. The certificate reads doubles
+# for its numerical conclusion and expansions for its exact one, so a matrix is
+# split into its rounded row sums and the matrix itself. A side given as a
+# vector is its own one-column expansion.
+.certify_split_duals <- function(duals) {
+  if (is.null(duals) || !is.list(duals) ||
+      !(is.matrix(duals$u) || is.matrix(duals$v))) {
+    return(list(duals = duals, exact = NULL))
+  }
+  as_expansion <- function(x) {
+    m <- if (is.matrix(x)) x else matrix(as.numeric(x), ncol = 1L)
+    storage.mode(m) <- "double"
+    if (anyNA(m) || any(!is.finite(m))) {
+      stop("`duals` must be finite.", call. = FALSE)
+    }
+    m
+  }
+  exact <- list(u = as_expansion(duals$u), v = as_expansion(duals$v))
+  list(duals = list(u = rowSums(exact$u), v = rowSums(exact$v)), exact = exact)
 }
 
 .certify_extract_match <- function(x) {
@@ -347,6 +400,11 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
                     else as.integer(report$worst_j) + 1L
   report$transposed <- transposed
   report$tolerance <- tol
+  if (transposed && !is.null(report$exact_u)) {
+    swap <- report$exact_u
+    report$exact_u <- report$exact_v
+    report$exact_v <- swap
+  }
   report$arithmetic <- if (isTRUE(report$conclusion_is_exact)) "exact" else "double"
   report$conclusion_is_exact <- NULL
   class(report) <- "assignment_certificate"
@@ -382,7 +440,9 @@ print.assignment_certificate <- function(x, ...) {
   }
   cat(sprintf("  certified_optimal        %s\n", flag(x$certified_optimal)))
   if (identical(x$arithmetic, "exact")) {
-    cat("  arithmetic               exact, no tolerance\n\n")
+    cat(sprintf("  arithmetic               exact, no tolerance (%s potentials)\n\n",
+                if (is.null(x$exact_duals_source)) "solver"
+                else x$exact_duals_source))
   } else {
     cat(sprintf("  arithmetic               double, tolerance %.1e\n\n",
                 x$tolerance))

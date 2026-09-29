@@ -241,6 +241,8 @@ print.couplr_flow_problem <- function(x, ...) {
   report$worst_arc <- if (is.null(report$worst_arc) || report$worst_arc < 0) 0
                       else report$worst_arc + 1
   report$tolerance <- tol
+  report$arithmetic <- if (isTRUE(report$conclusion_is_exact)) "exact" else "double"
+  report$conclusion_is_exact <- NULL
   class(report) <- "flow_certificate"
   report
 }
@@ -251,12 +253,22 @@ print.couplr_flow_problem <- function(x, ...) {
 #' optimality conditions for the minimum-cost flow problem, and returns the
 #' result of each check. Unlike the `status` field on a solve result, which
 #' records what the solver terminated on, this is a statement about the flow:
-#' `certified_optimal` is `TRUE` only when every condition holds. The
-#' comparisons are made within a relative tolerance, so what it establishes is
-#' optimality to that tolerance; the exact-arithmetic conclusion
-#' [verify_assignment()] can reach has no counterpart here, because the arc
-#' bounds and the potentials of a general flow are compared per arc against a
-#' tolerance that scales with them.
+#' `certified_optimal` is `TRUE` only when every condition holds.
+#'
+#' The conditions are decided in one of two arithmetics, as they are by
+#' [verify_assignment()], and the certificate says which. The **exact**
+#' reading decides the sign of every residual arc's reduced cost with no
+#' tolerance: the flow is integral, so conservation and the bounds are exact
+#' already, and the duality gap, being the sum of the slackness violations
+#' weighted by `|cbar|`, is then exactly zero. When the potentials supplied
+#' pass the numerical reading but miss exactness, which on computed costs they
+#' usually do by a unit in the last place, exact potentials are recovered from
+#' the flow itself as the shortest-path distances of its residual graph, held
+#' in exact multi-component arithmetic. A flow that is not optimal has none,
+#' because its residual graph carries a negative cycle, so the recovery cannot
+#' certify one, and potentials that fail even the numerical reading certify
+#' nothing. The **numerical** reading makes the comparisons within a relative
+#' tolerance and establishes optimality to that tolerance.
 #'
 #' The problem is
 #'
@@ -304,12 +316,18 @@ print.couplr_flow_problem <- function(x, ...) {
 #'   data frame with columns `tail`, `head`, `lower`, `upper` and `cost` and
 #'   node ids run from 1. Required unless `x` already carries one.
 #' @param potential Optional numeric vector of node potentials, one per node.
-#'   Overrides any potentials on `x`.
+#'   Overrides any potentials on `x`. It may also be a matrix with one row per
+#'   node, as `exact_potential` is, in which case each potential is the exact
+#'   sum of its row.
 #' @param tol Relative tolerance for the feasibility and slackness comparisons.
 #'   Each arc scales it by the largest of its cost and its two potentials, and
 #'   the duality-gap comparison scales it by the magnitude of the objective,
 #'   since a threshold below the resolution of the arithmetic that produced a
-#'   number is not one a correct answer can meet.
+#'   number is not one a correct answer can meet. Ignored by an exact
+#'   certificate.
+#' @param arithmetic One of `"auto"`, `"exact"` or `"double"`, as for
+#'   [verify_assignment()]. `"auto"`, the default, reports the exact
+#'   conclusion when the exact conditions hold and the numerical one otherwise.
 #'
 #' @return An object of class `flow_certificate`, a list with elements:
 #' \itemize{
@@ -330,6 +348,17 @@ print.couplr_flow_problem <- function(x, ...) {
 #'   \item `dual_tolerance` - the widest `tol(a)` any comparison was made
 #'         against, so the verdict names the resolution it was reached at.
 #'   \item `primal_objective`, `dual_objective`, `duality_gap` - numeric.
+#'   \item `arithmetic` - `"exact"` or `"double"`, the arithmetic the
+#'         conclusion was reached in.
+#'   \item `exact_available`, `exact_certificate` - whether the exact question
+#'         was asked, and whether its conditions hold.
+#'   \item `n_exact_violations` - residual arcs whose reduced cost has the
+#'         wrong sign exactly, under the potentials given.
+#'   \item `exact_potentials_source` - which potentials decided the exact
+#'         certificate: `"solver"`, `"supplied"`, `"recovered"`, or `"none"`.
+#'   \item `exact_potential` - on an exact certificate decided by expansions,
+#'         the exact node potentials, one row per node whose sum is its value;
+#'         `NULL` otherwise.
 #'   \item `tolerance` - the relative `tol` as supplied.
 #' }
 #'
@@ -356,7 +385,9 @@ print.couplr_flow_problem <- function(x, ...) {
 #' verify_flow(c(2, 0, 0, 1), prob, potential = c(0, 0, 0, 0))
 #'
 #' @export
-verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9) {
+verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9,
+                        arithmetic = c("auto", "exact", "double")) {
+  arithmetic <- match.arg(arithmetic)
   if (!is.numeric(tol) || length(tol) != 1L || is.na(tol) || tol < 0) {
     stop("`tol` must be a single non-negative number.", call. = FALSE)
   }
@@ -383,6 +414,15 @@ verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9) {
   if (is.null(potential)) {
     potential <- .flow_solve(problem)$potential
   }
+  exact_potential <- NULL
+  if (is.matrix(potential)) {
+    exact_potential <- potential
+    storage.mode(exact_potential) <- "double"
+    if (anyNA(exact_potential) || any(!is.finite(exact_potential))) {
+      stop("`potential` must be finite.", call. = FALSE)
+    }
+    potential <- rowSums(exact_potential)
+  }
   potential <- as.numeric(potential)
   if (length(potential) != problem$n_nodes) {
     stop("`potential` has length ", length(potential),
@@ -392,7 +432,8 @@ verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9) {
   report <- lap_flow_certify(problem$n_nodes, problem$supply,
                              problem$arcs$tail, problem$arcs$head,
                              problem$arcs$lower, problem$arcs$upper,
-                             problem$arcs$cost, flow, potential, tol)
+                             problem$arcs$cost, flow, potential, tol,
+                             arithmetic, exact_potential)
   .new_flow_certificate(report, tol)
 }
 
@@ -415,7 +456,15 @@ print.flow_certificate <- function(x, ...) {
   cat(sprintf("  complementary_slackness  %s   (%.0f violating arc(s))\n",
               flag(x$complementary_slackness), x$n_cs_violations))
   cat(sprintf("  duality_gap              %.6e\n", x$duality_gap))
-  cat(sprintf("  certified_optimal        %s\n\n", flag(x$certified_optimal)))
+  cat(sprintf("  certified_optimal        %s\n", flag(x$certified_optimal)))
+  if (identical(x$arithmetic, "exact")) {
+    cat(sprintf("  arithmetic               exact, no tolerance (%s potentials)\n\n",
+                if (is.null(x$exact_potentials_source)) "solver"
+                else x$exact_potentials_source))
+  } else {
+    cat(sprintf("  arithmetic               double, tolerance %.1e\n\n",
+                x$tolerance))
+  }
 
   cat(sprintf("  primal objective  %.10g\n", x$primal_objective))
   cat(sprintf("  dual objective    %.10g\n", x$dual_objective))

@@ -489,12 +489,19 @@ test_that("the suboptimality bound carries the objectives own rounding", {
   # bound. On costs near 1e6 the envelope is the 2u * sum|term| scale.
   set.seed(1)
   m <- matrix(runif(400, 1, 1e6), 20, 20)
-  v <- verify_assignment(assignment(m, method = "jv"), cost = m)
+  v <- verify_assignment(assignment(m, method = "jv"), cost = m,
+                         arithmetic = "double")
   expect_true(v$certified_optimal)
   expect_gt(v$max_suboptimality, 0)
   # Loose enough not to pin the constant, tight enough to catch an envelope
   # that has gone from ulps to something visible in the objective.
   expect_lt(v$max_suboptimality, 1e-6 * abs(v$primal_objective))
+
+  # An exact certificate proves the matching attains the optimum, so the bound
+  # it reports is the number the double one was bounding.
+  e <- verify_assignment(assignment(m, method = "jv"), cost = m)
+  expect_identical(e$arithmetic, "exact")
+  expect_identical(e$max_suboptimality, 0)
 
   # Where every term is exactly zero the bound is exactly zero: rounding
   # outward on a zero term would report slack the arithmetic proved absent.

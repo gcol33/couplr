@@ -43,6 +43,7 @@
 #include "lap_types.h"
 #include "lap_cost_source.h"
 #include "lap_exact.h"
+#include "lap_exact_potentials.h"
 #include "lap_neighbours.h"
 
 #include <vector>
@@ -129,6 +130,8 @@ struct ReducedCostScan {
     int64_t n_exact_violations = 0; // admissible pairs with c - u - v < 0 exactly
 };
 
+enum class ExactDualsSource { none, solver, supplied, recovered };
+
 // Full certificate for a candidate matching and a candidate pair of dual
 // vectors. The duals are an input to a check, never an answer: garbage duals
 // fail, so accepting duals from the solver that produced the matching is
@@ -187,6 +190,16 @@ struct CertificateReport {
     int64_t n_exact_violations = 0;   // admissible pairs with c - u - v < 0
     int64_t n_exact_untight = 0;      // matched pairs with c - u - v != 0
 
+    // Which potentials the exact conditions were decided on. The solver's
+    // doubles are asked first; when they miss exactness and the matching is
+    // optimal, exact potentials recovered from the matching itself decide it
+    // instead, and a caller can also hand in expansions of its own. Whichever
+    // decided an exact certificate is returned with it, so that the conclusion
+    // can be checked again by anyone holding the cost matrix.
+    ExactDualsSource exact_duals_source = ExactDualsSource::none;
+    std::vector<exact::Expansion> exact_u;
+    std::vector<exact::Expansion> exact_v;
+
     // conclusion
     double  duality_gap = std::numeric_limits<double>::quiet_NaN();
     bool    certified_optimal = false;
@@ -228,6 +241,24 @@ struct CertificateReport {
 // Exact refuses to fall back, and is the mode to ask for when the point is the
 // strength of the proof rather than the answer.
 enum class Arithmetic { Auto, Exact, Double };
+
+// What the exact reading may use beyond the doubles in `u` and `v`: potentials
+// recovered from the matching when the doubles miss exactness, and expansions
+// the caller already holds. Neither changes the numerical reading.
+//
+// `check` is for a caller that has already asked the exact conditions of `u`
+// and `v` over every admissible pair, in passes it could afford: an
+// edge-generation loop checks the pairs its master holds and prices the ones it
+// omits, and the two together cover the complete problem without a sweep of
+// the grid. `source` is what the certificate reports the expansions as; a
+// caller that recovered them itself says so.
+struct ExactDuals {
+    bool recover = false;
+    const std::vector<exact::Expansion>* u = nullptr;
+    const std::vector<exact::Expansion>* v = nullptr;
+    const exact::ExpansionCheck* check = nullptr;
+    ExactDualsSource source = ExactDualsSource::supplied;
+};
 
 // min over admissible (i, j) of c_ij - u_i - v_j, with its argmin and the
 // number of pairs violating dual feasibility by more than tol.
@@ -362,7 +393,8 @@ CertificateReport certify_assignment_impl(const Source& src,
                                           const std::vector<double>& v,
                                           double tol,
                                           const ReducedCostScan* supplied,
-                                          Arithmetic mode) {
+                                          Arithmetic mode,
+                                          const ExactDuals& extra) {
     CertificateReport rep;
     rep.tolerance = tol;
     const bool want_exact = (mode != Arithmetic::Double);
@@ -557,6 +589,64 @@ CertificateReport certify_assignment_impl(const Source& src,
                             rep.exact_dual_feasible &&
                             rep.exact_cs_matched_tight &&
                             rep.exact_cs_unmatched_free;
+    if (rep.exact_certificate) rep.exact_duals_source = ExactDualsSource::solver;
+
+    // The doubles missed exactness. Expansions the caller holds are asked
+    // next, and they are the duals the exact counts then describe.
+    //
+    // Failing that, a numerical pass means the doubles are optimal potentials
+    // to within tol, and on computed costs a miss that small is almost always
+    // the double failing to hold an optimal potential rather than the matching
+    // failing to be optimal. So the potentials the matching itself determines
+    // are recovered and asked instead. They prove the matching, not the duals,
+    // so the counts keep describing the duals that were given; what changes is
+    // the certificate, and exact_duals_source says why. Duals that do not pass
+    // even the numerical reading certify nothing, and the check fails on them
+    // as it always has. A matching that is not optimal has no exact potentials,
+    // so a recovery that fails leaves the doubles' answer standing.
+    if (want_exact && rep.primal_feasible && !rep.exact_certificate) {
+        const auto adopt = [&](const std::vector<exact::Expansion>& eu,
+                               const std::vector<exact::Expansion>& ev,
+                               const exact::ExpansionCheck& check,
+                               ExactDualsSource source, bool counts) {
+            if (!check.checked) return;
+            rep.exact_available = true;
+            if (counts) {
+                rep.n_exact_violations = check.n_violations;
+                rep.n_exact_untight = check.n_untight;
+                rep.exact_dual_feasible = check.n_violations == 0 && check.sign_ok;
+                rep.exact_cs_matched_tight = check.n_untight == 0;
+                rep.exact_cs_unmatched_free = check.unmatched_free;
+            }
+            if (check.holds()) {
+                rep.exact_certificate = true;
+                rep.exact_duals_source = source;
+                rep.exact_u = eu;
+                rep.exact_v = ev;
+            }
+        };
+        if (extra.u != nullptr && extra.v != nullptr) {
+            adopt(*extra.u, *extra.v,
+                  extra.check != nullptr
+                      ? *extra.check
+                      : exact::check_expansion_duals(src, match, *extra.u, *extra.v),
+                  extra.source, true);
+        }
+        if (!rep.exact_certificate && extra.recover && numerical) {
+            const exact::AssignmentPotentials recovered =
+                exact::recover_assignment_potentials(src, match, v);
+            if (recovered.ok) {
+                adopt(recovered.u, recovered.v,
+                      exact::check_expansion_duals(src, match, recovered.u, recovered.v),
+                      ExactDualsSource::recovered, false);
+            }
+        }
+    }
+
+    // An exact certificate proves the matching attains the optimum, so nothing
+    // can beat it and the bound the doubles assembled above is replaced by the
+    // number it was bounding.
+    if (rep.exact_certificate) rep.max_suboptimality = 0.0;
 
     switch (mode) {
         case Arithmetic::Exact:
@@ -585,8 +675,9 @@ CertificateReport certify_assignment(const Source& src,
                                      const std::vector<double>& u,
                                      const std::vector<double>& v,
                                      double tol,
-                                     Arithmetic mode = Arithmetic::Auto) {
-    return detail::certify_assignment_impl(src, match, u, v, tol, nullptr, mode);
+                                     Arithmetic mode = Arithmetic::Auto,
+                                     const ExactDuals& extra = ExactDuals()) {
+    return detail::certify_assignment_impl(src, match, u, v, tol, nullptr, mode, extra);
 }
 
 // The same certificate against a scan the caller already holds.
@@ -606,8 +697,9 @@ CertificateReport certify_assignment(const Source& src,
                                      const std::vector<double>& v,
                                      double tol,
                                      const ReducedCostScan& scan,
-                                     Arithmetic mode = Arithmetic::Auto) {
-    return detail::certify_assignment_impl(src, match, u, v, tol, &scan, mode);
+                                     Arithmetic mode = Arithmetic::Auto,
+                                     const ExactDuals& extra = ExactDuals()) {
+    return detail::certify_assignment_impl(src, match, u, v, tol, &scan, mode, extra);
 }
 
 }  // namespace lap

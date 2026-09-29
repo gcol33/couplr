@@ -24,7 +24,9 @@ cost specification from \code{\link[=compute_distances]{compute_distances()}}. R
 carries one.}
 
 \item{duals}{Optional list with elements \code{u} and \code{v} giving row and column
-potentials in the orientation of \code{cost}. Overrides any duals on \code{x}.}
+potentials in the orientation of \code{cost}. Overrides any duals on \code{x}. Either
+element may be a matrix with one row per potential, as \code{exact_u} and
+\code{exact_v} are, in which case each potential is the exact sum of its row.}
 
 \item{maximize}{Logical; whether the assignment maximized rather than
 minimized. Defaults to \code{FALSE}.}
@@ -60,7 +62,17 @@ a certificate assembled from a scan that priced part of the problem
 against a tolerance rather than evaluating it, which is what the
 edge-generation loop hands back.
 \item \code{n_exact_violations}, \code{n_exact_untight} — pairs failing exact dual
-feasibility, and matched pairs not exactly tight.
+feasibility, and matched pairs not exactly tight, under the duals
+given. Potentials recovered from the matching prove the matching and
+leave these counts describing the duals that missed.
+\item \code{exact_duals_source} — which potentials decided the exact
+certificate: \code{"solver"} for the duals as supplied or solved,
+\code{"supplied"} for expansions passed in \code{duals}, \code{"recovered"} for
+potentials recovered from the matching, and \code{"none"} when no exact
+certificate was reached.
+\item \code{exact_u}, \code{exact_v} — on an exact certificate decided by
+expansions, the exact row and column potentials, one row per
+potential whose sum is its value; \code{NULL} otherwise.
 \item \code{structurally_valid_matching} — logical; no column claimed twice, no
 forbidden pair matched, no index out of range. Unmatched rows are
 permitted, so this holds for a partial matching.
@@ -88,9 +100,9 @@ rounding. Compensated summation buys back the accumulation error
 rather than removing it, so each sum is charged
 \verb{(2u + gamma_n^2)} times the sum of its terms' magnitudes and the
 assembly is rounded outward at every step. The number is an upper
-bound in double arithmetic and not an estimate of one. It is zero
-only where every one of those terms is exactly zero, which is what
-\code{certified_optimal} reports. \code{NA} when \code{primal_feasible} is
+bound in double arithmetic and not an estimate of one. An exact
+certificate proves the matching optimal and reports zero. \code{NA} when
+\code{primal_feasible} is
 \code{FALSE}: the quantity is what a feasible solution can beat this
 one by, and there is no answer for a candidate that is not one.
 \item \code{certified_reduced_cost_floor} — numeric; the lower bound proved for
@@ -133,14 +145,26 @@ potential computed as \code{c_ij - v_j} misses exact tightness by the rounding o
 that subtraction, and a matched arc off by one unit in the last place is
 enough to put the exact conclusion out of reach.
 
-Which of the two an instance supports is a property of the arithmetic that
-produced the potentials, so it is worth checking rather than assuming.
-Integer costs and costs drawn on the unit interval have given an exact
-certificate on every instance we have measured, across problem sizes, both
-orientations of a rectangular problem, and every solver. Costs that are
-themselves computed, such as Euclidean distances between covariate vectors,
-have given a numerical one, with matched arcs off by \code{2e-17} to \code{8e-15} of
-the median cost.
+The exact certificate does not depend on the solver's potentials being
+exact. Optimal duals are sums and differences of cost entries, and a double
+often cannot hold one: on computed costs such as Euclidean or Mahalanobis
+distances the solver's potentials miss exact tightness on some matched arc
+by a unit in the last place. When the duals given pass the numerical
+reading but not the exact one, exact potentials are recovered from the
+matching itself, as shortest-path distances over the cost entries held in
+exact multi-component arithmetic (Shewchuk 1997), and the conditions are
+decided on those. A matching that is not optimal has no such potentials, so
+the recovery cannot certify one; it finds the improving cycle or path
+instead, and the numerical reading stands. Duals that fail even the
+numerical reading certify nothing, and the check fails on them. The
+recovery costs one pass over the admissible pairs.
+
+Exact potentials generally do not fit in one double each, so they are
+returned as \code{exact_u} and \code{exact_v}, matrices with one row per potential
+whose row sums are the exact values. Summing each row in rational
+arithmetic (for example with \code{gmp::as.bigq}) reproduces them, and passing
+them back as \code{duals} has the conditions checked again from the cost matrix
+alone, so the certificate can be re-checked without trusting this code.
 
 The check needs dual variables. If \code{x} carries them (as
 \code{\link[=assignment_duals]{assignment_duals()}} results do), they are used. Otherwise they are obtained

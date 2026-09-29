@@ -137,8 +137,9 @@ certificate over the complete problem.}
 as \code{certificate}. \code{NULL}, the default, takes the path's own answer: \code{TRUE}
 under \code{memory_mode = "implicit"}, where the certificate is what
 distinguishes the answer from an approximate one and the loop has already
-done most of the scan, and \code{FALSE} elsewhere, where the duals are not among
-the things the solve returns and the check costs the solve
+done most of the scan, and \code{FALSE} elsewhere. The check reads the duals
+the solve returned where it returned some (see \code{u} and \code{v} below), so it
+costs one pass over the admissible pairs; elsewhere it costs the solve
 \code{\link[=verify_assignment]{verify_assignment()}} runs to get them. A solve that did not reach a
 complete optimal matching has nothing to certify and gets no certificate.}
 
@@ -180,9 +181,17 @@ fired under \code{"auto"}, the condition that triggered it, and whether
 the method was named explicitly. See \code{\link[=explain_dispatch]{explain_dispatch()}}.
 \item \code{certificate} — an \code{assignment_certificate}, present when one was
 checked. See \code{certify}.
+\item \code{u}, \code{v} — row and column duals in the orientation of \code{cost},
+present when the solver produced optimal duals for \code{cost}: \code{"jv"}
+(and so \code{"auto"} on every problem it sends there), \code{"hungarian"},
+the lazy \code{"jv"} path, and \code{memory_mode = "implicit"}, where they are
+the duals the last restricted master produced. \code{\link[=verify_assignment]{verify_assignment()}}
+reads them instead of solving again. Absent under
+\code{cardinality = "maximum"} and \code{"fixed"}, whose solver duals belong to
+the padded problem rather than to \code{cost}, and for \code{"gabow_tarjan"},
+whose duals are those of its scaled integer instance.
 }
-Under \code{memory_mode = "implicit"} the result also carries \code{u} and \code{v}, the
-duals the last restricted master produced, and \code{search}: the columns the
+Under \code{memory_mode = "implicit"} the result also carries \code{search}: the columns the
 first round gave each row (\code{seed_width}), the pairs the candidate set ended
 up holding (\code{candidate_edges}) out of \code{possible_edges}, the pairs a cost was
 computed for (\code{edges_evaluated}), the round count, and \code{rounds}, one row per

@@ -733,12 +733,19 @@ TEST_CASE("Assignment certificate - suboptimality bound",
         // objectives of magnitude 3: positive, and a few ulps of 3.
         const std::vector<double> u = {1.0, 2.0};
         const lap::CertificateReport rep =
-            lap::certify_assignment(cost, match, u, v, TOL);
+            lap::certify_assignment(cost, match, u, v, TOL, lap::Arithmetic::Double);
         REQUIRE(rep.certified_optimal);
         REQUIRE(rep.certified_reduced_cost_floor == 0.0);
         REQUIRE(rep.duality_gap == 0.0);
         REQUIRE(rep.max_suboptimality > 0.0);
         REQUIRE(rep.max_suboptimality < 16.0 * std::numeric_limits<double>::epsilon() * 3.0);
+
+        // Read exactly, the same conditions prove the matching attains the
+        // optimum, and the bound is the number the envelopes were bounding.
+        const lap::CertificateReport exact =
+            lap::certify_assignment(cost, match, u, v, TOL);
+        REQUIRE(exact.conclusion_is_exact);
+        REQUIRE(exact.max_suboptimality == 0.0);
     }
 
     SECTION("the depth the reduced costs reach, once per row") {

@@ -25,13 +25,14 @@ namespace jv_duals_detail {
 // ran on negated costs, which is what the duals have to be flipped back from.
 template <typename SolveSourceT, typename ReportSourceT>
 DualResult jv_duals_from(const SolveSourceT& work, const ReportSourceT& report,
-                         bool report_negated, bool solved_negated) {
+                         bool report_negated, bool solved_negated,
+                         bool warm_start = true) {
     const int n = static_cast<int>(work.nrow);
 
     detail::JvCoreOpts opts;
     // LAPJV pre-stages: column reduction + ARR. Inert for a LazyCostMatrix
     // (see jv_core.cpp).
-    opts.use_warm_start = true;
+    opts.use_warm_start = warm_start;
     auto core = detail::jv_core(work, opts);
 
     double total = 0.0;

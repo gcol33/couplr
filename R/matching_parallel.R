@@ -202,6 +202,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       unmatched_left = block_result$unmatched$left,
       unmatched_right = block_result$unmatched$right,
       solver = block_result$info$solver,
+      potentials = block_result$potentials,
       summary = block_summary_row_fn(
         block_id = block,
         n_left = nrow(left_block),
@@ -244,7 +245,8 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       right = as.character(all_unmatched_right)
     ),
     block_summary = all_summaries,
-    solvers = as.character(all_solvers)
+    solvers = as.character(all_solvers),
+    potentials = lapply(block_results, function(x) x$potentials)
   )
 }
 

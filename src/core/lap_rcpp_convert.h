@@ -20,6 +20,16 @@
 // Defined in lap_certify_rcpp.cpp.
 Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep);
 
+// Shared by the assignment and flow certificates, both of which cross exact
+// potentials to R as an n x K matrix whose row sums are the exact values, and
+// take the arithmetic mode as the string R validated. Defined in
+// lap_certify_rcpp.cpp.
+lap::Arithmetic arithmetic_from_string(const std::string& name);
+Rcpp::NumericMatrix expansions_to_r(const std::vector<lap::exact::Expansion>& e);
+std::vector<lap::exact::Expansion> expansions_from_r(const Rcpp::NumericMatrix& m,
+                                                     bool negate);
+const char* exact_source_name(lap::ExactDualsSource s);
+
 // The three fields carrying the cost unit go back in the caller's sign. A
 // maximize instance is certified against -c with duals to match, so its
 // objectives and gap come out negated. Feasibility flags, slackness measures

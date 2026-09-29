@@ -585,15 +585,21 @@ TEST_CASE("Without the certificate the loop answers the same and scans less",
     REQUIRE(bare.total_cost == Approx(proven.total_cost).margin(1e-12));
     REQUIRE(bare.candidate_edges == proven.candidate_edges);
 
-    // The pricing round is what stops the loop and runs either way. What the
-    // certificate adds is the walk of the pairs the master holds, so the answer
-    // is the same and the scan is shorter by the candidate set.
+    // The pricing round is what stops the loop and runs either way, once per
+    // round whether it prices at -tol or at zero. What the certificate adds is
+    // walks of the pairs the master holds: one per round to recover its exact
+    // potentials, and two at the end, for the double and the exact reading.
+    // None of it is a sweep of the omitted pairs, so the answer is the same and
+    // the scan is shorter by at most that many passes over the candidate set.
     REQUIRE(proven.certified);
     REQUIRE(proven.certificate.certified_optimal);
+    REQUIRE(proven.certificate.conclusion_is_exact);
     REQUIRE_FALSE(bare.certified);
     REQUIRE(bare.certificate.n_rows == 0);
     REQUIRE(bare.edges_evaluated < proven.edges_evaluated);
-    REQUIRE(proven.edges_evaluated - bare.edges_evaluated <= proven.candidate_edges);
+    const int64_t held_passes = static_cast<int64_t>(proven.rounds.size()) + 2;
+    REQUIRE(proven.edges_evaluated - bare.edges_evaluated <=
+            held_passes * proven.candidate_edges);
 }
 
 // ---------------------------------------------------------------------------

@@ -202,6 +202,8 @@
 
 #include "flow_problem.h"
 #include "../core/lap_certify.h"
+#include "../core/lap_exact.h"
+#include "../core/lap_exact_potentials.h"
 
 #include <algorithm>
 #include <cmath>
@@ -242,12 +244,120 @@ struct FlowCertificate {
     bool    complementary_slackness = false;
     int64_t n_cs_violations = 0;
 
+    // exact arithmetic
+    //
+    // The same conditions with no tolerance: the sign of cost(a) + pi(tail) -
+    // pi(head) on every residual arc, decided exactly. The flow is integral and
+    // its conservation already exact, so these are the whole of it, and the
+    // duality gap, being the sum of the slackness violations weighted by
+    // |cbar|, is then exactly zero. The potentials they are asked of are the
+    // ones supplied when those hold exactly, and otherwise the ones the flow
+    // itself determines: shortest-path distances over its residual graph, held
+    // as expansions. A flow that is not optimal has none, since its residual
+    // graph carries a negative cycle.
+    bool    exact_available = false;
+    bool    exact_certificate = false;
+    int64_t n_exact_violations = 0;   // residual arcs pricing exactly below zero
+    ExactDualsSource exact_potentials_source = ExactDualsSource::none;
+    std::vector<exact::Expansion> exact_potential;
+
     // conclusion
     double  dual_objective = std::numeric_limits<double>::quiet_NaN();
     double  duality_gap = std::numeric_limits<double>::quiet_NaN();
     bool    certified_optimal = false;
+    bool    conclusion_is_exact = false;
     double  tolerance = 0.0;
 };
+
+namespace flow_exact_detail {
+
+// Every residual arc of `flow`, as the arcs of the shortest-path problem whose
+// distances are the flow's optimal potentials: the forward arc of a where it can
+// still take flow, at weight cost(a), and the reverse arc where it carries more
+// than its lower bound, at weight -cost(a). cbar(a) >= 0 on the first and <= 0
+// on the second are the shortest-path inequalities of the two.
+struct ResidualAdjacency {
+    std::vector<int64_t> start;   // n_nodes + 1 offsets
+    std::vector<int32_t> head;
+    std::vector<double>  weight;  // the arc cost, negated on a reverse arc
+};
+
+inline ResidualAdjacency residual_adjacency(const FlowProblem& prob,
+                                            const std::vector<int64_t>& flow) {
+    const std::size_t n = static_cast<std::size_t>(prob.n_nodes);
+    ResidualAdjacency adj;
+    adj.start.assign(n + 1, 0);
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        if (flow[a] < arc.upper) ++adj.start[static_cast<std::size_t>(arc.tail) + 1];
+        if (flow[a] > arc.lower) ++adj.start[static_cast<std::size_t>(arc.head) + 1];
+    }
+    for (std::size_t v = 0; v < n; ++v) adj.start[v + 1] += adj.start[v];
+    adj.head.resize(static_cast<std::size_t>(adj.start[n]));
+    adj.weight.resize(static_cast<std::size_t>(adj.start[n]));
+    std::vector<int64_t> cursor(adj.start.begin(), adj.start.end() - 1);
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        if (flow[a] < arc.upper) {
+            const std::size_t k = static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.tail)]++);
+            adj.head[k] = arc.head;
+            adj.weight[k] = arc.cost;
+        }
+        if (flow[a] > arc.lower) {
+            const std::size_t k = static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.head)]++);
+            adj.head[k] = arc.tail;
+            adj.weight[k] = -arc.cost;
+        }
+    }
+    return adj;
+}
+
+// The number of residual arcs whose reduced cost against the expansions `pi`
+// is exactly negative.
+inline int64_t count_exact_violations(const FlowProblem& prob,
+                                      const std::vector<int64_t>& flow,
+                                      const std::vector<exact::Expansion>& pi) {
+    std::vector<exact::Expansion> neg(pi.size());
+    std::vector<exact::Approximation> pa(pi.size());
+    std::vector<exact::Approximation> na(pi.size());
+    for (std::size_t v = 0; v < pi.size(); ++v) {
+        neg[v] = exact::negated(pi[v]);
+        pa[v] = exact::approximate(pi[v]);
+        na[v] = exact::approximate(neg[v]);
+    }
+    int64_t bad = 0;
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        const std::size_t t = static_cast<std::size_t>(arc.tail);
+        const std::size_t h = static_cast<std::size_t>(arc.head);
+        // cost + pi(tail) - pi(head) is c - U - V with U = -pi(tail), V = pi(head).
+        const int s = exact::sign_reduced_cost(arc.cost, neg[t], na[t], pi[h], pa[h]);
+        if (flow[a] < arc.upper && s < 0) ++bad;
+        if (flow[a] > arc.lower && s > 0) ++bad;
+    }
+    return bad;
+}
+
+}  // namespace flow_exact_detail
+
+// Exact potentials for `flow`: the shortest-path distances of its residual
+// graph from a root joined to every node at weight zero, or ok = false when the
+// graph carries a negative cycle and the flow is not optimal. `hint` is the
+// solver's potentials when there are any, and orders the search only.
+inline exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
+                                                    const std::vector<int64_t>& flow,
+                                                    const std::vector<double>& hint) {
+    const flow_exact_detail::ResidualAdjacency adj =
+        flow_exact_detail::residual_adjacency(prob, flow);
+    return exact::shortest_paths(
+        prob.n_nodes, hint, [&](int64_t k, auto&& emit) {
+            const std::size_t sk = static_cast<std::size_t>(k);
+            for (int64_t e = adj.start[sk]; e < adj.start[sk + 1]; ++e) {
+                const std::size_t se = static_cast<std::size_t>(e);
+                emit(adj.head[se], adj.weight[se], 0.0);
+            }
+        });
+}
 
 // Certify `flow` (one entry per explicit arc) against `potential` (one entry per
 // node).
@@ -286,10 +396,22 @@ struct FlowCertificate {
 // a block that has not been turned into arcs is a claim about a flow that has no
 // entries. That, a length mismatch, and an arc endpoint outside the node range
 // are all reported as primal_feasible = false rather than read past the end.
+//
+// `mode` says which reading the conclusion is taken from, as it does for
+// certify_assignment(). The exact reading asks `exact_pi` first when the caller
+// holds expansions, since those are what the caller is asking about, then the
+// doubles in `potential`, and then, with `recover` set, the potentials the flow
+// itself determines. `exact_pi_source` is what the certificate reports
+// expansions the caller passed as; a caller that recovered them says so.
 inline FlowCertificate certify_flow(const FlowProblem& prob,
                                     const std::vector<int64_t>& flow,
                                     const std::vector<double>& potential,
-                                    double tol) {
+                                    double tol,
+                                    Arithmetic mode = Arithmetic::Double,
+                                    const std::vector<exact::Expansion>* exact_pi = nullptr,
+                                    bool recover = false,
+                                    ExactDualsSource exact_pi_source =
+                                        ExactDualsSource::supplied) {
     FlowCertificate rep;
     rep.tolerance = tol;
 
@@ -416,10 +538,67 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
     // buys back the accumulation error, not the fact that the objective's own
     // last bits are worth |objective| * eps.
     const double tol_gap = tol * std::max(1.0, std::abs(rep.primal_objective));
-    rep.certified_optimal = rep.primal_feasible &&
-                            rep.dual_feasible &&
-                            rep.complementary_slackness &&
-                            (std::abs(rep.duality_gap) <= tol_gap);
+    const bool numerical = rep.primal_feasible &&
+                           rep.dual_feasible &&
+                           rep.complementary_slackness &&
+                           (std::abs(rep.duality_gap) <= tol_gap);
+
+    // ---- exact reading ----
+    //
+    // The same order and the same rule as certify_assignment(): expansions the
+    // caller holds, then the doubles given, and, when the doubles pass the
+    // numerical reading, the potentials the flow itself determines. Those
+    // prove the flow and not the potentials given, so n_exact_violations keeps
+    // counting against the ones given.
+    if (mode != Arithmetic::Double && rep.primal_feasible) {
+        const auto try_expansions = [&](const std::vector<exact::Expansion>& pi,
+                                        ExactDualsSource source, bool keep,
+                                        bool counts) {
+            if (static_cast<int64_t>(pi.size()) != n_nodes) return;
+            rep.exact_available = true;
+            const int64_t bad = flow_exact_detail::count_exact_violations(prob, flow, pi);
+            if (counts) rep.n_exact_violations = bad;
+            if (bad == 0) {
+                rep.exact_certificate = true;
+                rep.exact_potentials_source = source;
+                if (keep) rep.exact_potential = pi;
+            }
+        };
+        if (exact_pi != nullptr) {
+            try_expansions(*exact_pi, exact_pi_source, true, true);
+        }
+        if (!rep.exact_certificate) {
+            std::vector<exact::Expansion> as_given(static_cast<std::size_t>(n_nodes));
+            bool finite = true;
+            for (int64_t v = 0; v < n_nodes && finite; ++v) {
+                const double x = potential[static_cast<std::size_t>(v)];
+                finite = std::isfinite(x);
+                if (finite && x != 0.0) as_given[static_cast<std::size_t>(v)].push_back(x);
+            }
+            if (finite) try_expansions(as_given, ExactDualsSource::solver, false,
+                                       exact_pi == nullptr);
+        }
+        if (!rep.exact_certificate && recover && numerical) {
+            const exact::ShortestPaths paths = recover_flow_potentials(prob, flow, potential);
+            if (paths.ok) try_expansions(paths.dist, ExactDualsSource::recovered, true, false);
+        }
+    }
+
+    switch (mode) {
+        case Arithmetic::Exact:
+            rep.certified_optimal = rep.exact_certificate;
+            rep.conclusion_is_exact = true;
+            break;
+        case Arithmetic::Double:
+            rep.certified_optimal = numerical;
+            rep.conclusion_is_exact = false;
+            break;
+        case Arithmetic::Auto:
+        default:
+            rep.certified_optimal = rep.exact_certificate || numerical;
+            rep.conclusion_is_exact = rep.exact_certificate;
+            break;
+    }
 
     return rep;
 }

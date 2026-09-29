@@ -37,9 +37,11 @@ same network, used as the solver's starting point.}
 \item{time_limit}{Seconds this one solve may run.}
 }
 \value{
-A list with the solve status, the flow and potentials, the
-certificate, the audit, the matched set, the true objective \code{objective}
-and the relaxed objective \code{relaxed} the multipliers price. A solve that ran
+A list with the solve status, the flow and potentials, the pair
+potentials in distance terms with the multipliers folded in
+(\code{pair_duals}, see \code{.cardinality_pair_duals()}), the certificate, the
+audit, the matched set, the true objective \code{objective} and the relaxed
+objective \code{relaxed} the multipliers price. A solve that ran
 out of time comes back with status \code{"interrupted"}, its flow and
 potentials, and nothing else: it proved neither an optimum nor the absence
 of one, so certifying and auditing it would be work spent on a number no

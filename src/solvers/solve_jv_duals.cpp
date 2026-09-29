@@ -11,7 +11,7 @@
 
 namespace lap {
 
-DualResult solve_jv_duals(const CostMatrix& cost, bool maximize) {
+DualResult solve_jv_duals(const CostMatrix& cost, bool maximize, bool warm_start) {
     const int n = static_cast<int>(cost.nrow);
     const int m = static_cast<int>(cost.ncol);
 
@@ -27,7 +27,8 @@ DualResult solve_jv_duals(const CostMatrix& cost, bool maximize) {
 
     return jv_duals_detail::jv_duals_from(work, cost,
                                           /*report_negated=*/false,
-                                          /*solved_negated=*/maximize);
+                                          /*solved_negated=*/maximize,
+                                          warm_start);
 }
 
 DualResult solve_jv_duals(const LazyCostMatrix& cost) {

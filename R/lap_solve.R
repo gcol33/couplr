@@ -119,8 +119,9 @@
 #'   as `certificate`. `NULL`, the default, takes the path's own answer: `TRUE`
 #'   under `memory_mode = "implicit"`, where the certificate is what
 #'   distinguishes the answer from an approximate one and the loop has already
-#'   done most of the scan, and `FALSE` elsewhere, where the duals are not among
-#'   the things the solve returns and the check costs the solve
+#'   done most of the scan, and `FALSE` elsewhere. The check reads the duals
+#'   the solve returned where it returned some (see `u` and `v` below), so it
+#'   costs one pass over the admissible pairs; elsewhere it costs the solve
 #'   [verify_assignment()] runs to get them. A solve that did not reach a
 #'   complete optimal matching has nothing to certify and gets no certificate.
 #' @param cardinality How many pairs to produce.
@@ -158,9 +159,17 @@
 #'         the method was named explicitly. See [explain_dispatch()].
 #'   \item `certificate` — an `assignment_certificate`, present when one was
 #'         checked. See `certify`.
+#'   \item `u`, `v` — row and column duals in the orientation of `cost`,
+#'         present when the solver produced optimal duals for `cost`: `"jv"`
+#'         (and so `"auto"` on every problem it sends there), `"hungarian"`,
+#'         the lazy `"jv"` path, and `memory_mode = "implicit"`, where they are
+#'         the duals the last restricted master produced. [verify_assignment()]
+#'         reads them instead of solving again. Absent under
+#'         `cardinality = "maximum"` and `"fixed"`, whose solver duals belong to
+#'         the padded problem rather than to `cost`, and for `"gabow_tarjan"`,
+#'         whose duals are those of its scaled integer instance.
 #' }
-#' Under `memory_mode = "implicit"` the result also carries `u` and `v`, the
-#' duals the last restricted master produced, and `search`: the columns the
+#' Under `memory_mode = "implicit"` the result also carries `search`: the columns the
 #' first round gave each row (`seed_width`), the pairs the candidate set ended
 #' up holding (`candidate_edges`) out of `possible_edges`, the pairs a cost was
 #' computed for (`edges_evaluated`), the round count, and `rounds`, one row per
@@ -379,7 +388,9 @@ assignment <- function(cost, maximize = FALSE,
   }
 
   total_cost <- res_raw$total_cost
+  duals <- if (method %in% .DUAL_METHODS) .solver_duals(res_raw, transposed)
   if (reduction$n_dummy > 0L) {
+    duals <- NULL
     # A row that took a dummy column is a row left unmatched, and the objective
     # is recomputed over real pairs so no sentinel price leaks into it.
     restored <- .cardinality_restore(match_out, cost, reduction$n_dummy)
@@ -399,18 +410,42 @@ assignment <- function(cost, maximize = FALSE,
   out$cardinality <- card$cardinality
   out$n_matched   <- sum(match_out > 0L)
   out$unmatched   <- which(match_out == 0L)
+  if (!is.null(duals)) {
+    out$u <- duals$u
+    out$v <- duals$v
+  }
   .attach_certificate(out, cost, maximize, do_certify)
+}
+
+# Solvers whose duals are optimal potentials of the matrix they were handed. A
+# result carries them so that a certificate reads them rather than solving
+# again. "gabow_tarjan" also returns duals, but they are the 1-optimal duals of
+# the scaled integer instance it solves, which certify nothing about the costs
+# as given, and handing them to verify_assignment() would fail a matching the
+# optimal duals certify.
+.DUAL_METHODS <- c("jv", "hungarian")
+
+# The duals a solver returned, in the caller's orientation, or NULL for a solver
+# that returns none. A transposed solve ran on t(cost), so its row duals belong
+# to the caller's columns.
+.solver_duals <- function(res_raw, transposed) {
+  if (is.null(res_raw[["u"]]) || is.null(res_raw[["v"]])) {
+    return(NULL)
+  }
+  u <- as.numeric(res_raw[["u"]])
+  v <- as.numeric(res_raw[["v"]])
+  if (transposed) list(u = v, v = u) else list(u = u, v = v)
 }
 
 # Attach a checked certificate to a solve result that does not carry one.
 #
 # The implicit path certifies as part of terminating, so there is nothing to add
 # there. Every other path proves nothing about its answer beyond the status it
-# terminated on, and the duals it would be checked against are not among the
-# things it returns, so the check costs the solve verify_assignment() runs plus
-# one pass over the admissible pairs. A solve that did not reach a complete
-# optimal matching has nothing to certify and gets no certificate; `status` is
-# what says so.
+# terminated on. Where the solver returned duals they are on the result and the
+# check reads them, so it costs one pass over the admissible pairs; where it
+# returned none the check also costs the solve verify_assignment() runs to get
+# them. A solve that did not reach a complete optimal matching has nothing to
+# certify and gets no certificate; `status` is what says so.
 .attach_certificate <- function(out, cost, maximize, certify) {
   if (!isTRUE(certify) || !is.null(out$certificate)) {
     return(out)
@@ -492,7 +527,7 @@ assignment <- function(cost, maximize = FALSE,
     match_out <- inv
   }
 
-  .new_lap_solve_result(
+  out <- .new_lap_solve_result(
     match       = match_out,
     total_cost  = res_raw$total_cost,
     status      = .compute_solve_status(match_out, min(n0, m0), method,
@@ -503,6 +538,12 @@ assignment <- function(cost, maximize = FALSE,
                        reason = "lazy cost source; the dense probe cannot run",
                        explicit = !identical(method, "jv"))
   )
+  duals <- .solver_duals(res_raw, transposed)
+  if (!is.null(duals)) {
+    out$u <- duals$u
+    out$v <- duals$v
+  }
+  out
 }
 
 # ==============================================================================
@@ -1314,21 +1355,16 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
 # sides. `n` and `m` are the caller's dimensions, before any transpose.
 .duals_result <- function(res_raw, n, m, transposed) {
   match_out <- as.integer(res_raw$match)
-  u_out <- as.numeric(res_raw$u)
-  v_out <- as.numeric(res_raw$v)
-
   if (transposed) {
     match_out <- .certify_invert_match(match_out, n)
-    swap <- u_out
-    u_out <- v_out
-    v_out <- swap
   }
+  duals <- .solver_duals(res_raw, transposed)
 
   list(
     match = match_out,
     total_cost = as.numeric(res_raw$total_cost),
-    u = u_out,
-    v = v_out,
+    u = duals$u,
+    v = duals$v,
     status = .compute_solve_status(match_out, min(n, m), "jv")
   )
 }
@@ -1350,7 +1386,7 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   transposed <- n > m
   work <- if (transposed) t(cost) else cost
 
-  .duals_result(lap_solve_jv_duals(work, maximize), n, m, transposed)
+  .duals_result(lap_solve_jv(work, maximize), n, m, transposed)
 }
 
 # The dual entry point for a cost source that computes its cells on demand.
@@ -1366,12 +1402,12 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   transposed <- n > m
   work <- if (transposed) transpose_lazy_cost_spec(cost) else cost
 
-  res_raw <- cpp_lap_solve_jv_duals_lazy(work$left_mat, work$right_mat,
-                                         work$distance,
-                                         lazy_cost_spec_inv_cov(work),
-                                         work$max_distance,
-                                         lazy_cost_spec_calipers(work),
-                                         work$vars, maximize)
+  res_raw <- cpp_lap_solve_jv_lazy(work$left_mat, work$right_mat,
+                                   work$distance,
+                                   lazy_cost_spec_inv_cov(work),
+                                   work$max_distance,
+                                   lazy_cost_spec_calipers(work),
+                                   work$vars, maximize)
 
   .duals_result(res_raw, n, m, transposed)
 }

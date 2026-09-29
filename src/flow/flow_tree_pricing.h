@@ -72,12 +72,14 @@ inline double node_cbar_lo(const BallTree& tree, const LazyCostMatrix& src,
 // Price every pair the candidate set omits, against duals `u` and `v`, through
 // the tree. `tree` is taken by reference because its per-node largest column
 // dual is what moved since the last round and is refreshed here.
-inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
-                               const std::vector<double>& u,
-                               const std::vector<double>& v,
-                               CandidateSet& cand,
-                               int keep_per_row,
-                               double tol) {
+template <class Accept = AcceptAll>
+BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
+                        const std::vector<double>& u,
+                        const std::vector<double>& v,
+                        CandidateSet& cand,
+                        int keep_per_row,
+                        double tol,
+                        const Accept& accept = Accept()) {
     const int64_t nrow = src.nrow;
     const int64_t ncol = src.ncol;
 
@@ -165,7 +167,7 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
                         rmin = cbar;
                         rmin_j = j;
                     }
-                    if (cbar < -tol) {
+                    if (cbar < -tol && accept(i, static_cast<int64_t>(j), c)) {
                         ++out.n_violators;
                         row_violators.emplace_back(cbar, j);
                     }
@@ -236,14 +238,16 @@ inline BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
 // The one call a round makes. A source whose metric a ball bounds is priced
 // through its tree, and one whose metric it does not is priced over the grid,
 // which is the same answer for more work rather than a different answer.
-inline BlockPricing price_pairs(const LazyCostMatrix& src, BallTree& tree,
-                                const std::vector<double>& u,
-                                const std::vector<double>& v,
-                                CandidateSet& cand,
-                                int keep_per_row,
-                                double tol) {
-    if (tree.empty()) return price_block(src, u, v, cand, keep_per_row, tol);
-    return price_tree(src, tree, u, v, cand, keep_per_row, tol);
+template <class Accept = AcceptAll>
+BlockPricing price_pairs(const LazyCostMatrix& src, BallTree& tree,
+                         const std::vector<double>& u,
+                         const std::vector<double>& v,
+                         CandidateSet& cand,
+                         int keep_per_row,
+                         double tol,
+                         const Accept& accept = Accept()) {
+    if (tree.empty()) return price_block(src, u, v, cand, keep_per_row, tol, accept);
+    return price_tree(src, tree, u, v, cand, keep_per_row, tol, accept);
 }
 
 }  // namespace lap

@@ -5,7 +5,13 @@
 \alias{print.flow_certificate}
 \title{Verify that a flow is optimal}
 \usage{
-verify_flow(x, problem = NULL, potential = NULL, tol = 1e-09)
+verify_flow(
+  x,
+  problem = NULL,
+  potential = NULL,
+  tol = 1e-09,
+  arithmetic = c("auto", "exact", "double")
+)
 
 \method{print}{flow_certificate}(x, ...)
 }
@@ -18,13 +24,20 @@ data frame with columns \code{tail}, \code{head}, \code{lower}, \code{upper} and
 node ids run from 1. Required unless \code{x} already carries one.}
 
 \item{potential}{Optional numeric vector of node potentials, one per node.
-Overrides any potentials on \code{x}.}
+Overrides any potentials on \code{x}. It may also be a matrix with one row per
+node, as \code{exact_potential} is, in which case each potential is the exact
+sum of its row.}
 
 \item{tol}{Relative tolerance for the feasibility and slackness comparisons.
 Each arc scales it by the largest of its cost and its two potentials, and
 the duality-gap comparison scales it by the magnitude of the objective,
 since a threshold below the resolution of the arithmetic that produced a
-number is not one a correct answer can meet.}
+number is not one a correct answer can meet. Ignored by an exact
+certificate.}
+
+\item{arithmetic}{One of \code{"auto"}, \code{"exact"} or \code{"double"}, as for
+\code{\link[=verify_assignment]{verify_assignment()}}. \code{"auto"}, the default, reports the exact
+conclusion when the exact conditions hold and the numerical one otherwise.}
 
 \item{...}{Ignored.}
 }
@@ -48,6 +61,17 @@ it, which is a violation when it falls below that arc's \code{-tol(a)}.
 \item \code{dual_tolerance} - the widest \code{tol(a)} any comparison was made
 against, so the verdict names the resolution it was reached at.
 \item \code{primal_objective}, \code{dual_objective}, \code{duality_gap} - numeric.
+\item \code{arithmetic} - \code{"exact"} or \code{"double"}, the arithmetic the
+conclusion was reached in.
+\item \code{exact_available}, \code{exact_certificate} - whether the exact question
+was asked, and whether its conditions hold.
+\item \code{n_exact_violations} - residual arcs whose reduced cost has the
+wrong sign exactly, under the potentials given.
+\item \code{exact_potentials_source} - which potentials decided the exact
+certificate: \code{"solver"}, \code{"supplied"}, \code{"recovered"}, or \code{"none"}.
+\item \code{exact_potential} - on an exact certificate decided by expansions,
+the exact node potentials, one row per node whose sum is its value;
+\code{NULL} otherwise.
 \item \code{tolerance} - the relative \code{tol} as supplied.
 }
 
@@ -58,14 +82,24 @@ Checks a flow and a set of node potentials against the linear-programming
 optimality conditions for the minimum-cost flow problem, and returns the
 result of each check. Unlike the \code{status} field on a solve result, which
 records what the solver terminated on, this is a statement about the flow:
-\code{certified_optimal} is \code{TRUE} only when every condition holds. The
-comparisons are made within a relative tolerance, so what it establishes is
-optimality to that tolerance; the exact-arithmetic conclusion
-\code{\link[=verify_assignment]{verify_assignment()}} can reach has no counterpart here, because the arc
-bounds and the potentials of a general flow are compared per arc against a
-tolerance that scales with them.
+\code{certified_optimal} is \code{TRUE} only when every condition holds.
 }
 \details{
+The conditions are decided in one of two arithmetics, as they are by
+\code{\link[=verify_assignment]{verify_assignment()}}, and the certificate says which. The \strong{exact}
+reading decides the sign of every residual arc's reduced cost with no
+tolerance: the flow is integral, so conservation and the bounds are exact
+already, and the duality gap, being the sum of the slackness violations
+weighted by \verb{|cbar|}, is then exactly zero. When the potentials supplied
+pass the numerical reading but miss exactness, which on computed costs they
+usually do by a unit in the last place, exact potentials are recovered from
+the flow itself as the shortest-path distances of its residual graph, held
+in exact multi-component arithmetic. A flow that is not optimal has none,
+because its residual graph carries a negative cycle, so the recovery cannot
+certify one, and potentials that fail even the numerical reading certify
+nothing. The \strong{numerical} reading makes the comparisons within a relative
+tolerance and establishes optimality to that tolerance.
+
 The problem is
 
 \preformatted{

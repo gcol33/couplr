@@ -18,6 +18,10 @@ namespace lap {
 // Parameters:
 //   cost: Cost matrix (row-major, with mask for forbidden edges)
 //   maximize: If true, find maximum weight matching (costs negated internally)
+//   warm_start: Run the LAPJV pre-stages (column reduction and augmenting row
+//     reduction) before the shortest-path phase. Off, the same core is the
+//     classic Hungarian method in shortest-augmenting-path form, which is what
+//     solve_hungarian() asks for.
 //
 // Returns:
 //   DualResult with:
@@ -28,7 +32,8 @@ namespace lap {
 // Throws:
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
-DualResult solve_jv_duals(const CostMatrix& cost, bool maximize = false);
+DualResult solve_jv_duals(const CostMatrix& cost, bool maximize = false,
+                          bool warm_start = true);
 
 // The same solve over a cost source that computes its cells on demand, so a
 // lazy problem can be certified without materializing the matrix the

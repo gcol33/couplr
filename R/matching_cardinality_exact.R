@@ -173,11 +173,11 @@
   if (is.null(index$gen)) index else index$gen$built$index
 }
 
-# The omitted pairs a node's solve prices below zero, added to the session's
-# candidate set, with the floor over every omitted pair and the tolerance it was
-# read at. A pair arc costs d - shift + sum_r lambda_r (u_ri - w_rj - b_r) and
-# reduces by pi(left_i) - pi(right_j), which the pricer reads as d - u_i - v_j.
-.cardinality_price_omitted <- function(gen, index, potential, coefs, lambda, tol) {
+# A solve's node potentials read in distance terms, with the multipliers folded
+# in. A pair arc costs d - shift + sum_r lambda_r (u_ri - w_rj - b_r) and
+# reduces by pi(left_i) - pi(right_j), which is d - u_i - v_j for the u and v
+# returned here: the reduced cost of a pair is its distance less the two.
+.cardinality_pair_duals <- function(index, potential, coefs, lambda) {
   layout <- index$layout
   pi_left <- potential[layout$node_left(seq_len(index$n_left))]
   pi_right <- potential[layout$node_right(seq_len(index$n_right))]
@@ -189,10 +189,18 @@
     row_part <- row_part + lambda[[r]] * (coefs[[r]]$u - coefs[[r]]$b)
     col_part <- col_part - lambda[[r]] * coefs[[r]]$w
   }
-  u <- index$cost_shift - row_part - pi_left
-  v <- pi_right - col_part
+  list(u = index$cost_shift - row_part - pi_left,
+       v = pi_right - col_part)
+}
+
+# The omitted pairs a node's solve prices below zero, added to the session's
+# candidate set, with the floor over every omitted pair and the tolerance it was
+# read at.
+.cardinality_price_omitted <- function(gen, index, potential, coefs, lambda, tol) {
+  duals <- .cardinality_pair_duals(index, potential, coefs, lambda)
   tolerance <- tol * max(1, abs(potential))
-  priced <- lap_pricing_price(gen$session, u, v, gen$keep_per_row, tolerance)
+  priced <- lap_pricing_price(gen$session, duals$u, duals$v, gen$keep_per_row,
+                              tolerance)
   list(i = as.integer(priced$i), j = as.integer(priced$j),
        proven_floor = priced$proven_floor, tolerance = tolerance)
 }
@@ -257,9 +265,11 @@
 #'   same network, used as the solver's starting point.
 #' @param time_limit Seconds this one solve may run.
 #'
-#' @return A list with the solve status, the flow and potentials, the
-#'   certificate, the audit, the matched set, the true objective `objective`
-#'   and the relaxed objective `relaxed` the multipliers price. A solve that ran
+#' @return A list with the solve status, the flow and potentials, the pair
+#'   potentials in distance terms with the multipliers folded in
+#'   (`pair_duals`, see `.cardinality_pair_duals()`), the certificate, the
+#'   audit, the matched set, the true objective `objective` and the relaxed
+#'   objective `relaxed` the multipliers price. A solve that ran
 #'   out of time comes back with status `"interrupted"`, its flow and
 #'   potentials, and nothing else: it proved neither an optimum nor the absence
 #'   of one, so certifying and auditing it would be work spent on a number no
@@ -328,13 +338,21 @@
                  potential = as.numeric(solved$potential))
   }
   flow <- as.numeric(solved$flow)
-  certificate <- verify_flow(solved, tol = tol)
+  # A search under moment rows prunes and bounds against tolerances, so an exact
+  # reading of each node's solve would buy nothing it can use; the single solve
+  # of the flow engine is the whole problem, and gets one.
+  exact_reading <- !length(.as_moment_coefficient_list(coefs))
+  certificate <- verify_flow(solved, tol = tol,
+                             arithmetic = if (exact_reading) "auto" else "double")
   if (!is.null(omitted)) {
     certificate$master_certified <- certificate$certified_optimal
     certificate$omitted_proven_floor <- omitted$proven_floor
     certificate$omitted_tolerance <- omitted$tolerance
     certificate$certified_optimal <- isTRUE(certificate$certified_optimal) &&
       !(omitted$proven_floor < -omitted$tolerance)
+    # The omitted pairs are bounded against a tolerance, so the conclusion
+    # over the complete problem is a numerical one whatever the master's was.
+    certificate$arithmetic <- "double"
   }
 
   read <- .balance_flow_read(index, flow)
@@ -344,6 +362,8 @@
   list(status = solved$status,
        flow = flow,
        potential = as.numeric(solved$potential),
+       pair_duals = .cardinality_pair_duals(index, as.numeric(solved$potential),
+                                            coefs, lambda),
        integral = max(abs(flow - round(flow)), 0) <= 1e-6,
        certificate = certificate,
        certified = isTRUE(certificate$certified_optimal),
@@ -1070,6 +1090,9 @@
 #'         objective, how many times its range fits inside the range a double
 #'         orders exactly, and the constant taken off every distance.
 #'   \item `total_distance`, `pairs` - the matched set itself.
+#'   \item `potentials` - the pair potentials of the solve the matched set
+#'         came from, as `.cardinality_pair_duals()` reads them, or `NULL`
+#'         when that solve was not certified.
 #' }
 #' @keywords internal
 .cardinality_report <- function(run, specs = NULL, tol = 1e-9) {
@@ -1158,7 +1181,9 @@
                  status = run$status,
                  total_distance = read$total_distance + n_pairs *
                    index$cost_shift,
-                 pairs = pairs),
+                 pairs = pairs,
+                 potentials = if (isTRUE(run$solution$certified))
+                   run$solution$pair_duals else NULL),
             class = "cardinality_report")
 }
 

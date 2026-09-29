@@ -97,6 +97,17 @@
 #'       `gap_fraction`, `certified`, `stopped_on`, `n_nodes`, and the state of
 #'       every stated constraint. See [print.cardinality_report()].
 #'     \item `certificate` - present when the search certified optimality.
+#'     \item `potentials` - the dual potentials of the network solve the
+#'       matched sample came from, a list with elements `left` and `right`
+#'       holding one value per unit, named by id, in distance terms: the
+#'       reduced cost of a pair is its distance less the two, with the tier
+#'       weights and any moment multipliers already folded in. Under
+#'       `engine = "flow"` that solve is the whole problem, and the potentials
+#'       certify the matched sample as its optimum. Under branch and bound it
+#'       is the node the incumbent was read from, with the arcs that node fixed
+#'       and the moment rows priced at its multipliers, and they certify the
+#'       incumbent as that node's optimum; the bound on the whole problem is
+#'       `cardinality$best_possible`. Present when that solve was certified.
 #'     \item `status` - `"optimal"`, `"iteration_limit"`, or `"heuristic"`.
 #'     \item `info$engine` - the engine that answered.
 #'   }
@@ -388,6 +399,14 @@ cardinality_match <- function(left, right, vars,
       n_matched = report$n_matched,
       best_possible = report$best_possible,
       gap = report$gap
+    )
+  }
+  if (!is.null(report$potentials)) {
+    result$potentials <- list(
+      left = stats::setNames(as.numeric(report$potentials$u),
+                             as.character(left_ids)),
+      right = stats::setNames(as.numeric(report$potentials$v),
+                              as.character(right_ids))
     )
   }
 

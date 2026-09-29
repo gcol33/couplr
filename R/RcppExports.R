@@ -33,12 +33,12 @@ cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max
     .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize, eps)
 }
 
-lap_certify_dense <- function(cost, match, u, v, maximize, tol, arithmetic) {
-    .Call(`_couplr_lap_certify_dense`, cost, match, u, v, maximize, tol, arithmetic)
+lap_certify_dense <- function(cost, match, u, v, maximize, tol, arithmetic, exact = NULL) {
+    .Call(`_couplr_lap_certify_dense`, cost, match, u, v, maximize, tol, arithmetic, exact)
 }
 
-lap_certify_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic) {
-    .Call(`_couplr_lap_certify_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic)
+lap_certify_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic, exact = NULL) {
+    .Call(`_couplr_lap_certify_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, vars, match, u, v, maximize, tol, arithmetic, exact)
 }
 
 lap_scan_reduced_costs <- function(cost, u, v, tol) {
@@ -137,14 +137,6 @@ lap_solve_push_relabel <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_push_relabel`, cost, maximize)
 }
 
-lap_solve_jv_duals <- function(cost, maximize) {
-    .Call(`_couplr_lap_solve_jv_duals`, cost, maximize)
-}
-
-cpp_lap_solve_jv_duals_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize) {
-    .Call(`_couplr_cpp_lap_solve_jv_duals_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, var_names, maximize)
-}
-
 lap_solve_network_simplex <- function(cost) {
     .Call(`_couplr_lap_solve_network_simplex`, cost)
 }
@@ -153,8 +145,8 @@ lap_flow_solve <- function(n_nodes, supply, tail, head, lower, upper, cost, warm
     .Call(`_couplr_lap_flow_solve`, n_nodes, supply, tail, head, lower, upper, cost, warm_flow, warm_potential, time_limit, tol, relax_eps, max_augmentations, return_potentials)
 }
 
-lap_flow_certify <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol) {
-    .Call(`_couplr_lap_flow_certify`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol)
+lap_flow_certify <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol, arithmetic = "auto", exact_potential = NULL) {
+    .Call(`_couplr_lap_flow_certify`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, tol, arithmetic, exact_potential)
 }
 
 lap_flow_compile_full_match <- function(cost, min_controls, max_controls) {

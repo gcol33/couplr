@@ -10,6 +10,8 @@
 
 #include <Rcpp.h>
 
+#include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -49,6 +51,12 @@ public:
     // problem is 2.5e9, well past what an R integer can hold.
     void add_count(const char* name, int64_t x) {
         values_[k_] = Rcpp::wrap(static_cast<double>(x));
+        names_[k_] = name;
+        ++k_;
+    }
+
+    void add_value(const char* name, SEXP x) {
+        values_[k_] = x;
         names_[k_] = name;
         ++k_;
     }
@@ -114,6 +122,44 @@ std::vector<int> match_to_zero_based(const Rcpp::IntegerVector& match) {
     return out;
 }
 
+std::vector<double> duals_to_internal(const Rcpp::NumericVector& x, bool negate) {
+    std::vector<double> out(static_cast<std::size_t>(x.size()));
+    for (R_xlen_t k = 0; k < x.size(); ++k) {
+        out[static_cast<std::size_t>(k)] = negate ? -x[k] : x[k];
+    }
+    return out;
+}
+
+// The expansions a caller supplied, if any, held for lap::ExactDuals to point
+// at.
+struct SuppliedExact {
+    std::vector<lap::exact::Expansion> u;
+    std::vector<lap::exact::Expansion> v;
+    bool present = false;
+};
+
+SuppliedExact supplied_exact(const Rcpp::Nullable<Rcpp::List>& exact, bool negate) {
+    SuppliedExact out;
+    if (exact.isNull()) return out;
+    const Rcpp::List x(exact.get());
+    out.u = expansions_from_r(Rcpp::NumericMatrix(SEXP(x["u"])), negate);
+    out.v = expansions_from_r(Rcpp::NumericMatrix(SEXP(x["v"])), negate);
+    out.present = true;
+    return out;
+}
+
+lap::ExactDuals exact_options(const SuppliedExact& supplied) {
+    lap::ExactDuals out;
+    out.recover = true;
+    if (supplied.present) {
+        out.u = &supplied.u;
+        out.v = &supplied.v;
+    }
+    return out;
+}
+
+}  // namespace
+
 // The mode arrives as the string R validated, so an unknown one is a bug in
 // the wrapper rather than a user error, and defaulting it would hide that.
 lap::Arithmetic arithmetic_from_string(const std::string& name) {
@@ -123,18 +169,58 @@ lap::Arithmetic arithmetic_from_string(const std::string& name) {
     Rcpp::stop("unknown arithmetic mode: " + name);
 }
 
-std::vector<double> duals_to_internal(const Rcpp::NumericVector& x, bool negate) {
-    std::vector<double> out(static_cast<std::size_t>(x.size()));
-    for (R_xlen_t k = 0; k < x.size(); ++k) {
-        out[static_cast<std::size_t>(k)] = negate ? -x[k] : x[k];
+// Exact potentials cross to R as an n x K matrix, one row per potential, whose
+// row sums are the exact values. A row's entries are the components of its
+// expansion, smallest first, padded with zeros, so a reader with rational
+// arithmetic recovers each value by summing its row. Coming the other way the
+// entries are only required to sum to the value: they are added exactly, so a
+// caller may hand in any split of it, a single column of doubles included.
+Rcpp::NumericMatrix expansions_to_r(const std::vector<lap::exact::Expansion>& e) {
+    std::size_t width = 1;
+    for (const auto& x : e) width = std::max(width, x.size());
+    Rcpp::NumericMatrix out(static_cast<int>(e.size()), static_cast<int>(width));
+    for (std::size_t i = 0; i < e.size(); ++i) {
+        for (std::size_t k = 0; k < e[i].size(); ++k) {
+            out(static_cast<int>(i), static_cast<int>(k)) = e[i][k];
+        }
     }
     return out;
 }
 
-}  // namespace
+std::vector<lap::exact::Expansion> expansions_from_r(const Rcpp::NumericMatrix& m,
+                                                     bool negate) {
+    std::vector<lap::exact::Expansion> out(static_cast<std::size_t>(m.nrow()));
+    lap::exact::Expansion next;
+    for (int i = 0; i < m.nrow(); ++i) {
+        lap::exact::Expansion& acc = out[static_cast<std::size_t>(i)];
+        for (int k = 0; k < m.ncol(); ++k) {
+            const double x = m(i, k);
+            if (!std::isfinite(x)) {
+                Rcpp::stop("exact duals must be finite; row " + std::to_string(i + 1) +
+                           " is not");
+            }
+            if (x == 0.0) continue;
+            lap::exact::grow_expansion(acc, negate ? -x : x, next);
+            acc.swap(next);
+        }
+        lap::exact::compress(acc);
+    }
+    return out;
+}
+
+const char* exact_source_name(lap::ExactDualsSource s) {
+    switch (s) {
+        case lap::ExactDualsSource::solver:    return "solver";
+        case lap::ExactDualsSource::supplied:  return "supplied";
+        case lap::ExactDualsSource::recovered: return "recovered";
+        case lap::ExactDualsSource::none:
+        default:                               return "none";
+    }
+}
+
 
 Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
-    ListBuilder out(34);
+    ListBuilder out(37);
 
     out.add_flag("structurally_valid_matching", rep.structurally_valid_matching);
     out.add_flag("all_rows_matched", rep.all_rows_matched);
@@ -168,6 +254,15 @@ Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
     out.add_flag("exact_available", rep.exact_available);
     out.add_count("n_exact_violations", rep.n_exact_violations);
     out.add_count("n_exact_untight", rep.n_exact_untight);
+    out.add_value("exact_duals_source",
+                  Rcpp::wrap(std::string(exact_source_name(rep.exact_duals_source))));
+    if (rep.exact_u.empty() && rep.exact_v.empty()) {
+        out.add_value("exact_u", R_NilValue);
+        out.add_value("exact_v", R_NilValue);
+    } else {
+        out.add_value("exact_u", expansions_to_r(rep.exact_u));
+        out.add_value("exact_v", expansions_to_r(rep.exact_v));
+    }
 
     out.add_number("duality_gap", rep.duality_gap);
     out.add_number("certified_reduced_cost_floor", rep.certified_reduced_cost_floor);
@@ -179,27 +274,32 @@ Rcpp::List certificate_report_to_list(const lap::CertificateReport& rep) {
     return out.finish();
 }
 
-// The three fields carrying the cost unit go back in the caller's sign; the
-// duals were negated on the way in, so a maximize instance was certified
-// against -c and reports -objective.
+// The fields carrying the cost unit go back in the caller's sign; the duals
+// were negated on the way in, so a maximize instance was certified against -c
+// and reports -objective, and its exact potentials are those of -c.
 void restore_certificate_sign(lap::CertificateReport& rep, bool maximize) {
     if (!maximize) return;
     rep.primal_objective = -rep.primal_objective;
     rep.dual_objective = -rep.dual_objective;
     rep.duality_gap = -rep.duality_gap;
+    for (auto& e : rep.exact_u) e = lap::exact::negated(e);
+    for (auto& e : rep.exact_v) e = lap::exact::negated(e);
 }
 
 Rcpp::List certify_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
                               Rcpp::NumericVector u, Rcpp::NumericVector v,
-                              bool maximize, double tol, std::string arithmetic) {
+                              bool maximize, double tol, std::string arithmetic,
+                              Rcpp::Nullable<Rcpp::List> exact) {
     try {
         const lap::CostMatrix cm = cost_matrix_for_certify(cost, maximize);
         const std::vector<int> m0 = match_to_zero_based(match);
         const std::vector<double> u0 = duals_to_internal(u, maximize);
         const std::vector<double> v0 = duals_to_internal(v, maximize);
+        const SuppliedExact supplied = supplied_exact(exact, maximize);
 
         lap::CertificateReport rep = lap::certify_assignment(
-            cm, m0, u0, v0, tol, arithmetic_from_string(arithmetic));
+            cm, m0, u0, v0, tol, arithmetic_from_string(arithmetic),
+            exact_options(supplied));
         restore_certificate_sign(rep, maximize);
 
         return certificate_report_to_list(rep);
@@ -217,7 +317,8 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
                              double max_distance, Rcpp::List calipers,
                              Rcpp::CharacterVector vars,
                              Rcpp::IntegerVector match, Rcpp::NumericVector u,
-                             Rcpp::NumericVector v, bool maximize, double tol, std::string arithmetic) {
+                             Rcpp::NumericVector v, bool maximize, double tol,
+                             std::string arithmetic, Rcpp::Nullable<Rcpp::List> exact) {
     try {
         // The inverse covariance is only read for Mahalanobis; every other
         // metric passes NULL, matching lazy_cost_spec_inv_cov() in
@@ -238,10 +339,12 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
         const std::vector<int> m0 = match_to_zero_based(match);
         const std::vector<double> u0 = duals_to_internal(u, maximize);
         const std::vector<double> v0 = duals_to_internal(v, maximize);
+        const SuppliedExact supplied = supplied_exact(exact, maximize);
 
         lap::CertificateReport rep = std::visit([&](const auto& cm) {
             return lap::certify_assignment(cm, m0, u0, v0, tol,
-                                           arithmetic_from_string(arithmetic));
+                                           arithmetic_from_string(arithmetic),
+                                           exact_options(supplied));
         }, source);
         restore_certificate_sign(rep, maximize);
 
@@ -288,12 +391,13 @@ template ReducedCostScan scan_reduced_costs<PaddedCostView<CostMatrix> >(
 
 template CertificateReport certify_assignment<CostMatrix>(
     const CostMatrix&, const std::vector<int>&, const std::vector<double>&,
-    const std::vector<double>&, double, Arithmetic);
+    const std::vector<double>&, double, Arithmetic, const ExactDuals&);
 template CertificateReport certify_assignment<LazyCostMatrix>(
     const LazyCostMatrix&, const std::vector<int>&, const std::vector<double>&,
-    const std::vector<double>&, double, Arithmetic);
+    const std::vector<double>&, double, Arithmetic, const ExactDuals&);
 template CertificateReport certify_assignment<PaddedCostView<CostMatrix> >(
     const PaddedCostView<CostMatrix>&, const std::vector<int>&,
-    const std::vector<double>&, const std::vector<double>&, double, Arithmetic);
+    const std::vector<double>&, const std::vector<double>&, double, Arithmetic,
+    const ExactDuals&);
 
 }  // namespace lap

@@ -29,7 +29,9 @@
 #   keep_per_row  violators a row contributes per pricing round
 #   width         columns the first feasibility round gives a deficient row,
 #                 or 0 to size the seed from the number of columns
-#   tol           a pair prices out at cbar < -tol
+#   tol           a pair prices out at cbar < -tol; a certifying loop prices at
+#                 zero against exact potentials and reads it only in a round
+#                 whose master the recovery finds not exactly optimal
 #   max_rounds    guard, not a convergence bound
 #
 # They are not arguments of assignment() or match_couples(). The loop converges
@@ -141,14 +143,10 @@
 # vectors swap sides, which is what .duals_result() does for the same reason.
 .new_implicit_result <- function(raw, n, transposed, tol) {
   match_out <- as.integer(raw$match)
-  u_out <- as.numeric(raw$u)
-  v_out <- as.numeric(raw$v)
   if (transposed) {
     match_out <- .certify_invert_match(match_out, n)
-    swap <- u_out
-    u_out <- v_out
-    v_out <- swap
   }
+  duals <- .solver_duals(raw, transposed)
 
   certificate <- NULL
   if (!is.null(raw$certificate)) {
@@ -170,8 +168,8 @@
     certificate = certificate
   )
 
-  out$u <- u_out
-  out$v <- v_out
+  out$u <- duals$u
+  out$v <- duals$v
   out$search <- list(
     seed_width      = as.integer(raw$seed_width),
     candidate_edges = as.numeric(raw$candidate_edges),

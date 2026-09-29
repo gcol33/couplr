@@ -58,7 +58,9 @@ Suggests:
     cobalt,
     MatchIt,
     marginaleffects,
-    optmatch
+    optmatch,
+    clue,
+    lpSolve
 LinkingTo:
     Rcpp
 SystemRequirements: C++17

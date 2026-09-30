@@ -17,8 +17,7 @@
   branch = c("unit", "pair"),
   node_limit = 500L,
   time_limit = Inf,
-  should_stop = NULL,
-  tol = 1e-09
+  should_stop = NULL
 )
 }
 \arguments{
@@ -42,8 +41,6 @@ takes them.}
 
 \item{should_stop}{Optional predicate of the search state; \code{TRUE} stops the
 search the way an interrupt would.}
-
-\item{tol}{Numeric tolerance for certification and for the constraint values.}
 }
 \value{
 A \code{cardinality_report}.

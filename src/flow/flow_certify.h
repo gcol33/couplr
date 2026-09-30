@@ -280,6 +280,8 @@ struct ResidualAdjacency {
     std::vector<int64_t> start;   // n_nodes + 1 offsets
     std::vector<int32_t> head;
     std::vector<double>  weight;  // the arc cost, negated on a reverse arc
+    std::vector<int64_t> arc;     // the arc it is residual to
+    std::vector<char>    reverse; // 1 on a reverse arc
 };
 
 inline ResidualAdjacency residual_adjacency(const FlowProblem& prob,
@@ -293,8 +295,11 @@ inline ResidualAdjacency residual_adjacency(const FlowProblem& prob,
         if (flow[a] > arc.lower) ++adj.start[static_cast<std::size_t>(arc.head) + 1];
     }
     for (std::size_t v = 0; v < n; ++v) adj.start[v + 1] += adj.start[v];
-    adj.head.resize(static_cast<std::size_t>(adj.start[n]));
-    adj.weight.resize(static_cast<std::size_t>(adj.start[n]));
+    const std::size_t m = static_cast<std::size_t>(adj.start[n]);
+    adj.head.resize(m);
+    adj.weight.resize(m);
+    adj.arc.resize(m);
+    adj.reverse.resize(m);
     std::vector<int64_t> cursor(adj.start.begin(), adj.start.end() - 1);
     for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
         const FlowArc& arc = prob.arcs[a];
@@ -302,11 +307,15 @@ inline ResidualAdjacency residual_adjacency(const FlowProblem& prob,
             const std::size_t k = static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.tail)]++);
             adj.head[k] = arc.head;
             adj.weight[k] = arc.cost;
+            adj.arc[k] = static_cast<int64_t>(a);
+            adj.reverse[k] = 0;
         }
         if (flow[a] > arc.lower) {
             const std::size_t k = static_cast<std::size_t>(cursor[static_cast<std::size_t>(arc.head)]++);
             adj.head[k] = arc.tail;
             adj.weight[k] = -arc.cost;
+            adj.arc[k] = static_cast<int64_t>(a);
+            adj.reverse[k] = 1;
         }
     }
     return adj;
@@ -344,9 +353,15 @@ inline int64_t count_exact_violations(const FlowProblem& prob,
 // graph from a root joined to every node at weight zero, or ok = false when the
 // graph carries a negative cycle and the flow is not optimal. `hint` is the
 // solver's potentials when there are any, and orders the search only.
+//
+// With `want_cycle`, a flow that is not optimal comes back with one negative
+// cycle of its residual graph in `cycle`, each residual arc tagged 2a for the
+// forward arc of a and 2a + 1 for its reverse; cancel_residual_cycle() pushes
+// flow around it.
 inline exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
                                                     const std::vector<int64_t>& flow,
-                                                    const std::vector<double>& hint) {
+                                                    const std::vector<double>& hint,
+                                                    bool want_cycle = false) {
     const flow_exact_detail::ResidualAdjacency adj =
         flow_exact_detail::residual_adjacency(prob, flow);
     return exact::shortest_paths(
@@ -354,9 +369,119 @@ inline exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
             const std::size_t sk = static_cast<std::size_t>(k);
             for (int64_t e = adj.start[sk]; e < adj.start[sk + 1]; ++e) {
                 const std::size_t se = static_cast<std::size_t>(e);
-                emit(adj.head[se], adj.weight[se], 0.0);
+                emit(adj.head[se],
+                     exact::DoubleDifference{adj.weight[se], 0.0,
+                                             2 * adj.arc[se] + adj.reverse[se]});
             }
-        });
+        }, want_cycle);
+}
+
+// recover_flow_potentials() against costs that replace the doubles in `prob`:
+// the costs of a network whose arcs carry terms no double holds, such as moment
+// multipliers folded into a distance. The flow is then proved optimal against
+// those costs rather than their roundings.
+//
+// `costs` answers two questions per arc: `approximation(a)`, the cost rounded
+// with a bound on its error, which is all the filter reads, and `exact(a)`,
+// the cost as an expansion, asked only of the relaxations the filter cannot
+// settle. A cost that is a sum of parts can then be rounded from its parts and
+// never built for the arcs the doubles decide.
+template <class Costs>
+exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
+                                             const std::vector<int64_t>& flow,
+                                             const std::vector<double>& hint,
+                                             const Costs& costs, bool want_cycle = false) {
+    const flow_exact_detail::ResidualAdjacency adj =
+        flow_exact_detail::residual_adjacency(prob, flow);
+    return exact::shortest_paths(
+        prob.n_nodes, hint, [&](int64_t k, auto&& emit) {
+            const std::size_t sk = static_cast<std::size_t>(k);
+            for (int64_t e = adj.start[sk]; e < adj.start[sk + 1]; ++e) {
+                const std::size_t se = static_cast<std::size_t>(e);
+                const std::size_t a = static_cast<std::size_t>(adj.arc[se]);
+                const auto exact_cost = [&costs, a]() -> exact::Expansion {
+                    return costs.exact(a);
+                };
+                emit(adj.head[se],
+                     exact::LazyWeight<decltype(exact_cost)>{
+                         costs.approximation(a), exact_cost,
+                         2 * adj.arc[se] + adj.reverse[se], adj.reverse[se] != 0});
+            }
+        }, want_cycle);
+}
+
+// Push as much flow around a residual cycle, tagged as recover_flow_potentials()
+// tags it, as its tightest arc allows. The flow stays integral, inside every
+// bound and conserved, and on a negative cycle its cost falls.
+inline void cancel_residual_cycle(const FlowProblem& prob, std::vector<int64_t>& flow,
+                                  const std::vector<int64_t>& cycle) {
+    int64_t room = std::numeric_limits<int64_t>::max();
+    for (int64_t t : cycle) {
+        const std::size_t a = static_cast<std::size_t>(t / 2);
+        const FlowArc& arc = prob.arcs[a];
+        const int64_t r = (t % 2 == 1) ? flow[a] - arc.lower : arc.upper - flow[a];
+        room = std::min(room, r);
+    }
+    for (int64_t t : cycle) {
+        const std::size_t a = static_cast<std::size_t>(t / 2);
+        flow[a] += (t % 2 == 1) ? -room : room;
+    }
+}
+
+// D(pi) of the header, exactly, for potentials held as expansions and arc costs
+// read through a costs type as recover_flow_potentials() reads them. Weak
+// duality makes it a lower bound on the LP's optimum at every pi, so it is a
+// bound whether or not the flow those potentials came from is optimal, and at
+// optimal potentials it is the optimum.
+//
+// Most arcs contribute nothing: an arc with lower bound zero whose reduced cost
+// is clearly positive, or with upper bound zero whose reduced cost is clearly
+// negative. The same filter as the reduced-cost sign decides those in doubles,
+// and only the rest are summed exactly.
+template <class Costs>
+exact::Expansion exact_dual_objective(const FlowProblem& prob,
+                                      const std::vector<exact::Expansion>& pi,
+                                      const Costs& costs) {
+    const std::size_t n = static_cast<std::size_t>(prob.n_nodes);
+    std::vector<exact::Approximation> pa(n);
+    for (std::size_t v = 0; v < n; ++v) pa[v] = exact::approximate(pi[v]);
+
+    exact::Expansion total;
+    for (std::size_t v = 0; v < n; ++v) {
+        const int64_t s = prob.supply[v];
+        if (s == 0) continue;
+        total = exact::expansion_sum(total,
+                                     exact::scale_expansion(pi[v], -static_cast<double>(s)));
+    }
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        const FlowArc& arc = prob.arcs[a];
+        const std::size_t t = static_cast<std::size_t>(arc.tail);
+        const std::size_t h = static_cast<std::size_t>(arc.head);
+        const exact::Approximation ca = costs.approximation(a);
+        const double approx = (ca.value + pa[t].value) - pa[h].value;
+        const double bound = 4.0 * DBL_EPSILON *
+                                 (std::fabs(ca.value) + std::fabs(pa[t].value) +
+                                  std::fabs(pa[h].value)) +
+                             ca.error + pa[t].error + pa[h].error;
+        if (approx > bound && arc.lower == 0) continue;
+        if (approx < -bound && arc.upper == 0) continue;
+
+        const exact::Expansion cbar = exact::expansion_sum(
+            exact::expansion_sum(costs.exact(a), pi[t]), exact::negated(pi[h]));
+        const int s = exact::sign(cbar);
+        const int64_t mult = s > 0 ? arc.lower : (s < 0 ? arc.upper : 0);
+        if (mult == 0) continue;
+        // A count above 2^53 does not survive the conversion to a double,
+        // FLOW_INF_CAP among them, so it is split into the double nearest it and
+        // the integer remainder, both exact.
+        const double high = static_cast<double>(mult);
+        const double low = static_cast<double>(mult - static_cast<int64_t>(high));
+        total = exact::expansion_sum(total, exact::scale_expansion(cbar, high));
+        if (low != 0.0) {
+            total = exact::expansion_sum(total, exact::scale_expansion(cbar, low));
+        }
+    }
+    return total;
 }
 
 // Certify `flow` (one entry per explicit arc) against `potential` (one entry per

@@ -67,13 +67,19 @@
 # is what makes c(incumbent) an upper bound on Z* and lets the search prune
 # against it.
 #
-# Certification. A node's bound is accepted only when verify_flow() certifies
-# the solve it came from. An uncertified solve neither prunes nor contributes to
-# the global bound, and it marks the whole run so that no gap of zero is ever
-# reported as certified optimality. The incumbent is a matched set read back
-# from a flow whose moment constraints are all recomputed and satisfied, so it
-# is feasible for every stated constraint at every point in the search,
-# including every early stop.
+# Certification. The solver is handed the repriced costs rounded to doubles, so
+# its optimum speaks for the rounding and not for L(lambda). A node's bound is
+# read instead from weak duality: for any node potentials pi, the dual
+# objective D(pi) of the network under the exact repriced costs is at most
+# L(lambda). It is evaluated exactly in src/flow/flow_lagrangian.h, at the
+# flow's own exact potentials when the flow is exactly optimal and at the
+# solver's otherwise, so every finished solve proves a bound and none rests on
+# a tolerance. The bounds, the incumbent's objective and the comparisons
+# between them are held and decided exactly, and so is the cardinality read off
+# the bound. The incumbent is a matched set read back from a flow whose moment
+# rows are recomputed on its pairs and satisfied exactly, so it is feasible for
+# every stated constraint at every point in the search, including every early
+# stop.
 # ==============================================================================
 
 # Generation. A search over a specification rather than a matrix solves every
@@ -84,10 +90,12 @@
 # optimal for the network holding every pair once no omitted pair prices below
 # zero against its potentials. The multipliers decompose into a row part and a
 # column part, so they fold into those potentials and the pricer reads the
-# distances as they are. Pairs that price in are appended to the network and the
-# node is solved again, warm; the arcs already there keep their indices, so
-# every bound the search placed on one stands. The certificate a node reports
-# is the solve's own, together with the floor under every omitted pair.
+# distances as they are. The potentials are the ones the node's bound is read
+# at, held exactly, and a pair prices in when its reduced cost is exactly
+# negative, so once none does the omitted pairs add exactly nothing to that
+# bound. Pairs that price in are appended to the network and the node is solved
+# again, warm; the arcs already there keep their indices, so every bound the
+# search placed on one stands.
 
 # The reasons the node loop stops, in the order they are checked. Anything
 # outside this set is a name nobody defined, and is refused where it is written
@@ -193,16 +201,89 @@
        v = pi_right - col_part)
 }
 
-# The omitted pairs a node's solve prices below zero, added to the session's
-# candidate set, with the floor over every omitted pair and the tolerance it was
-# read at.
-.cardinality_price_omitted <- function(gen, index, potential, coefs, lambda, tol) {
-  duals <- .cardinality_pair_duals(index, potential, coefs, lambda)
-  tolerance <- tol * max(1, abs(potential))
-  priced <- lap_pricing_price(gen$session, duals$u, duals$v, gen$keep_per_row,
-                              tolerance)
-  list(i = as.integer(priced$i), j = as.integer(priced$j),
-       proven_floor = priced$proven_floor, tolerance = tolerance)
+# Exact values. A number the search prunes or accepts on is held as the
+# components of an expansion (src/core/lap_exact.h), whose exact sum is the
+# number, or as -Inf or Inf for a node with no bound yet and a node holding
+# nothing. The sign of a difference of two of them is decided exactly.
+.exact_cmp <- function(a, b) {
+  inf_a <- length(a) == 1L && is.infinite(a)
+  inf_b <- length(b) == 1L && is.infinite(b)
+  if (inf_a && inf_b) {
+    return(if (a == b) 0L else if (a > b) 1L else -1L)
+  }
+  if (inf_a) {
+    return(if (a > 0) 1L else -1L)
+  }
+  if (inf_b) {
+    return(if (b > 0) -1L else 1L)
+  }
+  lap_exact_compare(a, b)
+}
+
+.exact_min <- function(values) {
+  out <- Inf
+  for (v in values) {
+    if (.exact_cmp(v, out) < 0) out <- v
+  }
+  out
+}
+
+.exact_max <- function(a, b) {
+  if (.exact_cmp(a, b) >= 0) a else b
+}
+
+# The double on the side of an exact value the caller names.
+.exact_value <- function(x, direction = c("down", "up")) {
+  direction <- match.arg(direction)
+  if (length(x) == 1L && is.infinite(x)) {
+    return(x)
+  }
+  lap_exact_round(x, direction)
+}
+
+# The moment rows as the exact routines read them: one column of u and of w per
+# row, and one b per row.
+.moment_matrices <- function(coefs, n_left, n_right) {
+  coefs <- .as_moment_coefficient_list(coefs)
+  if (!length(coefs)) {
+    return(list(u = matrix(0, n_left, 0L), w = matrix(0, n_right, 0L),
+                b = numeric(0)))
+  }
+  list(u = matrix(as.numeric(unlist(lapply(coefs, `[[`, "u"))), n_left),
+       w = matrix(as.numeric(unlist(lapply(coefs, `[[`, "w"))), n_right),
+       b = vapply(coefs, function(cf) as.numeric(cf$b), numeric(1)))
+}
+
+# The moment rows on a matched set, decided exactly: the sign of each row's
+# value, zero or below being satisfied, and the sign of their sum weighted by
+# the multipliers.
+.cardinality_rows_exact <- function(index, coefs, read, lambda = NULL) {
+  coefs <- .as_moment_coefficient_list(coefs)
+  if (!length(coefs)) {
+    return(list(sign = integer(0), weighted_sign = 0L))
+  }
+  mats <- .moment_matrices(coefs, index$n_left, index$n_right)
+  lambda <- if (is.null(lambda)) numeric(length(coefs)) else as.numeric(lambda)
+  lap_exact_moment_rows(mats$u, mats$w, mats$b, as.integer(read$left),
+                        as.integer(read$right), lambda)
+}
+
+# One solve of the network read exactly at `lambda`: the bound D(pi) it proves
+# on the node's Lagrangian, whether its potentials were recovered exactly, and
+# the pair potentials the omitted pairs are priced against. See
+# src/flow/flow_lagrangian.h.
+.cardinality_step <- function(problem, index, solved, coefs, lambda) {
+  mats <- .moment_matrices(coefs, index$n_left, index$n_right)
+  arcs <- problem$arcs
+  layout <- index$layout
+  lap_flow_lagrangian_step(
+    problem$n_nodes, problem$supply, arcs$tail, arcs$head, arcs$lower,
+    arcs$upper, arcs$cost, as.numeric(solved$flow),
+    as.numeric(solved$potential), as.integer(index$ranges$pair),
+    as.integer(index$pair_left), as.integer(index$pair_right),
+    as.integer(layout$node_left(seq_len(index$n_left))),
+    as.integer(layout$node_right(seq_len(index$n_right))),
+    mats$u, mats$w, mats$b, as.numeric(lambda))
 }
 
 # Seconds left of a budget stated as an absolute elapsed time, which is what a
@@ -250,9 +331,18 @@
 
 #' One solve of a balance network
 #'
-#' Applies a node's arc bounds and multipliers, solves the network, certifies
-#' the flow against the problem it was solved on, audits it against the
-#' objective identity the design encodes, and reads the matched set back.
+#' Applies a node's arc bounds and multipliers, solves the network, reads the
+#' solve exactly, audits the flow against the objective identity the design
+#' encodes, and reads the matched set back.
+#'
+#' The solver is handed the multiplier-repriced costs rounded to doubles, and
+#' the exact reading is taken against the costs themselves: the bound it
+#' returns is D(pi) of the node's Lagrangian at the solve's potentials, which
+#' weak duality makes a lower bound on the node whether or not the solve was
+#' optimal, and which is the solve's exact Lagrangian value when it was. A
+#' generating search prices the pairs it omits against the same potentials,
+#' at zero and exactly, and adds any that price below until none do, so the
+#' bound holds over every admissible pair.
 #'
 #' @param problem The network, or the pair `.balance_flow_problem()` returns.
 #' @param index The network's index, unless `problem` carries one.
@@ -260,31 +350,34 @@
 #' @param lambda Multipliers, one per row.
 #' @param edits The node's arc-bound decisions.
 #' @param cost Optional distance matrix for the audit.
-#' @param tol Numeric tolerance for the certificate.
 #' @param warm Optional `list(flow, potential)` from an earlier solve of the
 #'   same network, used as the solver's starting point.
 #' @param time_limit Seconds this one solve may run.
 #'
 #' @return A list with the solve status, the flow and potentials, the pair
 #'   potentials in distance terms with the multipliers folded in
-#'   (`pair_duals`, see `.cardinality_pair_duals()`), the certificate, the
-#'   audit, the matched set, the true objective `objective` and the relaxed
-#'   objective `relaxed` the multipliers price. A solve that ran
-#'   out of time comes back with status `"interrupted"`, its flow and
-#'   potentials, and nothing else: it proved neither an optimum nor the absence
-#'   of one, so certifying and auditing it would be work spent on a number no
-#'   caller may read.
+#'   (`pair_duals`, see `.cardinality_pair_duals()`), `bound` and
+#'   `bound_exact`, the node bound the solve proves, rounded down and exact,
+#'   `certified`, whether the flow is exactly optimal for the node's
+#'   Lagrangian over every admissible pair, the audit, the matched set, and the
+#'   true objective as `objective_exact` and as `objective`, rounded up. A
+#'   solve that ran out of time comes back with status `"interrupted"`, its
+#'   flow and potentials, and nothing else: it proved neither an optimum nor
+#'   the absence of one, so reading and auditing it would be work spent on a
+#'   number no caller may read.
 #' @keywords internal
 .cardinality_flow <- function(problem, index = NULL, coefs = NULL,
                               lambda = NULL, edits = NULL, cost = NULL,
-                              tol = 1e-9, warm = NULL, time_limit = Inf) {
+                              warm = NULL, time_limit = Inf) {
   node <- .cardinality_as_node(problem, index)
   gen <- node$index$gen
   if (!is.null(gen)) {
     node <- gen$built
   }
+  coefs <- .as_moment_coefficient_list(coefs)
+  lambda <- if (is.null(lambda)) numeric(length(coefs)) else as.numeric(lambda)
   started <- proc.time()[["elapsed"]]
-  omitted <- NULL
+  step <- NULL
 
   repeat {
     index <- node$index
@@ -311,67 +404,62 @@
                   flow = as.numeric(solved$flow),
                   potential = as.numeric(solved$potential),
                   integral = FALSE,
-                  certificate = NULL,
+                  bound = -Inf,
+                  bound_exact = -Inf,
                   certified = FALSE,
                   audit = NULL,
                   audit_ok = FALSE,
                   read = NULL,
                   objective = NA_real_,
-                  relaxed = NA_real_,
+                  objective_exact = Inf,
                   problem = base,
                   index = index))
     }
-    if (is.null(gen) || isTRUE(edits$closed) ||
-        .cardinality_no_flow(solved$status)) {
+    if (.cardinality_no_flow(solved$status)) {
+      step <- NULL
       break
     }
-    omitted <- .cardinality_price_omitted(gen, index, as.numeric(solved$potential),
-                                          coefs, lambda, tol)
-    if (!length(omitted$i)) {
+    step <- .cardinality_step(base, index, solved, coefs, lambda)
+    # A pinned node bars every pair it does not use, the ones never generated
+    # included, so its omitted pairs sit at an upper bound of zero and add
+    # nothing to the bound whatever they price at.
+    if (is.null(gen) || isTRUE(edits$closed)) {
       break
     }
-    gen$built <- .balance_add_pairs(gen$built, omitted$i, omitted$j,
-                                    lap_pricing_cost(gen$session, omitted$i,
-                                                     omitted$j))
+    priced <- lap_pricing_price_exact(gen$session, step$pair_u, step$pair_v,
+                                      index$cost_shift, gen$keep_per_row)
+    if (!length(priced$i)) {
+      break
+    }
+    gen$built <- .balance_add_pairs(gen$built, priced$i, priced$j,
+                                    lap_pricing_cost(gen$session, priced$i,
+                                                     priced$j))
     node <- gen$built
-    warm <- list(flow = as.numeric(solved$flow),
-                 potential = as.numeric(solved$potential))
+    warm <- list(flow = step$flow, potential = step$potential)
   }
-  flow <- as.numeric(solved$flow)
-  # A search under moment rows prunes and bounds against tolerances, so an exact
-  # reading of each node's solve would buy nothing it can use; the single solve
-  # of the flow engine is the whole problem, and gets one.
-  exact_reading <- !length(.as_moment_coefficient_list(coefs))
-  certificate <- verify_flow(solved, tol = tol,
-                             arithmetic = if (exact_reading) "auto" else "double")
-  if (!is.null(omitted)) {
-    certificate$master_certified <- certificate$certified_optimal
-    certificate$omitted_proven_floor <- omitted$proven_floor
-    certificate$omitted_tolerance <- omitted$tolerance
-    certificate$certified_optimal <- isTRUE(certificate$certified_optimal) &&
-      !(omitted$proven_floor < -omitted$tolerance)
-    # The omitted pairs are bounded against a tolerance, so the conclusion
-    # over the complete problem is a numerical one whatever the master's was.
-    certificate$arithmetic <- "double"
-  }
-
+  # The step's flow is the solver's with any negative cycle the exact costs
+  # showed cancelled, and its potentials are the ones the bound was read at,
+  # rounded, so both replace the solver's from here on.
+  flow <- if (is.null(step)) as.numeric(solved$flow) else step$flow
+  potential <- if (is.null(step)) as.numeric(solved$potential) else step$potential
   read <- .balance_flow_read(index, flow)
   audit <- .balance_flow_audit(base, index, flow, cost = cost,
                                tiers = index$tiers)
+  objective_exact <- lap_exact_dot(base$arcs$cost, flow)
 
   list(status = solved$status,
        flow = flow,
-       potential = as.numeric(solved$potential),
-       pair_duals = .cardinality_pair_duals(index, as.numeric(solved$potential),
-                                            coefs, lambda),
-       integral = max(abs(flow - round(flow)), 0) <= 1e-6,
-       certificate = certificate,
-       certified = isTRUE(certificate$certified_optimal),
+       potential = potential,
+       pair_duals = .cardinality_pair_duals(index, potential, coefs, lambda),
+       integral = all(flow == round(flow)),
+       bound = if (is.null(step)) -Inf else step$bound,
+       bound_exact = if (is.null(step)) -Inf else step$bound_exact,
+       certified = !is.null(step) && isTRUE(step$recovered),
        audit = audit,
        audit_ok = .cardinality_audit_ok(audit),
        read = read,
-       objective = sum(base$arcs$cost * flow),
-       relaxed = sum(arc_cost * flow),
+       objective = .exact_value(objective_exact, "up"),
+       objective_exact = objective_exact,
        problem = base,
        index = index)
 }
@@ -389,10 +477,10 @@
 #' Lagrangian bound for one node
 #'
 #' Solves the node's network at a sequence of multipliers, each step one
-#' `.flow_solve()` and one `verify_flow()`, and returns the largest certified
-#' relaxed optimum it reached. Multipliers move along the projected subgradient
-#' with step `t_0 / (1 + k)`, warm-started from whatever `lambda` is handed in,
-#' which is the parent's best set during a search.
+#' `.flow_solve()` read exactly by `.cardinality_flow()`, and returns the
+#' largest bound the steps proved. Multipliers move along the projected
+#' subgradient with step `t_0 / (1 + k)`, warm-started from whatever `lambda`
+#' is handed in, which is the parent's best set during a search.
 #'
 #' Consecutive steps solve one network. The topology, the arc bounds and every
 #' non-pair cost are the ones the previous step solved; only the pair costs
@@ -410,24 +498,23 @@
 #' @param edits The node's arc-bound decisions.
 #' @param incumbent The best objective known, which sets the step scale.
 #' @param step0 An explicit `t_0`, overriding that scale.
-#' @param tol Numeric tolerance for certification and for the row values.
 #' @param cost Optional distance matrix for the audit.
 #' @param warm Optional `list(flow, potential)` to start the first solve from.
 #' @param deadline Elapsed time, on `proc.time()`'s clock, past which a solve
 #'   stops where it stands. `Inf` is no budget.
 #'
-#' @return A list with `bound`, the multipliers that attained it, the relaxed
-#'   solve at those multipliers, any moment-feasible solutions the ascent
-#'   passed through, `certified`, whether the bound it reports came out of a
-#'   certified solve, and `warm`, the last complete solve's flow and potentials.
-#'   A `status` of `"interrupted"` means a solve ran out of time; the bound and
-#'   the solutions reported alongside it came from the steps that finished, and
-#'   are as valid as any others.
+#' @return A list with `bound` and `bound_exact`, the best bound rounded down
+#'   and exact, the multipliers that attained it, the relaxed solve at those
+#'   multipliers, any moment-feasible solutions the ascent passed through,
+#'   `certified`, whether any step proved a bound, and `warm`, the last
+#'   complete solve's flow and potentials. A `status` of `"interrupted"` means
+#'   a solve ran out of time; the bound and the solutions reported alongside it
+#'   came from the steps that finished, and are as valid as any others.
 #' @keywords internal
 .cardinality_lagrangian <- function(problem, coefs = NULL, lambda = NULL,
                                     steps = 20L, index = NULL, edits = NULL,
                                     incumbent = Inf, step0 = NULL,
-                                    tol = 1e-9, cost = NULL, warm = NULL,
+                                    cost = NULL, warm = NULL,
                                     deadline = Inf) {
   node <- .cardinality_as_node(problem, index)
   coefs <- .as_moment_coefficient_list(coefs)
@@ -448,6 +535,7 @@
   }
 
   bound <- -Inf
+  bound_exact <- -Inf
   best_lambda <- lambda
   best_solve <- NULL
   solutions <- list()
@@ -459,7 +547,7 @@
   for (k in seq_len(steps)) {
     fl <- .cardinality_flow(node$problem, node$index, coefs = coefs,
                             lambda = lambda, edits = edits, cost = cost,
-                            tol = tol, warm = warm,
+                            warm = warm,
                             time_limit = .cardinality_remaining(deadline))
     n_solves <- n_solves + 1L
 
@@ -481,24 +569,22 @@
     }
 
     # A finished solve of this network is the next one's starting point,
-    # whether or not it certified: the flow sits inside every arc bound and the
-    # potentials price the costs this step used, which is all a starting point
-    # has to be.
+    # whether or not it was optimal: the flow sits inside every arc bound and
+    # the potentials price the costs this step used, which is all a starting
+    # point has to be.
     warm <- list(flow = fl$flow, potential = fl$potential)
 
-    # Only a certified solve states a bound. An uncertified one still shows a
-    # matched set to branch on, and still moves the multipliers, but nothing it
-    # reports is allowed to prune.
-    usable <- fl$certified && fl$audit_ok && fl$integral &&
-      identical(fl$status, "optimal")
-    if (usable) {
-      if (fl$relaxed > bound) {
-        bound <- fl$relaxed
-        best_lambda <- lambda
-        best_solve <- fl
-      }
-      certified <- TRUE
-    } else {
+    # Every finished solve proves a bound, optimal or not, since D(pi) bounds
+    # the node at any potentials; a solve the rounding kept from its exact
+    # optimum proves a weaker one.
+    if (.exact_cmp(fl$bound_exact, bound_exact) > 0) {
+      bound <- fl$bound
+      bound_exact <- fl$bound_exact
+      best_lambda <- lambda
+      best_solve <- fl
+    }
+    certified <- TRUE
+    if (!identical(fl$status, "optimal")) {
       status <- fl$status
     }
     if (is.null(best_solve)) {
@@ -506,12 +592,13 @@
     }
 
     g <- .cardinality_violations(coefs, fl$read)
-    if (!length(g) || all(g <= tol)) {
+    rows <- .cardinality_rows_exact(node$index, coefs, fl$read, lambda)
+    if (!length(g) || all(rows$sign <= 0)) {
       # A relaxed optimum that satisfies every row is feasible for the original
       # problem, and when the multipliers price none of the satisfied rows it
       # also attains the bound, which settles the node.
       solutions[[length(solutions) + 1L]] <- fl
-      if (!length(g) || sum(lambda * g) >= -tol) {
+      if (!length(g) || rows$weighted_sign >= 0) {
         break
       }
     }
@@ -521,35 +608,32 @@
       break
     }
     if (is.null(t0)) {
-      reach <- if (is.finite(incumbent) && incumbent > fl$relaxed) {
-        incumbent - fl$relaxed
+      reach <- if (is.finite(incumbent) && incumbent > fl$bound) {
+        incumbent - fl$bound
       } else {
-        max(abs(fl$relaxed) * 1e-3, 1)
+        max(abs(fl$bound) * 1e-3, 1)
       }
       t0 <- reach / gnorm2
     }
     lambda <- pmax(0, lambda + (t0 / k) * g)
   }
 
-  list(bound = bound, lambda = best_lambda, relaxed = best_solve,
-       solutions = solutions, certified = certified, status = status,
-       n_solves = n_solves, warm = warm)
+  list(bound = bound, bound_exact = bound_exact, lambda = best_lambda,
+       relaxed = best_solve, solutions = solutions, certified = certified,
+       status = status, n_solves = n_solves, warm = warm)
 }
 
 # The cardinality no feasible matched set can exceed, given a lower bound on the
-# objective. One unit of cardinality is worth P and the rest of the objective
-# reaches at most P - 1, so the count this returns is exact rather than rounded.
+# objective, held exactly. One unit of cardinality is worth P and the rest of
+# the objective reaches at most P - 1, so q = ceiling((bound - (P - 1)) / P),
+# which is ceiling((bound + 1) / P) - 1, and the ceiling is decided exactly.
 .cardinality_best_possible <- function(index, bound) {
   budget <- index$total_budget
   penalty <- index$tiers$penalty
-  if (is.na(bound) || bound == -Inf) {
-    return(as.integer(budget))
+  if (length(bound) == 1L && is.infinite(bound)) {
+    return(if (bound > 0) 0L else as.integer(budget))
   }
-  if (bound == Inf) {
-    return(0L)
-  }
-  r_max <- penalty - 1
-  q <- max(0, ceiling((bound - r_max) / penalty - 1e-9))
+  q <- max(0, lap_exact_ceil_quotient(bound, 1, penalty) - 1)
   as.integer(max(0, budget - q))
 }
 
@@ -568,9 +652,14 @@
 # what the loop leaves behind is a matched set the network can carry. With no
 # exact level every pair is a candidate.
 #
+# The loop scores in doubles and stops on the rows' exact signs, so a row the
+# doubles put at zero while it is positive by less than their rounding is still
+# driven down, and what is returned satisfies every row exactly. Such a row is
+# weighted 1 rather than by its rounded value.
+#
 # Returns NULL when the rows still ask for a removal no candidate supplies, and
 # when nothing is left to keep.
-.cardinality_feasible_subset <- function(index, read, coefs, tol = 1e-9) {
+.cardinality_feasible_subset <- function(index, read, coefs) {
   coefs <- .as_moment_coefficient_list(coefs)
   left <- read$left
   right <- read$right
@@ -592,9 +681,19 @@
   value <- colSums(contrib)
   held <- rep(TRUE, length(left))
 
-  while (any(value > tol)) {
-    hot <- value > tol
-    score <- as.numeric(contrib[, hot, drop = FALSE] %*% value[hot])
+  repeat {
+    hot <- value > 0
+    if (!any(hot)) {
+      exact <- .cardinality_rows_exact(index, coefs,
+                                       list(left = left[held],
+                                            right = right[held]))
+      hot <- exact$sign > 0
+      if (!any(hot)) {
+        break
+      }
+    }
+    weight <- ifelse(value[hot] > 0, value[hot], 1)
+    score <- as.numeric(contrib[, hot, drop = FALSE] %*% weight)
     score[!(held & candidate)] <- -Inf
     k <- which.max(score)
     if (!length(k) || !is.finite(score[[k]]) || score[[k]] <= 0) {
@@ -721,7 +820,6 @@
 #' @param should_stop Optional predicate of the search state; `TRUE` stops the
 #'   search the way an interrupt would.
 #' @param cost Optional distance matrix for the audit.
-#' @param tol Numeric tolerance for certification, pruning and the row values.
 #'
 #' @return A list of class `cardinality_run`.
 #' @keywords internal
@@ -729,8 +827,7 @@
                                       dual_steps = 20L,
                                       branch = c("unit", "pair"),
                                       node_limit = 500L, time_limit = Inf,
-                                      should_stop = NULL, cost = NULL,
-                                      tol = 1e-9) {
+                                      should_stop = NULL, cost = NULL) {
   node0 <- .cardinality_as_node(problem, index)
   index <- node0$index
   coefs <- .as_moment_coefficient_list(coefs)
@@ -757,8 +854,7 @@
   # The one solve the budget does not bound. Every stopping path returns a
   # feasible incumbent, and this is the solve that makes one exist, so a budget
   # that cut it short would buy responsiveness with the guarantee.
-  empty <- .cardinality_flow(node0$problem, index, edits = bare, cost = cost,
-                             tol = tol)
+  empty <- .cardinality_flow(node0$problem, index, edits = bare, cost = cost)
 
   started <- proc.time()[["elapsed"]]
   deadline <- if (is.finite(time_limit)) started + time_limit else Inf
@@ -774,15 +870,16 @@
   root_solves <- 0L
   root_warm <- NULL
   if (length(coefs)) {
-    free <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol,
+    free <- .cardinality_flow(node0$problem, index, cost = cost,
                               time_limit = .cardinality_remaining(deadline))
     root_solves <- root_solves + 1L
     if (!identical(free$status, "interrupted") &&
         !.cardinality_no_flow(free$status)) {
       root_warm <- list(flow = free$flow, potential = free$potential)
-      subset <- .cardinality_feasible_subset(index, free$read, coefs, tol)
+      subset <- .cardinality_feasible_subset(.cardinality_current_index(index),
+                                             free$read, coefs)
       if (!is.null(subset)) {
-        seed <- .cardinality_flow(node0$problem, index, cost = cost, tol = tol,
+        seed <- .cardinality_flow(node0$problem, index, cost = cost,
                                   edits = .cardinality_pin_pairs(
                                     .cardinality_current_index(index),
                                     subset$left, subset$right),
@@ -793,8 +890,8 @@
         # set to read the rows off.
         if (identical(seed$status, "optimal") && seed$audit_ok &&
             seed$integral &&
-            all(.cardinality_violations(coefs, seed$read) <= tol) &&
-            seed$objective < incumbent$objective) {
+            all(.cardinality_rows_exact(seed$index, coefs, seed$read)$sign <= 0) &&
+            .exact_cmp(seed$objective_exact, incumbent$objective_exact) < 0) {
           incumbent <- seed
         }
       }
@@ -804,15 +901,15 @@
   env <- new.env(parent = emptyenv())
   env$incumbent <- incumbent
   env$best <- incumbent$objective
+  env$best_exact <- incumbent$objective_exact
   env$n_nodes <- 0L
   env$n_solves <- root_solves
   env$bound_certified <- TRUE
   env$stopped_on <- "optimality"
   env$active <- NULL
-  env$prune_slack <- 0
   env$frontier <- list(list(id = 0L, edits = .cardinality_no_edits(),
                             lambda = numeric(length(coefs)),
-                            bound = -Inf, depth = 0L,
+                            bound = -Inf, bound_value = -Inf, depth = 0L,
                             fixed_units = integer(0),
                             fixed_pairs = integer(0)))
   env$root_bound <- -Inf
@@ -828,19 +925,19 @@
   env$warm <- root_warm
   env$warm_ids <- 0L
 
+  # Bounds and the incumbent's objective are held exactly, so the smallest open
+  # bound, the test that closes the tree and the test that prunes a node are
+  # decided with no tolerance, and a node pruned on its bound holds nothing
+  # below the incumbent at all.
   frontier_bound <- function() {
-    open <- vapply(env$frontier, function(nd) nd$bound, numeric(1))
+    open <- lapply(env$frontier, function(nd) nd$bound)
     if (!is.null(env$active)) {
-      open <- c(open, env$active$bound)
+      open <- c(open, list(env$active$bound))
     }
-    if (!length(open)) Inf else min(open)
+    .exact_min(open)
   }
-  # A node pruned on its bound holds nothing below the incumbent to within the
-  # tolerance the comparison used, so that tolerance is taken off the bound
-  # rather than assumed away. It is relative and far below one unit of
-  # cardinality, which is worth P.
   global_bound <- function() {
-    min(env$best, frontier_bound()) - env$prune_slack
+    .exact_min(list(env$best_exact, frontier_bound()))
   }
 
   tryCatch({
@@ -861,15 +958,14 @@
           isTRUE(should_stop(list(n_nodes = env$n_nodes,
                                   elapsed = proc.time()[["elapsed"]] - started,
                                   incumbent = env$best,
-                                  bound = global_bound())))) {
+                                  bound = .exact_value(global_bound()))))) {
         env$stopped_on <- "interrupt"
         break
       }
       # The global form of the pruning test: when no open node can reach below
       # the incumbent, the incumbent is optimal and the nodes still listed hold
       # nothing worth opening.
-      if (frontier_bound() >= env$best - tol * max(1, abs(env$best))) {
-        env$prune_slack <- max(env$prune_slack, tol * max(1, abs(env$best)))
+      if (.exact_cmp(frontier_bound(), env$best_exact) >= 0) {
         env$stopped_on <- "bound"
         break
       }
@@ -877,8 +973,10 @@
       # Best-first on the bound, since that is what closes a tree, and deepest
       # first among the nodes that share one. Children inherit their parent's
       # bound, so ties are the common case, and taking the deeper of two equal
-      # nodes walks down to a matched set instead of across a level.
-      open_bound <- vapply(env$frontier, function(nd) nd$bound, numeric(1))
+      # nodes walks down to a matched set instead of across a level. The order
+      # is read off the rounded bounds; it decides which node opens next and
+      # nothing the certificate rests on.
+      open_bound <- vapply(env$frontier, function(nd) nd$bound_value, numeric(1))
       open_depth <- vapply(env$frontier, function(nd) nd$depth, numeric(1))
       pos <- order(open_bound, -open_depth)[[1L]]
       env$active <- env$frontier[[pos]]
@@ -890,7 +988,7 @@
                                       lambda = env$active$lambda,
                                       steps = dual_steps, index = index,
                                       edits = env$active$edits,
-                                      incumbent = env$best, tol = tol,
+                                      incumbent = env$best,
                                       cost = cost, warm = warm,
                                       deadline = deadline)
       env$n_solves <- env$n_solves + dual$n_solves
@@ -905,13 +1003,12 @@
         # being either pruned or branched would leave part of the tree
         # unaccounted for and the number reported would cover less than it
         # claims.
-        env$active$bound <- if (dual$certified && is.finite(dual$bound)) {
-          max(env$active$bound, dual$bound)
-        } else {
-          env$active$bound
+        if (dual$certified) {
+          env$active$bound <- .exact_max(env$active$bound, dual$bound_exact)
+          env$active$bound_value <- .exact_value(env$active$bound)
         }
         if (env$n_nodes == 1L) {
-          env$root_bound <- env$active$bound
+          env$root_bound <- env$active$bound_value
         }
         env$frontier <- c(env$frontier, list(env$active))
         env$active <- NULL
@@ -922,30 +1019,30 @@
 
       for (sol in dual$solutions) {
         if (!sol$audit_ok) next
-        ties <- sol$objective <= env$best + tol * max(1, abs(env$best)) &&
-          isTRUE(sol$certified) && !isTRUE(env$incumbent$certified)
-        if (sol$objective < env$best || ties) {
-          env$best <- min(env$best, sol$objective)
+        order <- .exact_cmp(sol$objective_exact, env$best_exact)
+        ties <- order == 0L && isTRUE(sol$certified) &&
+          !isTRUE(env$incumbent$certified)
+        if (order < 0L || ties) {
+          env$best <- sol$objective
+          env$best_exact <- sol$objective_exact
           env$incumbent <- sol
         }
       }
 
-      # An uncertified bound proves nothing, so the node keeps the bound it
-      # inherited rather than a number nothing checked.
-      node_bound <- if (dual$certified && is.finite(dual$bound)) {
-        max(env$active$bound, dual$bound)
-      } else if (identical(dual$status, "infeasible")) {
+      # A node whose ascent proved no bound keeps the one it inherited.
+      node_bound <- if (identical(dual$status, "infeasible")) {
         Inf
+      } else if (dual$certified) {
+        .exact_max(env$active$bound, dual$bound_exact)
       } else {
         env$active$bound
       }
+      node_bound_value <- .exact_value(node_bound)
       if (env$n_nodes == 1L) {
-        env$root_bound <- node_bound
+        env$root_bound <- node_bound_value
       }
 
-      prune_tol <- tol * max(1, abs(env$best))
-      if (node_bound >= env$best - prune_tol) {
-        env$prune_slack <- max(env$prune_slack, prune_tol)
+      if (.exact_cmp(node_bound, env$best_exact) >= 0) {
         env$active <- NULL
         next
       }
@@ -975,6 +1072,7 @@
       kids <- .cardinality_children(env$active, pick)
       kids <- lapply(kids, function(kid) {
         kid$bound <- node_bound
+        kid$bound_value <- node_bound_value
         kid$lambda <- dual$lambda
         kid$id <- env$next_id
         env$next_id <- env$next_id + 1L
@@ -992,8 +1090,9 @@
     env$stopped_on <- "interrupt"
   })
 
-  bound <- global_bound()
-  best_possible <- .cardinality_best_possible(index, bound)
+  bound_exact <- global_bound()
+  bound <- .exact_value(bound_exact)
+  best_possible <- .cardinality_best_possible(index, bound_exact)
   n_pairs <- env$incumbent$read$n_pairs
   settled <- env$stopped_on %in% c("optimality", "bound")
   certified <- settled && env$bound_certified &&
@@ -1021,8 +1120,9 @@
 # The achieved value of one moment row on a matched set, and the room left under
 # its bound. The statistic is the one the row was stated in: a standardized
 # difference carries the pooled spread the row fixed once, a mean difference
-# carries none.
-.cardinality_constraint_row <- function(spec, coefs, read, tol = 1e-9) {
+# carries none. `row_sign` is the exact sign of the row's value on the set,
+# which is what the search held it to.
+.cardinality_constraint_row <- function(spec, coefs, read, row_sign) {
   k <- length(read$left)
   scale <- if (identical(spec$stat, "std_diff")) spec$denominator else 1
   signed <- if (k) {
@@ -1033,13 +1133,12 @@
   stated <- k > 0L && is.finite(scale) && scale != 0 && !isTRUE(spec$trivial)
   achieved <- if (stated) signed / (scale * spec$direction) else NA_real_
   slack <- if (is.na(achieved)) NA_real_ else (spec$bound - signed) / scale
-  violation <- if (!k) 0 else k * (signed - spec$bound)
   list(kind = spec$stat,
        target = .moment_var_label(spec$var, spec$transform),
        bound = spec$limit,
        achieved = achieved,
        slack = slack,
-       satisfied = isTRUE(violation <= tol))
+       satisfied = row_sign <= 0L)
 }
 
 # Matched counts per category at one level of the hierarchy.
@@ -1066,7 +1165,6 @@
 #'
 #' @param run A `cardinality_run` from [.cardinality_branch_bound()].
 #' @param specs The moment rows the run was given, from `.moment_specs()`.
-#' @param tol Numeric tolerance for reading a constraint as satisfied.
 #'
 #' @return An object of class `cardinality_report`, a list with elements:
 #' \itemize{
@@ -1095,7 +1193,7 @@
 #'         when that solve was not certified.
 #' }
 #' @keywords internal
-.cardinality_report <- function(run, specs = NULL, tol = 1e-9) {
+.cardinality_report <- function(run, specs = NULL) {
   if (!inherits(run, "cardinality_run")) {
     stop("`run` must come from `.cardinality_branch_bound()`.", call. = FALSE)
   }
@@ -1110,8 +1208,9 @@
   gap <- best_possible - n_pairs
   gap_fraction <- if (best_possible > 0) gap / best_possible else 0
 
+  row_sign <- .cardinality_rows_exact(index, coefs, read)$sign
   rows <- lapply(seq_along(specs), function(r) {
-    .cardinality_constraint_row(specs[[r]], coefs[[r]], read, tol)
+    .cardinality_constraint_row(specs[[r]], coefs[[r]], read, row_sign[[r]])
   })
   constraints <- tibble::tibble(
     kind = vapply(rows, `[[`, character(1), "kind"),
@@ -1228,7 +1327,6 @@ print.cardinality_report <- function(x, ...) {
 #' @param node_limit,time_limit Search budget.
 #' @param should_stop Optional predicate of the search state; `TRUE` stops the
 #'   search the way an interrupt would.
-#' @param tol Numeric tolerance for certification and for the constraint values.
 #'
 #' @return A `cardinality_report`.
 #' @keywords internal
@@ -1236,7 +1334,7 @@ print.cardinality_report <- function(x, ...) {
                                moments = NULL, max_std_diff = NULL, vars = NULL,
                                dual_steps = 20L, branch = c("unit", "pair"),
                                node_limit = 500L, time_limit = Inf,
-                               should_stop = NULL, tol = 1e-9) {
+                               should_stop = NULL) {
   hier <- .refined_hierarchy(left, right, refined, exact = exact)
   gen <- NULL
   if (is_lazy_cost_spec(cost)) {
@@ -1256,9 +1354,8 @@ print.cardinality_report <- function(x, ...) {
                                    dual_steps = dual_steps,
                                    branch = branch, node_limit = node_limit,
                                    time_limit = time_limit,
-                                   should_stop = should_stop, cost = cost,
-                                   tol = tol)
-  report <- .cardinality_report(run, specs = specs, tol = tol)
+                                   should_stop = should_stop, cost = cost)
+  report <- .cardinality_report(run, specs = specs)
   if (!is.null(gen) && is.function(gen$spec$distance)) {
     lazy_pair_distances(gen$spec, report$pairs$left, report$pairs$right)
   }

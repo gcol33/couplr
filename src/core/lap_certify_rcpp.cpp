@@ -375,6 +375,117 @@ Rcpp::List scan_reduced_costs_impl(Rcpp::NumericMatrix cost, Rcpp::NumericVector
     return Rcpp::List();
 }
 
+// ---------------------------------------------------------------------------
+// Exact arithmetic for R
+// ---------------------------------------------------------------------------
+//
+// A value that is a sum of doubles crosses as the numeric vector of its
+// expansion's components, smallest first, and the empty vector is zero. The
+// branch and bound of cardinality_match() keeps its bounds and objectives in
+// this form, so the comparisons that prune a node or accept an incumbent are
+// decided exactly.
+
+namespace {
+
+lap::exact::Expansion expansion_from_vector(const Rcpp::NumericVector& x) {
+    lap::exact::Expansion acc;
+    lap::exact::Expansion next;
+    for (R_xlen_t k = 0; k < x.size(); ++k) {
+        const double v = x[k];
+        if (!std::isfinite(v)) Rcpp::stop("exact: a component is not finite");
+        if (v == 0.0) continue;
+        lap::exact::grow_expansion(acc, v, next);
+        acc.swap(next);
+    }
+    lap::exact::compress(acc);
+    return acc;
+}
+
+Rcpp::NumericVector expansion_to_vector(const lap::exact::Expansion& e) {
+    return Rcpp::NumericVector(e.begin(), e.end());
+}
+
+}  // namespace
+
+// sum_k x_k * y_k, exactly.
+Rcpp::NumericVector exact_dot_impl(Rcpp::NumericVector x, Rcpp::NumericVector y) {
+    if (x.size() != y.size()) Rcpp::stop("exact: the two vectors differ in length");
+    lap::exact::Expansion acc;
+    for (R_xlen_t k = 0; k < x.size(); ++k) {
+        if (!std::isfinite(x[k]) || !std::isfinite(y[k])) {
+            Rcpp::stop("exact: a term is not finite");
+        }
+        if (x[k] == 0.0 || y[k] == 0.0) continue;
+        acc = lap::exact::expansion_sum(acc, lap::exact::product(x[k], y[k]));
+    }
+    return expansion_to_vector(acc);
+}
+
+// The sign of e - f: -1, 0 or 1.
+int exact_compare_impl(Rcpp::NumericVector e, Rcpp::NumericVector f) {
+    return lap::exact::compare(expansion_from_vector(e), expansion_from_vector(f));
+}
+
+// The value rounded to a double in the direction named, "down" or "up".
+double exact_round_impl(Rcpp::NumericVector e, std::string direction) {
+    const lap::exact::Expansion x = expansion_from_vector(e);
+    if (direction == "down") return lap::exact::round_down(x);
+    if (direction == "up") return lap::exact::round_up(x);
+    Rcpp::stop("exact: direction must be \"down\" or \"up\"");
+}
+
+// The smallest integer q with q * divisor >= e + add, for a positive divisor.
+double exact_ceil_quotient_impl(Rcpp::NumericVector e, double add, double divisor) {
+    if (!std::isfinite(add) || !std::isfinite(divisor) || !(divisor > 0.0)) {
+        Rcpp::stop("exact: the divisor must be finite and positive and the addend finite");
+    }
+    return lap::exact::ceil_quotient(expansion_from_vector(e), add, divisor);
+}
+
+// Moment rows on a matched set: g_r = sum over the pairs of u_ri - w_rj - b_r,
+// one column of `u` and `w` per row, with the sign of each g_r and the sign of
+// sum_r lambda_r g_r, both exact. `left` and `right` are the matched units,
+// 1-based.
+Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                  Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                  Rcpp::IntegerVector right, Rcpp::NumericVector lambda) {
+    const int n_rows = b.size();
+    if (u.ncol() != n_rows || w.ncol() != n_rows || lambda.size() != n_rows) {
+        Rcpp::stop("exact: the moment rows and multipliers do not describe each other");
+    }
+    if (left.size() != right.size()) Rcpp::stop("exact: left and right differ in length");
+    const R_xlen_t k = left.size();
+    for (R_xlen_t t = 0; t < k; ++t) {
+        if (left[t] == NA_INTEGER || left[t] < 1 || left[t] > u.nrow() ||
+            right[t] == NA_INTEGER || right[t] < 1 || right[t] > w.nrow()) {
+            Rcpp::stop("exact: a matched unit is out of range");
+        }
+    }
+
+    Rcpp::IntegerVector row_sign(n_rows);
+    lap::exact::Expansion weighted;
+    lap::exact::Expansion next;
+    for (int r = 0; r < n_rows; ++r) {
+        lap::exact::Expansion g;
+        for (R_xlen_t t = 0; t < k; ++t) {
+            lap::exact::grow_expansion(g, u(left[t] - 1, r), next);
+            g.swap(next);
+            lap::exact::grow_expansion(g, -w(right[t] - 1, r), next);
+            g.swap(next);
+            if ((t & 63) == 63) lap::exact::compress(g);
+        }
+        g = lap::exact::expansion_sum(
+            g, lap::exact::negated(lap::exact::product(static_cast<double>(k), b[r])));
+        row_sign[r] = lap::exact::sign(g);
+        if (lambda[r] != 0.0) {
+            weighted = lap::exact::expansion_sum(weighted,
+                                                 lap::exact::scale_expansion(g, lambda[r]));
+        }
+    }
+    return Rcpp::List::create(Rcpp::Named("sign") = row_sign,
+                              Rcpp::Named("weighted_sign") = lap::exact::sign(weighted));
+}
+
 // Compile-time smoke: instantiate both templates against every cost source the
 // package can hand them, so a change to at()/allowed()/nrow/ncol on any of the
 // three is a build error here rather than a runtime surprise in whichever

@@ -161,8 +161,32 @@ lap_pricing_seed <- function(session, width) {
     .Call(`_couplr_lap_pricing_seed`, session, width)
 }
 
-lap_pricing_price <- function(session, u, v, keep_per_row, tol) {
-    .Call(`_couplr_lap_pricing_price`, session, u, v, keep_per_row, tol)
+lap_pricing_price_exact <- function(session, u, v, offset, keep_per_row) {
+    .Call(`_couplr_lap_pricing_price_exact`, session, u, v, offset, keep_per_row)
+}
+
+lap_flow_lagrangian_step <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node, u, w, b, lambda) {
+    .Call(`_couplr_lap_flow_lagrangian_step`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node, u, w, b, lambda)
+}
+
+lap_exact_dot <- function(x, y) {
+    .Call(`_couplr_lap_exact_dot`, x, y)
+}
+
+lap_exact_compare <- function(e, f) {
+    .Call(`_couplr_lap_exact_compare`, e, f)
+}
+
+lap_exact_round <- function(e, direction) {
+    .Call(`_couplr_lap_exact_round`, e, direction)
+}
+
+lap_exact_ceil_quotient <- function(e, add, divisor) {
+    .Call(`_couplr_lap_exact_ceil_quotient`, e, add, divisor)
+}
+
+lap_exact_moment_rows <- function(u, w, b, left, right, lambda) {
+    .Call(`_couplr_lap_exact_moment_rows`, u, w, b, left, right, lambda)
 }
 
 lap_pricing_cost <- function(session, i, j) {

@@ -11,7 +11,6 @@
   lambda = NULL,
   edits = NULL,
   cost = NULL,
-  tol = 1e-09,
   warm = NULL,
   time_limit = Inf
 )
@@ -29,8 +28,6 @@
 
 \item{cost}{Optional distance matrix for the audit.}
 
-\item{tol}{Numeric tolerance for the certificate.}
-
 \item{warm}{Optional \code{list(flow, potential)} from an earlier solve of the
 same network, used as the solver's starting point.}
 
@@ -39,17 +36,29 @@ same network, used as the solver's starting point.}
 \value{
 A list with the solve status, the flow and potentials, the pair
 potentials in distance terms with the multipliers folded in
-(\code{pair_duals}, see \code{.cardinality_pair_duals()}), the certificate, the
-audit, the matched set, the true objective \code{objective} and the relaxed
-objective \code{relaxed} the multipliers price. A solve that ran
-out of time comes back with status \code{"interrupted"}, its flow and
-potentials, and nothing else: it proved neither an optimum nor the absence
-of one, so certifying and auditing it would be work spent on a number no
-caller may read.
+(\code{pair_duals}, see \code{.cardinality_pair_duals()}), \code{bound} and
+\code{bound_exact}, the node bound the solve proves, rounded down and exact,
+\code{certified}, whether the flow is exactly optimal for the node's
+Lagrangian over every admissible pair, the audit, the matched set, and the
+true objective as \code{objective_exact} and as \code{objective}, rounded up. A
+solve that ran out of time comes back with status \code{"interrupted"}, its
+flow and potentials, and nothing else: it proved neither an optimum nor
+the absence of one, so reading and auditing it would be work spent on a
+number no caller may read.
 }
 \description{
-Applies a node's arc bounds and multipliers, solves the network, certifies
-the flow against the problem it was solved on, audits it against the
-objective identity the design encodes, and reads the matched set back.
+Applies a node's arc bounds and multipliers, solves the network, reads the
+solve exactly, audits the flow against the objective identity the design
+encodes, and reads the matched set back.
+}
+\details{
+The solver is handed the multiplier-repriced costs rounded to doubles, and
+the exact reading is taken against the costs themselves: the bound it
+returns is D(pi) of the node's Lagrangian at the solve's potentials, which
+weak duality makes a lower bound on the node whether or not the solve was
+optimal, and which is the solve's exact Lagrangian value when it was. A
+generating search prices the pairs it omits against the same potentials,
+at zero and exactly, and adds any that price below until none do, so the
+bound holds over every admissible pair.
 }
 \keyword{internal}

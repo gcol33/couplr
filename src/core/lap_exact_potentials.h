@@ -42,6 +42,7 @@
 #include "lap_neighbours.h"
 #include "lap_types.h"
 
+#include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <cstddef>
@@ -60,15 +61,93 @@ struct ShortestPaths {
     // mean nothing.
     bool ok = false;
     std::vector<Expansion> dist;
+    // When asked for, the tags of the arcs of one negative cycle, each arc from
+    // the node before it to the node after it, in the order the cycle runs.
+    std::vector<int64_t> cycle;
 };
 
+// An arc weight a - b of two doubles: a cost entry less another, which is the
+// shape the assignment's difference constraints take, and a single cost with
+// b = 0. The filter below evaluates it as the relaxation always has. `tag`
+// names the arc to a caller that asks for a negative cycle.
+struct DoubleDifference {
+    double a = 0.0;
+    double b = 0.0;
+    int64_t tag = -1;
+    double approx_from(double base) const { return (base + a) - b; }
+    double magnitude() const { return std::fabs(a) + std::fabs(b); }
+    double error() const { return 0.0; }
+    Expansion added_to(const Expansion& e) const { return add_difference(e, a, b); }
+};
+
+// An arc weight that is itself a sum of doubles, held exactly: a cost with
+// multiplier terms folded in, or its negation when `negate` is set, which is
+// the reverse arc of a residual graph. `approx` is the rounded value and error
+// bound of the cost; `exact` returns the cost as an expansion and is called
+// only for a relaxation the filter cannot settle, so an arc the doubles decide
+// never has its expansion built.
+template <class Exact>
+struct LazyWeight {
+    Approximation approx;
+    Exact exact;
+    int64_t tag = -1;
+    bool negate = false;
+    double value() const { return negate ? -approx.value : approx.value; }
+    double approx_from(double base) const { return base + value(); }
+    double magnitude() const { return std::fabs(approx.value); }
+    double error() const { return approx.error; }
+    Expansion added_to(const Expansion& e) const {
+        const Expansion w = exact();
+        return expansion_sum(e, negate ? negated(w) : w);
+    }
+};
+
+// A cycle in the predecessor graph: the tags of its arcs in the order the cycle
+// runs, or nothing when the graph has none. Each node points at the node its
+// label was last set from, so the graph is a forest unless it closes on
+// itself; one pass colours every chain, and a chain that meets itself is the
+// cycle.
+inline std::vector<int64_t> predecessor_cycle(const std::vector<int64_t>& pred_node,
+                                              const std::vector<int64_t>& pred_tag) {
+    const std::size_t n = pred_node.size();
+    std::vector<int64_t> seen(n, -1);
+    for (std::size_t s = 0; s < n; ++s) {
+        if (seen[s] >= 0) continue;
+        int64_t v = static_cast<int64_t>(s);
+        while (v >= 0 && seen[static_cast<std::size_t>(v)] < 0) {
+            seen[static_cast<std::size_t>(v)] = static_cast<int64_t>(s);
+            v = pred_node[static_cast<std::size_t>(v)];
+        }
+        if (v < 0 || seen[static_cast<std::size_t>(v)] != static_cast<int64_t>(s)) continue;
+        // v lies on a cycle of this chain. Walking predecessors runs the cycle
+        // backwards, so the tags are collected and then reversed.
+        std::vector<int64_t> tags;
+        int64_t x = v;
+        do {
+            tags.push_back(pred_tag[static_cast<std::size_t>(x)]);
+            x = pred_node[static_cast<std::size_t>(x)];
+        } while (x != v);
+        std::reverse(tags.begin(), tags.end());
+        return tags;
+    }
+    return {};
+}
+
 // Shortest paths from a root joined to every node at weight zero, so every
-// distance is at most zero. `out_arcs(k, emit)` calls `emit(j, a, b)` once per
-// arc k -> j of weight a - b, both doubles; a single-double weight passes b = 0.
+// distance is at most zero. `out_arcs(k, emit)` calls `emit(j, weight)` once per
+// arc k -> j, with the weight a DoubleDifference or a LazyWeight.
 // `hint` is optional (empty for none) and orders the search only.
+//
+// With `want_cycle`, a search that finds a negative cycle goes on to name one.
+// A walk longer than the node count proves a negative cycle exists without
+// saying where, so the search keeps correcting labels and checks its
+// predecessor graph once per n relaxations. Every cycle in that graph is
+// negative, and once a negative cycle is reachable one appears (Cherkassky and
+// Goldberg 1999, "Negative-cycle detection algorithms"), so the check ends the
+// search with a cycle to cancel.
 template <class OutArcs>
 ShortestPaths shortest_paths(int64_t n_nodes, const std::vector<double>& hint,
-                             OutArcs&& out_arcs) {
+                             OutArcs&& out_arcs, bool want_cycle = false) {
     ShortestPaths out;
     const std::size_t n = static_cast<std::size_t>(n_nodes > 0 ? n_nodes : 0);
     out.dist.assign(n, Expansion());
@@ -77,6 +156,10 @@ ShortestPaths shortest_paths(int64_t n_nodes, const std::vector<double>& hint,
     // included. A walk from the root through n distinct nodes has n edges, so a
     // longer one has repeated a node.
     std::vector<int64_t> walk(n, 1);
+    std::vector<int64_t> pred_node(want_cycle ? n : 0, -1);
+    std::vector<int64_t> pred_tag(want_cycle ? n : 0, -1);
+    bool cycle_exists = false;
+    int64_t since_check = 0;
     const bool hinted = hint.size() == n;
     const auto key = [&](std::size_t j) {
         return approx[j].value - (hinted ? hint[j] : 0.0);
@@ -101,30 +184,52 @@ ShortestPaths shortest_paths(int64_t n_nodes, const std::vector<double>& hint,
         const Approximation ak = approx[k];
         const int64_t walk_k = walk[k];
 
-        out_arcs(static_cast<int64_t>(k), [&](int64_t head, double a, double b) {
+        out_arcs(static_cast<int64_t>(k), [&](int64_t head, const auto& w) {
             if (negative_cycle) return;
             const std::size_t j = static_cast<std::size_t>(head);
-            // Is d(k) + a - b < d(j)? Decided in doubles when the two sides are
+            // Is d(k) + w < d(j)? Decided in doubles when the two sides are
             // clear of each other's rounding, exactly otherwise.
             const Approximation& aj = approx[j];
-            const double diff = ((ak.value + a) - b) - aj.value;
-            const double magnitude = std::fabs(ak.value) + std::fabs(a) +
-                                     std::fabs(b) + std::fabs(aj.value);
-            const double bound = 4.0 * DBL_EPSILON * magnitude + ak.error + aj.error;
-            if (diff > -bound) {
+            const double diff = w.approx_from(ak.value) - aj.value;
+            const double magnitude = std::fabs(ak.value) + w.magnitude() +
+                                     std::fabs(aj.value);
+            const double bound = 4.0 * DBL_EPSILON * magnitude + ak.error + aj.error +
+                                 w.error();
+            // Only a difference strictly below the band is an improvement the
+            // doubles can vouch for. At a band of zero, which is two exact
+            // zero labels joined by a zero weight, a difference of zero is no
+            // improvement at all, and taking it for one would record a walk
+            // that did not shorten and report a negative cycle that is not
+            // there.
+            if (diff >= -bound) {
                 if (diff > bound) return;
-                const Expansion candidate = add_difference(dk, a, b);
+                const Expansion candidate = w.added_to(dk);
                 const Expansion gap = expansion_sum(candidate, negated(out.dist[j]));
                 if (sign(gap) >= 0) return;
                 out.dist[j] = candidate;
             } else {
-                out.dist[j] = add_difference(dk, a, b);
+                out.dist[j] = w.added_to(dk);
             }
             approx[j] = approximate(out.dist[j]);
             walk[j] = walk_k + 1;
+            if (want_cycle) {
+                pred_node[j] = static_cast<int64_t>(k);
+                pred_tag[j] = w.tag;
+            }
             if (walk[j] > n_nodes) {
-                negative_cycle = true;
-                return;
+                if (!want_cycle) {
+                    negative_cycle = true;
+                    return;
+                }
+                cycle_exists = true;
+            }
+            if (cycle_exists && ++since_check >= n_nodes) {
+                since_check = 0;
+                out.cycle = predecessor_cycle(pred_node, pred_tag);
+                if (!out.cycle.empty()) {
+                    negative_cycle = true;
+                    return;
+                }
             }
             queued[j] = 1;
             queue.emplace(key(j), j);
@@ -199,7 +304,7 @@ AssignmentPotentials recover_assignment_potentials(const Source& src,
             const double ck = matched_cost[static_cast<std::size_t>(i)];
             for_each_admissible(src, i, [&](int64_t j, double c) {
                 ++out.n_evaluated;
-                if (j != k) emit(j, c, ck);
+                if (j != k) emit(j, DoubleDifference{c, ck});
                 return true;
             });
         });

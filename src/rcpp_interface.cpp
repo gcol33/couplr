@@ -102,9 +102,28 @@ SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
                               double max_distance, Rcpp::List calipers,
                               Rcpp::CharacterVector vars);
 Rcpp::List pricing_session_seed_impl(SEXP session, double width);
-Rcpp::List pricing_session_price_impl(SEXP session, Rcpp::NumericVector u,
-                                      Rcpp::NumericVector v, double keep_per_row,
-                                      double tol);
+Rcpp::List pricing_session_price_exact_impl(SEXP session, Rcpp::NumericMatrix u,
+                                            Rcpp::NumericMatrix v, double offset,
+                                            double keep_per_row);
+Rcpp::List flow_lagrangian_step_impl(int n_nodes, Rcpp::NumericVector supply,
+                                     Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                                     Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                                     Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                                     Rcpp::NumericVector potential,
+                                     Rcpp::IntegerVector pair_arc,
+                                     Rcpp::IntegerVector pair_left,
+                                     Rcpp::IntegerVector pair_right,
+                                     Rcpp::IntegerVector left_node,
+                                     Rcpp::IntegerVector right_node,
+                                     Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                     Rcpp::NumericVector b, Rcpp::NumericVector lambda);
+Rcpp::NumericVector exact_dot_impl(Rcpp::NumericVector x, Rcpp::NumericVector y);
+int exact_compare_impl(Rcpp::NumericVector e, Rcpp::NumericVector f);
+double exact_round_impl(Rcpp::NumericVector e, std::string direction);
+double exact_ceil_quotient_impl(Rcpp::NumericVector e, double add, double divisor);
+Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                  Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                  Rcpp::IntegerVector right, Rcpp::NumericVector lambda);
 Rcpp::NumericVector pricing_session_cost_impl(SEXP session, Rcpp::IntegerVector i,
                                               Rcpp::IntegerVector j);
 Rcpp::List pricing_session_range_impl(SEXP session);
@@ -476,10 +495,55 @@ Rcpp::List lap_pricing_seed(SEXP session, double width) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List lap_pricing_price(SEXP session, Rcpp::NumericVector u,
-                             Rcpp::NumericVector v, double keep_per_row,
-                             double tol) {
-  return pricing_session_price_impl(session, u, v, keep_per_row, tol);
+Rcpp::List lap_pricing_price_exact(SEXP session, Rcpp::NumericMatrix u,
+                                   Rcpp::NumericMatrix v, double offset,
+                                   double keep_per_row) {
+  return pricing_session_price_exact_impl(session, u, v, offset, keep_per_row);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_flow_lagrangian_step(int n_nodes, Rcpp::NumericVector supply,
+                                    Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                                    Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                                    Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                                    Rcpp::NumericVector potential,
+                                    Rcpp::IntegerVector pair_arc,
+                                    Rcpp::IntegerVector pair_left,
+                                    Rcpp::IntegerVector pair_right,
+                                    Rcpp::IntegerVector left_node,
+                                    Rcpp::IntegerVector right_node,
+                                    Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                    Rcpp::NumericVector b, Rcpp::NumericVector lambda) {
+  return flow_lagrangian_step_impl(n_nodes, supply, tail, head, lower, upper, cost,
+                                   flow, potential, pair_arc, pair_left, pair_right,
+                                   left_node, right_node, u, w, b, lambda);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector lap_exact_dot(Rcpp::NumericVector x, Rcpp::NumericVector y) {
+  return exact_dot_impl(x, y);
+}
+
+// [[Rcpp::export]]
+int lap_exact_compare(Rcpp::NumericVector e, Rcpp::NumericVector f) {
+  return exact_compare_impl(e, f);
+}
+
+// [[Rcpp::export]]
+double lap_exact_round(Rcpp::NumericVector e, std::string direction) {
+  return exact_round_impl(e, direction);
+}
+
+// [[Rcpp::export]]
+double lap_exact_ceil_quotient(Rcpp::NumericVector e, double add, double divisor) {
+  return exact_ceil_quotient_impl(e, add, divisor);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_exact_moment_rows(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                 Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                 Rcpp::IntegerVector right, Rcpp::NumericVector lambda) {
+  return exact_moment_rows_impl(u, w, b, left, right, lambda);
 }
 
 // [[Rcpp::export]]

@@ -146,6 +146,107 @@ test_that("a mean-difference bound is enumerated the same way", {
   }
 })
 
+# --- exact arithmetic ---------------------------------------------------------
+
+test_that("an optimal balance flow certifies exactly, zero-cost arcs included", {
+  # The balance network joins zero-labelled nodes by zero-cost arcs, where a
+  # shortest-path filter that took a zero difference for an improvement
+  # reported a negative cycle on an optimal flow.
+  for (seed in c(1:25, 101:112)) {
+    built <- card_build(card_instance(seed))
+    solved <- .flow_solve(built$problem)
+    cert <- verify_flow(solved, arithmetic = "exact")
+    expect_true(cert$certified_optimal, info = paste("seed", seed))
+  }
+})
+
+test_that("a node's bound never exceeds a moment-feasible matched set", {
+  for (seed in 201:208) {
+    inst <- card_instance(seed, max_units = 4L)
+    built <- card_build(inst)
+    coefs <- card_coefs(inst, max_std_diff = 0.2, vars = c("x", "y"))$coefs
+    set.seed(seed)
+    for (draw in 1:3) {
+      lambda <- stats::rexp(length(coefs)) * c(0, 0.1, 10)[[draw]]
+      fl <- .cardinality_flow(built$problem, built$index, coefs = coefs,
+                              lambda = lambda)
+      for (matching in card_all_matchings(inst$cost)) {
+        flow <- .balance_flow_encode(matching, built$index)
+        if (is.null(flow)) next
+        left_idx <- which(matching > 0L)
+        read <- list(left = left_idx, right = matching[left_idx])
+        rows <- .cardinality_rows_exact(built$index, coefs, read)
+        if (any(rows$sign > 0L)) next
+        objective <- lap_exact_dot(built$problem$arcs$cost, flow)
+        expect_lte(.exact_cmp(fl$bound_exact, objective), 0L)
+      }
+    }
+  }
+})
+
+test_that("with no multipliers the bound is the optimum itself, exactly", {
+  for (seed in 101:112) {
+    inst <- card_instance(seed)
+    built <- card_build(inst)
+    fl <- .cardinality_flow(built$problem, built$index)
+    best <- Inf
+    for (matching in card_all_matchings(inst$cost)) {
+      flow <- .balance_flow_encode(matching, built$index)
+      if (is.null(flow)) next
+      best <- .exact_min(list(best, lap_exact_dot(built$problem$arcs$cost, flow)))
+    }
+    expect_true(fl$certified)
+    expect_identical(.exact_cmp(fl$bound_exact, best), 0L)
+    expect_identical(.exact_cmp(fl$objective_exact, best), 0L)
+  }
+})
+
+test_that("a flow short of the optimum is repaired to it before it is read", {
+  repaired <- 0L
+  for (seed in 101:112) {
+    inst <- card_instance(seed)
+    built <- card_build(inst)
+    solved <- .flow_solve(built$problem)
+    optimum <- lap_exact_dot(built$problem$arcs$cost, solved$flow)
+    for (matching in card_all_matchings(inst$cost)) {
+      flow <- .balance_flow_encode(matching, built$index)
+      if (is.null(flow)) next
+      if (.exact_cmp(lap_exact_dot(built$problem$arcs$cost, flow), optimum) <= 0L) {
+        next
+      }
+      start <- list(flow = flow, potential = numeric(built$problem$n_nodes))
+      step <- .cardinality_step(built$problem, built$index, start, list(),
+                                numeric(0))
+      expect_true(step$recovered)
+      expect_gt(step$n_cancelled, 0)
+      reached <- lap_exact_dot(built$problem$arcs$cost, step$flow)
+      expect_identical(.exact_cmp(reached, optimum), 0L)
+      expect_identical(.exact_cmp(step$bound_exact, optimum), 0L)
+      repaired <- repaired + 1L
+      break
+    }
+  }
+  expect_gt(repaired, 0L)
+})
+
+test_that("a certified report under moment rows closed its bound exactly", {
+  checked <- 0L
+  for (seed in 201:210) {
+    inst <- card_instance(seed, max_units = 4L)
+    built <- card_build(inst)
+    coefs <- card_coefs(inst, max_std_diff = 0.3, vars = "x")$coefs
+    run <- .cardinality_branch_bound(built$problem, built$index, coefs = coefs,
+                                     node_limit = 300L)
+    if (!isTRUE(run$certified)) next
+    expect_true(all(.cardinality_rows_exact(run$index, coefs,
+                                            run$solution$read)$sign <= 0L))
+    expect_identical(run$best_possible, run$solution$read$n_pairs)
+    expect_lte(run$bound, run$objective)
+    checked <- checked + 1L
+  }
+  expect_gt(checked, 0L)
+})
+
 # --- the unconstrained reduction ----------------------------------------------
 
 test_that("no balance requirement reduces to maximum-cardinality matching", {

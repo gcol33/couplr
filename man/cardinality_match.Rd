@@ -122,7 +122,10 @@ it holds:
 \item \code{cardinality} - the report: \code{n_matched}, \code{best_possible}, \code{gap},
 \code{gap_fraction}, \code{certified}, \code{stopped_on}, \code{n_nodes}, and the state of
 every stated constraint. See \code{\link[=print.cardinality_report]{print.cardinality_report()}}.
-\item \code{certificate} - present when the search certified optimality.
+\item \code{certificate} - present when the search certified optimality, with
+\code{arithmetic = "exact"}: the bounds, the comparisons between them and
+the matched sample's objective and constraint values it rests on are
+all decided exactly.
 \item \code{potentials} - the dual potentials of the network solve the
 matched sample came from, a list with elements \code{left} and \code{right}
 holding one value per unit, named by id, in distance terms: the
@@ -174,6 +177,13 @@ settled and the gap is zero, and \code{gap} says how many matched units separate
 the answer from the bound when it is not. Every stopping path returns a
 matched set that satisfies every stated constraint, together with a bound
 valid for the whole problem.
+
+The certificate carries no tolerance. Each node's bound is the dual
+objective of its Lagrangian relaxation evaluated in exact arithmetic, which
+weak duality makes a lower bound whatever the solver returned, and the
+pruning tests, the constraint values of a matched set and the cardinality
+read off the bound are decided exactly, over the distances and constraint
+coefficients as stored.
 
 How long the search runs depends on whether the moment bounds bind. When the
 distance-minimizing match already satisfies them, which happens with a loose

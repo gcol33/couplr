@@ -244,6 +244,102 @@ inline Approximation approximate(const Expansion& e) {
     return out;
 }
 
+// Dekker's two-product through a fused multiply-add: returns fl(a * b) and
+// writes into `err` the part the rounding lost, so that a * b == result + err
+// holds exactly. std::fma rounds once, which is what makes the remainder exact.
+inline double two_product(double a, double b, double& err) {
+    const double p = a * b;
+    err = std::fma(a, b, -p);
+    return p;
+}
+
+// a * b as an expansion, exactly.
+inline Expansion product(double a, double b) {
+    double lo = 0.0;
+    const double hi = two_product(a, b, lo);
+    Expansion out;
+    if (lo != 0.0) out.push_back(lo);
+    if (hi != 0.0) out.push_back(hi);
+    return out;
+}
+
+// e * b, exactly and compressed. Shewchuk's SCALE-EXPANSION: each component's
+// product splits into a high and a low part, and the running sum absorbs them
+// with every piece rounding lost set aside, as grow_expansion() does for a sum.
+inline Expansion scale_expansion(const Expansion& e, double b) {
+    Expansion out;
+    if (e.empty() || b == 0.0) return out;
+    out.reserve(2 * e.size());
+    double lo = 0.0;
+    double q = two_product(e[0], b, lo);
+    if (lo != 0.0) out.push_back(lo);
+    for (std::size_t k = 1; k < e.size(); ++k) {
+        double p_lo = 0.0;
+        const double p_hi = two_product(e[k], b, p_lo);
+        double s_lo = 0.0;
+        const double s = two_sum(q, p_lo, s_lo);
+        if (s_lo != 0.0) out.push_back(s_lo);
+        double t_lo = 0.0;
+        q = two_sum(p_hi, s, t_lo);
+        if (t_lo != 0.0) out.push_back(t_lo);
+    }
+    if (q != 0.0) out.push_back(q);
+    compress(out);
+    return out;
+}
+
+// Sign of e - y, exactly.
+inline int compare(const Expansion& e, double y) {
+    Expansion diff;
+    grow_expansion(e, -y, diff);
+    return sign(diff);
+}
+
+// Sign of e - f, exactly.
+inline int compare(const Expansion& e, const Expansion& f) {
+    return sign(expansion_sum(e, negated(f)));
+}
+
+// The largest double not above the value, and the smallest not below it. A
+// compressed expansion's top component is within one unit in its last place of
+// the whole, so each loop below takes at most a step or two.
+inline double round_down(const Expansion& e) {
+    Expansion c = e;
+    compress(c);
+    double x = c.empty() ? 0.0 : c.back();
+    const double down = -std::numeric_limits<double>::infinity();
+    const double up = std::numeric_limits<double>::infinity();
+    while (compare(c, x) < 0) x = std::nextafter(x, down);
+    for (;;) {
+        const double y = std::nextafter(x, up);
+        if (compare(c, y) < 0) break;
+        x = y;
+    }
+    return x;
+}
+
+inline double round_up(const Expansion& e) {
+    return -round_down(negated(e));
+}
+
+// The smallest integer q with q * d >= e + a, for d > 0: the ceiling of the
+// quotient, decided exactly. The double quotient starts the search, and q * d
+// is held exactly as a two-component product, so each test is one exact sign.
+// Every q a caller passes through here is far below 2^53, where a double counts
+// exactly.
+inline double ceil_quotient(const Expansion& e, double a, double d) {
+    Expansion t;
+    grow_expansion(e, a, t);
+    compress(t);
+    const auto above = [&](double q) {
+        return sign(expansion_sum(t, negated(product(q, d)))) > 0;
+    };
+    double q = std::ceil((t.empty() ? 0.0 : t.back()) / d);
+    while (above(q)) q += 1.0;
+    while (!above(q - 1.0)) q -= 1.0;
+    return q;
+}
+
 // Sign of c - U - V for a double c and expansions U and V, exactly. The
 // certificate's question once the potentials are expansions rather than
 // doubles; the same filter as sign_reduced_cost() decides the pairs clear of

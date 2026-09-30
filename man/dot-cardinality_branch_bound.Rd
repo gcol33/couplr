@@ -13,8 +13,7 @@
   node_limit = 500L,
   time_limit = Inf,
   should_stop = NULL,
-  cost = NULL,
-  tol = 1e-09
+  cost = NULL
 )
 }
 \arguments{
@@ -34,8 +33,6 @@
 search the way an interrupt would.}
 
 \item{cost}{Optional distance matrix for the audit.}
-
-\item{tol}{Numeric tolerance for certification, pruning and the row values.}
 }
 \value{
 A list of class \code{cardinality_run}.

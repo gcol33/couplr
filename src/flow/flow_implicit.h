@@ -532,6 +532,13 @@ namespace implicit_detail {
 // those as the pricer reaches it. A pruning pricer's bound is already a lower
 // bound on the exact reduced cost, so a subtree it skips at the margin holds no
 // negative pair either.
+//
+// `offset` serves a network whose pair arcs carry the source's cost less a
+// constant, rounded: an arc costs fl(c - offset), and the exact sign is taken of
+// fl(c - offset) - U_i - V_j. The pricer still reads c, so its row potentials
+// are rounded up from U_i + offset, and the margin grows by the rounding of the
+// one subtraction, which near zero is bounded by the same potentials. An offset
+// of zero is the unshifted cost and changes nothing above.
 struct ExactPrices {
     bool ok = false;
     std::vector<exact::Expansion> U;
@@ -540,20 +547,29 @@ struct ExactPrices {
     std::vector<exact::Approximation> va;
     std::vector<double> u_hi;
     std::vector<double> v_hi;
+    double offset = 0.0;
     double margin = 0.0;
 
-    void set(std::vector<exact::Expansion> rows, std::vector<exact::Expansion> cols) {
+    void set(std::vector<exact::Expansion> rows, std::vector<exact::Expansion> cols,
+             double cost_offset = 0.0) {
         U = std::move(rows);
         V = std::move(cols);
+        offset = cost_offset;
         ua.resize(U.size());
         va.resize(V.size());
         u_hi.resize(U.size());
         v_hi.resize(V.size());
         double largest_u = 0.0;
         double largest_v = 0.0;
+        exact::Expansion shifted;
         for (std::size_t i = 0; i < U.size(); ++i) {
             ua[i] = exact::approximate(U[i]);
-            u_hi[i] = detail::next_up(ua[i].value + ua[i].error);
+            exact::Approximation sa = ua[i];
+            if (offset != 0.0) {
+                exact::grow_expansion(U[i], offset, shifted);
+                sa = exact::approximate(shifted);
+            }
+            u_hi[i] = detail::next_up(sa.value + sa.error);
             largest_u = std::max(largest_u, std::abs(u_hi[i]));
         }
         for (std::size_t j = 0; j < V.size(); ++j) {
@@ -561,7 +577,8 @@ struct ExactPrices {
             v_hi[j] = detail::next_up(va[j].value + va[j].error);
             largest_v = std::max(largest_v, std::abs(v_hi[j]));
         }
-        margin = detail::next_up(8.0 * DBL_EPSILON * (largest_u + largest_v));
+        margin = detail::next_up(8.0 * DBL_EPSILON *
+                                 (largest_u + largest_v + std::abs(offset)));
         ok = true;
     }
 
@@ -571,7 +588,8 @@ struct ExactPrices {
         const auto negative = [this](int64_t i, int64_t j, double c) {
             const std::size_t si = static_cast<std::size_t>(i);
             const std::size_t sj = static_cast<std::size_t>(j);
-            return exact::sign_reduced_cost(c, U[si], ua[si], V[sj], va[sj]) < 0;
+            const double arc_cost = c - offset;
+            return exact::sign_reduced_cost(arc_cost, U[si], ua[si], V[sj], va[sj]) < 0;
         };
         return search.price(src, u_hi, v_hi, cand, keep_per_row, -margin, negative);
     }

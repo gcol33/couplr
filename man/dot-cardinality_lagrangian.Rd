@@ -13,7 +13,6 @@
   edits = NULL,
   incumbent = Inf,
   step0 = NULL,
-  tol = 1e-09,
   cost = NULL,
   warm = NULL,
   deadline = Inf
@@ -37,8 +36,6 @@ returns.}
 
 \item{step0}{An explicit \code{t_0}, overriding that scale.}
 
-\item{tol}{Numeric tolerance for certification and for the row values.}
-
 \item{cost}{Optional distance matrix for the audit.}
 
 \item{warm}{Optional \code{list(flow, potential)} to start the first solve from.}
@@ -47,20 +44,20 @@ returns.}
 stops where it stands. \code{Inf} is no budget.}
 }
 \value{
-A list with \code{bound}, the multipliers that attained it, the relaxed
-solve at those multipliers, any moment-feasible solutions the ascent
-passed through, \code{certified}, whether the bound it reports came out of a
-certified solve, and \code{warm}, the last complete solve's flow and potentials.
-A \code{status} of \code{"interrupted"} means a solve ran out of time; the bound and
-the solutions reported alongside it came from the steps that finished, and
-are as valid as any others.
+A list with \code{bound} and \code{bound_exact}, the best bound rounded down
+and exact, the multipliers that attained it, the relaxed solve at those
+multipliers, any moment-feasible solutions the ascent passed through,
+\code{certified}, whether any step proved a bound, and \code{warm}, the last
+complete solve's flow and potentials. A \code{status} of \code{"interrupted"} means
+a solve ran out of time; the bound and the solutions reported alongside it
+came from the steps that finished, and are as valid as any others.
 }
 \description{
 Solves the node's network at a sequence of multipliers, each step one
-\code{.flow_solve()} and one \code{verify_flow()}, and returns the largest certified
-relaxed optimum it reached. Multipliers move along the projected subgradient
-with step \code{t_0 / (1 + k)}, warm-started from whatever \code{lambda} is handed in,
-which is the parent's best set during a search.
+\code{.flow_solve()} read exactly by \code{.cardinality_flow()}, and returns the
+largest bound the steps proved. Multipliers move along the projected
+subgradient with step \code{t_0 / (1 + k)}, warm-started from whatever \code{lambda}
+is handed in, which is the parent's best set during a search.
 }
 \details{
 Consecutive steps solve one network. The topology, the arc bounds and every

@@ -384,28 +384,29 @@ Rcpp::List pricing_session_seed_impl(SEXP session, double width) {
     return Rcpp::List();
 }
 
-// The omitted pairs pricing below -tol against u (per row) and v (per column),
-// at most keep_per_row per row, added to the candidate set and returned; and
-// the floor that bounds every omitted admissible pair, evaluated or pruned.
-Rcpp::List pricing_session_price_impl(SEXP session, Rcpp::NumericVector u,
-                                      Rcpp::NumericVector v, double keep_per_row,
-                                      double tol) {
+// The omitted pairs whose reduced cost is exactly negative, at most
+// keep_per_row per row, added to the candidate set and returned. `u` and `v`
+// hold the pair potentials as expansions, one row per unit, and a pair's arc
+// costs its distance less `offset`, rounded, as the network holds it; see
+// ExactPrices in flow_implicit.h. None returned means every omitted pair prices
+// at or above zero, exactly.
+Rcpp::List pricing_session_price_exact_impl(SEXP session, Rcpp::NumericMatrix u,
+                                            Rcpp::NumericMatrix v, double offset,
+                                            double keep_per_row) {
     try {
         const int keep = static_cast<int>(implicit_knob_from_r(keep_per_row, "keep_per_row"));
+        if (!std::isfinite(offset)) Rcpp::stop("pricing session: the offset is not finite");
         return std::visit([&](auto& s) {
-            if (u.size() != s->src.nrow || v.size() != s->src.ncol) {
-                Rcpp::stop("pricing session: %d row duals and %d column duals for a "
-                           "%d x %d source", static_cast<int>(u.size()),
-                           static_cast<int>(v.size()), static_cast<int>(s->src.nrow),
+            if (u.nrow() != s->src.nrow || v.nrow() != s->src.ncol) {
+                Rcpp::stop("pricing session: %d row potentials and %d column potentials "
+                           "for a %d x %d source", static_cast<int>(u.nrow()),
+                           static_cast<int>(v.nrow()), static_cast<int>(s->src.nrow),
                            static_cast<int>(s->src.ncol));
             }
-            const std::vector<double> uu(u.begin(), u.end());
-            const std::vector<double> vv(v.begin(), v.end());
-            const lap::BlockPricing priced =
-                s->search.price(s->src, uu, vv, s->cand, keep, tol);
+            lap::implicit_detail::ExactPrices prices;
+            prices.set(expansions_from_r(u, false), expansions_from_r(v, false), offset);
+            const lap::BlockPricing priced = prices.price(s->src, s->search, s->cand, keep);
             Rcpp::List out = pairs_to_r(s->cand.add_pairs(lap::violator_pairs(priced.violators)));
-            out.push_back(priced.min_reduced_cost, "min_reduced_cost");
-            out.push_back(priced.proven_floor, "proven_floor");
             out.push_back(static_cast<double>(priced.n_violators), "n_violators");
             out.push_back(static_cast<double>(priced.n_evaluated), "n_evaluated");
             return out;

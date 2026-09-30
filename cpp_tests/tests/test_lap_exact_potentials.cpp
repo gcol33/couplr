@@ -14,6 +14,7 @@
 #include "core/lap_types.h"
 #include "solvers/solve_jv_duals.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <random>
@@ -228,9 +229,9 @@ TEST_CASE("shortest paths report a negative cycle whatever the hint",
           "[exact][paths]") {
     // 0 -> 1 -> 2 -> 0 with total weight -1, reached from the root.
     const auto arcs = [](int64_t k, auto&& emit) {
-        if (k == 0) emit(1, 1.0, 0.0);
-        if (k == 1) emit(2, 1.0, 0.0);
-        if (k == 2) emit(0, 0.0, 3.0);
+        if (k == 0) emit(1, ex::DoubleDifference{1.0, 0.0, 10});
+        if (k == 1) emit(2, ex::DoubleDifference{1.0, 0.0, 11});
+        if (k == 2) emit(0, ex::DoubleDifference{0.0, 3.0, 12});
     };
     REQUIRE_FALSE(ex::shortest_paths(3, {}, arcs).ok);
     REQUIRE_FALSE(ex::shortest_paths(3, {5.0, -2.0, 0.25}, arcs).ok);
@@ -239,13 +240,65 @@ TEST_CASE("shortest paths report a negative cycle whatever the hint",
     // the root at zero, so d(1) = d(2) = 0 and the arc 2 -> 0 of weight -1
     // puts d(0) at -1.
     const auto positive = [](int64_t k, auto&& emit) {
-        if (k == 0) emit(1, 1.0, 0.0);
-        if (k == 1) emit(2, 1.0, 0.0);
-        if (k == 2) emit(0, 0.0, 1.0);
+        if (k == 0) emit(1, ex::DoubleDifference{1.0, 0.0});
+        if (k == 1) emit(2, ex::DoubleDifference{1.0, 0.0});
+        if (k == 2) emit(0, ex::DoubleDifference{0.0, 1.0});
     };
     const ex::ShortestPaths p = ex::shortest_paths(3, {}, positive);
     REQUIRE(p.ok);
     REQUIRE(ex::approximate(p.dist[0]).value == -1.0);
     REQUIRE(ex::sign(p.dist[1]) == 0);
     REQUIRE(ex::sign(p.dist[2]) == 0);
+}
+
+TEST_CASE("a search asked for the cycle names its arcs in order",
+          "[exact][paths]") {
+    const auto arcs = [](int64_t k, auto&& emit) {
+        if (k == 0) emit(1, ex::DoubleDifference{1.0, 0.0, 10});
+        if (k == 1) emit(2, ex::DoubleDifference{1.0, 0.0, 11});
+        if (k == 2) emit(0, ex::DoubleDifference{0.0, 3.0, 12});
+    };
+    const ex::ShortestPaths p = ex::shortest_paths(3, {}, arcs, true);
+    REQUIRE_FALSE(p.ok);
+    REQUIRE(p.cycle.size() == 3);
+    // Any rotation of 10, 11, 12 runs the cycle in its own order.
+    const auto at = std::find(p.cycle.begin(), p.cycle.end(), int64_t{10});
+    REQUIRE(at != p.cycle.end());
+    const std::size_t s = static_cast<std::size_t>(at - p.cycle.begin());
+    REQUIRE(p.cycle[(s + 1) % 3] == 11);
+    REQUIRE(p.cycle[(s + 2) % 3] == 12);
+}
+
+TEST_CASE("zero-weight arcs between zero labels are no improvement",
+          "[exact][paths]") {
+    // A zero-weight 2-cycle between every pair of four nodes: optimal
+    // distances are all zero, and no negative cycle exists.
+    const auto arcs = [](int64_t k, auto&& emit) {
+        for (int64_t j = 0; j < 4; ++j) {
+            if (j != k) emit(j, ex::DoubleDifference{0.0, 0.0});
+        }
+    };
+    for (bool want : {false, true}) {
+        const ex::ShortestPaths p = ex::shortest_paths(4, {}, arcs, want);
+        REQUIRE(p.ok);
+        REQUIRE(p.cycle.empty());
+        for (const auto& d : p.dist) REQUIRE(ex::sign(d) == 0);
+    }
+}
+
+TEST_CASE("products, directed rounding and ceilings are exact",
+          "[exact][arith]") {
+    const double a = 1.0 + std::ldexp(1.0, -30);
+    const ex::Expansion p = ex::product(a, a);
+    REQUIRE(ex::compare(p, a * a) == 1);
+    REQUIRE(ex::round_down(p) == a * a);
+    REQUIRE(ex::round_up(p) == std::nextafter(a * a, 2.0));
+
+    const ex::Expansion s = ex::scale_expansion(p, 3.0);
+    REQUIRE(ex::compare(s, ex::expansion_sum(ex::expansion_sum(p, p), p)) == 0);
+
+    ex::Expansion six{6.0};
+    REQUIRE(ex::ceil_quotient(six, 0.0, 3.0) == 2.0);
+    REQUIRE(ex::ceil_quotient(six, std::ldexp(1.0, -50), 3.0) == 3.0);
+    REQUIRE(ex::ceil_quotient(six, -std::ldexp(1.0, -50), 3.0) == 2.0);
 }

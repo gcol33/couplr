@@ -45,8 +45,30 @@
   holds for `assignment()`, `match_couples()` and `full_match()` under
   `memory_mode = "implicit"`. A loop that does not certify prices at `-tol` as
   before. Each round's record says which pricing it used (`exact_pricing`).
-  `cardinality_match()` keeps its numerical certificate over omitted pairs,
-  whose arc costs carry the tier shift and the moment multipliers.
+
+## Exact bounds in `cardinality_match()`
+
+* **`cardinality_match()` certifies with no tolerance.** Its branch and bound
+  took each node's bound from the relaxed optimum of a solve the
+  double-arithmetic flow certificate had accepted, pruned a node within `1e-9`
+  times the incumbent's objective, and priced the pairs a generating search
+  omits at `-1e-9` times the largest potential. Each solve is now read
+  exactly. The multiplier-repriced arc costs are held as expansions, the
+  flow's exact potentials are recovered from its residual graph under them,
+  any negative cycle those costs show is cancelled first, and the node's bound
+  is the dual objective at those potentials, which weak duality makes a lower
+  bound whatever the solve did. Omitted pairs are priced at zero against the
+  same potentials. The bounds, the incumbent's objective, the pruning tests,
+  the moment rows of a matched set and the cardinality read off the bound are
+  all decided exactly, so `certified = TRUE` is a proof over the costs and
+  rows as stored, on the flow engine and under moment constraints, dense and
+  implicit. The internal `tol` arguments of the search are gone.
+
+* The solver behind a node prices the repriced costs rounded to doubles and
+  stops at reduced costs within its own tolerance, so its flow can miss the
+  exact optimum of the node by that margin. Such a flow is repaired by
+  cancelling negative cycles in exact arithmetic before it is read, so the
+  matched set a node reports is optimal for the node's exact costs.
 
 ## Potentials on every design (#63)
 
@@ -63,6 +85,20 @@
 
 * `cardinality_match()` returns the potentials of the network solve its
   matched sample came from, in distance terms with the multipliers folded in.
+
+## Bug fixes
+
+* Exact potential recovery could refuse an optimal flow. Its shortest-path
+  search decides a relaxation in doubles when the two sides are clear of their
+  rounding band, and at a band of zero, two exact zero labels joined by a
+  zero-cost arc, it took a difference of zero for an improvement. Every such
+  relaxation lengthened the walk it recorded without shortening a path, so on
+  a network with zero-cost arcs the walk overran the node count and the search
+  reported a negative cycle that was not there. `verify_flow(arithmetic =
+  "exact")` refused 6 of the 37 balance networks in the package's test
+  instances, each of them optimal, and certifies all 37 now. The same search
+  recovers the potentials behind `verify_assignment()` and the implicit loop;
+  those paths were not measured separately.
 
 # couplr 1.7.2
 

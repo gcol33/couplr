@@ -1,0 +1,4 @@
+"package","n_pairs","total","certified","arithmetic","duality_gap","max_suboptimality","same_as_couplr"
+"couplr",185,304.042249060069,TRUE,"exact",0,0,185
+"MatchIt",185,304.043164044936,FALSE,"double",0.000914984867790736,0.000914984868239002,150
+"optmatch",185,304.043164044936,FALSE,"double",0.000914984867790736,0.000914984868239002,150

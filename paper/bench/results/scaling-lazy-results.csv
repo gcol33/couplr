@@ -1,0 +1,3 @@
+"n_total","memory_mode","instances","median_s","q25_s","q75_s"
+20000,"lazy",3,6.982,6.61,7.158
+50000,"lazy",3,60.594,55.638,61.315

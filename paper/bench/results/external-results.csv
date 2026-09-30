@@ -1,0 +1,16 @@
+"tool","kind","instances","max_abs_rel_diff","n_higher","certified","exact"
+"clue","euclid",40,0,0,40,40
+"couplr","euclid",40,0,0,40,40
+"lpSolve","euclid",20,0,0,20,20
+"optmatch","euclid",40,0.000101712947578921,36,4,4
+"scipy","euclid",40,0,0,40,40
+"clue","integer",40,0,0,40,40
+"couplr","integer",40,0,0,40,40
+"lpSolve","integer",20,0,0,20,20
+"optmatch","integer",40,0,0,40,40
+"scipy","integer",40,0,0,40,40
+"clue","uniform",40,0,0,40,40
+"couplr","uniform",40,0,0,40,40
+"lpSolve","uniform",20,0,0,20,20
+"optmatch","uniform",40,0.0240923686456365,34,6,6
+"scipy","uniform",40,0,0,40,40

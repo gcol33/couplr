@@ -11,8 +11,8 @@
 # that property favours the method.
 #
 # A rule earns its place by beating the default on the regime grid in
-# paper/bench_regimes.R, and two former rules did not. Sending a matrix with
-# more than half its entries forbidden to `lapmod` was never the quickest
+# paper/bench/bench_regimes.R, and two former rules did not. Sending a matrix
+# with more than half its entries forbidden to `lapmod` was never the quickest
 # choice at 60, 25, 5 or 1 percent of the entries finite, and sending a problem
 # with at least three columns per row to `sap` was the quickest in none of the
 # 32 cells where it fired, at a median of 5.75 times the cell's best. Jonker-

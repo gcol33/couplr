@@ -98,10 +98,10 @@ one asked, so the version that reaches CRAN is this one.
 * **`method = "auto"` no longer diverts on sparsity or aspect ratio.** Two of
   the five dispatch rules sent a matrix with more than half its entries
   forbidden to `"lapmod"`, and a matrix with at least three columns per row to
-  `"sap"`. Measured across the regime grid in `paper/bench_regimes.R`, neither
-  earned its place: `"sap"` was the quickest solver in none of the 32 cells
-  where its rule fired, at a median of 5.75 times the cell's best and a worst
-  of 13.4, and `"lapmod"` was quickest in 2 of 48 cells at 60 and 25 percent of
+  `"sap"`. Measured across the regime grid in `paper/bench/bench_regimes.R`,
+  neither earned its place: `"sap"` was the quickest solver in none of the 32
+  cells where its rule fired, at a median of 5.75 times the cell's best and a
+  worst of 13.4, and `"lapmod"` was quickest in 2 of 48 cells at 60 and 25 percent of
   the entries finite, and in 1 of 31 at 5 and 1 percent, the extreme sparsity
   its adjacency structure exists for. Jonker-Volgenant is at or below the
   best-known time in both regimes, so both properties now fall through to it.
@@ -178,7 +178,7 @@ one asked, so the version that reaches CRAN is this one.
   disjoint grid, took a median 0.13 of the time of `"jv"` over 64 cells, but
   2.6 times it in the worst. Neither is in the dispatch table, and
   `"auction_scaled"` remains available by name for tied costs.
-  `paper/bench_dispatch_validation.R` holds both grids and their verdicts.
+  `paper/bench/bench_dispatch_validation.R` holds both grids and their verdicts.
 
 * **`full_match()` takes `memory_mode = "implicit"`.** The edge-generation
   loop solved only the one-to-one assignment, because it read assignment

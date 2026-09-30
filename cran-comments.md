@@ -27,7 +27,9 @@
 * `verify_assignment()` reads duals off a solve result by exact name rather
   than by partial matching.
 
-No exported function is removed or renamed, and no dependency is added.
+No exported function is removed or renamed, and no hard dependency is
+added. 'clue' and 'lpSolve' join Suggests: the tests check every solver
+against their optima.
 
 ## R CMD check results
 
@@ -38,7 +40,13 @@ updates. 1.7.1 was published on 2026-09-16.
 
 ## Test environments
 
-* win-builder r-devel: WINBUILDER_DEVEL
+* local: Windows 11 x64, Rtools45 g++ 14.3.0. R 4.6.1: Status OK.
+  R-devel (2026-09-29 r90598 ucrt): Status OK apart from math rendering
+  in the HTML manual being skipped, as 'V8' is not installed there.
+* win-builder was unavailable on 2026-09-30: every run, including one of
+  a minimal test package, stopped at "checking CRAN incoming feasibility"
+  after a few seconds. R-devel on Windows was therefore checked locally,
+  at the revision win-builder runs.
 * GitHub Actions at the release commit: macOS-latest (release),
   windows-latest (release), ubuntu-latest (devel, release, oldrel-1)
 

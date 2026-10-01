@@ -166,8 +166,7 @@ ggplot(race_data, aes(x = algorithm, y = time_ms, fill = algorithm)) +
     plot.subtitle = element_text(size = 11),
     axis.text.y = element_text(size = 12, face = "bold"),
     axis.text.x = element_text(size = 10),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor = element_blank(),
+    panel.grid = element_blank(),
     plot.margin = margin(10, 60, 10, 10)
   )
 ```

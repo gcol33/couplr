@@ -10,6 +10,8 @@ match_couples(
   left,
   right = NULL,
   vars = NULL,
+  left_id = NULL,
+  right_id = NULL,
   distance = "euclidean",
   weights = NULL,
   scale = FALSE,
@@ -28,7 +30,8 @@ match_couples(
   ratio = 1L,
   check_costs = TRUE,
   sigma = NULL,
-  memory_mode = "auto"
+  memory_mode = "auto",
+  certify = NULL
 )
 ```
 
@@ -45,6 +48,22 @@ match_couples(
 - vars:
 
   Variable names to use for distance computation
+
+- left_id, right_id:
+
+  Name of the column holding the unit identifier, or NULL (default) to
+  use a column called `id`, then meaningful row names, then synthesized
+  ids `left_1 ... left_n` / `right_1 ... right_m` with a warning. The
+  values of this column are what `pairs$left_id` and `pairs$right_id`
+  carry, and what
+  [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md),
+  [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md),
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md),
+  [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  and
+  [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  join on, so the same column name is passed to those verbs. Ids read
+  from the data must be unique.
 
 - distance:
 
@@ -150,17 +169,49 @@ match_couples(
 
 - memory_mode:
 
-  One of "auto" (default), "dense", or "lazy". "auto" warns (or, when
-  `method` is `"jv"`/`"auction"` with a built-in distance metric,
-  switches) when the dense cost matrix would consume a large fraction of
-  free system RAM. "lazy" computes each pairwise distance from the
-  underlying feature data as the solver needs it, instead of allocating
-  the full n_left x n_right matrix; supported for
-  `method = "jv"`/`"auction"` with a built-in distance metric, and not
-  yet for `replace = TRUE`, `ratio > 1`, `method = "greedy"`, or custom
-  distance functions (blocking via `block_id` is the other option that
-  reduces memory, by solving smaller sub-problems). "dense" skips the
-  RAM check entirely.
+  One of "auto" (default), "dense", "lazy" or "implicit". "auto" warns
+  (or, when `method` is `"jv"`/`"auction"`, switches) when the dense
+  cost matrix would consume a large fraction of free system RAM. "lazy"
+  computes each pairwise distance from the underlying feature data as
+  the solver needs it, instead of allocating the full n_left x n_right
+  matrix; supported for `method = "jv"`/`"auction"`, including
+  `replace = TRUE`, where each left unit's cheapest partners are found
+  one row at a time, and `ratio > 1`, where the left units' covariates
+  are replicated rather than their rows of distances, and not yet for
+  `method = "greedy"` (blocking via `block_id` is the other option that
+  reduces memory, by solving smaller sub-problems). A custom distance
+  function is called on a block of left units against every right unit,
+  the same contract the dense path calls it under, with the block sized
+  so the matrix it returns stays near a million cells; each matched pair
+  is then evaluated again alone, and a distance that depends on the
+  other units in its call is an error. When the constraints admit no
+  complete matching, the largest matching they admit, cheapest among
+  those, is found by the edge-generation loop over the same
+  specification, as the dense path finds it by padding. Where the metric
+  carries a ball bound, the column set is held in a ball tree and a
+  subtree whose bound cannot beat the current threshold is discarded
+  without being read: `"mahalanobis"` always, the metrics linear in the
+  covariates up to six of them. `"manhattan"` and `"chebyshev"`, a
+  covariance with no Cholesky factor, and a higher-dimensional linear
+  metric read the columns instead. "implicit" states the problem over
+  every pair and solves it over a fraction of them, generating the pairs
+  the answer turns out to need and proving that the ones it never
+  generated could not have improved it; same requirements as "lazy". On
+  the eight-covariate problem the benchmarks use it leads "lazy" from
+  5,000 units upward, by 1.1x at 5,000 rising to 3.1x at 50,000, and
+  loses below that where the loop's fixed costs are still visible; what
+  it buys at every size is the certificate over the complete problem.
+  "auto" never selects it. "dense" skips the RAM check entirely.
+
+- certify:
+
+  Logical; whether the result carries a checked `assignment_certificate`
+  as `certificate`. Applies to `memory_mode = "implicit"`, where it
+  defaults to `TRUE`: the certificate is what separates the answer from
+  an approximate one. On the other paths the matching is certified after
+  the fact with
+  [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md),
+  against the cost matrix it was solved from.
 
 ## Value
 
@@ -171,6 +222,41 @@ A list with class "matching_result" containing:
 - `unmatched`: List of unmatched left and right IDs
 
 - `info`: Matching diagnostics and metadata
+
+- `status`: One of
+  [`solver_status_values()`](https://gillescolling.com/couplr/reference/solver_status_values.md),
+  computed from what the solve achieved. `"optimal"` when every left
+  unit found a partner under an optimal method, `"partial"` when
+  constraints left some unmatched, `"heuristic"` when a greedy method
+  ran, either because it was asked for or because the constrained path
+  fell back to it, and `"infeasible"` when nothing could be matched.
+
+- `potentials`: The dual potentials of the design's linear program, a
+  list with elements `left` and `right` holding one value per unit,
+  named by id. The reduced cost of a pair is its distance minus the two
+  potentials: at least zero on every admissible pair the matching left
+  out, zero on every pair of a 1:1 matching, and at most zero on the
+  pairs of a k:1 or with-replacement matching, whose pair arcs carry at
+  most one unit. A left unit's potential on the k:1 design is the
+  largest of its replicas'. With replacement the LP separates by row: a
+  left unit's potential is the distance to the farthest partner it took
+  and every right unit's is zero. A unit with no admissible partner, or
+  in a block with none, reads `NA`. Absent for `method = "greedy"` and
+  for a constrained problem answered by maximum cardinality, which is
+  not the LP the potentials belong to. On the 1:1 design they are the
+  duals
+  [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+  checks, and a method that returns none has them computed by
+  [`assignment_duals()`](https://gillescolling.com/couplr/reference/assignment_duals.md).
+
+Under `memory_mode = "implicit"` it also carries `certificate`, the
+checked statement of optimality (see
+[`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md),
+which names the arithmetic it was decided in), and `search`: the pairs
+the loop generated out of the pairs the problem states, the pairs a cost
+was computed for, and one row per round of what each round did. An
+infeasible answer carries `witness` instead, naming the units that could
+not be matched and the partners they have between them.
 
 ## Details
 

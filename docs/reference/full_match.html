@@ -32,7 +32,7 @@ right unit."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,10 +60,10 @@ right unit."><script>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -189,12 +189,17 @@ distance; <code>"greedy"</code> uses a fast two-pass heuristic.</p></dd>
 
 
 <dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
-<dd><p>One of "auto" (default) or "dense". "auto" warns if the
-dense cost matrix would consume a large fraction of free system RAM.
-<code>full_match()</code> uses a different (min-cost-flow) solver backend than
-<code><a href="match_couples.html">match_couples()</a></code>/<code><a href="assignment.html">assignment()</a></code>, so <code>memory_mode = "lazy"</code> is not
-available here yet and errors if requested; "dense" skips the RAM check
-entirely.</p></dd>
+<dd><p>One of "auto" (default), "dense" or "implicit". "auto"
+warns if the dense cost matrix would consume a large fraction of free
+system RAM. "dense" skips the RAM check entirely. "implicit" solves
+<code>method = "optimal"</code> without building
+the pair set: the flow is solved over a growing subset of pairs, the pairs
+it omits are priced against the flow's node potentials, and the subset
+grows until none prices below zero, so the groups are optimal over every
+pair; a <code>search</code> element records what that cost. Under "implicit"
+<code>caliper_sd</code> reads every pair's distance once to take its standard
+deviation, holding two running sums rather than the distances. "lazy" is
+not available here: a flow solved over every pair holds every pair.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -204,34 +209,84 @@ containing:</p><dl><dt>groups</dt>
 <dd><p>Tibble with columns <code>group_id</code>, <code>id</code>, <code>side</code>
 (<code>"left"</code>/<code>"right"</code>), and <code>weight</code></p></dd>
 
+<dt>status</dt>
+<dd><p>What the solver terminated on, one of
+<code>"optimal"</code> (every unit placed in a group meeting
+<code>min_controls</code>, at minimum total distance),
+<code>"partial"</code> (groups formed, some units left over, under a
+maximum-cardinality-then-minimum-cost objective),
+<code>"infeasible"</code> (no group meets the requested bounds), or
+<code>"heuristic"</code> (<code>method = "greedy"</code>, which neither claims nor
+checks optimality). See <code><a href="solver_status_values.html">solver_status_values</a></code>.</p></dd>
+
 <dt>info</dt>
 <dd><p>List with <code>n_groups</code>, <code>n_left</code>, <code>n_right</code>,
 <code>n_unmatched_left</code>, <code>n_unmatched_right</code>, <code>method</code>,
 <code>vars</code></p></dd>
 
 <dt>unmatched</dt>
-<dd><p>List of unmatched left and right IDs (if caliper excludes
-units)</p></dd>
+<dd><p>Left and right IDs that no group contains. Every unit is
+either a row of <code>groups</code> or an entry here.</p></dd>
+
+<dt>potentials</dt>
+<dd><p>Node potentials from the flow solve, a list with elements
+<code>left</code> and <code>right</code> holding one value per unit. They are one
+representative of the dual, in the gauge the solver fixes. Present for
+<code>method = "optimal"</code> only.</p></dd>
+
+<dt>certificate</dt>
+<dd><p>A <code>flow_certificate</code> from
+<code><a href="verify_flow.html">verify_flow</a></code>, checking the solved flow and its potentials
+against the optimality conditions. <code>status</code> says what the solver
+terminated on; this says what was checked. Present for
+<code>method = "optimal"</code> only. Under <code>memory_mode = "implicit"</code>
+the check covers the pairs the flow was solved over, and
+<code>omitted_proven_floor</code> bounds the reduced cost of every pair it
+omitted; <code>certified_optimal</code> holds both together.</p></dd>
+
+<dt>search</dt>
+<dd><p>Under <code>memory_mode = "implicit"</code>: the seed width, the
+pairs generated (<code>candidate_edges</code>) against the pairs there are
+(<code>possible_edges</code>), the distances computed
+(<code>edges_evaluated</code>) and one row per round.</p></dd>
 
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Full matching creates matched groups of variable size. Two algorithms are
-available:</p>
+    <p><code>full_match()</code> builds matched groups of variable size. Under the default
+<code>min_controls = 1</code> it solves full matching in the sense of Hansen and
+Klopfer (2006): a group holds either one left unit and several right ones or
+one right unit and several left ones, and both shapes may appear in the same
+solution.
+<code>max_controls</code> bounds the many side there, whichever side that is.</p>
+<p>A lower bound above one admits only the one-to-many shape, because a group
+built around a single right unit holds exactly one of them and cannot meet a
+lower bound of two. Every group is then one left unit with between
+<code>min_controls</code> and <code>max_controls</code> right ones. Both bounds count right units
+whichever side holds more, so an instance with too few right units to give
+every left unit that many is refused as <code>"infeasible"</code> rather than answered
+with groups counted the other way round.</p>
+<p>Two algorithms are available:</p>
 <p><strong>Optimal</strong> (<code>method = "optimal"</code>, default): Solves a min-cost
 max-flow problem that minimizes total distance across all group assignments
-simultaneously. Each left unit becomes a group center absorbing 1 to
-<code>max_controls</code> right units, with the globally optimal assignment found
-via Dijkstra's algorithm with Johnson potentials. When <code>n_left &gt; n_right</code>,
-roles are transposed automatically.</p>
+simultaneously, with the optimum found via Dijkstra's algorithm with Johnson
+potentials. At <code>min_controls = 1</code> the network is an edge cover over the
+admissible pairs, which is what lets a group be centred on either side; above
+one it is one centre per group and the centres are the left units.</p>
 <p><strong>Greedy</strong> (<code>method = "greedy"</code>): A fast two-pass heuristic:</p><ol><li><p>Each left unit picks its nearest eligible right unit</p></li>
 <li><p>Remaining right units are assigned to their nearest already-matched
 left unit, respecting <code>max_controls</code></p></li>
 </ol><p>This is faster but does not guarantee globally optimal results.</p>
-<p>Weights are computed so that within each group, the total weight of right
-units equals the total weight of left units (which is 1). For a group with
-1 left and k right units, each right unit receives weight 1/k.</p>
+<p>Every left unit carries weight 1, and the right units of a group share a
+total weight equal to the number of left units in that group, so the two
+sides of a group weigh the same. A group holding one left unit and k right
+units therefore gives each right unit <code>1/k</code>; a group holding k left
+units and one right unit gives that right unit <code>k</code>. <code>"greedy"</code>
+builds one left unit per group and produces only the first shape.
+<code>"optimal"</code> at <code>min_controls = 1</code> centres a group on whichever
+side is larger, so both arise; above one the centres are the left units and
+the first shape is the only one.</p>
     </div>
 
     <div class="section level2">
@@ -252,7 +307,7 @@ units equals the total weight of left units (which is 1). For a group with
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

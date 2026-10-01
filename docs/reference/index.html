@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,10 +54,10 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -172,6 +172,13 @@
 
         <dt>
 
+          <code><a href="match_path.html">match_path()</a></code>
+
+        </dt>
+        <dd>Match across a range of one design choice</dd>
+
+        <dt>
+
           <code><a href="matchmaker.html">matchmaker()</a></code>
 
         </dt>
@@ -242,6 +249,29 @@
         </dt>
         <dd>Rosenbaum Sensitivity Analysis</dd>
       </dl></div><div class="section level2">
+      <h2 id="optimality-verification">Optimality Verification<a class="anchor" aria-label="anchor" href="#optimality-verification"></a></h2>
+
+      <div class="section-desc"><p>Check a solution against the dual prices that certify it</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="verify_assignment.html">verify_assignment()</a></code> <code><a href="verify_assignment.html">print(<i>&lt;assignment_certificate&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Verify that an assignment is optimal</dd>
+
+        <dt>
+
+          <code><a href="verify_flow.html">verify_flow()</a></code> <code><a href="verify_flow.html">print(<i>&lt;flow_certificate&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Verify that a flow is optimal</dd>
+      </dl></div><div class="section level2">
       <h2 id="distance-and-preprocessing">Distance and Preprocessing<a class="anchor" aria-label="anchor" href="#distance-and-preprocessing"></a></h2>
 
       <div class="section-desc"><p>Distance computation and data preparation</p></div>
@@ -278,6 +308,20 @@
 
         </dt>
         <dd>Diagnose distance matrix and suggest fixes</dd>
+
+        <dt>
+
+          <code><a href="estimate_dense_matrix_mb.html">estimate_dense_matrix_mb()</a></code>
+
+        </dt>
+        <dd>Estimate dense cost-matrix memory footprint in megabytes</dd>
+
+        <dt>
+
+          <code><a href="estimate_dense_solve_mb.html">estimate_dense_solve_mb()</a></code>
+
+        </dt>
+        <dd>Estimate the peak footprint of a dense solve in megabytes</dd>
       </dl></div><div class="section level2">
       <h2 id="joined-datasets-output">Joined Datasets &amp; Output<a class="anchor" aria-label="anchor" href="#joined-datasets-output"></a></h2>
 
@@ -308,13 +352,6 @@
 
         </dt>
         <dd>Augment Matching Results with Original Data (broom-style)</dd>
-
-        <dt>
-
-          <code><a href="augment.html">augment()</a></code>
-
-        </dt>
-        <dd>Generic Augment Function</dd>
       </dl></div><div class="section level2">
       <h2 id="ecosystem-integration">Ecosystem Integration<a class="anchor" aria-label="anchor" href="#ecosystem-integration"></a></h2>
 
@@ -334,7 +371,7 @@
 
         <dt>
 
-          <code><a href="bal.tab.matching_result.html">bal.tab.matching_result()</a></code> <code><a href="bal.tab.matching_result.html">bal.tab.full_matching_result()</a></code> <code><a href="bal.tab.matching_result.html">bal.tab.cem_result()</a></code> <code><a href="bal.tab.matching_result.html">bal.tab.subclass_result()</a></code>
+          <code><a href="bal.tab.matching_result.html">bal.tab(<i>&lt;matching_result&gt;</i>)</a></code> <code><a href="bal.tab.matching_result.html">bal.tab(<i>&lt;full_matching_result&gt;</i>)</a></code> <code><a href="bal.tab.matching_result.html">bal.tab(<i>&lt;cem_result&gt;</i>)</a></code> <code><a href="bal.tab.matching_result.html">bal.tab(<i>&lt;subclass_result&gt;</i>)</a></code>
 
         </dt>
         <dd>Balance Table for Matching Results (cobalt integration)</dd>
@@ -361,6 +398,20 @@
 
         </dt>
         <dd>Extract method used from assignment result</dd>
+
+        <dt>
+
+          <code><a href="explain_dispatch.html">explain_dispatch()</a></code> <code><a href="explain_dispatch.html">print(<i>&lt;dispatch_explanation&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Explain which solver <code>method = "auto"</code> selects, and why</dd>
+
+        <dt>
+
+          <code><a href="solver_status_values.html">solver_status_values()</a></code>
+
+        </dt>
+        <dd>Solver status values</dd>
 
         <dt>
 
@@ -512,6 +563,13 @@
 
         <dt>
 
+          <code><a href="print.couplr_path.html">print(<i>&lt;couplr_path&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a design path</dd>
+
+        <dt>
+
           <code><a href="print.matchmaker_result.html">print(<i>&lt;matchmaker_result&gt;</i>)</a></code>
 
         </dt>
@@ -659,7 +717,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

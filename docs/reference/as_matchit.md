@@ -14,6 +14,7 @@ as_matchit(
   formula = NULL,
   left_id = "id",
   right_id = "id",
+  estimand = NULL,
   ...
 )
 ```
@@ -45,6 +46,16 @@ as_matchit(
 - right_id:
 
   Name of ID column in right (default: `"id"`)
+
+- estimand:
+
+  Target estimand stamped on the matchit object: one of `"ATT"`, `"ATC"`
+  or `"ATE"`. `NULL` (default) reads it from the design, which every
+  couplr front door records as `info$estimand`. MatchIt and
+  marginaleffects read this field to pick the target population and the
+  weighting of the effect estimate, so give it explicitly whenever the
+  design does not determine it – in particular when `left` holds the
+  controls, which makes the design's left-focal weighting an ATC.
 
 - ...:
 

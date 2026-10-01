@@ -5,13 +5,11 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Cardinality Matching — cardinality_match"><meta name="description" content="Maximizes the number of matched pairs subject to balance constraints.
-Uses iterative pruning: starts with a full match, then removes pairs
-that contribute most to imbalance until all variables satisfy the
-standardized difference threshold."><meta property="og:description" content="Maximizes the number of matched pairs subject to balance constraints.
-Uses iterative pruning: starts with a full match, then removes pairs
-that contribute most to imbalance until all variables satisfy the
-standardized difference threshold."><script>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Cardinality Matching — cardinality_match"><meta name="description" content="Maximizes the number of matched pairs subject to balance constraints, and
+reports how far the matched sample sits from the largest one the constraints
+admit."><meta property="og:description" content="Maximizes the number of matched pairs subject to balance constraints, and
+reports how far the matched sample sits from the largest one the constraints
+admit."><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -32,7 +30,7 @@ standardized difference threshold."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,10 +58,10 @@ standardized difference threshold."><script>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -90,10 +88,9 @@ standardized difference threshold."><script>
     </div>
 
     <div class="ref-description section level2">
-    <p>Maximizes the number of matched pairs subject to balance constraints.
-Uses iterative pruning: starts with a full match, then removes pairs
-that contribute most to imbalance until all variables satisfy the
-standardized difference threshold.</p>
+    <p>Maximizes the number of matched pairs subject to balance constraints, and
+reports how far the matched sample sits from the largest one the constraints
+admit.</p>
     </div>
 
     <div class="section level2">
@@ -102,14 +99,27 @@ standardized difference threshold.</p>
 <span>  <span class="va">left</span>,</span>
 <span>  <span class="va">right</span>,</span>
 <span>  <span class="va">vars</span>,</span>
-<span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  fine <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  refined <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  refined_exact <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  moments <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_std_diff <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"flow"</span>, <span class="st">"branch_bound"</span>, <span class="st">"heuristic"</span><span class="op">)</span>,</span>
 <span>  distance <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  auto_scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  sigma <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_distance <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  calipers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  left_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  right_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  time_limit <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>  node_limit <span class="op">=</span> <span class="fl">500L</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  batch_fraction <span class="op">=</span> <span class="fl">0.1</span></span>
+<span>  batch_fraction <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -118,76 +128,255 @@ standardized difference threshold.</p>
 
 
 <dl><dt id="arg-left">left<a class="anchor" aria-label="anchor" href="#arg-left"></a></dt>
-<dd><p>Data frame of "left" units</p></dd>
+<dd><p>Data frame of "left" units, one row each.</p></dd>
 
 
 <dt id="arg-right">right<a class="anchor" aria-label="anchor" href="#arg-right"></a></dt>
-<dd><p>Data frame of "right" units</p></dd>
+<dd><p>Data frame of "right" units, one row each.</p></dd>
 
 
 <dt id="arg-vars">vars<a class="anchor" aria-label="anchor" href="#arg-vars"></a></dt>
-<dd><p>Character vector of matching variable names</p></dd>
+<dd><p>Character vector of matching variable names.</p></dd>
+
+
+<dt id="arg-fine">fine<a class="anchor" aria-label="anchor" href="#arg-fine"></a></dt>
+<dd><p>Exact fine balance on one partition: a character vector of
+column names, cross-classified, or a one-sided formula. In a formula <code>+</code>
+and <code>:</code> both mean interaction, so <code>~ region + sex</code> and <code>~ region:sex</code> both
+ask for balance on every region-by-sex cell. <code>fine = X</code> is the same
+request as <code>refined = list(X), refined_exact = 1</code>.</p></dd>
+
+
+<dt id="arg-refined">refined<a class="anchor" aria-label="anchor" href="#arg-refined"></a></dt>
+<dd><p>A nested hierarchy of groupings, coarsest first: a list, each
+element a character vector or one-sided formula, or a character vector as
+shorthand for its own sequence of prefixes, so <code>c("region", "site")</code> means
+region, then region crossed with site. Each level must sit inside the one
+before it.</p></dd>
+
+
+<dt id="arg-refined-exact">refined_exact<a class="anchor" aria-label="anchor" href="#arg-refined-exact"></a></dt>
+<dd><p>How many of the coarsest levels of <code>refined</code> are
+enforced exactly (default: 1). The remaining levels are balanced as closely
+as the exact levels allow.</p></dd>
+
+
+<dt id="arg-moments">moments<a class="anchor" aria-label="anchor" href="#arg-moments"></a></dt>
+<dd><p>Moment constraints beyond <code>max_std_diff</code>: a named numeric of
+standardized-difference bounds, as in <code>c(x = 0.05, y = 0.1)</code>, or a list of
+entries with fields <code>var</code>, <code>stat</code> (<code>"std_diff"</code> or <code>"mean_diff"</code>),
+<code>transform</code>, <code>max</code> and <code>min</code>. A variable bounded here must not also be
+bounded by <code>max_std_diff</code>.</p></dd>
 
 
 <dt id="arg-max-std-diff">max_std_diff<a class="anchor" aria-label="anchor" href="#arg-max-std-diff"></a></dt>
-<dd><p>Maximum allowed absolute standardized difference
-(default: 0.1, corresponding to "excellent" balance)</p></dd>
+<dd><p>Maximum absolute standardized difference on every
+variable in <code>vars</code> (default: <code>Inf</code>, stating no such constraint). A finite
+value states one moment row per variable and per direction, which is what
+sends a call to the Lagrangian search; see Details.</p></dd>
+
+
+<dt id="arg-engine">engine<a class="anchor" aria-label="anchor" href="#arg-engine"></a></dt>
+<dd><p>Which solver answers the problem: <code>"flow"</code> for a single
+min-cost flow solve, available when no moment row is stated;
+<code>"branch_bound"</code> for the Lagrangian search moment rows need; <code>"auto"</code>
+(default) for whichever of the two the stated constraints call for; and
+<code>"heuristic"</code> for the pruning loop.</p></dd>
 
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
-<dd><p>Distance metric (default: "euclidean")</p></dd>
+<dd><p>Distance metric (default: "euclidean").</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional named vector of variable weights</p></dd>
+<dd><p>Optional named vector of variable weights.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>Scaling method (default: FALSE)</p></dd>
+<dd><p>Scaling method (default: FALSE).</p></dd>
 
 
 <dt id="arg-auto-scale">auto_scale<a class="anchor" aria-label="anchor" href="#arg-auto-scale"></a></dt>
-<dd><p>If TRUE, automatically select scaling (default: FALSE)</p></dd>
+<dd><p>If TRUE, check variable health and select scaling
+automatically (default: FALSE).</p></dd>
+
+
+<dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
+<dd><p>Bandwidth for the distance metrics that take one.</p></dd>
+
+
+<dt id="arg-max-distance">max_distance<a class="anchor" aria-label="anchor" href="#arg-max-distance"></a></dt>
+<dd><p>Pairs farther apart than this are not available.</p></dd>
+
+
+<dt id="arg-calipers">calipers<a class="anchor" aria-label="anchor" href="#arg-calipers"></a></dt>
+<dd><p>Named vector of per-variable caliper widths.</p></dd>
+
+
+<dt id="arg-left-id-right-id">left_id, right_id<a class="anchor" aria-label="anchor" href="#arg-left-id-right-id"></a></dt>
+<dd><p>Name of the id column on each side. When absent, ids
+come from an <code>id</code> column, from row names, or are synthesized.</p></dd>
+
+
+<dt id="arg-time-limit">time_limit<a class="anchor" aria-label="anchor" href="#arg-time-limit"></a></dt>
+<dd><p>Seconds the search may run (default: 30). The budget
+reaches the flow solver, so a solve in flight stops between augmentations
+rather than running to completion, and the node it belonged to is left
+unopened so the reported bound still covers the whole tree.</p></dd>
+
+
+<dt id="arg-node-limit">node_limit<a class="anchor" aria-label="anchor" href="#arg-node-limit"></a></dt>
+<dd><p>Nodes the search may open (default: 500).</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>LAP solver method (default: "auto")</p></dd>
+<dd><p>LAP solver method for the heuristic's initial match
+(default: "auto"). Reaches <code>engine = "heuristic"</code> only.</p></dd>
 
 
 <dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
-<dd><p>Maximum pruning iterations (default: 100)</p></dd>
+<dd><p>Maximum pruning iterations (default: 100). Reaches
+<code>engine = "heuristic"</code> only.</p></dd>
 
 
 <dt id="arg-batch-fraction">batch_fraction<a class="anchor" aria-label="anchor" href="#arg-batch-fraction"></a></dt>
-<dd><p>Fraction of worst pairs to remove per iteration
-(default: 0.1). Larger values speed up convergence but may over-prune.</p></dd>
+<dd><p>Fraction of the remaining pairs the heuristic deletes
+per iteration (default: 0.1). Reaches <code>engine = "heuristic"</code> only.</p></dd>
+
+
+<dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
+<dd><p>One of "auto" (default), "dense" or "implicit". "implicit"
+solves the flow and branch and bound engines without building the pair
+set: every network solve is taken over
+the pairs generated so far, the pairs it omits are priced against its
+potentials with the multipliers folded in, and the ones pricing below zero
+are added and the solve repeated, so each solve is optimal over every pair.
+The distance range the tier weights are built on is read in one pass over
+the pairs. The result carries a <code>search</code> record. "auto" never selects it,
+and the heuristic engine does not take it.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matching_result object with additional cardinality info:
-<code>result$info$pruning_iterations</code>, <code>result$info$pairs_removed</code>,
-<code>result$info$final_balance</code>.</p>
+    <p>A <code>matching_result</code> object. Beyond the fields every matching carries
+it holds:</p><ul><li><p><code>cardinality</code> - the report: <code>n_matched</code>, <code>best_possible</code>, <code>gap</code>,
+<code>gap_fraction</code>, <code>certified</code>, <code>stopped_on</code>, <code>n_nodes</code>, and the state of
+every stated constraint. See <code><a href="dot-cardinality_report.html">print.cardinality_report()</a></code>.</p></li>
+<li><p><code>certificate</code> - present when the search certified optimality, with
+<code>arithmetic = "exact"</code>: the bounds, the comparisons between them and
+the matched sample's objective and constraint values it rests on are
+all decided exactly.</p></li>
+<li><p><code>potentials</code> - the dual potentials of the network solve the
+matched sample came from, a list with elements <code>left</code> and <code>right</code>
+holding one value per unit, named by id, in distance terms: the
+reduced cost of a pair is its distance less the two, with the tier
+weights and any moment multipliers already folded in. Under
+<code>engine = "flow"</code> that solve is the whole problem, and the potentials
+certify the matched sample as its optimum. Under branch and bound it
+is the node the incumbent was read from, with the arcs that node fixed
+and the moment rows priced at its multipliers, and they certify the
+incumbent as that node's optimum; the bound on the whole problem is
+<code>cardinality$best_possible</code>. Present when that solve was certified.</p></li>
+<li><p><code>status</code> - <code>"optimal"</code>, <code>"iteration_limit"</code>, or <code>"heuristic"</code>.</p></li>
+<li><p><code>info$engine</code> - the engine that answered.</p></li>
+</ul><p><code>info$pruning_iterations</code> and <code>info$pairs_removed</code> are carried by
+<code>engine = "heuristic"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Cardinality matching (Zubizarreta 2014) finds the largest matched sample
-that satisfies pre-specified balance constraints. This implementation uses
-an iterative pruning heuristic:</p><ol><li><p>Run full optimal matching via <code><a href="match_couples.html">match_couples()</a></code></p></li>
-<li><p>Compute balance diagnostics</p></li>
-<li><p>While any |std_diff| exceeds <code>max_std_diff</code>:</p><ul><li><p>Identify the variable with worst balance</p></li>
-<li><p>Remove the batch of pairs contributing most to that imbalance</p></li>
-<li><p>Recompute balance</p></li>
-</ul></li>
-</ol></div>
+    <p>Cardinality matching (Zubizarreta 2012) asks for the largest matched sample
+that satisfies stated balance constraints, rather than the closest one. The
+constraints come in two kinds, and which kinds are stated decides how the
+problem is solved.</p>
+<p>Fine and refined covariate balance are representable in the matching network
+itself (Rosenbaum, Ross and Silber 2007; Pimentel, Kelz, Silber and
+Rosenbaum 2015): every category becomes a node, and a single min-cost flow
+solve returns the largest balanced sample together with a dual certificate
+of its optimality, at polynomial cost. <code>max_std_diff</code> defaults to <code>Inf</code>,
+stating no moment constraint, so a call asking for fine or refined balance
+alone takes this path and comes back certified:</p>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">cardinality_match</span>(left, right, vars, <span class="at">fine =</span> <span class="st">"region"</span>)</span></code></pre><p></p></div>
+<p>Linear moment constraints – a bound on a standardized or mean difference –
+cut across the network and are dualized instead. Their multipliers are
+updated per node, the Lagrangian value bounds the subtree, and the search
+branches on unit inclusion until the bound meets the incumbent or a budget
+runs out. A finite <code>max_std_diff</code> states one such constraint per variable
+and per direction, so it is what moves a call onto this path, and
+<code>node_limit</code> and <code>time_limit</code> are what end it when the bound does not close.
+The report says which happened: <code>certified</code> is <code>TRUE</code> only when the search
+settled and the gap is zero, and <code>gap</code> says how many matched units separate
+the answer from the bound when it is not. Every stopping path returns a
+matched set that satisfies every stated constraint, together with a bound
+valid for the whole problem.</p>
+<p>The certificate carries no tolerance. Each node's bound is the dual
+objective of its Lagrangian relaxation evaluated in exact arithmetic, which
+weak duality makes a lower bound whatever the solver returned, and the
+pruning tests, the constraint values of a matched set and the cardinality
+read off the bound are decided exactly, over the distances and constraint
+coefficients as stored.</p>
+<p>How long the search runs depends on whether the moment bounds bind. When the
+distance-minimizing match already satisfies them, which happens with a loose
+bound or with a <code>right</code> pool large enough that the closest partners are
+already balanced, the root node certifies and the call returns in
+milliseconds. When they bind, every node costs a flow solve, and although
+the root enters a feasible incumbent before the first node is opened, the
+bound above it closes slowly, so a call can spend its whole budget and still
+report a gap. Set <code>node_limit</code> and
+<code>time_limit</code> to a budget you are willing to spend, and read <code>stopped_on</code> and
+<code>gap</code> to see what the budget bought.</p>
+<p>The objective is lexicographic. Matched cardinality comes first, total
+distance second, so a pair is never added at the cost of a match and never
+dropped to shorten one.</p>
+<p><code>engine = "heuristic"</code> runs a pruning loop instead: a full match, then
+repeated deletion of the pairs carrying the worst variable's imbalance. Its
+properties follow from the loop. It starts from a full match and deletes
+pairs, and never re-adds one, so it cannot recover from an over-aggressive
+deletion. It never maximizes cardinality, it only shrinks a starting match.
+It considers one variable per iteration, the current worst, so balance on
+the others is incidental. It computes no bound, so it cannot say how far its
+answer sits from the largest balanced sample; <code>best_possible</code> and <code>gap</code> are
+<code>NA</code> and <code>certified</code> is <code>FALSE</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Zubizarreta, J. R. (2012). Using mixed integer programming for matching in
+an observational study of kidney failure after surgery. <em>Journal of the
+American Statistical Association</em>, 107(500), 1360-1371.</p>
+<p>Rosenbaum, P. R., Ross, R. N. and Silber, J. H. (2007). Minimum distance
+matched sampling with fine balance in an observational study of treatment
+for ovarian cancer. <em>Journal of the American Statistical Association</em>,
+102(477), 75-83.</p>
+<p>Pimentel, S. D., Kelz, R. R., Silber, J. H. and Rosenbaum, P. R. (2015).
+Large, sparse optimal matching with refined covariate balance in an
+observational study of the health outcomes produced by new surgeons.
+<em>Journal of the American Statistical Association</em>, 110(510), 515-527.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="match_couples.html">match_couples()</a></code> for distance-minimizing matching,
+<code><a href="balance_diagnostics.html">balance_diagnostics()</a></code> for reading balance off any matched sample.</p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">left</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">right</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">21</span><span class="op">:</span><span class="fl">50</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">0.3</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">cardinality_match</span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, max_std_diff <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="va">left</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span>,</span>
+<span>                   region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">right</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">21</span><span class="op">:</span><span class="fl">50</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">0.5</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">0.3</span><span class="op">)</span>,</span>
+<span>                    region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Exact fine balance on region, no moment constraint: one flow solve,</span></span>
+<span><span class="co"># answered with a certificate.</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">cardinality_match</span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
+<span>                         fine <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="va">cardinality</span></span>
+<span></span>
+<span><span class="co"># A standardized-difference bound as well: the same match, searched by</span></span>
+<span><span class="co"># branch and bound under a small node budget.</span></span>
+<span><span class="va">bb</span> <span class="op">&lt;-</span> <span class="fu">cardinality_match</span><span class="op">(</span><span class="va">left</span>, <span class="va">right</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
+<span>                        fine <span class="op">=</span> <span class="st">"region"</span>, max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>                        node_limit <span class="op">=</span> <span class="fl">25L</span><span class="op">)</span></span>
+<span><span class="va">bb</span><span class="op">$</span><span class="va">cardinality</span></span>
 <span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -199,7 +388,7 @@ an iterative pruning heuristic:</p><ol><li><p>Run full optimal matching via <cod
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

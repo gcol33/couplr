@@ -8,8 +8,9 @@ Resolve a requested memory_mode to a concrete decision
 resolve_memory_mode(
   n,
   m,
-  memory_mode = c("auto", "dense", "lazy"),
+  memory_mode = c("auto", "dense", "lazy", "implicit"),
   solver_supports_lazy = FALSE,
+  solver_supports_implicit = FALSE,
   ram_fraction = 0.5,
   fallback_threshold_mb = 4000
 )
@@ -24,7 +25,8 @@ resolve_memory_mode(
 - memory_mode:
 
   One of "auto" (probe RAM and decide), "dense" (always, skip probing
-  entirely), or "lazy" (always, error if unsupported here).
+  entirely), "lazy" (always, error if unsupported here), or "implicit"
+  (always, error if unsupported here).
 
 - solver_supports_lazy:
 
@@ -34,9 +36,15 @@ resolve_memory_mode(
   caller whose solve path consumes a `lazy_cost_spec`; see
   R/matching_lazy.R).
 
+- solver_supports_implicit:
+
+  Whether the caller's design is the one the edge-generation loop
+  solves: a 1:1 matching over a built-in distance metric, whose network
+  is one unit-capacity bipartite block.
+
 - ram_fraction:
 
-  Fraction of available RAM the dense matrix may consume before "auto"
+  Fraction of available RAM a dense solve's peak may reach before "auto"
   switches away from dense.
 
 - fallback_threshold_mb:
@@ -47,4 +55,4 @@ resolve_memory_mode(
 
 ## Value
 
-"dense" or "lazy".
+"dense", "lazy" or "implicit".

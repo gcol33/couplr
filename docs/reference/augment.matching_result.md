@@ -39,14 +39,14 @@ A tibble with matched pairs and original data (see
 ## Details
 
 This method follows the
-[`augment()`](https://gillescolling.com/couplr/reference/augment.md)
+[`augment()`](https://generics.r-lib.org/reference/augment.html)
 convention from the broom package, making it easy to integrate couplr
 into tidymodels workflows. It's equivalent to calling
 [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
 with default parameters.
 
 If the broom package is not loaded, you can use
-[`couplr::augment()`](https://gillescolling.com/couplr/reference/augment.md)
+[`couplr::augment()`](https://generics.r-lib.org/reference/augment.html)
 to access this function.
 
 ## Examples
@@ -65,5 +65,5 @@ right <- data.frame(
 )
 
 result <- match_couples(left, right, vars = "age")
-couplr::augment(result, left, right)
+augment(result, left, right)
 ```

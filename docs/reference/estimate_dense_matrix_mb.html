@@ -5,21 +5,23 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Estimate dense cost-matrix memory footprint in megabytes — estimate_dense_matrix_mb"><meta name="description" content="The true peak footprint is not 8 bytes/cell: matrix(0, n, m) at the R
-level (8B) is followed by rcpp_to_cost_matrix()'s copy into a
-lap::CostMatrix (8B data + 4B mask), then prepare_for_solve()'s
-unconditional copy (another 12B), and a possible t() transpose copy (8B).
-Several of these are transient but can coexist during GC lag. A conservative
-multiplier avoids systematically under-warning; n/m are coerced to
-double before multiplying so the estimate itself can't overflow the way
-lap::CostMatrix's old int flat-index arithmetic did."><meta property="og:description" content="The true peak footprint is not 8 bytes/cell: matrix(0, n, m) at the R
-level (8B) is followed by rcpp_to_cost_matrix()'s copy into a
-lap::CostMatrix (8B data + 4B mask), then prepare_for_solve()'s
-unconditional copy (another 12B), and a possible t() transpose copy (8B).
-Several of these are transient but can coexist during GC lag. A conservative
-multiplier avoids systematically under-warning; n/m are coerced to
-double before multiplying so the estimate itself can't overflow the way
-lap::CostMatrix's old int flat-index arithmetic did."><script>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Estimate dense cost-matrix memory footprint in megabytes — estimate_dense_matrix_mb"><meta name="description" content="What the matrix itself costs a process, which is more than the 8 bytes a cell
+occupies: matrix(0, n, m) at the R level is copied into a
+lap::CostMatrix (8B data + 4B mask), and the two coexist while garbage
+collection lags. Building the matrix and stopping there has peaked at between
+1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
+benchmark, so the default multiplier is above what has been measured rather
+than fitted to it. n/m
+are coerced to double before multiplying so the estimate itself can't
+overflow the way lap::CostMatrix's old int flat-index arithmetic did."><meta property="og:description" content="What the matrix itself costs a process, which is more than the 8 bytes a cell
+occupies: matrix(0, n, m) at the R level is copied into a
+lap::CostMatrix (8B data + 4B mask), and the two coexist while garbage
+collection lags. Building the matrix and stopping there has peaked at between
+1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
+benchmark, so the default multiplier is above what has been measured rather
+than fitted to it. n/m
+are coerced to double before multiplying so the estimate itself can't
+overflow the way lap::CostMatrix's old int flat-index arithmetic did."><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -40,7 +42,7 @@ lap::CostMatrix's old int flat-index arithmetic did."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,10 +70,10 @@ lap::CostMatrix's old int flat-index arithmetic did."><script>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -98,14 +100,15 @@ lap::CostMatrix's old int flat-index arithmetic did."><script>
     </div>
 
     <div class="ref-description section level2">
-    <p>The true peak footprint is not 8 bytes/cell: <code>matrix(0, n, m)</code> at the R
-level (8B) is followed by <code>rcpp_to_cost_matrix()</code>'s copy into a
-<code>lap::CostMatrix</code> (8B data + 4B mask), then <code>prepare_for_solve()</code>'s
-unconditional copy (another 12B), and a possible <code><a href="https://rdrr.io/r/base/t.html" class="external-link">t()</a></code> transpose copy (8B).
-Several of these are transient but can coexist during GC lag. A conservative
-multiplier avoids systematically under-warning; <code>n</code>/<code>m</code> are coerced to
-<code>double</code> before multiplying so the estimate itself can't overflow the way
-<code>lap::CostMatrix</code>'s old <code>int</code> flat-index arithmetic did.</p>
+    <p>What the matrix itself costs a process, which is more than the 8 bytes a cell
+occupies: <code>matrix(0, n, m)</code> at the R level is copied into a
+<code>lap::CostMatrix</code> (8B data + 4B mask), and the two coexist while garbage
+collection lags. Building the matrix and stopping there has peaked at between
+1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
+benchmark, so the default multiplier is above what has been measured rather
+than fitted to it. <code>n</code>/<code>m</code>
+are coerced to <code>double</code> before multiplying so the estimate itself can't
+overflow the way <code>lap::CostMatrix</code>'s old <code>int</code> flat-index arithmetic did.</p>
     </div>
 
     <div class="section level2">
@@ -113,8 +116,34 @@ multiplier avoids systematically under-warning; <code>n</code>/<code>m</code> ar
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">estimate_dense_matrix_mb</span><span class="op">(</span><span class="va">n</span>, <span class="va">m</span>, overhead_factor <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
-  </main></div>
+
+<dl><dt id="arg-n-m">n, m<a class="anchor" aria-label="anchor" href="#arg-n-m"></a></dt>
+<dd><p>Problem dimensions.</p></dd>
+
+
+<dt id="arg-overhead-factor">overhead_factor<a class="anchor" aria-label="anchor" href="#arg-overhead-factor"></a></dt>
+<dd><p>Multiplier on the raw cell bytes.</p></dd>
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>Numeric scalar, the estimated footprint of the matrix in megabytes.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This is the matrix, not the solve. <code><a href="estimate_dense_solve_mb.html">estimate_dense_solve_mb()</a></code> is what the
+memory guard reads; see there for why the two differ by more than a copy.</p>
+    </div>
+
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">estimate_dense_matrix_mb</span><span class="op">(</span><span class="fl">5000</span>, <span class="fl">5000</span><span class="op">)</span></span></code></pre></div>
+    </div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
@@ -122,7 +151,7 @@ multiplier avoids systematically under-warning; <code>n</code>/<code>m</code> ar
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

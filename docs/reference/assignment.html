@@ -28,7 +28,7 @@ using several algorithms. Forbidden edges can be marked as NA or Inf."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,10 +56,10 @@ using several algorithms. Forbidden edges can be marked as NA or Inf."><script>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -96,12 +96,16 @@ using several algorithms. Forbidden edges can be marked as <code>NA</code> or <c
 <span>  <span class="va">cost</span>,</span>
 <span>  maximize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"jv"</span>, <span class="st">"hungarian"</span>, <span class="st">"munkres"</span>, <span class="st">"auction"</span>, <span class="st">"auction_gs"</span>,</span>
-<span>    <span class="st">"auction_scaled"</span>, <span class="st">"sap"</span>, <span class="st">"ssp"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>, <span class="st">"ssap_bucket"</span>,</span>
-<span>    <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>, <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>, <span class="st">"push_relabel"</span>,</span>
-<span>    <span class="st">"orlin"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
+<span>    <span class="st">"auction_scaled"</span>, <span class="st">"sap"</span>, <span class="st">"ssp"</span>, <span class="st">"sap_dense"</span>, <span class="st">"csflow"</span>, <span class="st">"hk01"</span>, <span class="st">"bruteforce"</span>,</span>
+<span>    <span class="st">"ssap_bucket"</span>, <span class="st">"cycle_cancel"</span>, <span class="st">"gabow_tarjan"</span>, <span class="st">"lapmod"</span>, <span class="st">"csa"</span>, <span class="st">"ramshaw_tarjan"</span>,</span>
+<span>    <span class="st">"push_relabel"</span>, <span class="st">"network_simplex"</span><span class="op">)</span>,</span>
 <span>  auction_eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  eps <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  certify <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cardinality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"complete"</span>, <span class="st">"maximum"</span>, <span class="st">"fixed"</span><span class="op">)</span>,</span>
+<span>  n_matches <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  unmatched_penalty <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -126,19 +130,43 @@ entries are treated as forbidden assignments.</p></dd>
 <li><p><code>"munkres"</code> — Matrix-form 'Kuhn-Munkres' O(n^4), reference implementation</p></li>
 </ul><p><strong>Auction-based solvers:</strong></p><ul><li><p><code>"auction"</code> — 'Bertsekas' auction with adaptive epsilon</p></li>
 <li><p><code>"auction_gs"</code> — 'Gauss-Seidel' variant, good for spatial structure</p></li>
-<li><p><code>"auction_scaled"</code> — 'Epsilon-scaling', fastest for large dense problems</p></li>
-</ul><p><strong>Specialized solvers:</strong></p><ul><li><p><code>"sap"</code> / <code>"ssp"</code> — Shortest augmenting path, handles sparsity well</p></li>
-<li><p><code>"lapmod"</code> — Sparse JV variant, faster when &gt;50\<!-- % entries are NA/Inf --></p></li>
-<li><p><code>"hk01"</code> — 'Hopcroft-Karp' for binary (0/1) costs only</p></li>
+<li><p><code>"auction_scaled"</code> — 'Epsilon-scaling' auction, bidding at a
+decreasing sequence of epsilon values. Not chosen by <code>"auto"</code>; a rule
+sending heavily tied costs to it was tested and did not meet its
+criterion, and it remains available by name for tied costs</p></li>
+</ul><p><strong>Specialized solvers:</strong></p><ul><li><p><code>"sap"</code> — Shortest augmenting path over the shared flow model's
+network. <code>"ssp"</code> is accepted as a second spelling of this method and
+resolves to <code>"sap"</code>.</p></li>
+<li><p><code>"sap_dense"</code> — Shortest augmenting path with a linear scan in place
+of a heap, O(n * m^2), suited to a dense cost matrix</p></li>
+<li><p><code>"lapmod"</code> — 'Jonker-Volgenant' over the finite entries alone,
+stored row by row (CSR). Written for sparse input; see below for why
+<code>"auto"</code> does not divert sparse matrices to it</p></li>
+<li><p><code>"hk01"</code> — 'Hopcroft-Karp' for binary (0/1) or constant costs.
+Constant costs make every perfect matching optimal. On a <code>{0,1}</code> matrix
+the search runs over the zero-cost edges alone, where a perfect matching
+totals zero and is therefore optimal; if none exists the problem is
+passed to the weighted solver on the original costs.</p></li>
 <li><p><code>"ssap_bucket"</code> — 'Dial' algorithm for integer costs</p></li>
 <li><p><code>"bruteforce"</code> — Exact enumeration for tiny problems (n &lt;= 8)</p></li>
-</ul><p><strong>Advanced solvers:</strong></p><ul><li><p><code>"csa"</code> — 'Goldberg-Kennedy' cost-scaling, often fastest for medium-large</p></li>
-<li><p><code>"gabow_tarjan"</code> — 'Gabow-Tarjan' bit-scaling with complementary slackness O(n^3 log C)</p></li>
+</ul><p><strong>Advanced solvers:</strong></p><ul><li><p><code>"csa"</code> — 'Goldberg-Kennedy' cost-scaling assignment (CSA-Q):
+epsilon starts at the span of the costs and is divided by 10 each
+refine, rows are discharged from a stack by double-push, and each row
+keeps its three cheapest arcs between scans (the fourth-best
+heuristic). Real-valued costs are read as supplied; the final
+epsilon-optimal assignment is repaired to an optimal one</p></li>
+<li><p><code>"gabow_tarjan"</code> — 'Gabow-Tarjan' bit-scaling with complementary
+slackness. On a graph of <code>V</code> vertices and <code>E</code> edges the bound is
+O(sqrt(V) * E * log(V * C)), which for an <code>n</code> by <code>n</code> cost matrix is
+O(n^2.5 * log(n * C)). Its optimality bound holds for a matching that
+saturates both sides, so a rectangular problem gains a dummy side of
+zero cost. The dummies are copies of one node and are carried as a
+single unit holding as many partners as there are dummies, so the
+problem is solved at its own <code>n</code> by <code>m</code> shape.</p></li>
 <li><p><code>"cycle_cancel"</code> — Cycle-canceling with 'Karp' algorithm</p></li>
-<li><p><code>"csflow"</code> — Cost-scaling network flow</p></li>
+<li><p><code>"csflow"</code> — Successive shortest paths with 'Johnson' potentials</p></li>
 <li><p><code>"network_simplex"</code> — 'Network simplex' with spanning tree representation</p></li>
-<li><p><code>"orlin"</code> — 'Orlin-Ahuja' scaling O(sqrt(n) * m * log(nC))</p></li>
-<li><p><code>"push_relabel"</code> — 'Push-relabel' max-flow based solver</p></li>
+<li><p><code>"push_relabel"</code> — 'Goldberg-Tarjan' cost-scaling push-relabel</p></li>
 <li><p><code>"ramshaw_tarjan"</code> — 'Ramshaw-Tarjan', optimized for rectangular matrices (n != m)</p></li>
 </ul><p>One-dimensional problems have their own entry point,
 <code><a href="lap_solve_line_metric.html">lap_solve_line_metric()</a></code>, which takes two point vectors rather than a
@@ -148,12 +176,12 @@ rules need, and the first matching rule wins:</p><ol><li><p>at most 8 rows and 8
 than setting up a general solver;</p></li>
 <li><p>finite entries all equal, or all either 0 or 1: <code>"hk01"</code>, which
 exploits the absence of a real cost scale;</p></li>
-<li><p>more than half the entries non-finite: <code>"lapmod"</code>, which carries
-forbidden edges in its adjacency structure;</p></li>
-<li><p>at least 3 times as many columns as rows: <code>"sap"</code>, avoiding the
-padding a square-oriented solver would need;</p></li>
 <li><p>everything else: <code>"jv"</code>.</p></li>
-</ol><p>Naming a method skips the pass. Rectangular problems are transposed
+</ol><p>Sparsity and aspect ratio used to divert the choice to <code>"lapmod"</code> and
+<code>"sap"</code>. Neither beat <code>"jv"</code> on the regime grid, at any of the four
+admissibility densities or three aspect ratios measured, so both now fall
+through to it; each stays reachable by naming it.</p>
+<p>Naming a method skips the pass. Rectangular problems are transposed
 internally so the solver always sees at least as many columns as rows, and
 the assignment is mapped back afterwards.</p></dd>
 
@@ -169,13 +197,59 @@ its value is used for <code>auction_eps</code>.</p></dd>
 
 
 <dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
-<dd><p>One of "auto" (default), "dense", or "lazy". <code>cost</code> is
-already a materialized matrix by the time it reaches <code>assignment()</code>, so
-"auto" here is diagnostic only: it warns if the matrix is large relative
-to free system RAM (nothing else can be done post-hoc once the matrix
-already exists – build it via <code>compute_distances(memory_mode = ...)</code>
-instead to avoid materializing it in the first place). No lazy solver
-exists yet, so <code>memory_mode = "lazy"</code> currently always errors.</p></dd>
+<dd><p>One of "auto" (default), "dense", "lazy" or "implicit".
+<code>cost</code> is already a materialized matrix by the time it reaches
+<code>assignment()</code>, so "auto" here is diagnostic only: it warns if the matrix
+is large relative to free system RAM (nothing else can be done post-hoc
+once the matrix already exists – build it via
+<code>compute_distances(memory_mode = ...)</code> instead to avoid materializing it in
+the first place). <code>"lazy"</code> and <code>"implicit"</code> describe how a cost source is
+read rather than how a matrix is stored, so they apply to a lazy cost
+specification; <code>"implicit"</code> also accepts a matrix, where it solves the same
+problem by generating the pairs it needs and saves nothing, which is what
+makes it a check on the complete solve rather than a faster one.
+Against <code>"lazy"</code> on a lazy cost specification, <code>"implicit"</code> leads from
+5,000 units upward on the eight-covariate problem the benchmarks use, by
+1.1x at 5,000 rising to 3.1x at 50,000, and loses below that where the
+loop's fixed costs are still visible. What it buys at every size is the
+certificate over the complete problem.</p></dd>
+
+
+<dt id="arg-certify">certify<a class="anchor" aria-label="anchor" href="#arg-certify"></a></dt>
+<dd><p>Logical; whether to attach a checked <code>assignment_certificate</code>
+as <code>certificate</code>. <code>NULL</code>, the default, takes the path's own answer: <code>TRUE</code>
+under <code>memory_mode = "implicit"</code>, where the certificate is what
+distinguishes the answer from an approximate one and the loop has already
+done most of the scan, and <code>FALSE</code> elsewhere. The check reads the duals
+the solve returned where it returned some (see <code>u</code> and <code>v</code> below), so it
+costs one pass over the admissible pairs; elsewhere it costs the solve
+<code><a href="verify_assignment.html">verify_assignment()</a></code> runs to get them. A solve that did not reach a
+complete optimal matching has nothing to certify and gets no certificate.</p></dd>
+
+
+<dt id="arg-cardinality">cardinality<a class="anchor" aria-label="anchor" href="#arg-cardinality"></a></dt>
+<dd><p>How many pairs to produce.</p><ul><li><p><code>"complete"</code> (default) — every row is matched; an input admitting
+no complete matching is an error.</p></li>
+<li><p><code>"maximum"</code> — as many pairs as the admissible edges allow, and the
+cheapest total among matchings of that size.</p></li>
+<li><p><code>"fixed"</code> — exactly <code>n_matches</code> pairs, chosen to minimize total
+cost.</p></li>
+</ul><p>All three are solved exactly by the same solver: the two non-complete modes
+append dummy columns priced so that the solver's own optimum is the
+requested objective.</p></dd>
+
+
+<dt id="arg-n-matches">n_matches<a class="anchor" aria-label="anchor" href="#arg-n-matches"></a></dt>
+<dd><p>Integer; the number of pairs to produce. Required when
+<code>cardinality = "fixed"</code>, and not accepted otherwise.</p></dd>
+
+
+<dt id="arg-unmatched-penalty">unmatched_penalty<a class="anchor" aria-label="anchor" href="#arg-unmatched-penalty"></a></dt>
+<dd><p>Numeric; the cost charged for leaving one row
+unmatched, under <code>cardinality = "maximum"</code>. Supplying it replaces the
+lexicographic objective with a single one: a pair costing more than the
+penalty is worth dropping. Left <code>NULL</code>, no pair is ever traded away for a
+cost saving.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -183,18 +257,76 @@ exists yet, so <code>memory_mode = "lazy"</code> currently always errors.</p></d
     <p>An object of class <code>lap_solve_result</code>, a list with elements:</p><ul><li><p><code>match</code> — integer vector of length <code>min(nrow(cost), ncol(cost))</code>
 giving the assigned column for each row (0 if unassigned).</p></li>
 <li><p><code>total_cost</code> — numeric scalar, the objective value.</p></li>
-<li><p><code>status</code> — character scalar, e.g. <code>"optimal"</code>.</p></li>
+<li><p><code>status</code> — character scalar drawn from <code><a href="solver_status_values.html">solver_status_values()</a></code>,
+computed from what the solver terminated on. <code>"optimal"</code> means the
+solver reached its own optimality condition with every row matched;
+it is not a checked proof. Use <code><a href="verify_assignment.html">verify_assignment()</a></code> for that.</p></li>
 <li><p><code>method_used</code> — character scalar, the algorithm actually used.</p></li>
-</ul></div>
+<li><p><code>dispatch</code> — list recording how <code>method</code> was chosen: the rule that
+fired under <code>"auto"</code>, the condition that triggered it, and whether
+the method was named explicitly. See <code><a href="explain_dispatch.html">explain_dispatch()</a></code>.</p></li>
+<li><p><code>certificate</code> — an <code>assignment_certificate</code>, present when one was
+checked. See <code>certify</code>.</p></li>
+<li><p><code>u</code>, <code>v</code> — row and column duals in the orientation of <code>cost</code>,
+present when the solver produced optimal duals for <code>cost</code>: <code>"jv"</code>
+(and so <code>"auto"</code> on every problem it sends there), <code>"hungarian"</code>,
+the lazy <code>"jv"</code> path, and <code>memory_mode = "implicit"</code>, where they are
+the duals the last restricted master produced. <code><a href="verify_assignment.html">verify_assignment()</a></code>
+reads them instead of solving again. Absent under
+<code>cardinality = "maximum"</code> and <code>"fixed"</code>, whose solver duals belong to
+the padded problem rather than to <code>cost</code>, and for <code>"gabow_tarjan"</code>,
+whose duals are those of its scaled integer instance.</p></li>
+</ul><p>Under <code>memory_mode = "implicit"</code> the result also carries <code>search</code>: the columns the
+first round gave each row (<code>seed_width</code>), the pairs the candidate set ended
+up holding (<code>candidate_edges</code>) out of <code>possible_edges</code>, the pairs a cost was
+computed for (<code>edges_evaluated</code>), the round count, and <code>rounds</code>, one row per
+round of what the master held, what priced out and what each step cost.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>method = "auto"</code> selects an algorithm based on problem size/shape and data
-characteristics:</p><ul><li><p>Very small (n &lt;= 8 and m &lt;= 8): <code>"bruteforce"</code> — exact enumeration</p></li>
+    <p><code>method = "auto"</code> selects an algorithm based on problem size and the costs:</p><ul><li><p>Very small (n &lt;= 8 and m &lt;= 8): <code>"bruteforce"</code> — exact enumeration</p></li>
 <li><p>Binary/constant costs: <code>"hk01"</code> — specialized for 0/1 costs</p></li>
-<li><p>Sparse (&gt;50\<!-- % NA/Inf): \code{"lapmod"} — sparse JV variant, at every size --></p></li>
-<li><p>Very rectangular (m &gt;= 3n): <code>"sap"</code> — handles rectangular well</p></li>
-<li><p>Otherwise: <code>"jv"</code> — fastest general-purpose solver at every size</p></li>
-</ul><p>The other solvers are available by naming them explicitly.</p>
+<li><p>Otherwise: <code>"jv"</code></p></li>
+</ul><p><code><a href="explain_dispatch.html">explain_dispatch()</a></code> reports which rule fired and why. The other solvers are
+available by naming them explicitly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="integer-conversion-for-bit-scaling">Integer conversion for bit-scaling<a class="anchor" aria-label="anchor" href="#integer-conversion-for-bit-scaling"></a></h2>
+
+
+
+<p><code>"gabow_tarjan"</code> is a bit-scaling algorithm and runs on integer costs. The
+conversion is part of the method, so the rule it follows and what it claims
+afterwards are both properties of the solve rather than of the caller's
+preparation.</p>
+<p>Finite costs are shifted so the smallest is zero, multiplied by a scale
+factor <code>s</code>, and rounded to the nearest integer. <code>s</code> is set so that
+<code>K * s * (max - min)</code> stays at or below <code>10^13</code>, where <code>K</code> is <code>n + 1</code> on a
+square problem and <code>2 * min(n, m) + 1</code> on a rectangular one. <code>K</code> is the
+separation the algorithm needs between the optimum and a 1-optimal matching,
+and the bound holds every scaled cost clear of the sentinel that marks a
+forbidden pair while keeping the path sums the solver forms inside 64-bit
+arithmetic. Forbidden pairs take the sentinel and take part in neither the
+range nor the conversion.</p>
+<p>A matrix whose finite entries are each within <code>1e-9</code> of an integer is taken
+as an integer matrix: <code>s</code> is one, the shift is an integer, and every cost
+reaches the solver as the integer nearest to it. Where those entries are
+integers the conversion is exact and the optimum is the optimum of the
+instance as supplied; where they are merely near one, each cost moves by at
+most <code>1e-9</code>, so the matching returned costs at most <code>2 * min(n, m) * 1e-9</code>
+more than that optimum. Such a matrix is refused when its range exceeds
+<code>1.25 * 10^14 / K</code>, since a scale of one is the only one available and no
+choice brings the instance inside the bound; the error names the limit and
+points at <code>"jv"</code> or <code>"auction"</code>.</p>
+<p>Costs that are not integers are solved on the rounded instance. Rounding
+moves each cost by at most <code>1 / (2 * s)</code>, so the matching returned costs at
+most <code>min(n, m) * K * (max - min) / 10^13</code> more than the optimum of the
+matrix as supplied. On a square problem that is about
+<code>n^2 * (max - min) / 10^13</code>, which is <code>10^-7</code> of the range at <code>n = 1000</code> and
+<code>10^-5</code> of it at <code>n = 10000</code>. Duals are divided by <code>s</code> and shifted back, so
+they belong to the original matrix; whether the matching is optimal for that
+matrix and not only for the rounded one is a question
+<code><a href="verify_assignment.html">verify_assignment()</a></code> answers rather than one this bound settles.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -223,7 +355,7 @@ characteristics:</p><ul><li><p>Very small (n &lt;= 8 and m &lt;= 8): <code>"brut
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -254,9 +254,11 @@ network flow algorithms. It emphasizes full matching and variable ratio
 matching.
 
 **Key difference**: optmatch pioneered optimal full matching via network
-flow; couplr now also supports optimal full matching (via
-[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md))
-alongside one-to-one matching with 20+ algorithm choices.
+flow. couplr’s
+[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+solves the same problem, admitting one-to-many and many-to-one groups in
+the same solution, and adds one-to-one matching with 20+ algorithm
+choices and a checkable certificate.
 
 ### optmatch Approach
 
@@ -314,11 +316,12 @@ similar total distances. The key differences are in:
 2.  **Algorithm selection**: optmatch uses RELAX-IV; couplr offers 20+
     algorithms
 
-3.  **Full matching**: Both packages support variable-ratio matching
-    ([`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
-    in couplr,
+3.  **Full matching**:
+    [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+    in couplr and
     [`fullmatch()`](https://rdrr.io/pkg/optmatch/man/fullmatch.html) in
-    optmatch)
+    optmatch, both admitting one-to-many and many-to-one groups in one
+    solution.
 
 ``` r
 
@@ -450,11 +453,11 @@ cat("  Max |std diff|:", round(balance_dm$overall$max_abs_std_diff, 4), "\n")
 
 | Feature | designmatch | couplr |
 |----|----|----|
-| **Objective** | Satisfy balance constraints | Minimize total distance |
-| **Balance** | Hard constraint | Achieved via optimization |
-| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.) |
+| **Objective** | Satisfy balance constraints | Minimize total distance ([`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)), or maximize matched cardinality under balance constraints ([`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)) |
+| **Balance** | Hard constraint | Achieved via optimization, or stated as a hard constraint |
+| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.), min-cost flow, Lagrangian branch and bound |
 | **Feasibility** | May be infeasible | Always finds a solution |
-| **Fine-grain control** | Moment constraints, cardinality | Caliper, blocking |
+| **Fine-grain control** | Moment constraints, cardinality | Caliper, blocking, fine and refined balance, moment constraints |
 | **Speed** | Slower (MIP) | Faster (LAP) |
 
 ### When to Use Each
@@ -474,6 +477,10 @@ cat("  Max |std diff|:", round(balance_dm$overall$max_abs_std_diff, 4), "\n")
 - Need guaranteed solutions
 
 - Iterative refinement (match, assess, refine)
+
+- Fine or refined balance is the requirement, and a certificate of the
+  largest balanced sample is wanted
+  ([`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md))
 
 ------------------------------------------------------------------------
 

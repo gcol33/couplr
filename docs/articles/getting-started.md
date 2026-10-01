@@ -293,7 +293,7 @@ result_strict <- match_couples(
 )
 #> Auto-selected scaling method: standardize
 #> Warning: 94.9% of pairs are forbidden!
-#>   Only 0 valid pairs for 50 left units - the matching pool is shallow!
+#>   Only 205 valid pairs for 50 left units - the matching pool is shallow!
 #>   Your constraints might be critically strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold
@@ -304,7 +304,7 @@ result_strict <- match_couples(
 cat("Without caliper:", result_loose$info$n_matched, "pairs\n")
 #> Without caliper: 50 pairs
 cat("With caliper:", result_strict$info$n_matched, "pairs\n")
-#> With caliper: 37 pairs
+#> With caliper: 40 pairs
 ```
 
 Stricter calipers mean fewer but better matches.
@@ -378,8 +378,8 @@ Hospital A controls, etc.
 One-to-one matching discards unmatched controls. If you want every unit
 in a group, use
 [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md).
-It creates variable-ratio groups (e.g., 1 treatment + 3 controls) that
-minimize total distance:
+It creates variable-ratio groups (e.g., 1 treatment + 3 controls, or 2
+treatments + 1 control) that minimize total distance:
 
 ``` r
 
@@ -394,7 +394,8 @@ result_full
 #> Full Matching Result
 #> ====================
 #> 
-#>   Groups formed: 50
+#>   Status: optimal
+#>   Groups formed: 35
 #>   Left units:  50 matched, 0 unmatched (of 50)
 #>   Right units: 80 matched, 0 unmatched (of 80)
 #> 
@@ -406,11 +407,11 @@ head(result_full$groups)
 #>   group_id id    side  weight
 #>      <int> <chr> <chr>  <dbl>
 #> 1        1 1     left       1
-#> 2        1 42    right      1
-#> 3        2 2     left       1
-#> 4        2 11    right      1
-#> 5        3 3     left       1
-#> 6        3 59    right      1
+#> 2        1 16    left       1
+#> 3        1 44    right      2
+#> 4        2 2     left       1
+#> 5        2 3     left       1
+#> 6        2 58    right      2
 ```
 
 Full matching is useful when your control pool is much larger than
@@ -480,6 +481,14 @@ matched <- match_couples(
   auto_scale = TRUE
 )
 #> Auto-selected scaling method: standardize
+#> Warning: No id column found in left, so ids left_1 ... left_100 were used.
+#> Downstream verbs (join_matched(), match_data(), balance_diagnostics()) join on
+#> these values, so pass left_id = "<column>" to key the matching on your own
+#> identifier.
+#> Warning: No id column found in right, so ids right_1 ... right_200 were used.
+#> Downstream verbs (join_matched(), match_data(), balance_diagnostics()) join on
+#> these values, so pass right_id = "<column>" to key the matching on your own
+#> identifier.
 
 # 3. Check how many matched
 cat("Treated patients:", nrow(patients_treated), "\n")

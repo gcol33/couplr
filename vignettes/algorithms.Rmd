@@ -27,9 +27,6 @@ if (!has_viz) {
   message("This vignette requires ggraph, tidygraph, and ggplot2 packages for visualizations.")
 }
 
-# lap_animate() returns an htmlwidget; the animation chunks are gated on it
-has_widgets <- requireNamespace("htmlwidgets", quietly = TRUE)
-
 library(couplr)
 library(tibble)
 
@@ -176,64 +173,6 @@ When you run six assignment algorithms on identical input, they all find the sam
 The slowest is Munkres's matrix form of the Hungarian method, the version usually taught, which runs in $O(n^4)$. couplr's `"hungarian"` solves the same problem by shortest augmenting paths in $O(n^3)$ and takes `r sprintf("%.1f", bench_ratio("hungarian", "jv", race_n))` times as long as Jonker-Volgenant, the fastest here, which came out three decades after Munkres.
 
 Why keep so many? Each was designed for a different kind of input, and each can be named with `method =`. On the package's benchmarks most of those designs do not turn into speed on ordinary inputs, so `method = "auto"` uses three rules: exhaustive enumeration for problems at most 8 by 8, Hopcroft-Karp when the finite costs are all equal or all 0 or 1, and Jonker-Volgenant for everything else.
-
----
-
-## Watch It Run
-
-A bar chart of timings tells you which algorithm finished first; it does not tell you why. The Hungarian method, the slowest family in the race, is also the one with the cleanest pedagogical story --- and you only see that story when you watch the matching evolve step by step.
-
-`lap_animate(cost, method = "...")` does exactly that. Each animated method has a reference R implementation that emits a state trace at every algorithmic event (a bid, a dual update, an augmenting path, a price drop). The trace plays back as an interactive bipartite graph: green edges are matched, orange edges are currently being explored, red dashed edges lie on the alternating path being built. Dual potentials, where the algorithm has them, are printed next to the nodes.
-
-```{r animate-available, eval = TRUE}
-animated_methods()
-```
-
-Every assignment method in couplr now has an animation. The list covers each algorithmic family in this vignette: the textbook primal-dual (Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the rectangular-input variant (Ramshaw-Tarjan), the bucket-priority alternative (SSAP-bucket), the economic / bidding view (Auction with LIFO and Gauss-Seidel sweeps, plus epsilon-scaling), the bit-scaling discrete-cost approach (Gabow-Tarjan), the min-cost-flow family (CSflow, cycle-canceling, push-relabel, CSA, network-simplex), the special-case Hopcroft-Karp on 0/1 matrices, and the brute-force enumeration for tiny inputs.
-
-All four demos below run on a 30x30 cost matrix so you can see the algorithm's shape, not just a handful of edges. The header tracks `k / 30 matched`; matched pairs fade into the background as the algorithm commits them; orange edges are the current search; red dashed edges mark the augmenting path being built.
-
-### Hungarian on a 30x30
-
-```{r animate-hungarian, eval = has_widgets}
-set.seed(1)
-cost_hg <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_hg, method = "hungarian")
-```
-
-Each row's processing grows a Dijkstra shortest-path tree on reduced costs from the free row. Orange edges are the scan frontier; a free column popping off the queue terminates the search and the red dashed augmenting path commits one new matched edge before the next free row is selected.
-
-### Auction on a 30x30
-
-```{r animate-auction, eval = has_widgets}
-set.seed(2)
-cost_a <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_a, method = "auction")
-```
-
-Bidders compete: each unassigned row picks its most-valued column and bids `(best - second) + eps`. When a column already held by another row is grabbed, that row is freed and rejoins the bidding. Watch the matched count climb in fits as displacements ripple through.
-
-### Gabow-Tarjan bit-scaling on a 30x30
-
-```{r animate-gt, eval = has_widgets}
-set.seed(3)
-cost_gt <- matrix(sample(1:50, 900, replace = TRUE), 30, 30)
-lap_animate(cost_gt, method = "gabow_tarjan")
-```
-
-The header here tracks `Bit k / n_bits resolved` rather than matched edges, because GT's progress metric is bit-precision: each phase solves the assignment problem fully at the current bit-precision, then the next phase incorporates one more bit and rebuilds the matching from scratch (with the duals warm-starting from the previous phase). `phase_start` frames mark each bit being processed (MSB first). Within a bit, Hopcroft-Karp finds maximal augmenting paths in the equality graph; a single 1-feasibility Hungarian step closes any gap before the next bit is added.
-
-### Jonker-Volgenant pre-stages on a 30x30
-
-```{r animate-jv, eval = has_widgets}
-set.seed(4)
-cost_jv <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_jv, method = "jv")
-```
-
-Column reduction (greedy back-to-front), reduction transfer (tighten v on singletons), and augmenting row reduction usually do most of the work; you can watch the matched counter race upward before the Dijkstra main loop runs for any rows still unmatched after the pre-stages.
-
-The same call works for `method = "munkres"` (the matrix-form 1957 algorithm with star/prime zeros and cover lines) and `method = "auction_scaled"` (the epsilon-scaling variant that runs an entire auction at progressively tighter eps).
 
 ---
 

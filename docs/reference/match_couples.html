@@ -28,7 +28,7 @@ distance constraints, and various distance metrics."><script>
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,10 +56,10 @@ distance constraints, and various distance metrics."><script>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -96,6 +96,8 @@ distance constraints, and various distance metrics.</p>
 <span>  <span class="va">left</span>,</span>
 <span>  right <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  left_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  right_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  distance <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -114,7 +116,8 @@ distance constraints, and various distance metrics.</p>
 <span>  ratio <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  check_costs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  sigma <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span></span>
+<span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  certify <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -132,6 +135,17 @@ distance constraints, and various distance metrics.</p>
 
 <dt id="arg-vars">vars<a class="anchor" aria-label="anchor" href="#arg-vars"></a></dt>
 <dd><p>Variable names to use for distance computation</p></dd>
+
+
+<dt id="arg-left-id-right-id">left_id, right_id<a class="anchor" aria-label="anchor" href="#arg-left-id-right-id"></a></dt>
+<dd><p>Name of the column holding the unit identifier, or
+NULL (default) to use a column called <code>id</code>, then meaningful row names,
+then synthesized ids <code>left_1 ... left_n</code> / <code>right_1 ... right_m</code> with a
+warning. The values of this column are what <code>pairs$left_id</code> and
+<code>pairs$right_id</code> carry, and what <code><a href="join_matched.html">join_matched()</a></code>, <code><a href="match_data.html">match_data()</a></code>,
+<code><a href="balance_diagnostics.html">balance_diagnostics()</a></code>, <code><a href="sensitivity_analysis.html">sensitivity_analysis()</a></code> and <code><a href="as_matchit.html">as_matchit()</a></code> join
+on, so the same column name is passed to those verbs. Ids read from the
+data must be unique.</p></dd>
 
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
@@ -229,16 +243,46 @@ and provide helpful warnings before matching (default: TRUE)</p></dd>
 
 
 <dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
-<dd><p>One of "auto" (default), "dense", or "lazy". "auto"
-warns (or, when <code>method</code> is <code>"jv"</code>/<code>"auction"</code> with a built-in distance
-metric, switches) when the dense cost matrix would consume a large
+<dd><p>One of "auto" (default), "dense", "lazy" or "implicit".
+"auto" warns (or, when <code>method</code> is <code>"jv"</code>/<code>"auction"</code>, switches) when the dense cost matrix would consume a large
 fraction of free system RAM. "lazy" computes each pairwise distance from
 the underlying feature data as the solver needs it, instead of
-allocating the full n_left x n_right matrix; supported for <code>method = "jv"</code>/<code>"auction"</code> with a built-in distance metric, and not yet for
-<code>replace = TRUE</code>, <code>ratio &gt; 1</code>, <code>method = "greedy"</code>, or custom distance
-functions (blocking via <code>block_id</code> is the other option that reduces
-memory, by solving smaller sub-problems). "dense" skips the RAM check
-entirely.</p></dd>
+allocating the full n_left x n_right matrix; supported for <code>method = "jv"</code>/<code>"auction"</code>, including
+<code>replace = TRUE</code>, where each left unit's cheapest partners are found one
+row at a time, and <code>ratio &gt; 1</code>, where the left units' covariates are
+replicated rather than their rows of distances, and not yet for
+<code>method = "greedy"</code> (blocking via <code>block_id</code> is the other option that
+reduces memory, by solving smaller sub-problems). A custom distance
+function is called on a block of left units against every right unit,
+the same contract the dense path calls it under, with the block sized so
+the matrix it returns stays near a million cells; each matched pair is
+then evaluated again alone, and a distance that depends on the other units
+in its call is an error. When the constraints admit no complete matching, the
+largest matching they admit, cheapest among those, is found by the
+edge-generation loop over the same specification, as the dense path finds
+it by padding. Where the metric carries a ball
+bound, the column set is held in a ball tree and a subtree whose bound
+cannot beat the current threshold is discarded without being read:
+<code>"mahalanobis"</code> always, the metrics linear in the covariates up to six of
+them. <code>"manhattan"</code> and <code>"chebyshev"</code>, a covariance with no Cholesky
+factor, and a higher-dimensional linear metric read the columns instead. "implicit" states the problem
+over every pair and solves it over a fraction of them, generating the pairs
+the answer turns out to need and proving that the ones it never generated
+could not have improved it; same requirements as "lazy". On
+the eight-covariate problem the benchmarks use it leads "lazy" from 5,000
+units upward, by 1.1x at 5,000 rising to 3.1x at 50,000, and loses below
+that where the loop's fixed costs are still visible; what it buys at every
+size is the certificate over the complete problem. "auto" never selects
+it. "dense" skips the RAM check entirely.</p></dd>
+
+
+<dt id="arg-certify">certify<a class="anchor" aria-label="anchor" href="#arg-certify"></a></dt>
+<dd><p>Logical; whether the result carries a checked
+<code>assignment_certificate</code> as <code>certificate</code>. Applies to
+<code>memory_mode = "implicit"</code>, where it defaults to <code>TRUE</code>: the certificate is
+what separates the answer from an approximate one. On the other paths the
+matching is certified after the fact with <code><a href="verify_assignment.html">verify_assignment()</a></code>, against
+the cost matrix it was solved from.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -246,7 +290,35 @@ entirely.</p></dd>
     <p>A list with class "matching_result" containing:</p><ul><li><p><code>pairs</code>: Tibble of matched pairs with distances</p></li>
 <li><p><code>unmatched</code>: List of unmatched left and right IDs</p></li>
 <li><p><code>info</code>: Matching diagnostics and metadata</p></li>
-</ul></div>
+<li><p><code>status</code>: One of <code><a href="solver_status_values.html">solver_status_values()</a></code>, computed from what the solve
+achieved. <code>"optimal"</code> when every left unit found a partner under an
+optimal method, <code>"partial"</code> when constraints left some unmatched,
+<code>"heuristic"</code> when a greedy method ran, either because it was asked for
+or because the constrained path fell back to it, and <code>"infeasible"</code> when
+nothing could be matched.</p></li>
+<li><p><code>potentials</code>: The dual potentials of the design's linear program, a list
+with elements <code>left</code> and <code>right</code> holding one value per unit, named by
+id. The reduced cost of a pair is its distance minus the two
+potentials: at least zero on every admissible pair the matching left
+out, zero on every pair of a 1:1 matching, and at most zero on the pairs
+of a k:1 or with-replacement matching, whose pair arcs carry at most
+one unit. A left unit's potential on the k:1 design is the largest of
+its replicas'. With replacement the LP separates by row: a left unit's
+potential is the distance to the farthest partner it took and every
+right unit's is zero. A unit with no admissible partner, or in a block
+with none, reads <code>NA</code>. Absent for <code>method = "greedy"</code> and for a
+constrained problem answered by maximum cardinality, which is not the
+LP the potentials belong to. On the 1:1 design they are the duals
+<code><a href="verify_assignment.html">verify_assignment()</a></code> checks, and a method that returns none has them
+computed by <code><a href="assignment_duals.html">assignment_duals()</a></code>.</p></li>
+</ul><p>Under <code>memory_mode = "implicit"</code> it also carries <code>certificate</code>, the checked
+statement of optimality (see <code><a href="verify_assignment.html">verify_assignment()</a></code>, which names the
+arithmetic it was decided in), and <code>search</code>: the pairs
+the loop generated out of the pairs the problem states, the pairs a cost
+was computed for, and one row per round of what each round did. An
+infeasible answer carries <code>witness</code> instead, naming the units that could
+not be matched and the partners they have between them.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>With <code>method</code> set to a LAP solver (the default <code>"auto"</code>, or <code>"jv"</code>,
@@ -289,7 +361,7 @@ distance but scales to very large datasets.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

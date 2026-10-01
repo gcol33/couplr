@@ -9,16 +9,18 @@ couplr implements **20 algorithms** (19 sum-cost solvers callable via
 [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
 plus
 [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
-for min-max problems), including methods that exist in no other R
-package (Orlin-Ahuja, Network Simplex, Ramshaw-Tarjan) and, to our
-knowledge, no publicly available open-source implementation in any
-language for Gabow-Tarjan bit-scaling assignment.
+for min-max problems), including methods we have not found in another R
+package (Network Simplex, Ramshaw-Tarjan) and Gabow-Tarjan bit-scaling
+assignment. A search of CRAN, PyPI, GitHub and six graph libraries in
+September 2026 found no earlier open-source implementation of
+Gabow-Tarjan for the assignment problem.
 
 ### Who This Vignette Is For
 
 **Audience**: Researchers curious about optimization algorithms,
 developers choosing the right method for their problem, anyone wondering
-why modern algorithms beat Hungarian by 20x or more.
+why modern algorithms beat the textbook Hungarian method by two orders
+of magnitude.
 
 **Prerequisites**:
 
@@ -30,7 +32,8 @@ why modern algorithms beat Hungarian by 20x or more.
 
 **What You’ll Learn**:
 
-- Why Hungarian is slow and how later algorithms improved it
+- Why the textbook Hungarian method is slow and how later algorithms
+  improved it
 
 - How primal-dual, auction, and network flow approaches work
 
@@ -42,142 +45,28 @@ why modern algorithms beat Hungarian by 20x or more.
 
 ## The Race
 
-But first: the same problem, five different solutions.
+But first: the same problem, six different solutions.
 
-![Five algorithms solving the same 400x400 assignment problem with
-dramatically different
-speeds](algorithms_files/figure-html/the-race-1.svg)
+![Six algorithms solving the same 500 by 500 assignment problem, from
+Munkres, the slowest, to Jonker-Volgenant, the
+fastest](algorithms_files/figure-html/the-race-1.svg)
 
-When you run five different assignment algorithms on identical input,
-they all find the same optimal answer, but the fastest finishes **22
-times quicker** than the slowest.
+When you run six assignment algorithms on identical input, they all find
+the same optimal answer, but the fastest finishes **150 times quicker**
+than the slowest.
 
-The slowest happens to be Hungarian, the algorithm everyone learns in
-textbooks. CSA, the fastest here, came out four decades later. That gap
-represents years of algorithmic refinement that most production software
-never adopted.
+The slowest is Munkres’s matrix form of the Hungarian method, the
+version usually taught, which runs in \\O(n^4)\\. couplr’s `"hungarian"`
+solves the same problem by shortest augmenting paths in \\O(n^3)\\ and
+takes 2.0 times as long as Jonker-Volgenant, the fastest here, which
+came out three decades after Munkres.
 
-Why would anyone need five ways to solve the same problem? Because they
-don’t all behave the same under different conditions. The Hungarian
-method that handles a 100x100 matrix without complaint becomes painfully
-slow at 1000x1000. The Auction algorithm that dominates large dense
-problems stumbles on small sparse ones. Different matrix sizes,
-different sparsity patterns, different cost distributions: each
-situation favors a different algorithm.
-
-couplr gives you all of them, and it picks the right one automatically.
-
-------------------------------------------------------------------------
-
-## Watch It Run
-
-A bar chart of timings tells you which algorithm finished first; it does
-not tell you why. The same Hungarian primal-dual that takes 22x as long
-as CSA on a 400x400 problem is also the one with the cleanest
-pedagogical story — and you only see that story when you watch the
-matching evolve step by step.
-
-`lap_animate(cost, method = "...")` does exactly that. Each animated
-method has a reference R implementation that emits a state trace at
-every algorithmic event (a bid, a dual update, an augmenting path, a
-price drop). The trace plays back as an interactive bipartite graph:
-green edges are matched, orange edges are currently being explored, red
-dashed edges lie on the alternating path being built. Dual potentials,
-where the algorithm has them, are printed next to the nodes.
-
-``` r
-
-animated_methods()
-#>  [1] "auction"         "auction_gs"      "auction_scaled"  "bottleneck"     
-#>  [5] "bruteforce"      "csa"             "csflow"          "cycle_cancel"   
-#>  [9] "gabow_tarjan"    "hk01"            "hungarian"       "jv"             
-#> [13] "lapmod"          "munkres"         "network_simplex" "orlin"          
-#> [17] "push_relabel"    "ramshaw_tarjan"  "sap"             "ssap_bucket"
-```
-
-Every assignment method in couplr now has an animation. The list covers
-each algorithmic family in this vignette: the textbook primal-dual
-(Hungarian, Munkres), the warm-start Dijkstra-based variant (JV), the
-rectangular-input variant (Ramshaw-Tarjan), the bucket-priority
-alternative (SSAP-bucket), the economic / bidding view (Auction with
-LIFO and Gauss-Seidel sweeps, plus epsilon-scaling), the bit-scaling
-discrete-cost approach (Gabow-Tarjan), the min-cost-flow family (CSflow,
-cycle-canceling, push-relabel, CSA, Orlin, network-simplex), the
-special-case Hopcroft-Karp on 0/1 matrices, and the brute-force
-enumeration for tiny inputs.
-
-All four demos below run on a 30x30 cost matrix so you can see the
-algorithm’s shape, not just a handful of edges. The header tracks
-`k / 30 matched`; matched pairs fade into the background as the
-algorithm commits them; orange edges are the current search; red dashed
-edges mark the augmenting path being built.
-
-### Hungarian on a 30x30
-
-``` r
-
-set.seed(1)
-cost_hg <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_hg, method = "hungarian")
-```
-
-Each row’s processing grows a Dijkstra shortest-path tree on reduced
-costs from the free row. Orange edges are the scan frontier; a free
-column popping off the queue terminates the search and the red dashed
-augmenting path commits one new matched edge before the next free row is
-selected.
-
-### Auction on a 30x30
-
-``` r
-
-set.seed(2)
-cost_a <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_a, method = "auction")
-```
-
-Bidders compete: each unassigned row picks its most-valued column and
-bids `(best - second) + eps`. When a column already held by another row
-is grabbed, that row is freed and rejoins the bidding. Watch the matched
-count climb in fits as displacements ripple through.
-
-### Gabow-Tarjan bit-scaling on a 30x30
-
-``` r
-
-set.seed(3)
-cost_gt <- matrix(sample(1:50, 900, replace = TRUE), 30, 30)
-lap_animate(cost_gt, method = "gabow_tarjan")
-```
-
-The header here tracks `Bit k / n_bits resolved` rather than matched
-edges, because GT’s progress metric is bit-precision: each phase solves
-the assignment problem fully at the current bit-precision, then the next
-phase incorporates one more bit and rebuilds the matching from scratch
-(with the duals warm-starting from the previous phase). `phase_start`
-frames mark each bit being processed (MSB first). Within a bit,
-Hopcroft-Karp finds maximal augmenting paths in the equality graph; a
-single 1-feasibility Hungarian step closes any gap before the next bit
-is added.
-
-### Jonker-Volgenant pre-stages on a 30x30
-
-``` r
-
-set.seed(4)
-cost_jv <- matrix(sample(1:100, 900, replace = TRUE), 30, 30)
-lap_animate(cost_jv, method = "jv")
-```
-
-Column reduction (greedy back-to-front), reduction transfer (tighten v
-on singletons), and augmenting row reduction usually do most of the
-work; you can watch the matched counter race upward before the Dijkstra
-main loop runs for any rows still unmatched after the pre-stages.
-
-The same call works for `method = "munkres"` (the matrix-form 1957
-algorithm with star/prime zeros and cover lines) and
-`method = "auction_scaled"` (the epsilon-scaling variant that runs an
-entire auction at progressively tighter eps).
+Why keep so many? Each was designed for a different kind of input, and
+each can be named with `method =`. On the package’s benchmarks most of
+those designs do not turn into speed on ordinary inputs, so
+`method = "auto"` uses three rules: exhaustive enumeration for problems
+at most 8 by 8, Hopcroft-Karp when the finite costs are all equal or all
+0 or 1, and Jonker-Volgenant for everything else.
 
 ------------------------------------------------------------------------
 
@@ -316,8 +205,9 @@ augmentation](algorithms_files/figure-html/jv-diagram-1.svg)
 3.  **Augmentation**: For any remaining unmatched rows, use
     Dijkstra-style shortest path search.
 
-**Complexity**: Still \\O(n^3)\\, but with a much smaller constant.
-Often 10-50x faster than Hungarian in practice.
+**Complexity**: Still \\O(n^3)\\, with a smaller constant: on the
+package’s benchmark it takes 0.52 of the shortest-augmenting-path
+Hungarian’s time at n = 1000.
 
 ``` r
 
@@ -351,8 +241,7 @@ This transforms how the algorithm behaves. Large epsilon means big steps
 and rapid progress; small epsilon means careful refinement. The total
 work can end up being less than doing everything exactly from the start.
 
-Four algorithms exploit this insight: Auction, CSA, Gabow-Tarjan, and
-Orlin-Ahuja.
+Three algorithms exploit this insight: Auction, CSA, and Gabow-Tarjan.
 
 ------------------------------------------------------------------------
 
@@ -384,6 +273,15 @@ with prices](algorithms_files/figure-html/auction-diagram-1.svg)
 infinitely against each other, each raising the price by 0. The epsilon
 ensures progress.
 
+It also costs exactness. Bidding stops at an assignment within
+\\n\epsilon\\ of the optimum, which is optimal on integer costs once
+\\\epsilon \< 1/n\\ but not on real-valued ones, where two assignments
+can differ by less than any fixed \\n\epsilon\\. couplr’s auctions
+therefore finish with a repair step: shortest paths over the final
+prices turn them into exact dual potentials, and any cheaper
+reassignment found on the way is applied, so the matching returned is
+optimal.
+
 **Complexity**: \\O(n^2 \log(nC) / \epsilon)\\ where \\C\\ is the cost
 range.
 
@@ -414,12 +312,19 @@ The next algorithm makes epsilon-scaling systematic.
 
 ### Cost-Scaling Algorithm / CSA (1995)
 
-Andrew Goldberg and Robert Kennedy asked: what if we scale epsilon
-automatically?
+Andrew Goldberg and Robert Kennedy applied the push-relabel method for
+minimum-cost flow to assignment.
 
-**The idea**: Start with \\\epsilon = \max(c\_{ij})\\. In each phase,
-halve epsilon and refine the current solution. After \\O(\log C)\\
-phases, epsilon is essentially zero: optimality.
+**The idea**: Start with \\\epsilon\\ at the span of the costs. Each
+phase (a *refine*) divides epsilon by 10, clears the matching, and
+discharges the unmatched rows from a stack by *double-push*: the row
+takes its cheapest column, the row that held it becomes unmatched, and
+the column’s price drops to the row’s second-cheapest reduced cost less
+epsilon. Prices only fall, so a row keeps its three cheapest columns
+between scans and rescans its full row only when fewer than two of them
+are still below the fourth-cheapest value it saw. After \\O(\log C)\\
+phases the assignment is within \\n\epsilon\\ of optimal, and a repair
+step closes the remaining gap.
 
 ![CSA algorithm showing epsilon-scaling phases converging to optimal
 solution](algorithms_files/figure-html/csa-diagram-1.svg)
@@ -506,66 +411,8 @@ cat("Total cost:", get_total_cost(result), "\n")
 ```
 
 Gabow-Tarjan is primarily of theoretical interest. It provides the best
-known worst-case bounds for integer costs. But there’s one more scaling
-algorithm, with even better theoretical complexity.
-
-------------------------------------------------------------------------
-
-### Orlin-Ahuja Algorithm (1992)
-
-James Orlin and Ravindra Ahuja developed a **double-scaling** algorithm
-that scales both costs AND capacities simultaneously.
-
-**The insight**: Cost-scaling alone gives \\O(n^3 \log C)\\. But if we
-also scale *flow capacities*, we can exploit the structure of sparse
-graphs. At each scale, we only need to push \\O(\sqrt{n})\\ units of
-flow before refining.
-
-**The algorithm**:
-
-1.  Scale costs as in Gabow-Tarjan (process bits from high to low).
-
-2.  At each cost scale, use **capacity scaling**:
-
-    - Start with large capacity increments \\\Delta = 2^k\\
-
-    - Find augmenting paths that can carry \\\Delta\\ flow
-
-    - Halve \\\Delta\\ and repeat until \\\Delta = 1\\
-
-3.  The capacity scaling limits work per phase to \\O(m)\\
-    augmentations.
-
-**Why \\\sqrt{n}\\ appears**: The assignment problem has \\n\\ units of
-flow total. With capacity scaling, each phase handles \\O(\sqrt{n})\\
-flow units, and there are \\O(\sqrt{n})\\ phases per cost scale. This
-geometric structure yields the improved bound.
-
-**Complexity**: \\O(\sqrt{n} \cdot m \cdot \log(nC))\\ where \\m\\ is
-the number of edges.
-
-For sparse problems where \\m \ll n^2\\, this is dramatically better
-than \\O(n^3)\\.
-
-``` r
-
-set.seed(111)
-n <- 50
-cost <- matrix(sample(1:100000, n * n, replace = TRUE), n, n)
-result <- lap_solve(cost, method = "orlin")
-cat("Total cost:", get_total_cost(result), "\n")
-#> Total cost: 123035
-```
-
-Orlin-Ahuja provides the best theoretical bounds for sparse problems
-with large cost ranges. The implementation complexity is substantial:
-maintaining blocking flows across scaling phases requires careful data
-structure engineering. In practice, the overhead often makes it slower
-than CSA for dense problems. But for large sparse instances, it’s
-asymptotically optimal.
-
-That’s four scaling algorithms, each trading precision for speed in a
-different way. But there’s a completely different way to think about the
+known worst-case bounds for integer costs. That closes the scaling
+family, and there’s a completely different way to think about the
 problem entirely.
 
 ------------------------------------------------------------------------
@@ -760,8 +607,28 @@ cat("Total cost:", round(get_total_cost(result), 2), "\n")
 #> Total cost: 794.94
 ```
 
-For very sparse problems, SAP can be orders of magnitude faster than
-dense algorithms.
+Sparse storage is what these two are written for, but on the regime grid
+behind the dispatcher neither `"sap"` nor `"lapmod"` was often quicker
+than `"jv"` on sparse matrices, so `method = "auto"` sends sparse input
+to `"jv"` and both stay available by name.
+
+`"sap_dense"` runs the same successive-shortest-path search with the
+opposite storage assumption. Its Dijkstra step picks the next column by
+scanning every unfinalized one instead of pulling from a heap, which
+costs \\O(m)\\ per extraction and \\O(n m^2)\\ over a full solve. On a
+dense cost matrix, where every column is a candidate at every step, the
+scan does the work a heap would do anyway without paying for the heap.
+
+``` r
+
+set.seed(789)
+n <- 60
+cost <- matrix(runif(n * n, 0, 100), n, n)
+result <- lap_solve(cost, method = "sap_dense")
+cat("Total cost:", round(get_total_cost(result), 2), "
+")
+#> Total cost: 153.98
+```
 
 ------------------------------------------------------------------------
 
@@ -838,7 +705,7 @@ summary(kbest)
 #> 1     1           1         49             4
 #> 2     2           2         50             4
 #> 3     3           3         50             4
-#> 4     4           4         51             4
+#> 4     4           4         50             4
 #> 5     5           5         51             4
 ```
 
@@ -901,45 +768,49 @@ cost analysis.
 
 You’ve seen what the algorithms do. Now: how fast?
 
-![Runtime comparison of LAP algorithms across problem sizes showing CSA
-and JV leading](algorithms_files/figure-html/benchmark-plot-1.svg)
+![Solve time against matrix size for six algorithms on dense uniform
+integer costs, with Jonker-Volgenant fastest at every
+size](algorithms_files/figure-html/benchmark-plot-1.svg)
 
-**For dense matrices**: CSA and JV are consistently fastest. Hungarian
-falls behind rapidly. Auction and Network Simplex are solid
-middle-ground choices.
+**For dense matrices**: Jonker-Volgenant is the fastest at every size
+shown. At n = 1000, CSA takes 1.6 times its time, the
+shortest-augmenting-path Hungarian 1.9 times, auction 2.1 times, and
+network simplex, which solves the problem as a general flow, 50 times.
+Munkres stops at the smaller sizes.
 
-![Sparse algorithm performance showing SAP and LAPMOD outperforming
-dense algorithms](algorithms_files/figure-html/sparse-plot-1.svg)
-
-**For sparse matrices**: SAP and LAPMOD are 10x faster than dense
-algorithms. Use them.
+**For sparse matrices**: on the regime grid behind the dispatcher, which
+crosses cost distributions with densities from 60 down to 1 percent of
+entries finite, Jonker-Volgenant was at or below the best time the
+sparse solvers reached, which is why `method = "auto"` does not divert
+on sparsity.
 
 ------------------------------------------------------------------------
 
 ## Quick Reference
 
-| Algorithm | Complexity | Best For | Method |
+| Algorithm | Complexity | Written For | Method |
 |----|----|----|----|
 | Hungarian | \\O(n^3)\\ | Pedagogy, small \\n\\ | `"hungarian"` |
 | Jonker-Volgenant | \\O(n^3)\\ expected | General purpose | `"jv"` |
-| Auction | \\O(n^2 \log(nC)/\epsilon)\\ | Large dense | `"auction"` |
+| Auction | \\O(n^2 \log(nC)/\epsilon)\\ | Dense costs | `"auction"` |
 | Auction (Gauss-Seidel) | \\O(n^2 \log(nC)/\epsilon)\\ | Spatial structure | `"auction_gs"` |
-| Auction (Scaled) | \\O(n^2 \log(nC)/\epsilon)\\ | Large dense, fastest | `"auction_scaled"` |
-| CSA | \\O(n^3)\\ amortized | Medium-large dense | `"csa"` |
+| Auction (Scaled) | \\O(n^2 \log(nC)/\epsilon)\\ | Tied costs | `"auction_scaled"` |
+| CSA | \\O(n^3)\\ amortized | Dense costs | `"csa"` |
 | Cost-Scaling Flow | \\O(n^3 \log(nC))\\ | General min-cost flow | `"csflow"` |
-| Gabow-Tarjan | \\O(\sqrt{n}\\ m \log(nC))\\ | Large integer costs | `"gabow_tarjan"` |
-| Orlin-Ahuja | \\O(\sqrt{n} m \log(nC))\\ | Large sparse | `"orlin"` |
+| Gabow-Tarjan | \\O(\sqrt{V}\\ E \log(VC))\\ | Large integer costs | `"gabow_tarjan"` |
+| SAP (dense scan) | \\O(n m^2)\\ | Dense costs | `"sap_dense"` |
 | Network Simplex | \\O(n^3)\\ typical | Dual info needed | `"network_simplex"` |
 | Push-Relabel | \\O(n^2 m)\\ | Max-flow style | `"push_relabel"` |
 | Cycle Canceling | \\O(n^2 m \cdot C)\\ | Theoretical interest | `"cycle_cancel"` |
 | HK01 | \\O(n^{2.5})\\ | Binary costs only | `"hk01"` |
 | SSAP (Dial) | \\O(n^2 + nm)\\ | Integer costs, buckets | `"ssap_bucket"` |
-| SAP | \\O(n^2 + nm)\\ | Sparse (\>50% forbidden) | `"sap"` |
-| LAPMOD | \\O(n^2 + nm)\\ | Sparse (\>50% forbidden) | `"lapmod"` |
+| SAP | \\O(n^2 + nm)\\ | Sparse, via the flow model | `"sap"` |
+| LAPMOD | \\O(n^2 + nm)\\ | Sparse, CSR storage | `"lapmod"` |
 | Ramshaw-Tarjan | \\O(nm \log n)\\ | Rectangular matrices | `"ramshaw_tarjan"` |
 | Brute Force | \\O(n!)\\ | Tiny (\\n \leq 8\\) | `"bruteforce"` |
 
-Or just use `method = "auto"` and let couplr choose.
+Or use `method = "auto"`, which applies the three rules described under
+The Race.
 
 ------------------------------------------------------------------------
 
@@ -960,10 +831,6 @@ Or just use `method = "auto"` and let couplr choose.
 
 - Goldberg, A. V., & Kennedy, R. (1995). An efficient cost scaling
   algorithm for the assignment problem. *Mathematical Programming*.
-
-- Orlin, J. B., & Ahuja, R. K. (1992). New scaling algorithms for the
-  assignment and minimum mean cycle problems. *Mathematical
-  Programming*.
 
 - Ramshaw, L., & Tarjan, R. E. (2012). On minimum-cost assignments in
   unbalanced bipartite graphs. *HP Labs Technical Report*.

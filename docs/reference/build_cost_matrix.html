@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,10 +54,10 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -98,7 +98,8 @@
 <span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sigma <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  memory_mode <span class="op">=</span> <span class="st">"auto"</span>,</span>
-<span>  caller_supports_lazy <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  caller_supports_lazy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  caller_supports_implicit <span class="op">=</span> <span class="va">caller_supports_lazy</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,22 +108,30 @@
 
 
 <dl><dt id="arg-memory-mode">memory_mode<a class="anchor" aria-label="anchor" href="#arg-memory-mode"></a></dt>
-<dd><p>One of "auto" (default), "dense", or "lazy". "auto"
-warns (or, when the caller supports it, switches) when the dense matrix
-would consume a large fraction of free system RAM. <code>memory_mode = "lazy"</code> returns a <code>lazy_cost_spec</code> instead of a matrix when the calling
+<dd><p>One of "auto" (default), "dense", "lazy" or "implicit".
+"auto" warns (or, when the caller supports it, switches) when the dense
+matrix would consume a large fraction of free system RAM. <code>memory_mode = "lazy"</code> returns a <code>lazy_cost_spec</code> instead of a matrix when the calling
 path and distance metric support it (built-in metrics via <code><a href="assignment.html">assignment()</a></code>
 with <code>method = "jv"</code>/<code>"auction"</code>); otherwise it errors clearly rather
-than silently falling back to dense.</p></dd>
+than silently falling back to dense. <code>memory_mode = "implicit"</code> returns
+the same specification marked for the edge-generation loop, which solves
+it without building the pair set at all.</p></dd>
 
 
 <dt id="arg-caller-supports-lazy">caller_supports_lazy<a class="anchor" aria-label="anchor" href="#arg-caller-supports-lazy"></a></dt>
 <dd><p>Whether the calling code path can actually
-consume a <code>lazy_cost_spec</code> result. Defaults to <code>TRUE</code>; callers whose
-downstream solve path has not been made lazy-aware (e.g. <code><a href="full_match.html">full_match()</a></code>,
-which uses an entirely different min-cost-flow backend) pass <code>FALSE</code> so
-<code>memory_mode = "auto"</code> never promotes to lazy for them, and an explicit
+consume a <code>lazy_cost_spec</code> result for a solve over every pair. Defaults
+to <code>TRUE</code>; a caller with no such solve (e.g. <code><a href="full_match.html">full_match()</a></code>, whose flow
+over every pair would hold every pair) passes <code>FALSE</code> so
+<code>memory_mode = "auto"</code> never promotes to lazy for it, and an explicit
 <code>memory_mode = "lazy"</code> request errors clearly instead of returning a
 <code>lazy_cost_spec</code> the caller cannot use.</p></dd>
+
+
+<dt id="arg-caller-supports-implicit">caller_supports_implicit<a class="anchor" aria-label="anchor" href="#arg-caller-supports-implicit"></a></dt>
+<dd><p>Whether the calling path's design is one the
+edge-generation loop solves. Defaults to whatever the caller says about
+lazy, since the loop reads the same specification.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -139,7 +148,7 @@ which uses an entirely different min-cost-flow backend) pass <code>FALSE</code> 
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

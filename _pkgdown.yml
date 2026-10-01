@@ -27,7 +27,7 @@ figures:
 home:
   title: 'couplr: Optimal Pairing and Matching via Linear Assignment'
   description: |
-    18 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods. Production-ready matching workflows with automatic preprocessing, greedy algorithms for large-scale problems, and comprehensive balance diagnostics.
+    20 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods. Production-ready matching workflows with automatic preprocessing, greedy algorithms for large-scale problems, and comprehensive balance diagnostics.
 authors:
   Gilles Colling:
     href: https://github.com/gcol33
@@ -113,6 +113,8 @@ reference:
   - update_constraints
   - preprocess_matching_vars
   - diagnose_distance_matrix
+  - estimate_dense_matrix_mb
+  - estimate_dense_solve_mb
 - title: Joined Datasets & Output
   desc: Create analysis-ready merged datasets
   contents:
@@ -198,14 +200,14 @@ articles:
   contents: pixel-morphing
 news:
   releases:
-  - text: Version 1.3.0
-    href: news/index.html
-  - text: Version 1.2.0
-    href: news/index.html
-  - text: Version 1.1.0
-    href: news/index.html
-  - text: Version 1.0.0
-    href: news/index.html
+  - text: Version 1.8.0
+    href: news/index.html#couplr-180
+  - text: Version 1.7.2
+    href: news/index.html#couplr-172
+  - text: Version 1.6.1
+    href: news/index.html#couplr-161
+  - text: Version 1.5.5
+    href: news/index.html#couplr-155
 footer:
   structure:
     left: developed_by

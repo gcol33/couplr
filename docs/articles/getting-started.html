@@ -41,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,10 +73,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul>
@@ -112,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-08-09</h4>
+            <h4 data-toc-skip class="date">2026-10-01</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -514,7 +514,7 @@ pairings. Use <code>max_distance</code> to set a caliper:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
 <span><span class="co">#&gt; Warning: 94.9% of pairs are forbidden!</span></span>
-<span><span class="co">#&gt;   Only 0 valid pairs for 50 left units - the matching pool is shallow!</span></span>
+<span><span class="co">#&gt;   Only 205 valid pairs for 50 left units - the matching pool is shallow!</span></span>
 <span><span class="co">#&gt;   Your constraints might be critically strict.</span></span>
 <span><span class="co">#&gt;   Consider:</span></span>
 <span><span class="co">#&gt;     - Relaxing max_distance threshold</span></span>
@@ -525,7 +525,7 @@ pairings. Use <code>max_distance</code> to set a caliper:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Without caliper:"</span>, <span class="va">result_loose</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"pairs\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Without caliper: 50 pairs</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With caliper:"</span>, <span class="va">result_strict</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"pairs\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; With caliper: 37 pairs</span></span></code></pre></div>
+<span><span class="co">#&gt; With caliper: 40 pairs</span></span></code></pre></div>
 <p>Stricter calipers mean fewer but better matches.</p>
 <hr>
 </div>
@@ -589,8 +589,8 @@ Hospital A controls, etc.</p>
 </h2>
 <p>One-to-one matching discards unmatched controls. If you want every
 unit in a group, use <code><a href="../reference/full_match.html">full_match()</a></code>. It creates
-variable-ratio groups (e.g., 1 treatment + 3 controls) that minimize
-total distance:</p>
+variable-ratio groups (e.g., 1 treatment + 3 controls, or 2 treatments +
+1 control) that minimize total distance:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
@@ -603,7 +603,8 @@ total distance:</p>
 <span><span class="co">#&gt; Full Matching Result</span></span>
 <span><span class="co">#&gt; ====================</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Groups formed: 50</span></span>
+<span><span class="co">#&gt;   Status: optimal</span></span>
+<span><span class="co">#&gt;   Groups formed: 35</span></span>
 <span><span class="co">#&gt;   Left units:  50 matched, 0 unmatched (of 50)</span></span>
 <span><span class="co">#&gt;   Right units: 80 matched, 0 unmatched (of 80)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -615,11 +616,11 @@ total distance:</p>
 <span><span class="co">#&gt;   group_id id    side  weight</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1 1     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1 42    right      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        2 2     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        2 11    right      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        3 3     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>        3 59    right      1</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1 16    left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        1 44    right      2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        2 2     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        2 3     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>        2 58    right      2</span></span></code></pre></div>
 <p>Full matching is useful when your control pool is much larger than
 treatment and you don’t want to waste data. See
 <code><a href="../articles/matching-workflows.html">vignette("matching-workflows")</a></code> for details on constraints
@@ -680,6 +681,14 @@ interoperability with cobalt and marginaleffects.</p>
 <span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
+<span><span class="co">#&gt; Warning: No id column found in left, so ids left_1 ... left_100 were used.</span></span>
+<span><span class="co">#&gt; Downstream verbs (join_matched(), match_data(), balance_diagnostics()) join on</span></span>
+<span><span class="co">#&gt; these values, so pass left_id = "&lt;column&gt;" to key the matching on your own</span></span>
+<span><span class="co">#&gt; identifier.</span></span>
+<span><span class="co">#&gt; Warning: No id column found in right, so ids right_1 ... right_200 were used.</span></span>
+<span><span class="co">#&gt; Downstream verbs (join_matched(), match_data(), balance_diagnostics()) join on</span></span>
+<span><span class="co">#&gt; these values, so pass right_id = "&lt;column&gt;" to key the matching on your own</span></span>
+<span><span class="co">#&gt; identifier.</span></span>
 <span></span>
 <span><span class="co"># 3. Check how many matched</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Treated patients:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">patients_treated</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -914,7 +923,7 @@ solving</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

@@ -7,13 +7,17 @@ on couplr result objects. Requires the cobalt package to be installed.
 ## Usage
 
 ``` r
-bal.tab.matching_result(x, left, right, ...)
+# S3 method for class 'matching_result'
+bal.tab(x, left, right, ...)
 
-bal.tab.full_matching_result(x, left, right, ...)
+# S3 method for class 'full_matching_result'
+bal.tab(x, left, right, ...)
 
-bal.tab.cem_result(x, left, right, ...)
+# S3 method for class 'cem_result'
+bal.tab(x, left, right, ...)
 
-bal.tab.subclass_result(x, data = NULL, ...)
+# S3 method for class 'subclass_result'
+bal.tab(x, data = NULL, ...)
 ```
 
 ## Arguments
@@ -32,8 +36,10 @@ bal.tab.subclass_result(x, data = NULL, ...)
 
 - ...:
 
-  Additional arguments passed to
-  [`cobalt::bal.tab()`](https://ngreifer.github.io/cobalt/reference/bal.tab.html)
+  Additional arguments. Arguments named in
+  [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)'s
+  signature go to the conversion; the rest go to
+  [`cobalt::bal.tab()`](https://ngreifer.github.io/cobalt/reference/bal.tab.html).
 
 - data:
 

@@ -29,6 +29,8 @@ High-level matching for observational studies
 
 - [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   : Match two datasets into couples
+- [`match_path()`](https://gillescolling.com/couplr/reference/match_path.md)
+  : Match across a range of one design choice
 - [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
   : Create blocks for stratified matching
 - [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
@@ -53,6 +55,17 @@ Assess match quality and sensitivity to hidden bias
 - [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
   : Rosenbaum Sensitivity Analysis
 
+## Optimality Verification
+
+Check a solution against the dual prices that certify it
+
+- [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+  [`print(`*`<assignment_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+  : Verify that an assignment is optimal
+- [`verify_flow()`](https://gillescolling.com/couplr/reference/verify_flow.md)
+  [`print(`*`<flow_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_flow.md)
+  : Verify that a flow is optimal
+
 ## Distance and Preprocessing
 
 Distance computation and data preparation
@@ -65,6 +78,10 @@ Distance computation and data preparation
   : Preprocess matching variables with automatic checks and scaling
 - [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
   : Diagnose distance matrix and suggest fixes
+- [`estimate_dense_matrix_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_matrix_mb.md)
+  : Estimate dense cost-matrix memory footprint in megabytes
+- [`estimate_dense_solve_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_solve_mb.md)
+  : Estimate the peak footprint of a dense solve in megabytes
 
 ## Joined Datasets & Output
 
@@ -76,8 +93,6 @@ Create analysis-ready merged datasets
   : Extract Analysis-Ready Data from Matching Results
 - [`augment(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/augment.matching_result.md)
   : Augment Matching Results with Original Data (broom-style)
-- [`augment()`](https://gillescolling.com/couplr/reference/augment.md) :
-  Generic Augment Function
 
 ## Ecosystem Integration
 
@@ -85,10 +100,10 @@ Interoperability with MatchIt, cobalt, and marginaleffects
 
 - [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
   : Convert couplr Result to matchit Object
-- [`bal.tab.matching_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab.full_matching_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab.cem_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab.subclass_result()`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+- [`bal.tab(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab(`*`<full_matching_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab(`*`<cem_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
+  [`bal.tab(`*`<subclass_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
   : Balance Table for Matching Results (cobalt integration)
 
 ## Utility Functions
@@ -97,16 +112,31 @@ Helper functions for working with results
 
 - [`get_total_cost()`](https://gillescolling.com/couplr/reference/get_total_cost.md)
   : Extract total cost from assignment result
+
 - [`get_method_used()`](https://gillescolling.com/couplr/reference/get_method_used.md)
   : Extract method used from assignment result
+
+- [`explain_dispatch()`](https://gillescolling.com/couplr/reference/explain_dispatch.md)
+  [`print(`*`<dispatch_explanation>`*`)`](https://gillescolling.com/couplr/reference/explain_dispatch.md)
+  :
+
+  Explain which solver `method = "auto"` selects, and why
+
+- [`solver_status_values()`](https://gillescolling.com/couplr/reference/solver_status_values.md)
+  : Solver status values
+
 - [`as_assignment_matrix()`](https://gillescolling.com/couplr/reference/as_assignment_matrix.md)
   : Convert assignment result to a binary matrix
+
 - [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_result.md)
   : Check if object is an assignment result
+
 - [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_batch_result.md)
   : Check if object is a batch assignment result
+
 - [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_kbest_result.md)
   : Check if object is a k-best assignment result
+
 - [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md)
   : Check if Object is a Distance Object
 
@@ -151,6 +181,8 @@ S3 methods for displaying and visualizing results
   : Print method for k-best assignment results
 - [`print(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/print.matching_result.md)
   : Print method for matching results
+- [`print(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/print.couplr_path.md)
+  : Print a design path
 - [`print(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/print.matchmaker_result.md)
   : Print method for matchmaker results
 - [`print(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/print.balance_diagnostics.md)

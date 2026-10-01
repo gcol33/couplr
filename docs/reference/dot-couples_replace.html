@@ -5,7 +5,17 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Replacement matching: each left picks its best right independently — .couples_replace"><meta name="description" content="Replacement matching: each left picks its best right independently"><meta property="og:description" content="Replacement matching: each left picks its best right independently"><script>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Replacement matching: each left picks its best right independently — .couples_replace"><meta name="description" content="The compiled design gives every column capacity for every row, so the rows
+never compete and the optimum of the whole network is each row's own cheapest
+columns. plan$per_row is how many of them a row takes: the requested ratio,
+or the column count when there are fewer columns than that. A lazy cost spec
+is answered one row at a time in C++, through the same row search the
+implicit loop seeds with, so no row of costs is ever held in R."><meta property="og:description" content="The compiled design gives every column capacity for every row, so the rows
+never compete and the optimum of the whole network is each row's own cheapest
+columns. plan$per_row is how many of them a row takes: the requested ratio,
+or the column count when there are fewer columns than that. A lazy cost spec
+is answered one row at a time in C++, through the same row search the
+implicit loop seeds with, so no row of costs is ever held in R."><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -26,7 +36,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,10 +64,10 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
@@ -84,7 +94,12 @@
     </div>
 
     <div class="ref-description section level2">
-    <p>Replacement matching: each left picks its best right independently</p>
+    <p>The compiled design gives every column capacity for every row, so the rows
+never compete and the optimum of the whole network is each row's own cheapest
+columns. <code>plan$per_row</code> is how many of them a row takes: the requested ratio,
+or the column count when there are fewer columns than that. A lazy cost spec
+is answered one row at a time in C++, through the same row search the
+implicit loop seeds with, so no row of costs is ever held in R.</p>
     </div>
 
     <div class="section level2">
@@ -96,13 +111,23 @@
 <span>  <span class="va">left_ids</span>,</span>
 <span>  <span class="va">right_ids</span>,</span>
 <span>  <span class="va">vars</span>,</span>
-<span>  ratio <span class="op">=</span> <span class="fl">1L</span></span>
+<span>  ratio <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  <span class="va">plan</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List with pairs tibble, unmatched list, and info list.</p>
+    <p>List with pairs tibble, unmatched list, info list, and potentials.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The LP separates by row, so its duals are explicit. A row's dual is the
+cost of the most expensive partner it took, which is its k-th cheapest
+admissible cost, and every column's is zero, since no column has a capacity
+to price. The pairs taken then reduce to at most zero and the pairs passed
+over to at least zero, which are the optimality conditions of the flow LP
+with each pair arc carrying at most one unit.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -114,7 +139,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

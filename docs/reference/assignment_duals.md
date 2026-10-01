@@ -7,7 +7,7 @@ optimality certificate and enable sensitivity analysis.
 ## Usage
 
 ``` r
-assignment_duals(cost, maximize = FALSE)
+assignment_duals(cost, maximize = FALSE, certify = FALSE)
 ```
 
 ## Arguments
@@ -15,11 +15,21 @@ assignment_duals(cost, maximize = FALSE)
 - cost:
 
   Numeric matrix; rows = tasks, columns = agents. `NA` or `Inf` entries
-  are treated as forbidden assignments.
+  are treated as forbidden assignments. A lazy cost specification from
+  [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  is also accepted, and is solved without materializing the matrix.
 
 - maximize:
 
   Logical; if `TRUE`, maximizes the total cost instead of minimizing.
+
+- certify:
+
+  Logical; if `TRUE`, the duals are checked against `cost` with
+  [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+  and the resulting `assignment_certificate` is attached as
+  `certificate`. The check is one pass over the admissible pairs and
+  reuses the duals computed here, so it costs no second solve.
 
 ## Value
 
@@ -34,6 +44,9 @@ A list with class `"assignment_duals_result"` containing:
 - `v` - numeric vector of column dual variables (length m)
 
 - `status` - character, e.g. "optimal"
+
+- `certificate` - an `assignment_certificate`, present only under
+  `certify = TRUE`
 
 ## Details
 
@@ -59,7 +72,9 @@ This implies that `sum(u) + sum(v) = total_cost` (strong duality).
 ## See also
 
 [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
-for standard assignment without duals
+for standard assignment without duals,
+[`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+for the check `certify = TRUE` runs
 
 ## Examples
 

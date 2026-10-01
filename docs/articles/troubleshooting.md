@@ -242,7 +242,7 @@ result_strict <- match_couples(
 )
 #> Auto-selected scaling method: standardize
 #> Warning: 99.2% of pairs are forbidden!
-#>   Only 0 valid pairs for 100 left units - the matching pool is shallow!
+#>   Only 84 valid pairs for 100 left units - the matching pool is shallow!
 #>   Your constraints might be critically strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold
@@ -253,7 +253,7 @@ result_strict <- match_couples(
 cat("Original matches:", result$info$n_matched, "\n")
 #> Original matches: 100
 cat("With caliper:", result_strict$info$n_matched, "\n")
-#> With caliper: 20
+#> With caliper: 23
 
 balance_strict <- balance_diagnostics(result_strict, left, right, vars = c("age", "income"))
 print(balance_strict)
@@ -263,21 +263,21 @@ print(balance_strict)
 #> 
 #> Matching Summary:
 #>   Method: lap
-#>   Matched pairs: 20
+#>   Matched pairs: 23
 #>   Unmatched left: 0 (of 100)
-#>   Unmatched right: 80 (of 100)
+#>   Unmatched right: 77 (of 100)
 #> 
 #> Variable-level Balance:
 #> # A tibble: 2 × 7
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             31.2         31.2        0.04      0.009       1.06        0.1
-#> 2 income       53160.       51959.      1201.        0.16        0.996       0.2
+#> 1 age             31.5         31.5       0.012      0.003        1.02     0.13 
+#> 2 income       53825.       51791.     2034.         0.28         1.12     0.217
 #> 
 #> Overall Balance:
-#>   Mean |Std Diff|: 0.085 (Excellent)
-#>   Max |Std Diff|: 0.160
-#>   Vars with |Std Diff| > 0.25: 0.0%
+#>   Mean |Std Diff|: 0.141 (Good)
+#>   Max |Std Diff|: 0.280
+#>   Vars with |Std Diff| > 0.25: 50.0%
 #> 
 #> Balance Interpretation:
 #>   |Std Diff| < 0.10: Excellent balance
@@ -388,7 +388,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.25 seconds
+#> Greedy matching (n=500): 0 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -447,7 +447,7 @@ dist_cache <- compute_distances(
 # Fast: reuse cached distances
 result1 <- match_couples(dist_cache, max_distance = 0.3, method = "hungarian")
 #> Warning: 97.9% of pairs are forbidden!
-#>   Only 9000 valid pairs for 500 left units - the matching pool is shallow!
+#>   Only 5327 valid pairs for 500 left units - the matching pool is shallow!
 #>   Your constraints might be critically strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold
@@ -456,7 +456,7 @@ result1 <- match_couples(dist_cache, max_distance = 0.3, method = "hungarian")
 #>     - Checking if your data actually overlaps
 result2 <- match_couples(dist_cache, max_distance = 0.5, method = "hungarian")
 #> Warning: 94.1% of pairs are forbidden!
-#>   Only 22500 valid pairs for 500 left units - the matching pool is shallow!
+#>   Only 14642 valid pairs for 500 left units - the matching pool is shallow!
 #>   Your constraints might be critically strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold
@@ -465,7 +465,7 @@ result2 <- match_couples(dist_cache, max_distance = 0.5, method = "hungarian")
 #>     - Checking if your data actually overlaps
 result3 <- match_couples(dist_cache, max_distance = 1.0, method = "hungarian")
 #> Warning: 78.5% of pairs are forbidden!
-#>   Only 84000 valid pairs for 500 left units - the matching pool is shallow!
+#>   Only 53789 valid pairs for 500 left units - the matching pool is shallow!
 #>   Your constraints might be concerningly strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold

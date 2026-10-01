@@ -41,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,10 +73,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.3.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.2.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.1.0</a></li>
-    <li><a class="dropdown-item" href="../news/index.html">Version 1.0.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-180">Version 1.8.0</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-172">Version 1.7.2</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-161">Version 1.6.1</a></li>
+    <li><a class="dropdown-item" href="../news/index.html#couplr-155">Version 1.5.5</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul>
@@ -112,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-08-09</h4>
+            <h4 data-toc-skip class="date">2026-10-01</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -370,7 +370,16 @@ automatic preprocessing:</p>
 <span><span class="co">#&gt; [1] 100</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n_right</span></span>
-<span><span class="co">#&gt; [1] 150</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 150</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $estimand</span></span>
+<span><span class="co">#&gt; [1] "ATT"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $focal</span></span>
+<span><span class="co">#&gt; [1] "left"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $focal_discarded</span></span>
+<span><span class="co">#&gt; [1] 0</span></span></code></pre></div>
 <p>The result contains:</p>
 <ul>
 <li><p><code>pairs</code>: Matched pairs with IDs and distances</p></li>
@@ -764,18 +773,18 @@ matters</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 1.17 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.3 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.96 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.03 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 1.2 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 10 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -834,7 +843,7 @@ default):</p>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">strat</span> <span class="kw">in</span> <span class="va">strategies</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
+<span>    <span class="va">greedy_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>      <span class="va">test_left</span>, <span class="va">test_right</span>,</span>
 <span>      vars <span class="op">=</span> <span class="st">"x"</span>,</span>
 <span>      strategy <span class="op">=</span> <span class="va">strat</span></span>
@@ -843,8 +852,8 @@ default):</p>
 <span></span>
 <span>  <span class="va">results</span><span class="op">[[</span><span class="va">strat</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    time <span class="op">=</span> <span class="va">time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>,</span>
-<span>    mean_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>,</span>
-<span>    total_dist <span class="op">=</span> <span class="va">result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">total_distance</span></span>
+<span>    mean_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">greedy_result</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>,</span>
+<span>    total_dist <span class="op">=</span> <span class="va">greedy_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">total_distance</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -860,9 +869,9 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted     0.04        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.04        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq     0.03        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed    sorted     0.00        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed1 row_best     0.02        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed2       pq     0.01        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li><p>Default to <code>strategy = "row_best"</code> for good
@@ -2208,7 +2217,8 @@ sample size while preserving balance.</p>
 <span><span class="co">#&gt; Full Matching Result</span></span>
 <span><span class="co">#&gt; ====================</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Groups formed: 100</span></span>
+<span><span class="co">#&gt;   Status: optimal</span></span>
+<span><span class="co">#&gt;   Groups formed: 78</span></span>
 <span><span class="co">#&gt;   Left units:  100 matched, 0 unmatched (of 100)</span></span>
 <span><span class="co">#&gt;   Right units: 150 matched, 0 unmatched (of 150)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2236,7 +2246,7 @@ optimal.</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal: "</span>, <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_groups</span>, <span class="st">"groups,"</span>,</span>
 <span>    <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_left</span>, <span class="st">"unmatched left,"</span>,</span>
 <span>    <span class="va">result_full</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_right</span>, <span class="st">"unmatched right\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Optimal:  100 groups, 0 unmatched left, 0 unmatched right</span></span>
+<span><span class="co">#&gt; Optimal:  78 groups, 0 unmatched left, 0 unmatched right</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy:  "</span>, <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_groups</span>, <span class="st">"groups,"</span>,</span>
 <span>    <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_left</span>, <span class="st">"unmatched left,"</span>,</span>
 <span>    <span class="va">result_full_greedy</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_unmatched_right</span>, <span class="st">"unmatched right\n"</span><span class="op">)</span></span>
@@ -2274,13 +2284,13 @@ unbiased estimation:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>        1 1     left       1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>        1 140   right      1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>        2 2     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>        2 50    right      1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>        2 69    right      1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>        3 3     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>        3 62    right      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>        4 4     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>        4 5     right      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>        5 5     left       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        5 63    right      1</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>        3 24    left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>        3 121   right      2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>        4 4     left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>        4 58    left       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        4 60    left       1</span></span></code></pre></div>
 <p><strong>When to use full matching vs one-to-one:</strong></p>
 <table class="table">
 <thead><tr class="header">
@@ -2399,7 +2409,7 @@ estimated probability of treatment — the propensity score.
 <span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: 74.8% of pairs are forbidden!</span></span>
-<span><span class="co">#&gt;   Only 3600 valid pairs for 100 left units - the matching pool is shallow!</span></span>
+<span><span class="co">#&gt;   Only 3776 valid pairs for 100 left units - the matching pool is shallow!</span></span>
 <span><span class="co">#&gt;   Your constraints might be moderately strict.</span></span>
 <span><span class="co">#&gt;   Consider:</span></span>
 <span><span class="co">#&gt;     - Relaxing max_distance threshold</span></span>
@@ -2416,6 +2426,7 @@ estimated probability of treatment — the propensity score.
 <span><span class="co">#&gt; Unmatched (left): 1 </span></span>
 <span><span class="co">#&gt; Unmatched (right): 51 </span></span>
 <span><span class="co">#&gt; Total distance: 9.8133 </span></span>
+<span><span class="co">#&gt; Status: partial </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matched pairs:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 99 × 4</span></span></span>
@@ -2443,28 +2454,106 @@ argument.</p>
 <h3 id="cardinality-matching">Cardinality Matching<a class="anchor" aria-label="anchor" href="#cardinality-matching"></a>
 </h3>
 <p>Standard matching minimizes total distance. Cardinality matching
-instead maximizes the number of matched pairs while enforcing strict
-balance constraints:</p>
+instead maximizes the number of matched pairs subject to balance
+constraints, and reports how far the matched sample sits from the
+largest one those constraints admit.</p>
+<p>Fine balance on a categorical partition is representable in the
+matching network itself, so a call that states balance only that way is
+answered by a single min-cost flow solve, with a dual certificate, at
+polynomial cost. <code>max_std_diff</code> defaults to <code>Inf</code>,
+stating no moment constraint, so this is the route a call takes until a
+finite bound is asked for:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Maximize pairs subject to balance threshold</span></span>
+<code class="sourceCode R"><span><span class="co"># Maximize pairs subject to exact balance on the education distribution</span></span>
 <span><span class="va">card_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
 <span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
-<span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,  <span class="co"># Excellent balance threshold</span></span>
-<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
+<span>  fine <span class="op">=</span> <span class="st">"education"</span>,</span>
+<span>  auto_scale <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs matched:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="va">card_result</span><span class="op">$</span><span class="va">cardinality</span></span>
+<span><span class="co">#&gt; Matched units:       100</span></span>
+<span><span class="co">#&gt; Best possible:       100</span></span>
+<span><span class="co">#&gt; Optimality gap:      0</span></span>
+<span><span class="co">#&gt; Certified optimal</span></span></code></pre></div>
+<p>Bounding the standardized difference of each matching variable adds
+constraints that cut across the network. Those are dualized and searched
+by branch and bound, which runs until the bound meets the incumbent or
+<code>node_limit</code> or <code>time_limit</code> runs out:</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">card_bb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">80</span>, <span class="op">]</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  node_limit <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  scale <span class="op">=</span> <span class="st">"standardize"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">card_bb</span><span class="op">$</span><span class="va">cardinality</span></span>
+<span><span class="co">#&gt; Matched units:       19</span></span>
+<span><span class="co">#&gt; Global upper bound:  20</span></span>
+<span><span class="co">#&gt; Cardinality gap:     1 unit (5.000%)</span></span>
+<span><span class="va">card_bb</span><span class="op">$</span><span class="va">cardinality</span><span class="op">$</span><span class="va">constraints</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
+<span><span class="co">#&gt;   kind          target      bound achieved  slack satisfied</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> std_diff      age           0.1  -<span style="color: #BB0000;">0.080</span><span style="color: #BB0000; text-decoration: underline;">5</span> 0.181  TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> std_diff      age          -<span style="color: #BB0000;">0.1</span>  -<span style="color: #BB0000;">0.080</span><span style="color: #BB0000; text-decoration: underline;">5</span> 0.019<span style="text-decoration: underline;">5</span> TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> std_diff      income        0.1   0.033<span style="text-decoration: underline;">5</span> 0.066<span style="text-decoration: underline;">5</span> TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> std_diff      income       -<span style="color: #BB0000;">0.1</span>   0.033<span style="text-decoration: underline;">5</span> 0.133  TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> exact_balance (all units)   0     0      0      TRUE</span></span></code></pre></div>
+<p><code>certified</code> is <code>TRUE</code> only when the search
+settled and the gap is zero. When it is not, <code>gap</code> and
+<code>gap_fraction</code> say how many matched units separate the answer
+from the bound, and <code>stopped_on</code> says what ended the
+search.</p>
+<p>How long the search runs depends on whether the moment bounds bind.
+When the distance-minimizing match already satisfies them, which happens
+with a loose bound or a control reservoir large enough that the closest
+partners are already balanced, the root node certifies and the call
+returns in milliseconds. When they bind, every node costs a flow solve,
+and although the root enters a feasible incumbent before the first node
+is opened, the bound above it closes slowly, so a call can spend its
+whole budget and still report a gap. Set <code>node_limit</code> and
+<code>time_limit</code> to a budget you are willing to spend, and read
+<code>stopped_on</code> and <code>gap</code> to see what the budget
+bought.</p>
+<p><code>time_limit</code> reaches the flow solver, which checks it
+between augmentations, so the call returns on the budget rather than on
+the completion of the solve that was running when it ran out. The node
+that solve belonged to goes back on the frontier unopened, which is what
+keeps <code>bound</code> valid for the whole problem, and the incumbent
+stands.</p>
+<p>A pruning heuristic is reachable with
+<code>engine = "heuristic"</code>. It starts from a full match and
+deletes the pairs carrying the worst variable’s imbalance, one variable
+per round, and reports <code>info$pruning_iterations</code> and
+<code>info$pairs_removed</code>. It computes no bound, so
+<code>best_possible</code> and <code>gap</code> come back
+<code>NA</code>:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">card_heur</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
+<span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
+<span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  engine <span class="op">=</span> <span class="st">"heuristic"</span>,</span>
+<span>  scale <span class="op">=</span> <span class="st">"standardize"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs matched:"</span>, <span class="va">card_heur</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Pairs matched: 81</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pruning iterations:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pruning_iterations</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pruning iterations:"</span>, <span class="va">card_heur</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pruning_iterations</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Pruning iterations: 2</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs removed:"</span>, <span class="va">card_result</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pairs_removed</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Pairs removed:"</span>, <span class="va">card_heur</span><span class="op">$</span><span class="va">info</span><span class="op">$</span><span class="va">pairs_removed</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Pairs removed: 19</span></span></code></pre></div>
-<p>This is useful when you need strict balance guarantees and are
-willing to sacrifice some sample size.</p>
+<p>Cardinality matching is useful when balance is a requirement rather
+than a diagnostic, and the question is how large a sample can meet
+it.</p>
 </div>
 <div class="section level3">
 <h3 id="coarsened-exact-matching-cem">Coarsened Exact Matching (CEM)<a class="anchor" aria-label="anchor" href="#coarsened-exact-matching-cem"></a>
@@ -2472,7 +2561,7 @@ willing to sacrifice some sample size.</p>
 <p>CEM coarsens continuous variables into bins, then performs exact
 matching within strata. This avoids model dependence — results don’t
 rely on a distance function or propensity score model:</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cem_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cem_match.html">cem_match</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">left_data</span>,</span>
 <span>  right <span class="op">=</span> <span class="va">right_data</span>,</span>
@@ -2513,7 +2602,7 @@ strata.</p>
 <p>Subclassification (stratification on the propensity score) divides
 the sample into strata of similar PS, then computes within-stratum
 effects. Unlike one-to-one matching, no units are discarded:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Combine data</span></span>
 <span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">left_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">]</span>, treated <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>,</span>
@@ -2567,23 +2656,23 @@ marginaleffects.</p>
 frame with <code>treatment</code>, <code>weights</code>,
 <code>subclass</code>, and <code>distance</code> columns — ready for
 downstream modelling:</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">md</span> <span class="op">&lt;-</span> <span class="fu">couplr</span><span class="fu">::</span><span class="fu"><a href="../reference/match_data.html">match_data</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">md</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
 <span><span class="co">#&gt;      id   age income education group     treatment weights subclass distance</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  39.4 <span style="text-decoration: underline;">49</span>344. MA        treatment         1       1        1 0.003<span style="text-decoration: underline;">24</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2  42.7 <span style="text-decoration: underline;">63</span>853. MA        treatment         1       1        2 0.004<span style="text-decoration: underline;">55</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3  60.6 <span style="text-decoration: underline;">56</span>300. MA        treatment         1       1        3 0.000<span style="text-decoration: underline;">900</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4  45.7 <span style="text-decoration: underline;">54</span>787. HS        treatment         1       1        4 0.006<span style="text-decoration: underline;">85</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5  46.3 <span style="text-decoration: underline;">45</span>726. HS        treatment         1       1        5 0.004<span style="text-decoration: underline;">47</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6  62.2 <span style="text-decoration: underline;">59</span>325. MA        treatment         1       1        6 0.003<span style="text-decoration: underline;">89</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  39.4 <span style="text-decoration: underline;">49</span>344. MA        treatment         1       1        1   0.530 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2  42.7 <span style="text-decoration: underline;">63</span>853. MA        treatment         1       1        2   0.299 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3  60.6 <span style="text-decoration: underline;">56</span>300. MA        treatment         1       1        3   0.038<span style="text-decoration: underline;">2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4  45.7 <span style="text-decoration: underline;">54</span>787. HS        treatment         1       1        4   0.691 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5  46.3 <span style="text-decoration: underline;">45</span>726. HS        treatment         1       1        5   0.425 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6  62.2 <span style="text-decoration: underline;">59</span>325. MA        treatment         1       1        6   0.133</span></span></code></pre></div>
 <p><strong><code><a href="../reference/as_matchit.html">as_matchit()</a></code></strong> constructs a
 <code>matchit</code>-class object, enabling direct use with
 <code><a href="https://ngreifer.github.io/cobalt/reference/bal.tab.html" class="external-link">cobalt::bal.tab()</a></code>, <code><a href="https://ngreifer.github.io/cobalt/reference/love.plot.html" class="external-link">cobalt::love.plot()</a></code>, and
 <code><a href="https://rdrr.io/pkg/marginaleffects/man/comparisons.html" class="external-link">marginaleffects::avg_comparisons()</a></code>:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_matchit.html">as_matchit</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># cobalt balance table</span></span>
@@ -2601,7 +2690,7 @@ downstream modelling:</p>
 be needed to invalidate the results?</em> Rosenbaum bounds address this
 by computing p-values under varying degrees of unobserved
 confounding.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Simulate a modest treatment effect (small enough that hidden bias matters)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
 <span><span class="va">n_sa</span> <span class="op">&lt;-</span> <span class="fl">50</span></span>
@@ -2665,7 +2754,7 @@ factor of 1.75 to explain away the result.</p>
 </h2>
 <p>If <code>ggplot2</code> is available, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods
 produce publication-ready plots:</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
@@ -2712,58 +2801,59 @@ produce publication-ready plots:</p>
 <rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
 </g>
 <defs>
-  <clipPath id='cpMzguMDJ8NDk4LjUyfDIzLjE4fDI1Ni41MA=='>
-    <rect x='38.02' y='23.18' width='460.50' height='233.33' />
+  <clipPath id='cpMzMuMTN8NDk4LjUyfDIzLjE4fDI1Ni41MA=='>
+    <rect x='33.13' y='23.18' width='465.39' height='233.33' />
   </clipPath>
 </defs>
-<g clip-path='url(#cpMzguMDJ8NDk4LjUyfDIzLjE4fDI1Ni41MA==)'>
-<rect x='58.95' y='33.78' width='13.95' height='212.11' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='72.90' y='207.46' width='13.95' height='38.44' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='86.86' y='237.36' width='13.95' height='8.54' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='100.81' y='238.78' width='13.95' height='7.12' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='114.77' y='237.36' width='13.95' height='8.54' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='128.72' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='142.68' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='156.63' y='243.05' width='13.95' height='2.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='170.59' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='184.54' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='198.50' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='212.45' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='226.41' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='240.36' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='254.31' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='268.27' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='282.22' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='296.18' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='310.13' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='324.09' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='338.04' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='352.00' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='365.95' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='379.91' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='393.86' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='407.82' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='421.77' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='435.72' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='449.68' y='245.90' width='13.95' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
-<rect x='463.63' y='244.47' width='13.95' height='1.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<g clip-path='url(#cpMzMuMTN8NDk4LjUyfDIzLjE4fDI1Ni41MA==)'>
+<rect x='54.28' y='189.33' width='14.10' height='56.56' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='68.38' y='62.07' width='14.10' height='183.83' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='82.49' y='33.78' width='14.10' height='212.11' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='96.59' y='47.92' width='14.10' height='197.97' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='110.69' y='47.92' width='14.10' height='197.97' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='124.80' y='161.05' width='14.10' height='84.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='138.90' y='175.19' width='14.10' height='70.70' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='153.00' y='146.91' width='14.10' height='98.99' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='167.10' y='203.47' width='14.10' height='42.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='181.21' y='161.05' width='14.10' height='84.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='195.31' y='189.33' width='14.10' height='56.56' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='209.41' y='203.47' width='14.10' height='42.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='223.52' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='237.62' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='251.72' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='265.82' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='279.93' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='294.03' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='308.13' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='322.24' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='336.34' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='350.44' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='364.54' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='378.65' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='392.75' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='406.85' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='420.95' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='435.06' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='449.16' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='463.26' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
 </g>
 <g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
-<text x='33.09' y='249.05' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
-<text x='33.09' y='177.87' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>50</text>
-<text x='33.09' y='106.69' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>100</text>
-<text x='33.09' y='35.51' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>150</text>
-<text x='65.93' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
-<text x='206.40' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1</text>
-<text x='346.88' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2</text>
-<text x='487.35' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>3</text>
-<text x='268.27' y='280.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distance</text>
+<text x='28.20' y='249.05' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='28.20' y='178.34' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>5</text>
+<text x='28.20' y='107.64' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>10</text>
+<text x='28.20' y='36.93' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>15</text>
+<text x='60.90' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='166.44' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.5</text>
+<text x='271.97' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.0</text>
+<text x='377.51' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.5</text>
+<text x='483.04' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2.0</text>
+<text x='265.82' y='280.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distance</text>
 <text transform='translate(13.36,139.84) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Count</text>
-<text x='38.02' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Matching Distances (n=200)</text>
+<text x='33.13' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Matching Distances (n=100)</text>
 </g>
 </g>
 </svg></div></p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Balance diagnostics love plot</span></span>
 <span>  <span class="va">bal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
@@ -2814,21 +2904,18 @@ produce publication-ready plots:</p>
   </clipPath>
 </defs>
 <g clip-path='url(#cpMzguNzd8NDk4LjUyfDIzLjE4fDIxNy4zMQ==)'>
-<circle cx='59.67' cy='76.12' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
-<circle cx='477.62' cy='164.36' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
-<line x1='303.97' y1='217.31' x2='303.97' y2='23.18' style='stroke-width: 1.07; stroke: #7F7F7F; stroke-linecap: butt;' />
-<line x1='260.96' y1='217.31' x2='260.96' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-<line x1='346.98' y1='217.31' x2='346.98' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<circle cx='59.67' cy='164.36' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<circle cx='477.62' cy='76.12' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<line x1='263.69' y1='217.31' x2='263.69' y2='23.18' style='stroke-width: 1.07; stroke: #7F7F7F; stroke-linecap: butt;' />
+<line x1='125.68' y1='217.31' x2='125.68' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<line x1='401.69' y1='217.31' x2='401.69' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
 </g>
 <g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
-<text x='33.84' y='167.51' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>income</text>
-<text x='33.84' y='79.27' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
-<text x='45.91' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.6</text>
-<text x='131.93' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.4</text>
-<text x='217.95' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.2</text>
-<text x='303.97' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
-<text x='389.99' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.2</text>
-<text x='476.01' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.4</text>
+<text x='33.84' y='167.51' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
+<text x='33.84' y='79.27' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>income</text>
+<text x='125.68' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.1</text>
+<text x='263.69' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='401.69' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.1</text>
 <text x='268.65' y='241.00' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Standardized Difference</text>
 <circle cx='243.17' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
 <text x='257.29' y='271.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Imbalanced</text>
@@ -2836,7 +2923,7 @@ produce publication-ready plots:</p>
 </g>
 </g>
 </svg></div></p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Sensitivity analysis curve</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
@@ -2950,7 +3037,7 @@ integration</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

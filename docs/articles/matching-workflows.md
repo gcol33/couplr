@@ -224,6 +224,15 @@ result$info
 #> 
 #> $n_right
 #> [1] 150
+#> 
+#> $estimand
+#> [1] "ATT"
+#> 
+#> $focal
+#> [1] "left"
+#> 
+#> $focal_discarded
+#> [1] 0
 ```
 
 The result contains:
@@ -532,18 +541,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 1.17 seconds
+#>   Time: 0.3 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.96 seconds
+#>   Time: 0.03 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 1.2 x
+#>   Speedup: 10 x
 ```
 
 ### Greedy Strategies
@@ -617,7 +626,7 @@ results <- list()
 
 for (strat in strategies) {
   time <- system.time({
-    result <- match_couples(
+    greedy_result <- match_couples(
       test_left, test_right,
       vars = "x",
       strategy = strat
@@ -626,8 +635,8 @@ for (strat in strategies) {
 
   results[[strat]] <- list(
     time = time["elapsed"],
-    mean_dist = mean(result$pairs$distance),
-    total_dist = result$info$total_distance
+    mean_dist = mean(greedy_result$pairs$distance),
+    total_dist = greedy_result$info$total_distance
   )
 }
 
@@ -643,9 +652,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.04        0.0912          18.24
-#> elapsed1 row_best     0.04        0.0968          19.36
-#> elapsed2       pq     0.03        0.0912          18.24
+#> elapsed    sorted     0.00        0.0912          18.24
+#> elapsed1 row_best     0.02        0.0968          19.36
+#> elapsed2       pq     0.01        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -1685,7 +1694,8 @@ result_full
 #> Full Matching Result
 #> ====================
 #> 
-#>   Groups formed: 100
+#>   Status: optimal
+#>   Groups formed: 78
 #>   Left units:  100 matched, 0 unmatched (of 100)
 #>   Right units: 150 matched, 0 unmatched (of 150)
 #> 
@@ -1716,7 +1726,7 @@ result_full_greedy <- full_match(
 cat("Optimal: ", result_full$info$n_groups, "groups,",
     result_full$info$n_unmatched_left, "unmatched left,",
     result_full$info$n_unmatched_right, "unmatched right\n")
-#> Optimal:  100 groups, 0 unmatched left, 0 unmatched right
+#> Optimal:  78 groups, 0 unmatched left, 0 unmatched right
 cat("Greedy:  ", result_full_greedy$info$n_groups, "groups,",
     result_full_greedy$info$n_unmatched_left, "unmatched left,",
     result_full_greedy$info$n_unmatched_right, "unmatched right\n")
@@ -1760,13 +1770,13 @@ head(result_full$groups, 10)
 #>  1        1 1     left       1
 #>  2        1 140   right      1
 #>  3        2 2     left       1
-#>  4        2 50    right      1
+#>  4        2 69    right      1
 #>  5        3 3     left       1
-#>  6        3 62    right      1
-#>  7        4 4     left       1
-#>  8        4 5     right      1
-#>  9        5 5     left       1
-#> 10        5 63    right      1
+#>  6        3 24    left       1
+#>  7        3 121   right      2
+#>  8        4 4     left       1
+#>  9        4 58    left       1
+#> 10        4 60    left       1
 ```
 
 **When to use full matching vs one-to-one:**
@@ -1868,7 +1878,7 @@ ps_result <- ps_match(
   method = "hungarian"
 )
 #> Warning: 74.8% of pairs are forbidden!
-#>   Only 3600 valid pairs for 100 left units - the matching pool is shallow!
+#>   Only 3776 valid pairs for 100 left units - the matching pool is shallow!
 #>   Your constraints might be moderately strict.
 #>   Consider:
 #>     - Relaxing max_distance threshold
@@ -1885,6 +1895,7 @@ ps_result
 #> Unmatched (left): 1 
 #> Unmatched (right): 51 
 #> Total distance: 9.8133 
+#> Status: partial 
 #> 
 #> Matched pairs:
 #> # A tibble: 99 × 4
@@ -1914,32 +1925,115 @@ simulated dataset. You can also supply a pre-fitted model via the
 ### Cardinality Matching
 
 Standard matching minimizes total distance. Cardinality matching instead
-maximizes the number of matched pairs while enforcing strict balance
-constraints:
+maximizes the number of matched pairs subject to balance constraints,
+and reports how far the matched sample sits from the largest one those
+constraints admit.
+
+Fine balance on a categorical partition is representable in the matching
+network itself, so a call that states balance only that way is answered
+by a single min-cost flow solve, with a dual certificate, at polynomial
+cost. `max_std_diff` defaults to `Inf`, stating no moment constraint, so
+this is the route a call takes until a finite bound is asked for:
 
 ``` r
 
-# Maximize pairs subject to balance threshold
+# Maximize pairs subject to exact balance on the education distribution
 card_result <- cardinality_match(
   left = left_data,
   right = right_data,
   vars = c("age", "income"),
-  max_std_diff = 0.1,  # Excellent balance threshold
-  auto_scale = TRUE,
-  method = "hungarian"
+  fine = "education",
+  auto_scale = TRUE
 )
 #> Auto-selected scaling method: standardize
 
-cat("Pairs matched:", card_result$info$n_matched, "\n")
+card_result$cardinality
+#> Matched units:       100
+#> Best possible:       100
+#> Optimality gap:      0
+#> Certified optimal
+```
+
+Bounding the standardized difference of each matching variable adds
+constraints that cut across the network. Those are dualized and searched
+by branch and bound, which runs until the bound meets the incumbent or
+`node_limit` or `time_limit` runs out:
+
+``` r
+
+card_bb <- cardinality_match(
+  left = left_data[1:20, ],
+  right = right_data[1:80, ],
+  vars = c("age", "income"),
+  max_std_diff = 0.1,
+  node_limit = 10L,
+  scale = "standardize"
+)
+
+card_bb$cardinality
+#> Matched units:       19
+#> Global upper bound:  20
+#> Cardinality gap:     1 unit (5.000%)
+card_bb$cardinality$constraints
+#> # A tibble: 5 × 6
+#>   kind          target      bound achieved  slack satisfied
+#>   <chr>         <chr>       <dbl>    <dbl>  <dbl> <lgl>    
+#> 1 std_diff      age           0.1  -0.0805 0.181  TRUE     
+#> 2 std_diff      age          -0.1  -0.0805 0.0195 TRUE     
+#> 3 std_diff      income        0.1   0.0335 0.0665 TRUE     
+#> 4 std_diff      income       -0.1   0.0335 0.133  TRUE     
+#> 5 exact_balance (all units)   0     0      0      TRUE
+```
+
+`certified` is `TRUE` only when the search settled and the gap is zero.
+When it is not, `gap` and `gap_fraction` say how many matched units
+separate the answer from the bound, and `stopped_on` says what ended the
+search.
+
+How long the search runs depends on whether the moment bounds bind. When
+the distance-minimizing match already satisfies them, which happens with
+a loose bound or a control reservoir large enough that the closest
+partners are already balanced, the root node certifies and the call
+returns in milliseconds. When they bind, every node costs a flow solve,
+and although the root enters a feasible incumbent before the first node
+is opened, the bound above it closes slowly, so a call can spend its
+whole budget and still report a gap. Set `node_limit` and `time_limit`
+to a budget you are willing to spend, and read `stopped_on` and `gap` to
+see what the budget bought.
+
+`time_limit` reaches the flow solver, which checks it between
+augmentations, so the call returns on the budget rather than on the
+completion of the solve that was running when it ran out. The node that
+solve belonged to goes back on the frontier unopened, which is what
+keeps `bound` valid for the whole problem, and the incumbent stands.
+
+A pruning heuristic is reachable with `engine = "heuristic"`. It starts
+from a full match and deletes the pairs carrying the worst variable’s
+imbalance, one variable per round, and reports `info$pruning_iterations`
+and `info$pairs_removed`. It computes no bound, so `best_possible` and
+`gap` come back `NA`:
+
+``` r
+
+card_heur <- cardinality_match(
+  left = left_data,
+  right = right_data,
+  vars = c("age", "income"),
+  max_std_diff = 0.1,
+  engine = "heuristic",
+  scale = "standardize"
+)
+
+cat("Pairs matched:", card_heur$info$n_matched, "\n")
 #> Pairs matched: 81
-cat("Pruning iterations:", card_result$info$pruning_iterations, "\n")
+cat("Pruning iterations:", card_heur$info$pruning_iterations, "\n")
 #> Pruning iterations: 2
-cat("Pairs removed:", card_result$info$pairs_removed, "\n")
+cat("Pairs removed:", card_heur$info$pairs_removed, "\n")
 #> Pairs removed: 19
 ```
 
-This is useful when you need strict balance guarantees and are willing
-to sacrifice some sample size.
+Cardinality matching is useful when balance is a requirement rather than
+a diagnostic, and the question is how large a sample can meet it.
 
 ### Coarsened Exact Matching (CEM)
 
@@ -2053,12 +2147,12 @@ head(md)
 #> # A tibble: 6 × 9
 #>      id   age income education group     treatment weights subclass distance
 #>   <int> <dbl>  <dbl> <chr>     <chr>         <int>   <dbl>    <int>    <dbl>
-#> 1     1  39.4 49344. MA        treatment         1       1        1 0.00324 
-#> 2     2  42.7 63853. MA        treatment         1       1        2 0.00455 
-#> 3     3  60.6 56300. MA        treatment         1       1        3 0.000900
-#> 4     4  45.7 54787. HS        treatment         1       1        4 0.00685 
-#> 5     5  46.3 45726. HS        treatment         1       1        5 0.00447 
-#> 6     6  62.2 59325. MA        treatment         1       1        6 0.00389
+#> 1     1  39.4 49344. MA        treatment         1       1        1   0.530 
+#> 2     2  42.7 63853. MA        treatment         1       1        2   0.299 
+#> 3     3  60.6 56300. MA        treatment         1       1        3   0.0382
+#> 4     4  45.7 54787. HS        treatment         1       1        4   0.691 
+#> 5     5  46.3 45726. HS        treatment         1       1        5   0.425 
+#> 6     6  62.2 59325. MA        treatment         1       1        6   0.133
 ```
 
 **[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)**

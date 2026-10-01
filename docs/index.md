@@ -18,9 +18,9 @@ C++.**
 
 Hand `couplr` two groups and it returns the pairing that minimizes total
 covariate distance across the whole sample. The assignment is solved
-exactly with the Jonker-Volgenant and Gabow-Tarjan algorithms, so the
-pairing is the global optimum and comes back identical on every run and
-every machine.
+exactly, by Jonker-Volgenant on ordinary inputs or by any of nineteen
+solvers named explicitly, so the total distance is the global minimum
+and a solve can be certified optimal.
 
 ``` r
 
@@ -38,20 +38,26 @@ join_matched(result, treated, control)
 [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
 evaluates the pairing as a whole and returns the assignment with the
 lowest total covariate distance. Because the solve is exact, the total
-distance is the global minimum, and the same input gives the same
-pairing every time, with no dependence on row order or a random seed.
+distance is the global minimum. There is no random seed: the same input
+gives the same pairing on every run. When several pairings tie at the
+minimum, which of them comes back can depend on the order of the rows.
 
-When a control pool grows too large to solve exactly,
-`method = "greedy"` trades the optimality guarantee for speed while
-keeping the same scaling, constraints, and blocking. Three strategies
-cover different memory and speed tradeoffs:
+Large pools are solved exactly as well. `memory_mode = "lazy"` computes
+each distance when the solver needs it, and `memory_mode = "implicit"`
+generates only the pairs the optimum turns out to need, so neither
+builds the full distance matrix. `method = "greedy"` is a speed trade:
+it gives up the optimality guarantee and keeps the same scaling,
+constraints, and blocking.
 
 ``` r
 
 match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)   # optimal
 
 match_couples(treated, control, vars = c("age", "income"),
-              method = "greedy", strategy = "pq")                               # fast, large pools
+              memory_mode = "implicit")                                          # optimal, large pools
+
+match_couples(treated, control, vars = c("age", "income"),
+              method = "greedy", strategy = "pq")                               # approximate, fast
 ```
 
 ## Scaling and constraints
@@ -87,7 +93,7 @@ full_match(treated, control, vars = c("age", "income"), min_controls = 1, max_co
 cem_match(treated, control, vars = c("age", "income"))
 
 # balance-constrained cardinality matching
-cardinality_match(treated, control, vars = c("age", "income"), max_std_diff = 0.1)
+cardinality_match(treated, control, vars = c("age", "income"), fine = "site")
 
 # propensity subclassification and propensity matching, formula interface
 subclass_match(treated ~ age + income, data = df, n_subclasses = 5)
@@ -101,7 +107,7 @@ sensitive a conclusion is to unmeasured confounding:
 
 ``` r
 
-bal <- balance_diagnostics(result)      # standardized differences, variance ratios, KS tests
+bal <- balance_diagnostics(result, treated, control)   # standardized differences, variance ratios, KS tests
 bal
 autoplot(bal)                           # love plot of standardized differences
 
@@ -121,16 +127,18 @@ sensitivity.
 
 ``` r
 
-m  <- as_matchit(result)
-md <- match_data(result)
+m  <- as_matchit(result, treated, control)
+md <- match_data(result, treated, control)
 ```
 
 ## The assignment backend
 
 [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
 exposes the solver layer directly. It takes a cost matrix, handles
-rectangular shapes and forbidden edges (`NA` / `Inf`), and picks from
-nineteen solvers when `method = "auto"`:
+rectangular shapes and forbidden edges (`NA` / `Inf`), and offers
+nineteen solvers by name. `method = "auto"` enumerates problems up to 8
+by 8, uses Hopcroft-Karp when the finite costs are all equal or all 0 or
+1, and otherwise Jonker-Volgenant:
 
 ``` r
 

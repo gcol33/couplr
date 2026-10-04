@@ -16,10 +16,12 @@
 //     after whitening by the Cholesky factor of the inverse covariance, so one
 //     ball serves both metrics and the factor is computed once here. The
 //     source holds inv_cov itself rather than a factor.
-//   - an axis-aligned box in the *original* covariates, for the caliper.
-//     Whitening is a rotation and a scaling, so it destroys the axis alignment
-//     a per-variable caliper is stated in, and a box in whitened coordinates
-//     would bound the wrong differences.
+//   - an axis-aligned box in the *original* covariates, for the distance's
+//     per-variable reach, and a range over each caliper's raw values, for the
+//     caliper. Whitening is a rotation and a scaling, so it destroys the axis
+//     alignment a per-variable caliper is stated in, and the covariates are
+//     themselves scaled and weighted before they reach the source, so the
+//     caliper is bounded on the values it is stated on.
 //
 // The tree holds only what the source cannot answer for itself: the leaf
 // ordering, the two structures, the whitening factor, and the per-node largest
@@ -109,6 +111,11 @@ struct BallTree {
     std::vector<double> centre;          // n_nodes * n_vars, whitened
     std::vector<double> radius;          // n_nodes
     std::vector<double> box_lo, box_hi;  // n_nodes * n_vars, original
+    // The range of each caliper's raw values over the node's columns,
+    // n_nodes * n_cal. A caliper is stated on its variable as supplied, which
+    // the coordinates above hold scaled and weighted.
+    int64_t n_cal = 0;
+    std::vector<double> cal_lo, cal_hi;
     std::vector<double> max_v;           // n_nodes, refreshed per pricing round
 
     // The point every coordinate is measured from, in the original covariates.
@@ -510,6 +517,11 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
     tree.box_hi.assign(n_nodes * span, 0.0);
     tree.radius.assign(n_nodes, 0.0);
     tree.max_v.assign(n_nodes, 0.0);
+    const std::vector<CaliperSpec>& cals = src.calipers();
+    tree.n_cal = static_cast<int64_t>(cals.size());
+    const std::size_t n_cal = cals.size();
+    tree.cal_lo.assign(n_nodes * n_cal, std::numeric_limits<double>::infinity());
+    tree.cal_hi.assign(n_nodes * n_cal, -std::numeric_limits<double>::infinity());
 
     for (int32_t id = static_cast<int32_t>(n_nodes) - 1; id >= 0; --id) {
         const std::size_t base = static_cast<std::size_t>(id) * span;
@@ -559,6 +571,29 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
             for (int64_t k = 0; k < n_vars; ++k) {
                 blo[k] = llo[k] < rlo[k] ? llo[k] : rlo[k];
                 bhi[k] = lhi[k] > rhi[k] ? lhi[k] : rhi[k];
+            }
+        }
+
+        double* clo = &tree.cal_lo[static_cast<std::size_t>(id) * n_cal];
+        double* chi = &tree.cal_hi[static_cast<std::size_t>(id) * n_cal];
+        if (tree.is_leaf(id)) {
+            for (int32_t t = a; t < b; ++t) {
+                const std::size_t col =
+                    static_cast<std::size_t>(tree.perm[static_cast<std::size_t>(t)]);
+                for (std::size_t c = 0; c < n_cal; ++c) {
+                    const double x = cals[c].right[col];
+                    if (x < clo[c]) clo[c] = x;
+                    if (x > chi[c]) chi[c] = x;
+                }
+            }
+        } else {
+            const std::size_t l =
+                static_cast<std::size_t>(tree.left[static_cast<std::size_t>(id)]) * n_cal;
+            const std::size_t r =
+                static_cast<std::size_t>(tree.right[static_cast<std::size_t>(id)]) * n_cal;
+            for (std::size_t c = 0; c < n_cal; ++c) {
+                clo[c] = std::min(tree.cal_lo[l + c], tree.cal_lo[r + c]);
+                chi[c] = std::max(tree.cal_hi[l + c], tree.cal_hi[r + c]);
             }
         }
     }
@@ -699,37 +734,37 @@ inline bool node_distance_out(const BallTree& tree, const LazyCostMatrix& src,
         src, node_bounds_for_source(tree, q_whitened, q_g, q_original, id));
 }
 
-// Whether the calipers forbid every column the node holds. Read in the
-// original covariates, where the per-variable window is stated.
+// Whether the calipers forbid every column the node holds, for left unit `qi`.
+// Read in each caliper's raw values, where the per-variable window is stated.
 inline bool node_caliper_out(const BallTree& tree, const LazyCostMatrix& src,
-                             const double* q_original, int32_t id) {
+                             int64_t qi, int32_t id) {
     const std::vector<CaliperSpec>& cals = src.calipers();
     if (cals.empty()) return false;
-    const double* blo = tree.node_box_lo(id);
-    const double* bhi = tree.node_box_hi(id);
-    for (const CaliperSpec& cal : cals) {
-        const std::size_t k = static_cast<std::size_t>(cal.var_index);
-        const double x = q_original[k];
+    const std::size_t base = static_cast<std::size_t>(id) *
+                             static_cast<std::size_t>(tree.n_cal);
+    for (std::size_t c = 0; c < cals.size(); ++c) {
+        const double x = cals[c].left[static_cast<std::size_t>(qi)];
         // The window's two endpoints are each one rounded addition, and the
-        // box holds coordinates copied rather than computed. Widening the
-        // window by one representable step on each side puts the rounding on
-        // the side that declines to prune.
-        const double hi_edge = detail::next_up(x + cal.threshold);
-        const double lo_edge = detail::next_down(x - cal.threshold);
-        if (blo[k] > hi_edge) return true;
-        if (bhi[k] < lo_edge) return true;
+        // box holds values copied rather than computed. Widening the window by
+        // one representable step on each side puts the rounding on the side
+        // that declines to prune.
+        const double hi_edge = detail::next_up(x + cals[c].threshold);
+        const double lo_edge = detail::next_down(x - cals[c].threshold);
+        if (tree.cal_lo[base + c] > hi_edge) return true;
+        if (tree.cal_hi[base + c] < lo_edge) return true;
     }
     return false;
 }
 
-// A lower bound on the cost of every column the node holds, infinite when the
-// node's box or its ball puts them all out of reach. This is the one question
-// a descent asks of a node, and both the caliper and the distance limit answer
-// it by ruling the node out rather than by bounding it.
+// A lower bound on the cost of every column the node holds for left unit `qi`,
+// whose coordinates are `q_original`, infinite when the node's box or its ball
+// puts them all out of reach. This is the one question a descent asks of a
+// node, and both the caliper and the distance limit answer it by ruling the
+// node out rather than by bounding it.
 inline double node_cost_floor(const BallTree& tree, const LazyCostMatrix& src,
                               const double* q_whitened, double q_g,
-                              const double* q_original, int32_t id) {
-    if (node_caliper_out(tree, src, q_original, id)) {
+                              const double* q_original, int64_t qi, int32_t id) {
+    if (node_caliper_out(tree, src, qi, id)) {
         return std::numeric_limits<double>::infinity();
     }
     const BallBounds b =

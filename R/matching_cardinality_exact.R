@@ -1378,7 +1378,7 @@ print.cardinality_report <- function(x, ...) {
 .cardinality_generator <- function(spec) {
   session <- lap_pricing_session(spec$left_mat, spec$right_mat, spec$distance,
                                  lazy_cost_spec_inv_cov(spec), spec$max_distance,
-                                 lazy_cost_spec_calipers(spec), spec$vars)
+                                 lazy_cost_spec_calipers(spec))
   range <- lap_pricing_range(session)
   seed_width <- lap_implicit_seed_width(spec$n_right)
   seed <- lap_pricing_seed(session, seed_width)

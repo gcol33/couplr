@@ -79,42 +79,63 @@ as_matchit <- function(result, left, right,
     )
   }
 
-  # Treatment vector
-  treat <- stats::setNames(md$treatment, md$id)
+  # A matchit object holds one entry per unit, named by the unit. match_data()
+  # holds one row per pair for pair designs, so a unit in several pairs (ratio
+  # > 1, with replacement) has several rows, and the two sides may number their
+  # units the same way. Units are therefore keyed by id, qualified by side
+  # whenever an id occurs on both sides, and every per-unit field is read from
+  # the unit's rows through that key.
+  side <- ifelse(md$treatment == 1L, "left", "right")
+  key <- .matchit_unit_keys(md$id, side)
+  first <- !duplicated(key)
+  unit_key <- key[first]
+  unit_of_row <- factor(key, levels = unit_key)
 
-  # Weights
-  wts <- stats::setNames(md$weights, md$id)
+  treat <- stats::setNames(md$treatment[first], unit_key)
+  wts <- stats::setNames(
+    as.numeric(tapply(md$weights, unit_of_row, sum)), unit_key)
 
-  # Covariates matrix
   X_cols <- intersect(vars, names(md))
-  X <- as.data.frame(md[, X_cols, drop = FALSE])
-  rownames(X) <- md$id
+  X <- as.data.frame(md[first, X_cols, drop = FALSE])
+  rownames(X) <- unit_key
 
-  # Distance vector
-  distance <- if ("distance" %in% names(md)) {
-    stats::setNames(md$distance, md$id)
+  # A pair distance belongs to a unit only when the unit is in one pair.
+  distance <- if ("distance" %in% names(md) && all(first)) {
+    stats::setNames(md$distance, unit_key)
   } else {
     NULL
   }
 
-  # Build match.matrix for 1:1 results
+  # Pair designs: one row per left unit, one column per partner slot.
   match_matrix <- NULL
-  if (inherits(result, "matching_result") && !is.null(result$pairs)) {
-    pairs <- result$pairs
-    if (nrow(pairs) > 0) {
-      match_matrix <- matrix(
-        as.character(pairs$right_id),
-        ncol = 1,
-        dimnames = list(as.character(pairs$left_id), NULL)
-      )
-    }
-  }
+  subclass <- NULL
+  if (inherits(result, "matching_result")) {
+    is_left <- side == "left"
+    pair_left <- stats::setNames(key[is_left], md$subclass[is_left])
+    pair_right <- stats::setNames(key[!is_left], md$subclass[!is_left])
+    left_units <- unique(key[is_left])
+    partners <- split(unname(pair_right[names(pair_left)]),
+                      factor(unname(pair_left), levels = left_units))
+    width <- max(lengths(partners))
+    match_matrix <- matrix(
+      unlist(lapply(partners, function(p) {
+        c(p, rep(NA_character_, width - length(p)))
+      })),
+      nrow = length(left_units), byrow = TRUE,
+      dimnames = list(left_units, NULL))
 
-  # Subclass
-  subclass <- if ("subclass" %in% names(md)) {
-    stats::setNames(as.factor(md$subclass), md$id)
-  } else {
-    NULL
+    # A matched set is a left unit with its partners. A right unit reused by
+    # several left units belongs to no single set, so subclass is left out,
+    # as MatchIt does for matching with replacement.
+    set_of_row <- unname(pair_left[as.character(md$subclass)])
+    sets_per_unit <- tapply(set_of_row, unit_of_row,
+                            function(s) length(unique(s)))
+    if (all(sets_per_unit == 1L)) {
+      subclass <- stats::setNames(
+        factor(set_of_row[first], levels = left_units), unit_key)
+    }
+  } else if ("subclass" %in% names(md)) {
+    subclass <- stats::setNames(as.factor(md$subclass[first]), unit_key)
   }
 
   # Determine method label
@@ -150,6 +171,18 @@ as_matchit <- function(result, left, right,
     ),
     class = "matchit"
   )
+}
+
+# Unit names for a matchit object: the id itself, or "left:<id>" and
+# "right:<id>" when some id occurs on both sides, so that every name refers to
+# one unit.
+.matchit_unit_keys <- function(id, side) {
+  id <- as.character(id)
+  if (length(intersect(id[side == "left"], id[side == "right"])) > 0L) {
+    paste0(side, ":", id)
+  } else {
+    id
+  }
 }
 
 # The estimand a matchit object is labelled with. It comes from the design,

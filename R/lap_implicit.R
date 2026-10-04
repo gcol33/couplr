@@ -128,8 +128,7 @@
   raw <- if (lazy) {
     lap_implicit_lazy(work$left_mat, work$right_mat, work$distance,
                       lazy_cost_spec_inv_cov(work), work$max_distance,
-                      lazy_cost_spec_calipers(work), work$vars,
-                      maximize, keep_per_row, width, tol, max_rounds, certify)
+                      lazy_cost_spec_calipers(work), maximize, keep_per_row, width, tol, max_rounds, certify)
   } else {
     lap_implicit_dense(work, maximize, keep_per_row, width, tol, max_rounds,
                        certify)

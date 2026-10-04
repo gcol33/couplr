@@ -890,13 +890,13 @@ Rcpp::List flow_design_implicit_impl(Rcpp::NumericMatrix left_mat,
                                      SEXP distance,
                                      Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                      double max_distance, Rcpp::List calipers,
-                                     Rcpp::CharacterVector vars, std::string design,
+                                     std::string design,
                                      double first, double second,
                                      double keep_per_row, double width, double tol,
                                      double max_rounds, bool certify) {
     try {
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
-                                                   max_distance, calipers, vars, false);
+                                                   max_distance, calipers, false);
         return std::visit([&](const auto& src) -> Rcpp::List {
             using Source = std::decay_t<decltype(src)>;
             const lap::SourceOracle<Source> oracle(src);

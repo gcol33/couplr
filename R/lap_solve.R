@@ -507,11 +507,11 @@ assignment <- function(cost, maximize = FALSE,
   res_raw <- if (identical(method, "jv")) {
     cpp_lap_solve_jv_lazy(work$left_mat, work$right_mat, work$distance,
                           inv_cov, work$max_distance, caliper_list,
-                          work$vars, maximize)
+                          maximize)
   } else {
     cpp_lap_solve_auction_lazy(work$left_mat, work$right_mat, work$distance,
                                inv_cov, work$max_distance, caliper_list,
-                               work$vars, maximize, auction_eps)
+                               maximize, auction_eps)
   }
 
   match_out <- as.integer(res_raw$match)
@@ -1407,7 +1407,7 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
                                    lazy_cost_spec_inv_cov(work),
                                    work$max_distance,
                                    lazy_cost_spec_calipers(work),
-                                   work$vars, maximize)
+                                   maximize)
 
   .duals_result(res_raw, n, m, transposed)
 }

@@ -42,6 +42,36 @@ test_that("match_couples() memory_mode = lazy agrees with dense under a feasible
               tolerance = 1e-9)
 })
 
+test_that("a caliper binds on the raw variable whatever the scaling and weights (#64)", {
+  set.seed(11)
+  left <- data.frame(id = paste0("L", 1:30), x = round(rnorm(30, 40, 8)),
+                     y = rnorm(30, 10, 3))
+  right <- data.frame(id = paste0("R", 1:60), x = round(rnorm(60, 40, 8)),
+                      y = rnorm(60, 10, 3))
+  setups <- list(list(scale = "standardize"), list(scale = "robust"),
+                 list(weights = c(x = 4, y = 1)))
+  for (setup in setups) {
+    run <- function(mode) {
+      suppressWarnings(do.call(match_couples, c(
+        list(left, right, vars = c("x", "y"), calipers = list(x = 3),
+             memory_mode = mode), setup)))
+    }
+    dense <- run("dense")
+    raw_gap <- function(res) {
+      abs(left$x[match(res$pairs$left_id, left$id)] -
+            right$x[match(res$pairs$right_id, right$id)])
+    }
+    expect_true(all(raw_gap(dense) <= 3))
+    for (mode in c("lazy", "implicit")) {
+      res <- run(mode)
+      expect_true(all(raw_gap(res) <= 3), info = paste(names(setup), mode))
+      expect_equal(nrow(res$pairs), nrow(dense$pairs), info = paste(names(setup), mode))
+      expect_equal(res$info$total_distance, dense$info$total_distance,
+                   tolerance = 1e-9, info = paste(names(setup), mode))
+    }
+  }
+})
+
 test_that("match_couples() memory_mode = lazy recovers the dense partial matching", {
   set.seed(7)
   left <- data.frame(id = paste0("L", 1:10), x = rnorm(10), y = rnorm(10))

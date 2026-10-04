@@ -27,14 +27,39 @@ enum class DistanceMetric {
     Mahalanobis
 };
 
-// Per-variable caliper: pairs with |left[i,var_index] - right[j,var_index]|
-// exceeding threshold are forbidden, independent of the chosen distance
-// metric (matches R's apply_calipers(), which checks raw per-variable
-// differences regardless of `distance`).
+// Per-variable caliper: pairs with |left[i] - right[j]| exceeding threshold
+// are forbidden, independent of the chosen distance metric. The values are
+// the variable as the caller supplied it, held apart from the coordinates the
+// distance is computed in: those are scaled and weighted, while a caliper is
+// stated on the raw variable, as R's apply_calipers() checks it on the dense
+// path.
 struct CaliperSpec {
-    int64_t var_index;
     double threshold;
+    std::vector<double> left;
+    std::vector<double> right;
+
+    bool passes(int64_t i, int64_t j) const {
+        return !(std::abs(left[static_cast<std::size_t>(i)] -
+                          right[static_cast<std::size_t>(j)]) > threshold);
+    }
+
+    CaliperSpec swapped() const { return CaliperSpec{threshold, right, left}; }
 };
+
+inline bool passes_all(const std::vector<CaliperSpec>& calipers,
+                       int64_t i, int64_t j) {
+    for (const CaliperSpec& cal : calipers) {
+        if (!cal.passes(i, j)) return false;
+    }
+    return true;
+}
+
+inline std::vector<CaliperSpec> swapped_all(const std::vector<CaliperSpec>& calipers) {
+    std::vector<CaliperSpec> out;
+    out.reserve(calipers.size());
+    for (const CaliperSpec& cal : calipers) out.push_back(cal.swapped());
+    return out;
+}
 
 class LazyCostMatrix {
 public:
@@ -137,7 +162,7 @@ public:
     // transposed().at(j, i) is at(i, j) to the bit.
     LazyCostMatrix transposed() const {
         return LazyCostMatrix(right_, left_, n_vars_, metric_, inv_cov_, max_distance_,
-                              calipers_, negate_);
+                              swapped_all(calipers_), negate_);
     }
 
     const double* left_row(int64_t i) const {
@@ -149,14 +174,7 @@ public:
 
 private:
     bool passes_calipers(int64_t i, int64_t j) const {
-        if (calipers_.empty()) return true;
-        const double* li = &left_[static_cast<size_t>(i * n_vars_)];
-        const double* rj = &right_[static_cast<size_t>(j * n_vars_)];
-        for (const auto& cal : calipers_) {
-            const double diff = std::abs(li[cal.var_index] - rj[cal.var_index]);
-            if (diff > cal.threshold) return false;
-        }
-        return true;
+        return passes_all(calipers_, i, j);
     }
 
     double raw_distance(int64_t i, int64_t j) const {

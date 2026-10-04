@@ -199,7 +199,7 @@ match_path <- function(left, right, vars,
   raw <- lap_match_path_lazy(
     work$left_mat, work$right_mat, work$distance,
     lazy_cost_spec_inv_cov(work), as.numeric(values),
-    lazy_cost_spec_calipers(work), work$vars,
+    lazy_cost_spec_calipers(work),
     maximize = FALSE, keep_per_row = keep_per_row, width = width,
     tol = tol, max_rounds = max_rounds, certify = certify
   )

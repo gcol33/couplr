@@ -65,15 +65,17 @@ apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
   }
 
   if (is_lazy_cost_spec(cost_matrix)) {
-    # O(length(calipers)): resolve each caliper variable to its column index
-    # in `vars` (the same order as left_mat/right_mat) and record it, rather
-    # than an O(n*m*length(calipers)) dense scan.
+    # O(n + m) per caliper rather than the dense path's O(n*m) scan: record the
+    # threshold with the variable's raw values, which the cost source compares
+    # pair by pair. The raw values, not the spec's feature columns: those are
+    # scaled and weighted, and a caliper is stated on the variable as supplied.
     new_calipers <- cost_matrix$calipers
     for (var_name in names(calipers)) {
-      var_index <- match(var_name, vars)
-      if (is.na(var_index)) next  # not a matching variable, same as dense path
+      if (!var_name %in% vars) next  # not a matching variable, same as dense path
       new_calipers[[length(new_calipers) + 1]] <- list(
-        var_index = var_index, threshold = calipers[[var_name]]
+        var = var_name, threshold = calipers[[var_name]],
+        left = as.numeric(left[[var_name]]),
+        right = as.numeric(right[[var_name]])
       )
     }
     cost_matrix$calipers <- new_calipers

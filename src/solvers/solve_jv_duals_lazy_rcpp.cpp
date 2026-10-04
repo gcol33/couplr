@@ -16,11 +16,10 @@ Rcpp::List solve_jv_duals_lazy_impl(Rcpp::NumericMatrix left_mat,
                                     SEXP metric,
                                     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                     double max_distance, Rcpp::List calipers,
-                                    Rcpp::CharacterVector var_names, bool maximize) {
+                                    bool maximize) {
     try {
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, metric, inv_cov,
-                                                   max_distance, calipers, var_names,
-                                                   maximize);
+                                                   max_distance, calipers, maximize);
 
         // The total is computed from the original (unnegated) distances inside
         // the solve; there is no materialized matrix to recompute it from, which

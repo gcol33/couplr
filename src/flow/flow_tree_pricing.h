@@ -53,9 +53,10 @@ namespace detail {
 // infinite when the node holds no reachable column at all.
 inline double node_cbar_lo(const BallTree& tree, const LazyCostMatrix& src,
                            const double* q_whitened, double q_g,
-                           const double* q_original, int32_t id, double ui) {
+                           const double* q_original, int64_t qi, int32_t id,
+                           double ui) {
     const double floor_c =
-        node_cost_floor(tree, src, q_whitened, q_g, q_original, id);
+        node_cost_floor(tree, src, q_whitened, q_g, q_original, qi, id);
     if (!(floor_c < std::numeric_limits<double>::infinity())) {
         return std::numeric_limits<double>::infinity();
     }
@@ -134,7 +135,7 @@ BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
 
         stack.clear();
         const double root_lb =
-            detail::node_cbar_lo(tree, src, q.data(), q_g, x, 0, ui);
+            detail::node_cbar_lo(tree, src, q.data(), q_g, x, i, 0, ui);
         if (root_lb < kInf) stack.emplace_back(root_lb, 0);
 
         while (!stack.empty()) {
@@ -178,9 +179,9 @@ BlockPricing price_tree(const LazyCostMatrix& src, BallTree& tree,
             const int32_t l = tree.left[static_cast<std::size_t>(id)];
             const int32_t r = tree.right[static_cast<std::size_t>(id)];
             const double lb_l =
-                detail::node_cbar_lo(tree, src, q.data(), q_g, x, l, ui);
+                detail::node_cbar_lo(tree, src, q.data(), q_g, x, i, l, ui);
             const double lb_r =
-                detail::node_cbar_lo(tree, src, q.data(), q_g, x, r, ui);
+                detail::node_cbar_lo(tree, src, q.data(), q_g, x, i, r, ui);
 
             // The weaker bound is pushed first so the stronger one is taken
             // first: the row's best tightens on the promising side, and the

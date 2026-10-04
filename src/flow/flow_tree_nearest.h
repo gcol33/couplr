@@ -70,7 +70,7 @@ inline void tree_cheapest_outside(const LazyCostMatrix& src, const BallTree& tre
     best.reserve(static_cast<std::size_t>(width));
 
     std::vector<std::pair<double, int32_t>> stack;
-    const double root = node_cost_floor(tree, src, q.data(), q_g, x, 0);
+    const double root = node_cost_floor(tree, src, q.data(), q_g, x, i, 0);
     if (root < kInf) stack.emplace_back(root, 0);
 
     while (!stack.empty()) {
@@ -108,8 +108,8 @@ inline void tree_cheapest_outside(const LazyCostMatrix& src, const BallTree& tre
 
         const int32_t l = tree.left[static_cast<std::size_t>(id)];
         const int32_t r = tree.right[static_cast<std::size_t>(id)];
-        const double fl = node_cost_floor(tree, src, q.data(), q_g, x, l);
-        const double fr = node_cost_floor(tree, src, q.data(), q_g, x, r);
+        const double fl = node_cost_floor(tree, src, q.data(), q_g, x, i, l);
+        const double fr = node_cost_floor(tree, src, q.data(), q_g, x, i, r);
 
         const double limit = static_cast<int32_t>(best.size()) == width
                                  ? best.front().first

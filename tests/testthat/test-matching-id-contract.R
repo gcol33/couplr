@@ -322,6 +322,46 @@ test_that("as_matchit warns when the design did not retain every focal unit", {
   expect_warning(as_matchit(res, left, right), "matched focal subset")
 })
 
+test_that("as_matchit names each unit once when the two sides share ids (#66)", {
+  set.seed(43)
+  left <- data.frame(id = 1:8, x = rnorm(8))
+  right <- data.frame(id = 1:24, x = rnorm(24))
+  res <- match_couples(left, right, vars = "x")
+
+  mi <- as_matchit(res, left, right)
+  expect_length(mi$treat, 16L)
+  expect_false(anyDuplicated(names(mi$treat)) > 0)
+  expect_setequal(rownames(mi$match.matrix), paste0("left:", res$pairs$left_id))
+  expect_true(all(mi$match.matrix[, 1] %in% names(mi$treat)[mi$treat == 0L]))
+  expect_identical(rownames(mi$X), names(mi$treat))
+
+  fm <- full_match(left, right, vars = "x")
+  mi_full <- as_matchit(fm, left, right)
+  expect_length(mi_full$treat, 32L)
+})
+
+test_that("as_matchit gives one entry per unit for ratio and replacement designs (#66)", {
+  set.seed(45)
+  left <- data.frame(id = 1:8, x = rnorm(8))
+  right <- data.frame(id = 9:40, x = rnorm(32))
+
+  mi2 <- as_matchit(match_couples(left, right, vars = "x", ratio = 2L),
+                    left, right)
+  expect_equal(dim(mi2$match.matrix), c(8L, 2L))
+  expect_length(mi2$treat, 24L)
+  expect_equal(as.vector(tapply(mi2$weights, mi2$treat, sum)), c(8, 8))
+  expect_equal(nlevels(mi2$subclass), 8L)
+
+  rep_res <- match_couples(left, right, vars = "x", replace = TRUE)
+  mi_rep <- as_matchit(rep_res, left, right)
+  expect_false(anyDuplicated(names(mi_rep$treat)) > 0)
+  expect_equal(sum(mi_rep$treat == 0L),
+               length(unique(rep_res$pairs$right_id)))
+  if (anyDuplicated(rep_res$pairs$right_id) > 0) {
+    expect_null(mi_rep$subclass)
+  }
+})
+
 # ------------------------------------------------------------------------------
 # Ecosystem generics (#39)
 # ------------------------------------------------------------------------------

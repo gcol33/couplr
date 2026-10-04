@@ -213,7 +213,7 @@
   knobs <- .implicit_defaults()
   raw <- lap_design_implicit(spec$left_mat, spec$right_mat, spec$distance,
                              lazy_cost_spec_inv_cov(spec), spec$max_distance,
-                             lazy_cost_spec_calipers(spec), spec$vars,
+                             lazy_cost_spec_calipers(spec),
                              "one_to_one", 0, 0, knobs$keep_per_row, knobs$width,
                              knobs$tol, knobs$max_rounds, TRUE)
   placed <- as.numeric(raw$flow) > 0
@@ -289,11 +289,7 @@
   if (is_lazy_cost_spec(cost_matrix)) {
     spec <- cost_matrix
     spec$inv_cov <- lazy_cost_spec_inv_cov(cost_matrix)
-    spec$left_mat <- cost_matrix$left_mat[plan$row_unit, , drop = FALSE]
-    spec$right_mat <- cost_matrix$right_mat[plan$col_unit, , drop = FALSE]
-    spec$n_left <- nrow(spec$left_mat)
-    spec$n_right <- nrow(spec$right_mat)
-    return(spec)
+    return(lazy_cost_spec_rows(spec, plan$row_unit, plan$col_unit))
   }
   cost_matrix[plan$row_unit, plan$col_unit, drop = FALSE]
 }
@@ -566,8 +562,7 @@
                               cost_matrix$distance,
                               lazy_cost_spec_inv_cov(cost_matrix),
                               cost_matrix$max_distance,
-                              lazy_cost_spec_calipers(cost_matrix),
-                              cost_matrix$vars, k)
+                              lazy_cost_spec_calipers(cost_matrix), k)
     rows <- as.integer(found$rows)
     cols <- as.integer(found$cols)
     dists <- as.numeric(found$distance)

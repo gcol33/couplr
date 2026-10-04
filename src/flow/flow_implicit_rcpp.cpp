@@ -276,10 +276,10 @@ Rcpp::List replace_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
                              SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
-                             Rcpp::CharacterVector vars, double per_row) {
+                             double per_row) {
     try {
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
-                                                   max_distance, calipers, vars, false);
+                                                   max_distance, calipers, false);
         const int64_t k = implicit_knob_from_r(per_row, "per_row");
         if (k < 1) Rcpp::stop("replacement matching: per_row must be at least 1");
         return std::visit([k](const auto& src) { return replace_body(src, k); }, source);
@@ -340,11 +340,10 @@ Rcpp::List pairs_to_r(const std::vector<lap::CandidateSet::Pair>& pairs) {
 SEXP pricing_session_new_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                               SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
-                              double max_distance, Rcpp::List calipers,
-                              Rcpp::CharacterVector vars) {
+                              double max_distance, Rcpp::List calipers) {
     try {
         LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
-                                             max_distance, calipers, vars, false);
+                                             max_distance, calipers, false);
         std::unique_ptr<PricingSession> session(new PricingSession());
         if (auto* lazy = std::get_if<lap::LazyCostMatrix>(&source)) {
             session->held = std::make_unique<PricingSessionOf<lap::LazyCostMatrix>>(
@@ -474,7 +473,7 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
                               SEXP distance,
                               Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                               double max_distance, Rcpp::List calipers,
-                              Rcpp::CharacterVector vars, bool maximize,
+                              bool maximize,
                               double keep_per_row, double width, double tol,
                               double max_rounds, bool certify) {
     try {
@@ -482,7 +481,7 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
         // negation into at()/allowed() at construction, so it is already the
         // internal minimization.
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
-                                                   max_distance, calipers, vars, maximize);
+                                                   max_distance, calipers, maximize);
         const lap::ImplicitOptions opts =
             implicit_options_from_r(keep_per_row, width, tol, max_rounds, certify);
         return std::visit([&](const auto& cm) { return run_implicit(cm, opts, maximize); },

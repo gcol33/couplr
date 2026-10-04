@@ -389,6 +389,41 @@ enum class ShortfallAnswer {
 // and it is a parameter rather than a local because it depends on the columns'
 // geometry alone. A path over caliper values moves the cut and leaves the
 // geometry where it is, so one structure serves every point.
+// Make a master exactly optimal over the arcs it holds. The flow solver works
+// in doubles, and on costs whose differences sit below their rounding it can
+// stop on a flow that a residual cycle of exactly negative cost still
+// improves, so no exact potentials exist for it and a certificate built on it
+// can only be read at a tolerance. Each such cycle is cancelled, which keeps
+// the flow integral and feasible and lowers its exact cost, until the residual
+// graph carries none. The potentials are then the recovered ones, rounded and
+// put back on the solver's gauge, and the total is read off the repaired flow.
+// A master that needed no cancelling is left as the solver returned it.
+inline void exact_master(const FlowProblem& prob, FlowResult& master) {
+    std::vector<int64_t> flow = master.flow;
+    int64_t n_cancelled = 0;
+    exact::ShortestPaths paths;
+    for (;;) {
+        paths = recover_flow_potentials(prob, flow, master.potential, true);
+        if (paths.ok || paths.cycle.empty()) break;
+        cancel_residual_cycle(prob, flow, paths.cycle);
+        ++n_cancelled;
+    }
+    if (n_cancelled == 0 || !paths.ok) return;
+
+    master.flow = std::move(flow);
+    const std::size_t n = paths.dist.size();
+    const double gauge = n > 0 ? exact::approximate(paths.dist[0]).value : 0.0;
+    master.potential.assign(n, 0.0);
+    for (std::size_t v = 0; v < n; ++v) {
+        master.potential[v] = exact::approximate(paths.dist[v]).value - gauge;
+    }
+    ::lap::detail::CompensatedSum total;
+    for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
+        total.add(prob.arcs[a].cost * static_cast<double>(master.flow[a]));
+    }
+    master.total_cost = total.value();
+}
+
 template <class Source, class Policy>
 void run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
                 RowSearch<Source>& search, const ImplicitOptions& opts,
@@ -415,7 +450,8 @@ void run_rounds(const Source& src, FlowProblem& prob, CandidateSet& cand,
         rec.block_arcs = prob.block_arcs[0].n_arcs;
 
         const Clock::time_point t_master = Clock::now();
-        const FlowResult master = solve_min_cost_flow(prob, flow_opts);
+        FlowResult master = solve_min_cost_flow(prob, flow_opts);
+        if (opts.certify && master.status == "optimal") exact_master(prob, master);
         rec.master_seconds = seconds_since(t_master);
         rec.master_status  = master.status;
         rec.flow_sent      = master.flow_sent;

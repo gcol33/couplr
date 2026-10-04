@@ -436,3 +436,25 @@ test_that("an empty problem is refused the way every other path refuses it", {
   expect_error(assignment(matrix(NaN, 2, 3), memory_mode = "implicit"),
                "NaN not allowed")
 })
+
+test_that("the loop repairs a master its rounding left short of the exact optimum (#65)", {
+  # Standardised covariates give costs whose differences sit below their
+  # rounding, where the flow master stopped on a flow a residual cycle of
+  # exactly negative cost still improved, and the certificate fell back to a
+  # tolerance.
+  data("hospital_staff", package = "couplr", envir = environment())
+  treated <- transform(hospital_staff$nurses_extended, id = nurse_id)
+  control <- transform(hospital_staff$controls_extended, id = nurse_id)
+  covars <- c("age", "experience_years", "certification_level")
+  for (sc in c("standardize", "robust")) {
+    m <- suppressMessages(match_couples(treated, control, vars = covars,
+                                        scale = sc, memory_mode = "implicit",
+                                        certify = TRUE))
+    expect_identical(m$certificate$arithmetic, "exact", info = sc)
+    expect_equal(m$certificate$max_suboptimality, 0, info = sc)
+    dense <- suppressMessages(match_couples(treated, control, vars = covars,
+                                            scale = sc, memory_mode = "dense"))
+    expect_equal(m$info$total_distance, dense$info$total_distance,
+                 tolerance = 1e-12, info = sc)
+  }
+})

@@ -1,3 +1,34 @@
+# couplr 1.8.1
+
+## Bug fixes
+
+* **Calipers bind on the raw variable in lazy and implicit mode (#64).** The
+  lazy and implicit cost sources compared a caliper against the matching
+  variable after scaling and weighting, so with `scale`, `auto_scale = TRUE`
+  or `weights` a caliper of 3 years admitted pairs 12 years apart, while dense
+  mode applied it as stated. Each caliper now carries the variable's raw
+  values, and the cost sources, the metric tree's pruning and the reshaped
+  ratio designs read those. All three memory modes return the same total
+  under calipers on scaled or weighted variables.
+
+* **The implicit loop ends with an exact certificate on scaled costs (#65).**
+  On costs whose differences sit below their rounding, such as standardised
+  covariates, the flow master could stop on a matching that a residual cycle
+  of exactly negative cost still improved, so no exact potentials existed and
+  the certificate fell back to a tolerance (`max_suboptimality` of order
+  1e-13). A certifying loop now cancels such cycles exactly before reading the
+  master's potentials, and returns the exact optimum with an exact
+  certificate.
+
+* **`as_matchit()` gives one entry per unit (#66).** It named units by id
+  over the rows of `match_data()`, which holds a row per pair, so it failed
+  with "duplicate 'row.names'" when the two sides shared ids, under
+  `ratio > 1` and under `replace = TRUE`. Units are now keyed by id, qualified
+  as `left:<id>` and `right:<id>` when an id occurs on both sides, weights are
+  summed per unit, `match.matrix` has one column per partner, and `subclass`
+  is left out when a reused control belongs to several matched sets, as in
+  MatchIt. `bal.tab()` on couplr results goes through the same conversion.
+
 # couplr 1.8.0
 
 ## Exact certificates on computed distances (#61)

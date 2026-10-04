@@ -132,7 +132,7 @@ Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
                                 SEXP distance,
                                 Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                 Rcpp::NumericVector values, Rcpp::List calipers,
-                                Rcpp::CharacterVector vars, bool maximize,
+                                bool maximize,
                                 double keep_per_row, double width, double tol,
                                 double max_rounds, bool certify) {
     try {
@@ -147,7 +147,7 @@ Rcpp::List match_path_lazy_impl(Rcpp::NumericMatrix left_mat,
         // compiled problem points at, and the tree the loop prices with, be
         // built once as well.
         LazySource source = rcpp_lazy_source(left_mat, right_mat, distance, inv_cov,
-                                             sweep[0], calipers, vars, maximize);
+                                             sweep[0], calipers, maximize);
 
         lap::PathOptions opts;
         opts.implicit = implicit_options_from_r(keep_per_row, width, tol,

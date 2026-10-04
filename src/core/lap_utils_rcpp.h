@@ -105,10 +105,10 @@ lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost);
 // "mahalanobis"/"maha"). `inv_cov` is the precomputed p x p inverse
 // covariance matrix (only read for Mahalanobis; pass R_NilValue otherwise --
 // computing it is R's job, matching compute_distance_matrix()'s existing
-// pooled-covariance logic, not reimplemented here). `calipers` is a named
-// R list (variable name -> numeric threshold); names are resolved to column
-// indices via `var_names` (the `vars` vector, in the same column order as
-// left_mat/right_mat).
+// pooled-covariance logic, not reimplemented here). `calipers` is an R
+// list with one list(threshold, left, right) per caliper, carrying the raw
+// values of its variable for each left and right unit (R's
+// lazy_cost_spec_calipers()).
 lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,
@@ -116,7 +116,6 @@ lap::LazyCostMatrix rcpp_to_lazy_cost_matrix(
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
     double max_distance,
     Rcpp::List calipers,
-    const Rcpp::CharacterVector& var_names,
     bool maximize);
 
 // The cost source a lazy specification describes: a LazyCostMatrix for a
@@ -132,7 +131,6 @@ LazySource rcpp_lazy_source(const Rcpp::NumericMatrix& left_mat,
                             Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                             double max_distance,
                             Rcpp::List calipers,
-                            const Rcpp::CharacterVector& var_names,
                             bool maximize);
 
 // The distance of specific matched pairs, evaluated by the same code the lazy

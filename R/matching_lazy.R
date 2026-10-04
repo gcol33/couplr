@@ -63,10 +63,8 @@ dim.lazy_cost_spec <- function(x) c(x$n_left, x$n_right)
 #' Swap left/right in a lazy cost spec
 #'
 #' A cheap metadata field-swap (left_mat <-> right_mat, n_left <-> n_right),
-#' unlike the dense path's `t()` matrix copy. Calipers/max_distance are
-#' unaffected: a caliper's `var_index` refers to a matching VARIABLE
-#' (a column shared by both sides), not a left/right unit index, so it does
-#' not need to change when the roles of left/right are swapped.
+#' unlike the dense path's `t()` matrix copy. max_distance is unaffected, and
+#' each caliper's raw values swap sides with the units they belong to.
 #'
 #' @keywords internal
 transpose_lazy_cost_spec <- function(spec) {
@@ -75,6 +73,10 @@ transpose_lazy_cost_spec <- function(spec) {
   transposed$right_mat <- spec$left_mat
   transposed$n_left <- spec$n_right
   transposed$n_right <- spec$n_left
+  transposed$calipers <- lapply(spec$calipers, function(cal) {
+    cal[c("left", "right")] <- cal[c("right", "left")]
+    cal
+  })
   # A user's function is called as f(left, right) and need not be symmetric, so
   # the transposed problem asks it the original question and turns the answer.
   if (is.function(spec$distance)) {
@@ -188,16 +190,37 @@ lazy_cost_spec_inv_cov <- function(spec) {
   inv_cov
 }
 
-#' Calipers of a lazy cost spec, keyed by variable name
+#' Calipers of a lazy cost spec, as the C++ cost source reads them
 #'
-#' The C++ lazy cost source takes its calipers as a named list of thresholds,
-#' while the spec stores them as records carrying an index into `spec$vars`.
+#' One `list(threshold, left, right)` per caliper, named by its variable:
+#' the threshold and the variable's raw values for every left and right unit,
+#' in the row order of `left_mat` and `right_mat`.
 #'
-#' @return Named list of numeric thresholds, one per caliper.
+#' @return Named list of caliper records.
 #' @keywords internal
 lazy_cost_spec_calipers <- function(spec) {
   stats::setNames(
-    lapply(spec$calipers, function(cal) cal$threshold),
-    vapply(spec$calipers, function(cal) spec$vars[[cal$var_index]], character(1))
+    lapply(spec$calipers, function(cal) cal[c("threshold", "left", "right")]),
+    vapply(spec$calipers, function(cal) cal$var, character(1))
   )
+}
+
+#' Rows of a lazy cost spec, by unit index on each side
+#'
+#' Reads the feature rows and every caliper's raw values through the same
+#' index, so the two stay aligned when a design replicates or reorders units.
+#'
+#' @keywords internal
+lazy_cost_spec_rows <- function(spec, rows, cols) {
+  out <- spec
+  out$left_mat <- spec$left_mat[rows, , drop = FALSE]
+  out$right_mat <- spec$right_mat[cols, , drop = FALSE]
+  out$n_left <- nrow(out$left_mat)
+  out$n_right <- nrow(out$right_mat)
+  out$calipers <- lapply(spec$calipers, function(cal) {
+    cal$left <- cal$left[rows]
+    cal$right <- cal$right[cols]
+    cal
+  })
+  out
 }

@@ -13,12 +13,11 @@
 Rcpp::List solve_auction_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                    SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                    double max_distance, Rcpp::List calipers,
-                                   Rcpp::CharacterVector var_names, bool maximize,
+                                   bool maximize,
                                    Rcpp::Nullable<double> eps) {
     try {
         const LazySource source = rcpp_lazy_source(left_mat, right_mat, metric, inv_cov,
-                                                   max_distance, calipers, var_names,
-                                                   maximize);
+                                                   max_distance, calipers, maximize);
 
         const double eps_in = eps.isNotNull() ? Rcpp::as<double>(eps.get())
                                               : std::numeric_limits<double>::quiet_NaN();

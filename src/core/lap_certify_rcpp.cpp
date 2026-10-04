@@ -315,7 +315,6 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
                              SEXP distance,
                              Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                              double max_distance, Rcpp::List calipers,
-                             Rcpp::CharacterVector vars,
                              Rcpp::IntegerVector match, Rcpp::NumericVector u,
                              Rcpp::NumericVector v, bool maximize, double tol,
                              std::string arithmetic, Rcpp::Nullable<Rcpp::List> exact) {
@@ -334,7 +333,7 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
         // (negate = maximize), so it is already the internal minimization.
         const LazySource source = rcpp_lazy_source(
             left_mat, right_mat, distance, inv_cov_arg, max_distance,
-            calipers, vars, maximize);
+            calipers, maximize);
 
         const std::vector<int> m0 = match_to_zero_based(match);
         const std::vector<double> u0 = duals_to_internal(u, maximize);

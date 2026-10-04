@@ -17,7 +17,7 @@
 // source runs on.
 //
 // Everything the built-in lazy source applies after its distance applies here:
-// per-variable calipers on the covariates, the distance cut, the maximize
+// per-variable calipers on the raw variables, the distance cut, the maximize
 // negation. A value that is not a finite number is no pair, as NA and Inf are
 // in a materialized matrix.
 #pragma once
@@ -112,13 +112,7 @@ private:
     };
 
     bool passes_calipers(int64_t i, int64_t j) const {
-        if (calipers_.empty()) return true;
-        const double* li = &(*left_rows_)[static_cast<std::size_t>(i * n_vars_)];
-        const double* rj = &(*right_rows_)[static_cast<std::size_t>(j * n_vars_)];
-        for (const CaliperSpec& cal : calipers_) {
-            if (std::abs(li[cal.var_index] - rj[cal.var_index]) > cal.threshold) return false;
-        }
-        return true;
+        return passes_all(calipers_, i, j);
     }
 
     double value(int64_t i, int64_t j) const {

@@ -316,7 +316,7 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
   caliper_list <- lazy_cost_spec_calipers(cost)
   report <- lap_certify_lazy(cost$left_mat, cost$right_mat, cost$distance,
                              inv_cov, cost$max_distance, caliper_list,
-                             cost$vars, as.integer(match_vec),
+                             as.integer(match_vec),
                              as.numeric(duals$u), as.numeric(duals$v),
                              maximize, tol, arithmetic, exact)
   .new_assignment_certificate(report, transposed = transposed, tol = tol)

@@ -1,54 +1,36 @@
-## Release notes (1.8.0)
+## Release notes (1.8.1)
 
-1.7.2 was tagged but never submitted; its changes are included here.
+This is a bug-fix release four days after 1.8.0. The first fix concerns
+results that were returned without any error or warning:
 
-* `verify_assignment()` and `verify_flow()` decide their optimality
-  conditions exactly on computed distances (Euclidean, Mahalanobis). When the
-  solver's floating-point duals miss exact tightness by rounding, the
-  potentials the matching determines are recovered in exact multi-component
-  arithmetic, and an exact certificate returns them so it can be re-checked
-  from the cost matrix alone.
+* With scaled or weighted matching variables, the low-memory modes
+  (`memory_mode = "lazy"` and `"implicit"`) compared calipers against the
+  scaled values, so they admitted pairs that the caliper excludes and that
+  the default mode excludes. All modes now apply calipers to the variables
+  as supplied.
 
-* `memory_mode = "implicit"` certifies over every admissible pair by pricing
-  omitted pairs at zero against exact potentials, instead of at a tolerance.
+* `as_matchit()` failed for designs with more than one control per treated
+  unit, with replacement, or when both groups used the same ids.
 
-* `assignment()`, `match_couples()` and `cardinality_match()` return the
-  optimal duals or potentials on every design with a linear program, so a
-  certificate costs one pass over the pairs and no second solve.
+* The column-generation mode now returns an exact optimality certificate on
+  scaled costs, where it previously fell back to a tolerance.
 
-* `cardinality_match()` certifies with no tolerance. Each node's bound is the
-  dual objective of its Lagrangian relaxation evaluated exactly, and the
-  pruning tests and constraint values behind a certificate are decided
-  exactly.
-
-* Exact potential recovery no longer refuses an optimal flow on networks with
-  zero-cost arcs, which it did on some balance networks.
-
-* `verify_assignment()` reads duals off a solve result by exact name rather
-  than by partial matching.
-
-No exported function is removed or renamed, and no hard dependency is
-added. 'clue' and 'lpSolve' join Suggests: the tests check every solver
-against their optima.
+No exported function is removed or renamed, and no dependency is added.
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
-The note is the incoming-feasibility one reporting the number of recent
-updates. 1.7.1 was published on 2026-09-16.
+The note is the incoming-feasibility one: days since last update 4, number
+of updates in the past 6 months 7. This release fixes the results described
+above, which is why it follows 1.8.0 so closely.
 
 ## Test environments
 
-* local: Windows 11 x64, Rtools45 g++ 14.3.0. R 4.6.1: Status OK.
-  R-devel (2026-09-29 r90598 ucrt): Status OK apart from math rendering
-  in the HTML manual being skipped, as 'V8' is not installed there.
-* win-builder was unavailable on 2026-09-30: every run, including one of
-  a minimal test package, stopped at "checking CRAN incoming feasibility"
-  after a few seconds. R-devel on Windows was therefore checked locally,
-  at the revision win-builder runs.
-* GitHub Actions at the release commit: macOS-latest (release),
-  windows-latest (release), ubuntu-latest (devel, release, oldrel-1)
+* local: Windows 11 x64, R 4.6.1, Rtools45 g++ 14.3.0: Status 1 NOTE (as
+  above), tests FAIL 0 | PASS 8382.
+* win-builder: R-devel (2026-09-30 r90605 ucrt): Status 1 NOTE (as above),
+  tests FAIL 0 | PASS 8382.
 
 ## Downstream dependencies
 

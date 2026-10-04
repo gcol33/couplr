@@ -11,6 +11,7 @@
 
 #include "core/lap_error.h"
 #include "core/lap_lazy_types.h"
+#include "test_calipers.h"
 #include "flow/flow_balltree.h"
 #include "flow/flow_candidates.h"
 #include "flow/flow_pricing.h"
@@ -62,7 +63,7 @@ struct Case {
     int64_t n_vars = 3;
     lap::DistanceMetric metric = lap::DistanceMetric::Euclidean;
     double max_distance = kInf;
-    std::vector<lap::CaliperSpec> calipers;
+    std::vector<ColumnCaliper> calipers;
     bool negate = false;
     double dual_scale = 1.0;   // how far the duals push pairs below zero
     double cand_fraction = 0.1;
@@ -101,9 +102,11 @@ lap::LazyCostMatrix make_source(const Case& c, std::mt19937& rng) {
             }
         }
     }
+    std::vector<lap::CaliperSpec> calipers =
+        column_calipers(c.calipers, left, right, c.n_vars);
     return lap::LazyCostMatrix(std::move(left), std::move(right), c.n_vars,
                                c.metric, std::move(inv_cov), c.max_distance,
-                               c.calipers, c.negate);
+                               std::move(calipers), c.negate);
 }
 
 // Both pricers see the same candidate set, so which pairs are in it only has to
@@ -237,7 +240,7 @@ TEST_CASE("Tree pricing - the same answer as the grid scan") {
     cases.push_back(capped);
 
     Case calipered;
-    calipered.calipers = {lap::CaliperSpec{0, 1.0}, lap::CaliperSpec{2, 1.2}};
+    calipered.calipers = {{0, 1.0}, {2, 1.2}};
     calipered.seed = 32;
     calipered.label = "calipers";
     cases.push_back(calipered);
@@ -246,7 +249,7 @@ TEST_CASE("Tree pricing - the same answer as the grid scan") {
     both.metric = lap::DistanceMetric::Mahalanobis;
     both.n_vars = 4;
     both.max_distance = 2.0;
-    both.calipers = {lap::CaliperSpec{1, 0.9}};
+    both.calipers = {{1, 0.9}};
     both.seed = 33;
     both.label = "mahalanobis with both limits";
     cases.push_back(both);
@@ -456,9 +459,11 @@ TEST_CASE("Tree pricing - a caliper edge at adjacent representable doubles") {
     }
     const int64_t ncol = static_cast<int64_t>(right.size()) / n_vars;
 
-    const lap::LazyCostMatrix src(std::vector<double>{x0, 0.0}, std::move(right), n_vars,
+    const std::vector<double> left{x0, 0.0};
+    std::vector<lap::CaliperSpec> calipers = column_calipers({{0, t}}, left, right, n_vars);
+    const lap::LazyCostMatrix src(left, std::move(right), n_vars,
                                   lap::DistanceMetric::Euclidean, {}, kInf,
-                                  {lap::CaliperSpec{0, t}}, false);
+                                  std::move(calipers), false);
     lap::BallTree tree = lap::build_ball_tree(src, 1);
     REQUIRE_FALSE(tree.empty());
 

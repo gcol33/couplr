@@ -12,6 +12,7 @@
 
 #include "core/lap_error.h"
 #include "core/lap_lazy_types.h"
+#include "test_calipers.h"
 #include "flow/flow_balltree.h"
 
 #include <cmath>
@@ -117,7 +118,7 @@ struct SourceSpec {
     int64_t n_vars = 3;
     lap::DistanceMetric metric = lap::DistanceMetric::Euclidean;
     double max_distance = kInf;
-    std::vector<lap::CaliperSpec> calipers;
+    std::vector<ColumnCaliper> calipers;
     bool negate = false;
     std::uint32_t seed = 1;
 };
@@ -130,9 +131,11 @@ lap::LazyCostMatrix make_source(const SourceSpec& spec) {
     if (spec.metric == lap::DistanceMetric::Mahalanobis) {
         inv_cov = spd_matrix(spec.n_vars, rng);
     }
+    std::vector<lap::CaliperSpec> calipers =
+        column_calipers(spec.calipers, left, right, spec.n_vars);
     return lap::LazyCostMatrix(std::move(left), std::move(right), spec.n_vars,
                                spec.metric, std::move(inv_cov),
-                               spec.max_distance, spec.calipers, spec.negate);
+                               spec.max_distance, std::move(calipers), spec.negate);
 }
 
 // The whitened separation the tree's centres and radii are stated in.
@@ -255,7 +258,7 @@ TEST_CASE("Ball tree - node_cost_lo is under every admissible member's cost") {
             spec.negate = negate;
             spec.ncol = 120;
             spec.max_distance = 2.5;
-            spec.calipers = {lap::CaliperSpec{0, 2.0}};
+            spec.calipers = {{0, 2.0}};
             spec.seed = 23;
             const lap::LazyCostMatrix src = make_source(spec);
             const lap::BallTree tree = lap::build_ball_tree(src, 5);
@@ -291,7 +294,7 @@ TEST_CASE("Ball tree - an out verdict never leaves a member in") {
     // Tight enough that both verdicts fire on some node and loose enough that
     // neither fires on all of them.
     spec.max_distance = 2.0;
-    spec.calipers = {lap::CaliperSpec{0, 1.0}, lap::CaliperSpec{2, 1.5}};
+    spec.calipers = {{0, 1.0}, {2, 1.5}};
     spec.seed = 31;
     const lap::LazyCostMatrix src = make_source(spec);
     const lap::BallTree tree = lap::build_ball_tree(src, 7);
@@ -307,7 +310,7 @@ TEST_CASE("Ball tree - an out verdict never leaves a member in") {
         for (int32_t id = 0; id < tree.n_nodes(); ++id) {
             const bool d_out =
                 lap::node_distance_out(tree, src, q.data(), q_g, x, id);
-            const bool c_out = lap::node_caliper_out(tree, src, x, id);
+            const bool c_out = lap::node_caliper_out(tree, src, i, id);
             if (d_out) ++distance_fired;
             if (c_out) ++caliper_fired;
             if (!d_out && !c_out) continue;
@@ -333,7 +336,7 @@ TEST_CASE("Ball tree - the caliper box is read in the original covariates") {
     spec.metric = lap::DistanceMetric::Mahalanobis;
     spec.ncol = 200;
     spec.n_vars = 3;
-    spec.calipers = {lap::CaliperSpec{1, 0.4}};
+    spec.calipers = {{1, 0.4}};
     spec.seed = 41;
     const lap::LazyCostMatrix src = make_source(spec);
     const lap::BallTree tree = lap::build_ball_tree(src, 6);
@@ -344,7 +347,7 @@ TEST_CASE("Ball tree - the caliper box is read in the original covariates") {
     for (int64_t i = 0; i < src.nrow; ++i) {
         lap::whiten_point(tree, src.left_row(i), q.data());
         for (int32_t id = 0; id < tree.n_nodes(); ++id) {
-            if (!lap::node_caliper_out(tree, src, src.left_row(i), id)) continue;
+            if (!lap::node_caliper_out(tree, src, i, id)) continue;
             ++fired;
             for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
                  t < tree.hi[static_cast<std::size_t>(id)]; ++t) {
@@ -559,7 +562,7 @@ TEST_CASE("Ball tree - the cost floor holds under offset coordinates and a "
             const double q_g = lap::whiten_point(tree, x, q.data());
             for (int32_t id = 0; id < tree.n_nodes(); ++id) {
                 const double lo =
-                    lap::node_cost_floor(tree, src, q.data(), q_g, x, id);
+                    lap::node_cost_floor(tree, src, q.data(), q_g, x, i, id);
                 if (!std::isfinite(lo)) continue;
                 for (int32_t t = tree.lo[static_cast<std::size_t>(id)];
                      t < tree.hi[static_cast<std::size_t>(id)]; ++t) {

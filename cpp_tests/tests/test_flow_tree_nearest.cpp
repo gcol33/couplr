@@ -9,6 +9,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "core/lap_lazy_types.h"
+#include "test_calipers.h"
 #include "flow/flow_balltree.h"
 #include "flow/flow_candidates.h"
 #include "flow/flow_feasibility.h"
@@ -62,7 +63,7 @@ struct Case {
     int64_t n_vars = 3;
     lap::DistanceMetric metric = lap::DistanceMetric::Euclidean;
     double max_distance = kInf;
-    std::vector<lap::CaliperSpec> calipers;
+    std::vector<ColumnCaliper> calipers;
     bool negate = false;
     double skip_fraction = 0.2;
     int width = 5;
@@ -78,9 +79,11 @@ lap::LazyCostMatrix make_source(const Case& c, std::mt19937& rng) {
     if (c.metric == lap::DistanceMetric::Mahalanobis) {
         inv_cov = spd_matrix(c.n_vars, rng);
     }
+    std::vector<lap::CaliperSpec> calipers =
+        column_calipers(c.calipers, left, right, c.n_vars);
     return lap::LazyCostMatrix(std::move(left), std::move(right), c.n_vars,
                                c.metric, std::move(inv_cov), c.max_distance,
-                               c.calipers, c.negate);
+                               std::move(calipers), c.negate);
 }
 
 // One row's kept columns, ascending, as (column, cost).
@@ -166,13 +169,13 @@ TEST_CASE("tree reseed matches the scan under every admissibility rule",
     run_case(bounded);
 
     Case capered;
-    capered.calipers = {lap::CaliperSpec{0, 1.0}, lap::CaliperSpec{2, 0.8}};
+    capered.calipers = {{0, 1.0}, {2, 0.8}};
     capered.label = "calipers";
     run_case(capered);
 
     Case both;
     both.max_distance = 2.0;
-    both.calipers = {lap::CaliperSpec{1, 1.2}};
+    both.calipers = {{1, 1.2}};
     both.metric = lap::DistanceMetric::Mahalanobis;
     both.label = "distance limit and caliper";
     run_case(both);

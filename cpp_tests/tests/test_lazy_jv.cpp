@@ -11,6 +11,7 @@
 
 #include "core/lap_types.h"
 #include "core/lap_lazy_types.h"
+#include "test_calipers.h"
 #include "solvers/solve_jv.h"
 
 #include <vector>
@@ -21,7 +22,6 @@ using Catch::Approx;
 using lap::CostMatrix;
 using lap::LazyCostMatrix;
 using lap::DistanceMetric;
-using lap::CaliperSpec;
 
 namespace {
 
@@ -74,7 +74,7 @@ ParallelCost build_parallel(const std::vector<std::vector<double>>& left,
                             DistanceMetric metric,
                             const std::vector<double>& inv_cov,
                             double max_distance,
-                            const std::vector<CaliperSpec>& calipers,
+                            const std::vector<ColumnCaliper>& calipers,
                             bool maximize) {
     int64_t n = static_cast<int64_t>(left.size());
     int64_t m = static_cast<int64_t>(right.size());
@@ -87,8 +87,8 @@ ParallelCost build_parallel(const std::vector<std::vector<double>>& left,
                                     metric, inv_cov);
             bool allowed = true;
             for (const auto& cal : calipers) {
-                if (std::abs(left[static_cast<size_t>(i)][static_cast<size_t>(cal.var_index)] -
-                            right[static_cast<size_t>(j)][static_cast<size_t>(cal.var_index)]) > cal.threshold) {
+                if (std::abs(left[static_cast<size_t>(i)][static_cast<size_t>(cal.var)] -
+                            right[static_cast<size_t>(j)][static_cast<size_t>(cal.var)]) > cal.threshold) {
                     allowed = false;
                 }
             }
@@ -112,7 +112,7 @@ ParallelCost build_parallel(const std::vector<std::vector<double>>& left,
     for (const auto& row : right) for (double v : row) right_flat.push_back(v);
 
     LazyCostMatrix lazy(left_flat, right_flat, p, metric, inv_cov,
-                        max_distance, calipers, maximize);
+                        max_distance, column_calipers(calipers, left_flat, right_flat, p), maximize);
 
     return ParallelCost{std::move(dense), std::move(lazy)};
 }
@@ -215,7 +215,7 @@ TEST_CASE("solve_jv: dense and lazy agree with a per-variable caliper", "[lazy][
     auto left = identity_plus_offset(6, 0.0);
     auto right = identity_plus_offset(6, 1.0);
     std::vector<double> no_inv_cov;
-    std::vector<CaliperSpec> calipers = {{0, 3.0}};  // caliper on variable index 0
+    std::vector<ColumnCaliper> calipers = {{0, 3.0}};  // caliper on variable index 0
 
     auto pc = build_parallel(left, right, DistanceMetric::Euclidean, no_inv_cov,
                              std::numeric_limits<double>::infinity(), calipers, false);

@@ -8,6 +8,7 @@
 #include "core/lap_certify.h"
 #include "core/lap_error.h"
 #include "core/lap_lazy_types.h"
+#include "test_calipers.h"
 #include "core/lap_types.h"
 #include "flow/flow_candidates.h"
 #include "flow/flow_compile.h"
@@ -884,7 +885,7 @@ TEST_CASE("A transposed lazy source measures every pair to the bit",
     for (double& x : right) x = gauss(rng);
     std::vector<double> inv_cov = {2.0, 0.4, -0.3, 0.4, 1.5, 0.2, -0.3, 0.2, 1.0};
     const lap::LazyCostMatrix src(left, right, n_vars, lap::DistanceMetric::Mahalanobis,
-                                  inv_cov, 4.0, {lap::CaliperSpec{1, 2.5}}, false);
+                                  inv_cov, 4.0, column_calipers({{1, 2.5}}, left, right, n_vars), false);
     const lap::LazyCostMatrix t = src.transposed();
     REQUIRE(t.nrow == src.ncol);
     REQUIRE(t.ncol == src.nrow);

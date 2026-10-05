@@ -574,8 +574,8 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
             }
         }
 
-        double* clo = &tree.cal_lo[static_cast<std::size_t>(id) * n_cal];
-        double* chi = &tree.cal_hi[static_cast<std::size_t>(id) * n_cal];
+        double* clo = tree.cal_lo.data() + static_cast<std::size_t>(id) * n_cal;
+        double* chi = tree.cal_hi.data() + static_cast<std::size_t>(id) * n_cal;
         if (tree.is_leaf(id)) {
             for (int32_t t = a; t < b; ++t) {
                 const std::size_t col =

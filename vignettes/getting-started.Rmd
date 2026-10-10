@@ -20,6 +20,15 @@ library(couplr)
 library(dplyr)
 ```
 
+## Installation
+
+```{r, eval = FALSE}
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## What couplr Does
 
 couplr creates matched samples from two groups of observations. Given a "left" group (e.g., treatment) and a "right" group (e.g., control), it finds optimal pairings based on similarity across variables you specify. couplr supports both **one-to-one matching** (each treatment unit paired with one control) and **full matching** (variable-ratio groups where every unit is assigned).

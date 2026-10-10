@@ -55,6 +55,15 @@ ext_demo <- function(...) {
 }
 ```
 
+## Installation
+
+```{r, eval = FALSE}
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 This vignette serves three purposes:

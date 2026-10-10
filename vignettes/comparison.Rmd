@@ -22,6 +22,15 @@ library(dplyr)
 library(ggplot2)
 ```
 
+## Installation
+
+```{r, eval = FALSE}
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 This vignette compares couplr's approach to matching with established R packages:

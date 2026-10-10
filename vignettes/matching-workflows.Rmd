@@ -21,6 +21,15 @@ library(dplyr)
 library(ggplot2)
 ```
 
+## Installation
+
+```{r, eval = FALSE}
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 Matching is a fundamental technique for creating comparable groups in observational studies. Unlike random assignment, observational data often contain systematic differences between treatment and control groups that confound causal inference. Matching addresses this by pairing similar units based on observed characteristics, creating "apples-to-apples" comparisons.

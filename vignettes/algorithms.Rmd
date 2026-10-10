@@ -94,6 +94,15 @@ theme_diagram <- function() {
 }
 ```
 
+## Installation
+
+```{r, eval = FALSE}
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R packages still use nothing else.

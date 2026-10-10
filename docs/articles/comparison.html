@@ -41,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-10-01</h4>
+            <h4 data-toc-skip class="date">2026-10-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -120,6 +120,15 @@ Colling</h4>
 
     
     
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"couplr"</span><span class="op">)</span>            <span class="co"># CRAN</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>               <span class="co"># development version</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
@@ -147,11 +156,11 @@ approach.</p>
 </h2>
 <p>We simulate a job training evaluation scenario with selection
 bias:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Treatment group: younger, more educated, higher prior earnings</span></span>
-<span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span></span>
 <span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">35</span>, sd <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>,</span>
@@ -162,7 +171,7 @@ bias:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Control group: older, less educated, lower prior earnings (selection bias)</span></span>
-<span><span class="va">control</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span><span class="va">control</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="fl">201</span><span class="op">:</span><span class="fl">700</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span>, mean <span class="op">=</span> <span class="fl">45</span>, sd <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
 <span>  education <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span>, mean <span class="op">=</span> <span class="fl">12</span>, sd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
@@ -172,8 +181,8 @@ bias:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Combine for packages that expect single data frame</span></span>
-<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">treatment</span>, <span class="va">control</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>treated <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">group</span> <span class="op">==</span> <span class="st">"treatment"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu">bind_rows</span><span class="op">(</span><span class="va">treatment</span>, <span class="va">control</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span>treated <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">group</span> <span class="op">==</span> <span class="st">"treatment"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Treatment units:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">treatment</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Treatment units: 200</span></span>
@@ -213,12 +222,12 @@ matches directly on covariates (multivariate distance).</p>
 <div class="section level3">
 <h3 id="matchit-approach">MatchIt Approach<a class="anchor" aria-label="anchor" href="#matchit-approach"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MatchIt"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kosukeimai.github.io/MatchIt/" class="external-link">MatchIt</a></span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># MatchIt: Propensity score matching (default)</span></span>
-<span>  <span class="va">m_ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://kosukeimai.github.io/MatchIt/reference/matchit.html" class="external-link">matchit</a></span><span class="op">(</span></span>
+<span>  <span class="va">m_ps</span> <span class="op">&lt;-</span> <span class="fu">matchit</span><span class="op">(</span></span>
 <span>    <span class="va">treated</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">education</span> <span class="op">+</span> <span class="va">prior_earnings</span> <span class="op">+</span> <span class="va">employed</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">combined</span>,</span>
 <span>    method <span class="op">=</span> <span class="st">"nearest"</span>,</span>
@@ -229,20 +238,13 @@ matches directly on covariates (multivariate distance).</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Matched pairs:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">m_ps</span><span class="op">$</span><span class="va">weights</span><span class="op">[</span><span class="va">combined</span><span class="op">$</span><span class="va">treated</span> <span class="op">==</span> <span class="fl">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># Extract matched data</span></span>
-<span>  <span class="va">matched_ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://kosukeimai.github.io/MatchIt/reference/match_data.html" class="external-link">match.data</a></span><span class="op">(</span><span class="va">m_ps</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'MatchIt'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:couplr':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     match_data</span></span>
-<span><span class="co">#&gt; MatchIt (propensity score, nearest neighbor):</span></span>
-<span><span class="co">#&gt;   Matched pairs: 200</span></span></code></pre></div>
+<span>  <span class="va">matched_ps</span> <span class="op">&lt;-</span> <span class="fu">match.data</span><span class="op">(</span><span class="va">m_ps</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="couplr-approach">couplr Approach<a class="anchor" aria-label="anchor" href="#couplr-approach"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># couplr: Direct covariate matching</span></span>
 <span><span class="va">result_couplr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
@@ -263,13 +265,13 @@ matches directly on covariates (multivariate distance).</p>
 <div class="section level3">
 <h3 id="balance-comparison">Balance Comparison<a class="anchor" aria-label="anchor" href="#balance-comparison"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"MatchIt"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># MatchIt balance</span></span>
-<span>  <span class="va">matched_treated_ps</span> <span class="op">&lt;-</span> <span class="va">matched_ps</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">treated</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span>
-<span>  <span class="va">matched_control_ps</span> <span class="op">&lt;-</span> <span class="va">matched_ps</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">treated</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span></span>
+<span>  <span class="va">matched_treated_ps</span> <span class="op">&lt;-</span> <span class="va">matched_ps</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">treated</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="va">matched_control_ps</span> <span class="op">&lt;-</span> <span class="va">matched_ps</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">treated</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">matchit_balance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  <span class="va">matchit_balance</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span>    variable <span class="op">=</span> <span class="va">vars</span>,</span>
 <span>    std_diff <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">vars</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
 <span>      <span class="va">diff</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">matched_treated_ps</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">matched_control_ps</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
@@ -286,10 +288,10 @@ matches directly on covariates (multivariate distance).</p>
 <span></span>
 <span>  <span class="va">couplr_balance_df</span> <span class="op">&lt;-</span> <span class="va">couplr_balance</span><span class="op">$</span><span class="va">var_stats</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span>
+<span>    <span class="fu">mutate</span><span class="op">(</span>method <span class="op">=</span> <span class="st">"couplr"</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># Combine and plot</span></span>
-<span>  <span class="va">balance_comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">matchit_balance</span>, <span class="va">couplr_balance_df</span><span class="op">)</span></span>
+<span>  <span class="va">balance_comparison</span> <span class="op">&lt;-</span> <span class="fu">bind_rows</span><span class="op">(</span><span class="va">matchit_balance</span>, <span class="va">couplr_balance_df</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="fu">ggplot</span><span class="op">(</span><span class="va">balance_comparison</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">variable</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">std_diff</span><span class="op">)</span>, fill <span class="op">=</span> <span class="va">method</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu">geom_col</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"dodge"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -309,101 +311,7 @@ matches directly on covariates (multivariate distance).</p>
 <span>      panel.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>      legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>    <span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="co">#&gt; Warning in ks.test.default(left_clean, right_clean): p-value will be</span></span>
-<span><span class="co">#&gt; approximate in the presence of ties</span></span></code></pre></div>
-<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='360.00pt' viewBox='0 0 648.00 360.00' class="r-plt inline-svg" style="width:100%;height:auto;">
-<g class='svglite'>
-<defs>
-  <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite text {
-      white-space: pre;
-      fill: #3E3F3A;
-    }
-    .svglite g.glyphgroup path {
-      fill: inherit;
-      stroke: none;
-    }
-  ]]></style>
-</defs>
-<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
-<defs>
-  <clipPath id='cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA='>
-    <rect x='0.00' y='0.00' width='648.00' height='360.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA=)'>
-<rect x='-0.000000000000064' y='0.00' width='648.00' height='360.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-</g>
-<defs>
-  <clipPath id='cpMzUuNTZ8NjQyLjUyfDM4Ljg1fDI4OS4zMQ=='>
-    <rect x='35.56' y='38.85' width='606.96' height='250.45' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMzUuNTZ8NjQyLjUyfDM4Ljg1fDI4OS4zMQ==)'>
-<rect x='35.56' y='38.85' width='606.96' height='250.45' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
-<polyline points='35.56,248.16 642.52,248.16 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,188.65 642.52,188.65 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,129.13 642.52,129.13 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,69.61 642.52,69.61 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,277.92 642.52,277.92 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,218.40 642.52,218.40 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,158.89 642.52,158.89 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,99.37 642.52,99.37 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='35.56,39.85 642.52,39.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='122.27,289.31 122.27,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='266.79,289.31 266.79,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='411.30,289.31 411.30,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='555.81,289.31 555.81,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<rect x='122.27' y='174.06' width='65.03' height='103.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0;' />
-<rect x='266.79' y='178.73' width='65.03' height='99.19' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0;' />
-<rect x='555.81' y='145.65' width='65.03' height='132.27' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0;' />
-<rect x='411.30' y='164.62' width='65.03' height='113.31' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0;' />
-<rect x='57.24' y='50.24' width='65.03' height='227.69' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='201.75' y='127.04' width='65.03' height='150.88' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='490.78' y='173.11' width='65.03' height='104.81' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='346.27' y='176.93' width='65.03' height='100.99' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<line x1='35.56' y1='218.40' x2='642.52' y2='218.40' style='stroke-width: 1.07; stroke: #93C54B; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-<line x1='35.56' y1='129.13' x2='642.52' y2='129.13' style='stroke-width: 1.07; stroke: #F47C3C; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA=)'>
-<text x='30.63' y='281.07' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
-<text x='30.63' y='221.55' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.1</text>
-<text x='30.63' y='162.04' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.2</text>
-<text x='30.63' y='102.52' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.3</text>
-<text x='30.63' y='43.00' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.4</text>
-<text x='122.27' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
-<text x='266.79' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>education</text>
-<text x='411.30' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>employed</text>
-<text x='555.81' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>prior_earnings</text>
-<text x='339.04' y='313.00' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Variable</text>
-<text transform='translate(13.36,164.08) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>|Standardized Difference|</text>
-<text x='266.05' y='344.34' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Method</text>
-<rect x='308.96' y='332.47' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='361.15' y='332.47' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0;' />
-<text x='331.01' y='343.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>couplr</text>
-<text x='383.20' y='343.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>MatchIt</text>
-<text x='35.56' y='31.05' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Green line = 0.1 (excellent), Orange line = 0.25 (acceptable)</text>
-<text x='35.56' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Covariate Balance: MatchIt vs couplr</text>
-</g>
-</g>
-</svg></div></p>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="key-differences">Key Differences<a class="anchor" aria-label="anchor" href="#key-differences"></a>
@@ -528,31 +436,29 @@ checkable certificate.</p>
 <div class="section level3">
 <h3 id="optmatch-approach">optmatch Approach<a class="anchor" aria-label="anchor" href="#optmatch-approach"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"optmatch"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://optmat.ch" class="external-link">optmatch</a></span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># Create distance matrix</span></span>
-<span>  <span class="va">dist_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/optmatch/man/match_on-methods.html" class="external-link">match_on</a></span><span class="op">(</span></span>
+<span>  <span class="va">dist_mat</span> <span class="op">&lt;-</span> <span class="fu">match_on</span><span class="op">(</span></span>
 <span>    <span class="va">treated</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">education</span> <span class="op">+</span> <span class="va">prior_earnings</span> <span class="op">+</span> <span class="va">employed</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">combined</span>,</span>
 <span>    method <span class="op">=</span> <span class="st">"mahalanobis"</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># Optimal pair matching</span></span>
-<span>  <span class="va">m_opt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/optmatch/man/pairmatch.html" class="external-link">pairmatch</a></span><span class="op">(</span><span class="va">dist_mat</span>, data <span class="op">=</span> <span class="va">combined</span><span class="op">)</span></span>
+<span>  <span class="va">m_opt</span> <span class="op">&lt;-</span> <span class="fu">pairmatch</span><span class="op">(</span><span class="va">dist_mat</span>, data <span class="op">=</span> <span class="va">combined</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">n_matched</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">m_opt</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"optmatch (optimal pair matching):\n"</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Matched pairs:"</span>, <span class="va">n_matched</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="co">#&gt; optmatch (optimal pair matching):</span></span>
-<span><span class="co">#&gt;   Matched pairs: 200</span></span></code></pre></div>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="couplr-approach-1">couplr Approach<a class="anchor" aria-label="anchor" href="#couplr-approach-1"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># couplr with Mahalanobis-like scaling</span></span>
 <span><span class="va">result_couplr_maha</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
@@ -579,19 +485,16 @@ couplr uses separate data frames</p></li>
 <li><p><strong>Algorithm selection</strong>: optmatch uses RELAX-IV;
 couplr offers 20+ algorithms</p></li>
 <li><p><strong>Full matching</strong>: <code><a href="../reference/full_match.html">full_match()</a></code> in
-couplr and <code><a href="https://rdrr.io/pkg/optmatch/man/fullmatch.html" class="external-link">fullmatch()</a></code> in optmatch, both admitting
+couplr and <code>fullmatch()</code> in optmatch, both admitting
 one-to-many and many-to-one groups in one solution.</p></li>
 </ol>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"optmatch"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Compare total distances</span></span>
 <span>  <span class="co"># (Note: Direct comparison is complex due to different distance scaling)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nBoth packages find globally optimal one-to-one assignments.\n"</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Total distance differences arise from distance metric choices.\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Both packages find globally optimal one-to-one assignments.</span></span>
-<span><span class="co">#&gt; Total distance differences arise from distance metric choices.</span></span></code></pre></div>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="key-differences-1">Key Differences<a class="anchor" aria-label="anchor" href="#key-differences-1"></a>
@@ -621,7 +524,7 @@ one-to-many and many-to-one groups in one solution.</p></li>
 <tr class="odd">
 <td><strong>Distance</strong></td>
 <td>
-<code><a href="https://rdrr.io/pkg/optmatch/man/match_on-methods.html" class="external-link">match_on()</a></code> function</td>
+<code>match_on()</code> function</td>
 <td>
 <code><a href="../reference/compute_distances.html">compute_distances()</a></code> + caching</td>
 </tr>
@@ -681,7 +584,7 @@ consequence, not a constraint).</p>
 <div class="section level3">
 <h3 id="designmatch-approach">designmatch Approach<a class="anchor" aria-label="anchor" href="#designmatch-approach"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"designmatch"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jrzubizarreta/designmatch" class="external-link">designmatch</a></span><span class="op">)</span></span>
 <span></span>
@@ -720,7 +623,7 @@ consequence, not a constraint).</p>
 </h3>
 <p>couplr doesn’t constrain balance directly but achieves balance
 through distance minimization:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># couplr: Optimize distance, then check balance</span></span>
 <span><span class="va">result_couplr_dm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
@@ -834,7 +737,7 @@ scaling) and optimizes assignment.</p>
 <div class="section level3">
 <h3 id="matching-package-approach">Matching Package Approach<a class="anchor" aria-label="anchor" href="#matching-package-approach"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"Matching"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/JasjeetSekhon/Matching" class="external-link">Matching</a></span><span class="op">)</span></span>
 <span></span>
@@ -857,7 +760,7 @@ scaling) and optimizes assignment.</p>
 <div class="section level3">
 <h3 id="balance-comparison-1">Balance Comparison<a class="anchor" aria-label="anchor" href="#balance-comparison-1"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"Matching"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Check balance from Matching package</span></span>
 <span>  <span class="va">mb</span> <span class="op">&lt;-</span> <span class="fu">MatchBalance</span><span class="op">(</span></span>
@@ -1272,7 +1175,7 @@ required</p></li>
 <div class="section level3">
 <h3 id="sequential-pipeline">Sequential Pipeline<a class="anchor" aria-label="anchor" href="#sequential-pipeline"></a>
 </h3>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Stage 1: couplr for initial matching</span></span>
 <span><span class="va">matched</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment_data</span>,</span>
@@ -1299,7 +1202,7 @@ required</p></li>
 <h3 id="complementary-use">Complementary Use<a class="anchor" aria-label="anchor" href="#complementary-use"></a>
 </h3>
 <p>Different packages excel at different tasks:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Use couplr for: one-to-one matching, full matching, large-scale matching, distance caching</span></span>
 <span><span class="co"># Use MatchIt for: propensity scores, CEM, genetic matching, published protocols</span></span>
 <span><span class="co"># Use optmatch for: sparse distance matrices, RItools integration</span></span>
@@ -1326,11 +1229,11 @@ status, prior earnings (re74, re75), employment status.</p>
 <div class="section level3">
 <h3 id="simulating-lalonde-style-data">Simulating Lalonde-Style Data<a class="anchor" aria-label="anchor" href="#simulating-lalonde-style-data"></a>
 </h3>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1986</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># NSW treatment group (randomized) - smaller sample for CRAN</span></span>
-<span><span class="va">nsw_treat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span><span class="va">nsw_treat</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">17</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">25</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  education <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="fl">16</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">10</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -1345,7 +1248,7 @@ status, prior earnings (re74, re75), employment status.</p>
 <span></span>
 <span><span class="co"># CPS comparison group (observational - very different!)</span></span>
 <span><span class="co"># Reduced from 15,815 to 500 for CRAN timing compliance</span></span>
-<span><span class="va">cps_control</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span><span class="va">cps_control</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="fl">101</span><span class="op">:</span><span class="fl">600</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">17</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">33</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  education <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="fl">16</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">12</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -1392,7 +1295,7 @@ status, prior earnings (re74, re75), employment status.</p>
 </h3>
 <p>With treatment vs control groups of different sizes, we need
 efficient matching. couplr handles this with greedy matching:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Greedy matching (fast for large control pools)</span></span>
 <span><span class="va">result_lalonde</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">nsw_treat</span>,</span>
@@ -1411,7 +1314,7 @@ efficient matching. couplr handles this with greedy matching:</p>
 <div class="section level3">
 <h3 id="balance-assessment">Balance Assessment<a class="anchor" aria-label="anchor" href="#balance-assessment"></a>
 </h3>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">balance_lalonde</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span></span>
 <span>  <span class="va">result_lalonde</span>, <span class="va">nsw_treat</span>, <span class="va">cps_control</span>, <span class="va">vars_lalonde</span></span>
 <span><span class="op">)</span></span>
@@ -1431,7 +1334,7 @@ efficient matching. couplr handles this with greedy matching:</p>
 <span><span class="co">#&gt; approximate in the presence of ties</span></span>
 <span></span>
 <span><span class="co"># Before/after comparison</span></span>
-<span><span class="va">before_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span><span class="va">before_df</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span></span>
 <span>  variable <span class="op">=</span> <span class="va">vars_lalonde</span>,</span>
 <span>  std_diff <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">vars_lalonde</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">t_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">nsw_treat</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
@@ -1444,10 +1347,10 @@ efficient matching. couplr handles this with greedy matching:</p>
 <span></span>
 <span><span class="va">after_df</span> <span class="op">&lt;-</span> <span class="va">balance_lalonde</span><span class="op">$</span><span class="va">var_stats</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">variable</span>, <span class="va">std_diff</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"After"</span><span class="op">)</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"After"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">balance_plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">before_df</span>, <span class="va">after_df</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">stage</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Before"</span>, <span class="st">"After"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">balance_plot_df</span> <span class="op">&lt;-</span> <span class="fu">bind_rows</span><span class="op">(</span><span class="va">before_df</span>, <span class="va">after_df</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span>stage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">stage</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Before"</span>, <span class="st">"After"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">ggplot</span><span class="op">(</span><span class="va">balance_plot_df</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html" class="external-link">reorder</a></span><span class="op">(</span><span class="va">variable</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">std_diff</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                             y <span class="op">=</span> <span class="va">std_diff</span>, fill <span class="op">=</span> <span class="va">stage</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -1468,119 +1371,13 @@ efficient matching. couplr handles this with greedy matching:</p>
 <span>    legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='648.00pt' height='360.00pt' viewBox='0 0 648.00 360.00' class="r-plt inline-svg" style="width:100%;height:auto;">
-<g class='svglite'>
-<defs>
-  <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite text {
-      white-space: pre;
-      fill: #3E3F3A;
-    }
-    .svglite g.glyphgroup path {
-      fill: inherit;
-      stroke: none;
-    }
-  ]]></style>
-</defs>
-<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
-<defs>
-  <clipPath id='cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA='>
-    <rect x='0.00' y='0.00' width='648.00' height='360.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA=)'>
-<rect rx='4' x='0.00' y='0.00' width='648.00' height='360.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
-</g>
-<defs>
-  <clipPath id='cpNjEuNDl8NjQyLjUyfDM4Ljg1fDI4OS4zMQ=='>
-    <rect x='61.49' y='38.85' width='581.03' height='250.45' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpNjEuNDl8NjQyLjUyfDM4Ljg1fDI4OS4zMQ==)'>
-<polyline points='129.86,289.31 129.86,38.85 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='258.79,289.31 258.79,38.85 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='387.72,289.31 387.72,38.85 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='516.66,289.31 516.66,38.85 ' style='stroke-width: 0.53; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,270.98 642.52,270.98 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,240.44 642.52,240.44 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,209.89 642.52,209.89 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,179.35 642.52,179.35 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,148.81 642.52,148.81 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,118.26 642.52,118.26 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,87.72 642.52,87.72 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='61.49,57.18 642.52,57.18 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='65.40,289.31 65.40,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='194.33,289.31 194.33,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='323.26,289.31 323.26,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='452.19,289.31 452.19,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<polyline points='581.12,289.31 581.12,38.85 ' style='stroke-width: 1.07; stroke: #3E3F3A; stroke-linecap: butt;' />
-<rect x='210.94' y='209.89' width='112.32' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='223.27' y='240.44' width='99.99' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='323.26' y='57.18' width='292.85' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='314.45' y='270.98' width='8.81' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='167.61' y='148.81' width='155.65' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='323.26' y='179.35' width='96.10' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='116.59' y='118.26' width='206.67' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='87.90' y='87.72' width='235.36' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='281.18' y='196.15' width='42.07' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='278.88' y='226.69' width='44.38' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='323.26' y='43.43' width='253.99' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='317.63' y='257.24' width='5.63' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='229.66' y='135.06' width='93.60' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='323.26' y='165.61' width='69.22' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='218.70' y='104.52' width='104.56' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<rect x='164.79' y='73.98' width='158.47' height='13.74' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<line x1='310.37' y1='289.31' x2='310.37' y2='38.85' style='stroke-width: 1.07; stroke: #93C54B; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-<line x1='336.15' y1='289.31' x2='336.15' y2='38.85' style='stroke-width: 1.07; stroke: #93C54B; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-<line x1='291.03' y1='289.31' x2='291.03' y2='38.85' style='stroke-width: 1.07; stroke: #F47C3C; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-<line x1='355.49' y1='289.31' x2='355.49' y2='38.85' style='stroke-width: 1.07; stroke: #F47C3C; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMC4wMHw2NDguMDB8MC4wMHwzNjAuMDA=)'>
-<text x='56.56' y='274.13' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>hispanic</text>
-<text x='56.56' y='243.59' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>education</text>
-<text x='56.56' y='213.04' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
-<text x='56.56' y='182.50' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>nodegree</text>
-<text x='56.56' y='151.96' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>married</text>
-<text x='56.56' y='121.41' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>re74</text>
-<text x='56.56' y='90.87' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>re75</text>
-<text x='56.56' y='60.33' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>black</text>
-<text x='65.40' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-2</text>
-<text x='194.33' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-1</text>
-<text x='323.26' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
-<text x='452.19' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1</text>
-<text x='581.12' y='300.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2</text>
-<text x='352.00' y='313.00' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Standardized Difference</text>
-<rect x='307.72' y='332.47' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #D9534F;' />
-<rect x='361.86' y='332.47' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #93C54B;' />
-<text x='329.77' y='343.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Before</text>
-<text x='383.91' y='343.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>After</text>
-<text x='61.49' y='31.05' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Lalonde-style job training evaluation</text>
-<text x='61.49' y='14.93' style='font-size: 1.32em; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Covariate Balance: Before vs After Matching</text>
-</g>
-</g>
-</svg></div></p>
+<p><img src="comparison_files/figure-html/lalonde-balance-1.svg" class="r-plt" alt="Balance plot for Lalonde-style matching showing improvement in standardized differences" width="864"></p>
 </div>
 <div class="section level3">
 <h3 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
 </h3>
 <p>The matching dramatically reduces imbalance:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Balance summary:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Balance summary:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean |std diff| before:"</span>,</span>
@@ -1678,83 +1475,5 @@ solutions</p></li>
 
 
 
-  <script>
-/* SVG Copy Button Functionality */
-(function() {
-  "use strict";
-
-  // Initialize SVG copy buttons after DOM is ready
-  document.addEventListener("DOMContentLoaded", function() {
-    if (typeof ClipboardJS === "undefined") {
-      console.warn("ClipboardJS not loaded - SVG copy buttons disabled");
-      return;
-    }
-
-    // Initialize clipboard for SVG copy buttons
-    var svgClipboard = new ClipboardJS(".btn-copy-svg", {
-      text: function(trigger) {
-        var container = trigger.closest(".svg-container");
-        if (!container) return "";
-
-        var svg = container.querySelector("svg");
-        if (!svg) return "";
-
-        // Clone SVG to avoid modifying the original
-        var clone = svg.cloneNode(true);
-
-        // Remove inline-svg class (not needed in copied version)
-        clone.classList.remove("inline-svg");
-
-        // Add XML declaration and serialize
-        var serializer = new XMLSerializer();
-        var svgString = serializer.serializeToString(clone);
-
-        // Add XML declaration if not present
-        if (!svgString.startsWith("<?xml")) {
-          svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
-        }
-
-        return svgString;
-      }
-    });
-
-    // Handle success
-    svgClipboard.on("success", function(e) {
-      var btn = e.trigger;
-      var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
-
-      // Update tooltip to show "Copied!"
-      btn.setAttribute("data-bs-original-title", "Copied!");
-      var tooltip = bootstrap.Tooltip.getInstance(btn);
-      if (tooltip) {
-        tooltip.show();
-      }
-
-      // Reset after delay
-      setTimeout(function() {
-        btn.setAttribute("data-bs-original-title", originalTitle);
-      }, 1500);
-
-      e.clearSelection();
-    });
-
-    // Handle error
-    svgClipboard.on("error", function(e) {
-      var btn = e.trigger;
-      btn.setAttribute("data-bs-original-title", "Press Ctrl+C to copy");
-      var tooltip = bootstrap.Tooltip.getInstance(btn);
-      if (tooltip) {
-        tooltip.show();
-      }
-    });
-
-    // Initialize tooltips for SVG copy buttons
-    var svgCopyButtons = document.querySelectorAll(".btn-copy-svg");
-    svgCopyButtons.forEach(function(btn) {
-      new bootstrap.Tooltip(btn, { container: "body" });
-    });
-  });
-})();
-</script>
-</body>
+  </body>
 </html>

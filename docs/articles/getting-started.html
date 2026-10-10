@@ -41,7 +41,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,7 +112,7 @@
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-10-01</h4>
+            <h4 data-toc-skip class="date">2026-10-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -120,6 +120,15 @@ Colling</h4>
 
     
     
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"couplr"</span><span class="op">)</span>            <span class="co"># CRAN</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>               <span class="co"># development version</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"gcol33/couplr"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="what-couplr-does">What couplr Does<a class="anchor" aria-label="anchor" href="#what-couplr-does"></a>
 </h2>
@@ -187,7 +196,7 @@ matches your use case.</p>
 <h2 id="your-first-match">Your First Match<a class="anchor" aria-label="anchor" href="#your-first-match"></a>
 </h2>
 <p>The simplest workflow uses <code><a href="../reference/match_couples.html">match_couples()</a></code>:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gillescolling.com/couplr/">couplr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
@@ -237,7 +246,7 @@ unit</p></li>
 <div class="section level3">
 <h3 id="understanding-the-output">Understanding the Output<a class="anchor" aria-label="anchor" href="#understanding-the-output"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Quick overview with summary()</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Matching Result Summary</span></span>
@@ -286,7 +295,7 @@ group</p></li>
 <p>Without scaling, variables with larger values dominate the matching.
 Income (measured in thousands) would overwhelm age (measured in
 decades):</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># BAD: Without scaling, income dominates</span></span>
 <span><span class="va">result_unscaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  <span class="va">treatment</span>, <span class="va">control</span>,</span>
@@ -317,7 +326,7 @@ to.</p>
 </h2>
 <p>After matching, verify that treatment and control groups are now
 balanced:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get the matched observations</span></span>
 <span><span class="va">matched_treatment</span> <span class="op">&lt;-</span> <span class="va">treatment</span><span class="op">[</span><span class="va">result</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">left_id</span>, <span class="op">]</span></span>
 <span><span class="va">matched_control</span> <span class="op">&lt;-</span> <span class="va">control</span><span class="op">[</span><span class="va">result</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">right_id</span>, <span class="op">]</span></span>
@@ -344,91 +353,9 @@ Workflows</a>).</p>
 </h3>
 <p>Use <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> to see the distribution of match
 distances:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='432.00pt' height='288.00pt' viewBox='0 0 432.00 288.00' class="r-plt inline-svg" style="width:100%;height:auto;">
-<g class='svglite'>
-<defs>
-  <style type='text/css'><![CDATA[
-    /* theme-aware-processed */
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite > g > rect {
-      fill: none;
-      stroke: #3E3F3A;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-miterlimit: 10.00;
-    }
-    .svglite text {
-      white-space: pre;
-      fill: #3E3F3A;
-    }
-    .svglite g.glyphgroup path {
-      fill: inherit;
-      stroke: none;
-    }
-  ]]></style>
-</defs>
-<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
-<defs>
-  <clipPath id='cpMC4wMHw0MzIuMDB8MC4wMHwyODguMDA='>
-    <rect x='0.00' y='0.00' width='432.00' height='288.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpMC4wMHw0MzIuMDB8MC4wMHwyODguMDA=)'>
-<text x='230.40' y='34.67' text-anchor='middle' style='font-size: 1.44em; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Matching Distances (n=50)</text>
-<text x='230.40' y='269.28' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distance</text>
-<text transform='translate(12.96,136.80) rotate(-90)' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Frequency</text>
-<line x1='71.73' y1='214.56' x2='389.07' y2='214.56' style='stroke-width: 0.75;' />
-<line x1='71.73' y1='214.56' x2='71.73' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='117.07' y1='214.56' x2='117.07' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='162.40' y1='214.56' x2='162.40' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='207.73' y1='214.56' x2='207.73' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='253.07' y1='214.56' x2='253.07' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='298.40' y1='214.56' x2='298.40' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='343.73' y1='214.56' x2='343.73' y2='221.76' style='stroke-width: 0.75;' />
-<line x1='389.07' y1='214.56' x2='389.07' y2='221.76' style='stroke-width: 0.75;' />
-<text x='71.73' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
-<text x='117.07' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.2</text>
-<text x='162.40' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.4</text>
-<text x='207.73' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.6</text>
-<text x='253.07' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.8</text>
-<text x='298.40' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.0</text>
-<text x='343.73' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.2</text>
-<text x='389.07' y='240.48' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.4</text>
-<line x1='59.04' y1='208.80' x2='59.04' y2='64.80' style='stroke-width: 0.75;' />
-<line x1='59.04' y1='208.80' x2='51.84' y2='208.80' style='stroke-width: 0.75;' />
-<line x1='59.04' y1='160.80' x2='51.84' y2='160.80' style='stroke-width: 0.75;' />
-<line x1='59.04' y1='112.80' x2='51.84' y2='112.80' style='stroke-width: 0.75;' />
-<line x1='59.04' y1='64.80' x2='51.84' y2='64.80' style='stroke-width: 0.75;' />
-<text transform='translate(41.76,208.80) rotate(-90)' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
-<text transform='translate(41.76,160.80) rotate(-90)' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>5</text>
-<text transform='translate(41.76,112.80) rotate(-90)' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>10</text>
-<text transform='translate(41.76,64.80) rotate(-90)' text-anchor='middle' style='font-size: 1.2em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>15</text>
-</g>
-<defs>
-  <clipPath id='cpNTkuMDR8NDAxLjc2fDU5LjA0fDIxNC41Ng=='>
-    <rect x='59.04' y='59.04' width='342.72' height='155.52' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpNTkuMDR8NDAxLjc2fDU5LjA0fDIxNC41Ng==)'>
-<rect x='71.73' y='74.40' width='45.33' height='134.40' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='117.07' y='64.80' width='45.33' height='144.00' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='162.40' y='84.00' width='45.33' height='124.80' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='207.73' y='180.00' width='45.33' height='28.80' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='253.07' y='189.60' width='45.33' height='19.20' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='298.40' y='199.20' width='45.33' height='9.60' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-<rect x='343.73' y='189.60' width='45.33' height='19.20' style='stroke-width: 0.75; stroke: #FFFFFF; fill: #4682B4;' />
-</g>
-</g>
-</svg></div></p>
+<p><img src="getting-started_files/figure-html/plot-result-1.svg" class="r-plt" alt="Histogram showing distribution of match distances, with most matches having low distances near zero" width="576"></p>
 <p>The histogram shows how similar matched pairs are. A distribution
 concentrated near zero indicates good matches.</p>
 <hr>
@@ -440,7 +367,7 @@ concentrated near zero indicates good matches.</p>
 <p>For datasets larger than a few thousand observations, optimal
 matching becomes slow. Use <code>match_couples(method = "greedy")</code>
 instead; it’s 10-100x faster with nearly identical results:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create larger datasets</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">456</span><span class="op">)</span></span>
 <span><span class="va">large_treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -496,7 +423,7 @@ instead; it’s 10-100x faster with nearly identical results:</p>
 </h2>
 <p>Sometimes you want to reject poor matches rather than force bad
 pairings. Use <code>max_distance</code> to set a caliper:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Allow any match</span></span>
 <span><span class="va">result_loose</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/match_couples.html">match_couples</a></span><span class="op">(</span></span>
 <span>  <span class="va">treatment</span>, <span class="va">control</span>,</span>
@@ -537,7 +464,7 @@ study sites), you can match within each group separately. This ensures
 exact balance on the grouping variable.</p>
 <p>First, create blocks with <code><a href="../reference/matchmaker.html">matchmaker()</a></code>, then pass the
 result to <code><a href="../reference/match_couples.html">match_couples()</a></code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Data from multiple hospital sites</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">321</span><span class="op">)</span></span>
 <span><span class="va">treated</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -591,7 +518,7 @@ Hospital A controls, etc.</p>
 unit in a group, use <code><a href="../reference/full_match.html">full_match()</a></code>. It creates
 variable-ratio groups (e.g., 1 treatment + 3 controls, or 2 treatments +
 1 control) that minimize total distance:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/full_match.html">full_match</a></span><span class="op">(</span></span>
 <span>  left <span class="op">=</span> <span class="va">treatment</span>,</span>
 <span>  right <span class="op">=</span> <span class="va">control</span>,</span>
@@ -656,7 +583,7 @@ interoperability with cobalt and marginaleffects.</p>
 <h2 id="complete-example">Complete Example<a class="anchor" aria-label="anchor" href="#complete-example"></a>
 </h2>
 <p>Here’s a realistic workflow from start to finish:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Prepare your data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">789</span><span class="op">)</span></span>
 <span><span class="va">patients_treated</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -750,7 +677,7 @@ workflows), couplr also provides lower-level functions.</p>
 </h3>
 <p>Given a cost matrix where entry (i,j) is the cost of assigning row i
 to column j:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Cost matrix: 3 workers x 3 tasks</span></span>
 <span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">5</span>,</span>
@@ -780,7 +707,7 @@ row 3 to column 3 (cost 4). Total cost: 9.</p>
 </h3>
 <p>Use <code>NA</code> or <code>Inf</code> for impossible
 assignments:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost_forbidden</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">4</span>, <span class="fl">2</span>, <span class="cn">NA</span>,   <span class="co"># Row 1 cannot go to column 3</span></span>
 <span>  <span class="cn">Inf</span>, <span class="fl">3</span>, <span class="fl">6</span>,  <span class="co"># Row 2 cannot go to column 1</span></span>
@@ -805,7 +732,7 @@ assignments:</p>
 <h3 id="maximization">Maximization<a class="anchor" aria-label="anchor" href="#maximization"></a>
 </h3>
 <p>For preference or profit maximization:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">preferences</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">8</span>, <span class="fl">5</span>, <span class="fl">3</span>,</span>
 <span>  <span class="fl">4</span>, <span class="fl">7</span>, <span class="fl">6</span>,</span>
@@ -831,7 +758,7 @@ assignments:</p>
 </h3>
 <p>Solve multiple assignment problems at once using grouped data
 frames:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Weekly nurse-shift scheduling: solve each day separately</span></span>
 <span><span class="va">schedule</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mon"</span>, <span class="st">"Tue"</span>, <span class="st">"Wed"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
@@ -865,7 +792,7 @@ all results in one tidy table.</p>
 <h3 id="k-best-solutions">K-Best Solutions<a class="anchor" aria-label="anchor" href="#k-best-solutions"></a>
 </h3>
 <p>Find multiple near-optimal solutions:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">3</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">kbest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lap_solve_kbest.html">lap_solve_kbest</a></span><span class="op">(</span><span class="va">cost</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
@@ -933,83 +860,5 @@ solving</p></li>
 
 
 
-  <script>
-/* SVG Copy Button Functionality */
-(function() {
-  "use strict";
-
-  // Initialize SVG copy buttons after DOM is ready
-  document.addEventListener("DOMContentLoaded", function() {
-    if (typeof ClipboardJS === "undefined") {
-      console.warn("ClipboardJS not loaded - SVG copy buttons disabled");
-      return;
-    }
-
-    // Initialize clipboard for SVG copy buttons
-    var svgClipboard = new ClipboardJS(".btn-copy-svg", {
-      text: function(trigger) {
-        var container = trigger.closest(".svg-container");
-        if (!container) return "";
-
-        var svg = container.querySelector("svg");
-        if (!svg) return "";
-
-        // Clone SVG to avoid modifying the original
-        var clone = svg.cloneNode(true);
-
-        // Remove inline-svg class (not needed in copied version)
-        clone.classList.remove("inline-svg");
-
-        // Add XML declaration and serialize
-        var serializer = new XMLSerializer();
-        var svgString = serializer.serializeToString(clone);
-
-        // Add XML declaration if not present
-        if (!svgString.startsWith("<?xml")) {
-          svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
-        }
-
-        return svgString;
-      }
-    });
-
-    // Handle success
-    svgClipboard.on("success", function(e) {
-      var btn = e.trigger;
-      var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
-
-      // Update tooltip to show "Copied!"
-      btn.setAttribute("data-bs-original-title", "Copied!");
-      var tooltip = bootstrap.Tooltip.getInstance(btn);
-      if (tooltip) {
-        tooltip.show();
-      }
-
-      // Reset after delay
-      setTimeout(function() {
-        btn.setAttribute("data-bs-original-title", originalTitle);
-      }, 1500);
-
-      e.clearSelection();
-    });
-
-    // Handle error
-    svgClipboard.on("error", function(e) {
-      var btn = e.trigger;
-      btn.setAttribute("data-bs-original-title", "Press Ctrl+C to copy");
-      var tooltip = bootstrap.Tooltip.getInstance(btn);
-      if (tooltip) {
-        tooltip.show();
-      }
-    });
-
-    // Initialize tooltips for SVG copy buttons
-    var svgCopyButtons = document.querySelectorAll(".btn-copy-svg");
-    svgCopyButtons.forEach(function(btn) {
-      new bootstrap.Tooltip(btn, { container: "body" });
-    });
-  });
-})();
-</script>
-</body>
+  </body>
 </html>

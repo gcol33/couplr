@@ -14,18 +14,15 @@
 ##
 ## Reproducible via:  Rscript paper/bench/bench_certificate.R
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
-options(pkg.build_extra_flags = FALSE)
-suppressPackageStartupMessages(pkgload::load_all(repo_root, quiet = TRUE))
+load_couplr()
 
-results_dir  <- file.path(repo_root, "paper", "bench", "results")
 runs_path    <- file.path(results_dir, "certificate-runs.csv")
 results_path <- file.path(results_dir, "certificate-results.csv")
 

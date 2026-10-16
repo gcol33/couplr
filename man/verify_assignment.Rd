@@ -3,7 +3,8 @@
 \name{verify_assignment}
 \alias{verify_assignment}
 \alias{print.assignment_certificate}
-\title{Verify that an assignment is optimal}
+\alias{summary.assignment_certificate}
+\title{Verify That an Assignment Is Optimal}
 \usage{
 verify_assignment(
   x,
@@ -15,6 +16,8 @@ verify_assignment(
 )
 
 \method{print}{assignment_certificate}(x, ...)
+
+\method{summary}{assignment_certificate}(object, ...)
 }
 \arguments{
 \item{x}{An \code{assignment_certificate} object.}
@@ -45,6 +48,8 @@ non-negative \code{tol}, so \code{"auto"} certifies nothing \code{"double"} woul
 on an exact certificate. \code{"double"} decides everything within \code{tol}.}
 
 \item{...}{Ignored.}
+
+\item{object}{A certificate.}
 }
 \value{
 An object of class \code{assignment_certificate}, a list with elements:

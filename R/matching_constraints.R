@@ -55,11 +55,12 @@ apply_max_distance <- function(cost_matrix, max_distance = Inf) {
 
 #' Apply caliper constraints
 #'
-#' Calipers impose per-variable maximum absolute differences.
+#' A caliper is a maximum absolute difference on one column of both data
+#' frames: a matching variable, or another one such as a propensity score.
 #'
 #' @return Modified cost matrix with forbidden pairs marked.
 #' @keywords internal
-apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
+apply_calipers <- function(cost_matrix, left, right, calipers) {
   if (is.null(calipers)) {
     return(cost_matrix)
   }
@@ -71,7 +72,6 @@ apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
     # scaled and weighted, and a caliper is stated on the variable as supplied.
     new_calipers <- cost_matrix$calipers
     for (var_name in names(calipers)) {
-      if (!var_name %in% vars) next  # not a matching variable, same as dense path
       new_calipers[[length(new_calipers) + 1]] <- list(
         var = var_name, threshold = calipers[[var_name]],
         left = as.numeric(left[[var_name]]),
@@ -84,10 +84,6 @@ apply_calipers <- function(cost_matrix, left, right, calipers, vars) {
 
   # For each variable with a caliper
   for (var_name in names(calipers)) {
-    if (!(var_name %in% vars)) {
-      next  # Skip if not in matching variables
-    }
-
     caliper_value <- calipers[[var_name]]
 
     # The whole n_left x n_right table of absolute differences on this
@@ -131,14 +127,14 @@ mark_forbidden_pairs <- function(cost_matrix, forbidden_indices) {
 #'
 #' @return Modified cost matrix with all constraints applied.
 #' @keywords internal
-apply_all_constraints <- function(cost_matrix, left, right, vars,
+apply_all_constraints <- function(cost_matrix, left, right,
                                   max_distance = Inf, calipers = NULL,
                                   forbidden = NULL) {
   # Apply max_distance
   cost_matrix <- apply_max_distance(cost_matrix, max_distance)
 
   # Apply calipers
-  cost_matrix <- apply_calipers(cost_matrix, left, right, calipers, vars)
+  cost_matrix <- apply_calipers(cost_matrix, left, right, calipers)
 
   # Apply custom forbidden pairs if provided
   cost_matrix <- mark_forbidden_pairs(cost_matrix, forbidden)
@@ -159,7 +155,7 @@ has_valid_pairs <- function(cost_matrix) {
     # already catch and translate into the same "no valid pairs" outcome.
     return(TRUE)
   }
-  any(.is_valid_cost(cost_matrix))
+  lap_cost_any_admissible(cost_matrix, BIG_COST)
 }
 
 #' Count valid pairs in cost matrix
@@ -167,5 +163,5 @@ has_valid_pairs <- function(cost_matrix) {
 #' @return Integer count of valid (non-forbidden) pairs.
 #' @keywords internal
 count_valid_pairs <- function(cost_matrix) {
-  sum(.is_valid_cost(cost_matrix))
+  lap_cost_summary(cost_matrix, BIG_COST, 0, numeric(0))$n_admissible
 }

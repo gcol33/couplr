@@ -71,7 +71,7 @@ inline int64_t flat_index(int64_t i, int64_t j, int64_t ncol) {
 // Cost matrix: row-major flat vector + dimensions
 struct CostMatrix {
     std::vector<double> data;   // row-major, size = nrow * ncol
-    std::vector<int> mask;      // 1=allowed, 0=forbidden, size = nrow * ncol
+    std::vector<uint8_t> mask;  // 1=allowed, 0=forbidden, size = nrow * ncol
     int64_t nrow = 0;
     int64_t ncol = 0;
 

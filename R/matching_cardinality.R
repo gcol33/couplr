@@ -53,10 +53,11 @@
 #' @param max_std_diff Maximum absolute standardized difference on every
 #'   variable in `vars` (default: `Inf`, stating no such constraint). A finite
 #'   value states one moment row per variable and per direction, which is what
-#'   sends a call to the Lagrangian search; see Details.
+#'   sends a call to the search over unit selections; see Details.
 #' @param engine Which solver answers the problem: `"flow"` for a single
 #'   min-cost flow solve, available when no moment row is stated;
-#'   `"branch_bound"` for the Lagrangian search moment rows need; `"auto"`
+#'   `"branch_bound"` for the search over unit selections that moment rows
+#'   need; `"auto"`
 #'   (default) for whichever of the two the stated constraints call for; and
 #'   `"heuristic"` for the pruning loop.
 #' @param distance Distance metric (default: "euclidean").
@@ -66,14 +67,18 @@
 #'   automatically (default: FALSE).
 #' @param sigma Bandwidth for the distance metrics that take one.
 #' @param max_distance Pairs farther apart than this are not available.
-#' @param calipers Named vector of per-variable caliper widths.
+#' @param calipers Named vector of caliper widths, each on a column of both
+#'   data frames: a matching variable or another one, such as a propensity
+#'   score.
 #' @param left_id,right_id Name of the id column on each side. When absent, ids
 #'   come from an `id` column, from row names, or are synthesized.
-#' @param time_limit Seconds the search may run (default: 30). The budget
-#'   reaches the flow solver, so a solve in flight stops between augmentations
-#'   rather than running to completion, and the node it belonged to is left
-#'   unopened so the reported bound still covers the whole tree.
-#' @param node_limit Nodes the search may open (default: 500).
+#' @param time_limit Seconds the search may run (default: 30). A search that
+#'   stops on the clock returns a result that depends on the speed of the
+#'   machine. Set `time_limit = Inf` and bound the search with `node_limit`
+#'   to control the amount of search independently of machine speed.
+#'   Floating-point ties can change the search order across platforms.
+#' @param node_limit Branch-and-bound nodes the search may open, counted over
+#'   all of its stages (default: 500).
 #' @param method LAP solver method for the heuristic's initial match
 #'   (default: "auto"). Reaches `engine = "heuristic"` only.
 #' @param max_iter Maximum pruning iterations (default: 100). Reaches
@@ -84,8 +89,8 @@
 #'   solves the flow and branch and bound engines without building the pair
 #'   set: every network solve is taken over
 #'   the pairs generated so far, the pairs it omits are priced against its
-#'   potentials with the multipliers folded in, and the ones pricing below zero
-#'   are added and the solve repeated, so each solve is optimal over every pair.
+#'   potentials, and the ones pricing below zero are added and the solve
+#'   repeated, so each solve is optimal over every pair.
 #'   The distance range the tier weights are built on is read in one pass over
 #'   the pairs. The result carries a `search` record. "auto" never selects it,
 #'   and the heuristic engine does not take it.
@@ -104,12 +109,11 @@
 #'       matched sample came from, a list with elements `left` and `right`
 #'       holding one value per unit, named by id, in distance terms: the
 #'       reduced cost of a pair is its distance less the two, with the tier
-#'       weights and any moment multipliers already folded in. Under
-#'       `engine = "flow"` that solve is the whole problem, and the potentials
-#'       certify the matched sample as its optimum. Under branch and bound it
-#'       is the node the incumbent was read from, with the arcs that node fixed
-#'       and the moment rows priced at its multipliers, and they certify the
-#'       incumbent as that node's optimum; the bound on the whole problem is
+#'       weights already folded in. Under `engine = "flow"` that solve is the
+#'       whole problem, and the potentials certify the matched sample as its
+#'       optimum. Under branch and bound it is the solve that pairs the
+#'       selected units, and the potentials certify that pairing as the
+#'       cheapest one for those units; the bound on the whole problem is
 #'       `cardinality$best_possible`. Present when that solve was certified.
 #'     \item `status` - `"optimal"`, `"iteration_limit"`, or `"heuristic"`.
 #'     \item `info$engine` - the engine that answered.
@@ -135,40 +139,45 @@
 #' cardinality_match(left, right, vars, fine = "region")
 #' ```
 #'
-#' Linear moment constraints -- a bound on a standardized or mean difference --
-#' cut across the network and are dualized instead. Their multipliers are
-#' updated per node, the Lagrangian value bounds the subtree, and the search
-#' branches on unit inclusion until the bound meets the incumbent or a budget
-#' runs out. A finite `max_std_diff` states one such constraint per variable
-#' and per direction, so it is what moves a call onto this path, and
-#' `node_limit` and `time_limit` are what end it when the bound does not close.
-#' The report says which happened: `certified` is `TRUE` only when the search
-#' settled and the gap is zero, and `gap` says how many matched units separate
-#' the answer from the bound when it is not. Every stopping path returns a
-#' matched set that satisfies every stated constraint, together with a bound
-#' valid for the whole problem.
+#' Linear moment constraints, bounds on a standardized or mean difference, do
+#' not fit in the network. Summed over the matched pairs, such a bound is a
+#' linear constraint on which units are matched, never on how they are paired,
+#' so `engine = "branch_bound"` searches over unit selections: an integer
+#' programme with one 0/1 variable per unit and a few rows, solved by branch and
+#' bound on its linear relaxation. A finite `max_std_diff` states one such row
+#' per variable and per direction, so it is what moves a call onto this path.
 #'
-#' The certificate carries no tolerance. Each node's bound is the dual
-#' objective of its Lagrangian relaxation evaluated in exact arithmetic, which
-#' weak duality makes a lower bound whatever the solver returned, and the
-#' pruning tests, the constraint values of a matched set and the cardinality
-#' read off the bound are decided exactly, over the distances and constraint
-#' coefficients as stored.
+#' The objective is lexicographic, and the search settles it one stage at a
+#' time. It first finds the most matched units the constraints admit, then the
+#' least imbalance at each refined level, coarsest first, and last the least
+#' total distance. A pair is never added at the cost of a match and never
+#' dropped to shorten one. The distance stage reads the cheapest pairing of a
+#' selection off the balance network and adds a cut from the potentials of that
+#' solve (Benders decomposition), and when calipers or `max_distance` forbid
+#' pairs, a selection whose units cannot all be paired adds a Hall-condition
+#' row instead.
 #'
-#' How long the search runs depends on whether the moment bounds bind. When the
-#' distance-minimizing match already satisfies them, which happens with a loose
-#' bound or with a `right` pool large enough that the closest partners are
-#' already balanced, the root node certifies and the call returns in
-#' milliseconds. When they bind, every node costs a flow solve, and although
-#' the root enters a feasible incumbent before the first node is opened, the
-#' bound above it closes slowly, so a call can spend its whole budget and still
-#' report a gap. Set `node_limit` and
-#' `time_limit` to a budget you are willing to spend, and read `stopped_on` and
-#' `gap` to see what the budget bought.
+#' The report says how the search ended. `certified` is `TRUE` only when every
+#' stage closed, and `gap` says how many matched units separate the answer from
+#' the bound when the first stage did not. Every stopping path returns a matched
+#' set that satisfies every stated constraint, together with a bound valid for
+#' the whole problem. When the distance stage stops on the budget, the matched
+#' sample is a largest balanced one, with `gap` zero, whose total distance is
+#' the smallest the search reached.
 #'
-#' The objective is lexicographic. Matched cardinality comes first, total
-#' distance second, so a pair is never added at the cost of a match and never
-#' dropped to shorten one.
+#' The certificate carries no tolerance. Each bound is a weak-duality bound read
+#' from the relaxation's duals in exact arithmetic or with a rigorous rounding
+#' margin, so it holds whatever the simplex returned, and every selection is
+#' checked against the constraints exactly before it is accepted.
+#'
+#' How long the search runs depends on how far the relaxation sits from the
+#' best integer selection. With continuous covariates the relaxation's bound on
+#' the number of matched units is usually within one unit of the optimum, and
+#' the search closes at its first node when it finds a selection that reaches
+#' it. When the optimum lies one unit below that bound, proving it takes many
+#' more nodes, and the report shows the incumbent beside a bound one unit
+#' above it. Set `node_limit` and `time_limit` to a budget you are willing to
+#' spend, and read `stopped_on` and `gap` to see what the budget bought.
 #'
 #' `engine = "heuristic"` runs a pruning loop instead: a full match, then
 #' repeated deletion of the pairs carrying the worst variable's imbalance. Its
@@ -208,8 +217,8 @@
 #'                          fine = "region")
 #' fit$cardinality
 #'
-#' # A standardized-difference bound as well: the same match, searched by
-#' # branch and bound under a small node budget.
+#' # A standardized-difference bound as well: the same match, searched over
+#' # unit selections under a small node budget.
 #' bb <- cardinality_match(left, right, vars = c("x", "y"),
 #'                         fine = "region", max_std_diff = 0.1,
 #'                         node_limit = 25L)
@@ -299,7 +308,7 @@ cardinality_match <- function(left, right, vars,
 
   validate_matching_inputs(left, right, vars)
   weights <- validate_weights(weights, vars)
-  calipers <- validate_calipers(calipers, vars)
+  calipers <- validate_calipers(calipers, intersect(names(left), names(right)))
 
   if (auto_scale) {
     preproc <- preprocess_matching_vars(
@@ -341,8 +350,7 @@ cardinality_match <- function(left, right, vars,
                             sigma = sigma, memory_mode = memory_mode,
                             caller_supports_lazy = FALSE,
                             caller_supports_implicit = TRUE)
-  cost <- apply_all_constraints(cost, left, right, vars,
-                                max_distance, calipers)
+  cost <- apply_all_constraints(cost, left, right, max_distance, calipers)
 
   report <- .cardinality_solve(
     left, right, cost,
@@ -404,13 +412,14 @@ cardinality_match <- function(left, right, vars,
     result$search <- report$search
   }
   if (isTRUE(report$certified)) {
-    result$certificate <- list(
+    result$certificate <- structure(list(
       certified_optimal = TRUE,
       n_matched = report$n_matched,
       best_possible = report$best_possible,
       gap = report$gap,
-      arithmetic = "exact"
-    )
+      arithmetic = "exact",
+      report = report
+    ), class = "cardinality_certificate")
   }
   if (!is.null(report$potentials)) {
     result$potentials <- list(

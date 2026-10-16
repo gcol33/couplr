@@ -2,7 +2,11 @@
 % Please edit documentation in R/matching_preprocessing.R
 \name{preprocess_matching_vars}
 \alias{preprocess_matching_vars}
-\title{Preprocess matching variables with automatic checks and scaling}
+\alias{print.variable_health}
+\alias{summary.variable_health}
+\alias{print.preprocessing_result}
+\alias{summary.preprocessing_result}
+\title{Check Matching Variables and Choose Scaling}
 \usage{
 preprocess_matching_vars(
   left,
@@ -14,6 +18,14 @@ preprocess_matching_vars(
   remove_problematic = TRUE,
   verbose = TRUE
 )
+
+\method{print}{variable_health}(x, ...)
+
+\method{summary}{variable_health}(object, ...)
+
+\method{print}{preprocessing_result}(x, ...)
+
+\method{summary}{preprocessing_result}(object, ...)
 }
 \arguments{
 \item{left}{Data frame of left units}
@@ -31,20 +43,32 @@ preprocess_matching_vars(
 \item{remove_problematic}{Logical, automatically exclude constant/all-NA variables (default: TRUE)}
 
 \item{verbose}{Logical, whether to print warnings (default: TRUE)}
+
+\item{x}{A preprocessing_result object}
+
+\item{...}{Additional arguments (ignored)}
+
+\item{object}{A preprocessing result or its nested variable-health report.}
 }
 \value{
 A list with class "preprocessing_result" containing:
 \itemize{
-\item \code{left}: Preprocessed left data frame
-\item \code{right}: Preprocessed right data frame
+\item \code{left}: Input left data frame
+\item \code{right}: Input right data frame
 \item \code{vars}: Final variable names (after exclusions)
 \item \code{health}: Variable health diagnostics
 \item \code{scaling_method}: Selected scaling method
 \item \code{excluded_vars}: Variables that were excluded
 \item \code{warnings}: List of warnings issued
 }
+
+\code{summary()} returns a \code{summary.preprocessing_result} with the retained
+variables, group sizes, scaling choice, exclusions, warnings, and the
+detailed variable-health report.
 }
 \description{
 Main preprocessing function that orchestrates variable health checks,
-categorical encoding, and automatic scaling selection.
+and automatic scaling selection. The returned data frames retain their
+input values; \code{\link[=match_couples]{match_couples()}} applies the selected scaling when building
+distances.
 }

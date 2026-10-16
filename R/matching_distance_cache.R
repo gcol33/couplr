@@ -1,4 +1,4 @@
-#' Compute and Cache Distance Matrix for Reuse
+#' Compute and Cache a Distance Matrix
 #'
 #' Precomputes a distance matrix between left and right datasets, allowing
 #' it to be reused across multiple matching operations with different
@@ -175,25 +175,15 @@ compute_distances <- function(left, right,
 }
 
 
-#' Check if Object is a Distance Object
-#'
-#' @param x Object to check
-#' @return Logical: TRUE if x is a distance_object
-#'
-#' @examples
-#' left <- data.frame(id = 1:3, x = c(1, 2, 3))
-#' right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
-#' dist_obj <- compute_distances(left, right, vars = "x")
-#' is_distance_object(dist_obj)  # TRUE
-#' is_distance_object(list())    # FALSE
-#'
+#' @rdname compute_distances
+#' @param x A `distance_object`; any object for `is_distance_object()`.
 #' @export
 is_distance_object <- function(x) {
   inherits(x, "distance_object")
 }
 
 
-#' Update Constraints on Distance Object
+#' Update the Constraints of a Distance Object
 #'
 #' Apply new constraints to a precomputed distance object without
 #' recomputing the underlying distances. This is useful for exploring
@@ -201,7 +191,8 @@ is_distance_object <- function(x) {
 #'
 #' @param dist_obj A distance_object from \code{compute_distances()}
 #' @param max_distance Maximum allowed distance (pairs with distance > max_distance become Inf)
-#' @param calipers Named list of per-variable calipers
+#' @param calipers Named list of calipers, each on a column of both data
+#'   frames the distance object was built from.
 #'
 #' @return A new distance_object with updated cost_matrix
 #'
@@ -240,12 +231,15 @@ update_constraints <- function(dist_obj, max_distance = Inf, calipers = NULL) {
   new_cost <- apply_max_distance(dist_obj$cost_matrix, max_distance)
 
   if (!is.null(calipers)) {
+    calipers <- validate_calipers(
+      calipers,
+      intersect(names(dist_obj$original_left), names(dist_obj$original_right))
+    )
     new_cost <- apply_calipers(
       new_cost,
       dist_obj$original_left,
       dist_obj$original_right,
-      calipers,
-      dist_obj$metadata$vars
+      calipers
     )
   }
 
@@ -262,12 +256,13 @@ update_constraints <- function(dist_obj, max_distance = Inf, calipers = NULL) {
 }
 
 
-#' Print Method for Distance Objects
-#'
-#' @param x A distance_object
+.distance_description <- function(distance) {
+  if (is.function(distance)) "custom function" else paste(distance, collapse = ", ")
+}
+
+#' @rdname compute_distances
 #' @param ... Additional arguments (ignored)
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 print.distance_object <- function(x, ...) {
   cat("Distance Object\n")
@@ -280,7 +275,7 @@ print.distance_object <- function(x, ...) {
 
   cat("Computation:\n")
   cat("  Variables:   ", paste(x$metadata$vars, collapse = ", "), "\n")
-  cat("  Distance:    ", x$metadata$distance, "\n")
+  cat("  Distance:    ", .distance_description(x$metadata$distance), "\n")
   cat("  Scaling:     ", if (identical(x$metadata$scale, FALSE)) "none" else x$metadata$scale, "\n")
   if (!is.null(x$metadata$weights)) {
     cat("  Weights:     ", paste(round(x$metadata$weights, 3), collapse = ", "), "\n")
@@ -334,12 +329,9 @@ print.distance_object <- function(x, ...) {
 }
 
 
-#' Summary Method for Distance Objects
-#'
+#' @rdname compute_distances
 #' @param object A distance_object
-#' @param ... Additional arguments (ignored)
 #'
-#' @return Invisibly returns the input object.
 #' @export
 summary.distance_object <- function(object, ...) {
   cat("Distance Object Summary\n")

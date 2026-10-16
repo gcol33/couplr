@@ -247,7 +247,7 @@ print.couplr_flow_problem <- function(x, ...) {
   report
 }
 
-#' Verify that a flow is optimal
+#' Verify That a Flow Is Optimal
 #'
 #' Checks a flow and a set of node potentials against the linear-programming
 #' optimality conditions for the minimum-cost flow problem, and returns the
@@ -444,6 +444,31 @@ verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9,
 #' @method print flow_certificate
 #' @rdname verify_flow
 print.flow_certificate <- function(x, ...) {
+  verdict <- if (isTRUE(x$certified_optimal)) "optimal" else "not certified"
+  arith <- if (identical(x$arithmetic, "exact")) "exact arithmetic" else
+    sprintf("tolerance %.0e", x$tolerance)
+  cat(sprintf("Flow certificate: %s (%s)\n", verdict, arith))
+  cat(sprintf("  cost %.10g, lower bound %.10g, duality gap %s\n",
+              x$primal_objective, x$dual_objective,
+              format(x$duality_gap, digits = 4)))
+  failed <- c("primal feasibility", "dual feasibility",
+              "complementary slackness")[!c(isTRUE(x$primal_feasible),
+                                           isTRUE(x$dual_feasible),
+                                           isTRUE(x$complementary_slackness))]
+  if (length(failed)) cat("  failed:", paste(failed, collapse = ", "), "\n")
+  invisible(x)
+}
+
+#' @rdname verify_flow
+#' @param object A certificate.
+#' @export
+summary.flow_certificate <- function(object, ...) {
+  class(object) <- c("summary.flow_certificate", class(object))
+  object
+}
+
+#' @export
+print.summary.flow_certificate <- function(x, ...) {
   flag <- function(ok) if (isTRUE(ok)) "TRUE " else "FALSE"
 
   cat("Flow certificate\n")

@@ -13,8 +13,6 @@
   moments = NULL,
   max_std_diff = NULL,
   vars = NULL,
-  dual_steps = 20L,
-  branch = c("unit", "pair"),
   node_limit = 500L,
   time_limit = Inf,
   should_stop = NULL
@@ -32,10 +30,6 @@ that is \code{Inf} or \code{NA} is a pair the match may not use.}
 
 \item{moments, max_std_diff, vars}{Moment constraints, as \code{.moment_specs()}
 takes them.}
-
-\item{dual_steps}{Multiplier updates per node.}
-
-\item{branch}{Whether to branch on left-unit inclusion or on pairs.}
 
 \item{node_limit, time_limit}{Search budget.}
 

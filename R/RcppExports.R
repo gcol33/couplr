@@ -9,6 +9,18 @@ lap_probe_cost_matrix <- function(cost) {
     .Call(`_couplr_lap_probe_cost_matrix`, cost)
 }
 
+lap_cost_any_admissible <- function(cost, big) {
+    .Call(`_couplr_lap_cost_any_admissible`, cost, big)
+}
+
+lap_cost_margins <- function(cost, big) {
+    .Call(`_couplr_lap_cost_margins`, cost, big)
+}
+
+lap_cost_summary <- function(cost, big, zero_tol, probs) {
+    .Call(`_couplr_lap_cost_summary`, cost, big, zero_tol, probs)
+}
+
 lap_solve_bruteforce <- function(cost, maximize) {
     .Call(`_couplr_lap_solve_bruteforce`, cost, maximize)
 }
@@ -23,6 +35,10 @@ cpp_lap_solve_jv_lazy <- function(left_mat, right_mat, metric, inv_cov, max_dist
 
 cpp_lazy_pair_distances <- function(left_mat, right_mat, metric, inv_cov, rows, cols) {
     .Call(`_couplr_cpp_lazy_pair_distances`, left_mat, right_mat, metric, inv_cov, rows, cols)
+}
+
+cpp_lazy_dense_matrix <- function(left_mat, right_mat, metric, inv_cov) {
+    .Call(`_couplr_cpp_lazy_dense_matrix`, left_mat, right_mat, metric, inv_cov)
 }
 
 cpp_lazy_distance_sd <- function(left_mat, right_mat, metric, inv_cov) {
@@ -165,8 +181,8 @@ lap_pricing_price_exact <- function(session, u, v, offset, keep_per_row) {
     .Call(`_couplr_lap_pricing_price_exact`, session, u, v, offset, keep_per_row)
 }
 
-lap_flow_lagrangian_step <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node, u, w, b, lambda) {
-    .Call(`_couplr_lap_flow_lagrangian_step`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node, u, w, b, lambda)
+lap_flow_exact_read <- function(n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node) {
+    .Call(`_couplr_lap_flow_exact_read`, n_nodes, supply, tail, head, lower, upper, cost, flow, potential, pair_arc, pair_left, pair_right, left_node, right_node)
 }
 
 lap_exact_dot <- function(x, y) {
@@ -181,12 +197,20 @@ lap_exact_round <- function(e, direction) {
     .Call(`_couplr_lap_exact_round`, e, direction)
 }
 
-lap_exact_ceil_quotient <- function(e, add, divisor) {
-    .Call(`_couplr_lap_exact_ceil_quotient`, e, add, divisor)
+lap_exact_moment_rows <- function(u, w, b, left, right) {
+    .Call(`_couplr_lap_exact_moment_rows`, u, w, b, left, right)
 }
 
-lap_exact_moment_rows <- function(u, w, b, left, right, lambda) {
-    .Call(`_couplr_lap_exact_moment_rows`, u, w, b, left, right, lambda)
+lap_select_solve <- function(c, lower, upper, integer, rows, theta, integral_objective, perturb, incumbent, oracle, node_limit, time_limit, should_stop, separator) {
+    .Call(`_couplr_lap_select_solve`, c, lower, upper, integer, rows, theta, integral_objective, perturb, incumbent, oracle, node_limit, time_limit, should_stop, separator)
+}
+
+lap_select_lift_dense <- function(cost, shift, in_left, in_right, u, v) {
+    .Call(`_couplr_lap_select_lift_dense`, cost, shift, in_left, in_right, u, v)
+}
+
+lap_pricing_lift <- function(session, shift, in_left, in_right, u, v) {
+    .Call(`_couplr_lap_pricing_lift`, session, shift, in_left, in_right, u, v)
 }
 
 lap_pricing_cost <- function(session, i, j) {

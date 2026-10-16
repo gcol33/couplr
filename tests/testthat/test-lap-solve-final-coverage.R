@@ -200,8 +200,9 @@ test_that("sinkhorn result can be printed", {
   skip_on_cran()
   cost <- matrix(c(1, 2, 2, 1), 2, 2)
   result <- sinkhorn(cost, lambda = 10)
-  # sinkhorn returns a list, just check it prints without error
-  expect_output(print(result), "transport_plan")
+  expect_s3_class(result, "sinkhorn_result")
+  expect_output(print(result), "Sinkhorn Transport Result")
+  expect_output(print(result), "Converged:")
 })
 
 # ------------------------------------------------------------------------------

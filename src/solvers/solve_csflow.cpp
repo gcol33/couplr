@@ -16,7 +16,7 @@
 
 namespace lap {
 
-LapResult solve_csflow(const CostMatrix& cost, bool maximize) {
+LapResult solve_csflow(CostMatrix cost, bool maximize) {
     const int n = static_cast<int>(cost.nrow);
     const int m = static_cast<int>(cost.ncol);
 
@@ -28,7 +28,7 @@ LapResult solve_csflow(const CostMatrix& cost, bool maximize) {
     lap::require_rows_fit_cols(n, m);
 
     // Prepare working costs (negated if maximize, BIG for forbidden)
-    CostMatrix work = prepare_for_solve(cost, maximize);
+    CostMatrix work = prepare_for_solve(std::move(cost), maximize);
 
     // Check feasibility
     ensure_each_row_has_option(work.mask, n, m);
@@ -51,21 +51,7 @@ LapResult solve_csflow(const CostMatrix& cost, bool maximize) {
     std::vector<int> assignment = flow.match;
 
     // Verify matching and compute total cost using ORIGINAL costs
-    double total = 0.0;
-    for (int i = 0; i < n; ++i) {
-        int j = assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Could not find full matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
-    }
+    const double total = priced_total(work, maximize, assignment);
 
     return LapResult(std::move(assignment), total, "optimal");
 }

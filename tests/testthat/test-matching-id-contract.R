@@ -369,7 +369,7 @@ test_that("as_matchit gives one entry per unit for ratio and replacement designs
 test_that("augment is the generics generic, not a second one", {
   expect_identical(couplr::augment, generics::augment)
   expect_true(!is.null(
-    getS3method("augment", "matching_result", optional = TRUE,
+    getS3method("augment", "couplr_result", optional = TRUE,
                 envir = asNamespace("couplr"))
   ))
 })
@@ -392,8 +392,7 @@ test_that("bal.tab methods are registered on cobalt's generic", {
   # Delayed registration puts the methods in cobalt's own S3 table, which is
   # what lets a call made from inside another package dispatch to them.
   registered <- ls(get(".__S3MethodsTable__.", envir = asNamespace("cobalt")))
-  for (cls in c("matching_result", "full_matching_result",
-                "cem_result", "subclass_result")) {
+  for (cls in c("couplr_result", "subclass_result")) {
     expect_true(paste0("bal.tab.", cls) %in% registered, info = cls)
   }
 })

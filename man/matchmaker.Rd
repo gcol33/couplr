@@ -2,7 +2,9 @@
 % Please edit documentation in R/matching_blocks.R
 \name{matchmaker}
 \alias{matchmaker}
-\title{Create blocks for stratified matching}
+\alias{print.matchmaker_result}
+\alias{summary.matchmaker_result}
+\title{Create Blocks for Stratified Matching}
 \usage{
 matchmaker(
   left,
@@ -19,6 +21,10 @@ matchmaker(
   return_dropped = TRUE,
   ...
 )
+
+\method{print}{matchmaker_result}(x, ...)
+
+\method{summary}{matchmaker_result}(object, ...)
 }
 \arguments{
 \item{left}{Data frame of "left" units (e.g., treated, cases)}
@@ -54,7 +60,12 @@ matchmaker(
 
 \item{return_dropped}{Include dropped blocks in output}
 
-\item{...}{Additional arguments passed to clustering function}
+\item{...}{Additional arguments passed to the clustering function; ignored
+by the print and summary methods.}
+
+\item{x}{A matchmaker_result object}
+
+\item{object}{A \code{matchmaker_result} object.}
 }
 \value{
 A list with class "matchmaker_result" containing:
@@ -65,6 +76,10 @@ A list with class "matchmaker_result" containing:
 \item \code{dropped}: Information about dropped blocks (if any)
 \item \code{info}: Metadata about blocking process
 }
+
+\code{print()} shows retained unit and block counts. \code{summary()} returns a
+\code{summary.matchmaker_result} with \code{info}, \code{block_summary}, and \code{dropped};
+printing it also shows every block and the reasons for dropped blocks.
 }
 \description{
 Constructs blocks (strata) for matching, using either grouping variables

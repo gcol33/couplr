@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.R
 \name{example_costs}
 \alias{example_costs}
-\title{Example cost matrices for assignment problems}
+\title{Example Cost Matrices}
 \format{
 A list containing four example cost matrices:
 \describe{

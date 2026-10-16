@@ -1,4 +1,4 @@
-#' Join Matched Pairs with Original Data
+#' Join Matched Pairs with the Original Data
 #'
 #' Creates an analysis-ready dataset by joining matched pairs with variables
 #' from the original left and right datasets. This eliminates the need for
@@ -290,46 +290,15 @@ join_matched.subclass_result <- function(result, data = NULL, ...) {
 }
 
 
-#' Augment Matching Results with Original Data (broom-style)
-#'
-#' S3 method for augmenting matching results following the broom package
-#' conventions. This is a thin wrapper around \code{join_matched()} with
-#' sensible defaults for quick exploration.
-#'
+#' @rdname join_matched
 #' @param x A matching_result object
 #' @param left The original left dataset
 #' @param right The original right dataset
 #' @param ... Additional arguments passed to \code{join_matched()}
 #'
-#' @return A tibble with matched pairs and original data (see \code{join_matched()})
-#'
-#' @details
-#' This method follows the \code{augment()} convention from the broom package,
-#' making it easy to integrate couplr into tidymodels workflows. It's
-#' equivalent to calling \code{join_matched()} with default parameters.
-#'
-#' If the broom package is not loaded, you can use \code{couplr::augment()}
-#' to access this function.
-#'
-#' @examples
-#' left <- data.frame(
-#'   id = 1:5,
-#'   treatment = 1,
-#'   age = c(25, 30, 35, 40, 45)
-#' )
-#'
-#' right <- data.frame(
-#'   id = 6:10,
-#'   treatment = 0,
-#'   age = c(24, 29, 36, 41, 44)
-#' )
-#'
-#' result <- match_couples(left, right, vars = "age")
-#' augment(result, left, right)
-#'
 #' @importFrom generics augment
 #' @exportS3Method generics::augment
-augment.matching_result <- function(x, left, right, ...) {
+augment.couplr_result <- function(x, left, right, ...) {
   join_matched(x, left, right, ...)
 }
 

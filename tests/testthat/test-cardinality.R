@@ -204,12 +204,9 @@ test_that("refined states a nested hierarchy coarsest first", {
 # --- the branch and bound engine ---------------------------------------------
 
 test_that("branch and bound reports a gap it has not closed", {
-  set.seed(12)
-  left <- data.frame(id = 1:24, x = rnorm(24), y = rnorm(24))
-  right <- data.frame(id = 25:60, x = rnorm(36, 0.6), y = rnorm(36, 0.4))
-
-  fit <- cardinality_match(left, right, vars = c("x", "y"),
-                           max_std_diff = 0.3, node_limit = 5L)
+  inst <- card_gap_instance()
+  fit <- cardinality_match(inst$left, inst$right, vars = inst$vars,
+                           max_std_diff = inst$max_std_diff, node_limit = 1L)
 
   expect_identical(fit$info$engine, "branch_bound")
   expect_identical(fit$status, "iteration_limit")
@@ -358,7 +355,7 @@ test_that("the default call returns a matching_result the package can read", {
   expect_identical(nrow(joined), nrow(fit$pairs))
 
   s <- summary(fit)
-  expect_s3_class(s, "summary.matching_result")
+  expect_s3_class(s, "summary.couplr_result")
 })
 
 # --- print -------------------------------------------------------------------
@@ -375,14 +372,9 @@ test_that("the certified block prints", {
 })
 
 test_that("the uncertified block prints", {
-  set.seed(12)
-  left <- data.frame(id = 1:24, x = rnorm(24), y = rnorm(24))
-  right <- data.frame(id = 25:60, x = rnorm(36, 0.6), y = rnorm(36, 0.4))
-  # The budget sits on the plateau the search reaches by ten nodes and holds
-  # through eighty, so the block prints a settled incumbent beside an open
-  # bound rather than a figure the next node would move.
-  fit <- cardinality_match(left, right, vars = c("x", "y"),
-                           max_std_diff = 0.3, node_limit = 20L)
+  inst <- card_gap_instance()
+  fit <- cardinality_match(inst$left, inst$right, vars = inst$vars,
+                           max_std_diff = inst$max_std_diff, node_limit = 1L)
   expect_false(fit$cardinality$certified)
   expect_gt(fit$cardinality$gap, 0)
   expect_gte(fit$cardinality$best_possible, fit$cardinality$n_matched)

@@ -166,7 +166,7 @@ struct HK {
 // Forward declaration of csflow solver (fallback for binary {0,1} without perfect zero matching)
 // This will be linked from solve_csflow.cpp when available
 // For now, we'll throw an error if we need it
-LapResult solve_csflow(const CostMatrix& cost, bool maximize);
+LapResult solve_csflow(CostMatrix cost, bool maximize);
 
 LapResult solve_hk01(const CostMatrix& cost, bool maximize) {
     const int n = static_cast<int>(cost.nrow);

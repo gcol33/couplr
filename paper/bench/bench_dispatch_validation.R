@@ -64,13 +64,12 @@
 ##                    Rscript paper/bench/bench_dispatch_validation.R --grid=2
 ##                    --quick
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 options(pkg.build_extra_flags = FALSE)
 
@@ -80,13 +79,13 @@ if (!requireNamespace("RhpcBLASctl", quietly = TRUE)) {
 }
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
 argv  <- commandArgs(TRUE)
 QUICK <- any(argv == "--quick")
@@ -134,7 +133,6 @@ if (!length(GRID)) GRID <- names(grids)[length(grids)]
 grid <- grids[[GRID]]
 if (is.null(grid)) stop("No validation grid version '", GRID, "'.", call. = FALSE)
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 runs_csv    <- file.path(results_dir, paste0(grid$files, "-runs.csv"))
 results_csv <- file.path(results_dir, paste0(grid$files, "-results.csv"))
 verdict_csv <- file.path(results_dir, paste0(grid$files, "-verdict.csv"))

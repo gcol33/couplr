@@ -236,9 +236,10 @@ validate_weights <- function(weights, vars) {
 
 #' Validate calipers parameter
 #'
+#' @param columns The columns a caliper may name: those of both data frames.
 #' @return Validated calipers (list or named numeric), or NULL if none.
 #' @keywords internal
-validate_calipers <- function(calipers, vars) {
+validate_calipers <- function(calipers, columns) {
   if (is.null(calipers)) {
     return(NULL)
   }
@@ -251,10 +252,9 @@ validate_calipers <- function(calipers, vars) {
     stop("calipers must be named (variable names)", call. = FALSE)
   }
 
-  # Check that all caliper variables exist in vars
-  unknown <- setdiff(names(calipers), vars)
+  unknown <- setdiff(names(calipers), columns)
   if (length(unknown) > 0) {
-    stop(sprintf("calipers contains unknown variables: %s",
+    stop(sprintf("calipers contains unknown variables (not columns of both data frames): %s",
                  paste(unknown, collapse = ", ")), call. = FALSE)
   }
 

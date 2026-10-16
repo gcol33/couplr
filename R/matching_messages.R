@@ -201,32 +201,16 @@ warn_extreme_costs <- function(p95, p99, ratio, problem_vars = NULL) {
 }
 
 #' Many forbidden pairs warning
+#'
+#' Raised when the restrictions exclude more than 90% of the candidate pairs,
+#' the range in which a complete matching may no longer exist.
 #' @return No return value, called for side effects (issues a warning).
 #' @keywords internal
 warn_many_forbidden <- function(pct_forbidden, n_valid, n_left) {
-  severity <- if (pct_forbidden > 90) {
-    "critical"
-  } else if (pct_forbidden > 75) {
-    "concerning"
-  } else {
-    "moderate"
-  }
-
-  emoji_choice <- if (severity == "critical") "stop" else "warning_sign"
-
-  couplr_warn(
-    sprintf("%.1f%% of pairs are forbidden!", pct_forbidden), "\n",
-    "  ", couplr_emoji(emoji_choice), sprintf(
-      "Only %d valid pairs for %d left units - the matching pool is shallow!",
-      n_valid, n_left
-    ), "\n",
-    "  ", couplr_emoji("info"), "Your constraints might be ", severity, "ly strict.\n",
-    "  ", couplr_emoji("sparkles"), "Consider:\n",
-    "    - Relaxing max_distance threshold\n",
-    "    - Widening calipers\n",
-    "    - Using fewer/broader blocks\n",
-    "    - Checking if your data actually overlaps"
-  )
+  couplr_warn(sprintf(paste0(
+    "%.1f%% of candidate pairs are excluded by the matching restrictions;\n",
+    "%d admissible pairs remain for %d left units."),
+    pct_forbidden, n_valid, n_left))
 }
 
 #' All distances identical warning
@@ -321,36 +305,41 @@ success_good_balance <- function(mean_std_diff) {
 #' @keywords internal
 check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = TRUE) {
   if (is_lazy_cost_spec(cost_matrix)) {
-    # Every check below is an O(n*m) full-matrix scan (zero-rate, constant
-    # check, extreme-cost-ratio quantiles, forbidden-rate) -- exactly what
-    # lazy mode exists to avoid. A streaming (single-pass, O(1)-memory)
-    # equivalent is a documented future addition, not implemented yet; skip
-    # rather than silently materializing the matrix these diagnostics exist
-    # to avoid materializing in the first place.
+    # The checks below read a stored matrix. A lazy specification stores
+    # none, and evaluating every pair here would cost the n*m distance
+    # evaluations lazy mode exists to avoid.
     return(list(valid = TRUE, n_finite = NA_integer_, n_total = NA_integer_))
   }
 
-  # Get finite distances only
-  finite_costs <- cost_matrix[is.finite(cost_matrix)]
+  # One pass over the matrix in place: the admissible costs are never copied,
+  # and the quantiles are those quantile() would give on them.
+  s <- lap_cost_summary(cost_matrix, BIG_COST, threshold_zero,
+                        c(0.5, 0.95, 0.99))
+  n_finite <- s$n_admissible
+  n_total <- s$n_total
 
-  if (length(finite_costs) == 0) {
+  if (n_finite == 0) {
     if (warn) {
       err_no_valid_pairs("All distances are Inf (likely no valid pairs exist)")
     }
     return(list(
       valid = FALSE,
       n_finite = 0,
-      n_total = length(cost_matrix)
+      n_total = n_total,
+      n_infinite = n_total,
+      n_zeros = 0,
+      pct_zeros = 0,
+      pct_forbidden = if (n_total > 0) 100 else NA_real_,
+      min = NA_real_, max = NA_real_, median = NA_real_,
+      p95 = NA_real_, p99 = NA_real_
     ))
   }
 
-  n_finite <- length(finite_costs)
-  n_total <- length(cost_matrix)
   n_infinite <- n_total - n_finite
   pct_forbidden <- 100 * n_infinite / n_total
 
   # Check for too many zeros
-  n_zeros <- sum(abs(finite_costs) < threshold_zero)
+  n_zeros <- s$n_zeros
   pct_zeros <- 100 * n_zeros / n_finite
 
   if (warn && pct_zeros > 10) {
@@ -358,16 +347,17 @@ check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = 
   }
 
   # Check for constant distances
-  if (length(unique(finite_costs)) == 1) {
+  if (s$min == s$max) {
     if (warn) {
-      warn_constant_distance(finite_costs[1])
+      warn_constant_distance(s$min)
     }
   }
 
   # Check for extreme cost ratios
-  if (length(finite_costs) > 10) {
-    p95 <- quantile(finite_costs, 0.95, names = FALSE)
-    p99 <- quantile(finite_costs, 0.99, names = FALSE)
+  p95 <- p99 <- NA
+  if (n_finite > 10) {
+    p95 <- s$quantiles[2]
+    p99 <- s$quantiles[3]
 
     if (p95 > 0 && p99 / p95 > 10) {
       if (warn) {
@@ -377,26 +367,27 @@ check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = 
   }
 
   # Check for too many forbidden pairs
-  if (warn && pct_forbidden > 50) {
+  if (warn && pct_forbidden > 90) {
     warn_many_forbidden(pct_forbidden, n_finite, nrow(cost_matrix))
   }
 
   list(
     valid = TRUE,
     n_finite = n_finite,
+    n_total = n_total,
     n_infinite = n_infinite,
     n_zeros = n_zeros,
     pct_zeros = pct_zeros,
     pct_forbidden = pct_forbidden,
-    min = min(finite_costs),
-    max = max(finite_costs),
-    median = median(finite_costs),
-    p95 = if (length(finite_costs) > 10) quantile(finite_costs, 0.95, names = FALSE) else NA,
-    p99 = if (length(finite_costs) > 10) quantile(finite_costs, 0.99, names = FALSE) else NA
+    min = s$min,
+    max = s$max,
+    median = s$quantiles[1],
+    p95 = p95,
+    p99 = p99
   )
 }
 
-#' Diagnose distance matrix and suggest fixes
+#' Diagnose a Distance Matrix
 #'
 #' Comprehensive diagnostics for a distance matrix with actionable suggestions.
 #'
@@ -405,10 +396,15 @@ check_cost_distribution <- function(cost_matrix, threshold_zero = 1e-10, warn = 
 #' @param right Right dataset (for variable checking)
 #' @param vars Variables used for matching
 #' @param warn If TRUE, issue warnings
-#' @return List with diagnostic results and suggestions
+#' @return A `distance_diagnostics` list with the cost distribution,
+#'   variable issues, problem variables, suggestions, and quality assessment.
+#'   `summary()` returns these findings as `summary.distance_diagnostics`.
 #' @export
 diagnose_distance_matrix <- function(cost_matrix, left = NULL, right = NULL,
                                      vars = NULL, warn = TRUE) {
+  if (!is.matrix(cost_matrix) || !is.numeric(cost_matrix)) {
+    stop("cost_matrix must be a numeric matrix.", call. = FALSE)
+  }
 
   # Basic distribution check
   dist_diag <- check_cost_distribution(cost_matrix, warn = warn)
@@ -452,7 +448,7 @@ diagnose_distance_matrix <- function(cost_matrix, left = NULL, right = NULL,
   # Build suggestions
   suggestions <- character(0)
 
-  if (dist_diag$pct_forbidden > 75) {
+  if (isTRUE(dist_diag$pct_forbidden > 75)) {
     suggestions <- c(suggestions, "Relax constraints (max_distance or calipers)")
   }
 
@@ -469,7 +465,7 @@ diagnose_distance_matrix <- function(cost_matrix, left = NULL, right = NULL,
     suggestions <- c(suggestions, "Remove or transform problematic variables")
   }
 
-  list(
+  structure(list(
     distribution = dist_diag,
     variable_issues = var_issues,
     problem_variables = problem_vars,
@@ -477,5 +473,49 @@ diagnose_distance_matrix <- function(cost_matrix, left = NULL, right = NULL,
     quality = if (dist_diag$valid && dist_diag$pct_forbidden < 50 &&
                   dist_diag$pct_zeros < 10) "good" else
               if (dist_diag$valid) "fair" else "poor"
-  )
+  ), class = "distance_diagnostics")
+}
+
+#' @rdname diagnose_distance_matrix
+#' @param x,object A `distance_diagnostics` object.
+#' @param ... Ignored.
+#' @export
+print.distance_diagnostics <- function(x, ...) {
+  .print_distance_diagnostics_overview(x)
+  invisible(x)
+}
+
+.print_distance_diagnostics_overview <- function(x) {
+  cat("Distance Matrix Diagnostics\n")
+  cat("Quality:", x$quality, "\n")
+  cat("Admissible pairs:", x$distribution$n_finite, "of", x$distribution$n_total, "\n")
+  cat("Problem variables:", length(x$problem_variables), "\n")
+  cat("Suggestions:", length(x$suggestions), "\n")
+}
+
+#' @rdname diagnose_distance_matrix
+#' @export
+summary.distance_diagnostics <- function(object, ...) {
+  structure(unclass(object), class = "summary.distance_diagnostics")
+}
+
+#' @export
+print.summary.distance_diagnostics <- function(x, ...) {
+  .print_distance_diagnostics_overview(x)
+  cat("\nCost distribution:\n")
+  print(data.frame(statistic = names(x$distribution),
+    value = vapply(x$distribution, function(value) paste(value, collapse = ", "), "")),
+    row.names = FALSE)
+  if (length(x$variable_issues)) {
+    cat("\nVariable issues:\n")
+    print(data.frame(variable = names(x$variable_issues),
+                     issue = unlist(x$variable_issues, use.names = FALSE)),
+          row.names = FALSE)
+  }
+  if (length(x$suggestions)) {
+    cat("\nSuggestions:\n")
+    cat(x$suggestions, sep = "\n")
+    cat("\n")
+  }
+  invisible(x)
 }

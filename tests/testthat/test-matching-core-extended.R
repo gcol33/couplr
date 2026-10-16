@@ -361,7 +361,7 @@ test_that("greedy matching from distance object with no valid pairs", {
 # Print/Summary/Plot methods for matching_result
 # ------------------------------------------------------------------------------
 
-test_that("print.matching_result works", {
+test_that("print.couplr_result is shorter than summary", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
@@ -370,11 +370,12 @@ test_that("print.matching_result works", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("Matching Result", output)))
-  expect_true(any(grepl("Pairs matched", output)))
+  expect_true(any(grepl("couplr result", output)))
+  expect_true(any(grepl("Pairs:", output)))
+  expect_lt(length(output), length(capture.output(print(summary(result)))))
 })
 
-test_that("print.matching_result with strategy", {
+test_that("print.couplr_result with strategy", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
@@ -383,10 +384,10 @@ test_that("print.matching_result with strategy", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("Strategy", output)))
+  expect_true(any(grepl("Greedy strategy: *sorted", output)))
 })
 
-test_that("print.matching_result with blocks", {
+test_that("print.couplr_result with blocks", {
   skip_on_cran()
   left <- data.frame(
     id = 1:4,
@@ -404,11 +405,11 @@ test_that("print.matching_result with blocks", {
 
   output <- capture.output(print(result))
 
-  # Should show block_id in paired output
-  expect_true(any(grepl("block_id", output)))
+  expect_true(any(grepl("Blocks: *2", output)))
+  expect_true("block_id" %in% names(as.data.frame(result)))
 })
 
-test_that("summary.matching_result works", {
+test_that("summary.couplr_result works", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
@@ -416,12 +417,12 @@ test_that("summary.matching_result works", {
   result <- match_couples(left, right, vars = "x")
   smry <- summary(result)
 
-  expect_s3_class(smry, "summary.matching_result")
-  expect_equal(smry$n_matched, 5)
-  expect_true(!is.na(smry$mean_distance))
+  expect_s3_class(smry, "summary.couplr_result")
+  expect_equal(smry$glance$n_pairs, 5)
+  expect_length(smry$distances, 6)
 })
 
-test_that("print.summary.matching_result works", {
+test_that("print.summary.couplr_result works", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
@@ -431,10 +432,10 @@ test_that("print.summary.matching_result works", {
 
   output <- capture.output(print(smry))
 
-  expect_true(any(grepl("Summary", output)))
+  expect_true(any(grepl("Pair distances", output)))
 })
 
-test_that("print.summary.matching_result with strategy", {
+test_that("print.summary.couplr_result with strategy", {
   skip_on_cran()
   left <- data.frame(id = 1:3, x = 1:3)
   right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))

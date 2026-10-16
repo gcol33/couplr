@@ -37,7 +37,7 @@ get_trace_fn <- function(method) {
   get(method, envir = .trace_registry)
 }
 
-#' List methods that currently support animation
+#' List Methods That Support Animation
 #'
 #' Returns the character vector of method strings for which a trace function
 #' has been registered. Use any of these with [lap_animate()].
@@ -125,7 +125,7 @@ normalise_for_json <- function(x) {
 # Public API
 # ==============================================================================
 
-#' Animate an assignment algorithm step-by-step
+#' Animate an Assignment Algorithm
 #'
 #' Produce an interactive bipartite-graph animation showing how a chosen
 #' linear-assignment algorithm transforms the matching over time. The result
@@ -159,11 +159,12 @@ normalise_for_json <- function(x) {
 #'   interface.
 #'
 #' @examples
-#' \dontrun{
 #' cost <- matrix(c(4, 2, 5,
 #'                  3, 3, 6,
 #'                  7, 5, 4), nrow = 3, byrow = TRUE)
-#' lap_animate(cost, method = "hungarian")
+#' if (requireNamespace("htmlwidgets", quietly = TRUE)) {
+#'   widget <- lap_animate(cost, method = "hungarian")
+#'   if (interactive()) print(widget)
 #' }
 #'
 #' @export

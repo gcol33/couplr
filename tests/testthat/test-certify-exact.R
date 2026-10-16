@@ -249,10 +249,11 @@ test_that("the print method names the arithmetic the conclusion is in", {
   set.seed(19)
   cost <- matrix(sample(1:200, 36, replace = TRUE), 6, 6)
 
-  exact_out <- capture.output(print(verify_assignment(assignment(cost), cost)))
-  loose_out <- capture.output(
-    print(verify_assignment(assignment(cost), cost, arithmetic = "double")))
+  exact <- verify_assignment(assignment(cost), cost)
+  loose <- verify_assignment(assignment(cost), cost, arithmetic = "double")
 
-  expect_true(any(grepl("exact, no tolerance", exact_out, fixed = TRUE)))
-  expect_true(any(grepl("double, tolerance", loose_out, fixed = TRUE)))
+  expect_output(print(exact), "optimal (exact arithmetic)", fixed = TRUE)
+  expect_output(print(loose), "tolerance 1e-09", fixed = TRUE)
+  expect_output(print(summary(exact)), "exact, no tolerance", fixed = TRUE)
+  expect_output(print(summary(loose)), "double, tolerance", fixed = TRUE)
 })

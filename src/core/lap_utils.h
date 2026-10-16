@@ -25,7 +25,7 @@ std::string match_to_key(const std::vector<int>& match);
 // as CostMatrix's flat index -- even though individual column values in
 // `cols` stay `int`-valued (a single row/column count never approaches
 // INT_MAX on its own).
-void build_allowed(const std::vector<int>& mask, int64_t n, int64_t m,
+void build_allowed(const std::vector<uint8_t>& mask, int64_t n, int64_t m,
                    std::vector<int64_t>& row_ptr, std::vector<int>& cols);
 
 // Generic cost-source overload: enumerates allowed pairs via the source's
@@ -62,7 +62,7 @@ void build_allowed(const CostSourceT& cost,
 
 // Check that each row has at least one allowed edge
 // Throws InfeasibleException if any row has no options
-void ensure_each_row_has_option(const std::vector<int>& mask, int64_t n, int64_t m);
+void ensure_each_row_has_option(const std::vector<uint8_t>& mask, int64_t n, int64_t m);
 
 // Generic cost-source overload: checks the source's own allowed(i,j). See
 // build_allowed() above for why this is a header-only template.
@@ -170,9 +170,20 @@ CostMatrix negate_costs(const CostMatrix& cost);
 // the sentinel is no longer the largest value in it.
 void forbid_sentinel_costs(CostMatrix& cost);
 
-// Prepare cost matrix for solving (handles maximization, padding for rectangular)
-// Returns: prepared CostMatrix (negated if maximize, padded if needed)
+// Prepare cost matrix for solving: negated if maximize, and every forbidden
+// cell set to BIG. The rvalue overload prepares the matrix it is handed in
+// place, so a caller done with its matrix moves it in and the solve holds one
+// copy of the costs instead of two.
+CostMatrix prepare_for_solve(CostMatrix&& cost, bool maximize);
 CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize);
+
+// The total of a complete assignment on the caller's cost scale, read from the
+// prepared matrix the solver ran on: an allowed cell holds the caller's cost,
+// negated when `negated`. Throws InfeasibleException when a row is unmatched
+// (`unmatched` is the message) or sits on a forbidden or non-finite edge.
+double priced_total(const CostMatrix& work, bool negated,
+                    const std::vector<int>& assignment,
+                    const char* unmatched = "Could not find full matching");
 
 // Convert 0-based match to 1-based (for R interface)
 std::vector<int> to_one_based(const std::vector<int>& match);

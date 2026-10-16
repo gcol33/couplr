@@ -2,9 +2,12 @@
 % Please edit documentation in R/lap_solve.R
 \name{bottleneck_assignment}
 \alias{bottleneck_assignment}
+\alias{summary.bottleneck_result}
 \title{Solve the Bottleneck Assignment Problem}
 \usage{
 bottleneck_assignment(cost, maximize = FALSE)
+
+\method{summary}{bottleneck_result}(object, ...)
 }
 \arguments{
 \item{cost}{Numeric matrix; rows = tasks, columns = agents. \code{NA} or \code{Inf}
@@ -12,6 +15,10 @@ entries are treated as forbidden assignments.}
 
 \item{maximize}{Logical; if \code{TRUE}, maximizes the minimum edge cost instead
 of minimizing the maximum (maximin objective). Default is \code{FALSE} (minimax).}
+
+\item{object}{A result returned by this function.}
+
+\item{...}{Ignored by the summary method.}
 }
 \value{
 A list with class \code{"bottleneck_result"} containing:
@@ -21,6 +28,8 @@ assigned column for each row (1-based indexing)
 \item \code{bottleneck} - numeric scalar, the bottleneck (max/min edge) value
 \item \code{status} - character scalar, e.g. \code{"optimal"}
 }
+\code{summary()} returns a \code{summary.assignment_result} with the bottleneck
+value, status, and complete row-to-column assignment table.
 }
 \description{
 Finds an assignment that minimizes (or maximizes) the maximum edge cost

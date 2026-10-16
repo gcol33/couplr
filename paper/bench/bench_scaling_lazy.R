@@ -7,19 +7,18 @@
 ##
 ## Reproducible via:  Rscript paper/bench/bench_scaling_lazy.R
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 options(pkg.build_extra_flags = FALSE)
 
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 ## Single-core wall-clock, matching the rest of the paper's timings.
@@ -27,9 +26,8 @@ blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "scaling-lazy-results.csv")
 
 SIZES <- c(20000L, 50000L)

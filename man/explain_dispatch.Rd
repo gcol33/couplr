@@ -3,7 +3,8 @@
 \name{explain_dispatch}
 \alias{explain_dispatch}
 \alias{print.dispatch_explanation}
-\title{Explain which solver \code{method = "auto"} selects, and why}
+\alias{summary.dispatch_explanation}
+\title{Explain the Automatic Solver Choice}
 \usage{
 explain_dispatch(
   cost,
@@ -15,6 +16,8 @@ explain_dispatch(
 )
 
 \method{print}{dispatch_explanation}(x, ...)
+
+\method{summary}{dispatch_explanation}(object, ...)
 }
 \arguments{
 \item{cost}{Numeric matrix, as passed to \code{\link[=assignment]{assignment()}}. \code{NA} or \code{Inf}
@@ -32,6 +35,8 @@ are evaluated against the same matrix \code{assignment()} would hand the solver.
 \item{x}{A \code{dispatch_explanation} object.}
 
 \item{...}{Ignored.}
+
+\item{object}{A \code{dispatch_explanation} object.}
 }
 \value{
 An object of class \code{dispatch_explanation}, a list with elements:
@@ -46,6 +51,9 @@ the transpose. Rectangular problems are transposed internally so the
 solver always has at least as many columns as rows.
 \item \code{probe} - the single-pass summary the rules read.
 }
+\code{print()} gives the selected solver and reason. \code{summary()} returns a
+\code{summary.dispatch_explanation} with all decision and probe fields;
+printing it also lists the rules tested and the observed cost properties.
 
 Invisibly returns \code{x}.
 }

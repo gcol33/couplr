@@ -192,12 +192,12 @@ test_that("sinkhorn with high lambda converges to assignment", {
 # print methods
 # ------------------------------------------------------------------------------
 
-test_that("print.matching_result works", {
+test_that("print.couplr_result works on a matching", {
   skip_on_cran()
   left <- data.frame(x = 1:3)
   right <- data.frame(x = 4:6)
   result <- match_couples(left, right, vars = "x")
-  expect_output(print(result), "Matching Result")
+  expect_output(print(result), "one-to-one matching")
 })
 
 test_that("print.balance_result works", {

@@ -138,6 +138,16 @@ LazySource rcpp_lazy_source(const Rcpp::NumericMatrix& left_mat,
 // and must not recompute them from the formula: a second implementation of the
 // same metric lands an ulp away, and a caliper set at a reported distance then
 // excludes the pair it was read from. `rows`/`cols` are 1-based.
+// Every pair's distance as an n_left x n_right matrix, from the same code a
+// lazy solve evaluates pairs with, so a dense matrix and a lazy specification
+// of one problem hold the same distances to the last bit. The matrix is
+// written in place; nothing the size of it is allocated besides.
+Rcpp::NumericMatrix lazy_dense_matrix_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    SEXP metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
+
 Rcpp::NumericVector lazy_pair_distances_impl(
     const Rcpp::NumericMatrix& left_mat,
     const Rcpp::NumericMatrix& right_mat,

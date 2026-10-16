@@ -2,7 +2,7 @@
 % Please edit documentation in R/matching_distance_cache.R
 \name{update_constraints}
 \alias{update_constraints}
-\title{Update Constraints on Distance Object}
+\title{Update the Constraints of a Distance Object}
 \usage{
 update_constraints(dist_obj, max_distance = Inf, calipers = NULL)
 }
@@ -11,7 +11,8 @@ update_constraints(dist_obj, max_distance = Inf, calipers = NULL)
 
 \item{max_distance}{Maximum allowed distance (pairs with distance > max_distance become Inf)}
 
-\item{calipers}{Named list of per-variable calipers}
+\item{calipers}{Named list of calipers, each on a column of both data
+frames the distance object was built from.}
 }
 \value{
 A new distance_object with updated cost_matrix

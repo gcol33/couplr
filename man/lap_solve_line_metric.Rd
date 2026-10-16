@@ -2,9 +2,12 @@
 % Please edit documentation in R/lap_solve.R
 \name{lap_solve_line_metric}
 \alias{lap_solve_line_metric}
-\title{Solve 1-D Line Assignment Problem}
+\alias{summary.lap_line_metric_result}
+\title{Solve a One-Dimensional Assignment Problem}
 \usage{
 lap_solve_line_metric(x, y, cost = "L1", maximize = FALSE)
+
+\method{summary}{lap_line_metric_result}(object, ...)
 }
 \arguments{
 \item{x}{Numeric vector of source positions (will be sorted internally)}
@@ -19,6 +22,10 @@ Can also use aliases: "abs", "manhattan" for L1; "sq", "squared", "quadratic" fo
 }}
 
 \item{maximize}{Logical; if TRUE, maximizes total cost instead of minimizing (default: FALSE)}
+
+\item{object}{A result returned by this function.}
+
+\item{...}{Ignored by the summary method.}
 }
 \value{
 A list with components:
@@ -26,6 +33,9 @@ A list with components:
 \item \code{match}: Integer vector of length n with 1-based column indices
 \item \code{total_cost}: Total cost of the assignment
 }
+
+\code{summary()} returns a \code{summary.assignment_result} with the objective
+and the complete row-to-column assignment table.
 }
 \description{
 Solves the linear assignment problem when both sources and targets are

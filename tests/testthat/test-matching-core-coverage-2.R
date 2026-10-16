@@ -171,7 +171,7 @@ test_that("match_couples accepts distance_object input", {
 # Print and summary methods
 # ------------------------------------------------------------------------------
 
-test_that("print.matchmaker_result works", {
+test_that("print.couplr_result reports pairs", {
   skip_on_cran()
   result <- match_couples(
     test_left, test_right,
@@ -179,7 +179,7 @@ test_that("print.matchmaker_result works", {
   )
 
   output <- capture.output(print(result))
-  expect_true(any(grepl("Matching Result", output)))
+  expect_true(any(grepl("Pairs:", output)))
 })
 
 test_that("summary.matchmaker_result works", {

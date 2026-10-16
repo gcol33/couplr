@@ -36,7 +36,7 @@
 ^VIGNETTE_IMPROVEMENT_PLAN\.md$
 ^src/.*\.o$
 ^src/.*\.dll$
-^.*\.png$
+^(?!inst/extdata/).*\.png$
 ^.*\.pdf$
 ^error\.txt$
 ^fix_.*\.R$

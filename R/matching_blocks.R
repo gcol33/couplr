@@ -2,7 +2,7 @@
 # Matching Blocks - Block construction and matchmaker()
 # ==============================================================================
 
-#' Create blocks for stratified matching
+#' Create Blocks for Stratified Matching
 #'
 #' Constructs blocks (strata) for matching, using either grouping variables
 #' or clustering algorithms. Returns the input data frames with block IDs
@@ -28,7 +28,8 @@
 #' @param drop_imbalanced Drop blocks with extreme imbalance
 #' @param imbalance_threshold Maximum allowed |n_left - n_right| / max(n_left, n_right)
 #' @param return_dropped Include dropped blocks in output
-#' @param ... Additional arguments passed to clustering function
+#' @param ... Additional arguments passed to the clustering function; ignored
+#'   by the print and summary methods.
 #'
 #' @return A list with class "matchmaker_result" containing:
 #'   - `left`: Left data frame with block_id column added
@@ -36,6 +37,10 @@
 #'   - `block_summary`: Summary statistics for each block
 #'   - `dropped`: Information about dropped blocks (if any)
 #'   - `info`: Metadata about blocking process
+#'
+#'   `print()` shows retained unit and block counts. `summary()` returns a
+#'   `summary.matchmaker_result` with `info`, `block_summary`, and `dropped`;
+#'   printing it also shows every block and the reasons for dropped blocks.
 #'
 #' @examples
 #' # Group blocking
@@ -96,7 +101,7 @@ matchmaker <- function(left, right,
           n_blocks_dropped = 0
         )
       ),
-      class = c("matchmaker_result", "couplr_result")
+      class = "matchmaker_result"
     ))
   }
 
@@ -144,7 +149,7 @@ matchmaker <- function(left, right,
         n_blocks_dropped = length(dropped_info$blocks)
       )
     ),
-    class = c("matchmaker_result", "couplr_result")
+    class = "matchmaker_result"
   )
 }
 
@@ -321,15 +326,17 @@ summarize_blocks <- function(left, right, block_vars = NULL) {
   tibble::as_tibble(summary)
 }
 
-#' Print method for matchmaker results
-#'
+#' @rdname matchmaker
 #' @param x A matchmaker_result object
-#' @param ... Additional arguments (ignored)
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print matchmaker_result
 print.matchmaker_result <- function(x, ...) {
+  .print_block_overview(x)
+  invisible(x)
+}
+
+.print_block_overview <- function(x) {
   cat("Matchmaker Result\n")
   cat("=================\n\n")
 
@@ -340,12 +347,34 @@ print.matchmaker_result <- function(x, ...) {
     cat("Blocks dropped:", x$info$n_blocks_dropped, "\n")
   }
 
-  cat("\nBlock summary:\n")
-  print(x$block_summary)
+  cat("Left units retained:", sum(x$block_summary$n_left), "\n")
+  cat("Right units retained:", sum(x$block_summary$n_right), "\n")
 
   if (!is.null(x$dropped) && length(x$dropped$blocks) > 0) {
     cat("\nDropped blocks:", paste(x$dropped$blocks, collapse = ", "), "\n")
   }
 
+}
+
+#' @rdname matchmaker
+#' @param object A `matchmaker_result` object.
+#' @export
+summary.matchmaker_result <- function(object, ...) {
+  structure(object[c("info", "block_summary", "dropped")],
+            class = "summary.matchmaker_result")
+}
+
+#' @export
+print.summary.matchmaker_result <- function(x, ...) {
+  .print_block_overview(x)
+  cat("\nBlock summary:\n")
+  print(x$block_summary, n = Inf)
+  if (!is.null(x$dropped) && length(x$dropped$blocks)) {
+    cat("\nDropped block reasons:\n")
+    print(data.frame(block_id = x$dropped$blocks, reason = x$dropped$reason),
+          row.names = FALSE)
+    cat("Dropped left units:", nrow(x$dropped$left), "\n")
+    cat("Dropped right units:", nrow(x$dropped$right), "\n")
+  }
   invisible(x)
 }

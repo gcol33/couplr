@@ -80,28 +80,6 @@ struct DoubleDifference {
     Expansion added_to(const Expansion& e) const { return add_difference(e, a, b); }
 };
 
-// An arc weight that is itself a sum of doubles, held exactly: a cost with
-// multiplier terms folded in, or its negation when `negate` is set, which is
-// the reverse arc of a residual graph. `approx` is the rounded value and error
-// bound of the cost; `exact` returns the cost as an expansion and is called
-// only for a relaxation the filter cannot settle, so an arc the doubles decide
-// never has its expansion built.
-template <class Exact>
-struct LazyWeight {
-    Approximation approx;
-    Exact exact;
-    int64_t tag = -1;
-    bool negate = false;
-    double value() const { return negate ? -approx.value : approx.value; }
-    double approx_from(double base) const { return base + value(); }
-    double magnitude() const { return std::fabs(approx.value); }
-    double error() const { return approx.error; }
-    Expansion added_to(const Expansion& e) const {
-        const Expansion w = exact();
-        return expansion_sum(e, negate ? negated(w) : w);
-    }
-};
-
 // A cycle in the predecessor graph: the tags of its arcs in the order the cycle
 // runs, or nothing when the graph has none. Each node points at the node its
 // label was last set from, so the graph is a forest unless it closes on
@@ -135,7 +113,7 @@ inline std::vector<int64_t> predecessor_cycle(const std::vector<int64_t>& pred_n
 
 // Shortest paths from a root joined to every node at weight zero, so every
 // distance is at most zero. `out_arcs(k, emit)` calls `emit(j, weight)` once per
-// arc k -> j, with the weight a DoubleDifference or a LazyWeight.
+// arc k -> j, with the weight a DoubleDifference.
 // `hint` is optional (empty for none) and orders the search only.
 //
 // With `want_cycle`, a search that finds a negative cycle goes on to name one.

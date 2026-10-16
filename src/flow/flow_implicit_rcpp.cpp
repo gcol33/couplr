@@ -33,6 +33,7 @@
 #include "flow_implicit_rcpp.h"
 #include "flow_oracle.h"
 #include "flow_problem.h"
+#include "../select/select_lift.h"
 
 #include <algorithm>
 #include <cmath>
@@ -210,7 +211,7 @@ Rcpp::List implicit_dense_impl(Rcpp::NumericMatrix cost, bool maximize,
         // the same prepared matrix.
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
         lap::forbid_sentinel_costs(cm);
-        const lap::CostMatrix work = lap::prepare_for_solve(cm, maximize);
+        const lap::CostMatrix work = lap::prepare_for_solve(std::move(cm), maximize);
 
         return run_implicit(work, implicit_options_from_r(keep_per_row, width, tol,
                                                           max_rounds, certify),
@@ -491,4 +492,26 @@ Rcpp::List implicit_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix 
     }
 
     return Rcpp::List();
+}
+
+// The distance cut of a pinned solve lifted on the units outside the
+// selection, over the session's cost source (see select_lift.h).
+Rcpp::List pricing_session_lift_impl(SEXP session, double shift,
+                                     Rcpp::LogicalVector in_left, Rcpp::LogicalVector in_right,
+                                     Rcpp::NumericMatrix u, Rcpp::NumericMatrix v) {
+    std::vector<lap::exact::Expansion> U = expansions_from_r(u, false);
+    std::vector<lap::exact::Expansion> V = expansions_from_r(v, false);
+    std::vector<uint8_t> il(in_left.begin(), in_left.end());
+    std::vector<uint8_t> ir(in_right.begin(), in_right.end());
+    std::visit([&](auto& s) {
+        if (static_cast<int64_t>(U.size()) != s->src.nrow ||
+            static_cast<int64_t>(V.size()) != s->src.ncol ||
+            static_cast<int64_t>(il.size()) != s->src.nrow ||
+            static_cast<int64_t>(ir.size()) != s->src.ncol) {
+            Rcpp::stop("select lift: the potentials do not fit the session");
+        }
+        lap::select::lift_outside(s->src, shift, il, ir, U, V);
+    }, session_from(session).held);
+    return Rcpp::List::create(Rcpp::Named("u") = expansions_to_r(U),
+                              Rcpp::Named("v") = expansions_to_r(V));
 }

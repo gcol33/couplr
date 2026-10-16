@@ -181,13 +181,7 @@ lazy_cost_spec_inv_cov <- function(spec) {
   } else {
     cov_mat <- stats::cov(rbind(spec$left_mat, spec$right_mat))
   }
-  inv_cov <- tryCatch(solve(cov_mat), error = function(e) NULL)
-  if (is.null(inv_cov) || rcond(cov_mat) < .Machine$double.eps) {
-    stop("Covariance matrix is singular or near-singular; cannot compute Mahalanobis distance. ",
-         "Consider removing collinear variables or supplying a regularized sigma.",
-         call. = FALSE)
-  }
-  inv_cov
+  mahalanobis_precision(cov_mat)
 }
 
 #' Calipers of a lazy cost spec, as the C++ cost source reads them

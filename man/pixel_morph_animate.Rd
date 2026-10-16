@@ -2,7 +2,9 @@
 % Please edit documentation in R/morph_pixel.R
 \name{pixel_morph_animate}
 \alias{pixel_morph_animate}
-\title{Pixel-level image morphing (animation)}
+\alias{print.pixel_morph_animation}
+\alias{summary.pixel_morph_animation}
+\title{Animated Pixel-Level Image Morphing}
 \usage{
 pixel_morph_animate(
   imgA,
@@ -22,6 +24,10 @@ pixel_morph_animate(
   patch_size = 1L,
   upscale = 1
 )
+
+\method{print}{pixel_morph_animation}(x, ...)
+
+\method{summary}{pixel_morph_animation}(object, ...)
 }
 \arguments{
 \item{imgA}{Source image (file path or magick image object)}
@@ -57,9 +63,14 @@ quantized colour, filling the remainder by identity)}
 \item{patch_size}{Tile size for tiled modes (default: 1)}
 
 \item{upscale}{Post-rendering upscaling factor (default: 1)}
+
+\item{x, object}{A \code{pixel_morph_animation} result.}
+
+\item{...}{Ignored.}
 }
 \value{
-Invisibly returns a list with animation object and metadata:
+Invisibly returns a \code{pixel_morph_animation} list with animation
+object and metadata:
 \item{animation}{magick animation object}
 \item{width}{Image width in pixels}
 \item{height}{Image height in pixels}
@@ -67,6 +78,8 @@ Invisibly returns a list with animation object and metadata:
 \item{n_pixels}{Total number of pixels}
 \item{mode}{Mode used for matching}
 \item{upscale}{Upscaling factor applied}
+\code{summary()} returns a \code{summary.pixel_morph_animation} with frame counts
+and assignment coverage, including repeated and unfilled destinations.
 }
 \description{
 Creates an animated morph by computing optimal pixel assignment from image A
@@ -143,13 +156,14 @@ A warning is issued if overlaps/holes are detected in the final frame.
 }
 }
 \examples{
+\donttest{
 if (requireNamespace("magick", quietly = TRUE)) {
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-  if (nzchar(imgA) && nzchar(imgB)) {
-    outfile <- tempfile(fileext = ".gif")
-    pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
-  }
+  outfile <- tempfile(fileext = ".gif")
+  pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
+  file.exists(outfile)
+}
 }
 
 }

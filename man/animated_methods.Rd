@@ -2,7 +2,7 @@
 % Please edit documentation in R/animate.R
 \name{animated_methods}
 \alias{animated_methods}
-\title{List methods that currently support animation}
+\title{List Methods That Support Animation}
 \usage{
 animated_methods()
 }

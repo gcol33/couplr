@@ -93,3 +93,31 @@ test_that("NaN costs are still rejected for every method", {
   expect_error(assignment(m, method = "auto"), "NaN")
   expect_error(assignment(m, method = "jv"), "NaN")
 })
+
+test_that("the in-place cost scans agree with the R expressions they replace", {
+  big <- couplr:::BIG_COST
+  set.seed(11)
+  m <- matrix(rnorm(2000), 40)
+  m[sample(2000, 300)] <- Inf
+  m[sample(2000, 20)] <- NA
+  m[1:4] <- big
+  m[5] <- -0
+  m[6:9] <- 0
+  m[41:80] <- Inf
+  v <- m[is.finite(m) & m < big]
+  probs <- c(0, 0.5, 0.95, 0.99, 1)
+  s <- couplr:::lap_cost_summary(m, big, 1e-10, probs)
+  expect_identical(s$quantiles, quantile(v, probs, names = FALSE))
+  expect_equal(s$n_admissible, length(v))
+  expect_equal(s$n_zeros, sum(abs(v) < 1e-10))
+  expect_identical(c(s$min, s$max), range(v))
+  mg <- couplr:::lap_cost_margins(m, big)
+  expect_identical(mg$row_ok, rowSums(is.finite(m) & m < big) > 0)
+  expect_identical(mg$col_ok, colSums(is.finite(m) & m < big) > 0)
+  expect_true(couplr:::lap_cost_any_admissible(m, big))
+  expect_false(couplr:::lap_cost_any_admissible(matrix(c(Inf, NA, big), 1), big))
+  si <- couplr:::lap_cost_summary(matrix(c(3L, NA, -2L, 3L), 2), big, 0, 0.5)
+  expect_identical(si$quantiles, 3)
+  none <- couplr:::lap_cost_summary(matrix(Inf, 2, 2), big, 0, probs)
+  expect_true(all(is.na(none$quantiles)))
+})

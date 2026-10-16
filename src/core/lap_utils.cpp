@@ -17,7 +17,7 @@ std::string match_to_key(const std::vector<int>& match) {
     return os.str();
 }
 
-void build_allowed(const std::vector<int>& mask, int64_t n, int64_t m,
+void build_allowed(const std::vector<uint8_t>& mask, int64_t n, int64_t m,
                    std::vector<int64_t>& row_ptr, std::vector<int>& cols) {
     row_ptr.assign(static_cast<size_t>(n + 1), 0);
 
@@ -46,7 +46,7 @@ void build_allowed(const std::vector<int>& mask, int64_t n, int64_t m,
     }
 }
 
-void ensure_each_row_has_option(const std::vector<int>& mask, int64_t n, int64_t m) {
+void ensure_each_row_has_option(const std::vector<uint8_t>& mask, int64_t n, int64_t m) {
     for (int64_t i = 0; i < n; ++i) {
         bool has_option = false;
         for (int64_t j = 0; j < m; ++j) {
@@ -117,13 +117,17 @@ double compute_total_cost(const CostMatrix& original_cost,
     return compute_total_cost(original_cost, match);
 }
 
-CostMatrix negate_costs(const CostMatrix& cost) {
-    CostMatrix result = cost;
-    for (size_t i = 0; i < result.data.size(); ++i) {
-        if (std::isfinite(result.data[i])) {
-            result.data[i] = -result.data[i];
+static void negate_finite(CostMatrix& cost) {
+    for (size_t i = 0; i < cost.data.size(); ++i) {
+        if (std::isfinite(cost.data[i])) {
+            cost.data[i] = -cost.data[i];
         }
     }
+}
+
+CostMatrix negate_costs(const CostMatrix& cost) {
+    CostMatrix result = cost;
+    negate_finite(result);
     return result;
 }
 
@@ -136,7 +140,12 @@ void forbid_sentinel_costs(CostMatrix& cost) {
 }
 
 CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize) {
-    CostMatrix result = maximize ? negate_costs(cost) : cost;
+    return prepare_for_solve(CostMatrix(cost), maximize);
+}
+
+CostMatrix prepare_for_solve(CostMatrix&& cost, bool maximize) {
+    CostMatrix result = std::move(cost);
+    if (maximize) negate_finite(result);
 
     // Ensure forbidden entries are BIG
     for (int64_t i = 0; i < result.nrow; ++i) {
@@ -148,6 +157,26 @@ CostMatrix prepare_for_solve(const CostMatrix& cost, bool maximize) {
     }
 
     return result;
+}
+
+double priced_total(const CostMatrix& work, bool negated,
+                    const std::vector<int>& assignment, const char* unmatched) {
+    double total = 0.0;
+    for (int64_t i = 0; i < static_cast<int64_t>(assignment.size()); ++i) {
+        const int j = assignment[static_cast<size_t>(i)];
+        if (j < 0) {
+            LAP_THROW_INFEASIBLE(unmatched);
+        }
+        if (!work.allowed(i, j)) {
+            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
+        }
+        const double c = negated ? -work.at(i, j) : work.at(i, j);
+        if (!std::isfinite(c)) {
+            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
+        }
+        total += c;
+    }
+    return total;
 }
 
 std::vector<int> to_one_based(const std::vector<int>& match) {

@@ -2,7 +2,10 @@
 % Please edit documentation in R/lap_solve.R
 \name{sinkhorn}
 \alias{sinkhorn}
-\title{'Sinkhorn-Knopp' optimal transport solver}
+\alias{print.sinkhorn_result}
+\alias{summary.sinkhorn_result}
+\alias{as.matrix.sinkhorn_result}
+\title{Entropic Optimal Transport by Sinkhorn-Knopp Iteration}
 \usage{
 sinkhorn(
   cost,
@@ -12,6 +15,12 @@ sinkhorn(
   r_weights = NULL,
   c_weights = NULL
 )
+
+\method{print}{sinkhorn_result}(x, ...)
+
+\method{summary}{sinkhorn_result}(object, ...)
+
+\method{as.matrix}{sinkhorn_result}(x, ...)
 }
 \arguments{
 \item{cost}{Numeric matrix of transport costs. \code{NA} or \code{Inf} entries are
@@ -30,9 +39,13 @@ Default is uniform. Will be normalized to sum to 1.}
 
 \item{c_weights}{Optional numeric vector of column marginals (target distribution).
 Default is uniform. Will be normalized to sum to 1.}
+
+\item{x, object}{A \code{sinkhorn_result}.}
+
+\item{...}{Ignored.}
 }
 \value{
-A list with elements:
+A \code{sinkhorn_result} list with elements:
 \itemize{
 \item \code{transport_plan} — numeric matrix, the optimal transport plan P.
 Row sums approximate r_weights, column sums approximate c_weights.
@@ -42,6 +55,9 @@ Row sums approximate r_weights, column sums approximate c_weights.
 \item \code{iterations} — number of iterations used.
 \item \code{lambda} — the regularization parameter used.
 }
+\code{as.matrix()} returns the transport plan. \code{summary()} returns a
+\code{summary.sinkhorn_result} with convergence, transported mass, support size,
+and the observed row and column marginals.
 }
 \description{
 Compute an entropy-regularized optimal transport plan using the 'Sinkhorn-Knopp'

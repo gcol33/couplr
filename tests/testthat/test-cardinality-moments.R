@@ -129,27 +129,20 @@ test_that("the full-pool denominator is the package's own moment definition", {
 })
 
 
-test_that("coefficients and repricing stay O(n + m) on a large instance", {
+test_that("coefficients stay O(n + m) on a large instance", {
   n <- 2000L
   m <- 5000L
   set.seed(21)
   left <- data.frame(x = stats::rnorm(n), y = stats::rnorm(n))
   right <- data.frame(x = stats::rnorm(m), y = stats::rnorm(m))
 
-  n_arcs <- 400L
-  arcs <- data.frame(i = sample(n, n_arcs, replace = TRUE),
-                     j = sample(m, n_arcs, replace = TRUE),
-                     cost = stats::runif(n_arcs))
-
   elapsed <- system.time({
     specs <- .moment_specs(moments = NULL, max_std_diff = 0.1,
                            vars = c("x", "y"), left = left, right = right)
     coefs <- lapply(specs, .moment_coefficients, left = left, right = right)
-    priced <- .moment_reprice(arcs, coefs, rep(0.5, length(coefs)))
   })[["elapsed"]]
 
   expect_length(specs, 4L)
-  expect_length(priced, n_arcs)
   expect_lt(elapsed, 5)
 
   for (cf in coefs) {
@@ -571,66 +564,8 @@ test_that("degenerate pair sets and empty constraint sets behave", {
 })
 
 
-test_that("repricing is the identity at lambda = 0 and additive in lambda", {
-  pools <- moment_pools(n = 40, m = 60, seed = 61)
-  left <- pools$left
-  right <- pools$right
-
-  specs <- .moment_specs(NULL, 0.1, c("x", "y"), left, right)
-  coefs <- lapply(specs, .moment_coefficients, left = left, right = right)
-  expect_length(coefs, 4L)
-
-  set.seed(62)
-  n_arcs <- 150L
-  arcs <- data.frame(i = sample(nrow(left), n_arcs, replace = TRUE),
-                     j = sample(nrow(right), n_arcs, replace = TRUE),
-                     cost = stats::runif(n_arcs, 0, 10))
-
-  expect_identical(.moment_reprice(arcs, coefs, rep(0, 4)), arcs$cost)
-  expect_identical(.moment_reprice(arcs, list(), numeric(0)), arcs$cost)
-  expect_identical(.moment_reprice(arcs, NULL, numeric(0)), arcs$cost)
-
-  l1 <- c(0.3, 0, 1.2, 0.7)
-  l2 <- c(1.0, 0.5, 0, 2.0)
-  p1 <- .moment_reprice(arcs, coefs, l1)
-  p2 <- .moment_reprice(arcs, coefs, l2)
-  p12 <- .moment_reprice(arcs, coefs, l1 + l2)
-  expect_equal(p12 - arcs$cost, (p1 - arcs$cost) + (p2 - arcs$cost),
-               tolerance = 1e-10)
-
-  # Against the definition, arc by arc.
-  manual <- arcs$cost
-  for (r in seq_along(coefs)) {
-    manual <- manual + l1[r] * (coefs[[r]]$u[arcs$i] - coefs[[r]]$w[arcs$j] -
-                                  coefs[[r]]$b)
-  }
-  expect_equal(p1, manual, tolerance = 1e-12)
-
-  # A single coefficient object stands in for a list of one.
-  expect_equal(.moment_reprice(arcs, coefs[[1L]], 0.9),
-               .moment_reprice(arcs, coefs[1L], 0.9), tolerance = 1e-12)
-})
-
-
-test_that("repricing refuses a mismatched call", {
+test_that("coefficients refuse a spec that was not normalized", {
   pools <- moment_pools(n = 12, m = 15, seed = 63)
-  left <- pools$left
-  right <- pools$right
-  specs <- .moment_specs(c(x = 0.1), NULL, NULL, left, right)
-  coefs <- lapply(specs, .moment_coefficients, left = left, right = right)
-
-  arcs <- data.frame(i = c(1L, 2L, 3L), j = c(4L, 5L, 6L), cost = c(1, 2, 3))
-
-  expect_error(.moment_reprice(arcs, coefs, 1), "finite multipliers",
-               fixed = TRUE)
-  expect_error(.moment_reprice(arcs, coefs, c(1, NA)), "finite multipliers",
-               fixed = TRUE)
-  expect_error(.moment_reprice(arcs, coefs, c(1, Inf)), "finite multipliers",
-               fixed = TRUE)
-  expect_error(.moment_reprice(arcs[, c("i", "j")], coefs, c(1, 1)),
-               "missing the column(s) cost", fixed = TRUE)
-  expect_error(.moment_reprice(arcs[, c("i", "cost")], coefs, c(1, 1)),
-               "missing the column(s) j", fixed = TRUE)
-  expect_error(.moment_coefficients(list(var = "x"), left, right),
+  expect_error(.moment_coefficients(list(var = "x"), pools$left, pools$right),
                "must be a normalized moment spec", fixed = TRUE)
 })

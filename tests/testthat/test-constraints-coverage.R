@@ -67,18 +67,18 @@ test_that("apply_calipers returns unchanged for NULL", {
   cost <- matrix(1:4, 2, 2)
   left <- data.frame(x = c(1, 2))
   right <- data.frame(x = c(3, 4))
-  result <- couplr:::apply_calipers(cost, left, right, calipers = NULL, vars = "x")
+  result <- couplr:::apply_calipers(cost, left, right, calipers = NULL)
   expect_equal(result, cost)
 })
 
-test_that("apply_calipers skips variables not in vars", {
+test_that("apply_calipers applies a caliper on a column outside vars", {
   skip_on_cran()
   cost <- matrix(1:4, 2, 2)
   left <- data.frame(x = c(1, 2), y = c(10, 20))
-  right <- data.frame(x = c(3, 4), y = c(100, 200))
-  # Caliper on y, but y not in vars - should be skipped
-  result <- couplr:::apply_calipers(cost, left, right, calipers = list(y = 0.1), vars = "x")
-  expect_equal(result, cost)
+  right <- data.frame(x = c(3, 4), y = c(10.05, 200))
+  result <- couplr:::apply_calipers(cost, left, right, calipers = list(y = 0.1))
+  expect_equal(result[1, 1], 1)
+  expect_true(all(is.infinite(result[-1])))
 })
 
 test_that("apply_calipers marks forbidden pairs", {
@@ -87,7 +87,7 @@ test_that("apply_calipers marks forbidden pairs", {
   left <- data.frame(x = c(1, 10))
   right <- data.frame(x = c(2, 5))
   # Caliper of 3 on x
-  result <- couplr:::apply_calipers(cost, left, right, calipers = list(x = 3), vars = "x")
+  result <- couplr:::apply_calipers(cost, left, right, calipers = list(x = 3))
   # |1-2|=1 OK, |1-5|=4 > 3 forbidden
   # |10-2|=8 > 3 forbidden, |10-5|=5 > 3 forbidden
   expect_equal(result[1, 1], 1)  # OK
@@ -135,7 +135,7 @@ test_that("apply_all_constraints combines all constraints", {
   # max_distance = 4 forbids the 5 at [2,1]
   # caliper on x = 3 forbids pairs where diff > 3
   result <- couplr:::apply_all_constraints(
-    cost, left, right, vars = "x",
+    cost, left, right,
     max_distance = 4, calipers = list(x = 3)
   )
 
@@ -152,7 +152,7 @@ test_that("apply_all_constraints with forbidden pairs", {
 
   forbidden <- matrix(c(1, 1), ncol = 2)
   result <- couplr:::apply_all_constraints(
-    cost, left, right, vars = "x",
+    cost, left, right,
     forbidden = forbidden
   )
 

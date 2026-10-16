@@ -215,98 +215,68 @@ sensitivity_analysis <- function(result,
   list(p_upper = p_upper, p_lower = p_lower)
 }
 
-#' Print method for sensitivity analysis
-#'
-#' @param x A sensitivity_analysis object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return Invisibly returns the input object `x`.
+#' @rdname sensitivity_analysis
+#' @param x A `sensitivity_analysis` object.
+#' @param ... Ignored.
 #' @export
-#' @method print sensitivity_analysis
 print.sensitivity_analysis <- function(x, ...) {
-  cat("Rosenbaum Sensitivity Analysis\n")
-  cat("==============================\n\n")
-
-  cat("Matched pairs:", x$n_pairs, "\n")
-  cat("Alternative:", x$alternative, "\n")
-  cat("Test statistic (T+):", sprintf("%.1f", x$t_observed), "\n\n")
-
-  cat("Gamma    p (upper bound)\n")
-  cat("-----    ---------------\n")
-  for (i in seq_len(nrow(x$results))) {
-    sig <- if (x$results$p_upper[i] < 0.05) " *" else ""
-    cat(sprintf("%-8.2f %.4f%s\n",
-                x$results$gamma[i], x$results$p_upper[i], sig))
-  }
-
-  cat("\n* significant at alpha = 0.05\n")
-
-  if (is.finite(x$critical_gamma)) {
-    below <- x$results$gamma[x$results$gamma < x$critical_gamma]
-    if (length(below) > 0) {
-      cat(sprintf(
-        "\nInsensitive to hidden bias up to Gamma = %.2f\n", max(below)
-      ))
-    } else {
-      cat("\nThe effect is already non-significant at the smallest Gamma tested\n")
-    }
-    cat(sprintf(
-      "To explain away the effect, hidden bias would need Gamma >= %.2f\n",
-      x$critical_gamma
-    ))
-  } else {
-    cat("\nResult is insensitive to bias at all tested Gamma values\n")
-  }
-
+  cat(sprintf("Rosenbaum sensitivity analysis (alternative \"%s\")\n",
+              x$alternative))
+  cat(sprintf("  %d pairs with a nonzero outcome difference\n", x$n_pairs))
+  p1 <- x$results$p_upper[x$results$gamma == 1]
+  if (length(p1)) cat(sprintf("  p-value without hidden bias (Gamma = 1): %.4g\n", p1))
+  cat("  ", .sensitivity_verdict(x), "\n", sep = "")
   invisible(x)
 }
 
-#' Summary method for sensitivity analysis
-#'
-#' @param object A sensitivity_analysis object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return A list containing summary statistics (invisibly)
+# One sentence on how far the conclusion survives hidden bias.
+.sensitivity_verdict <- function(x, alpha = 0.05) {
+  tested <- range(x$results$gamma)
+  if (!is.finite(x$critical_gamma)) {
+    return(sprintf("Significant at alpha = %.2f for every Gamma up to %.2f.",
+                   alpha, tested[2]))
+  }
+  below <- x$results$gamma[x$results$gamma < x$critical_gamma]
+  if (!length(below)) {
+    return(sprintf("Not significant at alpha = %.2f at the smallest Gamma tested (%.2f).",
+                   alpha, tested[1]))
+  }
+  sprintf("Significant at alpha = %.2f up to Gamma = %.2f, not at Gamma = %.2f.",
+          alpha, max(below), x$critical_gamma)
+}
+
+#' @rdname sensitivity_analysis
+#' @param object A `sensitivity_analysis` object.
 #' @export
-#' @method summary sensitivity_analysis
 summary.sensitivity_analysis <- function(object, ...) {
-  out <- list(
-    n_pairs = object$n_pairs,
-    t_observed = object$t_observed,
-    critical_gamma = object$critical_gamma,
-    alternative = object$alternative,
-    p_at_gamma_1 = object$results$p_upper[object$results$gamma == 1],
-    max_gamma_tested = max(object$results$gamma)
-  )
-  class(out) <- "summary.sensitivity_analysis"
-  out
+  class(object) <- c("summary.sensitivity_analysis", class(object))
+  object
 }
 
 #' @export
 print.summary.sensitivity_analysis <- function(x, ...) {
-  cat("Sensitivity Analysis Summary\n")
-  cat("============================\n\n")
-  cat("Matched pairs:", x$n_pairs, "\n")
-  cat("Alternative:", x$alternative, "\n")
-  if (length(x$p_at_gamma_1) > 0) {
-    cat("p-value (no hidden bias):", sprintf("%.4f", x$p_at_gamma_1), "\n")
-  }
-  cat("Critical Gamma:", if (is.finite(x$critical_gamma)) {
-    sprintf("%.2f", x$critical_gamma)
-  } else {
-    paste0("> ", x$max_gamma_tested)
-  }, "\n")
-
+  print.sensitivity_analysis(x)
+  cat(sprintf("  Signed-rank statistic T+ = %.1f\n", x$t_observed))
+  cat("\n")
+  tab <- as.data.frame(x$results[, c("gamma", "p_lower", "p_upper")])
+  names(tab) <- c("Gamma", "p (lower bound)", "p (upper bound)")
+  print(tab, row.names = FALSE, digits = 4)
   invisible(x)
 }
 
-#' Plot method for sensitivity analysis (base graphics)
-#'
+#' @rdname sensitivity_analysis
+#' @param row.names,optional Ignored.
+#' @export
+as.data.frame.sensitivity_analysis <- function(x, row.names = NULL,
+                                               optional = FALSE, ...) {
+  as.data.frame(x$results)
+}
+
+#' @rdname sensitivity_analysis
 #' @param x A sensitivity_analysis object
 #' @param alpha Significance level (default: 0.05)
 #' @param ... Additional arguments passed to plot
 #'
-#' @return The sensitivity_analysis object (invisibly)
 #' @export
 #' @method plot sensitivity_analysis
 plot.sensitivity_analysis <- function(x, alpha = 0.05, ...) {

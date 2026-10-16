@@ -23,17 +23,13 @@
 ## `bench_scaling_couplr_only.R` to cover couplr at the large sizes and
 ## `bench_scaling_alternatives.R` for the other two.
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
-## pkgbuild's default profile compiles the package at -O0, which would time an
-## unoptimised couplr against optimised installs of the comparison packages.
-options(pkg.build_extra_flags = FALSE)
 
 for (p in c("MatchIt", "optmatch", "RhpcBLASctl")) {
   if (!requireNamespace(p, quietly = TRUE)) {
@@ -45,7 +41,7 @@ suppressPackageStartupMessages({
   library(MatchIt)
   library(optmatch)
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 ## Single-core wall-clock: pin BLAS / OpenMP to one thread.
@@ -59,7 +55,6 @@ Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
 ## not "what optmatch refuses to attempt". Flagged in the paper.
 options(optmatch_max_problem_size = Inf)
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "scaling-results.csv")
 runs_csv    <- file.path(results_dir, "scaling-runs.csv")
 
@@ -84,7 +79,7 @@ if (QUICK) {
 TIMEOUT_S <- 600  # per run
 
 ## ---- synthetic data: 8 covariates, treated:control = 1:2 ----
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
 ## ---- per-package callables ----
 ## memory_mode is pinned to "dense" so all three packages are timed on the same
@@ -93,21 +88,48 @@ source(file.path(repo_root, "paper", "bench", "bench_common.R"))
 ## much RAM happens to be free, which would make the timing depend on machine
 ## state rather than on problem size. The lazy path is timed separately by
 ## bench_scaling_lazy.R.
-couplr_call <- function(d) {
+##
+## Every callable takes `ctx`: the data (`ctx$d`), and, for the arms that time
+## one part of a certified solve, the distance matrix (`ctx$cost`) and an
+## assignment with its potentials (`ctx$duals`), both built outside the timing.
+##
+## `couplr` is the default call, which does not certify a dense matching;
+## `couplr_certified` is the same call with `certify = TRUE`, so the difference
+## is the cost of the certificate. The three `lap_*` arms split that cost on
+## the same matrix: `lap_solve` is the Jonker-Volgenant solve alone,
+## `lap_duals` the solve that also returns the potentials, and `lap_verify`
+## the check of the matching against those potentials, which calls no solver.
+couplr_call <- function(ctx, certify = NULL) {
+  d <- ctx$d
   tr <- subset(d, treat == 1); ct <- subset(d, treat == 0)
   match_couples(left = tr, right = ct, vars = covars, distance = "mahalanobis",
-                memory_mode = "dense")
+                memory_mode = "dense", certify = certify)
 }
-matchit_call <- function(d) {
-  matchit(form, data = d, method = "optimal",
+matchit_call <- function(ctx) {
+  matchit(form, data = ctx$d, method = "optimal",
           distance = "mahalanobis", ratio = 1)
 }
-optmatch_call <- function(d) {
-  pairmatch(form, data = d, controls = 1)
+optmatch_call <- function(ctx) {
+  pairmatch(form, data = ctx$d, controls = 1)
 }
 
-callables <- list(couplr = couplr_call, optmatch = optmatch_call,
-                  MatchIt = matchit_call)
+callables <- list(
+  couplr           = couplr_call,
+  couplr_certified = function(ctx) couplr_call(ctx, certify = TRUE),
+  optmatch         = optmatch_call,
+  MatchIt          = matchit_call,
+  lap_solve        = function(ctx) assignment(ctx$cost, method = "jv"),
+  lap_duals        = function(ctx) assignment_duals(ctx$cost),
+  lap_verify       = function(ctx) verify_assignment(ctx$duals, ctx$cost)
+)
+cost_arms  <- c("lap_solve", "lap_duals", "lap_verify")
+
+## The matrix couplr's dense mode solves, in the treated-by-control orientation.
+distance_matrix <- function(d) {
+  as.matrix(compute_distances(subset(d, treat == 1), subset(d, treat == 0),
+                              vars = covars, distance = "mahalanobis",
+                              memory_mode = "dense"))
+}
 
 ## ---- resume-safe accumulators ----------------------------------------------
 runs <- if (file.exists(runs_csv)) {
@@ -120,37 +142,6 @@ have_run <- function(n_total, pkg, instance) {
   nrow(runs) > 0 &&
     any(runs$n_total == n_total & runs$package == pkg &
           runs$instance == instance)
-}
-
-## The published table is the summary, and it is derived from the raw rows
-## rather than accumulated alongside them, so the two cannot drift apart.
-summarise_runs <- function(runs) {
-  if (!nrow(runs)) return(data.frame())
-  do.call(rbind, lapply(split(runs, list(runs$n_total, runs$package),
-                              drop = TRUE), function(g) {
-    ok <- g[g$status == "ok", ]
-    ## One number per instance -- the fastest of its repetitions -- so the
-    ## quartiles below are taken over instances and not over repetitions.
-    per_instance <- if (nrow(ok)) {
-      vapply(split(ok$seconds, ok$instance), min, numeric(1))
-    } else {
-      numeric(0)
-    }
-    q <- if (length(per_instance)) {
-      stats::quantile(per_instance, c(0.25, 0.5, 0.75), names = FALSE)
-    } else {
-      rep(NA_real_, 3)
-    }
-    data.frame(
-      n_total = g$n_total[1], package = g$package[1],
-      instances = length(per_instance), runs = nrow(ok),
-      median_s = round(q[2], 4), q25_s = round(q[1], 4), q75_s = round(q[3], 4),
-      min_s = if (length(per_instance)) round(min(per_instance), 4) else NA_real_,
-      max_s = if (length(per_instance)) round(max(per_instance), 4) else NA_real_,
-      status = if (nrow(ok) == nrow(g)) "ok" else g$status[g$status != "ok"][1],
-      stringsAsFactors = FALSE
-    )
-  }))
 }
 
 write_partial <- function() {
@@ -176,17 +167,22 @@ for (i in seq_len(nrow(grid))) {
       cat(sprintf("  i%d %-8s : already recorded, skipping\n", instance, pkg))
     }
     if (!length(pkgs)) next
-    d <- make_data(n_total, seed = seed)
+    ctx <- list(d = make_data(n_total, seed = seed))
+    if (any(pkgs %in% cost_arms)) {
+      ctx$cost  <- distance_matrix(ctx$d)
+      ctx$duals <- assignment_duals(ctx$cost)
+    }
 
     ## Warm-up at small n only: at large n it would cost a second full solve.
     if (n_total <= 2000) {
-      for (pkg in pkgs) invisible(try(callables[[pkg]](d), silent = TRUE))
+      for (pkg in pkgs) invisible(try(callables[[pkg]](ctx), silent = TRUE))
     }
     arms <- setNames(lapply(pkgs, function(pkg) {
       fn <- callables[[pkg]]
-      function() { fn(d); NULL }
+      function() { fn(ctx); NULL }
     }), pkgs)
     timed <- time_rounds(arms, reps, TIMEOUT_S)$runs
+    ctx$cost <- ctx$duals <- NULL
 
     for (pkg in pkgs) {
       tr <- timed[timed$arm == pkg, ]

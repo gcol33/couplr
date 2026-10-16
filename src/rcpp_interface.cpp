@@ -39,6 +39,10 @@ Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix);
 // =======================
 Rcpp::List prepare_cost_matrix_impl(NumericMatrix cost, bool maximize);
 Rcpp::List probe_cost_matrix_impl(SEXP cost);
+bool cost_any_admissible_impl(SEXP cost, double big);
+Rcpp::List cost_margins_impl(SEXP cost, double big);
+Rcpp::List cost_summary_impl(SEXP cost, double big, double zero_tol,
+                             Rcpp::NumericVector probs);
 Rcpp::List solve_bruteforce_impl(NumericMatrix cost, bool maximize);
 Rcpp::List solve_auction_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                    SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
@@ -104,25 +108,22 @@ Rcpp::List pricing_session_seed_impl(SEXP session, double width);
 Rcpp::List pricing_session_price_exact_impl(SEXP session, Rcpp::NumericMatrix u,
                                             Rcpp::NumericMatrix v, double offset,
                                             double keep_per_row);
-Rcpp::List flow_lagrangian_step_impl(int n_nodes, Rcpp::NumericVector supply,
-                                     Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
-                                     Rcpp::NumericVector lower, Rcpp::NumericVector upper,
-                                     Rcpp::NumericVector cost, Rcpp::NumericVector flow,
-                                     Rcpp::NumericVector potential,
-                                     Rcpp::IntegerVector pair_arc,
-                                     Rcpp::IntegerVector pair_left,
-                                     Rcpp::IntegerVector pair_right,
-                                     Rcpp::IntegerVector left_node,
-                                     Rcpp::IntegerVector right_node,
-                                     Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
-                                     Rcpp::NumericVector b, Rcpp::NumericVector lambda);
+Rcpp::List flow_exact_read_impl(int n_nodes, Rcpp::NumericVector supply,
+                                Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                                Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                                Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                                Rcpp::NumericVector potential,
+                                Rcpp::IntegerVector pair_arc,
+                                Rcpp::IntegerVector pair_left,
+                                Rcpp::IntegerVector pair_right,
+                                Rcpp::IntegerVector left_node,
+                                Rcpp::IntegerVector right_node);
 Rcpp::NumericVector exact_dot_impl(Rcpp::NumericVector x, Rcpp::NumericVector y);
 int exact_compare_impl(Rcpp::NumericVector e, Rcpp::NumericVector f);
 double exact_round_impl(Rcpp::NumericVector e, std::string direction);
-double exact_ceil_quotient_impl(Rcpp::NumericVector e, double add, double divisor);
-Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
-                                  Rcpp::NumericVector b, Rcpp::IntegerVector left,
-                                  Rcpp::IntegerVector right, Rcpp::NumericVector lambda);
+Rcpp::IntegerVector exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                           Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                           Rcpp::IntegerVector right);
 Rcpp::NumericVector pricing_session_cost_impl(SEXP session, Rcpp::IntegerVector i,
                                               Rcpp::IntegerVector j);
 Rcpp::List pricing_session_range_impl(SEXP session);
@@ -215,6 +216,24 @@ Rcpp::List lap_probe_cost_matrix(SEXP cost) {
   return probe_cost_matrix_impl(cost);
 }
 
+// The admissibility questions the matching code asks of a dense cost matrix,
+// answered in place for the same reason; `big` is R's BIG_COST.
+// [[Rcpp::export]]
+bool lap_cost_any_admissible(SEXP cost, double big) {
+  return cost_any_admissible_impl(cost, big);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_cost_margins(SEXP cost, double big) {
+  return cost_margins_impl(cost, big);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_cost_summary(SEXP cost, double big, double zero_tol,
+                            Rcpp::NumericVector probs) {
+  return cost_summary_impl(cost, big, zero_tol, probs);
+}
+
 // [[Rcpp::export]]
 Rcpp::List lap_solve_bruteforce(NumericMatrix cost, bool maximize) {
   return solve_bruteforce_impl(cost, maximize);
@@ -242,6 +261,14 @@ Rcpp::NumericVector cpp_lazy_pair_distances(Rcpp::NumericMatrix left_mat,
                                             Rcpp::IntegerVector rows,
                                             Rcpp::IntegerVector cols) {
   return lazy_pair_distances_impl(left_mat, right_mat, metric, inv_cov, rows, cols);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix cpp_lazy_dense_matrix(Rcpp::NumericMatrix left_mat,
+                                          Rcpp::NumericMatrix right_mat,
+                                          SEXP metric,
+                                          Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
+  return lazy_dense_matrix_impl(left_mat, right_mat, metric, inv_cov);
 }
 
 // [[Rcpp::export]]
@@ -498,21 +525,19 @@ Rcpp::List lap_pricing_price_exact(SEXP session, Rcpp::NumericMatrix u,
 }
 
 // [[Rcpp::export]]
-Rcpp::List lap_flow_lagrangian_step(int n_nodes, Rcpp::NumericVector supply,
-                                    Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
-                                    Rcpp::NumericVector lower, Rcpp::NumericVector upper,
-                                    Rcpp::NumericVector cost, Rcpp::NumericVector flow,
-                                    Rcpp::NumericVector potential,
-                                    Rcpp::IntegerVector pair_arc,
-                                    Rcpp::IntegerVector pair_left,
-                                    Rcpp::IntegerVector pair_right,
-                                    Rcpp::IntegerVector left_node,
-                                    Rcpp::IntegerVector right_node,
-                                    Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
-                                    Rcpp::NumericVector b, Rcpp::NumericVector lambda) {
-  return flow_lagrangian_step_impl(n_nodes, supply, tail, head, lower, upper, cost,
-                                   flow, potential, pair_arc, pair_left, pair_right,
-                                   left_node, right_node, u, w, b, lambda);
+Rcpp::List lap_flow_exact_read(int n_nodes, Rcpp::NumericVector supply,
+                                Rcpp::IntegerVector tail, Rcpp::IntegerVector head,
+                                Rcpp::NumericVector lower, Rcpp::NumericVector upper,
+                                Rcpp::NumericVector cost, Rcpp::NumericVector flow,
+                                Rcpp::NumericVector potential,
+                                Rcpp::IntegerVector pair_arc,
+                                Rcpp::IntegerVector pair_left,
+                                Rcpp::IntegerVector pair_right,
+                                Rcpp::IntegerVector left_node,
+                                Rcpp::IntegerVector right_node) {
+  return flow_exact_read_impl(n_nodes, supply, tail, head, lower, upper, cost,
+                              flow, potential, pair_arc, pair_left, pair_right,
+                              left_node, right_node);
 }
 
 // [[Rcpp::export]]
@@ -531,15 +556,53 @@ double lap_exact_round(Rcpp::NumericVector e, std::string direction) {
 }
 
 // [[Rcpp::export]]
-double lap_exact_ceil_quotient(Rcpp::NumericVector e, double add, double divisor) {
-  return exact_ceil_quotient_impl(e, add, divisor);
+Rcpp::IntegerVector lap_exact_moment_rows(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                          Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                          Rcpp::IntegerVector right) {
+  return exact_moment_rows_impl(u, w, b, left, right);
+}
+
+Rcpp::List select_solve_impl(Rcpp::NumericVector c, Rcpp::NumericVector lower,
+                             Rcpp::NumericVector upper, Rcpp::LogicalVector integer,
+                             Rcpp::List rows, int theta, bool integral_objective, bool perturb,
+                             Rcpp::Nullable<Rcpp::List> incumbent,
+                             Rcpp::Nullable<Rcpp::Function> oracle,
+                             double node_limit, double time_limit,
+                             Rcpp::Nullable<Rcpp::Function> should_stop,
+                             Rcpp::Nullable<Rcpp::Function> separator);
+
+// [[Rcpp::export]]
+Rcpp::List lap_select_solve(Rcpp::NumericVector c, Rcpp::NumericVector lower,
+                            Rcpp::NumericVector upper, Rcpp::LogicalVector integer,
+                            Rcpp::List rows, int theta, bool integral_objective, bool perturb,
+                            Rcpp::Nullable<Rcpp::List> incumbent,
+                            Rcpp::Nullable<Rcpp::Function> oracle,
+                            double node_limit, double time_limit,
+                            Rcpp::Nullable<Rcpp::Function> should_stop,
+                            Rcpp::Nullable<Rcpp::Function> separator) {
+  return select_solve_impl(c, lower, upper, integer, rows, theta, integral_objective, perturb,
+                           incumbent, oracle, node_limit, time_limit, should_stop, separator);
+}
+
+Rcpp::List select_lift_dense_impl(Rcpp::NumericMatrix cost, double shift,
+                                  Rcpp::LogicalVector in_left, Rcpp::LogicalVector in_right,
+                                  Rcpp::NumericMatrix u, Rcpp::NumericMatrix v);
+Rcpp::List pricing_session_lift_impl(SEXP session, double shift,
+                                     Rcpp::LogicalVector in_left, Rcpp::LogicalVector in_right,
+                                     Rcpp::NumericMatrix u, Rcpp::NumericMatrix v);
+
+// [[Rcpp::export]]
+Rcpp::List lap_select_lift_dense(Rcpp::NumericMatrix cost, double shift,
+                                 Rcpp::LogicalVector in_left, Rcpp::LogicalVector in_right,
+                                 Rcpp::NumericMatrix u, Rcpp::NumericMatrix v) {
+  return select_lift_dense_impl(cost, shift, in_left, in_right, u, v);
 }
 
 // [[Rcpp::export]]
-Rcpp::List lap_exact_moment_rows(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
-                                 Rcpp::NumericVector b, Rcpp::IntegerVector left,
-                                 Rcpp::IntegerVector right, Rcpp::NumericVector lambda) {
-  return exact_moment_rows_impl(u, w, b, left, right, lambda);
+Rcpp::List lap_pricing_lift(SEXP session, double shift,
+                            Rcpp::LogicalVector in_left, Rcpp::LogicalVector in_right,
+                            Rcpp::NumericMatrix u, Rcpp::NumericMatrix v) {
+  return pricing_session_lift_impl(session, shift, in_left, in_right, u, v);
 }
 
 // [[Rcpp::export]]

@@ -406,7 +406,7 @@ cat("  Max |std diff|:", round(balance_dm$overall$max_abs_std_diff, 4), "\n")
 |---------|-------------|--------|
 | **Objective** | Satisfy balance constraints | Minimize total distance (`match_couples()`), or maximize matched cardinality under balance constraints (`cardinality_match()`) |
 | **Balance** | Hard constraint | Achieved via optimization, or stated as a hard constraint |
-| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.), min-cost flow, Lagrangian branch and bound |
+| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.), min-cost flow, branch and bound over unit selections |
 | **Feasibility** | May be infeasible | Always finds a solution |
 | **Fine-grain control** | Moment constraints, cardinality | Caliper, blocking, fine and refined balance, moment constraints |
 | **Speed** | Slower (MIP) | Faster (LAP) |

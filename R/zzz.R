@@ -44,9 +44,9 @@ prepare_cost_matrix <- function(cost, maximize = FALSE) {
 # Package Hooks
 # ==============================================================================
 
-# .onLoad <- function(libname, pkgname) {
-#   # Package initialization code here if needed
-# }
+.onLoad <- function(libname, pkgname) {
+  .register_builtin_lap_solvers()
+}
 
 .onUnload <- function(libpath) {
   library.dynam.unload("couplr", libpath)

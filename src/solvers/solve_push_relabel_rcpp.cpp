@@ -14,7 +14,7 @@ using namespace Rcpp;
 Rcpp::List solve_push_relabel_impl(NumericMatrix cost, bool maximize) {
   try {
     lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
-    lap::LapResult result = lap::solve_push_relabel(cm, maximize);
+    lap::LapResult result = lap::solve_push_relabel(std::move(cm), maximize);
     return lap_result_to_rcpp(result, cost);
   } catch (const lap::LapException& e) {
     Rcpp::stop(e.what());

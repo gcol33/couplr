@@ -152,7 +152,6 @@ test_that("cobalt bal.tab methods require cobalt package", {
 
   result <- match_couples(left, right, vars = "age")
 
-  # If cobalt is installed, this should work
-  bt <- bal.tab.matching_result(result, left, right)
+  bt <- bal.tab.couplr_result(result, left, right)
   expect_true(!is.null(bt))
 })

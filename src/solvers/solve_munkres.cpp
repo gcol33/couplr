@@ -14,7 +14,7 @@
 
 namespace lap {
 
-LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
+LapResult solve_munkres(CostMatrix cost, bool maximize) {
     const int n = static_cast<int>(cost.nrow);
     const int m = static_cast<int>(cost.ncol);
 
@@ -23,7 +23,7 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
     }
     lap::require_rows_fit_cols(n, m);
 
-    CostMatrix work = prepare_for_solve(cost, maximize);
+    CostMatrix work = prepare_for_solve(std::move(cost), maximize);
     ensure_each_row_has_option(work.mask, n, m);
 
     const double INF = std::numeric_limits<double>::infinity();
@@ -240,21 +240,7 @@ LapResult solve_munkres(const CostMatrix& cost, bool maximize) {
         LAP_THROW_INFEASIBLE("Could not find full matching");
     }
 
-    double total = 0.0;
-    for (int i = 0; i < n; ++i) {
-        int j = assignment[i];
-        if (j < 0) {
-            LAP_THROW_INFEASIBLE("Incomplete matching");
-        }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
-    }
+    const double total = priced_total(work, maximize, assignment);
 
     return LapResult(std::move(assignment), total, "optimal");
 }

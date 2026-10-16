@@ -88,7 +88,10 @@ test_that("summary.sensitivity_analysis works", {
   expect_true(!is.null(s$critical_gamma))
 
   out <- capture.output(print(s))
-  expect_true(any(grepl("Sensitivity", out)))
+  expect_true(any(grepl("Rosenbaum sensitivity", out)))
+  expect_true(any(grepl("p \\(upper bound\\)", out)))
+  expect_lt(length(capture.output(print(sens))), length(out))
+  expect_equal(nrow(as.data.frame(sens)), nrow(sens$results))
 })
 
 test_that("plot.sensitivity_analysis works", {

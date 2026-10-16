@@ -125,7 +125,8 @@ test_that("subclass_match print method works", {
   result <- subclass_match(
     treatment ~ x, data, treatment = "treatment"
   )
-  expect_output(print(result), "Subclassification Result")
+  expect_output(print(result), "subclassification matching")
+  expect_output(print(summary(result)), "Strata")
 })
 
 

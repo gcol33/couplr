@@ -59,12 +59,12 @@ test_that("estimate_dense_solve_mb() covers the peak a dense solve was measured 
   # the solve and not the matrix. These are the shapes and peaks the paper's
   # memory benchmark measured: one fresh R session per arm, peak resident set
   # read from outside against an idle session that loaded the same packages.
-  # Estimating the matrix alone put the 20,000-unit figure at 2,845 MB against
-  # a solve that peaked at 6,256 MB, which is the under-warning this guards.
+  # The raw matrix at 20,000 units is 711 MB against a solve that peaked at
+  # 1,528 MB, so an estimate of the matrix alone would under-warn.
   measured <- data.frame(
-    n_left   = c(1667,  3333,  6667),
-    n_right  = c(3333,  6667, 13333),
-    peak_mb  = c(464.3, 1280.2, 6255.7)
+    n_left   = c(667,  1667,  3333,  6667),
+    n_right  = c(1333, 3333,  6667, 13333),
+    peak_mb  = c(21.3, 104.1, 388.0, 1527.5)
   )
   for (i in seq_len(nrow(measured))) {
     expect_gte(
@@ -84,15 +84,15 @@ test_that("resolve_memory_mode() reads the solve estimate, not the matrix", {
     .package = "couplr"
   )
   # The switch fires when the estimate passes half the available RAM, which the
-  # mock fixes at 500 MB. At 3000 x 4000 the matrix estimate is 384 MB and the
-  # solve estimate 1,152 MB, so the threshold falls between them: a guard reading
+  # mock fixes at 500 MB. At 4000 x 5000 the matrix estimate is 320 MB and the
+  # solve estimate 640 MB, so the threshold falls between them: a guard reading
   # the matrix leaves this dense, and one reading the solve moves it to lazy.
   limit_mb <- 0.5 * 1000
-  expect_lt(estimate_dense_matrix_mb(3000, 4000), limit_mb)
-  expect_gt(estimate_dense_solve_mb(3000, 4000), limit_mb)
+  expect_lt(estimate_dense_matrix_mb(4000, 5000), limit_mb)
+  expect_gt(estimate_dense_solve_mb(4000, 5000), limit_mb)
 
   expect_warning(
-    mode <- resolve_memory_mode(3000, 4000, "auto", solver_supports_lazy = TRUE),
+    mode <- resolve_memory_mode(4000, 5000, "auto", solver_supports_lazy = TRUE),
     "Switching to memory_mode"
   )
   expect_equal(mode, "lazy")

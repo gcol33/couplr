@@ -53,22 +53,21 @@ test_that("print.lap_solve_kbest_result works", {
 # matching_result print tests
 # ------------------------------------------------------------------------------
 
-test_that("print.matching_result works for optimal matching", {
+test_that("print.couplr_result works for optimal matching", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
   result <- match_couples(left, right, vars = "x")
 
-  expect_output(print(result), "Matching Result")
-  expect_output(print(result), "Matched pairs")
+  expect_output(print(result), "one-to-one matching, optimal")
+  expect_output(print(result), "Pairs: *5")
 })
 
-test_that("print.matching_result works for greedy matching", {
+test_that("print.couplr_result works for greedy matching", {
   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
   result <- match_couples(left, right, vars = "x", method = "greedy")
 
-  expect_output(print(result), "Matching Result")
-  expect_output(print(result), "greedy")
+  expect_output(print(result), "greedy one-to-one matching")
 })
 
 # ------------------------------------------------------------------------------
@@ -152,9 +151,8 @@ test_that("print.balance_diagnostics works", {
   result <- match_couples(left, right, vars = c("age", "income"))
   balance <- balance_diagnostics(result, left, right, vars = c("age", "income"))
 
-  expect_output(print(balance), "Balance Diagnostics")
-  expect_output(print(balance), "Matched pairs")
-  expect_output(print(balance), "Overall Balance")
+  expect_output(print(balance), "Balance of 20 matched pairs")
+  expect_output(print(balance), "income")
 })
 
 test_that("print.balance_diagnostics shows unmatched info", {
@@ -171,7 +169,7 @@ test_that("print.balance_diagnostics shows unmatched info", {
   result <- match_couples(left, right, vars = "x")
   balance <- balance_diagnostics(result, left, right, vars = "x")
 
-  expect_output(print(balance), "Unmatched")
+  expect_output(print(balance), "10 of 20 right units")
 })
 
 # ------------------------------------------------------------------------------

@@ -4,12 +4,13 @@
 \alias{apply_calipers}
 \title{Apply caliper constraints}
 \usage{
-apply_calipers(cost_matrix, left, right, calipers, vars)
+apply_calipers(cost_matrix, left, right, calipers)
 }
 \value{
 Modified cost matrix with forbidden pairs marked.
 }
 \description{
-Calipers impose per-variable maximum absolute differences.
+A caliper is a maximum absolute difference on one column of both data
+frames: a matching variable, or another one such as a propensity score.
 }
 \keyword{internal}

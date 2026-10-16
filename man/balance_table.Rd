@@ -2,7 +2,7 @@
 % Please edit documentation in R/matching_diagnostics.R
 \name{balance_table}
 \alias{balance_table}
-\title{Create Balance Table}
+\title{Balance Table of a Balance Diagnostics Object}
 \usage{
 balance_table(balance, digits = 3)
 }

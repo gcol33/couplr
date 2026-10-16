@@ -119,7 +119,8 @@ test_that("match_couples return_diagnostics works", {
   # needs to label the design.
   expect_setequal(names(result_nodiag$info),
                   c("method", "n_matched", "total_distance",
-                    "estimand", "focal", "focal_discarded"))
+                    "estimand", "focal", "focal_discarded",
+                    "n_left", "n_right", "distance_metric"))
 })
 
 test_that("match_couples require_full_matching errors on unmatched", {
@@ -268,7 +269,7 @@ test_that("match_couples with distance_object respects max_distance", {
 # Print method tests
 # ------------------------------------------------------------------------------
 
-test_that("print.matching_result works", {
+test_that("print.couplr_result works", {
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = 1.5:5.5)
 
@@ -276,7 +277,7 @@ test_that("print.matching_result works", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("Matching Result", output)))
+  expect_true(any(grepl("couplr result", output)))
 })
 
 # ------------------------------------------------------------------------------
@@ -512,6 +513,7 @@ test_that("greedy matching with return_diagnostics = FALSE", {
   # Should have minimal info
   expect_setequal(names(result$info),
                   c("method", "strategy", "n_matched", "total_distance",
-                    "estimand", "focal", "focal_discarded"))
+                    "estimand", "focal", "focal_discarded",
+                    "n_left", "n_right", "distance_metric"))
   expect_true("n_matched" %in% names(result$info))
 })

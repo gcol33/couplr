@@ -2,7 +2,7 @@
 # Ecosystem Interoperability - cobalt, MatchIt, marginaleffects
 # ==============================================================================
 
-#' Convert couplr Result to matchit Object
+#' Convert a Matching Result to a matchit Object
 #'
 #' Constructs a \code{matchit}-class S3 object from a couplr result, enabling
 #' use with any function that accepts \pkg{MatchIt} objects (e.g.,
@@ -37,13 +37,14 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
-#' left <- data.frame(id = 1:5, age = c(25, 35, 45, 55, 65))
-#' right <- data.frame(id = 6:15, age = runif(10, 20, 70))
-#' result <- match_couples(left, right, vars = "age")
-#' mi <- as_matchit(result, left, right)
-#' # Now use with cobalt:
-#' cobalt::bal.tab(mi)
+#' if (requireNamespace("MatchIt", quietly = TRUE)) {
+#'   set.seed(1)
+#'   left <- data.frame(id = 1:5, age = c(25, 35, 45, 55, 65))
+#'   right <- data.frame(id = 6:15, age = runif(10, 20, 70))
+#'   result <- match_couples(left, right, vars = "age")
+#'   mi <- as_matchit(result, left, right)
+#'   mi
+#'   if (requireNamespace("cobalt", quietly = TRUE)) cobalt::bal.tab(mi)
 #' }
 #'
 #' @export
@@ -224,9 +225,9 @@ as_matchit <- function(result, left, right,
 # cobalt bal.tab methods
 # ==============================================================================
 
-#' Balance Table for Matching Results (cobalt integration)
+#' Balance Tables from cobalt for Matching Results
 #'
-#' S3 method enabling \code{cobalt::bal.tab()} on couplr result objects.
+#' S3 methods enabling \code{cobalt::bal.tab()} on couplr result objects.
 #' Requires the \pkg{cobalt} package to be installed.
 #'
 #' @param x A couplr result object
@@ -244,7 +245,7 @@ as_matchit <- function(result, left, right,
 #' \code{bal.tab.matchit()} method. The \pkg{cobalt} package must be
 #' installed but is not required for couplr to function.
 #'
-#' @name bal.tab.matching_result
+#' @name bal.tab.couplr_result
 NULL
 
 # One conversion for the three pair-shaped result classes. `...` carries
@@ -265,25 +266,13 @@ NULL
   do.call(cobalt::bal.tab, c(list(mi), to_cobalt))
 }
 
-#' @rdname bal.tab.matching_result
+#' @rdname bal.tab.couplr_result
 #' @exportS3Method cobalt::bal.tab
-bal.tab.matching_result <- function(x, left, right, ...) {
+bal.tab.couplr_result <- function(x, left, right, ...) {
   .bal_tab_via_matchit(x, left, right, ...)
 }
 
-#' @rdname bal.tab.matching_result
-#' @exportS3Method cobalt::bal.tab
-bal.tab.full_matching_result <- function(x, left, right, ...) {
-  .bal_tab_via_matchit(x, left, right, ...)
-}
-
-#' @rdname bal.tab.matching_result
-#' @exportS3Method cobalt::bal.tab
-bal.tab.cem_result <- function(x, left, right, ...) {
-  .bal_tab_via_matchit(x, left, right, ...)
-}
-
-#' @rdname bal.tab.matching_result
+#' @rdname bal.tab.couplr_result
 #' @exportS3Method cobalt::bal.tab
 bal.tab.subclass_result <- function(x, data = NULL, ...) {
   if (!requireNamespace("cobalt", quietly = TRUE)) {

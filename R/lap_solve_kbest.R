@@ -1,4 +1,4 @@
-#' Find k-best optimal assignments
+#' Find the k Best Assignments
 #'
 #' Returns the top k optimal (or near-optimal) assignments using 'Murty' algorithm.
 #' Useful for exploring alternative optimal solutions or finding robust assignments.
@@ -147,10 +147,9 @@ lap_solve_kbest_df <- function(df, k, source_col, target_col, cost_col,
   out
 }
 
-#' Print method for k-best assignment results
+#' @rdname lap_solve_kbest
 #' @param x A `lap_solve_kbest_result`.
 #' @param ... Additional arguments passed to `print()`. Ignored.
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print lap_solve_kbest_result
 print.lap_solve_kbest_result <- function(x, ...) {
@@ -162,49 +161,50 @@ print.lap_solve_kbest_result <- function(x, ...) {
     return(invisible(x))
   }
   
-  n_solutions <- length(unique(x$solution_id))
-  cat("Number of solutions:", n_solutions, "\n")
-  
-  # Get summary of total costs
-  solution_costs <- x |>
-    dplyr::group_by(solution_id, rank) |>
-    dplyr::summarise(total_cost = dplyr::first(total_cost), .groups = "drop") |>
-    dplyr::arrange(rank)
-  
-  cat("\nSolution costs:\n")
-  for (i in seq_len(min(5, nrow(solution_costs)))) {
-    cat(sprintf("  Rank %d: %.4f\n", 
-                solution_costs$rank[i], 
-                solution_costs$total_cost[i]))
+  # A subset of the columns keeps the class, so the header reports only what
+  # the remaining columns hold.
+  if ("solution_id" %in% names(x)) {
+    cat("Number of solutions:", length(unique(x$solution_id)), "\n")
   }
-  
-  if (nrow(solution_costs) > 5) {
-    cat(sprintf("  ... and %d more solutions\n", nrow(solution_costs) - 5))
+
+  if (all(c("solution_id", "rank", "total_cost") %in% names(x))) {
+    solution_costs <- x |>
+      dplyr::group_by(solution_id, rank) |>
+      dplyr::summarise(total_cost = dplyr::first(total_cost), .groups = "drop") |>
+      dplyr::arrange(rank)
+
+    cat("\nSolution costs:\n")
+    for (i in seq_len(min(5, nrow(solution_costs)))) {
+      cat(sprintf("  Rank %d: %.4f\n",
+                  solution_costs$rank[i],
+                  solution_costs$total_cost[i]))
+    }
+
+    if (nrow(solution_costs) > 5) {
+      cat(sprintf("  ... and %d more solutions\n", nrow(solution_costs) - 5))
+    }
   }
-  
+
   cat("\nAssignments:\n")
   print(tibble::as_tibble(x), ...)
   
   invisible(x)
 }
 
-#' Get summary of k-best results
-#'
-#' Extract summary information from k-best assignment results.
-#'
+#' @rdname lap_solve_kbest
 #' @param object An object of class `lap_solve_kbest_result`.
 #' @param ... Additional arguments (unused).
-#'
-#' @return A tibble with one row per solution containing:
-#'   - `rank`: solution rank  
-#'   - `solution_id`: solution identifier  
-#'   - `total_cost`: total cost of the solution  
-#'   - `n_assignments`: number of assignments in the solution  
 #'
 #' @export
 #' @method summary lap_solve_kbest_result
 summary.lap_solve_kbest_result <- function(object, ...) {
   x <- object
+
+  missing_cols <- setdiff(c("rank", "solution_id", "total_cost"), names(x))
+  if (length(missing_cols) > 0) {
+    stop("summary() of k-best results needs the column(s) ",
+         paste(missing_cols, collapse = ", "), call. = FALSE)
+  }
 
   if (nrow(x) == 0) {
     return(tibble::tibble(

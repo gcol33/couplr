@@ -183,12 +183,17 @@ test_that("assignment_duals reduced costs are non-negative", {
   }
 })
 
-test_that("assignment_duals print method works", {
+test_that("assignment_duals print is short and summary lists the potentials", {
   cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), nrow = 3, byrow = TRUE)
   result <- assignment_duals(cost)
 
-  expect_output(print(result), "Assignment Result with Duals")
-  expect_output(print(result), "Dual variables")
+  expect_output(print(result), "Assignment with dual potentials: optimal")
+  expect_lt(length(capture.output(print(result))),
+            length(capture.output(print(summary(result)))))
+  expect_output(print(summary(result)), "Row potentials u")
+  expect_identical(potentials(result), list(u = result$u, v = result$v))
+  df <- as.data.frame(result)
+  expect_equal(df$col, result$match)
 })
 
 test_that("assignment_duals class is correct", {
@@ -250,8 +255,10 @@ test_that("certify = TRUE attaches a certificate the duals prove", {
   expect_true(certified$certificate$certified_optimal)
   expect_equal(certified$certificate$duality_gap, 0, tolerance = 1e-9)
 
-  # The certificate is the only added field.
-  expect_identical(unclass(certified)[names(plain)], unclass(plain))
+  expect_identical(certified[names(plain)], plain[names(plain)])
+  expect_setequal(setdiff(names(certified), names(plain)), "certificate")
+  expect_identical(attr(certified, "dimensions"), attr(plain, "dimensions"))
+  expect_identical(class(certified), class(plain))
 })
 
 test_that("certify = TRUE covers the square and transposed orientations", {

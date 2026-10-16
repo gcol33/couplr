@@ -128,10 +128,11 @@ arm_seconds <- function(seconds, status) {
 
 ## 6 continuous (age-like, educ-like, two-earnings-like, two extras),
 ## 2 binary (race / nodegree-like). Treated shifted slightly to make
-## the matching problem non-degenerate. Treated:control = 1:2.
-make_data <- function(n_total, seed) {
+## the matching problem non-degenerate. Treated:control = 1:2 unless
+## `treated_share` says otherwise; the default draws what it always drew.
+make_data <- function(n_total, seed, treated_share = 1 / 3) {
   set.seed(seed)
-  n_t <- round(n_total / 3)
+  n_t <- round(n_total * treated_share)
   n_c <- n_total - n_t
   make_group <- function(n, shift) {
     data.frame(
@@ -476,4 +477,38 @@ solve_panel <- function(cost, methods, reps, timeout_s, duals) {
            total_cost = v$total_cost, n_matched = sum(v$match > 0L)),
       certify_run(method, cost, v$match, duals))
   })
+}
+
+## ============================================================================
+## Summarising timed runs
+## ============================================================================
+## The published table is the summary, and it is derived from the raw rows
+## rather than accumulated alongside them, so the two cannot drift apart.
+summarise_runs <- function(runs) {
+  if (!nrow(runs)) return(data.frame())
+  do.call(rbind, lapply(split(runs, list(runs$n_total, runs$package),
+                              drop = TRUE), function(g) {
+    ok <- g[g$status == "ok", ]
+    ## One number per instance -- the fastest of its repetitions -- so the
+    ## quartiles below are taken over instances and not over repetitions.
+    per_instance <- if (nrow(ok)) {
+      vapply(split(ok$seconds, ok$instance), min, numeric(1))
+    } else {
+      numeric(0)
+    }
+    q <- if (length(per_instance)) {
+      stats::quantile(per_instance, c(0.25, 0.5, 0.75), names = FALSE)
+    } else {
+      rep(NA_real_, 3)
+    }
+    data.frame(
+      n_total = g$n_total[1], package = g$package[1],
+      instances = length(per_instance), runs = nrow(ok),
+      median_s = round(q[2], 4), q25_s = round(q[1], 4), q75_s = round(q[3], 4),
+      min_s = if (length(per_instance)) round(min(per_instance), 4) else NA_real_,
+      max_s = if (length(per_instance)) round(max(per_instance), 4) else NA_real_,
+      status = if (nrow(ok) == nrow(g)) "ok" else g$status[g$status != "ok"][1],
+      stringsAsFactors = FALSE
+    )
+  }))
 }

@@ -131,17 +131,14 @@ get_free_ram_mb <- function() {
   }, error = function(e) NA_real_, warning = function(w) NA_real_)
 }
 
-#' Estimate dense cost-matrix memory footprint in megabytes
+#' Estimate the Memory of a Dense Cost Matrix
 #'
-#' What the matrix itself costs a process, which is more than the 8 bytes a cell
-#' occupies: `matrix(0, n, m)` at the R level is copied into a
-#' `lap::CostMatrix` (8B data + 4B mask), and the two coexist while garbage
-#' collection lags. Building the matrix and stopping there has peaked at between
-#' 1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
-#' benchmark, so the default multiplier is above what has been measured rather
-#' than fitted to it. `n`/`m`
-#' are coerced to `double` before multiplying so the estimate itself can't
-#' overflow the way `lap::CostMatrix`'s old `int` flat-index arithmetic did.
+#' What building the matrix costs a process: the 8 bytes of each cell, written
+#' in place by the distance code, and little besides. Building the matrix and
+#' stopping there has peaked at between 1.0 and 1.1 times the raw cell bytes
+#' from 2,000 to 20,000 units on the memory benchmark, so the default multiplier
+#' is above what has been measured rather than fitted to it. `n`/`m` are coerced
+#' to `double` before multiplying so the estimate itself can't overflow.
 #'
 #' This is the matrix, not the solve. [estimate_dense_solve_mb()] is what the
 #' memory guard reads; see there for why the two differ by more than a copy.
@@ -152,27 +149,26 @@ get_free_ram_mb <- function() {
 #' @examples
 #' estimate_dense_matrix_mb(5000, 5000)
 #' @export
-estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
+estimate_dense_matrix_mb <- function(n, m, overhead_factor = 2) {
   (as.numeric(n) * as.numeric(m) * 8 * overhead_factor) / 1e6
 }
 
-#' Estimate the peak footprint of a dense solve in megabytes
+#' Estimate the Peak Memory of a Dense Solve
 #'
 #' The matrix is the allocation a caller can reason about and it is not what
-#' bounds a dense solve. Preparation copies, the solver's own workspace and the
-#' assignment structures it carries all sit on top of the matrix, and the peak
-#' is what decides whether the solve fits, so that is the quantity the guard
-#' compares against available RAM.
+#' bounds a dense solve. The solver works on its own copy of the costs, with a
+#' byte per cell marking the forbidden pairs, beside the matrix R holds, and the
+#' peak is what decides whether the solve fits, so that is the quantity the
+#' guard compares against available RAM.
 #'
-#' The multiplier is read off the measurement rather than from an enumeration of
-#' the copies, which has proved to understate it. On the memory benchmark -- one
+#' The multiplier is read off the measurement. On the memory benchmark -- one
 #' fresh R session per arm, peak resident set taken from outside and read
 #' against an idle session that loaded the same packages -- a dense one-to-one
-#' solve has peaked at between 7 and 11 times the raw matrix bytes from 5,000 to
-#' 20,000 units, with the figure at a given size moving between runs. The
-#' default of 12 sits above every measured peak, which is the direction a guard
-#' should err in: it exists to refuse a solve that will not fit, not to predict
-#' where the peak lands.
+#' solve has peaked at between 2.2 and 3.0 times the raw matrix bytes from 2,000
+#' to 20,000 units, the larger ratios at the small sizes, where fixed costs
+#' weigh most. The default of 4 sits above every measured peak, which is the
+#' direction a guard should err in: it exists to refuse a solve that will not
+#' fit, not to predict where the peak lands.
 #'
 #' @param n,m Problem dimensions.
 #' @param solve_factor Multiplier on the raw cell bytes.
@@ -181,7 +177,7 @@ estimate_dense_matrix_mb <- function(n, m, overhead_factor = 4) {
 #' @examples
 #' estimate_dense_solve_mb(5000, 5000)
 #' @export
-estimate_dense_solve_mb <- function(n, m, solve_factor = 12) {
+estimate_dense_solve_mb <- function(n, m, solve_factor = 4) {
   (as.numeric(n) * as.numeric(m) * 8 * solve_factor) / 1e6
 }
 

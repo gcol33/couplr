@@ -42,13 +42,12 @@
 ## already in it is skipped, so a killed run resumes where it stopped. Move the
 ## file aside to force a full re-run.
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
@@ -58,7 +57,7 @@ suppressPackageStartupMessages({
   if (!requireNamespace("RhpcBLASctl", quietly = TRUE))
     install.packages("RhpcBLASctl", repos = "https://cloud.r-project.org")
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 options(scipen = 0, OutDec = ".", digits = 7, warn = 1, couplr.emoji = FALSE)
 
@@ -67,11 +66,11 @@ blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "path-results.csv")
 points_csv  <- file.path(results_dir, "path-points.csv")
+checkpoint_file <- file.path(results_dir, "path-checkpoint.rds")
 
 argv <- commandArgs(TRUE)
 SIZES <- if (length(argv) >= 1L) {
@@ -166,18 +165,31 @@ path_at <- function(sides, values) {
   list(wall = proc.time()[["elapsed"]] - t0, path = p)
 }
 
+save_path_checkpoint <- function(shape_rows, point_rows) {
+  state <- list(shapes = do.call(rbind, shape_rows), points = do.call(rbind, point_rows))
+  temporary <- tempfile(".path-checkpoint-", tmpdir = results_dir)
+  saveRDS(state, temporary)
+  if (!file.rename(temporary, checkpoint_file)) {
+    stop("Cannot replace the path checkpoint: ", checkpoint_file, call. = FALSE)
+  }
+  write.csv(state$shapes, out_csv, row.names = FALSE)
+  write.csv(state$points, points_csv, row.names = FALSE)
+}
+
 ## ---- resume-safe accumulators ----------------------------------------------
-shape_rows <- if (file.exists(out_csv)) {
-  list(read.csv(out_csv, stringsAsFactors = FALSE))
-} else {
-  list()
+if (!file.exists(checkpoint_file) && any(file.exists(c(out_csv, points_csv)))) {
+  stop("Path CSV files need their path-checkpoint.rds to resume. Use a separate ",
+       "results directory or run the benchmark runner with --fresh path.", call. = FALSE)
 }
-point_rows <- if (length(shape_rows) && file.exists(points_csv)) {
-  list(read.csv(points_csv, stringsAsFactors = FALSE))
+state <- if (file.exists(checkpoint_file)) {
+  readRDS(checkpoint_file)
 } else {
-  list()
+  list(shapes = NULL, points = NULL)
 }
+shape_rows <- if (!is.null(state$shapes)) list(state$shapes) else list()
+point_rows <- if (!is.null(state$points)) list(state$points) else list()
 done <- if (length(shape_rows)) unique(shape_rows[[1]]$n_total) else integer(0)
+if (length(done)) save_path_checkpoint(shape_rows, point_rows)
 
 cat("couplr path timing: a warm path against the solves it replaces\n")
 cat("repo: ", repo_root, "\n", sep = "")
@@ -322,8 +334,7 @@ for (n_total in SIZES) {
               format(row$worst_total_gap, digits = 3)))
   flush(stdout())
 
-  write.csv(do.call(rbind, shape_rows), out_csv, row.names = FALSE)
-  write.csv(do.call(rbind, point_rows), points_csv, row.names = FALSE)
+  save_path_checkpoint(shape_rows, point_rows)
 }
 
 table <- do.call(rbind, shape_rows)

@@ -64,7 +64,7 @@
   invisible(TRUE)
 }
 
-#' Match across a range of one design choice
+#' Solve a Sequence of Matchings over One Design Parameter
 #'
 #' Solves the matching once for each value of one argument and returns what
 #' happened at each: how many units were matched, at what total distance, how
@@ -113,8 +113,8 @@
 #' right <- data.frame(id = 1:60, x = rnorm(60), y = rnorm(60))
 #' path <- match_path(left, right, vars = c("x", "y"),
 #'                    vary = "max_distance", values = c(0.5, 1, 2, Inf))
-#' path$path
-#' path$balance
+#' as.data.frame(path)
+#' summary(path)
 #'
 #' @export
 match_path <- function(left, right, vars,
@@ -177,7 +177,7 @@ match_path <- function(left, right, vars,
 
   validate_matching_inputs(left, right, vars)
   weights <- validate_weights(weights, vars)
-  calipers <- validate_calipers(calipers, vars)
+  calipers <- validate_calipers(calipers, intersect(names(left), names(right)))
 
   left_ids <- extract_ids(left, "left", left_id, warn_synthetic = TRUE)
   right_ids <- extract_ids(right, "right", right_id, warn_synthetic = TRUE)
@@ -187,7 +187,7 @@ match_path <- function(left, right, vars,
   # is left off the specification and supplied per point.
   spec <- build_cost_matrix(left, right, vars, distance, weights, scale,
                             sigma = sigma, memory_mode = "implicit")
-  spec <- apply_all_constraints(spec, left, right, vars,
+  spec <- apply_all_constraints(spec, left, right,
                                 max_distance = Inf, calipers = calipers)
 
   # The loop matches every row, so the short side has to be the rows. On a
@@ -342,22 +342,71 @@ match_path <- function(left, right, vars,
   )
 }
 
-#' Print a design path
-#'
-#' Shows how many pairs the whole sweep generated out of how many exist, and
-#' then the point table: one row per value, with the matching it found and what
-#' finding it cost.
-#'
-#' @param x A `couplr_path` from [match_path()].
+#' @rdname match_path
+#' @param x,object A `couplr_path` from [match_path()].
 #' @param ... Ignored.
-#' @return `x`, invisibly.
 #' @export
 print.couplr_path <- function(x, ...) {
-  cat("<couplr_path> ", nrow(x$path), " points over ", x$vary, "\n", sep = "")
-  cat("  ", format(x$search$candidate_edges, big.mark = ","), " of ",
-      format(x$search$possible_edges, big.mark = ","),
-      " pairs generated, ", format(x$search$edges_evaluated, big.mark = ","),
-      " evaluated\n", sep = "")
-  print(x$path)
+  n_cert <- sum(x$path$certified, na.rm = TRUE)
+  cat(sprintf("couplr path over %s: %d points, %d certified optimal\n",
+              x$vary, nrow(x$path), n_cert))
+  cols <- c(x$vary, "status", "n_matched", "total_distance", "max_abs_std_diff")
+  print(as.data.frame(x$path[, cols]), row.names = FALSE, digits = 4)
+  invisible(x)
+}
+
+#' @rdname match_path
+#' @export
+summary.couplr_path <- function(object, ...) {
+  class(object) <- c("summary.couplr_path", class(object))
+  object
+}
+
+#' @export
+print.summary.couplr_path <- function(x, ...) {
+  print.couplr_path(x)
+  cat(sprintf("\n%s of %s pairs generated, %s evaluated\n",
+              format(x$search$candidate_edges, big.mark = ","),
+              format(x$search$possible_edges, big.mark = ","),
+              format(x$search$edges_evaluated, big.mark = ",")))
+  cat("\nPer point:\n")
+  print(x$path, n = Inf, width = Inf)
+  cat("\nStandardized differences per variable:\n")
+  wide <- stats::reshape(
+    as.data.frame(x$balance[, c(x$vary, "variable", "std_diff")]),
+    idvar = x$vary, timevar = "variable", direction = "wide")
+  names(wide) <- sub("^std_diff\\.", "", names(wide))
+  print(wide, row.names = FALSE, digits = 3)
+  invisible(x)
+}
+
+#' @rdname match_path
+#' @param what For `as.data.frame()`: `"path"` (one row per point) or
+#'   `"balance"` (one row per point and variable).
+#' @param row.names,optional Ignored.
+#' @export
+as.data.frame.couplr_path <- function(x, row.names = NULL, optional = FALSE,
+                                      what = c("path", "balance"), ...) {
+  what <- match.arg(what)
+  as.data.frame(x[[what]])
+}
+
+#' @rdname match_path
+#' @param threshold For `plot()`: reference line for the largest absolute
+#'   standardized difference (default 0.1).
+#' @export
+plot.couplr_path <- function(x, threshold = 0.1, ...) {
+  p <- x$path
+  v <- p[[x$vary]]
+  finite <- is.finite(v)
+  old <- graphics::par(mfrow = c(1, 2), mar = c(4.2, 4.2, 1, 1))
+  on.exit(graphics::par(old), add = TRUE)
+  graphics::plot(v[finite], p$n_matched[finite], type = "b", pch = 19,
+                 xlab = x$vary, ylab = "Matched pairs", ...)
+  graphics::plot(v[finite], p$max_abs_std_diff[finite], type = "b", pch = 19,
+                 xlab = x$vary, ylab = "Largest |std. difference|",
+                 ylim = range(c(0, threshold, p$max_abs_std_diff[finite]),
+                              na.rm = TRUE), ...)
+  graphics::abline(h = threshold, lty = 2)
   invisible(x)
 }

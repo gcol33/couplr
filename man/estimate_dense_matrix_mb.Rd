@@ -2,9 +2,9 @@
 % Please edit documentation in R/matching_memory.R
 \name{estimate_dense_matrix_mb}
 \alias{estimate_dense_matrix_mb}
-\title{Estimate dense cost-matrix memory footprint in megabytes}
+\title{Estimate the Memory of a Dense Cost Matrix}
 \usage{
-estimate_dense_matrix_mb(n, m, overhead_factor = 4)
+estimate_dense_matrix_mb(n, m, overhead_factor = 2)
 }
 \arguments{
 \item{n, m}{Problem dimensions.}
@@ -15,15 +15,12 @@ estimate_dense_matrix_mb(n, m, overhead_factor = 4)
 Numeric scalar, the estimated footprint of the matrix in megabytes.
 }
 \description{
-What the matrix itself costs a process, which is more than the 8 bytes a cell
-occupies: \code{matrix(0, n, m)} at the R level is copied into a
-\code{lap::CostMatrix} (8B data + 4B mask), and the two coexist while garbage
-collection lags. Building the matrix and stopping there has peaked at between
-1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units on the memory
-benchmark, so the default multiplier is above what has been measured rather
-than fitted to it. \code{n}/\code{m}
-are coerced to \code{double} before multiplying so the estimate itself can't
-overflow the way \code{lap::CostMatrix}'s old \code{int} flat-index arithmetic did.
+What building the matrix costs a process: the 8 bytes of each cell, written
+in place by the distance code, and little besides. Building the matrix and
+stopping there has peaked at between 1.0 and 1.1 times the raw cell bytes
+from 2,000 to 20,000 units on the memory benchmark, so the default multiplier
+is above what has been measured rather than fitted to it. \code{n}/\code{m} are coerced
+to \code{double} before multiplying so the estimate itself can't overflow.
 }
 \details{
 This is the matrix, not the solve. \code{\link[=estimate_dense_solve_mb]{estimate_dense_solve_mb()}} is what the

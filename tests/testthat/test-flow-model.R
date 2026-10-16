@@ -311,19 +311,20 @@ test_that("the check refuses what it cannot certify", {
                "numeric vector of arc flows")
 })
 
-test_that("the certificate prints its conditions and its conclusion", {
+test_that("the certificate prints its conclusion and summary its conditions", {
   cert <- verify_flow(couplr:::.flow_solve(flow_fixture()))
 
-  expect_output(print(cert), "Flow certificate")
-  expect_output(print(cert), "primal_feasible          TRUE")
-  expect_output(print(cert), "certified_optimal        TRUE")
-  expect_output(print(cert), "duality_gap")
+  expect_output(print(cert), "Flow certificate: optimal")
   expect_output(expect_invisible(print(cert)), "Flow certificate")
+  expect_output(print(summary(cert)), "primal_feasible          TRUE")
+  expect_output(print(summary(cert)), "certified_optimal        TRUE")
+  expect_output(print(summary(cert)), "duality_gap")
 
   # The worst arc is reported only when there is a dual violation to attribute.
   bad <- verify_flow(FLOW_OPTIMUM, flow_fixture(), potential = c(0, 0, 10, 10))
-  expect_output(print(bad), "worst reduced cost")
-  expect_output(print(bad), "certified_optimal        FALSE")
+  expect_output(print(bad), "failed: dual feasibility")
+  expect_output(print(summary(bad)), "worst reduced cost")
+  expect_output(print(summary(bad)), "certified_optimal        FALSE")
 })
 
 test_that("full_match carries the certificate of the flow it actually solved", {

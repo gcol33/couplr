@@ -173,23 +173,10 @@ test_that("warn_extreme_costs issues warning", {
   )
 })
 
-test_that("warn_many_forbidden issues warning with severity", {
-  # Critical (>90%)
+test_that("warn_many_forbidden issues one factual warning", {
   expect_warning(
     couplr:::warn_many_forbidden(95, 10, 100),
-    "forbidden"
-  )
-
-  # Concerning (>75%)
-  expect_warning(
-    couplr:::warn_many_forbidden(80, 20, 100),
-    "forbidden"
-  )
-
-  # Moderate
-  expect_warning(
-    couplr:::warn_many_forbidden(60, 40, 100),
-    "forbidden"
+    "95.0% of candidate pairs are excluded"
   )
 })
 

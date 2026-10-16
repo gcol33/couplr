@@ -31,11 +31,15 @@
 # with d the direction of the row and t the covariate, possibly transformed.
 #
 # That additive decomposition is why the representation is three vectors of
-# length n, m and 1 rather than a coefficient matrix. The Lagrangian relaxation
-# reprices every admissible arc at every iteration, and repricing one arc under
-# one row is two vector lookups and a subtraction. No n by m object is built at
-# any point, which is what keeps a few hundred thousand admissible arcs against
-# millions of cells affordable.
+# length n, m and 1 rather than a coefficient matrix. Summed over the pairs, a
+# row is
+#
+#   sum_i u_i s_i - sum_j w_j t_j - b * sum_i s_i,
+#
+# with s and t the indicators of the matched units, so it constrains which
+# units are matched and never how they are paired. That is what lets the
+# moment-constrained search work over unit selections, one coefficient per
+# unit, and no n by m object is built at any point.
 #
 # Missing values are refused rather than dropped. standardized_difference()
 # drops NA pairwise because it describes a sample that is already fixed; a
@@ -49,8 +53,8 @@
 # When both pools are constant at the same level, every matched subset has mean
 # difference exactly 0 and the bound holds for any non-negative delta. That row
 # is kept rather than dropped, with all-zero coefficients, so that the list of
-# rows lines up one for one with what the caller asked for and a multiplier
-# vector indexes it without a lookup; it reports itself as trivially satisfied.
+# rows lines up one for one with what the caller asked for; it reports itself
+# as trivially satisfied.
 #
 # When both pools are constant at different levels the spread is still zero,
 # but every matched subset carries the same nonzero mean difference, so the
@@ -479,45 +483,4 @@
          "were built from.", call. = FALSE)
   }
   sum(coefs$u[i]) - sum(coefs$w[j]) - length(i) * coefs$b
-}
-
-# Reprice arcs under moment multipliers
-#
-# Adds `sum_r lambda_r * a^r_ij` to the cost of every arc, which is the
-# Lagrangian cost the relaxed subproblem is solved at. One vectorized pass per
-# row over the arcs, so the whole repricing is O(arcs * rows) and touches
-# nothing of size n by m.
-.moment_reprice <- function(arcs, coefs, lambda) {
-  if (!is.data.frame(arcs) && !is.list(arcs)) {
-    stop("`arcs` must be a data frame with `i`, `j` and `cost` columns.",
-         call. = FALSE)
-  }
-  absent <- setdiff(c("i", "j", "cost"), names(arcs))
-  if (length(absent)) {
-    stop("`arcs` is missing the column(s) ", paste(absent, collapse = ", "),
-         ".", call. = FALSE)
-  }
-
-  cost <- as.numeric(arcs$cost)
-  coefs <- .as_moment_coefficient_list(coefs)
-  if (!length(coefs)) return(cost)
-
-  if (!is.numeric(lambda) || length(lambda) != length(coefs) ||
-      anyNA(lambda) || any(!is.finite(lambda))) {
-    stop("`lambda` must be ", length(coefs),
-         " finite multipliers, one per moment row.", call. = FALSE)
-  }
-
-  i <- as.integer(arcs$i)
-  j <- as.integer(arcs$j)
-  for (r in seq_along(coefs)) {
-    if (lambda[[r]] == 0) next
-    cf <- coefs[[r]]
-    if (!.is_moment_coefficients(cf)) {
-      stop("`coefs[[", r, "]]` is not a coefficient object from ",
-           "`.moment_coefficients()`.", call. = FALSE)
-    }
-    cost <- cost + lambda[[r]] * (cf$u[i] - cf$w[j] - cf$b)
-  }
-  cost
 }

@@ -12,7 +12,7 @@
   if (is.na(n)) 1L else as.integer(n)
 }
 
-#' Solve multiple assignment problems efficiently
+#' Solve Many Assignment Problems
 #'
 #' Solve many independent assignment problems at once. Supports lists of matrices,
 #' 3D arrays, or grouped data frames. Optional parallel execution via `n_threads`.
@@ -34,6 +34,10 @@
 #'   - `cost`: cost of each assignment
 #'   - `total_cost`: total cost for each problem
 #'   - `method_used`: algorithm used for each problem
+#'
+#'   `summary()` returns a `summary.lap_solve_batch_result` whose `problems`
+#'   table has one row per input problem, with grouping keys, assignment
+#'   counts, total costs, and solver names. Each problem contributes once.
 #'
 #' @examples
 #' # List of matrices
@@ -181,8 +185,7 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
     }
   })
   
-  class(out) <- c("lap_solve_batch_result", class(out))
-  out
+  .new_batch_result(out, "problem_id")
 }
 
 #' @keywords internal
@@ -262,38 +265,74 @@ lap_solve_batch_grouped <- function(df, source_col, target_col, cost_col,
   
   # Combine results
   out <- dplyr::bind_rows(results)
-  class(out) <- c("lap_solve_batch_result", class(out))
+  .new_batch_result(out, groups)
+}
+
+.new_batch_result <- function(out, keys) {
+  attr(out, "problem_keys") <- keys
+  class(out) <- c("lap_solve_batch_result", setdiff(class(out), "lap_solve_result"))
   out
 }
 
-#' Print method for batch assignment results
-#'
-#' Prints a summary and the table of results for a batch of assignment
-#' problems solved with `lap_solve_batch()`.
-#'
+.batch_problem_table <- function(x) {
+  keys <- attr(x, "problem_keys", exact = TRUE) %||% "problem_id"
+  metadata_columns <- c(keys, "total_cost", "method_used")
+  if (!all(metadata_columns %in% names(x))) return(NULL)
+  data <- tibble::as_tibble(x)
+  metadata <- unique(data[, metadata_columns, drop = FALSE])
+  if (anyDuplicated(metadata[, keys, drop = FALSE])) {
+    stop("A batch problem has inconsistent total cost or solver metadata.", call. = FALSE)
+  }
+  counts <- dplyr::summarise(
+    dplyr::group_by(data, dplyr::across(dplyr::all_of(keys))),
+    n_assignments = dplyr::n(), .groups = "drop")
+  out <- dplyr::left_join(metadata, counts, by = keys)
+  out[, c(keys, "n_assignments", "total_cost", "method_used"), drop = FALSE]
+}
+
+#' @rdname lap_solve_batch
 #' @param x A `lap_solve_batch_result` object.
 #' @param ... Additional arguments passed to `print()`. Currently ignored.
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print lap_solve_batch_result
 print.lap_solve_batch_result <- function(x, ...) {
+  .print_batch_overview(.batch_problem_table(x))
+  invisible(x)
+}
+
+.print_batch_overview <- function(problems) {
   cat("Batch Assignment Results\n")
   cat("========================\n\n")
 
-  # Only report counts if the column exists
-  if ("problem_id" %in% names(x)) {
-    cat("Number of problems solved:", dplyr::n_distinct(x$problem_id), "\n")
+  if (!is.null(problems)) {
+    cat("Number of problems solved:", nrow(problems), "\n")
+    cat("Assignments:", sum(problems$n_assignments), "\n")
   }
-
-  # Only report cost range if BOTH columns exist
-  if (all(c("problem_id", "total_cost") %in% names(x))) {
-    total_costs <- dplyr::distinct(x, .data$problem_id, .data$total_cost)
-    rng <- range(total_costs$total_cost, na.rm = TRUE)
+  if (!is.null(problems) && nrow(problems)) {
+    rng <- range(problems$total_cost, na.rm = TRUE)
     cat("Total cost range:", sprintf("[%.2f, %.2f]", rng[1], rng[2]), "\n")
   }
 
   cat("\n")
-  print(tibble::as_tibble(x), ...)
+}
+
+#' @rdname lap_solve_batch
+#' @param object A `lap_solve_batch_result`.
+#' @export
+summary.lap_solve_batch_result <- function(object, ...) {
+  problems <- .batch_problem_table(object)
+  if (is.null(problems)) {
+    stop("Batch results need their problem keys, total_cost and method_used columns.",
+         call. = FALSE)
+  }
+  structure(list(problems = problems), class = "summary.lap_solve_batch_result")
+}
+
+#' @export
+print.summary.lap_solve_batch_result <- function(x, ...) {
+  .print_batch_overview(x$problems)
+  cat("Problems:\n")
+  print(x$problems, n = Inf, width = Inf)
   invisible(x)
 }

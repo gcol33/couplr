@@ -67,7 +67,7 @@
   stop("No dispatch rule matched; the rule table has no catch-all.", call. = FALSE)
 }
 
-#' Explain which solver `method = "auto"` selects, and why
+#' Explain the Automatic Solver Choice
 #'
 #' `assignment(method = "auto")` picks a solver from a small set of rules
 #' evaluated against one pass over the cost matrix. This reports the decision
@@ -100,6 +100,9 @@
 #'         solver always has at least as many columns as rows.
 #'   \item `probe` - the single-pass summary the rules read.
 #' }
+#' `print()` gives the selected solver and reason. `summary()` returns a
+#' `summary.dispatch_explanation` with all decision and probe fields;
+#' printing it also lists the rules tested and the observed cost properties.
 #'
 #' @seealso [assignment()]
 #'
@@ -168,6 +171,11 @@ explain_dispatch <- function(cost, method = "auto", maximize = FALSE,
 #' @method print dispatch_explanation
 #' @rdname explain_dispatch
 print.dispatch_explanation <- function(x, ...) {
+  .print_dispatch_overview(x)
+  invisible(x)
+}
+
+.print_dispatch_overview <- function(x) {
   cat("Solver dispatch\n")
   cat("===============\n\n")
   cat(sprintf("Problem:  %d x %d", x$n, x$m))
@@ -188,6 +196,18 @@ print.dispatch_explanation <- function(x, ...) {
     cat("Why:      ", x$reason, "\n", sep = "")
   }
 
+}
+
+#' @rdname explain_dispatch
+#' @param object A `dispatch_explanation` object.
+#' @export
+summary.dispatch_explanation <- function(object, ...) {
+  structure(unclass(object), class = "summary.dispatch_explanation")
+}
+
+#' @export
+print.summary.dispatch_explanation <- function(x, ...) {
+  .print_dispatch_overview(x)
   cat("\nRules tested, in order:\n")
   for (i in seq_len(nrow(x$considered))) {
     row <- x$considered[i, ]

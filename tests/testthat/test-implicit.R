@@ -235,11 +235,15 @@ test_that("the certificate and the search record survive a default call", {
   # return_diagnostics is FALSE by default and truncates info to the solver
   # summary plus the design fields, which is why neither of these lives there.
   expect_named(loop$info, c("method", "n_matched", "total_distance",
-                            "estimand", "focal", "focal_discarded"))
-  expect_s3_class(loop$certificate, "assignment_certificate")
-  expect_true(loop$certificate$certified_optimal)
+                            "estimand", "focal", "focal_discarded",
+                            "n_left", "n_right", "distance_metric"))
+  expect_s3_class(certificate(loop), "assignment_certificate")
+  expect_true(certificate(loop)$certified_optimal)
   expect_equal(loop$search$possible_edges, 25 * 120)
   expect_true(loop$search$candidate_edges < loop$search$possible_edges)
+  g <- glance(loop)
+  expect_equal(g$possible_edges, 25 * 120)
+  expect_true(g$certified)
 })
 
 test_that("an infeasible caliper is reported with the witness, not an error", {
@@ -344,13 +348,18 @@ test_that("blocking and the loop are alternatives, not a combination", {
   )
 })
 
-test_that("certify belongs to the path that produces one", {
+test_that("certify = TRUE attaches a certificate to a dense matching", {
   left <- implicit_units(10, 5519)
   right <- implicit_units(30, 5520)
 
+  dense <- match_couples(left, right, vars = c("x", "y"), certify = TRUE)
+  expect_s3_class(certificate(dense), "assignment_certificate")
+  expect_true(certificate(dense)$certified_optimal)
+  expect_null(certificate(match_couples(left, right, vars = c("x", "y"))))
   expect_error(
-    match_couples(left, right, vars = c("x", "y"), certify = TRUE),
-    "certify. applies to memory_mode"
+    match_couples(left, right, vars = c("x", "y"), certify = TRUE,
+                  method = "greedy"),
+    "carry no certificate"
   )
 })
 
@@ -457,4 +466,30 @@ test_that("the loop repairs a master its rounding left short of the exact optimu
     expect_equal(m$info$total_distance, dense$info$total_distance,
                  tolerance = 1e-12, info = sc)
   }
+})
+
+test_that("a caliper on a column that is not matched on is honoured in every mode", {
+  set.seed(42)
+  mk <- function(n, shift) data.frame(x1 = rnorm(n, shift), x2 = rnorm(n),
+                                      ps = runif(n, 0.2 + shift / 4, 0.8))
+  tr <- mk(40, 0.4); ct <- mk(90, 0)
+  tr$id <- paste0("t", seq_len(nrow(tr))); ct$id <- paste0("c", seq_len(nrow(ct)))
+  res <- lapply(c("dense", "lazy", "implicit"), function(mode)
+    match_couples(tr, ct, vars = c("x1", "x2"), distance = "mahalanobis",
+                  calipers = list(ps = 0.03), memory_mode = mode,
+                  method = if (mode == "implicit") "auto" else "jv"))
+  for (r in res) {
+    p <- r$pairs
+    li <- match(p$left_id, tr$id)
+    ri <- match(p$right_id, ct$id)
+    expect_true(all(abs(tr$ps[li] - ct$ps[ri]) <= 0.03))
+  }
+  totals <- vapply(res, function(r) sum(r$pairs$distance), numeric(1))
+  n_pairs <- vapply(res, function(r) nrow(r$pairs), integer(1))
+  expect_equal(totals, rep(totals[1], 3), tolerance = 1e-9)
+  expect_equal(n_pairs, rep(n_pairs[1], 3))
+  free <- match_couples(tr, ct, vars = c("x1", "x2"), distance = "mahalanobis",
+                        memory_mode = "dense", method = "jv")$pairs
+  gap <- abs(tr$ps[match(free$left_id, tr$id)] - ct$ps[match(free$right_id, ct$id)])
+  expect_true(any(gap > 0.03))
 })

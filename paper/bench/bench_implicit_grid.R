@@ -34,13 +34,12 @@
 ## Rows accumulate in paper/bench/results/implicit-grid-runs.csv and a cell
 ## already in it is skipped, so a killed run resumes where it stopped.
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
@@ -52,7 +51,7 @@ if (!requireNamespace("RhpcBLASctl", quietly = TRUE)) {
 }
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 ## Single-core wall-clock, matching the rest of the paper's timings.
@@ -61,9 +60,8 @@ Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 options(couplr.emoji = FALSE, warn = 1)
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 runs_csv    <- file.path(results_dir, "implicit-grid-runs.csv")
 
 argv   <- commandArgs(TRUE)
@@ -208,16 +206,22 @@ runs <- if (file.exists(runs_csv)) {
 } else {
   data.frame()
 }
+cell_rows <- function(sweep, cell, seed_index) {
+  if (!nrow(runs)) return(logical())
+  runs$sweep == sweep & runs$cloud == cell$cloud & runs$dim == cell$dim &
+    runs$n_total == cell$n_total & runs$caliper == cell$caliper &
+    runs$seed_index == seed_index
+}
+
 have_cell <- function(sweep, cell, seed_index) {
-  nrow(runs) > 0 &&
-    any(runs$sweep == sweep & runs$cloud == cell$cloud & runs$dim == cell$dim &
-          runs$n_total == cell$n_total & runs$caliper == cell$caliper &
-          runs$seed_index == seed_index)
+  modes <- c("implicit", "lazy", if (cell$n_total <= DENSE_MAX_N) "dense")
+  all(modes %in% runs$memory_mode[cell_rows(sweep, cell, seed_index)])
 }
 
 record <- function(sweep, cell, seed_index, seed, caliper_value, mode, r,
                    equal_to_dense = NA, cost_gap_vs_dense = NA_real_) {
-  runs <<- rbind(runs, data.frame(
+  keep <- !(cell_rows(sweep, cell, seed_index) & runs$memory_mode == mode)
+  runs <<- rbind(runs[keep, , drop = FALSE], data.frame(
     sweep = sweep, cloud = cell$cloud, dim = cell$dim, n_total = cell$n_total,
     caliper = cell$caliper, caliper_value = caliper_value,
     seed_index = seed_index, seed = seed, memory_mode = mode,
@@ -243,9 +247,8 @@ for (sweep_name in names(sweeps)) {
   sw <- sweeps[[sweep_name]]
   for (level in sw$levels) {
     cell <- base_cell
-    cell[[sw$vary]] <- if (sw$vary == "caliper") as.character(level) else
+    cell[[sw$vary]] <- if (sw$vary %in% c("caliper", "cloud")) as.character(level) else
       as.integer(level)
-    if (sw$vary == "cloud") cell$cloud <- as.character(level)
 
     for (seed_index in seq_len(sw$seeds)) {
       if (have_cell(sweep_name, cell, seed_index)) {

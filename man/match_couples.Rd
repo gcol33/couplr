@@ -2,7 +2,7 @@
 % Please edit documentation in R/matching_core.R
 \name{match_couples}
 \alias{match_couples}
-\title{Match two datasets into couples}
+\title{Optimal and Greedy Pair Matching}
 \usage{
 match_couples(
   left,
@@ -60,7 +60,9 @@ scaling method (default: FALSE)}
 
 \item{max_distance}{Maximum allowed distance (pairs exceeding this are forbidden)}
 
-\item{calipers}{Named list of per-variable maximum absolute differences}
+\item{calipers}{Named list of maximum absolute differences, each on a
+column of both data frames: a matching variable or another one, such
+as a propensity score.}
 
 \item{block_id}{Column name containing block IDs (for stratified matching)}
 
@@ -143,11 +145,12 @@ size is the certificate over the complete problem. "auto" never selects
 it. "dense" skips the RAM check entirely.}
 
 \item{certify}{Logical; whether the result carries a checked
-\code{assignment_certificate} as \code{certificate}. Applies to
-\code{memory_mode = "implicit"}, where it defaults to \code{TRUE}: the certificate is
-what separates the answer from an approximate one. On the other paths the
-matching is certified after the fact with \code{\link[=verify_assignment]{verify_assignment()}}, against
-the cost matrix it was solved from.}
+\code{assignment_certificate}, read with \code{\link[=certificate]{certificate()}}. Defaults to \code{TRUE}
+under \code{memory_mode = "implicit"}, where the certificate is part of the
+solve, and to \code{FALSE} elsewhere, where it costs one extra pass over the
+admissible pairs. Available for one-to-one and \code{ratio}-to-one matching
+without blocks; greedy matching and matching with replacement solve no
+assignment problem and carry none.}
 }
 \value{
 A list with class "matching_result" containing:

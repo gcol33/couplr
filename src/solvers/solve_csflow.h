@@ -19,6 +19,6 @@ namespace lap {
 // Throws:
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
-LapResult solve_csflow(const CostMatrix& cost, bool maximize = false);
+LapResult solve_csflow(CostMatrix cost, bool maximize = false);
 
 }  // namespace lap

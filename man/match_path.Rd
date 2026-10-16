@@ -2,7 +2,11 @@
 % Please edit documentation in R/matching_path.R
 \name{match_path}
 \alias{match_path}
-\title{Match across a range of one design choice}
+\alias{print.couplr_path}
+\alias{summary.couplr_path}
+\alias{as.data.frame.couplr_path}
+\alias{plot.couplr_path}
+\title{Solve a Sequence of Matchings over One Design Parameter}
 \usage{
 match_path(
   left,
@@ -24,6 +28,20 @@ match_path(
   tol = .implicit_defaults()$tol,
   max_rounds = .implicit_defaults()$max_rounds
 )
+
+\method{print}{couplr_path}(x, ...)
+
+\method{summary}{couplr_path}(object, ...)
+
+\method{as.data.frame}{couplr_path}(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  what = c("path", "balance"),
+  ...
+)
+
+\method{plot}{couplr_path}(x, threshold = 0.1, ...)
 }
 \arguments{
 \item{left, right}{Data frames to match. Both are required.}
@@ -59,6 +77,18 @@ knobs, shared with \code{memory_mode = "implicit"}. Each point converges on any
 of them. \code{width} is the columns the seed gives a row, and 0, the default,
 sizes it from the number of columns; \verb{$search$seed_width} reports what the
 path used.}
+
+\item{x, object}{A \code{couplr_path} from \code{\link[=match_path]{match_path()}}.}
+
+\item{...}{Ignored.}
+
+\item{row.names, optional}{Ignored.}
+
+\item{what}{For \code{as.data.frame()}: \code{"path"} (one row per point) or
+\code{"balance"} (one row per point and variable).}
+
+\item{threshold}{For \code{plot()}: reference line for the largest absolute
+standardized difference (default 0.1).}
 }
 \value{
 An object of class \code{couplr_path}: \verb{$path}, one row per point,
@@ -84,7 +114,7 @@ left <- data.frame(id = 1:20, x = rnorm(20), y = rnorm(20))
 right <- data.frame(id = 1:60, x = rnorm(60), y = rnorm(60))
 path <- match_path(left, right, vars = c("x", "y"),
                    vary = "max_distance", values = c(0.5, 1, 2, Inf))
-path$path
-path$balance
+as.data.frame(path)
+summary(path)
 
 }

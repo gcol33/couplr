@@ -126,7 +126,9 @@ test_that("cem_match print method works", {
   right <- data.frame(id = 11:20, x = rnorm(10))
 
   result <- cem_match(left, right, vars = "x")
-  expect_output(print(result), "Coarsened Exact Matching")
+  expect_output(print(result), "coarsened exact matching")
+  expect_output(print(summary(result)), "Strata")
+  expect_equal(glance(result)$design, "coarsened exact")
 })
 
 

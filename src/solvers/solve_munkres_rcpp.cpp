@@ -9,7 +9,7 @@
 Rcpp::List solve_munkres_impl(Rcpp::NumericMatrix cost, bool maximize) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
-        lap::LapResult result = lap::solve_munkres(cm, maximize);
+        lap::LapResult result = lap::solve_munkres(std::move(cm), maximize);
 
         const int n = static_cast<int>(result.assignment.size());
         Rcpp::IntegerVector match(n);

@@ -80,6 +80,23 @@ check_variable_health <- function(left, right, vars,
       var_summary$skewness <- NA_real_
       var_summary$issue <- "all_na"
 
+    } else if (n_valid < 2L) {
+      issues[[length(issues) + 1L]] <- list(
+        variable = v,
+        severity = "error",
+        type = "insufficient_observations",
+        message = sprintf("Variable '%s' has fewer than two observed values", v)
+      )
+      exclude_vars <- c(exclude_vars, v)
+      warnings_list <- c(warnings_list,
+        sprintf("Excluding '%s': fewer than two observed values", v))
+      var_summary$mean <- valid_data[[1L]]
+      var_summary$sd <- NA_real_
+      var_summary$min <- valid_data[[1L]]
+      var_summary$max <- valid_data[[1L]]
+      var_summary$range <- 0
+      var_summary$skewness <- NA_real_
+      var_summary$issue <- "insufficient_observations"
     } else {
       # Compute statistics on valid data
       var_mean <- mean(valid_data)
@@ -208,7 +225,7 @@ suggest_scaling <- function(left, right, vars) {
     v <- vars[i]
     var_data <- combined[[v]][!is.na(combined[[v]])]
 
-    if (length(var_data) == 0) {
+    if (length(var_data) < 2L) {
       next
     }
 
@@ -237,8 +254,9 @@ suggest_scaling <- function(left, right, vars) {
   }
 
   # Check if variables have very different scales
-  if (length(sds) > 1) {
-    sd_ratio <- max(sds) / (min(sds[sds > 0]) + 1e-10)
+  positive_sds <- sds[is.finite(sds) & sds > 0]
+  if (length(positive_sds) > 1L) {
+    sd_ratio <- max(positive_sds) / min(positive_sds)
     if (sd_ratio > 10) {
       has_different_scales <- TRUE
     }
@@ -338,10 +356,12 @@ auto_encode_categorical <- function(left, right, var) {
        call. = FALSE)
 }
 
-#' Preprocess matching variables with automatic checks and scaling
+#' Check Matching Variables and Choose Scaling
 #'
 #' Main preprocessing function that orchestrates variable health checks,
-#' categorical encoding, and automatic scaling selection.
+#' and automatic scaling selection. The returned data frames retain their
+#' input values; [match_couples()] applies the selected scaling when building
+#' distances.
 #'
 #' @param left Data frame of left units
 #' @param right Data frame of right units
@@ -353,13 +373,17 @@ auto_encode_categorical <- function(left, right, var) {
 #' @param verbose Logical, whether to print warnings (default: TRUE)
 #'
 #' @return A list with class "preprocessing_result" containing:
-#'   - `left`: Preprocessed left data frame
-#'   - `right`: Preprocessed right data frame
+#'   - `left`: Input left data frame
+#'   - `right`: Input right data frame
 #'   - `vars`: Final variable names (after exclusions)
 #'   - `health`: Variable health diagnostics
 #'   - `scaling_method`: Selected scaling method
 #'   - `excluded_vars`: Variables that were excluded
 #'   - `warnings`: List of warnings issued
+#'
+#'   `summary()` returns a `summary.preprocessing_result` with the retained
+#'   variables, group sizes, scaling choice, exclusions, warnings, and the
+#'   detailed variable-health report.
 #'
 #' @export
 preprocess_matching_vars <- function(left, right, vars,
@@ -447,66 +471,120 @@ preprocess_matching_vars <- function(left, right, vars,
   )
 }
 
-#' Print method for variable health
-#'
+#' @rdname preprocess_matching_vars
 #' @param x A variable_health object
 #' @param ... Additional arguments (ignored)
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print variable_health
 print.variable_health <- function(x, ...) {
+  .print_health_overview(summary(x))
+  invisible(x)
+}
+
+.print_health_overview <- function(x) {
   cat("Variable Health Diagnostics\n")
   cat("===========================\n\n")
 
   if (length(x$exclude_vars) > 0) {
-    cat("Variables to exclude:\n")
-    for (v in x$exclude_vars) {
-      cat(sprintf("  - %s\n", v))
-    }
-    cat("\n")
+    cat("Variables to exclude:", length(x$exclude_vars), "\n")
   }
 
-  if (length(x$issues) > 0) {
+  cat("Variables checked:", nrow(x$summary), "\n")
+  if (nrow(x$issues) > 0) {
     cat("Issues detected:\n")
-    errors <- sum(sapply(x$issues, function(i) i$severity == "error"))
-    warnings <- sum(sapply(x$issues, function(i) i$severity == "warning"))
-    infos <- sum(sapply(x$issues, function(i) i$severity == "info"))
+    errors <- sum(x$issues$severity == "error")
+    warnings <- sum(x$issues$severity == "warning")
+    infos <- sum(x$issues$severity == "info")
 
     cat(sprintf("  Errors: %d, Warnings: %d, Info: %d\n\n", errors, warnings, infos))
   }
 
-  cat("Variable summary:\n")
-  print(x$summary, n = Inf)
+}
 
+#' @rdname preprocess_matching_vars
+#' @param object A preprocessing result or its nested variable-health report.
+#' @export
+summary.variable_health <- function(object, ...) {
+  issues <- if (length(object$issues)) {
+    do.call(rbind, lapply(object$issues, as.data.frame, stringsAsFactors = FALSE))
+  } else {
+    data.frame(variable = character(), severity = character(), type = character(),
+               message = character())
+  }
+  structure(list(summary = object$summary, issues = issues,
+                 exclude_vars = object$exclude_vars, warnings = object$warnings),
+            class = "summary.variable_health")
+}
+
+#' @export
+print.summary.variable_health <- function(x, ...) {
+  .print_health_overview(x)
+  cat("\nVariable summary:\n")
+  print(x$summary, n = Inf, width = Inf)
+  if (nrow(x$issues)) {
+    cat("\nIssue details:\n")
+    print(x$issues, row.names = FALSE)
+  }
   invisible(x)
 }
 
-#' Print method for preprocessing result
-#'
+#' @rdname preprocess_matching_vars
 #' @param x A preprocessing_result object
 #' @param ... Additional arguments (ignored)
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print preprocessing_result
 print.preprocessing_result <- function(x, ...) {
+  .print_preprocessing_overview(summary(x))
+  invisible(x)
+}
+
+.print_preprocessing_overview <- function(x) {
   cat("Preprocessing Result\n")
   cat("====================\n\n")
 
   cat(sprintf("Variables: %d\n", length(x$vars)))
+  cat(sprintf("Left units: %d, right units: %d\n", x$n_left, x$n_right))
   cat(sprintf("Scaling method: %s\n", x$scaling_method))
 
   if (length(x$excluded_vars) > 0) {
     cat(sprintf("Excluded: %d variables\n", length(x$excluded_vars)))
-    for (v in x$excluded_vars) {
-      cat(sprintf("  - %s\n", v))
-    }
   }
 
   if (length(x$warnings) > 0) {
     cat(sprintf("\nWarnings: %d\n", length(x$warnings)))
   }
 
+}
+
+#' @rdname preprocess_matching_vars
+#' @export
+summary.preprocessing_result <- function(object, ...) {
+  structure(list(n_left = nrow(object$left), n_right = nrow(object$right),
+                 vars = object$vars, scaling_method = object$scaling_method,
+                 excluded_vars = object$excluded_vars, warnings = object$warnings,
+                 health = if (!is.null(object$health)) summary(object$health)),
+            class = "summary.preprocessing_result")
+}
+
+#' @export
+print.summary.preprocessing_result <- function(x, ...) {
+  .print_preprocessing_overview(x)
+  cat("\nRetained variables:\n")
+  print(x$vars)
+  if (length(x$excluded_vars)) {
+    cat("\nExcluded variables:\n")
+    print(x$excluded_vars)
+  }
+  if (!is.null(x$health)) {
+    cat("\n")
+    print(x$health)
+  }
+  if (length(x$warnings)) {
+    cat("\nWarnings:\n")
+    cat(x$warnings, sep = "\n")
+    cat("\n")
+  }
   invisible(x)
 }

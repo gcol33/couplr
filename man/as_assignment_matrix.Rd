@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{as_assignment_matrix}
 \alias{as_assignment_matrix}
-\title{Convert assignment result to a binary matrix}
+\title{Convert an Assignment Result to a Binary Matrix}
 \usage{
 as_assignment_matrix(x, n_sources = NULL, n_targets = NULL)
 }
@@ -17,5 +17,6 @@ as_assignment_matrix(x, n_sources = NULL, n_targets = NULL)
 Integer matrix with 0 and 1 entries
 }
 \description{
-Turns a tidy assignment result back into a 0/1 assignment matrix.
+Turns a list or tidy assignment result into a 0/1 assignment matrix.
+Original dimensions and identifiers are retained where recorded.
 }

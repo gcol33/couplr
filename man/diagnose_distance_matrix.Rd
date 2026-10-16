@@ -2,7 +2,9 @@
 % Please edit documentation in R/matching_messages.R
 \name{diagnose_distance_matrix}
 \alias{diagnose_distance_matrix}
-\title{Diagnose distance matrix and suggest fixes}
+\alias{print.distance_diagnostics}
+\alias{summary.distance_diagnostics}
+\title{Diagnose a Distance Matrix}
 \usage{
 diagnose_distance_matrix(
   cost_matrix,
@@ -11,6 +13,10 @@ diagnose_distance_matrix(
   vars = NULL,
   warn = TRUE
 )
+
+\method{print}{distance_diagnostics}(x, ...)
+
+\method{summary}{distance_diagnostics}(object, ...)
 }
 \arguments{
 \item{cost_matrix}{Numeric matrix of distances}
@@ -22,9 +28,15 @@ diagnose_distance_matrix(
 \item{vars}{Variables used for matching}
 
 \item{warn}{If TRUE, issue warnings}
+
+\item{x, object}{A \code{distance_diagnostics} object.}
+
+\item{...}{Ignored.}
 }
 \value{
-List with diagnostic results and suggestions
+A \code{distance_diagnostics} list with the cost distribution,
+variable issues, problem variables, suggestions, and quality assessment.
+\code{summary()} returns these findings as \code{summary.distance_diagnostics}.
 }
 \description{
 Comprehensive diagnostics for a distance matrix with actionable suggestions.

@@ -607,10 +607,8 @@ test_that("balance_diagnostics print method works", {
   result <- match_couples(left, right, vars = "x")
   balance <- balance_diagnostics(result, left, right, vars = "x")
 
-  # Should print without error
-  expect_output(print(balance), "Balance Diagnostics")
-  expect_output(print(balance), "Matched pairs")
-  expect_output(print(balance), "Overall Balance")
+  expect_output(print(balance), "Balance of 15 matched pairs")
+  expect_output(print(summary(balance)), "Matched pairs: 15")
 })
 
 test_that("balance_diagnostics validates inputs", {

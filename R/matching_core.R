@@ -49,9 +49,9 @@
     return(.solve_lazy_with_partial_feasibility(cost_matrix, solver_fn, solver_params))
   }
 
-  feasible <- .is_valid_cost(cost_matrix)
-  row_ok <- rowSums(feasible) > 0L
-  col_ok <- colSums(feasible) > 0L
+  margins <- lap_cost_margins(cost_matrix, BIG_COST)
+  row_ok <- margins$row_ok
+  col_ok <- margins$col_ok
 
   if (!any(row_ok) || !any(col_ok)) {
     return(list(result = NULL,
@@ -61,10 +61,8 @@
 
   if (all(row_ok) && all(col_ok)) {
     sub <- cost_matrix
-    sub_feasible <- feasible
   } else {
     sub <- cost_matrix[row_ok, col_ok, drop = FALSE]
-    sub_feasible <- feasible[row_ok, col_ok, drop = FALSE]
   }
 
   orig_rows <- which(row_ok)
@@ -78,7 +76,7 @@
   padded <- NULL
   greedy_fallback <- FALSE
   if (is.null(res)) {
-    padded <- .pad_forbidden(sub, sub_feasible)
+    padded <- .pad_forbidden(sub, .is_valid_cost(sub))
     if (!is.null(padded)) {
       res <- tryCatch(
         do.call(solver_fn, c(list(padded, maximize = FALSE), solver_params)),
@@ -117,7 +115,7 @@
 
   if (!is.null(padded)) {
     # Drop the pairs that were only matched through a sentinel edge.
-    keep <- sub_feasible[cbind(matched_sub_rows, matched_sub_cols)]
+    keep <- .is_valid_cost(sub[cbind(matched_sub_rows, matched_sub_cols)])
     matched_sub_rows <- matched_sub_rows[keep]
     matched_sub_cols <- matched_sub_cols[keep]
   }
@@ -383,7 +381,7 @@
                                    sigma = sigma, memory_mode = memory_mode)
 
   # Apply constraints
-  cost_matrix <- apply_all_constraints(cost_matrix, left, right, vars,
+  cost_matrix <- apply_all_constraints(cost_matrix, left, right,
                                        max_distance, calipers)
 
   # Check cost distribution if requested
@@ -652,10 +650,10 @@
 
   # Apply additional constraints if specified
   if (!is.infinite(max_distance) || !is.null(calipers)) {
+    calipers <- validate_calipers(calipers, intersect(names(left), names(right)))
     cost_matrix <- apply_all_constraints(
       cost_matrix,
       left, right,
-      dist_obj$metadata$vars,
       max_distance,
       calipers
     )
@@ -1025,7 +1023,7 @@
 # Exported Matching Functions
 # ==============================================================================
 
-#' Match two datasets into couples
+#' Optimal and Greedy Pair Matching
 #'
 #' Performs one-to-one matching between two datasets. Supports blocking,
 #' distance constraints, and various distance metrics.
@@ -1054,7 +1052,9 @@
 #' @param auto_scale If TRUE, automatically check variable health and select
 #'   scaling method (default: FALSE)
 #' @param max_distance Maximum allowed distance (pairs exceeding this are forbidden)
-#' @param calipers Named list of per-variable maximum absolute differences
+#' @param calipers Named list of maximum absolute differences, each on a
+#'   column of both data frames: a matching variable or another one, such
+#'   as a propensity score.
 #' @param block_id Column name containing block IDs (for stratified matching)
 #' @param ignore_blocks If TRUE, ignore block_id even if present
 #' @param require_full_matching If TRUE, error if any units remain unmatched
@@ -1120,12 +1120,12 @@
 #'   size is the certificate over the complete problem. "auto" never selects
 #'   it. "dense" skips the RAM check entirely.
 #' @param certify Logical; whether the result carries a checked
-#'   `assignment_certificate` as `certificate`. Applies to
-#'   `memory_mode = "implicit"`, where it defaults to `TRUE`: the certificate is
-#'   what separates the answer from an approximate one. On the other paths the
-#'   matching is certified after the fact with [verify_assignment()], against
-#'   the cost matrix it was solved from.
-#'
+#'   `assignment_certificate`, read with [certificate()]. Defaults to `TRUE`
+#'   under `memory_mode = "implicit"`, where the certificate is part of the
+#'   solve, and to `FALSE` elsewhere, where it costs one extra pass over the
+#'   admissible pairs. Available for one-to-one and `ratio`-to-one matching
+#'   without blocks; greedy matching and matching with replacement solve no
+#'   assignment problem and carry none.
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
 #'   - `unmatched`: List of unmatched left and right IDs
@@ -1213,11 +1213,9 @@ match_couples <- function(left, right = NULL,
   greedy <- identical(method, "greedy")
   implicit <- identical(memory_mode, "implicit")
 
-  if (!is.null(certify) && !implicit) {
-    stop("`certify` applies to memory_mode = \"implicit\", where the ",
-         "certificate comes out of the solve. Elsewhere, certify a matching ",
-         "with verify_assignment() against the cost matrix it was solved ",
-         "from.", call. = FALSE)
+  if (isTRUE(certify) && (greedy || isTRUE(replace))) {
+    stop("`certify = TRUE` needs an optimal assignment solve; greedy matching ",
+         "and matching with replacement carry no certificate.", call. = FALSE)
   }
 
   # Validate replace and ratio
@@ -1289,7 +1287,7 @@ match_couples <- function(left, right = NULL,
   # Validate inputs
   validate_matching_inputs(left, right, vars)
   weights <- validate_weights(weights, vars)
-  calipers <- validate_calipers(calipers, vars)
+  calipers <- validate_calipers(calipers, intersect(names(left), names(right)))
 
   # Extract IDs
   left_ids <- extract_ids(left, "left", left_id, warn_synthetic = TRUE)
@@ -1302,12 +1300,12 @@ match_couples <- function(left, right = NULL,
   # Detect blocking
   block_info <- detect_blocking(left, right, block_id, ignore_blocks)
 
-  if (block_info$use_blocking && implicit) {
+  if (block_info$use_blocking && (implicit || isTRUE(certify))) {
     # Each block is its own solve and would carry its own certificate, and a
     # certificate per block is not a certificate for the matching. Blocking is
     # also the other answer to the memory the loop addresses, so the two are
     # alternatives rather than a combination.
-    stop("memory_mode = \"implicit\" is not supported with blocking: each ",
+    stop("memory_mode = \"implicit\" and certify = TRUE are not supported with blocking: each ",
          "block is a separate solve, and one certificate per block is not a ",
          "proof about the matching. Drop block_id, or use ",
          "ignore_blocks = TRUE.", call. = FALSE)
@@ -1393,8 +1391,9 @@ match_couples <- function(left, right = NULL,
     # The estimand survives the truncation for the reason `status` sits at the
     # top level: it is what as_matchit() labels the target population with,
     # and a field only a diagnostic call carries is one that door cannot read.
-    keep <- c(keep, "estimand", "focal", "focal_discarded")
-    result$info <- result$info[keep]
+    keep <- c(keep, "estimand", "focal", "focal_discarded", "n_left",
+              "n_right", "distance_metric", "ratio", "replace", "n_blocks")
+    result$info <- result$info[intersect(keep, names(result$info))]
   }
 
   structure(result, class = c("matching_result", "couplr_result"))

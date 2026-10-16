@@ -234,26 +234,3 @@ subclass_match <- function(formula = NULL,
 }
 
 
-#' Print Method for Subclassification Results
-#'
-#' @param x A subclass_result object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return Invisibly returns the input object \code{x}.
-#' @export
-print.subclass_result <- function(x, ...) {
-  cat("\nSubclassification Result\n")
-  cat("========================\n\n")
-  cat(sprintf("  Estimand: %s\n", x$info$estimand))
-  cat(sprintf("  Subclasses: %d", x$info$n_subclasses))
-  if (x$info$n_empty_subclasses > 0) {
-    cat(sprintf(" (%d without overlap)", x$info$n_empty_subclasses))
-  }
-  cat("\n")
-  cat(sprintf("  Treated (left):  %d\n", x$info$n_left))
-  cat(sprintf("  Control (right): %d\n", x$info$n_right))
-  cat("\n  Subclass summary:\n")
-  print(x$subclass_summary, n = Inf)
-  cat("\n")
-  invisible(x)
-}

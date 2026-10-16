@@ -69,14 +69,9 @@ test_that("warn_extreme_costs issues warning", {
   expect_warning(couplr:::warn_extreme_costs(10, 100, 10, c("var1")), "extreme values")
 })
 
-test_that("warn_many_forbidden issues warning for different severities", {
+test_that("warn_many_forbidden issues a warning", {
   skip_on_cran()
-  # Critical severity (>90%)
-  expect_warning(couplr:::warn_many_forbidden(95, 5, 10), "forbidden")
-  # Concerning severity (>75%)
-  expect_warning(couplr:::warn_many_forbidden(80, 20, 10), "forbidden")
-  # Moderate severity
-  expect_warning(couplr:::warn_many_forbidden(60, 40, 10), "forbidden")
+  expect_warning(couplr:::warn_many_forbidden(95, 5, 10), "excluded")
 })
 
 test_that("warn_constant_distance issues warning", {
@@ -160,11 +155,15 @@ test_that("check_cost_distribution warns on extreme costs", {
   expect_warning(result <- couplr:::check_cost_distribution(cost, warn = TRUE), "skewed")
 })
 
-test_that("check_cost_distribution warns on many forbidden", {
+test_that("check_cost_distribution warns when over 90% of pairs are forbidden", {
   skip_on_cran()
   cost <- matrix(Inf, 10, 10)
-  cost[1, 1:3] <- 1:3  # Only 30 valid pairs
-  expect_warning(result <- couplr:::check_cost_distribution(cost, warn = TRUE), "forbidden")
+  cost[1, 1:3] <- 1:3  # Only 3 valid pairs
+  expect_warning(result <- couplr:::check_cost_distribution(cost, warn = TRUE),
+                 "excluded by the matching restrictions")
+  half <- matrix(seq_len(100) / 10, 10, 10)
+  half[, 1:6] <- Inf
+  expect_no_warning(couplr:::check_cost_distribution(half, warn = TRUE))
 })
 
 # ------------------------------------------------------------------------------

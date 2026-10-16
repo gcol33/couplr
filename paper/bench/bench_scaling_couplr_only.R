@@ -12,13 +12,12 @@
 ##   COUPLR_BENCH_SIZES  comma-separated n_total values (default 20000,50000)
 ##   COUPLR_BENCH_REPS   comma-separated replicate counts, recycled to SIZES
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
@@ -26,16 +25,15 @@ options(pkg.build_extra_flags = FALSE)
 
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "scaling-results.csv")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
 parse_env_ints <- function(name, default) {
   raw <- Sys.getenv(name, "")

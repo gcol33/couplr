@@ -2,26 +2,16 @@
 # Matching Distance - Distance computation and scaling
 # ==============================================================================
 
-# Metrics that reduce over dimensions one at a time: each dimension's
-# n_left x n_right table of absolute differences comes from outer(), and
-# `combine` folds it into the running total (`+` for Manhattan, pmax for
-# Chebyshev, `acc + d^2` for squared Euclidean).
-.per_dim_reduce <- function(left_mat, right_mat, combine) {
-  acc <- matrix(0, nrow = nrow(left_mat), ncol = nrow(right_mat))
-  for (k in seq_len(ncol(left_mat))) {
-    acc <- combine(acc, abs(outer(left_mat[, k], right_mat[, k], `-`)))
-  }
-  acc
-}
-
-# Summing (L_ik - R_jk)^2 over dimensions holds every digit the coordinates
-# carry. The Gram-matrix identity ||L||^2 + ||R||^2 - 2 L.R would fold the same
-# sum into one BLAS call, but subtracting two large nearly equal terms costs
-# most of the mantissa whenever the coordinates are large next to the distance
-# between them.
-.squared_euclidean <- function(left_mat, right_mat) {
-  .per_dim_reduce(left_mat, right_mat, function(acc, d) acc + d^2)
-}
+# The built-in metrics are evaluated pair by pair in C++ by the code a lazy
+# solve uses, written straight into the result: a dense matrix then holds the
+# distances a lazy specification of the same problem evaluates, and building it
+# allocates nothing else of its size. The sum over dimensions of (L_ik - R_jk)^2
+# keeps every digit the coordinates carry, which the Gram-matrix identity
+# ||L||^2 + ||R||^2 - 2 L.R would not when the coordinates are large next to the
+# distance between them.
+.builtin_metrics <- c("euclidean", "l2", "manhattan", "l1", "cityblock",
+                      "squared_euclidean", "sqeuclidean", "sq", "chebyshev",
+                      "chebychev", "maximum", "max", "mahalanobis", "maha")
 
 #' Compute pairwise distance matrix
 #'
@@ -59,17 +49,12 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
   # Built-in distance metrics
   distance <- tolower(as.character(distance)[1])
 
-  dist_matrix <- matrix(0, nrow = n_left, ncol = n_right)
+  if (!distance %in% .builtin_metrics) {
+    stop(sprintf("Unknown distance metric: %s", distance), call. = FALSE)
+  }
 
-  if (distance %in% c("euclidean", "l2")) {
-    dist_matrix <- sqrt(.squared_euclidean(left_mat, right_mat))
-  } else if (distance %in% c("manhattan", "l1", "cityblock")) {
-    dist_matrix <- .per_dim_reduce(left_mat, right_mat, `+`)
-  } else if (distance %in% c("squared_euclidean", "sqeuclidean", "sq")) {
-    dist_matrix <- .squared_euclidean(left_mat, right_mat)
-  } else if (distance %in% c("chebyshev", "chebychev", "maximum", "max")) {
-    dist_matrix <- .per_dim_reduce(left_mat, right_mat, pmax)
-  } else if (distance %in% c("mahalanobis", "maha")) {
+  inv_cov <- NULL
+  if (distance %in% c("mahalanobis", "maha")) {
     # Mahalanobis distance: sqrt((x-y)' * Sigma^-1 * (x-y))
     if (!is.null(sigma)) {
       # User-supplied covariance matrix
@@ -94,28 +79,34 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
       }
     }
 
-    # Robust singularity check using rcond (not det == 0)
-    inv_cov <- tryCatch(
-      solve(cov_mat),
-      error = function(e) NULL
-    )
-    if (is.null(inv_cov) || rcond(cov_mat) < .Machine$double.eps) {
-      stop("Covariance matrix is singular or near-singular; cannot compute Mahalanobis distance. ",
-           "Consider removing collinear variables or supplying a regularized sigma.",
-           call. = FALSE)
-    }
-
-    # Vectorized computation: for each left row, compute distances to all right rows
-    # D_ij = sqrt( (L_i - R_j) %*% inv_cov %*% (L_i - R_j)' )
-    for (i in seq_len(n_left)) {
-      diff_mat <- sweep(right_mat, 2, left_mat[i, ])  # n_right x n_vars
-      dist_matrix[i, ] <- sqrt(pmax(rowSums(diff_mat * (diff_mat %*% inv_cov)), 0))
-    }
-  } else {
-    stop(sprintf("Unknown distance metric: %s", distance), call. = FALSE)
+    inv_cov <- mahalanobis_precision(cov_mat)
   }
 
-  dist_matrix
+  storage.mode(left_mat) <- "double"
+  storage.mode(right_mat) <- "double"
+  cpp_lazy_dense_matrix(left_mat, right_mat, distance, inv_cov)
+}
+
+#' Precision matrix of a covariance matrix, through its Cholesky factor
+#'
+#' The Mahalanobis distances need the inverse of a symmetric positive
+#' definite matrix. `chol()` factors it as `R'R`, its failure or a
+#' reciprocal condition number below machine precision marks a singular
+#' matrix, and `chol2inv()` forms the inverse from the triangular factor.
+#'
+#' @return The `p x p` inverse of `cov_mat`.
+#' @keywords internal
+mahalanobis_precision <- function(cov_mat) {
+  cov_mat <- as.matrix(cov_mat)
+  R <- tryCatch(chol(cov_mat), error = function(e) NULL)
+  if (is.null(R) || rcond(R, triangular = TRUE)^2 < .Machine$double.eps) {
+    stop("Covariance matrix is singular or near-singular; cannot compute Mahalanobis distance. ",
+         "Consider removing collinear variables or supplying a regularized sigma.",
+         call. = FALSE)
+  }
+  inv <- chol2inv(R)
+  dimnames(inv) <- dimnames(cov_mat)
+  inv
 }
 
 #' Apply scaling to matching variables

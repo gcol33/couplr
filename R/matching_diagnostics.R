@@ -116,13 +116,7 @@ calculate_var_balance <- function(left_vals, right_vals, var_name,
   # Variance ratio (left / right), the conventional matching-balance diagnostic
   var_ratio <- if (!is.na(sd_right) && sd_right > 0) (sd_left / sd_right)^2 else NA_real_
 
-  # Kolmogorov-Smirnov test for distribution similarity (unweighted)
-  ks_result <- tryCatch({
-    stats::ks.test(left_clean, right_clean)
-  }, error = function(e) NULL)
-
-  ks_statistic <- if (!is.null(ks_result)) ks_result$statistic else NA_real_
-  ks_pvalue <- if (!is.null(ks_result)) ks_result$p.value else NA_real_
+  ks_statistic <- .ks_statistic(left_clean, right_clean, wl, wr)
 
   # Return statistics
   list(
@@ -135,12 +129,50 @@ calculate_var_balance <- function(left_vals, right_vals, var_name,
     std_diff = std_diff,
     var_ratio = var_ratio,
     ks_statistic = ks_statistic,
-    ks_pvalue = ks_pvalue,
     n_left = length(left_clean),
     n_right = length(right_clean)
   )
 }
 
+
+#' Two-sample Kolmogorov-Smirnov statistic of weighted samples
+#'
+#' The largest absolute difference between the two weighted empirical
+#' distribution functions, evaluated at every observed value. Tied values are
+#' summed into one step, so ties need no special treatment; with unit weights
+#' this is the statistic of \code{stats::ks.test()}. Balance is described by
+#' the statistic alone, without a p-value.
+#'
+#' @return The statistic, or \code{NA} when either sample is empty.
+#' @keywords internal
+.ks_statistic <- function(x, y, wx = rep(1, length(x)), wy = rep(1, length(y))) {
+  if (length(x) == 0L || length(y) == 0L || sum(wx) <= 0 || sum(wy) <= 0) {
+    return(NA_real_)
+  }
+  grid <- sort(unique(c(x, y)))
+  cdf <- function(v, w) {
+    mass <- tapply(w, factor(v, levels = grid), sum)
+    mass[is.na(mass)] <- 0
+    cumsum(mass) / sum(w)
+  }
+  max(abs(cdf(x, wx) - cdf(y, wy)))
+}
+
+#' Add the standardized differences before matching to a balance table
+#'
+#' Each variable's standardized difference over all left and all right units,
+#' the reference a matched sample's balance is read against.
+#'
+#' @return \code{var_stats} with the column \code{std_diff_unmatched}.
+#' @keywords internal
+.with_unmatched_balance <- function(var_stats, left_all, right_all) {
+  var_stats$std_diff_unmatched <- vapply(var_stats$variable, function(v) {
+    l <- left_all[[v]]
+    r <- right_all[[v]]
+    standardized_difference(l[!is.na(l)], r[!is.na(r)], pooled = TRUE)
+  }, numeric(1), USE.NAMES = FALSE)
+  var_stats
+}
 
 #' Summarise a per-variable balance table
 #'
@@ -169,7 +201,7 @@ calculate_var_balance <- function(left_vals, right_vals, var_name,
 }
 
 
-#' Balance Diagnostics for Matched Pairs
+#' Balance Diagnostics for Matched Samples
 #'
 #' Computes comprehensive balance statistics comparing the distribution of
 #' matching variables between left and right units in the matched sample.
@@ -301,8 +333,8 @@ balance_diagnostics.matching_result <- function(result,
 
   # Count unmatched. Count distinct matched right units (not pair rows), since
   # with ratio > 1 or replacement a right unit can appear in several pairs.
-  n_unmatched_left <- sum(pairs[[2]] == 0)
   n_total_left <- nrow(left)
+  n_unmatched_left <- n_total_left - length(unique(matched_pairs[[1]]))
   n_total_right <- nrow(right)
   n_matched_right <- length(unique(matched_pairs[[2]]))
   n_unmatched_right <- n_total_right - n_matched_right
@@ -333,6 +365,7 @@ balance_diagnostics.matching_result <- function(result,
 
   # Convert to tibble (use bind_rows for robust column name preservation)
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  var_stats <- .with_unmatched_balance(var_stats, left, right)
 
   overall <- .overall_balance(var_stats, length(vars))
 
@@ -452,6 +485,7 @@ balance_diagnostics.full_matching_result <- function(result,
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  var_stats <- .with_unmatched_balance(var_stats, left, right)
   overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
@@ -503,6 +537,7 @@ balance_diagnostics.cem_result <- function(result,
   })
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  var_stats <- .with_unmatched_balance(var_stats, left, right)
   overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
@@ -568,6 +603,9 @@ balance_diagnostics.subclass_result <- function(result,
   var_stats_list <- var_stats_list[!sapply(var_stats_list, is.null)]
 
   var_stats <- dplyr::bind_rows(lapply(var_stats_list, tibble::as_tibble))
+  all_left <- data[as.character(data$id) %in% matched$id[matched$side == "left"], ]
+  all_right <- data[as.character(data$id) %in% matched$id[matched$side == "right"], ]
+  var_stats <- .with_unmatched_balance(var_stats, all_left, all_right)
   overall <- .overall_balance(var_stats, length(vars))
 
   result_obj <- list(
@@ -589,7 +627,7 @@ balance_diagnostics.subclass_result <- function(result,
 }
 
 
-#' Create Balance Table
+#' Balance Table of a Balance Diagnostics Object
 #'
 #' Formats balance diagnostics into a clean table for display or export.
 #'
@@ -605,6 +643,7 @@ balance_table <- function(balance, digits = 3) {
   }
 
   # Format variable statistics
+  before <- balance$var_stats$std_diff_unmatched
   tbl <- balance$var_stats[, c("variable", "mean_left", "mean_right", "mean_diff",
                                 "std_diff", "var_ratio", "ks_statistic")]
 
@@ -619,154 +658,62 @@ balance_table <- function(balance, digits = 3) {
   # Rename columns
   names(tbl) <- c("Variable", "Mean Left", "Mean Right", "Mean Diff",
                   "Std Diff", "Var Ratio", "KS Stat")
+  if (!is.null(before)) tbl[["Std Diff Before"]] <- round(before, digits)
 
   return(tibble::as_tibble(tbl))
 }
 
 
-#' Print Method for Balance Diagnostics
-#'
-#' @param x A balance_diagnostics object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return Invisibly returns the input object `x`.
+#' @rdname balance_diagnostics
+#' @param x,object A `balance_diagnostics` object.
 #' @export
 print.balance_diagnostics <- function(x, ...) {
-  cat("\n")
-  cat("Balance Diagnostics for Matched Pairs\n")
-  cat("======================================\n\n")
-
-  # Matching summary
-  cat("Matching Summary:\n")
-  cat(sprintf("  Method: %s\n", x$method))
-  cat(sprintf("  Matched pairs: %d\n", x$n_matched))
-  cat(sprintf("  Unmatched left: %d (of %d)\n", x$n_unmatched_left, x$n_total_left))
-  cat(sprintf("  Unmatched right: %d (of %d)\n", x$n_unmatched_right, x$n_total_right))
-  cat("\n")
-
-  # Variable-level statistics
-  cat("Variable-level Balance:\n")
-  print(balance_table(x, digits = 3), n = Inf)
-  cat("\n")
-
-  # Overall assessment
-  cat("Overall Balance:\n")
-  cat(sprintf("  Mean |Std Diff|: %.3f ", x$overall$mean_abs_std_diff))
-
-  if (x$overall$mean_abs_std_diff < 0.1) {
-    cat("(Excellent)\n")
-  } else if (x$overall$mean_abs_std_diff < 0.25) {
-    cat("(Good)\n")
-  } else if (x$overall$mean_abs_std_diff < 0.5) {
-    cat("(Acceptable)\n")
-  } else {
-    cat("(Poor)\n")
-  }
-
-  cat(sprintf("  Max |Std Diff|: %.3f\n", x$overall$max_abs_std_diff))
-  cat(sprintf("  Vars with |Std Diff| > 0.25: %.1f%%\n", x$overall$pct_large_imbalance))
-  cat("\n")
-
-  # Block summaries if present
-  if (x$has_blocks && !is.null(x$block_stats)) {
-    cat("Block-level Balance:\n")
-    print(x$block_stats, n = Inf)
-    cat("\n")
-  }
-
-  cat("Balance Interpretation:\n")
-  cat("  |Std Diff| < 0.10: Excellent balance\n")
-  cat("  |Std Diff| 0.10-0.25: Good balance\n")
-  cat("  |Std Diff| 0.25-0.50: Acceptable balance\n")
-  cat("  |Std Diff| > 0.50: Poor balance\n")
-  cat("\n")
-
-
+  cat(sprintf("Balance of %d matched %s\n  unmatched: %d of %d left, %d of %d right units\n",
+              x$n_matched, if (is.null(x$pairs)) "units" else "pairs",
+              x$n_unmatched_left, x$n_total_left,
+              x$n_unmatched_right, x$n_total_right))
+  tbl <- as.data.frame(balance_table(x, digits = 3))
+  print(tbl[, intersect(c("Variable", "Std Diff Before", "Std Diff", "Var Ratio",
+                         "KS Stat"), names(tbl))], row.names = FALSE)
+  cat(sprintf("Largest |Std Diff|: %.3f\n", x$overall$max_abs_std_diff))
   invisible(x)
 }
 
-#' Summary method for balance diagnostics
-#'
-#' @param object A balance_diagnostics object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return A list containing summary statistics (invisibly)
+#' @rdname balance_diagnostics
 #' @export
-#' @method summary balance_diagnostics
 summary.balance_diagnostics <- function(object, ...) {
-  std_diffs <- abs(object$var_stats$std_diff)
-  var_ratios <- object$var_stats$var_ratio
-
-  # Classify balance quality
-  quality <- if (object$overall$mean_abs_std_diff < 0.1) {
-    "Excellent"
-  } else if (object$overall$mean_abs_std_diff < 0.25) {
-    "Good"
-  } else if (object$overall$mean_abs_std_diff < 0.5) {
-    "Acceptable"
-  } else {
-    "Poor"
-  }
-
-  out <- list(
-    n_matched = object$n_matched,
-    n_unmatched_left = object$n_unmatched_left,
-    n_unmatched_right = object$n_unmatched_right,
-    n_variables = nrow(object$var_stats),
-    mean_abs_std_diff = object$overall$mean_abs_std_diff,
-    max_abs_std_diff = object$overall$max_abs_std_diff,
-    median_abs_std_diff = stats::median(std_diffs, na.rm = TRUE),
-    pct_excellent = mean(std_diffs < 0.1, na.rm = TRUE) * 100,
-    pct_good = mean(std_diffs >= 0.1 & std_diffs < 0.25, na.rm = TRUE) * 100,
-    pct_acceptable = mean(std_diffs >= 0.25 & std_diffs < 0.5, na.rm = TRUE) * 100,
-    pct_poor = mean(std_diffs >= 0.5, na.rm = TRUE) * 100,
-    mean_var_ratio = mean(var_ratios, na.rm = TRUE),
-    quality = quality,
-    has_blocks = object$has_blocks,
-    method = object$method
-  )
-
-  class(out) <- "summary.balance_diagnostics"
-  out
+  class(object) <- c("summary.balance_diagnostics", class(object))
+  object
 }
 
 #' @export
 print.summary.balance_diagnostics <- function(x, ...) {
-  cat("Balance Diagnostics Summary\n")
-  cat("===========================\n\n")
-
-  cat("Method:", x$method, "\n")
-  cat("Matched pairs:", x$n_matched, "\n")
-  cat("Variables assessed:", x$n_variables, "\n\n")
-
-  cat("Standardized Differences:\n")
-  cat("  Mean |Std Diff|:", sprintf("%.3f", x$mean_abs_std_diff), "\n")
-  cat("  Median |Std Diff|:", sprintf("%.3f", x$median_abs_std_diff), "\n")
-  cat("  Max |Std Diff|:", sprintf("%.3f", x$max_abs_std_diff), "\n\n")
-
-  cat("Balance Quality Distribution:\n")
-  cat("  Excellent (<0.10):", sprintf("%.1f%%", x$pct_excellent), "\n")
-  cat("  Good (0.10-0.25):", sprintf("%.1f%%", x$pct_good), "\n")
-  cat("  Acceptable (0.25-0.50):", sprintf("%.1f%%", x$pct_acceptable), "\n")
-  cat("  Poor (>0.50):", sprintf("%.1f%%", x$pct_poor), "\n\n")
-
-  cat("Overall Quality:", x$quality, "\n")
-
+  cat(sprintf("Balance diagnostics (%s matching)\n", x$method))
+  cat(sprintf("  Matched %s: %d\n", if (is.null(x$pairs)) "units" else "pairs",
+              x$n_matched))
+  cat(sprintf("  Unmatched: %d of %d left, %d of %d right units\n\n",
+              x$n_unmatched_left, x$n_total_left,
+              x$n_unmatched_right, x$n_total_right))
+  print(as.data.frame(balance_table(x, digits = 3)), row.names = FALSE)
+  std <- abs(x$var_stats$std_diff)
+  cat(sprintf("\n  Mean |Std Diff|: %.3f, largest: %.3f\n",
+              x$overall$mean_abs_std_diff, x$overall$max_abs_std_diff))
+  cat(sprintf("  Variables with |Std Diff| < 0.1: %d of %d; above 0.25: %d\n",
+              sum(std < 0.1, na.rm = TRUE), length(std),
+              sum(std > 0.25, na.rm = TRUE)))
+  if (isTRUE(x$has_blocks) && !is.null(x$block_stats)) {
+    cat("\nBalance within blocks:\n")
+    print(x$block_stats, n = Inf)
+  }
   invisible(x)
 }
 
-#' Plot method for balance diagnostics
-#'
-#' Produces a Love plot (dot plot) of standardized differences.
-#'
-#' @param x A balance_diagnostics object
-#' @param type Type of plot: "love" (default), "histogram", or "variance"
-#' @param threshold Threshold line for standardized differences (default: 0.1)
-#' @param ... Additional arguments passed to plotting functions
-#'
-#' @return The balance_diagnostics object (invisibly)
+#' @param type For `plot()`: `"love"` (default) for a Love plot of the
+#'   standardized differences, `"histogram"` or `"variance"`.
+#' @param threshold For `plot()`: position of the reference line for the
+#'   standardized differences (default 0.1).
+#' @rdname balance_diagnostics
 #' @export
-#' @method plot balance_diagnostics
 plot.balance_diagnostics <- function(x,
                                      type = c("love", "histogram", "variance"),
                                      threshold = 0.1,
@@ -777,13 +724,17 @@ plot.balance_diagnostics <- function(x,
     love = {
       # Love plot (dot plot of standardized differences)
       std_diffs <- x$var_stats$std_diff
+      before <- x$var_stats$std_diff_unmatched
       vars <- x$var_stats$variable
       n <- length(std_diffs)
 
-      # Order by absolute value
-      ord <- order(abs(std_diffs), decreasing = TRUE)
+      # Largest absolute difference (before matching where known) on top
+      ord <- order(abs(if (is.null(before)) std_diffs else before),
+                   decreasing = FALSE)
       std_diffs <- std_diffs[ord]
+      before <- before[ord]
       vars <- vars[ord]
+      span <- max(abs(c(std_diffs, before)), na.rm = TRUE)
 
       # Set up plot area
       old_par <- graphics::par(mar = c(4, 8, 3, 2))
@@ -791,7 +742,7 @@ plot.balance_diagnostics <- function(x,
 
       # Plot
       graphics::plot(std_diffs, seq_len(n),
-                     xlim = range(c(-max(abs(std_diffs)) * 1.1, max(abs(std_diffs)) * 1.1, -threshold, threshold)),
+                     xlim = range(c(-span * 1.1, span * 1.1, -threshold, threshold)),
                      yaxt = "n",
                      xlab = "Standardized Difference",
                      ylab = "",
@@ -802,6 +753,14 @@ plot.balance_diagnostics <- function(x,
       graphics::axis(2, at = seq_len(n), labels = vars, las = 1, cex.axis = 0.8)
       graphics::abline(v = 0, lty = 1, col = "gray50")
       graphics::abline(v = c(-threshold, threshold), lty = 2, col = "firebrick")
+      if (!is.null(before)) {
+        graphics::points(before, seq_len(n), pch = 1, col = "gray40")
+        graphics::segments(before, seq_len(n), std_diffs, seq_len(n),
+                           col = "gray70")
+        graphics::legend("bottomright", c("before matching", "after matching"),
+                         pch = c(1, 19), col = c("gray40", "steelblue"),
+                         bty = "n", cex = 0.8)
+      }
     },
     histogram = {
       # Histogram of standardized differences

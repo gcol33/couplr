@@ -123,6 +123,7 @@ set(TEST_SOURCES
     tests/test_lap_eps_repair.cpp
     tests/test_flow_certify.cpp
     tests/test_flow_assign.cpp
+    tests/test_select.cpp
 )
 
 # Main test executable

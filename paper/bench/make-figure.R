@@ -5,24 +5,23 @@ suppressPackageStartupMessages({
   library(patchwork)
 })
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
 options(pkg.build_extra_flags = FALSE)
-pkgload::load_all(repo_root, quiet = TRUE)
+load_couplr()
 
 TIMES    <- 5L
 MAX_COST <- 10000L
 SEED     <- 42L
 
-BENCHMARK_TABLE <- file.path(repo_root, "paper", "bench", "results", "benchmark-table.csv")
+BENCHMARK_TABLE <- file.path(results_dir, "benchmark-table.csv")
 BENCHMARK_FIGURE <- file.path(repo_root, "paper", "joss", "figures", "benchmark.png")
 ## The algorithms vignette draws its timing plots from the same measurement,
 ## shipped with the package so it renders without the paper directory.
@@ -343,7 +342,7 @@ row_a <- wrap_plots(panels_a, nrow = 1)
 # one matched point per covariate suffices; the panel's value is showing how
 # far each covariate moves toward the 0.1 balance threshold.
 
-LALONDE_PER_COV <- file.path(repo_root, "paper", "bench", "results", "lalonde-per-covariate.csv")
+LALONDE_PER_COV <- file.path(results_dir, "lalonde-per-covariate.csv")
 lp <- read.csv(LALONDE_PER_COV, stringsAsFactors = FALSE)
 
 covar_pretty <- c(

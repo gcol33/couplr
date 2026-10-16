@@ -127,7 +127,9 @@ test_that("full_match print method works", {
   right <- data.frame(id = 6:15, x = rnorm(10))
 
   result <- full_match(left, right, vars = "x")
-  expect_output(print(result), "Full Matching Result")
+  expect_output(print(result), "full matching")
+  expect_output(print(summary(result)), "Groups by number of units")
+  expect_equal(nrow(as.data.frame(result)), 15)
 })
 
 

@@ -1651,10 +1651,10 @@ card_result <- cardinality_match(
   auto_scale = TRUE
 )
 
-card_result$cardinality
+card_result
 ```
 
-Bounding the standardized difference of each matching variable adds constraints that cut across the network. Those are dualized and searched by branch and bound, which runs until the bound meets the incumbent or `node_limit` or `time_limit` runs out:
+Bounding the standardized difference of each matching variable adds constraints the network cannot hold. Summed over the matched pairs, each bound constrains which units are matched, so the search runs over unit selections: branch and bound on a linear programme with one variable per unit. It first finds the most matched units the bounds admit, then the smallest total distance at that size, and runs until both are proven or `node_limit` or `time_limit` runs out:
 
 ```{r cardinality-moments}
 card_bb <- cardinality_match(
@@ -1663,18 +1663,17 @@ card_bb <- cardinality_match(
   vars = c("age", "income"),
   max_std_diff = 0.1,
   node_limit = 10L,
+  time_limit = Inf,
   scale = "standardize"
 )
 
-card_bb$cardinality
-card_bb$cardinality$constraints
+glance(card_bb)
+summary(card_bb)
 ```
 
-`certified` is `TRUE` only when the search settled and the gap is zero. When it is not, `gap` and `gap_fraction` say how many matched units separate the answer from the bound, and `stopped_on` says what ended the search.
+`certified` is `TRUE` only when every stage of the search closed. When the size stage did not, `gap` and `gap_fraction` say how many matched units separate the answer from the bound, and `stopped_on` says what ended the search. A search that proved the size but ran out of budget on the distance stage reports a `gap` of zero and returns the cheapest pairing it found for a largest balanced sample.
 
-How long the search runs depends on whether the moment bounds bind. When the distance-minimizing match already satisfies them, which happens with a loose bound or a control reservoir large enough that the closest partners are already balanced, the root node certifies and the call returns in milliseconds. When they bind, every node costs a flow solve, and although the root enters a feasible incumbent before the first node is opened, the bound above it closes slowly, so a call can spend its whole budget and still report a gap. Set `node_limit` and `time_limit` to a budget you are willing to spend, and read `stopped_on` and `gap` to see what the budget bought.
-
-`time_limit` reaches the flow solver, which checks it between augmentations, so the call returns on the budget rather than on the completion of the solve that was running when it ran out. The node that solve belonged to goes back on the frontier unopened, which is what keeps `bound` valid for the whole problem, and the incumbent stands.
+How long the search runs depends on how close the linear relaxation comes to the best integer selection. When the distance-minimizing match already satisfies the bounds, which happens with a loose bound or a control reservoir large enough that the closest partners are already balanced, that match is the answer and the call returns in milliseconds. When the bounds bind, the relaxation usually bounds the size within one unit, and the search closes as soon as it finds a selection of that size. Set `node_limit` to a budget you are willing to spend, and read `stopped_on` and `gap` in `glance()` to see what the budget bought. A search stopped by `time_limit` depends on the speed of the machine, so `time_limit = Inf` with a `node_limit` gives the same result everywhere.
 
 A pruning heuristic is reachable with `engine = "heuristic"`. It starts from a full match and deletes the pairs carrying the worst variable's imbalance, one variable per round, and reports `info$pruning_iterations` and `info$pairs_removed`. It computes no bound, so `best_possible` and `gap` come back `NA`:
 

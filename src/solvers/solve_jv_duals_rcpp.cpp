@@ -38,7 +38,7 @@ static Rcpp::List solve_jv_core_rcpp(Rcpp::NumericMatrix cost, bool maximize,
                                      bool warm_start) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
-        lap::DualResult result = lap::solve_jv_duals(cm, maximize, warm_start);
+        lap::DualResult result = lap::solve_jv_duals(std::move(cm), maximize, warm_start);
         return dual_result_to_rcpp(result, cost);
 
     } catch (const lap::LapException& e) {

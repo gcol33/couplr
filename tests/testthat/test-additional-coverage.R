@@ -32,7 +32,7 @@ test_that("apply_calipers with single caliper matching exactly", {
   vars <- "x"
   calipers <- list(x = 1)  # Exactly 1 unit allowed
 
-  result <- couplr:::apply_calipers(cost, left, right, calipers, vars)
+  result <- couplr:::apply_calipers(cost, left, right, calipers)
 
   expect_equal(result[1, 1], 1)  # diff = 1, allowed
   expect_true(result[1, 2] > 1e15)  # diff = 3, not allowed
@@ -90,10 +90,10 @@ test_that("warn_extreme_costs without problem vars", {
   )
 })
 
-test_that("warn_many_forbidden with moderate severity", {
+test_that("warn_many_forbidden states the share and the admissible pairs left", {
   expect_warning(
-    couplr:::warn_many_forbidden(55, 50, 100),
-    "forbidden"
+    couplr:::warn_many_forbidden(95.5, 50, 100),
+    "95.5% of candidate pairs are excluded.*50 admissible pairs remain for 100 left units"
   )
 })
 
@@ -170,17 +170,15 @@ test_that("balance_table with multiple variables", {
   expect_equal(nrow(tbl), 3)
 })
 
-test_that("summary.balance_diagnostics classifies quality correctly", {
-  # Create well-matched data
+test_that("summary.balance_diagnostics counts variables below the 0.1 threshold", {
   set.seed(123)
   left <- data.frame(id = 1:20, x = rnorm(20))
   right <- data.frame(id = 21:40, x = rnorm(20))
 
   result <- match_couples(left, right, vars = "x")
   balance <- balance_diagnostics(result, left, right, vars = "x")
-  smry <- summary(balance)
 
-  expect_true(smry$quality %in% c("Excellent", "Good", "Acceptable", "Poor"))
+  expect_output(print(summary(balance)), "Variables with \\|Std Diff\\| < 0.1")
 })
 
 test_that("plot.balance_diagnostics with custom threshold", {

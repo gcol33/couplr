@@ -32,7 +32,7 @@ namespace lap {
 // Throws:
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
-DualResult solve_jv_duals(const CostMatrix& cost, bool maximize = false,
+DualResult solve_jv_duals(CostMatrix cost, bool maximize = false,
                           bool warm_start = true);
 
 // The same solve over a cost source that computes its cells on demand, so a

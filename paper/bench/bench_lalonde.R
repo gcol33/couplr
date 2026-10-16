@@ -4,17 +4,13 @@
 ##
 ## Reproducible via:  Rscript paper/bench/bench_lalonde.R
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
-## pkgbuild's default profile compiles the package at -O0, which would time an
-## unoptimised couplr against optimised installs of the comparison packages.
-options(pkg.build_extra_flags = FALSE)
 
 suppressPackageStartupMessages({
   if (!requireNamespace("MatchIt",        quietly = TRUE)) install.packages("MatchIt",        repos = "https://cloud.r-project.org")
@@ -26,12 +22,11 @@ suppressPackageStartupMessages({
   library(optmatch)
   library(cobalt)
   library(microbenchmark)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 set.seed(20260515)
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 
 ## ---- data: Lalonde NSW, with the standard MatchIt formula ----
 data("lalonde", package = "MatchIt")

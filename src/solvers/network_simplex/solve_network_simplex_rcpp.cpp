@@ -18,7 +18,7 @@
 Rcpp::List solve_network_simplex_rcpp(const Rcpp::NumericMatrix& cost_matrix) {
     try {
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost_matrix);
-        lap::LapResult result = lap::solve_network_simplex(cm, false);
+        lap::LapResult result = lap::solve_network_simplex(std::move(cm), false);
 
         Rcpp::List out = lap_result_to_rcpp(result, cost_matrix);
         out["status"] = result.status;

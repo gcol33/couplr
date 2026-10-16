@@ -14,7 +14,7 @@
 # Public API
 # =============================================================================
 
-#' Pixel-level image morphing (animation)
+#' Animated Pixel-Level Image Morphing
 #'
 #' Creates an animated morph by computing optimal pixel assignment from image A 
 #' to image B, then rendering intermediate frames showing the transport.
@@ -38,7 +38,8 @@
 #' @param patch_size Tile size for tiled modes (default: 1)
 #' @param upscale Post-rendering upscaling factor (default: 1)
 #'
-#' @return Invisibly returns a list with animation object and metadata:
+#' @return Invisibly returns a `pixel_morph_animation` list with animation
+#'   object and metadata:
 #'   \item{animation}{magick animation object}
 #'   \item{width}{Image width in pixels}
 #'   \item{height}{Image height in pixels}  
@@ -46,6 +47,8 @@
 #'   \item{n_pixels}{Total number of pixels}
 #'   \item{mode}{Mode used for matching}
 #'   \item{upscale}{Upscaling factor applied}
+#'   `summary()` returns a `summary.pixel_morph_animation` with frame counts
+#'   and assignment coverage, including repeated and unfilled destinations.
 #'
 #' @details
 #' ## Assignment vs Rendering Semantics
@@ -107,13 +110,14 @@
 #' A warning is issued if overlaps/holes are detected in the final frame.
 #'
 #' @examples
+#' \donttest{
 #' if (requireNamespace("magick", quietly = TRUE)) {
 #'   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
 #'   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-#'   if (nzchar(imgA) && nzchar(imgB)) {
-#'     outfile <- tempfile(fileext = ".gif")
-#'     pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
-#'   }
+#'   outfile <- tempfile(fileext = ".gif")
+#'   pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
+#'   file.exists(outfile)
+#' }
 #' }
 #'
 #' @export
@@ -241,7 +245,7 @@ pixel_morph_animate <- function(imgA,
     print(animation)
   }
 
-  invisible(list(
+  invisible(structure(list(
     animation  = animation,
     width      = W,
     height     = H,
@@ -249,10 +253,53 @@ pixel_morph_animate <- function(imgA,
     n_pixels   = N,
     mode       = mode,
     upscale    = upscale
-  ))
+  ), class = "pixel_morph_animation"))
 }
 
-#' Pixel-level image morphing (final frame only)
+#' @rdname pixel_morph_animate
+#' @param x,object A `pixel_morph_animation` result.
+#' @param ... Ignored.
+#' @export
+print.pixel_morph_animation <- function(x, ...) {
+  .print_pixel_morph_overview(x)
+  invisible(x)
+}
+
+.print_pixel_morph_overview <- function(x) {
+  cat("Pixel Morph Animation\n")
+  cat(sprintf("Assignment grid: %d x %d, %d pixels\n", x$width, x$height, x$n_pixels))
+  cat("Mode:", x$mode, "\n")
+  cat("Upscaling factor:", x$upscale, "\n")
+}
+
+#' @rdname pixel_morph_animate
+#' @export
+summary.pixel_morph_animation <- function(object, ...) {
+  targets <- object$assignment[is.finite(object$assignment) &
+    object$assignment >= 1L & object$assignment <= object$n_pixels]
+  unique_targets <- length(unique(targets))
+  out <- object[c("width", "height", "n_pixels", "mode", "upscale")]
+  out$n_frames <- length(object$animation)
+  out$n_assigned <- length(targets)
+  out$n_unique_targets <- unique_targets
+  out$n_reused_targets <- length(targets) - unique_targets
+  out$n_unfilled_targets <- object$n_pixels - unique_targets
+  class(out) <- "summary.pixel_morph_animation"
+  out
+}
+
+#' @export
+print.summary.pixel_morph_animation <- function(x, ...) {
+  .print_pixel_morph_overview(x)
+  cat("Frames:", x$n_frames, "\n")
+  cat("Assigned source pixels:", x$n_assigned, "\n")
+  cat("Distinct destination pixels:", x$n_unique_targets, "\n")
+  cat("Repeated destination assignments:", x$n_reused_targets, "\n")
+  cat("Unfilled destination pixels:", x$n_unfilled_targets, "\n")
+  invisible(x)
+}
+
+#' Pixel-Level Image Morphing
 #'
 #' Computes optimal pixel assignment from A to B and returns the final 
 #' transported frame (without intermediate animation frames).
@@ -311,12 +358,13 @@ pixel_morph_animate <- function(imgA,
 #' }
 #'
 #' @examples
+#' \donttest{
 #' if (requireNamespace("magick", quietly = TRUE)) {
 #'   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
 #'   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-#'   if (nzchar(imgA) && nzchar(imgB)) {
-#'     result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
-#'   }
+#'   result <- pixel_morph(imgA, imgB, n_frames = 2, show = FALSE)
+#'   result
+#' }
 #' }
 #'
 #' @seealso \code{\link{pixel_morph_animate}} for animated version

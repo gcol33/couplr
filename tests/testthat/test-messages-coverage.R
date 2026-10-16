@@ -103,11 +103,10 @@ test_that("warn_extreme_costs produces warning", {
   )
 })
 
-test_that("warn_many_forbidden produces warning at different severity levels", {
+test_that("warn_many_forbidden names the admissible pairs left", {
   skip_on_cran()
-  expect_warning(couplr:::warn_many_forbidden(95, 10, 100), "critical")
-  expect_warning(couplr:::warn_many_forbidden(80, 10, 100), "concerning")
-  expect_warning(couplr:::warn_many_forbidden(60, 10, 100), "moderate")
+  expect_warning(couplr:::warn_many_forbidden(95, 10, 100),
+                 "10 admissible pairs remain")
 })
 
 test_that("warn_constant_distance produces warning", {

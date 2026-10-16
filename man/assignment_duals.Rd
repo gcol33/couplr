@@ -2,9 +2,18 @@
 % Please edit documentation in R/lap_solve.R
 \name{assignment_duals}
 \alias{assignment_duals}
-\title{Solve assignment problem and return dual variables}
+\alias{print.assignment_duals_result}
+\alias{summary.assignment_duals_result}
+\alias{as.data.frame.assignment_duals_result}
+\title{Solve an Assignment Problem and Return Dual Potentials}
 \usage{
 assignment_duals(cost, maximize = FALSE, certify = FALSE)
+
+\method{print}{assignment_duals_result}(x, ...)
+
+\method{summary}{assignment_duals_result}(object, ...)
+
+\method{as.data.frame}{assignment_duals_result}(x, row.names = NULL, optional = FALSE, ...)
 }
 \arguments{
 \item{cost}{Numeric matrix; rows = tasks, columns = agents. \code{NA} or \code{Inf}
@@ -18,6 +27,14 @@ materializing the matrix.}
 \code{\link[=verify_assignment]{verify_assignment()}} and the resulting \code{assignment_certificate} is
 attached as \code{certificate}. The check is one pass over the admissible pairs
 and reuses the duals computed here, so it costs no second solve.}
+
+\item{x}{An \code{assignment_duals_result}.}
+
+\item{...}{Ignored.}
+
+\item{object}{An \code{assignment_duals_result}.}
+
+\item{row.names, optional}{Ignored.}
 }
 \value{
 A list with class \code{"assignment_duals_result"} containing:

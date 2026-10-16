@@ -160,44 +160,70 @@ test_that("an optimal balance flow certifies exactly, zero-cost arcs included", 
   }
 })
 
-test_that("a node's bound never exceeds a moment-feasible matched set", {
-  for (seed in 201:208) {
-    inst <- card_instance(seed, max_units = 4L)
+test_that("a distance cut never exceeds the cost of a selection it bounds", {
+  # The cut read off one selection's pinned solve, lifted on the units outside
+  # it, is a lower bound on the cheapest pairing of every selection of the
+  # same size that has one, and equals it at the selection it came from.
+  checked <- 0L
+  for (seed in 201:212) {
+    inst <- card_instance(seed, max_units = 4L, forbid = 0.15)
     built <- card_build(inst)
-    coefs <- card_coefs(inst, max_std_diff = 0.2, vars = c("x", "y"))$coefs
-    set.seed(seed)
-    for (draw in 1:3) {
-      lambda <- stats::rexp(length(coefs)) * c(0, 0.1, 10)[[draw]]
-      fl <- .cardinality_flow(built$problem, built$index, coefs = coefs,
-                              lambda = lambda)
-      for (matching in card_all_matchings(inst$cost)) {
-        flow <- .balance_flow_encode(matching, built$index)
-        if (is.null(flow)) next
-        left_idx <- which(matching > 0L)
-        read <- list(left = left_idx, right = matching[left_idx])
-        rows <- .cardinality_rows_exact(built$index, coefs, read)
-        if (any(rows$sign > 0L)) next
-        objective <- lap_exact_dot(built$problem$arcs$cost, flow)
-        expect_lte(.exact_cmp(fl$bound_exact, objective), 0L)
+    index <- built$index
+    ctx <- new.env(parent = emptyenv())
+    ctx$problem <- built$problem
+    ctx$index <- index
+    ctx$cost <- inst$cost
+    ctx$cache <- new.env(parent = emptyenv())
+    ctx$warm <- NULL
+    ctx$n_solves <- 0L
+    ctx$session <- NULL
+    ctx$cols <- .select_columns(index)
+    matchings <- card_all_matchings(inst$cost)
+    sizes <- vapply(matchings, function(m) sum(m > 0L), integer(1))
+    for (k in setdiff(unique(sizes), 0L)) {
+      at_k <- matchings[sizes == k]
+      first <- at_k[[1L]]
+      sel <- list(left = which(first > 0L), right = sort(first[first > 0L]))
+      pairing <- .select_pairing(ctx, sel)
+      if (!pairing$feasible || is.null(pairing$exact_duals)) next
+      u <- pairing$exact_duals$u
+      v <- pairing$exact_duals$v
+      # Every component of every potential, summed exactly.
+      at_sel <- c(as.vector(u[sel$left, , drop = FALSE]),
+                  as.vector(v[sel$right, , drop = FALSE]))
+      expect_identical(
+        lap_exact_compare(lap_exact_dot(at_sel, rep(1, length(at_sel))),
+                          pairing$distance), 0L)
+      for (m in at_k) {
+        left <- which(m > 0L)
+        right <- m[left]
+        base <- inst$cost[cbind(left, right)] - index$cost_shift
+        cut_terms <- c(as.vector(u[left, , drop = FALSE]),
+                       as.vector(v[right, , drop = FALSE]))
+        expect_lte(lap_exact_compare(lap_exact_dot(cut_terms, rep(1, length(cut_terms))),
+                                     lap_exact_dot(base, rep(1, k))), 0L)
+        checked <- checked + 1L
       }
     }
   }
+  expect_gt(checked, 0L)
 })
 
-test_that("with no multipliers the bound is the optimum itself, exactly", {
+test_that("a solve's bound is the optimum itself, exactly", {
   for (seed in 101:112) {
     inst <- card_instance(seed)
     built <- card_build(inst)
     fl <- .cardinality_flow(built$problem, built$index)
-    best <- Inf
+    best <- NULL
     for (matching in card_all_matchings(inst$cost)) {
       flow <- .balance_flow_encode(matching, built$index)
       if (is.null(flow)) next
-      best <- .exact_min(list(best, lap_exact_dot(built$problem$arcs$cost, flow)))
+      value <- lap_exact_dot(built$problem$arcs$cost, flow)
+      if (is.null(best) || lap_exact_compare(value, best) < 0L) best <- value
     }
     expect_true(fl$certified)
-    expect_identical(.exact_cmp(fl$bound_exact, best), 0L)
-    expect_identical(.exact_cmp(fl$objective_exact, best), 0L)
+    expect_identical(lap_exact_compare(fl$bound_exact, best), 0L)
+    expect_identical(lap_exact_compare(fl$objective_exact, best), 0L)
   }
 })
 
@@ -211,17 +237,16 @@ test_that("a flow short of the optimum is repaired to it before it is read", {
     for (matching in card_all_matchings(inst$cost)) {
       flow <- .balance_flow_encode(matching, built$index)
       if (is.null(flow)) next
-      if (.exact_cmp(lap_exact_dot(built$problem$arcs$cost, flow), optimum) <= 0L) {
+      if (lap_exact_compare(lap_exact_dot(built$problem$arcs$cost, flow), optimum) <= 0L) {
         next
       }
       start <- list(flow = flow, potential = numeric(built$problem$n_nodes))
-      step <- .cardinality_step(built$problem, built$index, start, list(),
-                                numeric(0))
+      step <- .cardinality_exact_read(built$problem, built$index, start)
       expect_true(step$recovered)
       expect_gt(step$n_cancelled, 0)
       reached <- lap_exact_dot(built$problem$arcs$cost, step$flow)
-      expect_identical(.exact_cmp(reached, optimum), 0L)
-      expect_identical(.exact_cmp(step$bound_exact, optimum), 0L)
+      expect_identical(lap_exact_compare(reached, optimum), 0L)
+      expect_identical(lap_exact_compare(step$bound_exact, optimum), 0L)
       repaired <- repaired + 1L
       break
     }
@@ -235,11 +260,11 @@ test_that("a certified report under moment rows closed its bound exactly", {
     inst <- card_instance(seed, max_units = 4L)
     built <- card_build(inst)
     coefs <- card_coefs(inst, max_std_diff = 0.3, vars = "x")$coefs
-    run <- .cardinality_branch_bound(built$problem, built$index, coefs = coefs,
-                                     node_limit = 300L)
+    run <- .cardinality_select(built, coefs, inst$cost, node_limit = 300L,
+                               time_limit = Inf)
     if (!isTRUE(run$certified)) next
     expect_true(all(.cardinality_rows_exact(run$index, coefs,
-                                            run$solution$read)$sign <= 0L))
+                                            run$solution$read) <= 0L))
     expect_identical(run$best_possible, run$solution$read$n_pairs)
     expect_lte(run$bound, run$objective)
     checked <- checked + 1L
@@ -296,7 +321,7 @@ test_that("relaxing a bound never costs matched units", {
 # --- interruption -------------------------------------------------------------
 
 test_that("a node limit returns a feasible match and an honest gap", {
-  hard <- card_hard_instance()
+  hard <- card_gap_instance()
   rows <- card_coefs(list(left = hard$left, right = hard$right),
                      max_std_diff = hard$max_std_diff, vars = hard$vars)
 
@@ -317,10 +342,12 @@ test_that("a time limit returns a feasible match and an honest gap", {
   rows <- card_coefs(list(left = hard$left, right = hard$right),
                      max_std_diff = hard$max_std_diff, vars = hard$vars)
 
+  # No time at all: the search opens no node, so the bound is the largest
+  # matching and the incumbent the empty set.
   report <- .cardinality_solve(hard$left, hard$right, hard$cost,
                                max_std_diff = hard$max_std_diff,
                                vars = hard$vars, node_limit = 10000L,
-                               time_limit = 0.05)
+                               time_limit = 0)
 
   expect_identical(report$status, "iteration_limit")
   expect_identical(report$stopped_on, "time_limit")
@@ -330,7 +357,7 @@ test_that("a time limit returns a feasible match and an honest gap", {
 })
 
 test_that("a stop predicate returns a feasible match and an honest gap", {
-  hard <- card_hard_instance()
+  hard <- card_gap_instance()
   rows <- card_coefs(list(left = hard$left, right = hard$right),
                      max_std_diff = hard$max_std_diff, vars = hard$vars)
 
@@ -350,7 +377,7 @@ test_that("a stop predicate returns a feasible match and an honest gap", {
 })
 
 test_that("an interrupt condition leaves the incumbent standing", {
-  hard <- card_hard_instance()
+  hard <- card_gap_instance()
   rows <- card_coefs(list(left = hard$left, right = hard$right),
                      max_std_diff = hard$max_std_diff, vars = hard$vars)
 
@@ -440,7 +467,7 @@ test_that("a certified report prints its gap", {
 })
 
 test_that("an interrupted report prints its bound", {
-  hard <- card_hard_instance()
+  hard <- card_gap_instance()
   report <- .cardinality_solve(hard$left, hard$right, hard$cost,
                                max_std_diff = hard$max_std_diff,
                                vars = hard$vars, node_limit = 5L)

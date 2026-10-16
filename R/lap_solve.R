@@ -4,7 +4,7 @@
 # This section contains assignment(), the low-level matrix-based LAP solver.
 # For most users, prefer the tidy interface lap_solve() below.
 # ==============================================================================
-#' Linear assignment solver
+#' Solve a Linear Assignment Problem
 #'
 #' Solve the linear assignment problem (minimum- or maximum-cost matching)
 #' using several algorithms. Forbidden edges can be marked as `NA` or `Inf`.
@@ -239,10 +239,7 @@
 #'
 #' @export
 assignment <- function(cost, maximize = FALSE,
-                       method = c("auto","jv","hungarian","munkres","auction","auction_gs","auction_scaled",
-                                  "sap","ssp","sap_dense","csflow","hk01","bruteforce",
-                                  "ssap_bucket","cycle_cancel","gabow_tarjan","lapmod","csa",
-                                  "ramshaw_tarjan","push_relabel","network_simplex"),
+                       method = "auto",
                        auction_eps = NULL, eps = NULL, memory_mode = "auto",
                        certify = NULL,
                        cardinality = c("complete", "maximum", "fixed"),
@@ -271,12 +268,13 @@ assignment <- function(cost, maximize = FALSE,
     return(.attach_certificate(out, cost, maximize, do_certify))
   }
 
-  method <- match.arg(method)
-  do_certify <- .resolve_certify(certify, memory_mode)
+  if (!identical(method, "auto")) solver <- .lap_solver(method)
+  if (identical(method, "ssp")) method <- "sap"
+  do_certify <- if (is.null(certify) && !identical(method, "auto") &&
+                    !solver$builtin) TRUE else .resolve_certify(certify, memory_mode)
 
   # Back-compat: eps → auction_eps
   if (!is.null(eps) && is.null(auction_eps)) auction_eps <- eps
-  if (method == "ssp") method <- "sap"
 
   cost <- as.matrix(cost)
 
@@ -352,29 +350,8 @@ assignment <- function(cost, maximize = FALSE,
     tmp <- n; n <- m; m <- tmp
   }
 
-  res_raw <- switch(
-    method,
-    "bruteforce"    = lap_solve_bruteforce(work, maximize),
-    "jv"            = lap_solve_jv(work, maximize),
-    "hungarian"     = lap_solve_hungarian(work, maximize),
-    "munkres"       = lap_solve_munkres(work, maximize),
-    "auction"       = lap_solve_auction(work, maximize, auction_eps),
-    "auction_gs"    = lap_solve_auction_gs(work, maximize, auction_eps),
-    "auction_scaled"= lap_solve_auction_scaled(work, maximize),
-    "sap"           = lap_solve_ssp(work, maximize),
-    "csflow"        = lap_solve_csflow(work, maximize),
-    "hk01"          = lap_solve_hk01(work, maximize),
-    "ssap_bucket"   = lap_solve_ssap_bucket(work, maximize),
-    "cycle_cancel"  = lap_solve_cycle_cancel(work, maximize),
-    "gabow_tarjan"  = lap_solve_gabow_tarjan(work, maximize),
-    "lapmod"        = lap_solve_lapmod(work, maximize),
-    "csa"           = lap_solve_csa(work, maximize),
-    "ramshaw_tarjan"= lap_solve_ramshaw_tarjan(work, maximize),
-    "push_relabel"  = lap_solve_push_relabel(work, maximize),
-    "sap_dense"     = lap_solve_sap_dense(work, maximize),
-    "network_simplex"= lap_solve_network_simplex_wrapper(work, maximize),
-    stop("Unknown or unimplemented method: ", method)
-  )
+  solver <- .lap_solver(method)
+  res_raw <- .run_lap_solver(solver, work, maximize, auction_eps)
 
   match_out <- as.integer(res_raw$match)
   if (transposed) {
@@ -388,7 +365,7 @@ assignment <- function(cost, maximize = FALSE,
   }
 
   total_cost <- res_raw$total_cost
-  duals <- if (method %in% .DUAL_METHODS) .solver_duals(res_raw, transposed)
+  duals <- if (solver$potentials) .solver_duals(res_raw, transposed)
   if (reduction$n_dummy > 0L) {
     duals <- NULL
     # A row that took a dummy column is a row left unmatched, and the objective
@@ -408,22 +385,12 @@ assignment <- function(cost, maximize = FALSE,
     dispatch    = dispatch
   )
   out$cardinality <- card$cardinality
-  out$n_matched   <- sum(match_out > 0L)
-  out$unmatched   <- which(match_out == 0L)
   if (!is.null(duals)) {
     out$u <- duals$u
     out$v <- duals$v
   }
   .attach_certificate(out, cost, maximize, do_certify)
 }
-
-# Solvers whose duals are optimal potentials of the matrix they were handed. A
-# result carries them so that a certificate reads them rather than solving
-# again. "gabow_tarjan" also returns duals, but they are the 1-optimal duals of
-# the scaled integer instance it solves, which certify nothing about the costs
-# as given, and handing them to verify_assignment() would fail a matching the
-# optimal duals certify.
-.DUAL_METHODS <- c("jv", "hungarian")
 
 # The duals a solver returned, in the caller's orientation, or NULL for a solver
 # that returns none. A transposed solve ran on t(cost), so its row duals belong
@@ -447,6 +414,7 @@ assignment <- function(cost, maximize = FALSE,
 # them. A solve that did not reach a complete optimal matching has nothing to
 # certify and gets no certificate; `status` is what says so.
 .attach_certificate <- function(out, cost, maximize, certify) {
+  attr(out, "dimensions") <- dim(cost)
   if (!isTRUE(certify) || !is.null(out$certificate)) {
     return(out)
   }
@@ -483,7 +451,7 @@ assignment <- function(cost, maximize = FALSE,
   # that heuristic's own "otherwise: jv" fallback for the common case.
   if (identical(method, "auto")) method <- "jv"
 
-  if (!method %in% c("jv", "auction")) {
+  if (!.lap_solver(method)$lazy) {
     stop("method = \"", method, "\" does not support memory_mode = \"lazy\" yet; ",
          "use \"jv\", \"auction\", or memory_mode = \"dense\".", call. = FALSE)
   }
@@ -551,7 +519,7 @@ assignment <- function(cost, maximize = FALSE,
 # ==============================================================================
 # This section contains lap_solve() and related tidy wrappers.
 # ==============================================================================
-#' Solve linear assignment problems
+#' Solve Linear Assignment Problems with a Tidy Interface
 #'
 #' Provides a tidy interface for solving the linear assignment problem using
 #' 'Hungarian' or 'Jonker-Volgenant' algorithms. Supports rectangular matrices,
@@ -658,12 +626,7 @@ lap_solve <- function(x, source = NULL, target = NULL, cost = NULL,
     )
   }
   
-  # Add total_cost as attribute
-  attr(out, "total_cost") <- result$total_cost
-  attr(out, "method_used") <- result$method_used
-  class(out) <- c("lap_solve_result", class(out))
-  
-  out
+  .tidy_assignment(out, result, seq_len(nrow(cost_matrix)), seq_len(ncol(cost_matrix)))
 }
 
 #' @keywords internal
@@ -709,11 +672,7 @@ lap_solve_df <- function(df, source_col, target_col, cost_col,
     )
   }
   
-  attr(out, "total_cost") <- result$total_cost
-  attr(out, "method_used") <- result$method_used
-  class(out) <- c("lap_solve_result", class(out))
-  
-  out
+  .tidy_assignment(out, result, unique_sources, unique_targets)
 }
 
 #' @keywords internal
@@ -743,28 +702,47 @@ lap_solve_grouped <- function(df, source_col, target_col, cost_col,
     })
 }
 
-#' Print method for assignment results
-#'
-#' Nicely prints a `lap_solve_result` object, including the assignments,
-#' total cost, and method used.
-#'
+#' @rdname assignment
 #' @param x A `lap_solve_result` object.
 #' @param ... Additional arguments passed to `print()`. Currently ignored.
 #'
-#' @return Invisibly returns the input object `x`.
 #' @export
 #' @method print lap_solve_result
 print.lap_solve_result <- function(x, ...) {
+  metadata <- .assignment_metadata(x)
+  cert <- if (is.null(metadata$certificate)) "not computed" else
+    if (isTRUE(metadata$certificate$certified_optimal)) "yes" else "no"
+  dimensions <- attr(x, "dimensions", exact = TRUE)
+  pairs <- .assignment_pairs(x)
+  n_sources <- if (length(dimensions)) dimensions[[1L]] else
+    if (is.data.frame(x)) nrow(x) else length(x$match)
+  cat(sprintf("Assignment Result: %s, Total cost %.10g (Method: \"%s\")\n",
+              metadata$status %||% "status not recorded", metadata$total_cost,
+              metadata$method_used))
+  cat(sprintf("  %d of %d rows matched; certified optimal: %s\n",
+              nrow(pairs), n_sources, cert))
+  invisible(x)
+}
+
+#' @rdname assignment
+#' @param object A `lap_solve_result` object.
+#' @export
+summary.lap_solve_result <- function(object, ...) {
+  class(object) <- c("summary.lap_solve_result", class(object))
+  object
+}
+
+#' @export
+print.summary.lap_solve_result <- function(x, ...) {
   cat("Assignment Result\n")
   cat("=================\n\n")
 
-  total_cost <- attr(x, "total_cost")
-  method_used <- attr(x, "method_used")
-  # Only the list form carries these; reading them off the tibble form would
-  # warn about an uninitialised column.
-  status <- NULL
-  certificate <- NULL
-  search <- NULL
+  metadata <- .assignment_metadata(x)
+  total_cost <- metadata$total_cost
+  method_used <- metadata$method_used
+  status <- metadata$status
+  certificate <- metadata$certificate
+  search <- metadata$search
 
   # Check if this is a tibble (from lap_solve) or a plain list (from assignment)
   if (inherits(x, "tbl_df") || inherits(x, "data.frame")) {
@@ -784,11 +762,6 @@ print.lap_solve_result <- function(x, ...) {
     } else {
       cat("  (no assignments)\n")
     }
-    total_cost <- x$total_cost
-    method_used <- x$method_used
-    status <- x$status
-    certificate <- x$certificate
-    search <- x$search
   }
 
   cat("\nTotal cost:", total_cost, "\n")
@@ -816,7 +789,7 @@ print.lap_solve_result <- function(x, ...) {
 # Specialized 1-D Line-Metric LAP Solver
 # ============================================================================
 
-#' Solve 1-D Line Assignment Problem
+#' Solve a One-Dimensional Assignment Problem
 #'
 #' Solves the linear assignment problem when both sources and targets are 
 #' ordered points on a line. Uses efficient O(n*m) dynamic programming
@@ -856,6 +829,9 @@ print.lap_solve_result <- function(x, ...) {
 #' @return A list with components:
 #'   - `match`: Integer vector of length n with 1-based column indices
 #'   - `total_cost`: Total cost of the assignment
+#'
+#'   `summary()` returns a `summary.assignment_result` with the objective
+#'   and the complete row-to-column assignment table.
 #'
 #' @examples
 #' # Square case: equal number of sources and targets
@@ -912,7 +888,7 @@ lap_solve_line_metric <- function(x, y, cost = "L1", maximize = FALSE) {
     maximize = as.logical(maximize)
   )
   
-  class(result) <- c("lap_line_metric_result", "lap_result", class(result))
+  class(result) <- "lap_line_metric_result"
   return(result)
 }
 
@@ -931,6 +907,35 @@ print.lap_line_metric_result <- function(x, ...) {
   }
   
   cat("\nTotal cost:", x$total_cost, "\n")
+  invisible(x)
+}
+
+#' @rdname lap_solve_line_metric
+#' @param object A result returned by this function.
+#' @param ... Ignored by the summary method.
+#' @export
+summary.lap_line_metric_result <- function(object, ...) {
+  .assignment_summary(object, "1-D Line Assignment Result",
+                      "Total cost", object$total_cost)
+}
+
+.assignment_summary <- function(object, title, objective_label, objective) {
+  structure(list(
+    title = title,
+    assignments = data.frame(row = seq_along(object$match),
+                             column = object$match),
+    objective = stats::setNames(objective, objective_label),
+    status = object[["status"]]
+  ), class = "summary.assignment_result")
+}
+
+#' @export
+print.summary.assignment_result <- function(x, ...) {
+  cat(x$title, "\n", sep = "")
+  cat(names(x$objective), ": ", format(x$objective), "\n", sep = "")
+  if (!is.null(x$status)) cat("Status:", x$status, "\n")
+  cat("\nAssignments (1-based indices):\n")
+  print(x$assignments, row.names = FALSE, max = nrow(x$assignments) * 2L)
   invisible(x)
 }
 
@@ -956,6 +961,8 @@ print.lap_line_metric_result <- function(x, ...) {
 #'     \item `bottleneck` - numeric scalar, the bottleneck (max/min edge) value
 #'     \item `status` - character scalar, e.g. `"optimal"`
 #'   }
+#'   `summary()` returns a `summary.assignment_result` with the bottleneck
+#'   value, status, and complete row-to-column assignment table.
 #'
 #' @details
 #' The Bottleneck Assignment Problem (BAP) is a variant of the Linear Assignment
@@ -1057,6 +1064,15 @@ print.bottleneck_result <- function(x, ...) {
   invisible(x)
 }
 
+#' @rdname bottleneck_assignment
+#' @param object A result returned by this function.
+#' @param ... Ignored by the summary method.
+#' @export
+summary.bottleneck_result <- function(object, ...) {
+  .assignment_summary(object, "Bottleneck Assignment Result",
+                      "Bottleneck value", object$bottleneck)
+}
+
 # ==============================================================================
 # Internal: Dense-scan Successive Shortest Path Wrapper
 # ==============================================================================
@@ -1128,7 +1144,7 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 # Sinkhorn-Knopp (Entropy-Regularized Optimal Transport)
 # ==============================================================================
 
-#' 'Sinkhorn-Knopp' optimal transport solver
+#' Entropic Optimal Transport by Sinkhorn-Knopp Iteration
 #'
 #' Compute an entropy-regularized optimal transport plan using the 'Sinkhorn-Knopp'
 #' algorithm. Unlike other LAP solvers that return a hard 1-to-1 assignment,
@@ -1146,7 +1162,7 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #' @param c_weights Optional numeric vector of column marginals (target distribution).
 #'   Default is uniform. Will be normalized to sum to 1.
 #'
-#' @return A list with elements:
+#' @return A `sinkhorn_result` list with elements:
 #' \itemize{
 #'   \item `transport_plan` — numeric matrix, the optimal transport plan P.
 #'         Row sums approximate r_weights, column sums approximate c_weights.
@@ -1156,6 +1172,9 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #'   \item `iterations` — number of iterations used.
 #'   \item `lambda` — the regularization parameter used.
 #' }
+#' `as.matrix()` returns the transport plan. `summary()` returns a
+#' `summary.sinkhorn_result` with convergence, transported mass, support size,
+#' and the observed row and column marginals.
 #'
 #' @details
 #' The 'Sinkhorn-Knopp' algorithm solves the entropy-regularized optimal transport
@@ -1166,7 +1185,6 @@ lap_solve_network_simplex_wrapper <- function(cost, maximize = FALSE) {
 #' subject to row sums = r_weights and column sums = c_weights.
 #'
 #' The entropy term H(P) encourages spread in the transport plan. As lambda -> Inf,
-
 #' the solution approaches the standard (unregularized) optimal transport.
 #'
 #' **Key differences from standard LAP solvers:**
@@ -1216,18 +1234,67 @@ sinkhorn <- function(cost, lambda = 10, tol = 1e-9, max_iter = 1000,
     stop("lambda must be positive")
   }
 
-  lap_solve_sinkhorn(cost, lambda, tol, max_iter, r_weights, c_weights)
+  structure(lap_solve_sinkhorn(cost, lambda, tol, max_iter, r_weights, c_weights),
+            class = "sinkhorn_result")
 }
 
-#' Round 'Sinkhorn' transport plan to hard assignment
+#' @rdname sinkhorn
+#' @param x,object A `sinkhorn_result`.
+#' @param ... Ignored.
+#' @export
+print.sinkhorn_result <- function(x, ...) {
+  .print_sinkhorn_overview(.sinkhorn_metadata(x))
+  invisible(x)
+}
+
+.sinkhorn_metadata <- function(object) {
+  list(dimensions = dim(object$transport_plan), cost = object$cost,
+       converged = object$converged, iterations = object$iterations,
+       lambda = object$lambda)
+}
+
+.print_sinkhorn_overview <- function(x) {
+  cat("Sinkhorn Transport Result\n")
+  cat(sprintf("Dimensions: %d x %d\n", x$dimensions[[1]], x$dimensions[[2]]))
+  cat("Transport cost:", format(x$cost), "\n")
+  cat("Converged:", x$converged, "in", x$iterations, "iterations\n")
+  cat("Regularization parameter:", x$lambda, "\n")
+}
+
+#' @rdname sinkhorn
+#' @export
+summary.sinkhorn_result <- function(object, ...) {
+  plan <- object$transport_plan
+  structure(c(.sinkhorn_metadata(object), list(mass = sum(plan),
+                 positive_entries = sum(plan > 0),
+                 row_marginals = rowSums(plan), column_marginals = colSums(plan))),
+            class = "summary.sinkhorn_result")
+}
+
+#' @export
+print.summary.sinkhorn_result <- function(x, ...) {
+  .print_sinkhorn_overview(x)
+  cat("Total transported mass:", x$mass, "\n")
+  cat("Positive plan entries:", x$positive_entries, "\n")
+  cat("\nRow marginal distribution:\n")
+  print(summary(x$row_marginals))
+  cat("Column marginal distribution:\n")
+  print(summary(x$column_marginals))
+  invisible(x)
+}
+
+#' @rdname sinkhorn
+#' @export
+as.matrix.sinkhorn_result <- function(x, ...) x$transport_plan
+
+#' Round a Sinkhorn Transport Plan to an Assignment
 #'
 #' Convert a soft transport plan from [sinkhorn()] to a hard 1-to-1 assignment
 #' using greedy rounding.
 #'
 #' @param result Either a result from [sinkhorn()] or a transport plan matrix.
 #'
-#' @return Integer vector of column assignments (1-based), same format as
-#'   [assignment()].
+#' @return Integer vector with one 1-based column assignment per row.
 #'
 #' @details
 #' Greedy rounding iteratively assigns each row to its most probable column,
@@ -1259,7 +1326,7 @@ sinkhorn_to_assignment <- function(result) {
 # Assignment with Dual Variables
 # ==============================================================================
 
-#' Solve assignment problem and return dual variables
+#' Solve an Assignment Problem and Return Dual Potentials
 #'
 #' Solves the linear assignment problem and returns dual potentials (u, v)
 #' in addition to the optimal matching. The dual variables provide an
@@ -1298,7 +1365,6 @@ sinkhorn_to_assignment <- function(result) {
 #' **Applications of dual variables:**
 #' \itemize{
 #'   \item **Optimality verification**: Check that duals satisfy constraints
-
 #'   \item **Sensitivity analysis**: Reduced cost `c[i,j] - u[i] - v[j]` shows
 #'         how much an edge cost must decrease before it enters the solution
 #'   \item **Pricing in column generation**: Use duals to price new columns
@@ -1339,7 +1405,7 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   } else {
     .assignment_duals_dense(cost, maximize)
   }
-  class(out) <- "assignment_duals_result"
+  class(out) <- c("assignment_duals_result", "lap_solve_result")
 
   if (certify) {
     # verify_assignment() reads the duals off `out` rather than solving again,
@@ -1360,13 +1426,12 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   }
   duals <- .solver_duals(res_raw, transposed)
 
-  list(
-    match = match_out,
-    total_cost = as.numeric(res_raw$total_cost),
-    u = duals$u,
-    v = duals$v,
-    status = .compute_solve_status(match_out, min(n, m), "jv")
-  )
+  out <- .new_lap_solve_result(match_out, res_raw$total_cost,
+    .compute_solve_status(match_out, min(n, m), "jv"), "jv")
+  out$u <- duals$u
+  out$v <- duals$v
+  attr(out, "dimensions") <- c(n, m)
+  out
 }
 
 .assignment_duals_dense <- function(cost, maximize) {
@@ -1412,32 +1477,47 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   .duals_result(res_raw, n, m, transposed)
 }
 
+#' @rdname assignment_duals
+#' @param x An `assignment_duals_result`.
+#' @param ... Ignored.
 #' @export
 print.assignment_duals_result <- function(x, ...) {
-  cat("Assignment Result with Duals\n")
-  cat("============================\n\n")
-
-  n <- length(x$match)
-  cat("Assignments (1-based indices):\n")
-  for (i in seq_len(min(n, 10))) {
-    if (x$match[i] > 0) {
-      cat(sprintf("  Row %d -> Column %d\n", i, x$match[i]))
-    }
-  }
-  if (n > 10) {
-    cat(sprintf("  ... (%d more assignments)\n", n - 10))
-  }
-
-  cat("\nTotal cost:", x$total_cost, "\n")
-  cat("Status:", x$status, "\n")
-
-  cat("\nDual variables:\n")
-  cat("  u (row):", head(x$u, 5))
-  if (length(x$u) > 5) cat(" ...")
-  cat("\n")
-  cat("  v (col):", head(x$v, 5))
-  if (length(x$v) > 5) cat(" ...")
-  cat("\n")
-
+  cat(sprintf("Assignment with dual potentials: %s, total cost %.10g\n",
+              x$status, x$total_cost))
+  cat(sprintf("  %d of %d rows matched; potentials u (%d rows), v (%d columns)\n",
+              sum(x$match > 0L), length(x$match), length(x$u), length(x$v)))
   invisible(x)
+}
+
+#' @rdname assignment_duals
+#' @param object An `assignment_duals_result`.
+#' @export
+summary.assignment_duals_result <- function(object, ...) {
+  class(object) <- c("summary.assignment_duals_result", class(object))
+  object
+}
+
+#' @export
+print.summary.assignment_duals_result <- function(x, ...) {
+  print.assignment_duals_result(x)
+  cat("\nAssignments (row -> column):\n")
+  print(utils::head(as.data.frame.assignment_duals_result(x), 10), row.names = FALSE)
+  if (length(x$match) > 10) cat(sprintf("  ... %d more rows\n", length(x$match) - 10))
+  cat("\nRow potentials u:\n")
+  print(summary(x$u))
+  cat("Column potentials v:\n")
+  print(summary(x$v))
+  invisible(x)
+}
+
+#' @rdname assignment_duals
+#' @param row.names,optional Ignored.
+#' @export
+as.data.frame.assignment_duals_result <- function(x, row.names = NULL,
+                                                  optional = FALSE, ...) {
+  rows <- seq_along(x$match)
+  col <- as.integer(x$match)
+  col[col == 0L] <- NA_integer_
+  data.frame(row = rows, col = col, u = as.numeric(x$u),
+             v = as.numeric(x$v)[ifelse(is.na(col), NA_integer_, col)])
 }

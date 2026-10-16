@@ -142,3 +142,26 @@ card_hard_instance <- function(seed = 11L, n = 24L, m = 24L) {
   list(left = left, right = right, cost = cost,
        vars = c("x", "y", "z"), max_std_diff = 0.05)
 }
+
+# An instance whose largest balanced sample lies one pair below its linear
+# relaxation, so the root finds the sample and only further nodes prove it:
+# two groups of 400 drawn as in paper/bench, eight covariates, every
+# standardized difference within 0.05.
+card_gap_instance <- function() {
+  set.seed(20261315L)
+  group <- function(n, shift) {
+    data.frame(v1 = stats::rnorm(n, 0.30 * shift), v2 = stats::rnorm(n, 0.10 * shift),
+               v3 = stats::rnorm(n, 0.40 * shift), v4 = stats::rnorm(n, 0.20 * shift),
+               v5 = stats::rnorm(n, 0.15 * shift), v6 = stats::rnorm(n, 0.05 * shift),
+               b1 = stats::rbinom(n, 1, 0.40 + 0.10 * shift),
+               b2 = stats::rbinom(n, 1, 0.30 - 0.05 * shift))
+  }
+  left <- group(400L, 1)
+  right <- group(400L, 0)
+  vars <- names(left)
+  cost <- as.matrix(stats::dist(rbind(as.matrix(left), as.matrix(right))))[
+    seq_len(400L), 400L + seq_len(400L)]
+  list(left = cbind(id = seq_len(400L), left),
+       right = cbind(id = 400L + seq_len(400L), right),
+       cost = cost, vars = vars, max_std_diff = 0.05)
+}

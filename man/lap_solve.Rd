@@ -2,7 +2,7 @@
 % Please edit documentation in R/lap_solve.R
 \name{lap_solve}
 \alias{lap_solve}
-\title{Solve linear assignment problems}
+\title{Solve Linear Assignment Problems with a Tidy Interface}
 \usage{
 lap_solve(
   x,

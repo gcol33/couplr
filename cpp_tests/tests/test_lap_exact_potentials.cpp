@@ -286,7 +286,7 @@ TEST_CASE("zero-weight arcs between zero labels are no improvement",
     }
 }
 
-TEST_CASE("products, directed rounding and ceilings are exact",
+TEST_CASE("products and directed rounding are exact",
           "[exact][arith]") {
     const double a = 1.0 + std::ldexp(1.0, -30);
     const ex::Expansion p = ex::product(a, a);
@@ -296,9 +296,4 @@ TEST_CASE("products, directed rounding and ceilings are exact",
 
     const ex::Expansion s = ex::scale_expansion(p, 3.0);
     REQUIRE(ex::compare(s, ex::expansion_sum(ex::expansion_sum(p, p), p)) == 0);
-
-    ex::Expansion six{6.0};
-    REQUIRE(ex::ceil_quotient(six, 0.0, 3.0) == 2.0);
-    REQUIRE(ex::ceil_quotient(six, std::ldexp(1.0, -50), 3.0) == 3.0);
-    REQUIRE(ex::ceil_quotient(six, -std::ldexp(1.0, -50), 3.0) == 2.0);
 }

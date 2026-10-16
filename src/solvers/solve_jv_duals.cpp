@@ -11,7 +11,7 @@
 
 namespace lap {
 
-DualResult solve_jv_duals(const CostMatrix& cost, bool maximize, bool warm_start) {
+DualResult solve_jv_duals(CostMatrix cost, bool maximize, bool warm_start) {
     const int n = static_cast<int>(cost.nrow);
     const int m = static_cast<int>(cost.ncol);
 
@@ -22,11 +22,11 @@ DualResult solve_jv_duals(const CostMatrix& cost, bool maximize, bool warm_start
     }
     lap::require_rows_fit_cols(n, m);
 
-    CostMatrix work = prepare_for_solve(cost, maximize);
+    CostMatrix work = prepare_for_solve(std::move(cost), maximize);
     ensure_each_row_has_option(work.mask, n, m);
 
-    return jv_duals_detail::jv_duals_from(work, cost,
-                                          /*report_negated=*/false,
+    return jv_duals_detail::jv_duals_from(work, work,
+                                          /*report_negated=*/maximize,
                                           /*solved_negated=*/maximize,
                                           warm_start);
 }

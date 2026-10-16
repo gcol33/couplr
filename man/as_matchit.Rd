@@ -2,7 +2,7 @@
 % Please edit documentation in R/matching_interop.R
 \name{as_matchit}
 \alias{as_matchit}
-\title{Convert couplr Result to matchit Object}
+\title{Convert a Matching Result to a matchit Object}
 \usage{
 as_matchit(
   result,
@@ -58,13 +58,14 @@ use with any function that accepts \pkg{MatchIt} objects (e.g.,
 \pkg{cobalt}, \pkg{marginaleffects}).
 }
 \examples{
-\dontrun{
-left <- data.frame(id = 1:5, age = c(25, 35, 45, 55, 65))
-right <- data.frame(id = 6:15, age = runif(10, 20, 70))
-result <- match_couples(left, right, vars = "age")
-mi <- as_matchit(result, left, right)
-# Now use with cobalt:
-cobalt::bal.tab(mi)
+if (requireNamespace("MatchIt", quietly = TRUE)) {
+  set.seed(1)
+  left <- data.frame(id = 1:5, age = c(25, 35, 45, 55, 65))
+  right <- data.frame(id = 6:15, age = runif(10, 20, 70))
+  result <- match_couples(left, right, vars = "age")
+  mi <- as_matchit(result, left, right)
+  mi
+  if (requireNamespace("cobalt", quietly = TRUE)) cobalt::bal.tab(mi)
 }
 
 }

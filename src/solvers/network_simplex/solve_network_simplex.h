@@ -34,6 +34,6 @@ namespace lap {
 //   DimensionException if nrow > ncol
 //   ConvergenceException if the final basis leaves a row unmatched even though
 //     a matching covering every row was found before the pivot loop
-LapResult solve_network_simplex(const CostMatrix& cost, bool maximize = false);
+LapResult solve_network_simplex(CostMatrix cost, bool maximize = false);
 
 }  // namespace lap

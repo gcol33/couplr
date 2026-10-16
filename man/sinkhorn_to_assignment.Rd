@@ -2,7 +2,7 @@
 % Please edit documentation in R/lap_solve.R
 \name{sinkhorn_to_assignment}
 \alias{sinkhorn_to_assignment}
-\title{Round 'Sinkhorn' transport plan to hard assignment}
+\title{Round a Sinkhorn Transport Plan to an Assignment}
 \usage{
 sinkhorn_to_assignment(result)
 }
@@ -10,8 +10,7 @@ sinkhorn_to_assignment(result)
 \item{result}{Either a result from \code{\link[=sinkhorn]{sinkhorn()}} or a transport plan matrix.}
 }
 \value{
-Integer vector of column assignments (1-based), same format as
-\code{\link[=assignment]{assignment()}}.
+Integer vector with one 1-based column assignment per row.
 }
 \description{
 Convert a soft transport plan from \code{\link[=sinkhorn]{sinkhorn()}} to a hard 1-to-1 assignment

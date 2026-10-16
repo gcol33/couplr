@@ -13,7 +13,7 @@
     Code
       print.cardinality_report(report)
     Output
-      Matched units:       13
-      Global upper bound:  15
-      Cardinality gap:     2 units (13.333%)
+      Matched units:       335
+      Global upper bound:  336
+      Cardinality gap:     1 unit (0.298%)
 

@@ -36,13 +36,12 @@
 ## it is skipped, so a killed run resumes where it stopped. Move the file aside
 ## to force a full re-run.
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
@@ -54,7 +53,7 @@ if (!requireNamespace("RhpcBLASctl", quietly = TRUE)) {
 }
 suppressPackageStartupMessages({
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 ## Single-core wall-clock, matching the rest of the paper's timings.
@@ -62,9 +61,8 @@ blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 runs_csv    <- file.path(results_dir, "regime-runs.csv")
 cells_csv   <- file.path(results_dir, "regime-cells.csv")
 

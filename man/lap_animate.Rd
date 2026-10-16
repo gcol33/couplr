@@ -2,7 +2,7 @@
 % Please edit documentation in R/animate.R
 \name{lap_animate}
 \alias{lap_animate}
-\title{Animate an assignment algorithm step-by-step}
+\title{Animate an Assignment Algorithm}
 \usage{
 lap_animate(
   cost,
@@ -54,11 +54,12 @@ which method strings currently have a registered trace.
 }
 
 \examples{
-\dontrun{
 cost <- matrix(c(4, 2, 5,
                  3, 3, 6,
                  7, 5, 4), nrow = 3, byrow = TRUE)
-lap_animate(cost, method = "hungarian")
+if (requireNamespace("htmlwidgets", quietly = TRUE)) {
+  widget <- lap_animate(cost, method = "hungarian")
+  if (interactive()) print(widget)
 }
 
 }

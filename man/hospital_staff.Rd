@@ -3,7 +3,7 @@
 \docType{data}
 \name{hospital_staff}
 \alias{hospital_staff}
-\title{Hospital staff scheduling example dataset}
+\title{Hospital Staff Example Data}
 \format{
 A list containing eight related datasets:
 \describe{

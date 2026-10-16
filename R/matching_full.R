@@ -635,30 +635,3 @@ full_match <- function(left, right, vars,
 }
 
 
-#' Print Method for Full Matching Results
-#'
-#' @param x A full_matching_result object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return Invisibly returns the input object \code{x}.
-#' @export
-print.full_matching_result <- function(x, ...) {
-  cat("\nFull Matching Result\n")
-  cat("====================\n\n")
-  cat(sprintf("  Status: %s\n", x$status))
-  cat(sprintf("  Groups formed: %d\n", x$info$n_groups))
-  cat(sprintf("  Left units:  %d matched, %d unmatched (of %d)\n",
-              x$info$n_matched_left, x$info$n_unmatched_left, x$info$n_left))
-  cat(sprintf("  Right units: %d matched, %d unmatched (of %d)\n",
-              x$info$n_matched_right, x$info$n_unmatched_right, x$info$n_right))
-
-  if (x$info$n_groups > 0) {
-    # Group size distribution
-    grp_sizes <- table(x$groups$group_id[x$groups$side == "right"])
-    cat(sprintf("\n  Right units per group: min=%d, median=%.0f, max=%d\n",
-                min(grp_sizes), stats::median(as.numeric(grp_sizes)),
-                max(grp_sizes)))
-  }
-  cat("\n")
-  invisible(x)
-}

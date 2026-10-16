@@ -26,13 +26,12 @@
 ## Rows accumulate in paper/bench/results/memory-results.csv and a cell already
 ## in it is skipped, so a killed run resumes where it stopped.
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 argv <- commandArgs(TRUE)
 arg_value <- function(name, default = NA_character_) {
@@ -70,7 +69,7 @@ arm_baseline <- c(dense_matrix = "baseline", dense = "baseline",
                   optmatch = "baseline_alt", MatchIt = "baseline_alt")
 
 run_arm <- function(arm, n_total) {
-  source(file.path(repo_root, "paper", "bench", "bench_common.R"), local = TRUE)
+  source(file.path(bench_dir, "bench_common.R"), local = TRUE)
   if (arm %in% c("baseline", "baseline_alt")) {
     return(list(n_pairs = 0L, total_cost = 0))
   }
@@ -113,7 +112,7 @@ if (IS_WORKER) {
 
   suppressPackageStartupMessages({
     for (p in arm_needs[[arm]]) library(p, character.only = TRUE)
-    pkgload::load_all(repo_root, quiet = TRUE)
+    load_couplr()
     if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
       RhpcBLASctl::blas_set_num_threads(1); RhpcBLASctl::omp_set_num_threads(1)
     }
@@ -141,12 +140,11 @@ if (IS_WORKER) {
 }
 
 ## ---- the parent -------------------------------------------------------------
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "memory-results.csv")
 
 ## The parent loads the package for one reason: the footprint estimate the
 ## memory dispatcher warns from is read out of it rather than restated here.
-suppressPackageStartupMessages(pkgload::load_all(repo_root, quiet = TRUE))
+load_couplr()
 
 sizes <- if (QUICK) c(1000L, 2000L) else c(2000L, 5000L, 10000L, 20000L)
 arms  <- if (QUICK) c("baseline", "dense_matrix", "dense", "implicit") else
@@ -180,7 +178,7 @@ if (is.null(peak_reader) || !file.exists(peak_reader$cmd)) {
 }
 
 rscript <- file.path(R.home("bin"), "Rscript")
-script  <- file.path(repo_root, "paper", "bench", "bench_memory.R")
+script  <- file.path(bench_dir, "bench_memory.R")
 
 ## The summary block below rewrites this file with three derived columns. A
 ## resumed run reads its own measurements back and re-derives them, so they are

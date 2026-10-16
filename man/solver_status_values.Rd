@@ -2,7 +2,7 @@
 % Please edit documentation in R/lap_status.R
 \name{solver_status_values}
 \alias{solver_status_values}
-\title{Solver status values}
+\title{Solver Status Values}
 \usage{
 solver_status_values()
 }

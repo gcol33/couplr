@@ -101,7 +101,7 @@ Rcpp::List scan_to_list(const lap::ReducedCostScan& scan) {
 lap::CostMatrix cost_matrix_for_certify(const Rcpp::NumericMatrix& cost, bool negate) {
     lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
     lap::forbid_sentinel_costs(cm);
-    return lap::prepare_for_solve(cm, negate);
+    return lap::prepare_for_solve(std::move(cm), negate);
 }
 
 // 1-based R match vector (0 = unmatched) to the 0-based convention of
@@ -433,24 +433,15 @@ double exact_round_impl(Rcpp::NumericVector e, std::string direction) {
     Rcpp::stop("exact: direction must be \"down\" or \"up\"");
 }
 
-// The smallest integer q with q * divisor >= e + add, for a positive divisor.
-double exact_ceil_quotient_impl(Rcpp::NumericVector e, double add, double divisor) {
-    if (!std::isfinite(add) || !std::isfinite(divisor) || !(divisor > 0.0)) {
-        Rcpp::stop("exact: the divisor must be finite and positive and the addend finite");
-    }
-    return lap::exact::ceil_quotient(expansion_from_vector(e), add, divisor);
-}
-
 // Moment rows on a matched set: g_r = sum over the pairs of u_ri - w_rj - b_r,
-// one column of `u` and `w` per row, with the sign of each g_r and the sign of
-// sum_r lambda_r g_r, both exact. `left` and `right` are the matched units,
-// 1-based.
-Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
-                                  Rcpp::NumericVector b, Rcpp::IntegerVector left,
-                                  Rcpp::IntegerVector right, Rcpp::NumericVector lambda) {
+// one column of `u` and `w` per row, and the exact sign of each g_r. `left`
+// and `right` are the matched units, 1-based.
+Rcpp::IntegerVector exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
+                                           Rcpp::NumericVector b, Rcpp::IntegerVector left,
+                                           Rcpp::IntegerVector right) {
     const int n_rows = b.size();
-    if (u.ncol() != n_rows || w.ncol() != n_rows || lambda.size() != n_rows) {
-        Rcpp::stop("exact: the moment rows and multipliers do not describe each other");
+    if (u.ncol() != n_rows || w.ncol() != n_rows) {
+        Rcpp::stop("exact: the moment rows do not describe each other");
     }
     if (left.size() != right.size()) Rcpp::stop("exact: left and right differ in length");
     const R_xlen_t k = left.size();
@@ -462,7 +453,6 @@ Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
     }
 
     Rcpp::IntegerVector row_sign(n_rows);
-    lap::exact::Expansion weighted;
     lap::exact::Expansion next;
     for (int r = 0; r < n_rows; ++r) {
         lap::exact::Expansion g;
@@ -476,13 +466,8 @@ Rcpp::List exact_moment_rows_impl(Rcpp::NumericMatrix u, Rcpp::NumericMatrix w,
         g = lap::exact::expansion_sum(
             g, lap::exact::negated(lap::exact::product(static_cast<double>(k), b[r])));
         row_sign[r] = lap::exact::sign(g);
-        if (lambda[r] != 0.0) {
-            weighted = lap::exact::expansion_sum(weighted,
-                                                 lap::exact::scale_expansion(g, lambda[r]));
-        }
     }
-    return Rcpp::List::create(Rcpp::Named("sign") = row_sign,
-                              Rcpp::Named("weighted_sign") = lap::exact::sign(weighted));
+    return row_sign;
 }
 
 // Compile-time smoke: instantiate both templates against every cost source the

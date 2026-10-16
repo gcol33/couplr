@@ -36,7 +36,7 @@ static std::vector<double> convert_to_column_major(const CostMatrix& cost) {
     return result;
 }
 
-LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
+LapResult solve_network_simplex(CostMatrix cost, bool maximize) {
     const int n_rows = static_cast<int>(cost.nrow);
     const int n_cols = static_cast<int>(cost.ncol);
 
@@ -48,7 +48,7 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     lap::require_rows_fit_cols(n_rows, n_cols);
 
     // Prepare working costs (negated if maximize, BIG for forbidden)
-    CostMatrix work = prepare_for_solve(cost, maximize);
+    CostMatrix work = prepare_for_solve(std::move(cost), maximize);
 
     // Check feasibility
     ensure_each_row_has_option(work.mask, n_rows, n_cols);
@@ -102,11 +102,8 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
     // Convert NSResult to LapResult
     std::vector<int> assignment = std::move(ns_result.assignment);
 
-    // Verify matching and compute total cost using ORIGINAL costs
-    double total = 0.0;
     for (int i = 0; i < n_rows; ++i) {
-        int j = assignment[i];
-        if (j < 0) {
+        if (assignment[i] < 0) {
             // A matching covering every row was found before the pivot loop, so
             // this is a basis that stopped carrying that flow, not an input with
             // no assignment.
@@ -115,15 +112,8 @@ LapResult solve_network_simplex(const CostMatrix& cost, bool maximize) {
                 " unmatched after " + std::to_string(ns_result.pivot_count) +
                 " pivots");
         }
-        if (!cost.allowed(i, j)) {
-            LAP_THROW_INFEASIBLE("Chosen forbidden edge");
-        }
-        double c = cost.at(i, j);
-        if (!std::isfinite(c)) {
-            LAP_THROW_INFEASIBLE("Chosen edge has non-finite cost");
-        }
-        total += c;
     }
+    const double total = priced_total(work, maximize, assignment);
 
     return LapResult(std::move(assignment), total, ns_result.status);
 }

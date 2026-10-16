@@ -322,24 +322,6 @@ inline double round_up(const Expansion& e) {
     return -round_down(negated(e));
 }
 
-// The smallest integer q with q * d >= e + a, for d > 0: the ceiling of the
-// quotient, decided exactly. The double quotient starts the search, and q * d
-// is held exactly as a two-component product, so each test is one exact sign.
-// Every q a caller passes through here is far below 2^53, where a double counts
-// exactly.
-inline double ceil_quotient(const Expansion& e, double a, double d) {
-    Expansion t;
-    grow_expansion(e, a, t);
-    compress(t);
-    const auto above = [&](double q) {
-        return sign(expansion_sum(t, negated(product(q, d)))) > 0;
-    };
-    double q = std::ceil((t.empty() ? 0.0 : t.back()) / d);
-    while (above(q)) q += 1.0;
-    while (!above(q - 1.0)) q -= 1.0;
-    return q;
-}
-
 // Sign of c - U - V for a double c and expansions U and V, exactly. The
 // certificate's question once the potentials are expansions rather than
 // doubles; the same filter as sign_reduced_cost() decides the pairs clear of

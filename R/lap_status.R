@@ -15,7 +15,7 @@
 # certified_optimal = TRUE. See verify_assignment().
 # ==============================================================================
 
-#' Solver status values
+#' Solver Status Values
 #'
 #' The closed set of values a couplr solve result's `status` field can take.
 #'
@@ -146,7 +146,9 @@ solver_status_values <- function() {
     match       = as.integer(match),
     total_cost  = as.numeric(total_cost),
     status      = .validate_status(status),
-    method_used = method_used
+    method_used = method_used,
+    n_matched   = sum(match > 0L),
+    unmatched   = which(match == 0L)
   )
   if (!is.null(dispatch))    out$dispatch    <- dispatch
   if (!is.null(certificate)) out$certificate <- certificate

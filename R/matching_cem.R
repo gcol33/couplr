@@ -287,27 +287,3 @@ cem_match <- function(left, right, vars,
 }
 
 
-#' Print Method for CEM Results
-#'
-#' @param x A cem_result object
-#' @param ... Additional arguments (ignored)
-#'
-#' @return Invisibly returns the input object \code{x}.
-#' @export
-print.cem_result <- function(x, ...) {
-  cat("\nCoarsened Exact Matching Result\n")
-  cat("===============================\n\n")
-  cat(sprintf("  Strata: %d total, %d matched\n",
-              x$info$n_strata, x$info$n_matched_strata))
-  cat(sprintf("  Left:   %d matched, %d pruned\n",
-              x$info$n_matched_left, x$info$n_pruned_left))
-  cat(sprintf("  Right:  %d matched, %d pruned\n",
-              x$info$n_matched_right, x$info$n_pruned_right))
-  cat(sprintf("  Variables: %s\n", paste(x$info$vars, collapse = ", ")))
-  if (length(x$info$grouping) > 0) {
-    cat(sprintf("  Exact grouping: %s\n",
-                paste(x$info$grouping, collapse = ", ")))
-  }
-  cat("\n")
-  invisible(x)
-}

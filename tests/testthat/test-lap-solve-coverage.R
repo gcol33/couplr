@@ -234,14 +234,15 @@ test_that("print.lap_solve_result handles list result", {
   expect_true(any(grepl("Assignment", output)))
 })
 
-test_that("print.lap_solve_result handles many assignments", {
+test_that("summary.lap_solve_result truncates long assignments", {
   skip_on_cran()
   cost <- matrix(runif(144), 12, 12)
   result <- assignment(cost, method = "hungarian")
 
-  output <- capture.output(print(result))
-
-  expect_true(any(grepl("more", output)))  # Should show "... and X more"
+  expect_output(print(result), "12 of 12 rows matched")
+  output <- capture.output(print(summary(result)))
+  expect_true(any(grepl("more", output)))
+  expect_lt(length(capture.output(print(result))), length(output))
 })
 
 test_that("print.lap_solve_result handles no assignments", {
@@ -545,17 +546,17 @@ test_that("print.assignment_duals_result works", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("Dual", output)))
+  expect_true(any(grepl("dual potentials", output)))
 })
 
-test_that("print.assignment_duals_result handles many assignments", {
+test_that("summary.assignment_duals_result truncates long assignments", {
   skip_on_cran()
   cost <- matrix(runif(144), 12, 12)
   result <- assignment_duals(cost)
 
-  output <- capture.output(print(result))
+  output <- capture.output(print(summary(result)))
 
-  expect_true(any(grepl("more", output)))
+  expect_true(any(grepl("more rows", output)))
 })
 
 # ------------------------------------------------------------------------------

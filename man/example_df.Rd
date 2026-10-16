@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.R
 \name{example_df}
 \alias{example_df}
-\title{Example assignment problem data frame}
+\title{Example Assignment Data Frame}
 \format{
 A tibble with 18 rows and 4 columns:
 \describe{

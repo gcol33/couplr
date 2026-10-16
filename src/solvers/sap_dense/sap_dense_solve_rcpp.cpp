@@ -13,7 +13,7 @@ Rcpp::List sap_dense_solve_impl(Rcpp::NumericMatrix cost, bool maximize = false)
         lap::CostMatrix cm = rcpp_to_cost_matrix(cost);
 
         // Call pure C++ solver
-        lap::LapResult result = lap::solve_sap_dense(cm, maximize);
+        lap::LapResult result = lap::solve_sap_dense(std::move(cm), maximize);
 
         // Convert back to Rcpp
         return lap_result_to_rcpp(result, cost);

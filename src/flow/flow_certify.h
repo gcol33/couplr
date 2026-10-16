@@ -376,40 +376,6 @@ inline exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
         }, want_cycle);
 }
 
-// recover_flow_potentials() against costs that replace the doubles in `prob`:
-// the costs of a network whose arcs carry terms no double holds, such as moment
-// multipliers folded into a distance. The flow is then proved optimal against
-// those costs rather than their roundings.
-//
-// `costs` answers two questions per arc: `approximation(a)`, the cost rounded
-// with a bound on its error, which is all the filter reads, and `exact(a)`,
-// the cost as an expansion, asked only of the relaxations the filter cannot
-// settle. A cost that is a sum of parts can then be rounded from its parts and
-// never built for the arcs the doubles decide.
-template <class Costs>
-exact::ShortestPaths recover_flow_potentials(const FlowProblem& prob,
-                                             const std::vector<int64_t>& flow,
-                                             const std::vector<double>& hint,
-                                             const Costs& costs, bool want_cycle = false) {
-    const flow_exact_detail::ResidualAdjacency adj =
-        flow_exact_detail::residual_adjacency(prob, flow);
-    return exact::shortest_paths(
-        prob.n_nodes, hint, [&](int64_t k, auto&& emit) {
-            const std::size_t sk = static_cast<std::size_t>(k);
-            for (int64_t e = adj.start[sk]; e < adj.start[sk + 1]; ++e) {
-                const std::size_t se = static_cast<std::size_t>(e);
-                const std::size_t a = static_cast<std::size_t>(adj.arc[se]);
-                const auto exact_cost = [&costs, a]() -> exact::Expansion {
-                    return costs.exact(a);
-                };
-                emit(adj.head[se],
-                     exact::LazyWeight<decltype(exact_cost)>{
-                         costs.approximation(a), exact_cost,
-                         2 * adj.arc[se] + adj.reverse[se], adj.reverse[se] != 0});
-            }
-        }, want_cycle);
-}
-
 // Push as much flow around a residual cycle, tagged as recover_flow_potentials()
 // tags it, as its tightest arc allows. The flow stays integral, inside every
 // bound and conserved, and on a negative cycle its cost falls.
@@ -429,7 +395,9 @@ inline void cancel_residual_cycle(const FlowProblem& prob, std::vector<int64_t>&
 }
 
 // D(pi) of the header, exactly, for potentials held as expansions and arc costs
-// read through a costs type as recover_flow_potentials() reads them. Weak
+// read through a costs type: `approximation(a)`, the cost rounded with a bound
+// on its error, which the filter below reads, and `exact(a)`, the cost as an
+// expansion, asked only of the arcs the filter cannot settle. Weak
 // duality makes it a lower bound on the LP's optimum at every pi, so it is a
 // bound whether or not the flow those potentials came from is optimal, and at
 // optimal potentials it is the optimum.

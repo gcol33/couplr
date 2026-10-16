@@ -4,7 +4,10 @@
 \alias{validate_calipers}
 \title{Validate calipers parameter}
 \usage{
-validate_calipers(calipers, vars)
+validate_calipers(calipers, columns)
+}
+\arguments{
+\item{columns}{The columns a caliper may name: those of both data frames.}
 }
 \value{
 Validated calipers (list or named numeric), or NULL if none.

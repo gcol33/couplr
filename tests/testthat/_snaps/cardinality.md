@@ -13,9 +13,9 @@
     Code
       print(fit$cardinality)
     Output
-      Matched units:       21
-      Global upper bound:  22
-      Cardinality gap:     1 unit (4.545%)
+      Matched units:       335
+      Global upper bound:  336
+      Cardinality gap:     1 unit (0.298%)
 
 # the heuristic block prints
 

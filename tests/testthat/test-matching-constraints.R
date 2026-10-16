@@ -70,7 +70,7 @@ test_that("apply_calipers marks violating pairs as forbidden", {
   vars <- c("x", "y")
   calipers <- list(y = 3)  # Max difference of 3 on y
 
-  result <- couplr:::apply_calipers(cost, left, right, calipers, vars)
+  result <- couplr:::apply_calipers(cost, left, right, calipers)
 
   # Check diagonal should still be valid (y diffs: 5, 5, 5)
   # All pairs should be forbidden since y diff is always 5 > 3
@@ -80,22 +80,20 @@ test_that("apply_calipers marks violating pairs as forbidden", {
 test_that("apply_calipers with NULL returns unchanged", {
   cost <- matrix(1, 3, 3)
 
-  result <- couplr:::apply_calipers(cost, NULL, NULL, NULL, NULL)
+  result <- couplr:::apply_calipers(cost, NULL, NULL, NULL)
 
   expect_equal(result, cost)
 })
 
-test_that("apply_calipers skips variables not in vars", {
+test_that("apply_calipers applies a caliper on a column that is not matched on", {
   left <- data.frame(x = c(1, 2, 3), z = c(100, 200, 300))
-  right <- data.frame(x = c(1.5, 2.5, 3.5), z = c(110, 210, 310))
+  right <- data.frame(x = c(1.5, 2.5, 3.5), z = c(103, 210, 297))
   cost <- matrix(1, 3, 3)
-  vars <- c("x")  # Only x, not z
-  calipers <- list(z = 5)  # Caliper on z, but z not in vars
 
-  result <- couplr:::apply_calipers(cost, left, right, calipers, vars)
+  result <- couplr:::apply_calipers(cost, left, right, list(z = 5))
 
-  # Should be unchanged since z is not in vars
-  expect_equal(result, cost)
+  expect_equal(diag(result), c(1, Inf, 1))
+  expect_true(all(is.infinite(result[row(result) != col(result)])))
 })
 
 test_that("apply_calipers works with multiple variables", {
@@ -105,7 +103,7 @@ test_that("apply_calipers works with multiple variables", {
   vars <- c("x", "y")
   calipers <- list(x = 1, y = 1)  # Max diff of 1 on both
 
-  result <- couplr:::apply_calipers(cost, left, right, calipers, vars)
+  result <- couplr:::apply_calipers(cost, left, right, calipers)
 
   # Diagonal should be valid, off-diagonal should be forbidden
   expect_equal(result[1, 1], 1)
@@ -151,7 +149,7 @@ test_that("apply_all_constraints combines all constraints", {
   vars <- c("x", "y")
 
   result <- couplr:::apply_all_constraints(
-    cost, left, right, vars,
+    cost, left, right,
     max_distance = 3,
     calipers = list(x = 2)
   )

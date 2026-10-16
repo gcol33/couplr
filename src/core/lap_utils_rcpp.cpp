@@ -73,6 +73,26 @@ Rcpp::NumericVector lazy_pair_distances_impl(
   return out;
 }
 
+Rcpp::NumericMatrix lazy_dense_matrix_impl(
+    const Rcpp::NumericMatrix& left_mat,
+    const Rcpp::NumericMatrix& right_mat,
+    SEXP metric,
+    Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov) {
+  const LazySource source = rcpp_lazy_source(
+      left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(), false);
+
+  Rcpp::NumericMatrix out(left_mat.nrow(), right_mat.nrow());
+  std::visit([&](const auto& cm) {
+    for (int64_t j = 0; j < cm.ncol; ++j) {
+      for (int64_t i = 0; i < cm.nrow; ++i) {
+        double c = 0.0;
+        out(i, j) = cost_if_allowed(cm, i, j, c) ? c : NA_REAL;
+      }
+    }
+  }, source);
+  return out;
+}
+
 LazySource rcpp_lazy_source(const Rcpp::NumericMatrix& left_mat,
                             const Rcpp::NumericMatrix& right_mat,
                             SEXP distance,

@@ -35,6 +35,6 @@ namespace lap {
 // Throws:
 //   InfeasibleException if no valid matching exists
 //   DimensionException if nrow > ncol
-LapResult solve_push_relabel(const CostMatrix& cost, bool maximize = false);
+LapResult solve_push_relabel(CostMatrix cost, bool maximize = false);
 
 }  // namespace lap

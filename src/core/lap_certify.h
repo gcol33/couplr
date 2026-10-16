@@ -77,9 +77,8 @@ inline void compensated_add(double& sum, double& comp, double x) {
 struct CompensatedSum {
     double  sum = 0.0;
     double  comp = 0.0;
-    // What the sum's own rounding is charged against. Neumaier's error is
-    // bounded by (2u + O(n^2 u^2)) times the sum of the magnitudes, so both
-    // the magnitudes and the term count have to be carried to state it.
+    // What the sum's own rounding is charged against. The bound below needs
+    // the sum of the magnitudes and the term count, so both are carried.
     double  abs_sum = 0.0;
     int64_t n_terms = 0;
 
@@ -90,9 +89,12 @@ struct CompensatedSum {
     }
     double value() const { return sum + comp; }
 
-    // An upper bound on |value() - exact|, rounded away from zero. The
-    // O(n^2 u^2) term is charged as gamma_n^2, which dominates it and is
-    // negligible beside 2u at any term count a solve reaches.
+    // An upper bound on |value() - exact|, rounded away from zero. This
+    // summation is Sum2 of Ogita, Rump and Oishi (2005, SIAM J. Sci. Comput.
+    // 26:1955), whose Proposition 4.5 bounds its error by
+    // u |exact| + gamma_{N-1}^2 sum|x| for N summands. The accumulator starts
+    // from zero, so N = n_terms + 1, and |exact| <= sum|x| gives
+    // (u + gamma_n^2) sum|x|; the 2u charged here contains that.
     double envelope() const {
         const double u = 0.5 * std::numeric_limits<double>::epsilon();
         const double g = gamma_of(n_terms);

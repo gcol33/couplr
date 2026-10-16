@@ -2,31 +2,9 @@
 # ggplot2 autoplot methods for matching results and diagnostics
 # ==============================================================================
 
-#' ggplot2 autoplot for matching results
-#'
-#' Produces ggplot2-based visualizations of matching distance distributions.
-#' Returns a ggplot object that can be further customized.
-#'
-#' @param object A matching_result object
+#' @rdname couplr_result
 #' @param type Type of plot: "histogram" (default), "density", or "ecdf"
 #' @param ... Additional arguments (ignored)
-#'
-#' @return A ggplot object
-#'
-#' @details
-#' Use `plot()` for base graphics or `autoplot()` for ggplot2 output.
-#' The ggplot2 package must be installed.
-#'
-#' @examples
-#' \donttest{
-#' if (requireNamespace("ggplot2", quietly = TRUE)) {
-#'   left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
-#'   right <- data.frame(id = 6:10, x = c(1.1, 2.2, 3.1, 4.2, 5.1))
-#'   result <- match_couples(left, right, vars = "x")
-#'   ggplot2::autoplot(result)
-#'   ggplot2::autoplot(result, type = "density")
-#' }
-#' }
 #'
 #' @exportS3Method ggplot2::autoplot
 autoplot.matching_result <- function(object,
@@ -72,30 +50,10 @@ autoplot.matching_result <- function(object,
   p + .theme_couplr()
 }
 
-#' ggplot2 autoplot for balance diagnostics
-#'
-#' Produces ggplot2-based balance assessment plots. Returns a ggplot object.
-#'
-#' @param object A balance_diagnostics object
+#' @rdname balance_diagnostics
 #' @param type Type of plot: "love" (default), "histogram", or "variance"
 #' @param threshold Threshold for standardized differences (default: 0.1)
 #' @param ... Additional arguments (ignored)
-#'
-#' @return A ggplot object
-#'
-#' @examples
-#' \donttest{
-#' if (requireNamespace("ggplot2", quietly = TRUE)) {
-#'   set.seed(42)
-#'   left <- data.frame(id = 1:10, age = rnorm(10, 45, 10),
-#'                      income = rnorm(10, 50000, 15000))
-#'   right <- data.frame(id = 11:30, age = rnorm(20, 47, 10),
-#'                        income = rnorm(20, 52000, 15000))
-#'   result <- match_couples(left, right, vars = c("age", "income"))
-#'   bal <- balance_diagnostics(result, left, right, vars = c("age", "income"))
-#'   ggplot2::autoplot(bal)
-#' }
-#' }
 #'
 #' @exportS3Method ggplot2::autoplot
 autoplot.balance_diagnostics <- function(object,
@@ -200,15 +158,10 @@ autoplot.balance_diagnostics <- function(object,
     ggplot2::theme(legend.position = "bottom")
 }
 
-#' ggplot2 autoplot for sensitivity analysis
-#'
-#' Plots p-value upper bounds against sensitivity parameter Gamma.
-#'
+#' @rdname sensitivity_analysis
 #' @param object A sensitivity_analysis object
 #' @param alpha Significance level (default: 0.05)
 #' @param ... Additional arguments (ignored)
-#'
-#' @return A ggplot object
 #'
 #' @exportS3Method ggplot2::autoplot
 autoplot.sensitivity_analysis <- function(object, alpha = 0.05, ...) {

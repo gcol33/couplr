@@ -1,4 +1,4 @@
-#' Example cost matrices for assignment problems
+#' Example Cost Matrices
 #'
 #' Small example datasets for demonstrating couplr functionality across
 #' different assignment problem types: square, rectangular, sparse, and binary.
@@ -83,7 +83,7 @@ example_costs <- list(
   ), nrow = 3, byrow = TRUE)
 )
 
-#' Example assignment problem data frame
+#' Example Assignment Data Frame
 #'
 #' A tidy data frame representation of assignment problems, suitable for
 #' use with grouped workflows and batch solving. Contains two independent
@@ -160,7 +160,7 @@ example_df <- tibble::tibble(
   )
 )
 
-#' Hospital staff scheduling example dataset
+#' Hospital Staff Example Data
 #'
 #' A comprehensive example dataset for demonstrating couplr functionality
 #' across vignettes. Contains synthetic hospital staff scheduling data with

@@ -46,7 +46,7 @@
 # carries v_j < 0.
 # ==============================================================================
 
-#' Verify that an assignment is optimal
+#' Verify That an Assignment Is Optimal
 #'
 #' Checks a solved assignment against the linear-programming optimality
 #' conditions and returns the result of each check. Unlike the `status` field on
@@ -419,6 +419,32 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
 #' @method print assignment_certificate
 #' @rdname verify_assignment
 print.assignment_certificate <- function(x, ...) {
+  verdict <- if (isTRUE(x$certified_optimal)) "optimal" else "not certified"
+  arith <- if (identical(x$arithmetic, "exact")) "exact arithmetic" else
+    sprintf("tolerance %.0e", x$tolerance)
+  cat(sprintf("Assignment certificate: %s (%s)\n", verdict, arith))
+  cat(sprintf("  cost %.10g, lower bound %.10g, max suboptimality %s\n",
+              x$primal_objective, x$dual_objective,
+              if (is.null(x$max_suboptimality) || is.na(x$max_suboptimality))
+                "not reported" else format(x$max_suboptimality, digits = 4)))
+  failed <- c("primal feasibility", "dual feasibility",
+              "complementary slackness")[!c(isTRUE(x$primal_feasible),
+                                           isTRUE(x$dual_feasible),
+                                           isTRUE(x$complementary_slackness))]
+  if (length(failed)) cat("  failed:", paste(failed, collapse = ", "), "\n")
+  invisible(x)
+}
+
+#' @rdname verify_assignment
+#' @param object A certificate.
+#' @export
+summary.assignment_certificate <- function(object, ...) {
+  class(object) <- c("summary.assignment_certificate", class(object))
+  object
+}
+
+#' @export
+print.summary.assignment_certificate <- function(x, ...) {
   flag <- function(ok) if (isTRUE(ok)) "TRUE " else "FALSE"
 
   cat("Assignment certificate\n")

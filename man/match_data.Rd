@@ -6,7 +6,7 @@
 \alias{match_data.full_matching_result}
 \alias{match_data.cem_result}
 \alias{match_data.subclass_result}
-\title{Extract Analysis-Ready Data from Matching Results}
+\title{Extract Analysis-Ready Data from a Matching Result}
 \usage{
 match_data(result, ...)
 

@@ -208,7 +208,11 @@ private:
             case DistanceMetric::Chebyshev: {
                 double s = 0.0;
                 for (int64_t k = 0; k < n_vars_; ++k) {
-                    s = std::max(s, std::abs(li[k] - rj[k]));
+                    // std::max drops a NaN operand, so a missing coordinate
+                    // is returned rather than passed over.
+                    const double d = std::abs(li[k] - rj[k]);
+                    if (std::isnan(d)) return d;
+                    s = std::max(s, d);
                 }
                 return s;
             }

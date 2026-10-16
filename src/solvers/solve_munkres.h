@@ -9,6 +9,6 @@
 
 namespace lap {
 
-LapResult solve_munkres(const CostMatrix& cost, bool maximize = false);
+LapResult solve_munkres(CostMatrix cost, bool maximize = false);
 
 }  // namespace lap

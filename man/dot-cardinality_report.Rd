@@ -3,20 +3,25 @@
 \name{.cardinality_report}
 \alias{.cardinality_report}
 \alias{print.cardinality_report}
+\alias{summary.cardinality_report}
 \title{Report of a cardinality match}
 \usage{
 .cardinality_report(run, specs = NULL)
 
 \method{print}{cardinality_report}(x, ...)
+
+\method{summary}{cardinality_report}(object, ...)
 }
 \arguments{
-\item{run}{A \code{cardinality_run} from \code{\link[=.cardinality_branch_bound]{.cardinality_branch_bound()}}.}
+\item{run}{A \code{cardinality_run} from \code{.cardinality_select()}.}
 
 \item{specs}{The moment rows the run was given, from \code{.moment_specs()}.}
 
 \item{x}{A \code{cardinality_report}.}
 
 \item{...}{Ignored.}
+
+\item{object}{A cardinality report, including a pruning-heuristic report.}
 }
 \value{
 An object of class \code{cardinality_report}, a list with elements:
@@ -33,6 +38,12 @@ certified and audited, and \code{gap} is zero.
 objective and the global lower bound on it. \code{best_possible} is read
 from \code{bound}.
 \item \code{stopped_on}, \code{n_nodes}, \code{engine}, \code{status}.
+\item \code{stages} - one row per stage of a search over unit selections, in
+the order the objective ranks them (\code{"size"}, an \code{"imbalance"} row
+per refined level, \code{"distance"}): whether it closed, what stopped
+it, its nodes and seconds, and its value and bound in its own units
+(matched units, units of imbalance, total distance). No rows when
+one network solve answered the call.
 \item \code{constraints} - one row per stated constraint, with what it asked
 for and what the matched sample achieved.
 \item \code{balance} - matched counts and imbalance per category at every
@@ -47,6 +58,10 @@ when that solve was not certified.
 }
 
 Invisibly returns \code{x}.
+
+\code{summary()} returns a \code{summary.cardinality_report} containing the
+original report; printing it displays the size bound, constraints,
+category counts, and optimization stages where available.
 }
 \description{
 Turns a completed search into the object callers read: the matched sample's

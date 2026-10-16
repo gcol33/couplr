@@ -6,7 +6,8 @@
 \alias{join_matched.full_matching_result}
 \alias{join_matched.cem_result}
 \alias{join_matched.subclass_result}
-\title{Join Matched Pairs with Original Data}
+\alias{augment.couplr_result}
+\title{Join Matched Pairs with the Original Data}
 \usage{
 join_matched(result, ...)
 
@@ -30,12 +31,14 @@ join_matched(result, ...)
 \method{join_matched}{cem_result}(result, left, right, left_id = "id", right_id = "id", ...)
 
 \method{join_matched}{subclass_result}(result, data = NULL, ...)
+
+\method{augment}{couplr_result}(x, left, right, ...)
 }
 \arguments{
 \item{result}{A result object from \code{match_couples()},
 \code{full_match()}, or \code{cem_match()}}
 
-\item{...}{Additional arguments passed to methods}
+\item{...}{Additional arguments passed to \code{join_matched()}}
 
 \item{left}{The original left dataset}
 
@@ -61,6 +64,8 @@ left and right variables (default: c("_left", "_right"))}
 \item{include_block_id}{Include block_id if blocking was used (default: TRUE)}
 
 \item{data}{Data frame used for subclassification}
+
+\item{x}{A matching_result object}
 }
 \value{
 A tibble with one row per matched pair, containing:

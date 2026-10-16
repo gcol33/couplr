@@ -91,5 +91,5 @@ Memory figures report peak resident memory above the baseline of a fresh R sessi
 
 ## Running the scripts
 
-Run the scripts from the package root. `sh paper/bench/run_bench_suite.sh` runs the timing benchmarks in order on one machine. Each script resumes from its CSVs in `results/`, and `FRESH=1` re-measures the selected stages. `Rscript paper/bench/bench_external.R` runs the external validation, and `Rscript paper/bench/example_hospital_staff.R` runs the extended example.
+`Rscript paper/bench/run_benchmarks.R` runs the benchmarks the JSS article reports, in order, on one machine; name stages to run a subset (`Rscript paper/bench/run_benchmarks.R memory implicit`) and add `--fresh` to re-measure instead of resuming from the CSVs in `results/`. The scripts work from any directory: inside this repository they time the source tree, elsewhere the installed package, and they write only to `results/` and `logs/` beside themselves. `Rscript paper/bench/example_hospital_staff.R` runs the extended example.
 

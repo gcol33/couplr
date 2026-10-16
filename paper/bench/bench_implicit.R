@@ -26,13 +26,12 @@
 ## Reproducible via:  Rscript paper/bench/bench_implicit.R
 ##                    Rscript paper/bench/bench_implicit.R --quick
 
-repo_root <- if (file.exists("DESCRIPTION")) {
-  normalizePath(".", winslash = "/", mustWork = TRUE)
-} else if (basename(getwd()) == "bench" && file.exists("../../DESCRIPTION")) {
-  normalizePath("../..", winslash = "/", mustWork = TRUE)
-} else {
-  stop("Run this script from the package root or paper/bench.")
-}
+bench_dir <- local({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (!length(f)) stop("Run this script with Rscript.", call. = FALSE)
+  dirname(normalizePath(sub("^--file=", "", f[1]), winslash = "/"))
+})
+source(file.path(bench_dir, "bench_setup.R"))
 
 ## pkgbuild's default profile compiles the package at -O0. Timings must come
 ## from an optimised build, matching how the package is installed in use.
@@ -42,7 +41,7 @@ suppressPackageStartupMessages({
   if (!requireNamespace("RhpcBLASctl", quietly = TRUE))
     install.packages("RhpcBLASctl", repos = "https://cloud.r-project.org")
   library(RhpcBLASctl)
-  pkgload::load_all(repo_root, quiet = TRUE)
+  load_couplr()
 })
 
 ## Single-core wall-clock, matching the rest of the paper's timings.
@@ -50,9 +49,8 @@ blas_set_num_threads(1); omp_set_num_threads(1)
 Sys.setenv(OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
            MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1")
 
-source(file.path(repo_root, "paper", "bench", "bench_common.R"))
+source(file.path(bench_dir, "bench_common.R"))
 
-results_dir <- file.path(repo_root, "paper", "bench", "results")
 out_csv     <- file.path(results_dir, "implicit-results.csv")
 equiv_csv   <- file.path(results_dir, "implicit-equivalence.csv")
 
@@ -165,10 +163,24 @@ record <- function(n, mode, r) {
   write.csv(results, out_csv, row.names = FALSE)
 }
 
+comparison_arm <- function(d, n_total, mode, held) {
+  if (!is.null(held[[mode]])) return(held[[mode]])
+  saved <- results[results$n_total == n_total & results$memory_mode == mode, ]
+  if (nrow(saved) != 1L || saved$status != "ok") return(NULL)
+  checked <- bounded_call(solve_arm(d, mode), TIMEOUT_S)
+  if (!checked$ok) {
+    cat(sprintf("  equivalence %s: %s\n", mode, checked$status))
+    return(NULL)
+  }
+  c(list(status = "ok"), checked$value)
+}
+
 ## ---- the grid ---------------------------------------------------------------
 ## Each size is generated once and all of its arms are run against that one
 ## data frame, so an arm never differs from another by which sample it saw.
-equiv <- data.frame(n_total = integer(0), cost_gap = numeric(0),
+equiv <- if (file.exists(equiv_csv)) {
+  read.csv(equiv_csv, stringsAsFactors = FALSE)
+} else data.frame(n_total = integer(0), cost_gap = numeric(0),
                     identical_pairing = logical(0),
                     certified_optimal = logical(0),
                     stringsAsFactors = FALSE)
@@ -219,17 +231,23 @@ for (n_total in SIZES) {
 
   ## The gate section C is judged by: identical to the dense solve on every
   ## problem small enough to run both.
-  if (!is.null(held$dense) && !is.null(held$implicit) &&
-      identical(held$dense$status, "ok") &&
-      identical(held$implicit$status, "ok")) {
-    gap  <- abs(held$dense$total_cost - held$implicit$total_cost)
-    same <- identical(held$dense$right_id, held$implicit$right_id)
-    cat(sprintf("  equivalence: identical pairing %s, cost gap %.3e, certified %s\n",
-                same, gap, held$implicit$certified))
-    equiv <- rbind(equiv, data.frame(
-      n_total = n_total, cost_gap = gap, identical_pairing = same,
-      certified_optimal = held$implicit$certified, stringsAsFactors = FALSE
-    ))
+  if (n_total %in% DENSE_SIZES &&
+      (!n_total %in% equiv$n_total ||
+       any(c("dense", "implicit") %in% names(held)))) {
+    equiv <- equiv[equiv$n_total != n_total, , drop = FALSE]
+    dense <- comparison_arm(d, n_total, "dense", held)
+    implicit <- comparison_arm(d, n_total, "implicit", held)
+    if (!is.null(dense) && !is.null(implicit) &&
+        identical(dense$status, "ok") && identical(implicit$status, "ok")) {
+      gap  <- abs(dense$total_cost - implicit$total_cost)
+      same <- identical(dense$right_id, implicit$right_id)
+      cat(sprintf("  equivalence: identical pairing %s, cost gap %.3e, certified %s\n",
+                  same, gap, implicit$certified))
+      equiv <- rbind(equiv, data.frame(
+        n_total = n_total, cost_gap = gap, identical_pairing = same,
+        certified_optimal = implicit$certified, stringsAsFactors = FALSE
+      ))
+    }
     write.csv(equiv, equiv_csv, row.names = FALSE)
   }
   cat("\n"); flush.console()

@@ -250,9 +250,9 @@ test_that("print.balance_diagnostics produces output", {
 
   output <- capture.output(print(balance))
 
-  expect_true(any(grepl("Balance Diagnostics", output)))
-  expect_true(any(grepl("Matching Summary", output)))
-  expect_true(any(grepl("Variable-level Balance", output)))
+  expect_true(any(grepl("Balance of 5 matched pairs", output)))
+  expect_true(any(grepl("Std Diff", output)))
+  expect_true(any(grepl("Largest", output)))
 })
 
 test_that("print.balance_diagnostics handles blocked results", {
@@ -280,7 +280,7 @@ test_that("print.balance_diagnostics handles blocked results", {
   expect_true("block_id" %in% names(result$pairs))
 })
 
-test_that("print.balance_diagnostics shows quality interpretation", {
+test_that("print.balance_diagnostics is shorter than its summary", {
   skip_on_cran()
   left <- data.frame(id = 1:5, x = 1:5)
   right <- data.frame(id = 6:10, x = c(1.1, 2.1, 3.1, 4.1, 5.1))
@@ -288,10 +288,8 @@ test_that("print.balance_diagnostics shows quality interpretation", {
   result <- match_couples(left, right, vars = "x")
   balance <- balance_diagnostics(result, left, right, vars = "x")
 
-  output <- capture.output(print(balance))
-
-  # Should show at least one quality assessment
-  expect_true(any(grepl("Excellent|Good|Acceptable|Poor", output)))
+  expect_lt(length(capture.output(print(balance))),
+            length(capture.output(print(summary(balance)))))
 })
 
 # ------------------------------------------------------------------------------
@@ -309,7 +307,6 @@ test_that("summary.balance_diagnostics works", {
 
   expect_s3_class(smry, "summary.balance_diagnostics")
   expect_true("n_matched" %in% names(smry))
-  expect_true("quality" %in% names(smry))
 })
 
 test_that("print.summary.balance_diagnostics works", {
@@ -323,8 +320,8 @@ test_that("print.summary.balance_diagnostics works", {
 
   output <- capture.output(print(smry))
 
-  expect_true(any(grepl("Summary", output)))
-  expect_true(any(grepl("Quality", output)))
+  expect_true(any(grepl("Balance diagnostics", output)))
+  expect_true(any(grepl("Mean Left", output)))
 })
 
 # ------------------------------------------------------------------------------

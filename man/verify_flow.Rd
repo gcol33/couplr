@@ -3,7 +3,8 @@
 \name{verify_flow}
 \alias{verify_flow}
 \alias{print.flow_certificate}
-\title{Verify that a flow is optimal}
+\alias{summary.flow_certificate}
+\title{Verify That a Flow Is Optimal}
 \usage{
 verify_flow(
   x,
@@ -14,6 +15,8 @@ verify_flow(
 )
 
 \method{print}{flow_certificate}(x, ...)
+
+\method{summary}{flow_certificate}(object, ...)
 }
 \arguments{
 \item{x}{A \code{flow_certificate} object.}
@@ -40,6 +43,8 @@ certificate.}
 conclusion when the exact conditions hold and the numerical one otherwise.}
 
 \item{...}{Ignored.}
+
+\item{object}{A certificate.}
 }
 \value{
 An object of class \code{flow_certificate}, a list with elements:

@@ -26,6 +26,6 @@ namespace lap {
 //
 // Complexity: O(n * m^2). Each of the n augmentations finalizes at most m
 // columns and scans m columns to select each one.
-LapResult solve_sap_dense(const CostMatrix& cost, bool maximize = false);
+LapResult solve_sap_dense(CostMatrix cost, bool maximize = false);
 
 }  // namespace lap

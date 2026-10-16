@@ -1,0 +1,23 @@
+tarball couplr_1.9.0.tar.gz md5 1e66b3135d19328ac76f0379df39a868
+installed Mon Oct 12 01:15:22 CEST 2026
+bench scripts from beast couplr paper/bench (working tree on 42da71e, bench_scaling.R with certified and split arms)
+ab7ec92f3cc6c37bdd96522bb1032758 bench/bench_certificate.R
+b2ffa24a3f5455041bf0d3115bf55d29 bench/bench_common.R
+c47d05ea412f1df0c56bb442db5ac8a4 bench/bench_dispatch_validation.R
+bc72ce9784bd4bfcfeef8a6a01d444d0 bench/bench_external.R
+8b1d01ccf4aaad134fc458c54a08f10f bench/bench_implicit.R
+dccfb72468010be1965a9ada7dcb866f bench/bench_implicit_grid.R
+b1f5e18e1679e0907b9d05715c699cc0 bench/bench_lalonde.R
+19ad2f17fffa3da9f105cd728841e8ba bench/bench_memory.R
+5cd3aa7ce4861ea49932f6826a9103f3 bench/bench_path.R
+264ab342266b682bc0331cf08cc2d113 bench/bench_regimes.R
+b95d0789faca61dcc0ef3e224e75512b bench/bench_scaling.R
+709011ee6204d116c10d5d806acc7a67 bench/bench_scaling_alternatives.R
+0450c6596736020fd2ff5711c0eaeb43 bench/bench_scaling_couplr_only.R
+279ac1d8845e1b12eb73375e07224d80 bench/bench_scaling_lazy.R
+02c503067cf35d6fa475017a92e0fb95 bench/bench_setup.R
+01b8a1e339a7c7bb692985dbb75deb33 bench/example_hospital_staff.R
+13c02ba90f2c5a7f992e1316ee302d47 bench/make-figure.R
+79bf2ad9cff875303ab4422dd1ea9759 bench/run_benchmarks.R
+
+Mon Oct 12 05:54:59 CEST 2026 bench_scaling.R: distance_matrix() pins memory_mode = dense (50000 failed: auto chose lazy). Scaling stage resumed after the suite.

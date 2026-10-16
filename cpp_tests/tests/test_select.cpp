@@ -308,6 +308,45 @@ TEST_CASE("row normalization preserves exact residuals and finite endpoints",
     REQUIRE(std::scalbn(component, -exponent) == spec.coef[0][0]);
 }
 
+TEST_CASE("a fixed selection is certified by its oracle when its LP stalls",
+          "[select]") {
+    sel::SelectProblem prob(2);
+    prob.c = {0.0, 1.0};
+    prob.lower = {1.0, 0.0};
+    prob.upper = {1.0, sel::kInf};
+    prob.integer = {1, 0};
+    prob.theta = 1;
+    auto cut = row_of({-1.75, 1.0}, 0.0, sel::kInf);
+    cut.hard = false;
+    prob.rows.add(cut);
+    sel::Limits limits;
+    limits.lp_iteration_limit = 0;
+    sel::Oracle oracle = [](const std::vector<double>&) {
+        sel::Verdict verdict;
+        verdict.feasible = true;
+        verdict.has_value = true;
+        verdict.value = ex::Expansion{1.75};
+        return verdict;
+    };
+    SECTION("the oracle completes the only remaining point") {
+        sel::BranchAndBound bb(prob, oracle, limits);
+        const auto res = bb.run();
+        REQUIRE(res.has_incumbent);
+        REQUIRE(res.bound_certified);
+        REQUIRE(ex::compare(res.value, 1.75) == 0);
+        REQUIRE(res.bound == 1.75);
+    }
+    SECTION("a violated cut keeps the leaf unresolved") {
+        auto upper_cut = row_of({0.0, 1.0}, -sel::kInf, 1.0);
+        upper_cut.hard = false;
+        prob.rows.add(upper_cut);
+        sel::BranchAndBound bb(prob, oracle, limits);
+        const auto res = bb.run();
+        REQUIRE_FALSE(res.has_incumbent);
+        REQUIRE_FALSE(res.bound_certified);
+    }
+}
+
 TEST_CASE("a scaled nonzero distance cut closes its integral root exactly",
           "[select]") {
     for (int exponent : {-20, -10, 0, 10, 30}) {

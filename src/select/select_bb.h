@@ -721,6 +721,35 @@ private:
         return best;
     }
 
+    // With every selection variable fixed and theta the only free continuous
+    // column, the oracle solves the entire leaf. A stalled floating-point LP
+    // need not leave that leaf uncertified. Check the completed point against
+    // every row exactly before accepting it, including the non-hard cuts.
+    bool resolve_proxy_leaf() {
+        if (prob_.theta < 0 || !oracle_) return false;
+        for (int64_t j = 0; j < prob_.n(); ++j) {
+            if (j != prob_.theta && lower_[j] != upper_[j]) return false;
+        }
+        std::vector<double> x = lower_;
+        if (violated_hard_row(x) >= 0) return true;
+        const Verdict verdict = oracle_(x);
+        if (!verdict.feasible) return true;
+        if (!verdict.has_value) return false;
+        x[prob_.theta] = exact::round_up(verdict.value);
+        if (x[prob_.theta] < lower_[prob_.theta] ||
+            x[prob_.theta] > upper_[prob_.theta]) return false;
+        const std::vector<int64_t> sup = support(x, false);
+        for (int64_t r = 0; r < prob_.rows.m(); ++r) {
+            const Expansion act = prob_.rows.activity(r, sup, x);
+            if (std::isfinite(prob_.rows.lo(r)) &&
+                exact::compare(act, prob_.rows.lo(r)) < 0) return false;
+            if (std::isfinite(prob_.rows.hi(r)) &&
+                exact::compare(act, prob_.rows.hi(r)) > 0) return false;
+        }
+        consider(x, verdict.value);
+        return true;
+    }
+
     std::shared_ptr<detail::Node> process(detail::Node& node) {
         ++result_.n_nodes;
         if (!consistent(node)) return nullptr;
@@ -752,6 +781,7 @@ private:
                 // bound and is split on a free column.
                 const int64_t j = free_integer(false);
                 if (j < 0) {
+                    if (resolve_proxy_leaf()) return nullptr;
                     result_.bound_certified = false;
                     unresolved_bound_ = std::min(unresolved_bound_, lb);
                     return nullptr;

@@ -24,7 +24,10 @@ expect_cardinality_agrees <- function(left, right, vars, ...) {
                                              memory_mode = "implicit", ...))
   expect_identical(cardinality_key(loop), cardinality_key(dense))
   expect_equal(loop$info$total_distance, dense$info$total_distance, tolerance = 1e-9)
-  expect_identical(loop$cardinality$certified, dense$cardinality$certified)
+  expect_identical(loop$cardinality$certified, dense$cardinality$certified,
+                   info = paste(capture.output(str(list(
+                     dense = dense$cardinality, implicit = loop$cardinality))),
+                     collapse = "\n"))
   expect_identical(loop$cardinality$n_matched, dense$cardinality$n_matched)
   invisible(list(dense = dense, loop = loop))
 }

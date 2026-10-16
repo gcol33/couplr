@@ -30,7 +30,7 @@ LapResult solve_push_relabel(CostMatrix cost, bool maximize) {
 
     lap::require_rows_fit_cols(n, m);
 
-    CostMatrix work = prepare_for_solve(std::move(cost), maximize);
+    CostMatrix work = prepare_for_solve(cost, maximize);
     ensure_each_row_has_option(work.mask, n, m);
 
     // Cost scaling stops at eps < 1/(n+1) because two distinct integer totals
@@ -86,7 +86,7 @@ LapResult solve_push_relabel(CostMatrix cost, bool maximize) {
             static_cast<int>(rc.second);
     }
 
-    const double total = priced_total(work, maximize, assignment);
+    const double total = priced_total(cost, false, assignment);
 
     return LapResult(std::move(assignment), total, "optimal");
 }

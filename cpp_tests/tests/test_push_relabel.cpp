@@ -98,6 +98,16 @@ TEST_CASE("Push-Relabel solver - maximization", "[push_relabel][maximize]") {
     }
 }
 
+TEST_CASE("Push-Relabel reports fractional costs on the original scale", "[push_relabel][fractional]") {
+    auto cost = make_cost({{2.75, 2.5, 1.75}});
+    const auto minimum = lap::solve_push_relabel(cost, false);
+    REQUIRE(minimum.assignment == std::vector<int>{2});
+    REQUIRE(minimum.total_cost == Approx(1.75));
+    const auto maximum = lap::solve_push_relabel(cost, true);
+    REQUIRE(maximum.assignment == std::vector<int>{0});
+    REQUIRE(maximum.total_cost == Approx(2.75));
+}
+
 TEST_CASE("Push-Relabel solver - forbidden edges", "[push_relabel][forbidden]") {
     SECTION("some forbidden edges") {
         lap::CostMatrix cost(3, 3);

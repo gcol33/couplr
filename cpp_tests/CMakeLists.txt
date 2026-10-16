@@ -8,13 +8,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Options
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
-# Coverage configuration
-if(ENABLE_COVERAGE)
-    message(STATUS "Code coverage enabled")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g --coverage -fprofile-arcs -ftest-coverage")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-endif()
-
 # Fetch Catch2 v3
 include(FetchContent)
 FetchContent_Declare(
@@ -133,6 +126,11 @@ add_executable(couplr_tests
 )
 
 target_link_libraries(couplr_tests PRIVATE Catch2::Catch2WithMain)
+
+if(ENABLE_COVERAGE)
+    target_compile_options(couplr_tests PRIVATE -O0 -g --coverage)
+    target_link_options(couplr_tests PRIVATE --coverage)
+endif()
 
 # Register tests with CTest
 include(CTest)

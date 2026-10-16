@@ -1,4 +1,4 @@
-# List methods that currently support animation
+# List Methods That Support Animation
 
 Returns the character vector of method strings for which a trace
 function has been registered. Use any of these with

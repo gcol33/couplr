@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Matching Workflows • couplr</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
   window.MathJax = {
     chtml: {
@@ -41,7 +46,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">couplr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,23 +55,24 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../articles/getting-started.html">Get Started</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/getting-started.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started</a></li>
-    <li><hr class="dropdown-divider"></li>
+<li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Core Topics</h6></li>
-    <li><a class="dropdown-item" href="../articles/algorithms.html">Algorithm Details</a></li>
+    <li><a class="dropdown-item" href="../articles/algorithms.html">The Algorithm Collection</a></li>
     <li><a class="dropdown-item" href="../articles/matching-workflows.html">Matching Workflows</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparison with Alternatives</a></li>
-    <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting</a></li>
+    <li><a class="dropdown-item" href="../articles/troubleshooting.html">Troubleshooting Guide</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
-    <li><a class="dropdown-item" href="../articles/pixel-morphing.html">Pixel Morphing &amp; Scientific Applications</a></li>
+    <li><a class="dropdown-item" href="../articles/pixel-morphing.html">Advanced Topics</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -107,12 +113,11 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Matching Workflows</h1>
+      <img src="../logo.svg" class="logo" alt=""><h1>Matching Workflows</h1>
                         <h4 data-toc-skip class="author">Gilles
 Colling</h4>
             
-            <h4 data-toc-skip class="date">2026-10-10</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/couplr/blob/HEAD/vignettes/matching-workflows.Rmd" class="external-link"><code>vignettes/matching-workflows.Rmd</code></a></small>
       <div class="d-none name"><code>matching-workflows.Rmd</code></div>
@@ -345,7 +350,7 @@ automatic preprocessing:</p>
 <span></span>
 <span><span class="co"># View matched pairs</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">pairs</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 x 5</span></span></span>
 <span><span class="co">#&gt;   left_id right_id distance .age_diff .income_diff</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 1       27         0.530   -<span style="color: #BB0000;">5.68</span>           <span style="text-decoration: underline;">2</span>942.</span></span>
@@ -429,7 +434,99 @@ without matches</p></li>
 <span>  <span class="fu">theme</span><span class="op">(</span>plot.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        panel.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        panel.grid <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/inspect-output-1.svg" class="r-plt" alt="Histogram showing the distribution of match distances, with most matches having low distances indicating good match quality" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.00' y='0.00' width='504.00' height='360.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzMuMTN8NDk4LjUyfDIzLjE4fDMyOC41MA=='>
+    <rect x='33.13' y='23.18' width='465.39' height='305.33' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzMuMTN8NDk4LjUyfDIzLjE4fDMyOC41MA==)'>
+<rect x='33.13' y='23.18' width='465.39' height='305.33' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<rect x='54.28' y='240.61' width='14.10' height='74.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='68.38' y='74.07' width='14.10' height='240.56' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='82.49' y='37.06' width='14.10' height='277.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='96.59' y='55.56' width='14.10' height='259.06' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='110.69' y='55.56' width='14.10' height='259.06' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='124.80' y='203.60' width='14.10' height='111.03' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='138.90' y='222.10' width='14.10' height='92.52' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='153.00' y='185.09' width='14.10' height='129.53' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='167.10' y='259.11' width='14.10' height='55.51' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='181.21' y='203.60' width='14.10' height='111.03' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='195.31' y='240.61' width='14.10' height='74.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='209.41' y='259.11' width='14.10' height='55.51' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='223.52' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='237.62' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='251.72' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='265.82' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='279.93' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='294.03' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='308.13' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='322.24' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='336.34' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='350.44' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='364.54' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='378.65' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='392.75' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='406.85' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='420.95' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='435.06' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='449.16' y='314.63' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+<rect x='463.26' y='296.12' width='14.10' height='18.50' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #29ABE0; fill-opacity: 0.70;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='28.20' y='317.78' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='28.20' y='225.25' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>5</text>
+<text x='28.20' y='132.73' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>10</text>
+<text x='28.20' y='40.21' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>15</text>
+<text x='60.90' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='166.44' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.5</text>
+<text x='271.97' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.0</text>
+<text x='377.51' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.5</text>
+<text x='483.04' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2.0</text>
+<text x='265.82' y='352.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Euclidean Distance (scaled)</text>
+<text transform='translate(13.36,175.84) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Count</text>
+<text x='33.13' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distribution of Match Distances</text>
+</g>
+</g>
+</svg></div></p>
 <p><strong>Interpretation:</strong></p>
 <ul>
 <li><p>Lower distances indicate better matches (more similar
@@ -690,18 +787,18 @@ matters</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Optimal matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.45 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.11 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_optimal</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.3368</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.06 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 7.5 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: Inf x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -786,8 +883,8 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted     0.02        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best     0.00        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed    sorted     0.00        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed1 row_best     0.01        0.0968          19.36</span></span>
 <span><span class="co">#&gt; elapsed2       pq     0.00        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
@@ -883,7 +980,137 @@ matching</p></li>
 <span>        panel.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        legend.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        panel.grid <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/calipers-1.svg" class="r-plt" alt="Overlapping histograms comparing match distances with and without caliper constraint, showing the caliper excludes distant matches" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.00' y='0.00' width='504.00' height='360.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzMuMTN8NDA3LjkyfDIzLjE4fDMyOC41MA=='>
+    <rect x='33.13' y='23.18' width='374.79' height='305.33' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzMuMTN8NDA3LjkyfDIzLjE4fDMyOC41MA==)'>
+<rect x='33.13' y='23.18' width='374.79' height='305.33' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<rect x='50.16' y='106.45' width='11.36' height='208.18' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='61.52' y='175.84' width='11.36' height='138.78' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='72.88' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='84.24' y='279.93' width='11.36' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='95.59' y='268.36' width='11.36' height='46.26' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='106.95' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='118.31' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='129.67' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='141.02' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='152.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='163.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='175.09' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='186.45' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='197.81' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='209.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='220.52' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='231.88' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='243.24' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='254.60' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='265.95' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='277.31' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='288.67' y='279.93' width='11.36' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='300.03' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='311.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='322.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='334.10' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='345.46' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='356.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='368.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='379.53' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='50.16' y='37.06' width='11.36' height='277.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='61.52' y='198.97' width='11.36' height='115.65' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='72.88' y='291.49' width='11.36' height='23.13' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='84.24' y='279.93' width='11.36' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='95.59' y='303.06' width='11.36' height='11.57' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='106.95' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='118.31' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='129.67' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='141.02' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='152.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='163.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='175.09' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='186.45' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='197.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='209.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='220.52' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='231.88' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='243.24' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='254.60' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='265.95' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='277.31' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='288.67' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='300.03' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='311.38' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='322.74' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='334.10' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='345.46' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='356.81' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='368.17' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<rect x='379.53' y='314.63' width='11.36' height='0.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<line x1='140.19' y1='328.50' x2='140.19' y2='23.18' style='stroke-width: 1.07; stroke: #FF0000; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='28.20' y='317.78' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='28.20' y='259.95' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>5</text>
+<text x='28.20' y='202.12' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>10</text>
+<text x='28.20' y='144.29' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>15</text>
+<text x='28.20' y='86.47' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>20</text>
+<text x='28.20' y='28.64' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>25</text>
+<text x='55.73' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='168.35' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2</text>
+<text x='280.96' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>4</text>
+<text x='393.58' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>6</text>
+<text x='220.52' y='352.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distance</text>
+<text transform='translate(13.36,175.84) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Count</text>
+<rect x='418.88' y='145.24' width='79.64' height='61.19' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<text x='424.36' y='159.76' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Condition</text>
+<rect x='425.07' y='167.11' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D; fill-opacity: 0.50;' />
+<rect x='425.07' y='184.39' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4; fill-opacity: 0.50;' />
+<text x='447.12' y='178.19' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>No caliper</text>
+<text x='447.12' y='195.47' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>With caliper</text>
+<text x='33.13' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Caliper Effect on Match Distances</text>
+</g>
+</g>
+</svg></div></p>
 </div>
 <div class="section level3">
 <h3 id="choosing-caliper-width">Choosing Caliper Width<a class="anchor" aria-label="anchor" href="#choosing-caliper-width"></a>
@@ -995,7 +1222,7 @@ burden</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Blocking structure:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Blocking structure:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">blocks</span><span class="op">$</span><span class="va">block_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 x 3</span></span></span>
 <span><span class="co">#&gt;   block_id n_left n_right</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A            36      58</span></span>
@@ -1018,7 +1245,7 @@ burden</p></li>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">left_site</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">id</span>, <span class="va">site</span><span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"left_id"</span> <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">right_site</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">id</span>, <span class="va">site</span><span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"right_id"</span> <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span>, suffix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"_left"</span>, <span class="st">"_right"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">site_left</span>, <span class="va">site_right</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 x 3</span></span></span>
 <span><span class="co">#&gt;   site_left site_right     n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> A         A             36</span></span>
@@ -1043,7 +1270,7 @@ blocks:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Cluster-based blocks:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Cluster-based blocks:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">cluster_blocks</span><span class="op">$</span><span class="va">block_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 x 4</span></span></span>
 <span><span class="co">#&gt;   block_id  n_left n_right mean_age</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> cluster_1     37      56     61.2</span></span>
@@ -1068,7 +1295,7 @@ blocks:</p>
 <span>    mean_age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span>,</span>
 <span>    sd_age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 x 4</span></span></span>
 <span><span class="co">#&gt;   block_id      n mean_age sd_age</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> cluster_1    37     61.2   4.59</span></span>
@@ -1139,41 +1366,21 @@ blocks:</p>
 <span></span>
 <span><span class="co"># Print balance summary</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Balance Diagnostics for Matched Pairs</span></span>
-<span><span class="co">#&gt; ======================================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matching Summary:</span></span>
-<span><span class="co">#&gt;   Method: lap</span></span>
-<span><span class="co">#&gt;   Matched pairs: 100</span></span>
-<span><span class="co">#&gt;   Unmatched left: 0 (of 100)</span></span>
-<span><span class="co">#&gt;   Unmatched right: 50 (of 150)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Variable-level Balance:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
+<span><span class="co">#&gt; Balance of 100 matched pairs</span></span>
+<span><span class="co">#&gt;   unmatched: 0 of 100 left, 50 of 150 right units</span></span>
+<span><span class="co">#&gt;  Variable Std Diff Before Std Diff Var Ratio KS Stat</span></span>
+<span><span class="co">#&gt;       age          -0.568   -0.148     0.794    0.18</span></span>
+<span><span class="co">#&gt;    income           0.404    0.155     0.965    0.09</span></span>
+<span><span class="co">#&gt; Largest |Std Diff|: 0.155</span></span>
+<span></span>
+<span><span class="co"># Extract balance table for reporting</span></span>
+<span><span class="fu"><a href="../reference/balance_table.html">balance_table</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 x 8</span></span></span>
 <span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.794      0.18</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.965      0.09</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Overall Balance:</span></span>
-<span><span class="co">#&gt;   Mean |Std Diff|: 0.151 (Good)</span></span>
-<span><span class="co">#&gt;   Max |Std Diff|: 0.155</span></span>
-<span><span class="co">#&gt;   Vars with |Std Diff| &gt; 0.25: 0.0%</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Balance Interpretation:</span></span>
-<span><span class="co">#&gt;   |Std Diff| &lt; 0.10: Excellent balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| 0.10-0.25: Good balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| 0.25-0.50: Acceptable balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| &gt; 0.50: Poor balance</span></span>
-<span></span>
-<span><span class="co"># Extract balance table for reporting</span></span>
-<span><span class="fu"><a href="../reference/balance_table.html">balance_table</a></span><span class="op">(</span><span class="va">balance</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
-<span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             45.9         47.3       -<span style="color: #BB0000;">1.43</span>     -<span style="color: #BB0000;">0.148</span>       0.794      0.18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> income       <span style="text-decoration: underline;">58</span>387.       <span style="text-decoration: underline;">56</span>118.      <span style="text-decoration: underline;">2</span>269.        0.155       0.965      0.09</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># i 1 more variable: `Std Diff Before` &lt;dbl&gt;</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="how-to-interpret-balance-results">How to Interpret Balance Results<a class="anchor" aria-label="anchor" href="#how-to-interpret-balance-results"></a>
@@ -1273,10 +1480,10 @@ section</p></li>
 <span>  <span class="fu">geom_hline</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"#93c54b"</span>, linewidth <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_hline</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"#f47c3c"</span>, linewidth <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_col</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"dodge"</span>, width <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_label</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1.5</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span>, label <span class="op">=</span> <span class="st">"±0.1 excellent"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">geom_label</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1.5</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span>, label <span class="op">=</span> <span class="st">"±0.1 excellent"</span><span class="op">)</span>),</span>
 <span>             fill <span class="op">=</span> <span class="st">"#93c54b"</span>, color <span class="op">=</span> <span class="st">"white"</span>, inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>             size <span class="op">=</span> <span class="fl">3</span>, fontface <span class="op">=</span> <span class="st">"bold"</span>, label.padding <span class="op">=</span> <span class="fu">unit</span><span class="op">(</span><span class="fl">0.2</span>, <span class="st">"lines"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_label</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1.5</span>, y <span class="op">=</span> <span class="fl">0.25</span>, label <span class="op">=</span> <span class="st">"±0.25 acceptable"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">geom_label</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1.5</span>, y <span class="op">=</span> <span class="fl">0.25</span>, label <span class="op">=</span> <span class="st">"±0.25 acceptable"</span><span class="op">)</span>),</span>
 <span>             fill <span class="op">=</span> <span class="st">"#f47c3c"</span>, color <span class="op">=</span> <span class="st">"white"</span>, inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>             size <span class="op">=</span> <span class="fl">3</span>, fontface <span class="op">=</span> <span class="st">"bold"</span>, label.padding <span class="op">=</span> <span class="fu">unit</span><span class="op">(</span><span class="fl">0.2</span>, <span class="st">"lines"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">labs</span><span class="op">(</span></span>
@@ -1291,13 +1498,104 @@ section</p></li>
 <span>        legend.background <span class="op">=</span> <span class="fu">element_rect</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>        panel.grid <span class="op">=</span> <span class="fu">element_blank</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">coord_flip</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please consider using `annotate()` or provide this layer with data containing</span></span>
+<span><span class="co">#&gt; Warning in geom_label(aes(x = 1.5, y = -0.1, label = "&lt;U+00B1&gt;0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">i</span> Please consider using `annotate()` or provide this layer with data containing</span></span>
 <span><span class="co">#&gt;   a single row.</span></span>
-<span><span class="co">#&gt; Warning in geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please consider using `annotate()` or provide this layer with data containing</span></span>
+<span><span class="co">#&gt; Warning in geom_label(aes(x = 1.5, y = 0.25, label = "&lt;U+00B1&gt;0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">i</span> Please consider using `annotate()` or provide this layer with data containing</span></span>
 <span><span class="co">#&gt;   a single row.</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/balance-plots-1.svg" class="r-plt" alt="Bar chart comparing standardized differences before and after matching, with threshold lines at 0.1 and 0.25 showing improved balance after matching" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.00' y='0.00' width='504.00' height='360.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpNTEuNzF8NDI3Ljk0fDIzLjE4fDMyOC41MA=='>
+    <rect x='51.71' y='23.18' width='376.23' height='305.33' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpNTEuNzF8NDI3Ljk0fDIzLjE4fDMyOC41MA==)'>
+<rect x='51.71' y='23.18' width='376.23' height='305.33' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<line x1='233.53' y1='328.50' x2='233.53' y2='23.18' style='stroke-width: 1.71; stroke: #93C54B; stroke-dasharray: 9.10,9.10; stroke-linecap: butt;' />
+<line x1='303.93' y1='328.50' x2='303.93' y2='23.18' style='stroke-width: 1.71; stroke: #93C54B; stroke-dasharray: 9.10,9.10; stroke-linecap: butt;' />
+<line x1='180.74' y1='328.50' x2='180.74' y2='23.18' style='stroke-width: 1.71; stroke: #F47C3C; stroke-dasharray: 9.10,9.10; stroke-linecap: butt;' />
+<line x1='356.72' y1='328.50' x2='356.72' y2='23.18' style='stroke-width: 1.71; stroke: #F47C3C; stroke-dasharray: 9.10,9.10; stroke-linecap: butt;' />
+<rect x='68.81' y='210.54' width='199.92' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4;' />
+<rect x='268.73' y='71.75' width='142.10' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4;' />
+<rect x='216.70' y='245.23' width='52.03' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D;' />
+<rect x='268.73' y='106.45' width='54.56' height='34.70' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D;' />
+<polygon points='186.86,180.95 280.21,180.95 280.15,180.94 280.40,180.93 280.64,180.88 280.87,180.80 281.08,180.67 281.27,180.52 281.44,180.33 281.57,180.12 281.67,179.90 281.73,179.66 281.75,179.41 281.75,179.41 281.75,172.27 281.75,172.27 281.73,172.03 281.67,171.79 281.57,171.56 281.44,171.35 281.27,171.16 281.08,171.01 280.87,170.88 280.64,170.80 280.40,170.75 280.21,170.74 186.86,170.74 187.04,170.75 186.80,170.74 186.55,170.77 186.31,170.84 186.09,170.94 185.89,171.08 185.71,171.25 185.56,171.45 185.44,171.67 185.37,171.90 185.33,172.15 185.32,172.27 185.32,179.41 185.33,179.29 185.33,179.53 185.37,179.78 185.44,180.01 185.56,180.23 185.71,180.43 185.89,180.60 186.09,180.74 186.31,180.85 186.55,180.91 186.80,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
+<text x='233.53' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.1 excellent</text>
+<polygon points='186.86,180.95 280.21,180.95 280.15,180.94 280.40,180.93 280.64,180.88 280.87,180.80 281.08,180.67 281.27,180.52 281.44,180.33 281.57,180.12 281.67,179.90 281.73,179.66 281.75,179.41 281.75,179.41 281.75,172.27 281.75,172.27 281.73,172.03 281.67,171.79 281.57,171.56 281.44,171.35 281.27,171.16 281.08,171.01 280.87,170.88 280.64,170.80 280.40,170.75 280.21,170.74 186.86,170.74 187.04,170.75 186.80,170.74 186.55,170.77 186.31,170.84 186.09,170.94 185.89,171.08 185.71,171.25 185.56,171.45 185.44,171.67 185.37,171.90 185.33,172.15 185.32,172.27 185.32,179.41 185.33,179.29 185.33,179.53 185.37,179.78 185.44,180.01 185.56,180.23 185.71,180.43 185.89,180.60 186.09,180.74 186.31,180.85 186.55,180.91 186.80,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
+<text x='233.53' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.1 excellent</text>
+<polygon points='186.86,180.95 280.21,180.95 280.15,180.94 280.40,180.93 280.64,180.88 280.87,180.80 281.08,180.67 281.27,180.52 281.44,180.33 281.57,180.12 281.67,179.90 281.73,179.66 281.75,179.41 281.75,179.41 281.75,172.27 281.75,172.27 281.73,172.03 281.67,171.79 281.57,171.56 281.44,171.35 281.27,171.16 281.08,171.01 280.87,170.88 280.64,170.80 280.40,170.75 280.21,170.74 186.86,170.74 187.04,170.75 186.80,170.74 186.55,170.77 186.31,170.84 186.09,170.94 185.89,171.08 185.71,171.25 185.56,171.45 185.44,171.67 185.37,171.90 185.33,172.15 185.32,172.27 185.32,179.41 185.33,179.29 185.33,179.53 185.37,179.78 185.44,180.01 185.56,180.23 185.71,180.43 185.89,180.60 186.09,180.74 186.31,180.85 186.55,180.91 186.80,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
+<text x='233.53' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.1 excellent</text>
+<polygon points='186.86,180.95 280.21,180.95 280.15,180.94 280.40,180.93 280.64,180.88 280.87,180.80 281.08,180.67 281.27,180.52 281.44,180.33 281.57,180.12 281.67,179.90 281.73,179.66 281.75,179.41 281.75,179.41 281.75,172.27 281.75,172.27 281.73,172.03 281.67,171.79 281.57,171.56 281.44,171.35 281.27,171.16 281.08,171.01 280.87,170.88 280.64,170.80 280.40,170.75 280.21,170.74 186.86,170.74 187.04,170.75 186.80,170.74 186.55,170.77 186.31,170.84 186.09,170.94 185.89,171.08 185.71,171.25 185.56,171.45 185.44,171.67 185.37,171.90 185.33,172.15 185.32,172.27 185.32,179.41 185.33,179.29 185.33,179.53 185.37,179.78 185.44,180.01 185.56,180.23 185.71,180.43 185.89,180.60 186.09,180.74 186.31,180.85 186.55,180.91 186.80,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #93C54B;' />
+<text x='233.53' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.1 excellent</text>
+<polygon points='303.87,180.95 409.57,180.95 409.51,180.94 409.76,180.93 410.00,180.88 410.23,180.80 410.44,180.67 410.63,180.52 410.80,180.33 410.93,180.12 411.03,179.90 411.09,179.66 411.11,179.41 411.11,179.41 411.11,172.27 411.11,172.27 411.09,172.03 411.03,171.79 410.93,171.56 410.80,171.35 410.63,171.16 410.44,171.01 410.23,170.88 410.00,170.80 409.76,170.75 409.57,170.74 303.87,170.74 304.06,170.75 303.81,170.74 303.57,170.77 303.33,170.84 303.11,170.94 302.90,171.08 302.72,171.25 302.58,171.45 302.46,171.67 302.38,171.90 302.34,172.15 302.34,172.27 302.34,179.41 302.34,179.29 302.34,179.53 302.38,179.78 302.46,180.01 302.58,180.23 302.72,180.43 302.90,180.60 303.11,180.74 303.33,180.85 303.57,180.91 303.81,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #F47C3C;' />
+<text x='356.72' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.25 acceptable</text>
+<polygon points='303.87,180.95 409.57,180.95 409.51,180.94 409.76,180.93 410.00,180.88 410.23,180.80 410.44,180.67 410.63,180.52 410.80,180.33 410.93,180.12 411.03,179.90 411.09,179.66 411.11,179.41 411.11,179.41 411.11,172.27 411.11,172.27 411.09,172.03 411.03,171.79 410.93,171.56 410.80,171.35 410.63,171.16 410.44,171.01 410.23,170.88 410.00,170.80 409.76,170.75 409.57,170.74 303.87,170.74 304.06,170.75 303.81,170.74 303.57,170.77 303.33,170.84 303.11,170.94 302.90,171.08 302.72,171.25 302.58,171.45 302.46,171.67 302.38,171.90 302.34,172.15 302.34,172.27 302.34,179.41 302.34,179.29 302.34,179.53 302.38,179.78 302.46,180.01 302.58,180.23 302.72,180.43 302.90,180.60 303.11,180.74 303.33,180.85 303.57,180.91 303.81,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #F47C3C;' />
+<text x='356.72' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.25 acceptable</text>
+<polygon points='303.87,180.95 409.57,180.95 409.51,180.94 409.76,180.93 410.00,180.88 410.23,180.80 410.44,180.67 410.63,180.52 410.80,180.33 410.93,180.12 411.03,179.90 411.09,179.66 411.11,179.41 411.11,179.41 411.11,172.27 411.11,172.27 411.09,172.03 411.03,171.79 410.93,171.56 410.80,171.35 410.63,171.16 410.44,171.01 410.23,170.88 410.00,170.80 409.76,170.75 409.57,170.74 303.87,170.74 304.06,170.75 303.81,170.74 303.57,170.77 303.33,170.84 303.11,170.94 302.90,171.08 302.72,171.25 302.58,171.45 302.46,171.67 302.38,171.90 302.34,172.15 302.34,172.27 302.34,179.41 302.34,179.29 302.34,179.53 302.38,179.78 302.46,180.01 302.58,180.23 302.72,180.43 302.90,180.60 303.11,180.74 303.33,180.85 303.57,180.91 303.81,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #F47C3C;' />
+<text x='356.72' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.25 acceptable</text>
+<polygon points='303.87,180.95 409.57,180.95 409.51,180.94 409.76,180.93 410.00,180.88 410.23,180.80 410.44,180.67 410.63,180.52 410.80,180.33 410.93,180.12 411.03,179.90 411.09,179.66 411.11,179.41 411.11,179.41 411.11,172.27 411.11,172.27 411.09,172.03 411.03,171.79 410.93,171.56 410.80,171.35 410.63,171.16 410.44,171.01 410.23,170.88 410.00,170.80 409.76,170.75 409.57,170.74 303.87,170.74 304.06,170.75 303.81,170.74 303.57,170.77 303.33,170.84 303.11,170.94 302.90,171.08 302.72,171.25 302.58,171.45 302.46,171.67 302.38,171.90 302.34,172.15 302.34,172.27 302.34,179.41 302.34,179.29 302.34,179.53 302.38,179.78 302.46,180.01 302.58,180.23 302.72,180.43 302.90,180.60 303.11,180.74 303.33,180.85 303.57,180.91 303.81,180.94 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #F47C3C;' />
+<text x='356.72' y='178.90' text-anchor='middle' style='font-size: 0.854em; font-weight: bold;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>&lt;U+00B1&gt;0.25 acceptable</text>
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='46.77' y='248.38' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
+<text x='46.77' y='109.60' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>income</text>
+<text x='57.55' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.6</text>
+<text x='127.94' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.4</text>
+<text x='198.34' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.2</text>
+<text x='268.73' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='339.12' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.2</text>
+<text x='409.52' y='339.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.4</text>
+<text x='239.82' y='352.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Standardized Difference</text>
+<text transform='translate(13.36,175.84) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Variable</text>
+<rect x='438.90' y='145.24' width='59.62' height='61.19' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<text x='444.38' y='159.76' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Timing</text>
+<rect x='445.08' y='167.11' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #F8766D;' />
+<rect x='445.08' y='184.39' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #00BFC4;' />
+<text x='467.13' y='178.19' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>After</text>
+<text x='467.13' y='195.47' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Before</text>
+<text x='51.71' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Covariate Balance Before and After Matching</text>
+</g>
+</g>
+</svg></div></p>
 </div>
 </div>
 <div class="section level2">
@@ -1425,39 +1723,16 @@ status</p></li>
 <span>  right <span class="op">=</span> <span class="va">control_group</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"education_years"</span>, <span class="st">"prior_earnings"</span>, <span class="st">"employed"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in ks.test.default(left_clean, right_clean): p-value will be</span></span>
-<span><span class="co">#&gt; approximate in the presence of ties</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">job_balance</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Balance Diagnostics for Matched Pairs</span></span>
-<span><span class="co">#&gt; ======================================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matching Summary:</span></span>
-<span><span class="co">#&gt;   Method: lap</span></span>
-<span><span class="co">#&gt;   Matched pairs: 200</span></span>
-<span><span class="co">#&gt;   Unmatched left: 0 (of 200)</span></span>
-<span><span class="co">#&gt;   Unmatched right: 300 (of 500)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Variable-level Balance:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 7</span></span></span>
-<span><span class="co">#&gt;   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> age             35.4       36.0        -<span style="color: #BB0000;">0.656</span>     -<span style="color: #BB0000;">0.081</span>       0.756     0.1  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> educati…        13.9       13.5         0.4        0.195       0.865     0.18 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> prior_e…     <span style="text-decoration: underline;">35</span>015.     <span style="text-decoration: underline;">33</span>795.       <span style="text-decoration: underline;">1</span>219.         0.121       1.03      0.08 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> employed         0.7        0.635       0.065      0.138       0.906     0.065</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Overall Balance:</span></span>
-<span><span class="co">#&gt;   Mean |Std Diff|: 0.134 (Good)</span></span>
-<span><span class="co">#&gt;   Max |Std Diff|: 0.195</span></span>
-<span><span class="co">#&gt;   Vars with |Std Diff| &gt; 0.25: 0.0%</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Balance Interpretation:</span></span>
-<span><span class="co">#&gt;   |Std Diff| &lt; 0.10: Excellent balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| 0.10-0.25: Good balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| 0.25-0.50: Acceptable balance</span></span>
-<span><span class="co">#&gt;   |Std Diff| &gt; 0.50: Poor balance</span></span>
+<span><span class="co">#&gt; Balance of 200 matched pairs</span></span>
+<span><span class="co">#&gt;   unmatched: 0 of 200 left, 300 of 500 right units</span></span>
+<span><span class="co">#&gt;         Variable Std Diff Before Std Diff Var Ratio KS Stat</span></span>
+<span><span class="co">#&gt;              age          -0.571   -0.081     0.756   0.100</span></span>
+<span><span class="co">#&gt;  education_years           0.706    0.195     0.865   0.180</span></span>
+<span><span class="co">#&gt;   prior_earnings           0.477    0.121     1.027   0.080</span></span>
+<span><span class="co">#&gt;         employed           0.416    0.138     0.906   0.065</span></span>
+<span><span class="co">#&gt; Largest |Std Diff|: 0.195</span></span>
 <span></span>
 <span><span class="co"># Check overall balance quality</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nOverall balance:\n"</span><span class="op">)</span></span>
@@ -1803,7 +2078,90 @@ reason not to</td>
 </tbody>
 </table>
 <p><strong>Recommended Workflow</strong>:</p>
-<p><img src="matching-workflows_files/figure-html/workflow-diagram-1.svg" class="r-plt" alt="Flowchart showing recommended matching workflow with iterative refinement loop" width="768"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='576.00pt' height='432.00pt' viewBox='0 0 576.00 432.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA='>
+    <rect x='0.00' y='0.00' width='576.00' height='432.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
+<rect x='0.00' y='0.000000000000057' width='576.00' height='432.00' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpNS40OHw1NzAuNTJ8MjIuMDh8NDI2LjUy'>
+    <rect x='5.48' y='22.08' width='565.04' height='404.44' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpNS40OHw1NzAuNTJ8MjIuMDh8NDI2LjUy)'>
+<rect x='5.48' y='22.08' width='565.04' height='404.44' style='stroke-width: 1.07; stroke: none;' /> fill: #F5F6F8;' />
+<line x1='288.00' y1='77.23' x2='288.00' y2='150.76' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='285.87,147.08 288.00,150.76 290.13,147.08 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<line x1='288.00' y1='150.76' x2='288.00' y2='224.30' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='285.87,220.62 288.00,224.30 290.13,220.62 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<line x1='288.00' y1='224.30' x2='288.00' y2='297.83' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='285.87,294.15 288.00,297.83 290.13,294.15 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<line x1='288.00' y1='297.83' x2='159.58' y2='371.37' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='161.72,367.69 159.58,371.37 163.83,371.38 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<line x1='288.00' y1='297.83' x2='416.42' y2='371.37' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='412.17,371.38 416.42,371.37 414.28,367.69 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<polyline points='416.42,371.37 416.39,371.23 416.18,370.37 415.72,368.40 415.00,365.38 414.12,361.66 413.19,357.73 412.30,353.94 411.42,350.40 410.56,347.09 409.68,343.97 408.77,340.96 407.83,338.12 406.79,335.18 405.71,332.31 404.61,329.56 403.50,326.95 402.42,324.50 401.37,322.16 400.30,319.82 399.16,317.39 397.92,314.84 396.56,312.19 395.11,309.49 393.66,306.92 392.08,304.24 390.46,301.63 388.84,299.14 387.26,296.80 385.73,294.60 384.24,292.51 382.74,290.42 381.15,288.26 379.44,286.00 377.60,283.66 375.65,281.28 373.73,279.04 371.66,276.72 369.57,274.47 367.50,272.34 365.50,270.35 363.57,268.49 361.70,266.73 359.83,264.97 357.86,263.15 355.74,261.26 353.48,259.32 351.11,257.37 348.80,255.54 346.32,253.66 343.83,251.86 341.39,250.17 339.04,248.60 336.79,247.15 334.62,245.78 332.44,244.41 330.15,243.01 327.71,241.57 325.12,240.10 322.42,238.64 319.79,237.29 316.99,235.93 314.14,234.62 311.16,233.33 307.98,232.02 304.58,230.68 300.94,229.28 297.17,227.83 293.62,226.46 290.75,225.36 288.91,224.65 288.12,224.34 288.00,224.30 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt;' />
+<polygon points='292.20,223.64 288.00,224.30 290.67,227.60 ' style='stroke-width: 1.49; stroke: #3E3F3A; stroke-linecap: butt; fill: #3E3F3A;' />
+<text x='210.95' y='330.30' text-anchor='middle' style='font-size: 0.854em; font-style: italic; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Yes</text>
+<text x='365.05' y='330.30' text-anchor='middle' style='font-size: 0.854em; font-style: italic; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>No</text>
+<polygon points='246.99,88.99 329.01,88.99 328.95,88.99 329.20,88.98 329.44,88.93 329.67,88.84 329.89,88.72 330.08,88.56 330.24,88.38 330.37,88.17 330.47,87.94 330.53,87.70 330.55,87.45 330.55,87.45 330.55,67.00 330.55,67.00 330.53,66.75 330.47,66.51 330.37,66.29 330.24,66.08 330.08,65.89 329.89,65.74 329.67,65.61 329.44,65.52 329.20,65.48 329.01,65.46 246.99,65.46 247.17,65.48 246.92,65.47 246.68,65.50 246.44,65.56 246.22,65.67 246.01,65.81 245.84,65.98 245.69,66.18 245.57,66.40 245.49,66.63 245.45,66.88 245.45,67.00 245.45,87.45 245.45,87.33 245.45,87.58 245.49,87.82 245.57,88.06 245.69,88.27 245.84,88.47 246.01,88.64 246.22,88.78 246.44,88.89 246.68,88.96 246.92,88.99 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #29ABE0;' />
+<text x='288.00' y='75.67' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1. Explore data</text>
+<text x='288.00' y='84.89' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Identify confounders</text>
+<polygon points='253.88,162.53 322.12,162.53 322.05,162.52 322.30,162.51 322.54,162.46 322.77,162.38 322.99,162.25 323.18,162.10 323.34,161.91 323.48,161.70 323.57,161.48 323.63,161.24 323.65,160.99 323.65,160.99 323.65,140.54 323.65,140.54 323.63,140.29 323.57,140.05 323.48,139.82 323.34,139.61 323.18,139.43 322.99,139.27 322.77,139.15 322.54,139.06 322.30,139.01 322.12,139.00 253.88,139.00 254.07,139.01 253.82,139.00 253.58,139.03 253.34,139.10 253.12,139.21 252.91,139.35 252.73,139.52 252.59,139.72 252.47,139.93 252.39,140.17 252.35,140.41 252.35,140.54 252.35,160.99 252.35,160.87 252.35,161.11 252.39,161.36 252.47,161.59 252.59,161.81 252.73,162.01 252.91,162.18 253.12,162.32 253.34,162.43 253.58,162.49 253.82,162.52 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #29ABE0;' />
+<text x='288.00' y='149.21' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2. First match</text>
+<text x='288.00' y='158.43' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>match_couples()</text>
+<polygon points='243.92,236.06 332.08,236.06 332.02,236.06 332.27,236.05 332.51,236.00 332.74,235.91 332.96,235.79 333.15,235.63 333.31,235.45 333.44,235.24 333.54,235.01 333.60,234.77 333.62,234.52 333.62,234.52 333.62,214.07 333.62,214.07 333.60,213.83 333.54,213.59 333.44,213.36 333.31,213.15 333.15,212.96 332.96,212.81 332.74,212.68 332.51,212.60 332.27,212.55 332.08,212.54 243.92,212.54 244.10,212.55 243.85,212.54 243.61,212.57 243.37,212.64 243.15,212.74 242.94,212.88 242.77,213.05 242.62,213.25 242.50,213.47 242.42,213.70 242.38,213.95 242.38,214.07 242.38,234.52 242.38,234.40 242.38,234.65 242.42,234.89 242.50,235.13 242.62,235.35 242.77,235.54 242.94,235.71 243.15,235.86 243.37,235.96 243.61,236.03 243.85,236.06 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #29ABE0;' />
+<text x='288.00' y='222.75' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>3. Check balance</text>
+<text x='288.00' y='231.96' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>balance_diagnostics()</text>
+<polygon points='135.67,383.13 183.49,383.13 183.43,383.13 183.68,383.12 183.92,383.07 184.15,382.98 184.37,382.86 184.56,382.70 184.72,382.52 184.85,382.31 184.95,382.08 185.01,381.84 185.03,381.60 185.03,381.60 185.03,361.14 185.03,361.14 185.01,360.90 184.95,360.66 184.85,360.43 184.72,360.22 184.56,360.03 184.37,359.88 184.15,359.75 183.92,359.67 183.68,359.62 183.49,359.61 135.67,359.61 135.85,359.62 135.61,359.61 135.36,359.64 135.12,359.71 134.90,359.81 134.70,359.95 134.52,360.12 134.37,360.32 134.26,360.54 134.18,360.77 134.14,361.02 134.13,361.14 134.13,381.60 134.14,381.47 134.14,381.72 134.18,381.96 134.26,382.20 134.37,382.42 134.52,382.61 134.70,382.79 134.90,382.93 135.12,383.03 135.36,383.10 135.61,383.13 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #29ABE0;' />
+<text x='159.58' y='369.82' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>4. Estimate</text>
+<text x='159.58' y='379.03' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>effect</text>
+<polygon points='376.85,383.13 455.99,383.13 455.93,383.13 456.17,383.12 456.41,383.07 456.65,382.98 456.86,382.86 457.05,382.70 457.22,382.52 457.35,382.31 457.44,382.08 457.50,381.84 457.52,381.60 457.52,381.60 457.52,361.14 457.52,361.14 457.50,360.90 457.44,360.66 457.35,360.43 457.22,360.22 457.05,360.03 456.86,359.88 456.65,359.75 456.41,359.67 456.17,359.62 455.99,359.61 376.85,359.61 377.04,359.62 376.79,359.61 376.54,359.64 376.31,359.71 376.08,359.81 375.88,359.95 375.70,360.12 375.55,360.32 375.44,360.54 375.36,360.77 375.32,361.02 375.31,361.14 375.31,381.60 375.32,381.47 375.32,381.72 375.36,381.96 375.44,382.20 375.55,382.42 375.70,382.61 375.88,382.79 376.08,382.93 376.31,383.03 376.54,383.10 376.79,383.13 ' style='stroke-width: 0.53; stroke: #FFFFFF; fill: #29ABE0;' />
+<text x='416.42' y='369.82' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Refine: caliper,</text>
+<text x='416.42' y='379.03' text-anchor='middle' style='font-size: 0.854em;fill: #FFFFFF; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>blocking, more vars</text>
+<polygon points='288.00,325.91 316.08,297.83 288.00,269.76 259.92,297.83 ' style='stroke-width: 2.13; stroke: #F47C3C; fill: #FFC107;' />
+<text x='288.00' y='296.54' text-anchor='middle' style='font-size: 0.854em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Balance</text>
+<text x='288.00' y='305.24' text-anchor='middle' style='font-size: 0.854em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>OK?</text>
+</g>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
+<text x='288.00' y='14.08' text-anchor='middle' style='font-size: 1.2em; font-weight: bold; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Matching Workflow</text>
+</g>
+</g>
+</svg></div></p>
 <hr>
 </div>
 <div class="section level2">
@@ -1826,16 +2184,11 @@ sample size while preserving balance.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_full</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Full Matching Result</span></span>
-<span><span class="co">#&gt; ====================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Status: optimal</span></span>
-<span><span class="co">#&gt;   Groups formed: 78</span></span>
-<span><span class="co">#&gt;   Left units:  100 matched, 0 unmatched (of 100)</span></span>
-<span><span class="co">#&gt;   Right units: 150 matched, 0 unmatched (of 150)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Right units per group: min=1, median=1, max=21</span></span></code></pre></div>
+<span><span class="co">#&gt; couplr result: full matching, optimal</span></span>
+<span><span class="co">#&gt;   Left units:         100 matched of 100</span></span>
+<span><span class="co">#&gt;   Right units:        150 matched of 150</span></span>
+<span><span class="co">#&gt;   Groups:             78</span></span>
+<span><span class="co">#&gt;   Certified optimal:  yes</span></span></code></pre></div>
 <p>The <code>method</code> argument controls the algorithm:</p>
 <ul>
 <li><p><code>"optimal"</code> (default) — Solves a min-cost max-flow
@@ -1891,7 +2244,7 @@ group, right-unit weights sum to the number of left units, enabling
 unbiased estimation:</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_full</span><span class="op">$</span><span class="va">groups</span>, <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 x 4</span></span></span>
 <span><span class="co">#&gt;    group_id id    side  weight</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>        1 1     left       1</span></span>
@@ -1958,7 +2311,7 @@ precision. Use the <code>ratio</code> parameter:</p>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
 <span></span>
 <span><span class="va">result_2to1</span><span class="op">$</span><span class="va">pairs</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 150 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 150 x 5</span></span></span>
 <span><span class="co">#&gt;    left_id right_id distance .age_diff .income_diff</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 3       52        1.07     -<span style="color: #BB0000;">11.6</span>          <span style="text-decoration: underline;">5</span>127. </span></span>
@@ -1971,7 +2324,7 @@ precision. Use the <code>ratio</code> parameter:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 6       25        0.231     -<span style="color: #BB0000;">2.50</span>         <span style="text-decoration: underline;">1</span>139. </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 7       143       0.735     -<span style="color: #BB0000;">5.12</span>         <span style="text-decoration: underline;">9</span>559. </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 7       94        0.006<span style="text-decoration: underline;">53</span>    0.072<span style="text-decoration: underline;">8</span>        -<span style="color: #BB0000;">20.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 140 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># i 140 more rows</span></span></span></code></pre></div>
 <p>Higher ratios increase sample size at the cost of slightly worse
 individual match quality. A common choice is 2:1 or 3:1.</p>
 </div>
@@ -2021,41 +2374,13 @@ estimated probability of treatment — the propensity score.
 <span>  caliper_sd <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"hungarian"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: 74.8% of pairs are forbidden!</span></span>
-<span><span class="co">#&gt;   Only 3776 valid pairs for 100 left units - the matching pool is shallow!</span></span>
-<span><span class="co">#&gt;   Your constraints might be moderately strict.</span></span>
-<span><span class="co">#&gt;   Consider:</span></span>
-<span><span class="co">#&gt;     - Relaxing max_distance threshold</span></span>
-<span><span class="co">#&gt;     - Widening calipers</span></span>
-<span><span class="co">#&gt;     - Using fewer/broader blocks</span></span>
-<span><span class="co">#&gt;     - Checking if your data actually overlaps</span></span>
 <span></span>
 <span><span class="va">ps_result</span></span>
-<span><span class="co">#&gt; Matching Result</span></span>
-<span><span class="co">#&gt; ===============</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Method: lap </span></span>
-<span><span class="co">#&gt; Pairs matched: 99 </span></span>
-<span><span class="co">#&gt; Unmatched (left): 1 </span></span>
-<span><span class="co">#&gt; Unmatched (right): 51 </span></span>
-<span><span class="co">#&gt; Total distance: 9.8133 </span></span>
-<span><span class="co">#&gt; Status: partial </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matched pairs:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 99 × 4</span></span></span>
-<span><span class="co">#&gt;    left_id right_id distance .logit_ps_diff</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 1       23        0.164          0.164  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 2       36        0.053<span style="text-decoration: underline;">3</span>         0.053<span style="text-decoration: underline;">3</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 3       148       0.012<span style="text-decoration: underline;">1</span>         0.012<span style="text-decoration: underline;">1</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 4       49        0.321          0.321  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 5       68        0.087<span style="text-decoration: underline;">4</span>         0.087<span style="text-decoration: underline;">4</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 6       48        0.004<span style="text-decoration: underline;">25</span>        0.004<span style="text-decoration: underline;">25</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 7       111       0.102          0.102  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 8       81        0.196          0.196  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 9       128       0.069<span style="text-decoration: underline;">2</span>         0.069<span style="text-decoration: underline;">2</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 10      110       0.013<span style="text-decoration: underline;">1</span>         0.013<span style="text-decoration: underline;">1</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 89 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; couplr result: one-to-one matching, partial</span></span>
+<span><span class="co">#&gt;   Left units:         99 matched of 100</span></span>
+<span><span class="co">#&gt;   Right units:        99 matched of 150</span></span>
+<span><span class="co">#&gt;   Pairs:              99</span></span>
+<span><span class="co">#&gt;   Total distance:     9.81329</span></span></code></pre></div>
 <p>The function fits a logistic regression, transforms scores to the
 logit scale, and calls <code><a href="../reference/match_couples.html">match_couples()</a></code> with a caliper
 constraint. The default caliper is 0.2 SD of logit(PS) (Rosenbaum and
@@ -2087,14 +2412,20 @@ finite bound is asked for:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Auto-selected scaling method: standardize</span></span>
 <span></span>
-<span><span class="va">card_result</span><span class="op">$</span><span class="va">cardinality</span></span>
-<span><span class="co">#&gt; Matched units:       100</span></span>
-<span><span class="co">#&gt; Best possible:       100</span></span>
-<span><span class="co">#&gt; Optimality gap:      0</span></span>
-<span><span class="co">#&gt; Certified optimal</span></span></code></pre></div>
+<span><span class="va">card_result</span></span>
+<span><span class="co">#&gt; couplr result: cardinality matching, optimal</span></span>
+<span><span class="co">#&gt;   Left units:         100 matched of 100</span></span>
+<span><span class="co">#&gt;   Right units:        100 matched of 150</span></span>
+<span><span class="co">#&gt;   Pairs:              100</span></span>
+<span><span class="co">#&gt;   Total distance:     33.7761</span></span>
+<span><span class="co">#&gt;   Size bound:         100 (gap 0)</span></span>
+<span><span class="co">#&gt;   Certified optimal:  yes</span></span></code></pre></div>
 <p>Bounding the standardized difference of each matching variable adds
-constraints that cut across the network. Those are dualized and searched
-by branch and bound, which runs until the bound meets the incumbent or
+constraints the network cannot hold. Summed over the matched pairs, each
+bound constrains which units are matched, so the search runs over unit
+selections: branch and bound on a linear programme with one variable per
+unit. It first finds the most matched units the bounds admit, then the
+smallest total distance at that size, and runs until both are proven or
 <code>node_limit</code> or <code>time_limit</code> runs out:</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">card_bb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cardinality_match.html">cardinality_match</a></span><span class="op">(</span></span>
@@ -2103,44 +2434,75 @@ by branch and bound, which runs until the bound meets the incumbent or
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span>,</span>
 <span>  max_std_diff <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  node_limit <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  time_limit <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  scale <span class="op">=</span> <span class="st">"standardize"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">card_bb</span><span class="op">$</span><span class="va">cardinality</span></span>
-<span><span class="co">#&gt; Matched units:       19</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">card_bb</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 x 17</span></span></span>
+<span><span class="co">#&gt;   design      n_left n_right n_matched_left n_matched_right n_pairs n_groups</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> cardinality     20      80             20              20      20       <span style="color: #BB0000;">NA</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># i 10 more variables: total_distance &lt;dbl&gt;, status &lt;chr&gt;, certified &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   max_suboptimality &lt;dbl&gt;, best_possible &lt;int&gt;, gap &lt;int&gt;, n_nodes &lt;int&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   stopped_on &lt;chr&gt;, size_certified &lt;lgl&gt;, size_seconds &lt;dbl&gt;</span></span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">card_bb</span><span class="op">)</span></span>
+<span><span class="co">#&gt; couplr result: cardinality matching, iteration_limit</span></span>
+<span><span class="co">#&gt;   Left units:         20 matched of 20</span></span>
+<span><span class="co">#&gt;   Right units:        20 matched of 80</span></span>
+<span><span class="co">#&gt;   Pairs:              20</span></span>
+<span><span class="co">#&gt;   Total distance:     5.32551</span></span>
+<span><span class="co">#&gt;   Size bound:         20 (gap 0)</span></span>
+<span><span class="co">#&gt;   Certified optimal:  no</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Pair distances (quantiles):</span></span>
+<span><span class="co">#&gt;     min     25%  median     75%     90%     max </span></span>
+<span><span class="co">#&gt; 0.03684 0.11760 0.23920 0.32250 0.51340 0.60270 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matched units:       20</span></span>
 <span><span class="co">#&gt; Global upper bound:  20</span></span>
-<span><span class="co">#&gt; Cardinality gap:     1 unit (5.000%)</span></span>
-<span><span class="va">card_bb</span><span class="op">$</span><span class="va">cardinality</span><span class="op">$</span><span class="va">constraints</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
-<span><span class="co">#&gt;   kind          target      bound achieved  slack satisfied</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> std_diff      age           0.1  -<span style="color: #BB0000;">0.080</span><span style="color: #BB0000; text-decoration: underline;">5</span> 0.181  TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> std_diff      age          -<span style="color: #BB0000;">0.1</span>  -<span style="color: #BB0000;">0.080</span><span style="color: #BB0000; text-decoration: underline;">5</span> 0.019<span style="text-decoration: underline;">5</span> TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> std_diff      income        0.1   0.033<span style="text-decoration: underline;">5</span> 0.066<span style="text-decoration: underline;">5</span> TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> std_diff      income       -<span style="color: #BB0000;">0.1</span>   0.033<span style="text-decoration: underline;">5</span> 0.133  TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> exact_balance (all units)   0     0      0      TRUE</span></span></code></pre></div>
-<p><code>certified</code> is <code>TRUE</code> only when the search
-settled and the gap is zero. When it is not, <code>gap</code> and
+<span><span class="co">#&gt; Cardinality gap:     0 units (0.000%)</span></span>
+<span><span class="co">#&gt; Total distance: 5.325514 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Balance constraints:</span></span>
+<span><span class="co">#&gt;           kind      target bound    achieved       slack satisfied</span></span>
+<span><span class="co">#&gt;       std_diff         age   0.1 -0.09522342 0.195223416      TRUE</span></span>
+<span><span class="co">#&gt;       std_diff         age  -0.1 -0.09522342 0.004776584      TRUE</span></span>
+<span><span class="co">#&gt;       std_diff      income   0.1  0.05263997 0.047360031      TRUE</span></span>
+<span><span class="co">#&gt;       std_diff      income  -0.1  0.05263997 0.152639969      TRUE</span></span>
+<span><span class="co">#&gt;  exact_balance (all units)   0.0  0.00000000 0.000000000      TRUE</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Selected category counts:</span></span>
+<span><span class="co">#&gt;  level category n_left n_right imbalance</span></span>
+<span><span class="co">#&gt;      1              20      20         0</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Optimization stages:</span></span>
+<span><span class="co">#&gt;     stage closed stopped_on n_nodes seconds     value     bound</span></span>
+<span><span class="co">#&gt;      size   TRUE optimality       1    0.00 20.000000 20.000000</span></span>
+<span><span class="co">#&gt;  distance  FALSE node_limit       9    0.04  5.325514  5.320702</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Unmatched left: 0</span></span>
+<span><span class="co">#&gt; Unmatched right: 60</span></span></code></pre></div>
+<p><code>certified</code> is <code>TRUE</code> only when every stage of
+the search closed. When the size stage did not, <code>gap</code> and
 <code>gap_fraction</code> say how many matched units separate the answer
-from the bound, and <code>stopped_on</code> says what ended the
-search.</p>
-<p>How long the search runs depends on whether the moment bounds bind.
-When the distance-minimizing match already satisfies them, which happens
-with a loose bound or a control reservoir large enough that the closest
-partners are already balanced, the root node certifies and the call
-returns in milliseconds. When they bind, every node costs a flow solve,
-and although the root enters a feasible incumbent before the first node
-is opened, the bound above it closes slowly, so a call can spend its
-whole budget and still report a gap. Set <code>node_limit</code> and
-<code>time_limit</code> to a budget you are willing to spend, and read
-<code>stopped_on</code> and <code>gap</code> to see what the budget
-bought.</p>
-<p><code>time_limit</code> reaches the flow solver, which checks it
-between augmentations, so the call returns on the budget rather than on
-the completion of the solve that was running when it ran out. The node
-that solve belonged to goes back on the frontier unopened, which is what
-keeps <code>bound</code> valid for the whole problem, and the incumbent
-stands.</p>
+from the bound, and <code>stopped_on</code> says what ended the search.
+A search that proved the size but ran out of budget on the distance
+stage reports a <code>gap</code> of zero and returns the cheapest
+pairing it found for a largest balanced sample.</p>
+<p>How long the search runs depends on how close the linear relaxation
+comes to the best integer selection. When the distance-minimizing match
+already satisfies the bounds, which happens with a loose bound or a
+control reservoir large enough that the closest partners are already
+balanced, that match is the answer and the call returns in milliseconds.
+When the bounds bind, the relaxation usually bounds the size within one
+unit, and the search closes as soon as it finds a selection of that
+size. Set <code>node_limit</code> to a budget you are willing to spend,
+and read <code>stopped_on</code> and <code>gap</code> in
+<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> to see what the budget bought. A search stopped by
+<code>time_limit</code> depends on the speed of the machine, so
+<code>time_limit = Inf</code> with a <code>node_limit</code> gives the
+same result everywhere.</p>
 <p>A pruning heuristic is reachable with
 <code>engine = "heuristic"</code>. It starts from a full match and
 deletes the pairs carrying the worst variable’s imbalance, one variable
@@ -2183,18 +2545,14 @@ rely on a distance function or propensity score model:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">cem_result</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Coarsened Exact Matching Result</span></span>
-<span><span class="co">#&gt; ===============================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Strata: 69 total, 32 matched</span></span>
-<span><span class="co">#&gt;   Left:   81 matched, 19 pruned</span></span>
-<span><span class="co">#&gt;   Right:  103 matched, 47 pruned</span></span>
-<span><span class="co">#&gt;   Variables: age, income</span></span>
+<span><span class="co">#&gt; couplr result: coarsened exact matching</span></span>
+<span><span class="co">#&gt;   Left units:         81 matched of 100</span></span>
+<span><span class="co">#&gt;   Right units:        103 matched of 150</span></span>
+<span><span class="co">#&gt;   Groups:             32</span></span>
 <span></span>
 <span><span class="co"># Strata summary: how many units in each coarsened cell</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">cem_result</span><span class="op">$</span><span class="va">strata_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 x 4</span></span></span>
 <span><span class="co">#&gt;   stratum               n_left n_right matched</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (25,30]|(3e+04,4e+04]      0       1 FALSE  </span></span>
@@ -2231,26 +2589,12 @@ effects. Unlike one-to-one matching, no units are discarded:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sub_result</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Subclassification Result</span></span>
-<span><span class="co">#&gt; ========================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Estimand: ATT</span></span>
-<span><span class="co">#&gt;   Subclasses: 5</span></span>
-<span><span class="co">#&gt;   Treated (left):  100</span></span>
-<span><span class="co">#&gt;   Control (right): 150</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Subclass summary:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
-<span><span class="co">#&gt;   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap</span></span>
-<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1         6        44   0.192       0.090<span style="text-decoration: underline;">2</span>         0.251 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        2        15        35   0.296       0.257          0.348 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        3        20        30   0.391       0.350          0.435 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        4        32        18   0.491       0.438          0.537 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        5        27        23   0.630       0.542          0.843 TRUE</span></span>
+<span><span class="co">#&gt; couplr result: subclassification matching</span></span>
+<span><span class="co">#&gt;   Left units:         100 matched of 100</span></span>
+<span><span class="co">#&gt;   Right units:        150 matched of 150</span></span>
+<span><span class="co">#&gt;   Groups:             5</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sub_result</span><span class="op">$</span><span class="va">subclass_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 x 7</span></span></span>
 <span><span class="co">#&gt;   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1         6        44   0.192       0.090<span style="text-decoration: underline;">2</span>         0.251 TRUE       </span></span>
@@ -2272,7 +2616,7 @@ downstream modelling:</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">md</span> <span class="op">&lt;-</span> <span class="fu">couplr</span><span class="fu">::</span><span class="fu"><a href="../reference/match_data.html">match_data</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">md</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 x 9</span></span></span>
 <span><span class="co">#&gt;      id   age income education group     treatment weights subclass distance</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  39.4 <span style="text-decoration: underline;">49</span>344. MA        treatment         1       1        1   0.530 </span></span>
@@ -2292,7 +2636,7 @@ downstream modelling:</p>
 <span><span class="fu">cobalt</span><span class="fu">::</span><span class="fu"><a href="https://ngreifer.github.io/cobalt/reference/bal.tab.html" class="external-link">bal.tab</a></span><span class="op">(</span><span class="va">mi</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># marginaleffects</span></span>
-<span><span class="fu">marginaleffects</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/marginaleffects/man/comparisons.html" class="external-link">avg_comparisons</a></span><span class="op">(</span><span class="va">model</span>, vcov <span class="op">=</span> <span class="st">"HC3"</span>, newdata <span class="op">=</span> <span class="fu">match.data</span><span class="op">(</span><span class="va">mi</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">marginaleffects</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/marginaleffects/man/comparisons.html" class="external-link">avg_comparisons</a></span><span class="op">(</span><span class="va">model</span>, vcov <span class="op">=</span> <span class="st">"HC3"</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://kosukeimai.github.io/MatchIt/reference/match_data.html" class="external-link">match.data</a></span><span class="op">(</span><span class="va">mi</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -2336,25 +2680,10 @@ confounding.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sa</span></span>
-<span><span class="co">#&gt; Rosenbaum Sensitivity Analysis</span></span>
-<span><span class="co">#&gt; ==============================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matched pairs: 50 </span></span>
-<span><span class="co">#&gt; Alternative: greater </span></span>
-<span><span class="co">#&gt; Test statistic (T+): 889.0 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Gamma    p (upper bound)</span></span>
-<span><span class="co">#&gt; -----    ---------------</span></span>
-<span><span class="co">#&gt; 1.00     0.0077 *</span></span>
-<span><span class="co">#&gt; 1.25     0.0401 *</span></span>
-<span><span class="co">#&gt; 1.50     0.1118</span></span>
-<span><span class="co">#&gt; 1.75     0.2195</span></span>
-<span><span class="co">#&gt; 2.00     0.3467</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; * significant at alpha = 0.05</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Insensitive to hidden bias up to Gamma = 1.25</span></span>
-<span><span class="co">#&gt; To explain away the effect, hidden bias would need Gamma &gt;= 1.50</span></span></code></pre></div>
+<span><span class="co">#&gt; Rosenbaum sensitivity analysis (alternative "greater")</span></span>
+<span><span class="co">#&gt;   50 pairs with a nonzero outcome difference</span></span>
+<span><span class="co">#&gt;   p-value without hidden bias (Gamma = 1): 0.007697</span></span>
+<span><span class="co">#&gt;   Significant at alpha = 0.05 up to Gamma = 1.25, not at Gamma = 1.50.</span></span></code></pre></div>
 <p>The <strong>critical gamma</strong> (<span class="math inline">\(\Gamma\)</span>) is the smallest value at which
 the upper-bound p-value crosses 0.05. A larger critical gamma means the
 finding is more robust: a critical gamma of 1.75, for example, means an
@@ -2374,20 +2703,244 @@ produce publication-ready plots:</p>
 <span>  <span class="co"># Distance distribution</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">result</span>, type <span class="op">=</span> <span class="st">"histogram"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/autoplot-examples-1.svg" class="r-plt" alt="" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzMuMTN8NDk4LjUyfDIzLjE4fDI1Ni41MA=='>
+    <rect x='33.13' y='23.18' width='465.39' height='233.33' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzMuMTN8NDk4LjUyfDIzLjE4fDI1Ni41MA==)'>
+<rect x='54.28' y='189.33' width='14.10' height='56.56' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='68.38' y='62.07' width='14.10' height='183.83' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='82.49' y='33.78' width='14.10' height='212.11' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='96.59' y='47.92' width='14.10' height='197.97' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='110.69' y='47.92' width='14.10' height='197.97' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='124.80' y='161.05' width='14.10' height='84.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='138.90' y='175.19' width='14.10' height='70.70' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='153.00' y='146.91' width='14.10' height='98.99' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='167.10' y='203.47' width='14.10' height='42.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='181.21' y='161.05' width='14.10' height='84.85' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='195.31' y='189.33' width='14.10' height='56.56' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='209.41' y='203.47' width='14.10' height='42.42' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='223.52' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='237.62' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='251.72' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='265.82' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='279.93' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='294.03' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='308.13' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='322.24' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='336.34' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='350.44' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='364.54' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='378.65' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='392.75' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='406.85' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='420.95' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='435.06' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='449.16' y='245.90' width='14.10' height='0.00' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+<rect x='463.26' y='231.76' width='14.10' height='14.14' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt; stroke-linejoin: miter; fill: #4682B4;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='28.20' y='249.05' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='28.20' y='178.34' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>5</text>
+<text x='28.20' y='107.64' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>10</text>
+<text x='28.20' y='36.93' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>15</text>
+<text x='60.90' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='166.44' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.5</text>
+<text x='271.97' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.0</text>
+<text x='377.51' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.5</text>
+<text x='483.04' y='267.74' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2.0</text>
+<text x='265.82' y='280.20' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Distance</text>
+<text transform='translate(13.36,139.84) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Count</text>
+<text x='33.13' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Matching Distances (n=100)</text>
+</g>
+</g>
+</svg></div></p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Balance diagnostics love plot</span></span>
 <span>  <span class="va">bal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/balance_diagnostics.html">balance_diagnostics</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">left_data</span>, <span class="va">right_data</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"income"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bal</span>, type <span class="op">=</span> <span class="st">"love"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/autoplot-balance-1.svg" class="r-plt" alt="" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='0.00' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzguNzd8NDk4LjUyfDIzLjE4fDIxNy4zMQ=='>
+    <rect x='38.77' y='23.18' width='459.75' height='194.13' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzguNzd8NDk4LjUyfDIzLjE4fDIxNy4zMQ==)'>
+<circle cx='59.67' cy='164.36' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<circle cx='477.62' cy='76.12' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<line x1='263.69' y1='217.31' x2='263.69' y2='23.18' style='stroke-width: 1.07; stroke: #7F7F7F; stroke-linecap: butt;' />
+<line x1='125.68' y1='217.31' x2='125.68' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+<line x1='401.69' y1='217.31' x2='401.69' y2='23.18' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='33.84' y='167.51' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>age</text>
+<text x='33.84' y='79.27' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>income</text>
+<text x='125.68' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.1</text>
+<text x='263.69' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='401.69' y='228.54' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.1</text>
+<text x='268.65' y='241.00' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Standardized Difference</text>
+<circle cx='243.17' cy='268.40' r='3.56' style='stroke-width: 0.71; stroke: #B22222; fill: #B22222;' />
+<text x='257.29' y='271.55' style='font-size: 0.88em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Imbalanced</text>
+<text x='38.77' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Balance: Standardized Differences</text>
+</g>
+</g>
+</svg></div></p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Sensitivity analysis curve</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sa</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p><img src="matching-workflows_files/figure-html/autoplot-sensitivity-1.svg" class="r-plt" alt="" width="672"></p>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='288.00pt' viewBox='0 0 504.00 288.00' class="r-plt inline-svg" style="width:100%;height:auto;">
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='288.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<rect rx='4' x='-0.000000000000064' y='0.00' width='504.00' height='288.00' style='stroke-width: 1.07; stroke: none; fill: #F5F6F8;' />
+</g>
+<defs>
+  <clipPath id='cpMzUuNTZ8NDk4LjUyfDIzLjE4fDI1NC4wNg=='>
+    <rect x='35.56' y='23.18' width='462.96' height='230.88' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzUuNTZ8NDk4LjUyfDIzLjE4fDI1NC4wNg==)'>
+<polyline points='56.61,243.56 161.83,223.53 267.04,179.08 372.26,112.45 477.48,33.67 ' style='stroke-width: 2.13; stroke: #4682B4; stroke-linecap: butt;' />
+<circle cx='56.61' cy='243.56' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='161.83' cy='223.53' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='267.04' cy='179.08' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='372.26' cy='112.45' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<circle cx='477.48' cy='33.67' r='2.49' style='stroke-width: 0.71; stroke: #4682B4; fill: #4682B4;' />
+<line x1='35.56' y1='217.37' x2='498.52' y2='217.37' style='stroke-width: 1.07; stroke: #B22222; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwyODguMDA=)'>
+<text x='30.63' y='251.48' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
+<text x='30.63' y='189.57' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.1</text>
+<text x='30.63' y='127.66' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.2</text>
+<text x='30.63' y='65.75' text-anchor='end' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.3</text>
+<text x='56.61' y='265.29' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.00</text>
+<text x='161.83' y='265.29' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.25</text>
+<text x='267.04' y='265.29' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.50</text>
+<text x='372.26' y='265.29' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.75</text>
+<text x='477.48' y='265.29' text-anchor='middle' style='font-size: 0.88em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>2.00</text>
+<text x='208.37' y='277.88' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Γ</text>
+<text x='214.43' y='277.88' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'> </text>
+<text x='217.49' y='277.88' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>(sensitivity parameter)</text>
+<text transform='translate(13.36,138.62) rotate(-90)' text-anchor='middle' style='font-size: 1.1em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Upper bound p-value</text>
+<text x='35.56' y='14.93' style='font-size: 1.32em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Rosenbaum Sensitivity Analysis</text>
+</g>
+</g>
+</svg></div></p>
 <p>All <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods return <code>ggplot</code>
 objects, so you can add layers, themes, and labels as needed.</p>
 <hr>
@@ -2436,5 +2989,83 @@ integration</p></li>
 
 
 
-  </body>
+  <script>
+/* SVG Copy Button Functionality */
+(function() {
+  "use strict";
+
+  // Initialize SVG copy buttons after DOM is ready
+  document.addEventListener("DOMContentLoaded", function() {
+    if (typeof ClipboardJS === "undefined") {
+      console.warn("ClipboardJS not loaded - SVG copy buttons disabled");
+      return;
+    }
+
+    // Initialize clipboard for SVG copy buttons
+    var svgClipboard = new ClipboardJS(".btn-copy-svg", {
+      text: function(trigger) {
+        var container = trigger.closest(".svg-container");
+        if (!container) return "";
+
+        var svg = container.querySelector("svg");
+        if (!svg) return "";
+
+        // Clone SVG to avoid modifying the original
+        var clone = svg.cloneNode(true);
+
+        // Remove inline-svg class (not needed in copied version)
+        clone.classList.remove("inline-svg");
+
+        // Add XML declaration and serialize
+        var serializer = new XMLSerializer();
+        var svgString = serializer.serializeToString(clone);
+
+        // Add XML declaration if not present
+        if (!svgString.startsWith("<?xml")) {
+          svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+        }
+
+        return svgString;
+      }
+    });
+
+    // Handle success
+    svgClipboard.on("success", function(e) {
+      var btn = e.trigger;
+      var originalTitle = btn.getAttribute("data-bs-original-title") || btn.getAttribute("title");
+
+      // Update tooltip to show "Copied!"
+      btn.setAttribute("data-bs-original-title", "Copied!");
+      var tooltip = bootstrap.Tooltip.getInstance(btn);
+      if (tooltip) {
+        tooltip.show();
+      }
+
+      // Reset after delay
+      setTimeout(function() {
+        btn.setAttribute("data-bs-original-title", originalTitle);
+      }, 1500);
+
+      e.clearSelection();
+    });
+
+    // Handle error
+    svgClipboard.on("error", function(e) {
+      var btn = e.trigger;
+      btn.setAttribute("data-bs-original-title", "Press Ctrl+C to copy");
+      var tooltip = bootstrap.Tooltip.getInstance(btn);
+      if (tooltip) {
+        tooltip.show();
+      }
+    });
+
+    // Initialize tooltips for SVG copy buttons
+    var svgCopyButtons = document.querySelectorAll(".btn-copy-svg");
+    svgCopyButtons.forEach(function(btn) {
+      new bootstrap.Tooltip(btn, { container: "body" });
+    });
+  });
+})();
+</script>
+</body>
 </html>

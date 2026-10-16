@@ -1,5 +1,15 @@
 # Comparison with Alternatives
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 This vignette compares couplr’s approach to matching with established R
@@ -112,6 +122,7 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
   # Extract matched data
   matched_ps <- match.data(m_ps)
 }
+#> Warning: package 'MatchIt' was built under R version 4.6.1
 #> 
 #> Attaching package: 'MatchIt'
 #> The following object is masked from 'package:couplr':
@@ -193,14 +204,12 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
       legend.position = "bottom"
     )
 }
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
 ```
 
 ![Side-by-side comparison of covariate balance achieved by MatchIt and
 couplr, showing standardized mean differences for age, education,
 prior_earnings, and
-employed](comparison_files/figure-html/unnamed-chunk-4-1.svg)
+employed](comparison_files/figure-html/unnamed-chunk-5-1.svg)
 
 ### Key Differences
 
@@ -281,6 +290,7 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
   cat("optmatch (optimal pair matching):\n")
   cat("  Matched pairs:", n_matched, "\n")
 }
+#> Warning: package 'optmatch' was built under R version 4.6.1
 #> optmatch (optimal pair matching):
 #>   Matched pairs: 200
 ```
@@ -435,8 +445,6 @@ result_couplr_dm <- match_couples(
 #> Auto-selected scaling method: standardize
 
 balance_dm <- balance_diagnostics(result_couplr_dm, treatment, control, vars)
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
 
 cat("\ncouplr (distance-minimizing):\n")
 #> 
@@ -455,7 +463,7 @@ cat("  Max |std diff|:", round(balance_dm$overall$max_abs_std_diff, 4), "\n")
 |----|----|----|
 | **Objective** | Satisfy balance constraints | Minimize total distance ([`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)), or maximize matched cardinality under balance constraints ([`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)) |
 | **Balance** | Hard constraint | Achieved via optimization, or stated as a hard constraint |
-| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.), min-cost flow, Lagrangian branch and bound |
+| **Solver** | Mixed-integer programming (GLPK, Gurobi) | Linear assignment (JV, Hungarian, etc.), min-cost flow, branch and bound over unit selections |
 | **Feasibility** | May be infeasible | Always finds a solution |
 | **Fine-grain control** | Moment constraints, cardinality | Caliper, blocking, fine and refined balance, moment constraints |
 | **Speed** | Slower (MIP) | Faster (LAP) |
@@ -832,20 +840,6 @@ cat("Mean distance:", round(mean(result_lalonde$pairs$distance), 4), "\n")
 balance_lalonde <- balance_diagnostics(
   result_lalonde, nsw_treat, cps_control, vars_lalonde
 )
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
 
 # Before/after comparison
 before_df <- tibble(
@@ -915,7 +909,7 @@ if (balance_lalonde$overall$max_abs_std_diff < 0.25) {
   cat("\n⚠ Some variables exceed 0.25 threshold - consider calipers or blocking\n")
 }
 #> 
-#> ⚠ Some variables exceed 0.25 threshold - consider calipers or blocking
+#> <U+26A0> Some variables exceed 0.25 threshold - consider calipers or blocking
 ```
 
 ### Key Takeaways

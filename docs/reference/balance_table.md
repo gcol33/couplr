@@ -1,4 +1,4 @@
-# Create Balance Table
+# Balance Table of a Balance Diagnostics Object
 
 Formats balance diagnostics into a clean table for display or export.
 

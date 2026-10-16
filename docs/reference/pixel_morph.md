@@ -1,4 +1,4 @@
-# Pixel-level image morphing (final frame only)
+# Pixel-Level Image Morphing
 
 Computes optimal pixel assignment from A to B and returns the final
 transported frame (without intermediate animation frames).
@@ -140,11 +140,12 @@ for animated version
 ## Examples
 
 ``` r
+# \donttest{
 if (requireNamespace("magick", quietly = TRUE)) {
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-  if (nzchar(imgA) && nzchar(imgB)) {
-    result <- pixel_morph(imgA, imgB, n_frames = 4, show = FALSE)
-  }
+  result <- pixel_morph(imgA, imgB, n_frames = 2, show = FALSE)
+  result
 }
+# }
 ```

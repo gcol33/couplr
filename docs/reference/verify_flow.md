@@ -1,4 +1,4 @@
-# Verify that a flow is optimal
+# Verify That a Flow Is Optimal
 
 Checks a flow and a set of node potentials against the
 linear-programming optimality conditions for the minimum-cost flow
@@ -20,6 +20,9 @@ verify_flow(
 
 # S3 method for class 'flow_certificate'
 print(x, ...)
+
+# S3 method for class 'flow_certificate'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -61,6 +64,10 @@ print(x, ...)
 - ...:
 
   Ignored.
+
+- object:
+
+  A certificate.
 
 ## Value
 

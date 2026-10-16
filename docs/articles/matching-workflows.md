@@ -1,5 +1,15 @@
 # Matching Workflows
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 Matching is a fundamental technique for creating comparable groups in
@@ -189,7 +199,7 @@ result <- match_couples(
 
 # View matched pairs
 head(result$pairs)
-#> # A tibble: 6 × 5
+#> # A tibble: 6 x 5
 #>   left_id right_id distance .age_diff .income_diff
 #>   <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #> 1 1       27         0.530   -5.68           2942.
@@ -541,18 +551,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 0.3 seconds
+#>   Time: 0.11 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.03 seconds
+#>   Time: 0 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 10 x
+#>   Speedup: Inf x
 ```
 
 ### Greedy Strategies
@@ -653,8 +663,8 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
 #> elapsed    sorted     0.00        0.0912          18.24
-#> elapsed1 row_best     0.02        0.0968          19.36
-#> elapsed2       pq     0.01        0.0912          18.24
+#> elapsed1 row_best     0.01        0.0968          19.36
+#> elapsed2       pq     0.00        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -871,7 +881,7 @@ blocks <- matchmaker(
 cat("Blocking structure:\n")
 #> Blocking structure:
 print(blocks$block_summary)
-#> # A tibble: 3 × 3
+#> # A tibble: 3 x 3
 #>   block_id n_left n_right
 #>   <chr>     <dbl>   <dbl>
 #> 1 A            36      58
@@ -894,7 +904,7 @@ result_blocked$pairs |>
   left_join(left_site |> dplyr::select(id, site), by = c("left_id" = "id")) |>
   left_join(right_site |> dplyr::select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) |>
   count(site_left, site_right)
-#> # A tibble: 3 × 3
+#> # A tibble: 3 x 3
 #>   site_left site_right     n
 #>   <chr>     <chr>      <int>
 #> 1 A         A             36
@@ -920,7 +930,7 @@ cluster_blocks <- matchmaker(
 cat("Cluster-based blocks:\n")
 #> Cluster-based blocks:
 print(cluster_blocks$block_summary)
-#> # A tibble: 3 × 4
+#> # A tibble: 3 x 4
 #>   block_id  n_left n_right mean_age
 #>   <chr>      <dbl>   <dbl>    <dbl>
 #> 1 cluster_1     37      56     61.2
@@ -945,7 +955,7 @@ cluster_blocks$left |>
     mean_age = mean(age),
     sd_age = sd(age)
   )
-#> # A tibble: 3 × 4
+#> # A tibble: 3 x 4
 #>   block_id      n mean_age sd_age
 #>   <chr>     <int>    <dbl>  <dbl>
 #> 1 cluster_1    37     61.2   4.59
@@ -1020,41 +1030,21 @@ balance <- balance_diagnostics(
 
 # Print balance summary
 print(balance)
-#> 
-#> Balance Diagnostics for Matched Pairs
-#> ======================================
-#> 
-#> Matching Summary:
-#>   Method: lap
-#>   Matched pairs: 100
-#>   Unmatched left: 0 (of 100)
-#>   Unmatched right: 50 (of 150)
-#> 
-#> Variable-level Balance:
-#> # A tibble: 2 × 7
-#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
-#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             45.9         47.3       -1.43     -0.148       0.794      0.18
-#> 2 income       58387.       56118.      2269.        0.155       0.965      0.09
-#> 
-#> Overall Balance:
-#>   Mean |Std Diff|: 0.151 (Good)
-#>   Max |Std Diff|: 0.155
-#>   Vars with |Std Diff| > 0.25: 0.0%
-#> 
-#> Balance Interpretation:
-#>   |Std Diff| < 0.10: Excellent balance
-#>   |Std Diff| 0.10-0.25: Good balance
-#>   |Std Diff| 0.25-0.50: Acceptable balance
-#>   |Std Diff| > 0.50: Poor balance
+#> Balance of 100 matched pairs
+#>   unmatched: 0 of 100 left, 50 of 150 right units
+#>  Variable Std Diff Before Std Diff Var Ratio KS Stat
+#>       age          -0.568   -0.148     0.794    0.18
+#>    income           0.404    0.155     0.965    0.09
+#> Largest |Std Diff|: 0.155
 
 # Extract balance table for reporting
 balance_table(balance)
-#> # A tibble: 2 × 7
+#> # A tibble: 2 x 8
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
 #> 1 age             45.9         47.3       -1.43     -0.148       0.794      0.18
 #> 2 income       58387.       56118.      2269.        0.155       0.965      0.09
+#> # i 1 more variable: `Std Diff Before` <dbl>
 ```
 
 ### How to Interpret Balance Results
@@ -1127,10 +1117,10 @@ ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
   geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b", linewidth = 0.8) +
   geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c", linewidth = 0.8) +
   geom_col(position = "dodge", width = 0.5) +
-  geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"),
+  geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent")),
              fill = "#93c54b", color = "white", inherit.aes = FALSE,
              size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
-  geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"),
+  geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable")),
              fill = "#f47c3c", color = "white", inherit.aes = FALSE,
              size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
   labs(
@@ -1145,11 +1135,11 @@ ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
         legend.background = element_rect(fill = "transparent", color = NA),
         panel.grid = element_blank()) +
   coord_flip()
-#> Warning in geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
+#> Warning in geom_label(aes(x = 1.5, y = -0.1, label = "<U+00B1>0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.
+#> i Please consider using `annotate()` or provide this layer with data containing
 #>   a single row.
-#> Warning in geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
+#> Warning in geom_label(aes(x = 1.5, y = 0.25, label = "<U+00B1>0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.
+#> i Please consider using `annotate()` or provide this layer with data containing
 #>   a single row.
 ```
 
@@ -1285,39 +1275,16 @@ job_balance <- balance_diagnostics(
   right = control_group,
   vars = c("age", "education_years", "prior_earnings", "employed")
 )
-#> Warning in ks.test.default(left_clean, right_clean): p-value will be
-#> approximate in the presence of ties
 
 print(job_balance)
-#> 
-#> Balance Diagnostics for Matched Pairs
-#> ======================================
-#> 
-#> Matching Summary:
-#>   Method: lap
-#>   Matched pairs: 200
-#>   Unmatched left: 0 (of 200)
-#>   Unmatched right: 300 (of 500)
-#> 
-#> Variable-level Balance:
-#> # A tibble: 4 × 7
-#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
-#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             35.4       36.0        -0.656     -0.081       0.756     0.1  
-#> 2 educati…        13.9       13.5         0.4        0.195       0.865     0.18 
-#> 3 prior_e…     35015.     33795.       1219.         0.121       1.03      0.08 
-#> 4 employed         0.7        0.635       0.065      0.138       0.906     0.065
-#> 
-#> Overall Balance:
-#>   Mean |Std Diff|: 0.134 (Good)
-#>   Max |Std Diff|: 0.195
-#>   Vars with |Std Diff| > 0.25: 0.0%
-#> 
-#> Balance Interpretation:
-#>   |Std Diff| < 0.10: Excellent balance
-#>   |Std Diff| 0.10-0.25: Good balance
-#>   |Std Diff| 0.25-0.50: Acceptable balance
-#>   |Std Diff| > 0.50: Poor balance
+#> Balance of 200 matched pairs
+#>   unmatched: 0 of 200 left, 300 of 500 right units
+#>         Variable Std Diff Before Std Diff Var Ratio KS Stat
+#>              age          -0.571   -0.081     0.756   0.100
+#>  education_years           0.706    0.195     0.865   0.180
+#>   prior_earnings           0.477    0.121     1.027   0.080
+#>         employed           0.416    0.138     0.906   0.065
+#> Largest |Std Diff|: 0.195
 
 # Check overall balance quality
 cat("\nOverall balance:\n")
@@ -1690,16 +1657,11 @@ result_full <- full_match(
 )
 
 result_full
-#> 
-#> Full Matching Result
-#> ====================
-#> 
-#>   Status: optimal
-#>   Groups formed: 78
-#>   Left units:  100 matched, 0 unmatched (of 100)
-#>   Right units: 150 matched, 0 unmatched (of 150)
-#> 
-#>   Right units per group: min=1, median=1, max=21
+#> couplr result: full matching, optimal
+#>   Left units:         100 matched of 100
+#>   Right units:        150 matched of 150
+#>   Groups:             78
+#>   Certified optimal:  yes
 ```
 
 The `method` argument controls the algorithm:
@@ -1764,7 +1726,7 @@ enabling unbiased estimation:
 ``` r
 
 head(result_full$groups, 10)
-#> # A tibble: 10 × 4
+#> # A tibble: 10 x 4
 #>    group_id id    side  weight
 #>       <int> <chr> <chr>  <dbl>
 #>  1        1 1     left       1
@@ -1808,7 +1770,7 @@ result_2to1 <- match_couples(
 #> Auto-selected scaling method: standardize
 
 result_2to1$pairs
-#> # A tibble: 150 × 5
+#> # A tibble: 150 x 5
 #>    left_id right_id distance .age_diff .income_diff
 #>    <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #>  1 3       52        1.07     -11.6          5127. 
@@ -1821,7 +1783,7 @@ result_2to1$pairs
 #>  8 6       25        0.231     -2.50         1139. 
 #>  9 7       143       0.735     -5.12         9559. 
 #> 10 7       94        0.00653    0.0728        -20.9
-#> # ℹ 140 more rows
+#> # i 140 more rows
 ```
 
 Higher ratios increase sample size at the cost of slightly worse
@@ -1877,41 +1839,13 @@ ps_result <- ps_match(
   caliper_sd = 0.5,
   method = "hungarian"
 )
-#> Warning: 74.8% of pairs are forbidden!
-#>   Only 3776 valid pairs for 100 left units - the matching pool is shallow!
-#>   Your constraints might be moderately strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
 
 ps_result
-#> Matching Result
-#> ===============
-#> 
-#> Method: lap 
-#> Pairs matched: 99 
-#> Unmatched (left): 1 
-#> Unmatched (right): 51 
-#> Total distance: 9.8133 
-#> Status: partial 
-#> 
-#> Matched pairs:
-#> # A tibble: 99 × 4
-#>    left_id right_id distance .logit_ps_diff
-#>    <chr>   <chr>       <dbl>          <dbl>
-#>  1 1       23        0.164          0.164  
-#>  2 2       36        0.0533         0.0533 
-#>  3 3       148       0.0121         0.0121 
-#>  4 4       49        0.321          0.321  
-#>  5 5       68        0.0874         0.0874 
-#>  6 6       48        0.00425        0.00425
-#>  7 7       111       0.102          0.102  
-#>  8 8       81        0.196          0.196  
-#>  9 9       128       0.0692         0.0692 
-#> 10 10      110       0.0131         0.0131 
-#> # ℹ 89 more rows
+#> couplr result: one-to-one matching, partial
+#>   Left units:         99 matched of 100
+#>   Right units:        99 matched of 150
+#>   Pairs:              99
+#>   Total distance:     9.81329
 ```
 
 The function fits a logistic regression, transforms scores to the logit
@@ -1947,16 +1881,22 @@ card_result <- cardinality_match(
 )
 #> Auto-selected scaling method: standardize
 
-card_result$cardinality
-#> Matched units:       100
-#> Best possible:       100
-#> Optimality gap:      0
-#> Certified optimal
+card_result
+#> couplr result: cardinality matching, optimal
+#>   Left units:         100 matched of 100
+#>   Right units:        100 matched of 150
+#>   Pairs:              100
+#>   Total distance:     33.7761
+#>   Size bound:         100 (gap 0)
+#>   Certified optimal:  yes
 ```
 
 Bounding the standardized difference of each matching variable adds
-constraints that cut across the network. Those are dualized and searched
-by branch and bound, which runs until the bound meets the incumbent or
+constraints the network cannot hold. Summed over the matched pairs, each
+bound constrains which units are matched, so the search runs over unit
+selections: branch and bound on a linear programme with one variable per
+unit. It first finds the most matched units the bounds admit, then the
+smallest total distance at that size, and runs until both are proven or
 `node_limit` or `time_limit` runs out:
 
 ``` r
@@ -1967,45 +1907,77 @@ card_bb <- cardinality_match(
   vars = c("age", "income"),
   max_std_diff = 0.1,
   node_limit = 10L,
+  time_limit = Inf,
   scale = "standardize"
 )
 
-card_bb$cardinality
-#> Matched units:       19
+glance(card_bb)
+#> # A tibble: 1 x 17
+#>   design      n_left n_right n_matched_left n_matched_right n_pairs n_groups
+#>   <chr>        <int>   <int>          <int>           <int>   <int>    <int>
+#> 1 cardinality     20      80             20              20      20       NA
+#> # i 10 more variables: total_distance <dbl>, status <chr>, certified <lgl>,
+#> #   max_suboptimality <dbl>, best_possible <int>, gap <int>, n_nodes <int>,
+#> #   stopped_on <chr>, size_certified <lgl>, size_seconds <dbl>
+summary(card_bb)
+#> couplr result: cardinality matching, iteration_limit
+#>   Left units:         20 matched of 20
+#>   Right units:        20 matched of 80
+#>   Pairs:              20
+#>   Total distance:     5.32551
+#>   Size bound:         20 (gap 0)
+#>   Certified optimal:  no
+#> 
+#> Pair distances (quantiles):
+#>     min     25%  median     75%     90%     max 
+#> 0.03684 0.11760 0.23920 0.32250 0.51340 0.60270 
+#> 
+#> Matched units:       20
 #> Global upper bound:  20
-#> Cardinality gap:     1 unit (5.000%)
-card_bb$cardinality$constraints
-#> # A tibble: 5 × 6
-#>   kind          target      bound achieved  slack satisfied
-#>   <chr>         <chr>       <dbl>    <dbl>  <dbl> <lgl>    
-#> 1 std_diff      age           0.1  -0.0805 0.181  TRUE     
-#> 2 std_diff      age          -0.1  -0.0805 0.0195 TRUE     
-#> 3 std_diff      income        0.1   0.0335 0.0665 TRUE     
-#> 4 std_diff      income       -0.1   0.0335 0.133  TRUE     
-#> 5 exact_balance (all units)   0     0      0      TRUE
+#> Cardinality gap:     0 units (0.000%)
+#> Total distance: 5.325514 
+#> 
+#> Balance constraints:
+#>           kind      target bound    achieved       slack satisfied
+#>       std_diff         age   0.1 -0.09522342 0.195223416      TRUE
+#>       std_diff         age  -0.1 -0.09522342 0.004776584      TRUE
+#>       std_diff      income   0.1  0.05263997 0.047360031      TRUE
+#>       std_diff      income  -0.1  0.05263997 0.152639969      TRUE
+#>  exact_balance (all units)   0.0  0.00000000 0.000000000      TRUE
+#> 
+#> Selected category counts:
+#>  level category n_left n_right imbalance
+#>      1              20      20         0
+#> 
+#> Optimization stages:
+#>     stage closed stopped_on n_nodes seconds     value     bound
+#>      size   TRUE optimality       1    0.00 20.000000 20.000000
+#>  distance  FALSE node_limit       9    0.04  5.325514  5.320702
+#> 
+#> Unmatched left: 0
+#> Unmatched right: 60
 ```
 
-`certified` is `TRUE` only when the search settled and the gap is zero.
-When it is not, `gap` and `gap_fraction` say how many matched units
-separate the answer from the bound, and `stopped_on` says what ended the
-search.
+`certified` is `TRUE` only when every stage of the search closed. When
+the size stage did not, `gap` and `gap_fraction` say how many matched
+units separate the answer from the bound, and `stopped_on` says what
+ended the search. A search that proved the size but ran out of budget on
+the distance stage reports a `gap` of zero and returns the cheapest
+pairing it found for a largest balanced sample.
 
-How long the search runs depends on whether the moment bounds bind. When
-the distance-minimizing match already satisfies them, which happens with
-a loose bound or a control reservoir large enough that the closest
-partners are already balanced, the root node certifies and the call
-returns in milliseconds. When they bind, every node costs a flow solve,
-and although the root enters a feasible incumbent before the first node
-is opened, the bound above it closes slowly, so a call can spend its
-whole budget and still report a gap. Set `node_limit` and `time_limit`
-to a budget you are willing to spend, and read `stopped_on` and `gap` to
-see what the budget bought.
-
-`time_limit` reaches the flow solver, which checks it between
-augmentations, so the call returns on the budget rather than on the
-completion of the solve that was running when it ran out. The node that
-solve belonged to goes back on the frontier unopened, which is what
-keeps `bound` valid for the whole problem, and the incumbent stands.
+How long the search runs depends on how close the linear relaxation
+comes to the best integer selection. When the distance-minimizing match
+already satisfies the bounds, which happens with a loose bound or a
+control reservoir large enough that the closest partners are already
+balanced, that match is the answer and the call returns in milliseconds.
+When the bounds bind, the relaxation usually bounds the size within one
+unit, and the search closes as soon as it finds a selection of that
+size. Set `node_limit` to a budget you are willing to spend, and read
+`stopped_on` and `gap` in
+[`glance()`](https://generics.r-lib.org/reference/glance.html) to see
+what the budget bought. A search stopped by `time_limit` depends on the
+speed of the machine, so `time_limit = Inf` with a `node_limit` gives
+the same result everywhere.
 
 A pruning heuristic is reachable with `engine = "heuristic"`. It starts
 from a full match and deletes the pairs carrying the worst variable’s
@@ -2051,18 +2023,14 @@ cem_result <- cem_match(
 )
 
 cem_result
-#> 
-#> Coarsened Exact Matching Result
-#> ===============================
-#> 
-#>   Strata: 69 total, 32 matched
-#>   Left:   81 matched, 19 pruned
-#>   Right:  103 matched, 47 pruned
-#>   Variables: age, income
+#> couplr result: coarsened exact matching
+#>   Left units:         81 matched of 100
+#>   Right units:        103 matched of 150
+#>   Groups:             32
 
 # Strata summary: how many units in each coarsened cell
 head(cem_result$strata_summary)
-#> # A tibble: 6 × 4
+#> # A tibble: 6 x 4
 #>   stratum               n_left n_right matched
 #>   <chr>                  <int>   <int> <lgl>  
 #> 1 (25,30]|(3e+04,4e+04]      0       1 FALSE  
@@ -2101,26 +2069,12 @@ sub_result <- subclass_match(
 )
 
 sub_result
-#> 
-#> Subclassification Result
-#> ========================
-#> 
-#>   Estimand: ATT
-#>   Subclasses: 5
-#>   Treated (left):  100
-#>   Control (right): 150
-#> 
-#>   Subclass summary:
-#> # A tibble: 5 × 7
-#>   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap
-#>      <int>     <int>     <int>   <dbl>        <dbl>         <dbl> <lgl>      
-#> 1        1         6        44   0.192       0.0902         0.251 TRUE       
-#> 2        2        15        35   0.296       0.257          0.348 TRUE       
-#> 3        3        20        30   0.391       0.350          0.435 TRUE       
-#> 4        4        32        18   0.491       0.438          0.537 TRUE       
-#> 5        5        27        23   0.630       0.542          0.843 TRUE
+#> couplr result: subclassification matching
+#>   Left units:         100 matched of 100
+#>   Right units:        150 matched of 150
+#>   Groups:             5
 head(sub_result$subclass_summary)
-#> # A tibble: 5 × 7
+#> # A tibble: 5 x 7
 #>   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap
 #>      <int>     <int>     <int>   <dbl>        <dbl>         <dbl> <lgl>      
 #> 1        1         6        44   0.192       0.0902         0.251 TRUE       
@@ -2144,7 +2098,7 @@ and `distance` columns — ready for downstream modelling:
 
 md <- couplr::match_data(result, left_data, right_data)
 head(md)
-#> # A tibble: 6 × 9
+#> # A tibble: 6 x 9
 #>      id   age income education group     treatment weights subclass distance
 #>   <int> <dbl>  <dbl> <chr>     <chr>         <int>   <dbl>    <int>    <dbl>
 #> 1     1  39.4 49344. MA        treatment         1       1        1   0.530 
@@ -2215,25 +2169,10 @@ sa <- sensitivity_analysis(
 )
 
 sa
-#> Rosenbaum Sensitivity Analysis
-#> ==============================
-#> 
-#> Matched pairs: 50 
-#> Alternative: greater 
-#> Test statistic (T+): 889.0 
-#> 
-#> Gamma    p (upper bound)
-#> -----    ---------------
-#> 1.00     0.0077 *
-#> 1.25     0.0401 *
-#> 1.50     0.1118
-#> 1.75     0.2195
-#> 2.00     0.3467
-#> 
-#> * significant at alpha = 0.05
-#> 
-#> Insensitive to hidden bias up to Gamma = 1.25
-#> To explain away the effect, hidden bias would need Gamma >= 1.50
+#> Rosenbaum sensitivity analysis (alternative "greater")
+#>   50 pairs with a nonzero outcome difference
+#>   p-value without hidden bias (Gamma = 1): 0.007697
+#>   Significant at alpha = 0.05 up to Gamma = 1.25, not at Gamma = 1.50.
 ```
 
 The **critical gamma** (\\\Gamma\\) is the smallest value at which the

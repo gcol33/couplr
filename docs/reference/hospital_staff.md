@@ -1,9 +1,9 @@
-# Hospital staff scheduling example dataset
+# Hospital Staff Example Data
 
 A comprehensive example dataset for demonstrating couplr functionality
-across vignettes. Contains hospital staff scheduling data with nurses,
-shifts, costs, and preference scores suitable for assignment problems,
-as well as nurse characteristics for matching workflows.
+across vignettes. Contains synthetic hospital staff scheduling data with
+nurses, shifts, costs, and preference scores suitable for assignment
+problems, as well as nurse characteristics for matching workflows.
 
 ## Usage
 

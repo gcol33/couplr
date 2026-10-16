@@ -16,8 +16,6 @@ the matched sample with the bound that goes with it.
   moments = NULL,
   max_std_diff = NULL,
   vars = NULL,
-  dual_steps = 20L,
-  branch = c("unit", "pair"),
   node_limit = 500L,
   time_limit = Inf,
   should_stop = NULL
@@ -46,14 +44,6 @@ the matched sample with the bound that goes with it.
 - moments, max_std_diff, vars:
 
   Moment constraints, as `.moment_specs()` takes them.
-
-- dual_steps:
-
-  Multiplier updates per node.
-
-- branch:
-
-  Whether to branch on left-unit inclusion or on pairs.
 
 - node_limit, time_limit:
 

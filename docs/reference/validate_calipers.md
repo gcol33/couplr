@@ -5,8 +5,14 @@ Validate calipers parameter
 ## Usage
 
 ``` r
-validate_calipers(calipers, vars)
+validate_calipers(calipers, columns)
 ```
+
+## Arguments
+
+- columns:
+
+  The columns a caliper may name: those of both data frames.
 
 ## Value
 

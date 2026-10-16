@@ -11,13 +11,15 @@ Source:
 [`inst/CITATION`](https://github.com/gcol33/couplr/blob/HEAD/inst/CITATION)
 
 Colling G (2026). *couplr: Optimal Pairing and Matching via Linear
-Assignment*. R package version 1.4.0,
-<https://github.com/gcol33/couplr>.
+Assignment*.
+[doi:10.32614/CRAN.package.couplr](https://doi.org/10.32614/CRAN.package.couplr).
+R package version 1.9.0, <https://CRAN.R-project.org/package=couplr>.
 
     @Manual{,
       title = {couplr: Optimal Pairing and Matching via Linear Assignment},
       author = {Gilles Colling},
       year = {2026},
-      note = {R package version 1.4.0},
-      url = {https://github.com/gcol33/couplr},
+      note = {R package version 1.9.0},
+      url = {https://CRAN.R-project.org/package=couplr},
+      doi = {10.32614/CRAN.package.couplr},
     }

@@ -1,4 +1,4 @@
-# Join Matched Pairs with Original Data
+# Join Matched Pairs with the Original Data
 
 Creates an analysis-ready dataset by joining matched pairs with
 variables from the original left and right datasets. This eliminates the
@@ -34,6 +34,9 @@ join_matched(result, left, right, left_id = "id", right_id = "id", ...)
 
 # S3 method for class 'subclass_result'
 join_matched(result, data = NULL, ...)
+
+# S3 method for class 'couplr_result'
+augment(x, left, right, ...)
 ```
 
 ## Arguments
@@ -48,7 +51,7 @@ join_matched(result, data = NULL, ...)
 
 - ...:
 
-  Additional arguments passed to methods
+  Additional arguments passed to `join_matched()`
 
 - left:
 
@@ -96,6 +99,10 @@ join_matched(result, data = NULL, ...)
 - data:
 
   Data frame used for subclassification
+
+- x:
+
+  A matching_result object
 
 ## Value
 

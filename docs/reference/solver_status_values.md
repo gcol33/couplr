@@ -1,4 +1,4 @@
-# Solver status values
+# Solver Status Values
 
 The closed set of values a couplr solve result's `status` field can
 take.

@@ -1,19 +1,17 @@
-# Estimate dense cost-matrix memory footprint in megabytes
+# Estimate the Memory of a Dense Cost Matrix
 
-What the matrix itself costs a process, which is more than the 8 bytes a
-cell occupies: `matrix(0, n, m)` at the R level is copied into a
-`lap::CostMatrix` (8B data + 4B mask), and the two coexist while garbage
-collection lags. Building the matrix and stopping there has peaked at
-between 1.5 and 1.9 times the raw cell bytes from 5,000 to 20,000 units
-on the memory benchmark, so the default multiplier is above what has
-been measured rather than fitted to it. `n`/`m` are coerced to `double`
-before multiplying so the estimate itself can't overflow the way
-`lap::CostMatrix`'s old `int` flat-index arithmetic did.
+What building the matrix costs a process: the 8 bytes of each cell,
+written in place by the distance code, and little besides. Building the
+matrix and stopping there has peaked at between 1.0 and 1.1 times the
+raw cell bytes from 2,000 to 20,000 units on the memory benchmark, so
+the default multiplier is above what has been measured rather than
+fitted to it. `n`/`m` are coerced to `double` before multiplying so the
+estimate itself can't overflow.
 
 ## Usage
 
 ``` r
-estimate_dense_matrix_mb(n, m, overhead_factor = 4)
+estimate_dense_matrix_mb(n, m, overhead_factor = 2)
 ```
 
 ## Arguments

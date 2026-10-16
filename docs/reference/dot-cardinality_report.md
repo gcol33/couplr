@@ -11,14 +11,16 @@ and the state of every constraint the match was asked to meet.
 
 # S3 method for class 'cardinality_report'
 print(x, ...)
+
+# S3 method for class 'cardinality_report'
+summary(object, ...)
 ```
 
 ## Arguments
 
 - run:
 
-  A `cardinality_run` from
-  [`.cardinality_branch_bound()`](https://gillescolling.com/couplr/reference/dot-cardinality_branch_bound.md).
+  A `cardinality_run` from `.cardinality_select()`.
 
 - specs:
 
@@ -31,6 +33,10 @@ print(x, ...)
 - ...:
 
   Ignored.
+
+- object:
+
+  A cardinality report, including a pruning-heuristic report.
 
 ## Value
 
@@ -54,6 +60,13 @@ An object of class `cardinality_report`, a list with elements:
 
 - `stopped_on`, `n_nodes`, `engine`, `status`.
 
+- `stages` - one row per stage of a search over unit selections, in the
+  order the objective ranks them (`"size"`, an `"imbalance"` row per
+  refined level, `"distance"`): whether it closed, what stopped it, its
+  nodes and seconds, and its value and bound in its own units (matched
+  units, units of imbalance, total distance). No rows when one network
+  solve answered the call.
+
 - `constraints` - one row per stated constraint, with what it asked for
   and what the matched sample achieved.
 
@@ -70,3 +83,8 @@ An object of class `cardinality_report`, a list with elements:
   solve was not certified.
 
 Invisibly returns `x`.
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.cardinality_report` containing the original report; printing it
+displays the size bound, constraints, category counts, and optimization
+stages where available.

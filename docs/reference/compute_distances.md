@@ -1,4 +1,4 @@
-# Compute and Cache Distance Matrix for Reuse
+# Compute and Cache a Distance Matrix
 
 Precomputes a distance matrix between left and right datasets, allowing
 it to be reused across multiple matching operations with different
@@ -22,6 +22,17 @@ compute_distances(
   block_id = NULL,
   memory_mode = "auto"
 )
+
+is_distance_object(x)
+
+# S3 method for class 'distance_object'
+print(x, ...)
+
+# S3 method for class 'distance_object'
+summary(object, ...)
+
+# S3 method for class 'distance_object'
+as.matrix(x, ...)
 ```
 
 ## Arguments
@@ -76,6 +87,18 @@ compute_distances(
   [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
   the same way as a dense `cost_matrix`. "dense" skips the RAM check
   entirely.
+
+- x:
+
+  A `distance_object`; any object for `is_distance_object()`.
+
+- ...:
+
+  Additional arguments (ignored)
+
+- object:
+
+  A distance_object
 
 ## Value
 

@@ -1,4 +1,4 @@
-# Solve assignment problem and return dual variables
+# Solve an Assignment Problem and Return Dual Potentials
 
 Solves the linear assignment problem and returns dual potentials (u, v)
 in addition to the optimal matching. The dual variables provide an
@@ -8,6 +8,15 @@ optimality certificate and enable sensitivity analysis.
 
 ``` r
 assignment_duals(cost, maximize = FALSE, certify = FALSE)
+
+# S3 method for class 'assignment_duals_result'
+print(x, ...)
+
+# S3 method for class 'assignment_duals_result'
+summary(object, ...)
+
+# S3 method for class 'assignment_duals_result'
+as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 ```
 
 ## Arguments
@@ -30,6 +39,22 @@ assignment_duals(cost, maximize = FALSE, certify = FALSE)
   and the resulting `assignment_certificate` is attached as
   `certificate`. The check is one pass over the admissible pairs and
   reuses the duals computed here, so it costs no second solve.
+
+- x:
+
+  An `assignment_duals_result`.
+
+- ...:
+
+  Ignored.
+
+- object:
+
+  An `assignment_duals_result`.
+
+- row.names, optional:
+
+  Ignored.
 
 ## Value
 

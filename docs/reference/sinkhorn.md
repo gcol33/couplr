@@ -1,4 +1,4 @@
-# 'Sinkhorn-Knopp' optimal transport solver
+# Entropic Optimal Transport by Sinkhorn-Knopp Iteration
 
 Compute an entropy-regularized optimal transport plan using the
 'Sinkhorn-Knopp' algorithm. Unlike other LAP solvers that return a hard
@@ -16,6 +16,15 @@ sinkhorn(
   r_weights = NULL,
   c_weights = NULL
 )
+
+# S3 method for class 'sinkhorn_result'
+print(x, ...)
+
+# S3 method for class 'sinkhorn_result'
+summary(object, ...)
+
+# S3 method for class 'sinkhorn_result'
+as.matrix(x, ...)
 ```
 
 ## Arguments
@@ -49,9 +58,17 @@ sinkhorn(
   Optional numeric vector of column marginals (target distribution).
   Default is uniform. Will be normalized to sum to 1.
 
+- x, object:
+
+  A `sinkhorn_result`.
+
+- ...:
+
+  Ignored.
+
 ## Value
 
-A list with elements:
+A `sinkhorn_result` list with elements:
 
 - `transport_plan` — numeric matrix, the optimal transport plan P. Row
   sums approximate r_weights, column sums approximate c_weights.
@@ -66,6 +83,11 @@ A list with elements:
 - `iterations` — number of iterations used.
 
 - `lambda` — the regularization parameter used.
+
+[`as.matrix()`](https://rdrr.io/r/base/matrix.html) returns the
+transport plan. [`summary()`](https://rdrr.io/r/base/summary.html)
+returns a `summary.sinkhorn_result` with convergence, transported mass,
+support size, and the observed row and column marginals.
 
 ## Details
 

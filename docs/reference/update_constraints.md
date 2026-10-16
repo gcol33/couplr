@@ -1,4 +1,4 @@
-# Update Constraints on Distance Object
+# Update the Constraints of a Distance Object
 
 Apply new constraints to a precomputed distance object without
 recomputing the underlying distances. This is useful for exploring
@@ -24,7 +24,8 @@ update_constraints(dist_obj, max_distance = Inf, calipers = NULL)
 
 - calipers:
 
-  Named list of per-variable calipers
+  Named list of calipers, each on a column of both data frames the
+  distance object was built from.
 
 ## Value
 

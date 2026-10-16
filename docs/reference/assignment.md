@@ -1,4 +1,4 @@
-# Linear assignment solver
+# Solve a Linear Assignment Problem
 
 Solve the linear assignment problem (minimum- or maximum-cost matching)
 using several algorithms. Forbidden edges can be marked as `NA` or
@@ -10,10 +10,7 @@ using several algorithms. Forbidden edges can be marked as `NA` or
 assignment(
   cost,
   maximize = FALSE,
-  method = c("auto", "jv", "hungarian", "munkres", "auction", "auction_gs",
-    "auction_scaled", "sap", "ssp", "sap_dense", "csflow", "hk01", "bruteforce",
-    "ssap_bucket", "cycle_cancel", "gabow_tarjan", "lapmod", "csa", "ramshaw_tarjan",
-    "push_relabel", "network_simplex"),
+  method = "auto",
   auction_eps = NULL,
   eps = NULL,
   memory_mode = "auto",
@@ -22,6 +19,18 @@ assignment(
   n_matches = NULL,
   unmatched_penalty = NULL
 )
+
+# S3 method for class 'lap_solve_result'
+print(x, ...)
+
+# S3 method for class 'lap_solve_result'
+summary(object, ...)
+
+is_lap_solve_result(x)
+
+get_total_cost(x)
+
+get_method_used(x)
 ```
 
 ## Arguments
@@ -216,6 +225,19 @@ assignment(
   objective with a single one: a pair costing more than the penalty is
   worth dropping. Left `NULL`, no pair is ever traded away for a cost
   saving.
+
+- x:
+
+  An assignment result object
+
+- ...:
+
+  Additional arguments passed to
+  [`print()`](https://rdrr.io/r/base/print.html). Currently ignored.
+
+- object:
+
+  A `lap_solve_result` object.
 
 ## Value
 

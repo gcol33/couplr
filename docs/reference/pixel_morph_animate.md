@@ -1,4 +1,4 @@
-# Pixel-level image morphing (animation)
+# Animated Pixel-Level Image Morphing
 
 Creates an animated morph by computing optimal pixel assignment from
 image A to image B, then rendering intermediate frames showing the
@@ -25,6 +25,12 @@ pixel_morph_animate(
   patch_size = 1L,
   upscale = 1
 )
+
+# S3 method for class 'pixel_morph_animation'
+print(x, ...)
+
+# S3 method for class 'pixel_morph_animation'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -95,9 +101,18 @@ pixel_morph_animate(
 
   Post-rendering upscaling factor (default: 1)
 
+- x, object:
+
+  A `pixel_morph_animation` result.
+
+- ...:
+
+  Ignored.
+
 ## Value
 
-Invisibly returns a list with animation object and metadata:
+Invisibly returns a `pixel_morph_animation` list with animation object
+and metadata:
 
 - animation:
 
@@ -126,6 +141,10 @@ Invisibly returns a list with animation object and metadata:
 - upscale:
 
   Upscaling factor applied
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.pixel_morph_animation` with frame counts and assignment
+coverage, including repeated and unfilled destinations.
 
 ## Details
 
@@ -202,12 +221,13 @@ A warning is issued if overlaps/holes are detected in the final frame.
 ## Examples
 
 ``` r
+# \donttest{
 if (requireNamespace("magick", quietly = TRUE)) {
   imgA <- system.file("extdata/icons/circleA_40.png", package = "couplr")
   imgB <- system.file("extdata/icons/circleB_40.png", package = "couplr")
-  if (nzchar(imgA) && nzchar(imgB)) {
-    outfile <- tempfile(fileext = ".gif")
-    pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
-  }
+  outfile <- tempfile(fileext = ".gif")
+  pixel_morph_animate(imgA, imgB, outfile = outfile, n_frames = 4, show = FALSE)
+  file.exists(outfile)
 }
+# }
 ```

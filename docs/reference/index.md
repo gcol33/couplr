@@ -5,34 +5,62 @@
 Core functions for solving linear assignment problems
 
 - [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
-  : Solve linear assignment problems
+  : Solve Linear Assignment Problems with a Tidy Interface
 - [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
-  : Solve multiple assignment problems efficiently
+  [`print(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`summary(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  : Solve Many Assignment Problems
 - [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
-  : Find k-best optimal assignments
+  [`print(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  : Find the k Best Assignments
 - [`lap_solve_line_metric()`](https://gillescolling.com/couplr/reference/lap_solve_line_metric.md)
-  : Solve 1-D Line Assignment Problem
+  [`summary(`*`<lap_line_metric_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_line_metric.md)
+  : Solve a One-Dimensional Assignment Problem
+- [`lap_solvers()`](https://gillescolling.com/couplr/reference/lap_solvers.md)
+  [`register_lap_solver()`](https://gillescolling.com/couplr/reference/lap_solvers.md)
+  : Assignment Solvers
 - [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
-  : Linear assignment solver
+  [`print(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`summary(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_total_cost()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_method_used()`](https://gillescolling.com/couplr/reference/assignment.md)
+  : Solve a Linear Assignment Problem
 - [`assignment_duals()`](https://gillescolling.com/couplr/reference/assignment_duals.md)
-  : Solve assignment problem and return dual variables
+  [`print(`*`<assignment_duals_result>`*`)`](https://gillescolling.com/couplr/reference/assignment_duals.md)
+  [`summary(`*`<assignment_duals_result>`*`)`](https://gillescolling.com/couplr/reference/assignment_duals.md)
+  [`as.data.frame(`*`<assignment_duals_result>`*`)`](https://gillescolling.com/couplr/reference/assignment_duals.md)
+  : Solve an Assignment Problem and Return Dual Potentials
 - [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
+  [`summary(`*`<bottleneck_result>`*`)`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
   : Solve the Bottleneck Assignment Problem
 - [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
-  : 'Sinkhorn-Knopp' optimal transport solver
+  [`print(`*`<sinkhorn_result>`*`)`](https://gillescolling.com/couplr/reference/sinkhorn.md)
+  [`summary(`*`<sinkhorn_result>`*`)`](https://gillescolling.com/couplr/reference/sinkhorn.md)
+  [`as.matrix(`*`<sinkhorn_result>`*`)`](https://gillescolling.com/couplr/reference/sinkhorn.md)
+  : Entropic Optimal Transport by Sinkhorn-Knopp Iteration
 - [`sinkhorn_to_assignment()`](https://gillescolling.com/couplr/reference/sinkhorn_to_assignment.md)
-  : Round 'Sinkhorn' transport plan to hard assignment
+  : Round a Sinkhorn Transport Plan to an Assignment
 
 ## Matching Functions
 
 High-level matching for observational studies
 
 - [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-  : Match two datasets into couples
+  : Optimal and Greedy Pair Matching
 - [`match_path()`](https://gillescolling.com/couplr/reference/match_path.md)
-  : Match across a range of one design choice
+  [`print(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`summary(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`as.data.frame(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`plot(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  : Solve a Sequence of Matchings over One Design Parameter
 - [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
-  : Create blocks for stratified matching
+  [`print(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/matchmaker.md)
+  [`summary(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/matchmaker.md)
+  : Create Blocks for Stratified Matching
 - [`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
   : Propensity Score Matching
 - [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
@@ -49,10 +77,19 @@ High-level matching for observational studies
 Assess match quality and sensitivity to hidden bias
 
 - [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
-  : Balance Diagnostics for Matched Pairs
+  [`print(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`autoplot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  : Balance Diagnostics for Matched Samples
 - [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)
-  : Create Balance Table
-- [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  : Balance Table of a Balance Diagnostics Object
+- [`autoplot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`print(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`summary(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`as.data.frame(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`plot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
   : Rosenbaum Sensitivity Analysis
 
 ## Optimality Verification
@@ -61,165 +98,197 @@ Check a solution against the dual prices that certify it
 
 - [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md)
   [`print(`*`<assignment_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_assignment.md)
-  : Verify that an assignment is optimal
+  [`summary(`*`<assignment_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_assignment.md)
+  : Verify That an Assignment Is Optimal
 - [`verify_flow()`](https://gillescolling.com/couplr/reference/verify_flow.md)
   [`print(`*`<flow_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_flow.md)
-  : Verify that a flow is optimal
+  [`summary(`*`<flow_certificate>`*`)`](https://gillescolling.com/couplr/reference/verify_flow.md)
+  : Verify That a Flow Is Optimal
+- [`certificate()`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`potentials()`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`unmatched_units()`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`print(`*`<cardinality_certificate>`*`)`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`summary(`*`<cardinality_certificate>`*`)`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`glance(`*`<cardinality_certificate>`*`)`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`glance(`*`<assignment_certificate>`*`)`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  [`glance(`*`<flow_certificate>`*`)`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  : Certificate, Potentials and Unmatched Units of a Result
 
 ## Distance and Preprocessing
 
 Distance computation and data preparation
 
 - [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
-  : Compute and Cache Distance Matrix for Reuse
+  [`is_distance_object()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`print(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`summary(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`as.matrix(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  : Compute and Cache a Distance Matrix
 - [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md)
-  : Update Constraints on Distance Object
+  : Update the Constraints of a Distance Object
 - [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
-  : Preprocess matching variables with automatic checks and scaling
+  [`print(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`summary(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`print(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`summary(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  : Check Matching Variables and Choose Scaling
 - [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
-  : Diagnose distance matrix and suggest fixes
+  [`print(`*`<distance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
+  [`summary(`*`<distance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md)
+  : Diagnose a Distance Matrix
 - [`estimate_dense_matrix_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_matrix_mb.md)
-  : Estimate dense cost-matrix memory footprint in megabytes
+  : Estimate the Memory of a Dense Cost Matrix
 - [`estimate_dense_solve_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_solve_mb.md)
-  : Estimate the peak footprint of a dense solve in megabytes
+  : Estimate the Peak Memory of a Dense Solve
 
 ## Joined Datasets & Output
 
 Create analysis-ready merged datasets
 
 - [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
-  : Join Matched Pairs with Original Data
+  [`augment(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/join_matched.md)
+  : Join Matched Pairs with the Original Data
 - [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)
-  : Extract Analysis-Ready Data from Matching Results
-- [`augment(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/augment.matching_result.md)
-  : Augment Matching Results with Original Data (broom-style)
+  : Extract Analysis-Ready Data from a Matching Result
 
 ## Ecosystem Integration
 
 Interoperability with MatchIt, cobalt, and marginaleffects
 
 - [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
-  : Convert couplr Result to matchit Object
-- [`bal.tab(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab(`*`<full_matching_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab(`*`<cem_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  [`bal.tab(`*`<subclass_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.matching_result.md)
-  : Balance Table for Matching Results (cobalt integration)
+  : Convert a Matching Result to a matchit Object
+- [`bal.tab(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.couplr_result.md)
+  [`bal.tab(`*`<subclass_result>`*`)`](https://gillescolling.com/couplr/reference/bal.tab.couplr_result.md)
+  : Balance Tables from cobalt for Matching Results
 
 ## Utility Functions
 
 Helper functions for working with results
 
-- [`get_total_cost()`](https://gillescolling.com/couplr/reference/get_total_cost.md)
-  : Extract total cost from assignment result
-
-- [`get_method_used()`](https://gillescolling.com/couplr/reference/get_method_used.md)
-  : Extract method used from assignment result
-
+- [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`print(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`summary(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_total_cost()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_method_used()`](https://gillescolling.com/couplr/reference/assignment.md)
+  : Solve a Linear Assignment Problem
 - [`explain_dispatch()`](https://gillescolling.com/couplr/reference/explain_dispatch.md)
   [`print(`*`<dispatch_explanation>`*`)`](https://gillescolling.com/couplr/reference/explain_dispatch.md)
-  :
-
-  Explain which solver `method = "auto"` selects, and why
-
+  [`summary(`*`<dispatch_explanation>`*`)`](https://gillescolling.com/couplr/reference/explain_dispatch.md)
+  : Explain the Automatic Solver Choice
 - [`solver_status_values()`](https://gillescolling.com/couplr/reference/solver_status_values.md)
-  : Solver status values
-
+  : Solver Status Values
 - [`as_assignment_matrix()`](https://gillescolling.com/couplr/reference/as_assignment_matrix.md)
-  : Convert assignment result to a binary matrix
-
-- [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_result.md)
-  : Check if object is an assignment result
-
-- [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_batch_result.md)
-  : Check if object is a batch assignment result
-
-- [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/is_lap_solve_kbest_result.md)
-  : Check if object is a k-best assignment result
-
-- [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md)
-  : Check if Object is a Distance Object
+  : Convert an Assignment Result to a Binary Matrix
+- [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`print(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`summary(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  : Solve Many Assignment Problems
+- [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`print(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  : Find the k Best Assignments
+- [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`is_distance_object()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`print(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`summary(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`as.matrix(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  : Compute and Cache a Distance Matrix
 
 ## Example Data
 
 Built-in datasets for examples and testing
 
 - [`hospital_staff`](https://gillescolling.com/couplr/reference/hospital_staff.md)
-  : Hospital staff scheduling example dataset
+  : Hospital Staff Example Data
 - [`example_costs`](https://gillescolling.com/couplr/reference/example_costs.md)
-  : Example cost matrices for assignment problems
+  : Example Cost Matrices
 - [`example_df`](https://gillescolling.com/couplr/reference/example_df.md)
-  : Example assignment problem data frame
+  : Example Assignment Data Frame
 
 ## Pixel Morphing
 
 Visual demonstrations and image processing
 
 - [`pixel_morph()`](https://gillescolling.com/couplr/reference/pixel_morph.md)
-  : Pixel-level image morphing (final frame only)
+  : Pixel-Level Image Morphing
 - [`pixel_morph_animate()`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
-  : Pixel-level image morphing (animation)
+  [`print(`*`<pixel_morph_animation>`*`)`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
+  [`summary(`*`<pixel_morph_animation>`*`)`](https://gillescolling.com/couplr/reference/pixel_morph_animate.md)
+  : Animated Pixel-Level Image Morphing
 
 ## Algorithm Animation
 
 Step-by-step visualization of LAP algorithms
 
 - [`lap_animate()`](https://gillescolling.com/couplr/reference/lap_animate.md)
-  : Animate an assignment algorithm step-by-step
+  : Animate an Assignment Algorithm
 - [`animated_methods()`](https://gillescolling.com/couplr/reference/animated_methods.md)
-  : List methods that currently support animation
+  : List Methods That Support Animation
 
 ## Print, Summary and Plot Methods
 
 S3 methods for displaying and visualizing results
 
-- [`print(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_result.md)
-  : Print method for assignment results
-- [`print(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_batch_result.md)
-  : Print method for batch assignment results
-- [`print(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/print.lap_solve_kbest_result.md)
-  : Print method for k-best assignment results
-- [`print(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/print.matching_result.md)
-  : Print method for matching results
-- [`print(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/print.couplr_path.md)
-  : Print a design path
-- [`print(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/print.matchmaker_result.md)
-  : Print method for matchmaker results
-- [`print(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/print.balance_diagnostics.md)
-  : Print Method for Balance Diagnostics
-- [`print(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/print.distance_object.md)
-  : Print Method for Distance Objects
-- [`print(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/print.preprocessing_result.md)
-  : Print method for preprocessing result
-- [`print(`*`<full_matching_result>`*`)`](https://gillescolling.com/couplr/reference/print.full_matching_result.md)
-  : Print Method for Full Matching Results
-- [`print(`*`<cem_result>`*`)`](https://gillescolling.com/couplr/reference/print.cem_result.md)
-  : Print Method for CEM Results
-- [`print(`*`<subclass_result>`*`)`](https://gillescolling.com/couplr/reference/print.subclass_result.md)
-  : Print Method for Subclassification Results
-- [`print(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/print.variable_health.md)
-  : Print method for variable health
-- [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/summary.lap_solve_kbest_result.md)
-  : Get summary of k-best results
-- [`summary(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/summary.distance_object.md)
-  : Summary Method for Distance Objects
-- [`summary(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/summary.matching_result.md)
-  : Summary method for matching results
-- [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/summary.balance_diagnostics.md)
-  : Summary method for balance diagnostics
-- [`summary(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/summary.sensitivity_analysis.md)
-  : Summary method for sensitivity analysis
-- [`plot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/plot.matching_result.md)
-  : Plot method for matching results
-- [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/plot.balance_diagnostics.md)
-  : Plot method for balance diagnostics
-- [`plot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/plot.sensitivity_analysis.md)
-  : Plot method for sensitivity analysis (base graphics)
-- [`print(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/print.sensitivity_analysis.md)
-  : Print method for sensitivity analysis
-- [`autoplot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.md)
-  : ggplot2 autoplot for balance diagnostics
-- [`autoplot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/autoplot.matching_result.md)
-  : ggplot2 autoplot for matching results
-- [`autoplot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.md)
-  : ggplot2 autoplot for sensitivity analysis
+- [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`print(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`summary(`*`<lap_solve_result>`*`)`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`is_lap_solve_result()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_total_cost()`](https://gillescolling.com/couplr/reference/assignment.md)
+  [`get_method_used()`](https://gillescolling.com/couplr/reference/assignment.md)
+  : Solve a Linear Assignment Problem
+- [`lap_solve_batch()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`print(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`summary(`*`<lap_solve_batch_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  [`is_lap_solve_batch_result()`](https://gillescolling.com/couplr/reference/lap_solve_batch.md)
+  : Solve Many Assignment Problems
+- [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`print(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`summary(`*`<lap_solve_kbest_result>`*`)`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  [`is_lap_solve_kbest_result()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  : Find the k Best Assignments
+- [`plot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`autoplot(`*`<matching_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`glance(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`tidy(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`as.data.frame(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`print(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  [`summary(`*`<couplr_result>`*`)`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  : Matching Results
+- [`match_path()`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`print(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`summary(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`as.data.frame(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  [`plot(`*`<couplr_path>`*`)`](https://gillescolling.com/couplr/reference/match_path.md)
+  : Solve a Sequence of Matchings over One Design Parameter
+- [`matchmaker()`](https://gillescolling.com/couplr/reference/matchmaker.md)
+  [`print(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/matchmaker.md)
+  [`summary(`*`<matchmaker_result>`*`)`](https://gillescolling.com/couplr/reference/matchmaker.md)
+  : Create Blocks for Stratified Matching
+- [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`print(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`summary(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`plot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  [`autoplot(`*`<balance_diagnostics>`*`)`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  : Balance Diagnostics for Matched Samples
+- [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`is_distance_object()`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`print(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`summary(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  [`as.matrix(`*`<distance_object>`*`)`](https://gillescolling.com/couplr/reference/compute_distances.md)
+  : Compute and Cache a Distance Matrix
+- [`preprocess_matching_vars()`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`print(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`summary(`*`<variable_health>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`print(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  [`summary(`*`<preprocessing_result>`*`)`](https://gillescolling.com/couplr/reference/preprocess_matching_vars.md)
+  : Check Matching Variables and Choose Scaling
+- [`autoplot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`print(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`summary(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`as.data.frame(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  [`plot(`*`<sensitivity_analysis>`*`)`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+  : Rosenbaum Sensitivity Analysis

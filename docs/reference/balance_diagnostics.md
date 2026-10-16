@@ -1,4 +1,4 @@
-# Balance Diagnostics for Matched Pairs
+# Balance Diagnostics for Matched Samples
 
 Computes comprehensive balance statistics comparing the distribution of
 matching variables between left and right units in the matched sample.
@@ -43,6 +43,23 @@ balance_diagnostics(
 
 # S3 method for class 'subclass_result'
 balance_diagnostics(result, data = NULL, vars = NULL, ...)
+
+# S3 method for class 'balance_diagnostics'
+print(x, ...)
+
+# S3 method for class 'balance_diagnostics'
+summary(object, ...)
+
+# S3 method for class 'balance_diagnostics'
+plot(x, type = c("love", "histogram", "variance"), threshold = 0.1, ...)
+
+# S3 method for class 'balance_diagnostics'
+autoplot(
+  object,
+  type = c("love", "histogram", "variance"),
+  threshold = 0.1,
+  ...
+)
 ```
 
 ## Arguments
@@ -58,7 +75,7 @@ balance_diagnostics(result, data = NULL, vars = NULL, ...)
 
 - ...:
 
-  Additional arguments passed to methods
+  Additional arguments (ignored)
 
 - left:
 
@@ -85,6 +102,18 @@ balance_diagnostics(result, data = NULL, vars = NULL, ...)
 
   Data frame used for subclassification (when `result` is a
   subclass_result)
+
+- x, object:
+
+  A `balance_diagnostics` object.
+
+- type:
+
+  Type of plot: "love" (default), "histogram", or "variance"
+
+- threshold:
+
+  Threshold for standardized differences (default: 0.1)
 
 ## Value
 

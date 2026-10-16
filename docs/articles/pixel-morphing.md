@@ -1,5 +1,7 @@
 # Advanced Topics
 
+## Installation
+
 ## Overview
 
 This vignette serves three purposes:

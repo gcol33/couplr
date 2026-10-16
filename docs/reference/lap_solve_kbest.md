@@ -1,4 +1,4 @@
-# Find k-best optimal assignments
+# Find the k Best Assignments
 
 Returns the top k optimal (or near-optimal) assignments using 'Murty'
 algorithm. Useful for exploring alternative optimal solutions or finding
@@ -18,14 +18,21 @@ lap_solve_kbest(
   single_method = "jv",
   forbidden = NA
 )
+
+# S3 method for class 'lap_solve_kbest_result'
+print(x, ...)
+
+# S3 method for class 'lap_solve_kbest_result'
+summary(object, ...)
+
+is_lap_solve_kbest_result(x)
 ```
 
 ## Arguments
 
 - x:
 
-  Cost matrix, data frame, or tibble. If a data frame/tibble, must
-  include columns specified by `source`, `target`, and `cost`.
+  Object to test
 
 - k:
 
@@ -60,6 +67,14 @@ lap_solve_kbest(
 - forbidden:
 
   Value to mark forbidden assignments (default: NA)
+
+- ...:
+
+  Additional arguments (unused).
+
+- object:
+
+  An object of class `lap_solve_kbest_result`.
 
 ## Value
 

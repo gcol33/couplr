@@ -6,6 +6,9 @@ Rosenbaum bounds on the Wilcoxon signed-rank statistic.
 ## Usage
 
 ``` r
+# S3 method for class 'sensitivity_analysis'
+autoplot(object, alpha = 0.05, ...)
+
 sensitivity_analysis(
   result,
   left,
@@ -16,9 +19,33 @@ sensitivity_analysis(
   left_id = "id",
   right_id = "id"
 )
+
+# S3 method for class 'sensitivity_analysis'
+print(x, ...)
+
+# S3 method for class 'sensitivity_analysis'
+summary(object, ...)
+
+# S3 method for class 'sensitivity_analysis'
+as.data.frame(x, row.names = NULL, optional = FALSE, ...)
+
+# S3 method for class 'sensitivity_analysis'
+plot(x, alpha = 0.05, ...)
 ```
 
 ## Arguments
+
+- object:
+
+  A `sensitivity_analysis` object.
+
+- alpha:
+
+  Significance level (default: 0.05)
+
+- ...:
+
+  Additional arguments passed to plot
 
 - result:
 
@@ -53,6 +80,14 @@ sensitivity_analysis(
 - right_id:
 
   Name of ID column in right (default: "id")
+
+- x:
+
+  A sensitivity_analysis object
+
+- row.names, optional:
+
+  Ignored.
 
 ## Value
 

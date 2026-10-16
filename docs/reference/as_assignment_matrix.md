@@ -1,6 +1,7 @@
-# Convert assignment result to a binary matrix
+# Convert an Assignment Result to a Binary Matrix
 
-Turns a tidy assignment result back into a 0/1 assignment matrix.
+Turns a list or tidy assignment result into a 0/1 assignment matrix.
+Original dimensions and identifiers are retained where recorded.
 
 ## Usage
 

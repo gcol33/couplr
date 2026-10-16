@@ -8,6 +8,9 @@ costs, BAP minimizes the maximum (bottleneck) cost.
 
 ``` r
 bottleneck_assignment(cost, maximize = FALSE)
+
+# S3 method for class 'bottleneck_result'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -23,6 +26,14 @@ bottleneck_assignment(cost, maximize = FALSE)
   minimizing the maximum (maximin objective). Default is `FALSE`
   (minimax).
 
+- object:
+
+  A result returned by this function.
+
+- ...:
+
+  Ignored by the summary method.
+
 ## Value
 
 A list with class `"bottleneck_result"` containing:
@@ -33,6 +44,10 @@ A list with class `"bottleneck_result"` containing:
 - `bottleneck` - numeric scalar, the bottleneck (max/min edge) value
 
 - `status` - character scalar, e.g. `"optimal"`
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.assignment_result` with the bottleneck value, status, and
+complete row-to-column assignment table.
 
 ## Details
 

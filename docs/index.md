@@ -22,6 +22,18 @@ exactly, by Jonker-Volgenant on ordinary inputs or by any of nineteen
 solvers named explicitly, so the total distance is the global minimum
 and a solve can be certified optimal.
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
+## Quick start
+
 ``` r
 
 library(couplr)
@@ -170,16 +182,6 @@ something you can look at:
 ``` r
 
 pixel_morph(imgA, imgB, n_frames = 16)
-```
-
-## Installation
-
-``` r
-
-install.packages("couplr")            # CRAN
-
-install.packages("pak")               # development version
-pak::pak("gcol33/couplr")
 ```
 
 ## Documentation

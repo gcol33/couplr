@@ -1,5 +1,15 @@
 # Troubleshooting Guide
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 This vignette provides solutions to common issues encountered when using
@@ -102,18 +112,8 @@ cost_with_fallback[!is.finite(cost_with_fallback)] <- 1e6  # Large penalty
 
 result <- lap_solve(cost_with_fallback)
 print(result)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target    cost
-#>    <int>  <int>   <dbl>
-#> 1      1      1       1
-#> 2      2      3 1000000
-#> 3      3      2       2
-#> 
-#> Total cost: 1000003 
-#> Method: bruteforce
+#> Assignment Result: optimal, Total cost 1000003 (Method: "bruteforce")
+#>   3 of 3 rows matched; certified optimal: not computed
 ```
 
 **3. For matching: check covariate overlap:**
@@ -127,6 +127,7 @@ right <- tibble(id = 1:50, age = rnorm(50, mean = 55, sd = 3))
 
 # Visualize overlap
 library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.6.1
 combined <- bind_rows(
   left |> mutate(group = "Left"),
   right |> mutate(group = "Right")
@@ -143,7 +144,7 @@ ggplot(combined, aes(x = age, fill = group)) +
 
 ![Density plot showing overlap between treatment and control groups on
 the age
-variable](troubleshooting_files/figure-html/unnamed-chunk-5-1.svg)
+variable](troubleshooting_files/figure-html/unnamed-chunk-6-1.svg)
 
 ------------------------------------------------------------------------
 
@@ -175,33 +176,12 @@ result <- match_couples(left, right, vars = c("age", "income"), auto_scale = TRU
 #> Auto-selected scaling method: standardize
 balance <- balance_diagnostics(result, left, right, vars = c("age", "income"))
 print(balance)
-#> 
-#> Balance Diagnostics for Matched Pairs
-#> ======================================
-#> 
-#> Matching Summary:
-#>   Method: lap
-#>   Matched pairs: 100
-#>   Unmatched left: 0 (of 100)
-#>   Unmatched right: 0 (of 100)
-#> 
-#> Variable-level Balance:
-#> # A tibble: 2 × 7
-#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
-#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             30.6         32.5       -1.89     -0.386        1.10      0.22
-#> 2 income       77666.       41353.     36313.        2.40         4.63      0.81
-#> 
-#> Overall Balance:
-#>   Mean |Std Diff|: 1.391 (Poor)
-#>   Max |Std Diff|: 2.397
-#>   Vars with |Std Diff| > 0.25: 100.0%
-#> 
-#> Balance Interpretation:
-#>   |Std Diff| < 0.10: Excellent balance
-#>   |Std Diff| 0.10-0.25: Good balance
-#>   |Std Diff| 0.25-0.50: Acceptable balance
-#>   |Std Diff| > 0.50: Poor balance
+#> Balance of 100 matched pairs
+#>   unmatched: 0 of 100 left, 0 of 100 right units
+#>  Variable Std Diff Before Std Diff Var Ratio KS Stat
+#>       age          -0.386   -0.386     1.098    0.22
+#>    income           2.397    2.397     4.628    0.81
+#> Largest |Std Diff|: 2.397
 ```
 
 ### Causes
@@ -241,14 +221,8 @@ result_strict <- match_couples(
   method = "hungarian"
 )
 #> Auto-selected scaling method: standardize
-#> Warning: 99.2% of pairs are forbidden!
-#>   Only 84 valid pairs for 100 left units - the matching pool is shallow!
-#>   Your constraints might be critically strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
+#> Warning: 99.2% of candidate pairs are excluded by the matching restrictions;
+#> 84 admissible pairs remain for 100 left units.
 
 cat("Original matches:", result$info$n_matched, "\n")
 #> Original matches: 100
@@ -257,33 +231,12 @@ cat("With caliper:", result_strict$info$n_matched, "\n")
 
 balance_strict <- balance_diagnostics(result_strict, left, right, vars = c("age", "income"))
 print(balance_strict)
-#> 
-#> Balance Diagnostics for Matched Pairs
-#> ======================================
-#> 
-#> Matching Summary:
-#>   Method: lap
-#>   Matched pairs: 23
-#>   Unmatched left: 0 (of 100)
-#>   Unmatched right: 77 (of 100)
-#> 
-#> Variable-level Balance:
-#> # A tibble: 2 × 7
-#>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
-#>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
-#> 1 age             31.5         31.5       0.012      0.003        1.02     0.13 
-#> 2 income       53825.       51791.     2034.         0.28         1.12     0.217
-#> 
-#> Overall Balance:
-#>   Mean |Std Diff|: 0.141 (Good)
-#>   Max |Std Diff|: 0.280
-#>   Vars with |Std Diff| > 0.25: 50.0%
-#> 
-#> Balance Interpretation:
-#>   |Std Diff| < 0.10: Excellent balance
-#>   |Std Diff| 0.10-0.25: Good balance
-#>   |Std Diff| 0.25-0.50: Acceptable balance
-#>   |Std Diff| > 0.50: Poor balance
+#> Balance of 23 matched pairs
+#>   unmatched: 77 of 100 left, 77 of 100 right units
+#>  Variable Std Diff Before Std Diff Var Ratio KS Stat
+#>       age          -0.386    0.003     1.024   0.130
+#>    income           2.397    0.280     1.117   0.217
+#> Largest |Std Diff|: 0.280
 ```
 
 **3. Use blocking on problematic variable:**
@@ -446,32 +399,12 @@ dist_cache <- compute_distances(
 
 # Fast: reuse cached distances
 result1 <- match_couples(dist_cache, max_distance = 0.3, method = "hungarian")
-#> Warning: 97.9% of pairs are forbidden!
-#>   Only 5327 valid pairs for 500 left units - the matching pool is shallow!
-#>   Your constraints might be critically strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
+#> Warning: 97.9% of candidate pairs are excluded by the matching restrictions;
+#> 5327 admissible pairs remain for 500 left units.
 result2 <- match_couples(dist_cache, max_distance = 0.5, method = "hungarian")
-#> Warning: 94.1% of pairs are forbidden!
-#>   Only 14642 valid pairs for 500 left units - the matching pool is shallow!
-#>   Your constraints might be critically strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
+#> Warning: 94.1% of candidate pairs are excluded by the matching restrictions;
+#> 14642 admissible pairs remain for 500 left units.
 result3 <- match_couples(dist_cache, max_distance = 1.0, method = "hungarian")
-#> Warning: 78.5% of pairs are forbidden!
-#>   Only 53789 valid pairs for 500 left units - the matching pool is shallow!
-#>   Your constraints might be concerningly strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
 ```
 
 ------------------------------------------------------------------------
@@ -718,6 +651,7 @@ print(health)
 #> ====================
 #> 
 #> Variables: 1
+#> Left units: 5, right units: 5
 #> Scaling method: none
 ```
 

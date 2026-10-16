@@ -1,4 +1,4 @@
-# Verify that an assignment is optimal
+# Verify That an Assignment Is Optimal
 
 Checks a solved assignment against the linear-programming optimality
 conditions and returns the result of each check. Unlike the `status`
@@ -20,6 +20,9 @@ verify_assignment(
 
 # S3 method for class 'assignment_certificate'
 print(x, ...)
+
+# S3 method for class 'assignment_certificate'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -70,6 +73,10 @@ print(x, ...)
 - ...:
 
   Ignored.
+
+- object:
+
+  A certificate.
 
 ## Value
 

@@ -1,4 +1,4 @@
-# Round 'Sinkhorn' transport plan to hard assignment
+# Round a Sinkhorn Transport Plan to an Assignment
 
 Convert a soft transport plan from
 [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
@@ -20,8 +20,7 @@ sinkhorn_to_assignment(result)
 
 ## Value
 
-Integer vector of column assignments (1-based), same format as
-[`assignment()`](https://gillescolling.com/couplr/reference/assignment.md).
+Integer vector with one 1-based column assignment per row.
 
 ## Details
 

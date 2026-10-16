@@ -1,4 +1,4 @@
-# Solve multiple assignment problems efficiently
+# Solve Many Assignment Problems
 
 Solve many independent assignment problems at once. Supports lists of
 matrices, 3D arrays, or grouped data frames. Optional parallel execution
@@ -17,13 +17,21 @@ lap_solve_batch(
   n_threads = 1,
   forbidden = NA
 )
+
+# S3 method for class 'lap_solve_batch_result'
+print(x, ...)
+
+# S3 method for class 'lap_solve_batch_result'
+summary(object, ...)
+
+is_lap_solve_batch_result(x)
 ```
 
 ## Arguments
 
 - x:
 
-  One of: List of cost matrices, 3D array, or grouped data frame
+  Object to test
 
 - source:
 
@@ -54,6 +62,15 @@ lap_solve_batch(
 
   Value to mark forbidden assignments (default: NA)
 
+- ...:
+
+  Additional arguments passed to
+  [`print()`](https://rdrr.io/r/base/print.html). Currently ignored.
+
+- object:
+
+  A `lap_solve_batch_result`.
+
 ## Value
 
 A tibble with columns:
@@ -69,6 +86,11 @@ A tibble with columns:
 - `total_cost`: total cost for each problem
 
 - `method_used`: algorithm used for each problem
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.lap_solve_batch_result` whose `problems` table has one row per
+input problem, with grouping keys, assignment counts, total costs, and
+solver names. Each problem contributes once.
 
 ## Examples
 

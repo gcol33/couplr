@@ -1,5 +1,15 @@
 # Quick Start
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## What couplr Does
 
 couplr creates matched samples from two groups of observations. Given a
@@ -68,7 +78,7 @@ result <- match_couples(
 
 # View matched pairs
 head(result$pairs)
-#> # A tibble: 6 × 5
+#> # A tibble: 6 x 5
 #>   left_id right_id distance .age_diff .income_diff
 #>   <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #> 1 1       46          0.779    -4.23        9144. 
@@ -95,31 +105,18 @@ head(result$pairs)
 
 # Quick overview with summary()
 summary(result)
-#> Matching Result Summary
-#> =======================
+#> couplr result: one-to-one matching, optimal
+#>   Left units:         50 matched of 50
+#>   Right units:        50 matched of 80
+#>   Pairs:              50
+#>   Total distance:     19.6423
 #> 
-#> Method: lap
-#> Pairs matched: 50 
-#> Unmatched: 0 left, 30 right
+#> Pair distances (quantiles):
+#>     min     25%  median     75%     90%     max 
+#> 0.06154 0.18450 0.29670 0.50390 0.78190 1.21800 
 #> 
-#> Distance Statistics:
-#>   Total: 19.6423 
-#>   Mean: 0.3928 
-#>   Min: 0.0615 
-#>   Q1: 0.1845 
-#>   Median: 0.2967 
-#>   Q3: 0.5039 
-#>   Max: 1.2184 
-#>   SD: 0.2863 
-#> 
-#> Distance Percentiles:
-#>   5%: 0.0993
-#>   10%: 0.1234
-#>   25%: 0.1845
-#>   50%: 0.2967
-#>   75%: 0.5039
-#>   90%: 0.7819
-#>   95%: 1.0396
+#> Unmatched left: 0
+#> Unmatched right: 30
 
 # Or access specific info
 result$info$n_matched
@@ -292,14 +289,8 @@ result_strict <- match_couples(
   max_distance = 0.5  # reject pairs more different than this
 )
 #> Auto-selected scaling method: standardize
-#> Warning: 94.9% of pairs are forbidden!
-#>   Only 205 valid pairs for 50 left units - the matching pool is shallow!
-#>   Your constraints might be critically strict.
-#>   Consider:
-#>     - Relaxing max_distance threshold
-#>     - Widening calipers
-#>     - Using fewer/broader blocks
-#>     - Checking if your data actually overlaps
+#> Warning: 94.9% of candidate pairs are excluded by the matching restrictions;
+#> 205 admissible pairs remain for 50 left units.
 
 cat("Without caliper:", result_loose$info$n_matched, "pairs\n")
 #> Without caliper: 50 pairs
@@ -360,7 +351,7 @@ result_blocked <- match_couples(
 
 # Verify: matches stay within their block
 result_blocked$pairs |> count(block_id)
-#> # A tibble: 3 × 2
+#> # A tibble: 3 x 2
 #>   block_id       n
 #>   <chr>      <int>
 #> 1 Hospital A    20
@@ -390,20 +381,15 @@ result_full <- full_match(
 )
 
 result_full
-#> 
-#> Full Matching Result
-#> ====================
-#> 
-#>   Status: optimal
-#>   Groups formed: 35
-#>   Left units:  50 matched, 0 unmatched (of 50)
-#>   Right units: 80 matched, 0 unmatched (of 80)
-#> 
-#>   Right units per group: min=1, median=1, max=13
+#> couplr result: full matching, optimal
+#>   Left units:         50 matched of 50
+#>   Right units:        80 matched of 80
+#>   Groups:             35
+#>   Certified optimal:  yes
 
 # Each group has one or more left and right units with matching weights
 head(result_full$groups)
-#> # A tibble: 6 × 4
+#> # A tibble: 6 x 4
 #>   group_id id    side  weight
 #>      <int> <chr> <chr>  <dbl>
 #> 1        1 1     left       1
@@ -561,18 +547,8 @@ cost <- matrix(c(
 
 result <- lap_solve(cost)
 print(result)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      2     2
-#> 2      2      1     3
-#> 3      3      3     4
-#> 
-#> Total cost: 9 
-#> Method: bruteforce
+#> Assignment Result: optimal, Total cost 9 (Method: "bruteforce")
+#>   3 of 3 rows matched; certified optimal: not computed
 ```
 
 Row 1 is assigned to column 2 (cost 2), row 2 to column 1 (cost 3), row
@@ -591,18 +567,8 @@ cost_forbidden <- matrix(c(
 ), nrow = 3, byrow = TRUE)
 
 lap_solve(cost_forbidden)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      1     4
-#> 2      2      2     3
-#> 3      3      3     4
-#> 
-#> Total cost: 11 
-#> Method: bruteforce
+#> Assignment Result: optimal, Total cost 11 (Method: "bruteforce")
+#>   3 of 3 rows matched; certified optimal: not computed
 ```
 
 ### Maximization
@@ -618,18 +584,8 @@ preferences <- matrix(c(
 ), nrow = 3, byrow = TRUE)
 
 lap_solve(preferences, maximize = TRUE)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      1     8
-#> 2      2      2     7
-#> 3      3      3     9
-#> 
-#> Total cost: 24 
-#> Method: bruteforce
+#> Assignment Result: optimal, Total cost 24 (Method: "bruteforce")
+#>   3 of 3 rows matched; certified optimal: not computed
 ```
 
 ### Grouped Data
@@ -652,7 +608,7 @@ schedule <- tibble(
 schedule |>
   group_by(day) |>
   lap_solve(nurse, shift, cost)
-#> # A tibble: 9 × 4
+#> # A tibble: 9 x 4
 #>   day   source target  cost
 #>   <chr>  <int>  <int> <dbl>
 #> 1 Mon        1      2     2
@@ -690,7 +646,7 @@ print(kbest)
 #>   Rank 3: 7.0000
 #> 
 #> Assignments:
-#> # A tibble: 9 × 6
+#> # A tibble: 9 x 6
 #>    rank solution_id source target  cost total_cost
 #>   <int>       <int>  <int>  <int> <dbl>      <dbl>
 #> 1     1           1      1      1     1          5

@@ -44,29 +44,8 @@ navbar:
     - github
   components:
     intro:
-      text: Get Started
+      text: Get started
       href: articles/getting-started.html
-    articles:
-      text: Articles
-      menu:
-      - text: Getting Started
-        href: articles/getting-started.html
-      - text: '---'
-      - text: Core Topics
-      - text: Algorithm Details
-        href: articles/algorithms.html
-      - text: Matching Workflows
-        href: articles/matching-workflows.html
-      - text: '---'
-      - text: Guides
-      - text: Comparison with Alternatives
-        href: articles/comparison.html
-      - text: Troubleshooting
-        href: articles/troubleshooting.html
-      - text: '---'
-      - text: Advanced
-      - text: Pixel Morphing & Scientific Applications
-        href: articles/pixel-morphing.html
     github:
       icon: fab fa-github
       href: https://github.com/gcol33/couplr
@@ -79,6 +58,7 @@ reference:
   - lap_solve_batch
   - lap_solve_kbest
   - lap_solve_line_metric
+  - lap_solvers
   - assignment
   - assignment_duals
   - bottleneck_assignment
@@ -106,6 +86,7 @@ reference:
   contents:
   - verify_assignment
   - verify_flow
+  - result_accessors
 - title: Distance and Preprocessing
   desc: Distance computation and data preparation
   contents:
@@ -161,19 +142,15 @@ reference:
   - print.lap_solve_result
   - print.lap_solve_batch_result
   - print.lap_solve_kbest_result
-  - print.matching_result
+  - couplr_result
   - print.couplr_path
   - print.matchmaker_result
   - print.balance_diagnostics
   - print.distance_object
   - print.preprocessing_result
-  - print.full_matching_result
-  - print.cem_result
-  - print.subclass_result
   - print.variable_health
   - summary.lap_solve_kbest_result
   - summary.distance_object
-  - summary.matching_result
   - summary.balance_diagnostics
   - summary.sensitivity_analysis
   - plot.matching_result
@@ -183,20 +160,19 @@ reference:
   - starts_with("autoplot")
 articles:
 - title: Getting Started
-  navbar: ~
   contents: getting-started
 - title: Core Topics
-  navbar: ~
+  navbar: Core Topics
   contents:
   - algorithms
   - matching-workflows
 - title: Guides
-  navbar: ~
+  navbar: Guides
   contents:
   - comparison
   - troubleshooting
 - title: Advanced
-  navbar: ~
+  navbar: Advanced
   contents: pixel-morphing
 news:
   releases:

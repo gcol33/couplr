@@ -1,4 +1,4 @@
-# Animate an assignment algorithm step-by-step
+# Animate an Assignment Algorithm
 
 Produce an interactive bipartite-graph animation showing how a chosen
 linear-assignment algorithm transforms the matching over time. The
@@ -82,10 +82,11 @@ for the tidy interface.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 cost <- matrix(c(4, 2, 5,
                  3, 3, 6,
                  7, 5, 4), nrow = 3, byrow = TRUE)
-lap_animate(cost, method = "hungarian")
-} # }
+if (requireNamespace("htmlwidgets", quietly = TRUE)) {
+  widget <- lap_animate(cost, method = "hungarian")
+  if (interactive()) print(widget)
+}
 ```

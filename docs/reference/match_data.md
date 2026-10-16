@@ -1,4 +1,4 @@
-# Extract Analysis-Ready Data from Matching Results
+# Extract Analysis-Ready Data from a Matching Result
 
 A generic function that converts any couplr matching result into a
 single analysis-ready data frame with `weights`, `subclass`, and

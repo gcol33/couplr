@@ -1,4 +1,4 @@
-# Match across a range of one design choice
+# Solve a Sequence of Matchings over One Design Parameter
 
 Solves the matching once for each value of one argument and returns what
 happened at each: how many units were matched, at what total distance,
@@ -30,6 +30,24 @@ match_path(
   tol = .implicit_defaults()$tol,
   max_rounds = .implicit_defaults()$max_rounds
 )
+
+# S3 method for class 'couplr_path'
+print(x, ...)
+
+# S3 method for class 'couplr_path'
+summary(object, ...)
+
+# S3 method for class 'couplr_path'
+as.data.frame(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  what = c("path", "balance"),
+  ...
+)
+
+# S3 method for class 'couplr_path'
+plot(x, threshold = 0.1, ...)
 ```
 
 ## Arguments
@@ -92,6 +110,30 @@ match_path(
   it from the number of columns; `$search$seed_width` reports what the
   path used.
 
+- x, object:
+
+  A `couplr_path` from `match_path()`.
+
+- ...:
+
+  Ignored.
+
+- row.names, optional:
+
+  Ignored.
+
+- what:
+
+  For [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
+  `"path"` (one row per point) or `"balance"` (one row per point and
+  variable).
+
+- threshold:
+
+  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html):
+  reference line for the largest absolute standardized difference
+  (default 0.1).
+
 ## Value
 
 An object of class `couplr_path`: `$path`, one row per point,
@@ -113,6 +155,6 @@ left <- data.frame(id = 1:20, x = rnorm(20), y = rnorm(20))
 right <- data.frame(id = 1:60, x = rnorm(60), y = rnorm(60))
 path <- match_path(left, right, vars = c("x", "y"),
                    vary = "max_distance", values = c(0.5, 1, 2, Inf))
-path$path
-path$balance
+as.data.frame(path)
+summary(path)
 ```

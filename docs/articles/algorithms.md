@@ -1,5 +1,15 @@
 # The Algorithm Collection
 
+## Installation
+
+``` r
+
+install.packages("couplr")            # CRAN
+
+install.packages("pak")               # development version
+pak::pak("gcol33/couplr")
+```
+
 ## Overview
 
 The Hungarian algorithm was published in 1955. Sixty years later, most R
@@ -162,18 +172,8 @@ matrix, you might wait 10+ seconds.
 cost <- matrix(c(10, 19, 8, 15, 10, 11, 9, 12, 14), nrow = 3, byrow = TRUE)
 result <- lap_solve(cost, method = "hungarian")
 print(result)
-#> Assignment Result
-#> =================
-#> 
-#> # A tibble: 3 × 3
-#>   source target  cost
-#>    <int>  <int> <dbl>
-#> 1      1      3     8
-#> 2      2      2    10
-#> 3      3      1     9
-#> 
-#> Total cost: 27 
-#> Method: hungarian
+#> Assignment Result: optimal, Total cost 27 (Method: "hungarian")
+#>   3 of 3 rows matched; certified optimal: not computed
 ```
 
 Hungarian works. It’s clean and easy to teach. But in 1987, two Dutch
@@ -699,7 +699,7 @@ cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13, 16, 9, 14, 12, 19, 8, 18),
                nrow = 4, byrow = TRUE)
 kbest <- lap_solve_kbest(cost, k = 5)
 summary(kbest)
-#> # A tibble: 5 × 4
+#> # A tibble: 5 x 4
 #>    rank solution_id total_cost n_assignments
 #>   <int>       <int>      <dbl>         <int>
 #> 1     1           1         49             4

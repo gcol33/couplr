@@ -1,15 +1,15 @@
-# Estimate the peak footprint of a dense solve in megabytes
+# Estimate the Peak Memory of a Dense Solve
 
 The matrix is the allocation a caller can reason about and it is not
-what bounds a dense solve. Preparation copies, the solver's own
-workspace and the assignment structures it carries all sit on top of the
-matrix, and the peak is what decides whether the solve fits, so that is
-the quantity the guard compares against available RAM.
+what bounds a dense solve. The solver works on its own copy of the
+costs, with a byte per cell marking the forbidden pairs, beside the
+matrix R holds, and the peak is what decides whether the solve fits, so
+that is the quantity the guard compares against available RAM.
 
 ## Usage
 
 ``` r
-estimate_dense_solve_mb(n, m, solve_factor = 12)
+estimate_dense_solve_mb(n, m, solve_factor = 4)
 ```
 
 ## Arguments
@@ -29,16 +29,14 @@ megabytes.
 
 ## Details
 
-The multiplier is read off the measurement rather than from an
-enumeration of the copies, which has proved to understate it. On the
-memory benchmark – one fresh R session per arm, peak resident set taken
-from outside and read against an idle session that loaded the same
-packages – a dense one-to-one solve has peaked at between 7 and 11 times
-the raw matrix bytes from 5,000 to 20,000 units, with the figure at a
-given size moving between runs. The default of 12 sits above every
-measured peak, which is the direction a guard should err in: it exists
-to refuse a solve that will not fit, not to predict where the peak
-lands.
+The multiplier is read off the measurement. On the memory benchmark –
+one fresh R session per arm, peak resident set taken from outside and
+read against an idle session that loaded the same packages – a dense
+one-to-one solve has peaked at between 2.2 and 3.0 times the raw matrix
+bytes from 2,000 to 20,000 units, the larger ratios at the small sizes,
+where fixed costs weigh most. The default of 4 sits above every measured
+peak, which is the direction a guard should err in: it exists to refuse
+a solve that will not fit, not to predict where the peak lands.
 
 ## Examples
 

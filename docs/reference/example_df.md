@@ -1,4 +1,4 @@
-# Example assignment problem data frame
+# Example Assignment Data Frame
 
 A tidy data frame representation of assignment problems, suitable for
 use with grouped workflows and batch solving. Contains two independent

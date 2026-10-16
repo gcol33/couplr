@@ -1,4 +1,4 @@
-# Solve linear assignment problems
+# Solve Linear Assignment Problems with a Tidy Interface
 
 Provides a tidy interface for solving the linear assignment problem
 using 'Hungarian' or 'Jonker-Volgenant' algorithms. Supports rectangular

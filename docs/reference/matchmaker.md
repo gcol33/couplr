@@ -1,4 +1,4 @@
-# Create blocks for stratified matching
+# Create Blocks for Stratified Matching
 
 Constructs blocks (strata) for matching, using either grouping variables
 or clustering algorithms. Returns the input data frames with block IDs
@@ -22,6 +22,12 @@ matchmaker(
   return_dropped = TRUE,
   ...
 )
+
+# S3 method for class 'matchmaker_result'
+print(x, ...)
+
+# S3 method for class 'matchmaker_result'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -86,7 +92,16 @@ matchmaker(
 
 - ...:
 
-  Additional arguments passed to clustering function
+  Additional arguments passed to the clustering function; ignored by the
+  print and summary methods.
+
+- x:
+
+  A matchmaker_result object
+
+- object:
+
+  A `matchmaker_result` object.
 
 ## Value
 
@@ -101,6 +116,12 @@ A list with class "matchmaker_result" containing:
 - `dropped`: Information about dropped blocks (if any)
 
 - `info`: Metadata about blocking process
+
+[`print()`](https://rdrr.io/r/base/print.html) shows retained unit and
+block counts. [`summary()`](https://rdrr.io/r/base/summary.html) returns
+a `summary.matchmaker_result` with `info`, `block_summary`, and
+`dropped`; printing it also shows every block and the reasons for
+dropped blocks.
 
 ## Details
 

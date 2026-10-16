@@ -67,3 +67,4 @@
 ^LICENSE\.txt$
 ^data-raw$
 ^output$
+^CITATION\.cff$

@@ -1,4 +1,4 @@
-# Explain which solver `method = "auto"` selects, and why
+# Explain the Automatic Solver Choice
 
 `assignment(method = "auto")` picks a solver from a small set of rules
 evaluated against one pass over the cost matrix. This reports the
@@ -20,6 +20,9 @@ explain_dispatch(
 
 # S3 method for class 'dispatch_explanation'
 print(x, ...)
+
+# S3 method for class 'dispatch_explanation'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -54,6 +57,10 @@ print(x, ...)
 
   Ignored.
 
+- object:
+
+  A `dispatch_explanation` object.
+
 ## Value
 
 An object of class `dispatch_explanation`, a list with elements:
@@ -72,6 +79,12 @@ An object of class `dispatch_explanation`, a list with elements:
   solver always has at least as many columns as rows.
 
 - `probe` - the single-pass summary the rules read.
+
+[`print()`](https://rdrr.io/r/base/print.html) gives the selected solver
+and reason. [`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.dispatch_explanation` with all decision and probe fields;
+printing it also lists the rules tested and the observed cost
+properties.
 
 Invisibly returns `x`.
 

@@ -9,7 +9,6 @@ apply_all_constraints(
   cost_matrix,
   left,
   right,
-  vars,
   max_distance = Inf,
   calipers = NULL,
   forbidden = NULL

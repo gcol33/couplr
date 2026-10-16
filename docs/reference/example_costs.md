@@ -1,4 +1,4 @@
-# Example cost matrices for assignment problems
+# Example Cost Matrices
 
 Small example datasets for demonstrating couplr functionality across
 different assignment problem types: square, rectangular, sparse, and

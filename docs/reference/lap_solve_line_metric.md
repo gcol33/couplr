@@ -1,4 +1,4 @@
-# Solve 1-D Line Assignment Problem
+# Solve a One-Dimensional Assignment Problem
 
 Solves the linear assignment problem when both sources and targets are
 ordered points on a line. Uses efficient O(n\*m) dynamic programming for
@@ -8,6 +8,9 @@ rectangular problems and O(n) sorting for square problems.
 
 ``` r
 lap_solve_line_metric(x, y, cost = "L1", maximize = FALSE)
+
+# S3 method for class 'lap_line_metric_result'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -35,6 +38,14 @@ lap_solve_line_metric(x, y, cost = "L1", maximize = FALSE)
   Logical; if TRUE, maximizes total cost instead of minimizing (default:
   FALSE)
 
+- object:
+
+  A result returned by this function.
+
+- ...:
+
+  Ignored by the summary method.
+
 ## Value
 
 A list with components:
@@ -42,6 +53,10 @@ A list with components:
 - `match`: Integer vector of length n with 1-based column indices
 
 - `total_cost`: Total cost of the assignment
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.assignment_result` with the objective and the complete
+row-to-column assignment table.
 
 ## Details
 

@@ -1,4 +1,4 @@
-# Diagnose distance matrix and suggest fixes
+# Diagnose a Distance Matrix
 
 Comprehensive diagnostics for a distance matrix with actionable
 suggestions.
@@ -13,6 +13,12 @@ diagnose_distance_matrix(
   vars = NULL,
   warn = TRUE
 )
+
+# S3 method for class 'distance_diagnostics'
+print(x, ...)
+
+# S3 method for class 'distance_diagnostics'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -37,6 +43,17 @@ diagnose_distance_matrix(
 
   If TRUE, issue warnings
 
+- x, object:
+
+  A `distance_diagnostics` object.
+
+- ...:
+
+  Ignored.
+
 ## Value
 
-List with diagnostic results and suggestions
+A `distance_diagnostics` list with the cost distribution, variable
+issues, problem variables, suggestions, and quality assessment.
+[`summary()`](https://rdrr.io/r/base/summary.html) returns these
+findings as `summary.distance_diagnostics`.

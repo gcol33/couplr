@@ -1,8 +1,8 @@
-# Calipers of a lazy cost spec, keyed by variable name
+# Calipers of a lazy cost spec, as the C++ cost source reads them
 
-The C++ lazy cost source takes its calipers as a named list of
-thresholds, while the spec stores them as records carrying an index into
-`spec$vars`.
+One `list(threshold, left, right)` per caliper, named by its variable:
+the threshold and the variable's raw values for every left and right
+unit, in the row order of `left_mat` and `right_mat`.
 
 ## Usage
 
@@ -12,4 +12,4 @@ lazy_cost_spec_calipers(spec)
 
 ## Value
 
-Named list of numeric thresholds, one per caliper.
+Named list of caliper records.

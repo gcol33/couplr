@@ -1,5 +1,232 @@
 # Changelog
 
+## couplr 1.9.0
+
+### Classes, methods and accessors
+
+- **One parent class with methods.**
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md),
+  [`full_match()`](https://gillescolling.com/couplr/reference/full_match.md),
+  [`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)
+  and
+  [`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+  return objects that inherit from `"couplr_result"`, which now carries
+  the methods they share: [`print()`](https://rdrr.io/r/base/print.html)
+  for a short overview,
+  [`summary()`](https://rdrr.io/r/base/summary.html) for the full report
+  (pair distances, certificate conditions, column-generation rounds, the
+  balance report of a cardinality matching, unmatched units),
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) for the
+  headline numbers as a one-row tibble, and
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) for the
+  matched units.
+  [`?couplr_result`](https://gillescolling.com/couplr/reference/couplr_result.md)
+  documents the family.
+
+- **Accessors.**
+  [`certificate()`](https://gillescolling.com/couplr/reference/result_accessors.md),
+  [`potentials()`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  and
+  [`unmatched_units()`](https://gillescolling.com/couplr/reference/result_accessors.md)
+  read the certificate, the dual potentials and the unmatched units of a
+  matching or an assignment result, so analyses no longer read the
+  objects’ internal fields.
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) and
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) are
+  re-exported from generics.
+
+- **print() is the short form, summary() the full one**, for matching
+  results, certificates (`assignment_certificate`, `flow_certificate`),
+  `assignment_duals_result`, `lap_solve_result`, `balance_diagnostics`,
+  `sensitivity_analysis` and `couplr_path`.
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) methods
+  were added for `assignment_duals_result`, `sensitivity_analysis` and
+  `couplr_path`, and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) for
+  `couplr_path` (matched pairs and largest standardized difference
+  against the swept value).
+
+### New features
+
+- **[`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+  searches moment constraints over unit selections.** A bound on a
+  standardized or mean difference constrains which units are matched,
+  never how they are paired, so `engine = "branch_bound"` now solves an
+  integer programme with one 0/1 variable per unit by branch and bound
+  on its linear relaxation (a dense-basis dual simplex in C++), with an
+  exchange heuristic for incumbents, reliability branching, and
+  reduced-cost fixing that restarts the root as the incumbent improves.
+  The lexicographic objective is settled stage by stage: the most
+  matched units, then the least imbalance at each refined level, then
+  the least total distance, the last through Benders cuts read from
+  exact network potentials. Calipers and `max_distance` enter as Hall
+  rows added when a selection cannot be paired. Every bound is a
+  weak-duality bound evaluated exactly or with a rigorous rounding
+  margin, so the certificate still carries no tolerance. The Lagrangian
+  search with subgradient multipliers it replaces is removed.
+  `node_limit` counts branch-and-bound nodes over all stages.
+
+- **Solver registry.**
+  [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md)
+  looks its `method` up in a registry.
+  [`lap_solvers()`](https://gillescolling.com/couplr/reference/lap_solvers.md)
+  lists the solvers with their algorithm, reference and whether they
+  return potentials or run in lazy mode, and
+  [`register_lap_solver()`](https://gillescolling.com/couplr/reference/lap_solvers.md)
+  adds a solver under the same contract. A registered solver’s results
+  carry a certificate by default.
+
+- **`match_couples(certify = TRUE)` in dense mode.** One-to-one and
+  `ratio`-to-one matchings without blocks can carry a checked
+  certificate in every memory mode, not only in implicit mode.
+
+- **Calipers on any shared column.** `calipers` in
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md),
+  [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md),
+  [`match_path()`](https://gillescolling.com/couplr/reference/match_path.md)
+  and
+  [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md)
+  may name any column of both data frames, not only a matching variable,
+  so a matching on the Mahalanobis distance within a propensity-score
+  caliper is one call:
+  `match_couples(tr, ct, vars = covs, distance = "mahalanobis", calipers = list(ps = 0.05))`.
+  This works in every memory mode.
+
+- **Balance before matching.**
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  reports each covariate’s standardized difference over all units
+  (`std_diff_unmatched`, column “Std Diff Before” of
+  [`balance_table()`](https://gillescolling.com/couplr/reference/balance_table.md)),
+  and the Love plot shows it beside the matched value.
+
+### Changes
+
+- **Dense matching uses far less memory.** The checks a dense matching
+  runs before solving (any admissible pair, the rows and columns with
+  one, the cost distribution) read the matrix in place instead of
+  building logical masks, a copy of the finite costs and a sorted copy
+  for the quantiles. The quantiles are computed by radix selection and
+  equal [`quantile()`](https://rdrr.io/r/stats/quantile.html)’s. The
+  solvers prepare the matrix they are handed in place instead of copying
+  it, and the solver’s copy marks forbidden cells with one byte per cell
+  instead of four. The dense distance matrix is filled in C++ by the
+  code lazy mode evaluates pairs with, so dense and lazy distances agree
+  to the last bit and building the matrix allocates nothing else of its
+  size. On the memory benchmark, a dense one-to-one Mahalanobis matching
+  at 20,000 units peaked at 1.5 GB above an idle session, down from 6.4
+  GB.
+  [`estimate_dense_solve_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_solve_mb.md)
+  and
+  [`estimate_dense_matrix_mb()`](https://gillescolling.com/couplr/reference/estimate_dense_matrix_mb.md)
+  default to the new measured multiples (4 and 2), so
+  `memory_mode = "auto"` chooses dense mode for larger problems than
+  before.
+
+- A missing covariate value gives a missing Chebyshev distance in every
+  memory mode; lazy and implicit mode used to skip the coordinate.
+
+- A cost of `BIG_COST` or more counts as forbidden in the
+  cost-distribution warnings, as it already did everywhere else.
+
+- [`print()`](https://rdrr.io/r/base/print.html) of a column subset of
+  [`lap_solve_kbest()`](https://gillescolling.com/couplr/reference/lap_solve_kbest.md)
+  results no longer fails, and
+  [`summary()`](https://rdrr.io/r/base/summary.html) of one names the
+  columns it needs.
+
+- The Kolmogorov-Smirnov statistic in
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md)
+  is computed directly from the (weighted) empirical distribution
+  functions, so tied covariates no longer raise
+  [`ks.test()`](https://rdrr.io/r/stats/ks.test.html) warnings; the
+  unused p-value column `ks_pvalue` was removed.
+
+- The many-forbidden-pairs warning is one factual sentence and fires
+  when the restrictions exclude more than 90% of the candidate pairs
+  (was 50%).
+
+- Mahalanobis distances use the Cholesky factor of the covariance matrix
+  ([`chol()`](https://rdrr.io/r/base/chol.html) and
+  [`chol2inv()`](https://rdrr.io/r/base/chol2inv.html)) instead of
+  [`solve()`](https://rdrr.io/r/base/solve.html).
+
+- Help pages: one title style throughout; print, summary and plot
+  methods are documented on the page of their class;
+  `example(pixel_morph)` runs (the example images are now in the built
+  package); no `\dontrun{}` examples.
+
+- [`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+  documents that a search stopped by `time_limit` depends on machine
+  speed. `time_limit = Inf` with a `node_limit` controls the search
+  budget independently of machine speed; floating-point ties can change
+  the search order across platforms.
+
+- The benchmark scripts in `paper/bench` run from any directory and
+  write only beside themselves; `run_benchmarks.R` replaces the shell
+  runner.
+
+## couplr 1.8.1
+
+CRAN release: 2026-10-04
+
+### Bug fixes
+
+- Registered solvers must return a plain integer-valued vector of column
+  indices. Fractional, classed, non-finite and dimensioned outputs are
+  rejected, and list fields are read by their exact names.
+
+- Moment-constrained cardinality matching verifies an LP infeasibility
+  witness in exact arithmetic before discarding a search node. Very
+  small constraint coefficients could cause the numerical LP solver to
+  report infeasibility and the search to certify a sample smaller than
+  the attainable optimum. Reversible power-of-two row scaling and
+  column-relative pivot checks preserve the search across different
+  constraint and distance scales.
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) of group, stratum
+  and subclass matchings reports their available diagnostics without
+  warnings about an absent pair-distance column.
+
+- The benchmark runner checks that every requested stage’s script is
+  present before archiving results or starting measurements. The
+  replication bundle and runner use the same stage registry.
+
+- **Calipers bind on the raw variable in lazy and implicit mode
+  ([\#64](https://github.com/gcol33/couplr/issues/64)).** The lazy and
+  implicit cost sources compared a caliper against the matching variable
+  after scaling and weighting, so with `scale`, `auto_scale = TRUE` or
+  `weights` a caliper of 3 years admitted pairs 12 years apart, while
+  dense mode applied it as stated. Each caliper now carries the
+  variable’s raw values, and the cost sources, the metric tree’s pruning
+  and the reshaped ratio designs read those. All three memory modes
+  return the same total under calipers on scaled or weighted variables.
+
+- **The implicit loop ends with an exact certificate on scaled costs
+  ([\#65](https://github.com/gcol33/couplr/issues/65)).** On costs whose
+  differences sit below their rounding, such as standardised covariates,
+  the flow master could stop on a matching that a residual cycle of
+  exactly negative cost still improved, so no exact potentials existed
+  and the certificate fell back to a tolerance (`max_suboptimality` of
+  order 1e-13). A certifying loop now cancels such cycles exactly before
+  reading the master’s potentials, and returns the exact optimum with an
+  exact certificate.
+
+- **[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  gives one entry per unit
+  ([\#66](https://github.com/gcol33/couplr/issues/66)).** It named units
+  by id over the rows of
+  [`match_data()`](https://gillescolling.com/couplr/reference/match_data.md),
+  which holds a row per pair, so it failed with “duplicate ‘row.names’”
+  when the two sides shared ids, under `ratio > 1` and under
+  `replace = TRUE`. Units are now keyed by id, qualified as `left:<id>`
+  and `right:<id>` when an id occurs on both sides, weights are summed
+  per unit, `match.matrix` has one column per partner, and `subclass` is
+  left out when a reused control belongs to several matched sets, as in
+  MatchIt. `bal.tab()` on couplr results goes through the same
+  conversion.
+
 ## couplr 1.8.0
 
 CRAN release: 2026-09-30
@@ -2034,15 +2261,14 @@ CRAN release: 2026-03-03
 
 - **[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
   methods** for ggplot2-based visualizations (requires ggplot2):
-  - [`autoplot.matching_result()`](https://gillescolling.com/couplr/reference/autoplot.matching_result.md):
+  - [`autoplot.matching_result()`](https://gillescolling.com/couplr/reference/couplr_result.md):
     histogram, density, or ecdf of distances
-  - [`autoplot.balance_diagnostics()`](https://gillescolling.com/couplr/reference/autoplot.balance_diagnostics.md):
+  - [`autoplot.balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md):
     love plot, histogram, or variance ratio plot
-  - [`autoplot.sensitivity_analysis()`](https://gillescolling.com/couplr/reference/autoplot.sensitivity_analysis.md):
+  - [`autoplot.sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md):
     gamma vs p-value curve
-- **Enhanced
-  [`summary.matching_result()`](https://gillescolling.com/couplr/reference/summary.matching_result.md)**
-  now reports match rate and distance percentiles
+- **Enhanced `summary.matching_result()`** now reports match rate and
+  distance percentiles
 
 #### New Functions
 
@@ -2277,13 +2503,12 @@ couple-themed messages:
   Formatted balance tables for reporting
 - [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md) -
   Create analysis-ready datasets from matching results
-- [`augment.matching_result()`](https://gillescolling.com/couplr/reference/augment.matching_result.md) -
-  Broom-style interface for joined data
+- `augment.matching_result()` - Broom-style interface for joined data
 - [`compute_distances()`](https://gillescolling.com/couplr/reference/compute_distances.md) -
   Precompute and cache distance matrices
 - [`update_constraints()`](https://gillescolling.com/couplr/reference/update_constraints.md) -
   Modify constraints on distance objects
-- [`is_distance_object()`](https://gillescolling.com/couplr/reference/is_distance_object.md) -
+- [`is_distance_object()`](https://gillescolling.com/couplr/reference/compute_distances.md) -
   Type checking for distance objects
 - [`diagnose_distance_matrix()`](https://gillescolling.com/couplr/reference/diagnose_distance_matrix.md) -
   Comprehensive distance diagnostics
@@ -2371,7 +2596,7 @@ visualization
 - [`assignment()`](https://gillescolling.com/couplr/reference/assignment.md) -
   Low-level solver
 - Utilities:
-  [`get_total_cost()`](https://gillescolling.com/couplr/reference/get_total_cost.md),
+  [`get_total_cost()`](https://gillescolling.com/couplr/reference/assignment.md),
   [`as_assignment_matrix()`](https://gillescolling.com/couplr/reference/as_assignment_matrix.md),
   etc.
 - Visualization:

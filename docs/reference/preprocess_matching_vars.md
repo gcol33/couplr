@@ -1,7 +1,10 @@
-# Preprocess matching variables with automatic checks and scaling
+# Check Matching Variables and Choose Scaling
 
 Main preprocessing function that orchestrates variable health checks,
-categorical encoding, and automatic scaling selection.
+and automatic scaling selection. The returned data frames retain their
+input values;
+[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
+applies the selected scaling when building distances.
 
 ## Usage
 
@@ -16,6 +19,18 @@ preprocess_matching_vars(
   remove_problematic = TRUE,
   verbose = TRUE
 )
+
+# S3 method for class 'variable_health'
+print(x, ...)
+
+# S3 method for class 'variable_health'
+summary(object, ...)
+
+# S3 method for class 'preprocessing_result'
+print(x, ...)
+
+# S3 method for class 'preprocessing_result'
+summary(object, ...)
 ```
 
 ## Arguments
@@ -53,13 +68,25 @@ preprocess_matching_vars(
 
   Logical, whether to print warnings (default: TRUE)
 
+- x:
+
+  A preprocessing_result object
+
+- ...:
+
+  Additional arguments (ignored)
+
+- object:
+
+  A preprocessing result or its nested variable-health report.
+
 ## Value
 
 A list with class "preprocessing_result" containing:
 
-- `left`: Preprocessed left data frame
+- `left`: Input left data frame
 
-- `right`: Preprocessed right data frame
+- `right`: Input right data frame
 
 - `vars`: Final variable names (after exclusions)
 
@@ -70,3 +97,8 @@ A list with class "preprocessing_result" containing:
 - `excluded_vars`: Variables that were excluded
 
 - `warnings`: List of warnings issued
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a
+`summary.preprocessing_result` with the retained variables, group sizes,
+scaling choice, exclusions, warnings, and the detailed variable-health
+report.

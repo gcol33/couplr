@@ -1,4 +1,4 @@
-# Match two datasets into couples
+# Optimal and Greedy Pair Matching
 
 Performs one-to-one matching between two datasets. Supports blocking,
 distance constraints, and various distance metrics.
@@ -89,7 +89,9 @@ match_couples(
 
 - calipers:
 
-  Named list of per-variable maximum absolute differences
+  Named list of maximum absolute differences, each on a column of both
+  data frames: a matching variable or another one, such as a propensity
+  score.
 
 - block_id:
 
@@ -205,13 +207,15 @@ match_couples(
 
 - certify:
 
-  Logical; whether the result carries a checked `assignment_certificate`
-  as `certificate`. Applies to `memory_mode = "implicit"`, where it
-  defaults to `TRUE`: the certificate is what separates the answer from
-  an approximate one. On the other paths the matching is certified after
-  the fact with
-  [`verify_assignment()`](https://gillescolling.com/couplr/reference/verify_assignment.md),
-  against the cost matrix it was solved from.
+  Logical; whether the result carries a checked
+  `assignment_certificate`, read with
+  [`certificate()`](https://gillescolling.com/couplr/reference/result_accessors.md).
+  Defaults to `TRUE` under `memory_mode = "implicit"`, where the
+  certificate is part of the solve, and to `FALSE` elsewhere, where it
+  costs one extra pass over the admissible pairs. Available for
+  one-to-one and `ratio`-to-one matching without blocks; greedy matching
+  and matching with replacement solve no assignment problem and carry
+  none.
 
 ## Value
 

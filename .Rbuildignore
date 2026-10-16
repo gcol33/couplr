@@ -65,3 +65,5 @@
 ^review$
 ^logs$
 ^LICENSE\.txt$
+^data-raw$
+^output$

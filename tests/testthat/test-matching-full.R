@@ -149,17 +149,25 @@ test_that("full_match validates inputs", {
 })
 
 
-test_that("full_match min_controls filters small groups", {
+test_that("full_match min_controls gives every group at least that many right units", {
+  left <- data.frame(id = 1:2, x = c(1, 50))
+  right <- data.frame(id = 3:7, x = c(1.1, 1.2, 50.1, 50.2, 50.3))
+
+  result <- full_match(left, right, vars = "x", min_controls = 2)
+
+  expect_equal(result$info$n_groups, 2L)
+  right_per_group <- table(
+    result$groups$group_id[result$groups$side == "right"]
+  )
+  expect_true(all(right_per_group >= 2))
+})
+
+test_that("full_match refuses min_controls the right side cannot supply", {
   left <- data.frame(id = 1:3, x = c(1, 50, 100))
   right <- data.frame(id = 4:6, x = c(1.1, 50.1, 50.2))
 
   result <- full_match(left, right, vars = "x", min_controls = 2)
 
-  # Groups with only 1 right unit should be dropped
-  if (result$info$n_groups > 0) {
-    right_per_group <- table(
-      result$groups$group_id[result$groups$side == "right"]
-    )
-    expect_true(all(right_per_group >= 2))
-  }
+  expect_equal(result$status, "infeasible")
+  expect_equal(result$info$n_groups, 0L)
 })

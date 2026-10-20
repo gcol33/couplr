@@ -2,7 +2,12 @@
 # clue::solve_LSAP (Hungarian, Hornik), lpSolve (simplex / branch and bound
 # on the integer program), and optmatch (Hansen's network-flow matching).
 
-lap_methods <- setdiff(eval(formals(assignment)$method), c("auto", "ssp"))
+lap_methods <- with(lap_solvers(), method[builtin])
+
+test_that("the reference checks cover the built-in solvers", {
+  expect_true(length(lap_methods) > 0)
+  expect_true(all(c("jv", "hungarian", "auction", "csa") %in% lap_methods))
+})
 ref_seeds <- if (identical(Sys.getenv("NOT_CRAN"), "true")) 1:5 else 1L
 
 # Instances each method accepts: hk01 is defined on 0/1 costs, ssap_bucket

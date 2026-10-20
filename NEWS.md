@@ -115,6 +115,13 @@
 * The benchmark scripts in `paper/bench` run from any directory and write only
   beside themselves; `run_benchmarks.R` replaces the shell runner.
 
+* `lap_solve_batch(n_threads = NULL)` takes its worker count from
+  `parallelly::availableCores(omit = 1)` instead of
+  `parallel::detectCores()`, so it respects CPU limits set by cgroups, job
+  schedulers and `mc.cores` (#68). The parallel path no longer checks for
+  the `parallel` package, which ships with R (#67). `parallel` and
+  `parallelly` move from Suggests to Imports.
+
 # couplr 1.8.1
 
 ## Bug fixes

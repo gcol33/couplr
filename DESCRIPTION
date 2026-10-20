@@ -33,7 +33,9 @@ Imports:
     dplyr (>= 1.0.0),
     rlang (>= 0.4.0),
     generics (>= 0.1.0),
-    purrr (>= 0.3.0)
+    purrr (>= 0.3.0),
+    parallel,
+    parallelly (>= 1.30.0)
 Suggests:
     testthat (>= 3.0.0),
     htmlwidgets,
@@ -44,10 +46,8 @@ Suggests:
     knitr,
     rmarkdown,
     bench,
-    parallel,
     future (>= 1.20.0),
     future.apply (>= 1.8.0),
-    parallelly (>= 1.30.0),
     ggplot2,
     ggraph,
     tidygraph,

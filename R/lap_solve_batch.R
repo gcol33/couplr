@@ -1,15 +1,13 @@
-#' Number of worker processes to use when `n_threads` is NULL
+#' Number of worker processes to use when none is given
 #'
-#' `parallel::detectCores()` reports the physical core count and ignores the
-#' two-core limit that `R CMD check` advertises through `_R_CHECK_LIMIT_CORES_`,
-#' so it is honoured here.
+#' `parallelly::availableCores()` honours the CPU limits set by `R CMD check`,
+#' cgroups, job schedulers and options such as `mc.cores`; one core is left
+#' for the main R session.
 #'
 #' @return Integer number of workers, at least 1.
 #' @noRd
-.batch_threads <- function() {
-  if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) return(2L)
-  n <- parallel::detectCores()
-  if (is.na(n)) 1L else as.integer(n)
+.default_workers <- function() {
+  as.integer(parallelly::availableCores(omit = 1))
 }
 
 #' Solve Many Assignment Problems
@@ -24,7 +22,8 @@
 #' @param maximize Logical; if TRUE, maximizes total cost (default: FALSE)
 #' @param method Algorithm to use (default: "auto"). See `lap_solve` for options.
 #' @param n_threads Number of threads for parallel execution (default: 1).
-#'   Set to NULL to use all available cores.
+#'   Set to NULL to use all available cores but one, as reported by
+#'   [parallelly::availableCores()].
 #' @param forbidden Value to mark forbidden assignments (default: NA)
 #'
 #' @return A tibble with columns:
@@ -111,7 +110,7 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
   
   # Determine number of threads
   if (is.null(n_threads)) {
-    n_threads <- .batch_threads()
+    n_threads <- .default_workers()
   }
   n_threads <- max(1, as.integer(n_threads))
 
@@ -134,11 +133,6 @@ lap_solve_batch <- function(x, source = NULL, target = NULL, cost = NULL,
     })
   } else {
     # Parallel execution
-    if (!requireNamespace("parallel", quietly = TRUE)) {
-      warning("Package 'parallel' not available, using sequential execution")
-      n_threads <- 1
-    }
-    
     cl <- parallel::makeCluster(n_threads)
     on.exit(parallel::stopCluster(cl))
     
@@ -212,7 +206,7 @@ lap_solve_batch_grouped <- function(df, source_col, target_col, cost_col,
   
   # Determine number of threads
   if (is.null(n_threads)) {
-    n_threads <- .batch_threads()
+    n_threads <- .default_workers()
   }
   n_threads <- max(1, as.integer(n_threads))
 

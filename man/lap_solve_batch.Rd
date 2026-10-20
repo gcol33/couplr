@@ -38,7 +38,8 @@ is_lap_solve_batch_result(x)
 \item{method}{Algorithm to use (default: "auto"). See \code{lap_solve} for options.}
 
 \item{n_threads}{Number of threads for parallel execution (default: 1).
-Set to NULL to use all available cores.}
+Set to NULL to use all available cores but one, as reported by
+\code{\link[parallelly:availableCores]{parallelly::availableCores()}}.}
 
 \item{forbidden}{Value to mark forbidden assignments (default: NA)}
 

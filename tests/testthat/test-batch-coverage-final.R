@@ -38,7 +38,7 @@ test_that("lap_solve_batch handles 3D array", {
 test_that("lap_solve_batch handles n_threads = NULL", {
   skip_on_cran()
   costs <- list(matrix(c(1, 2, 3, 4), 2, 2))
-  # Should use detectCores()
+  # Should use parallelly::availableCores()
   result <- couplr::lap_solve_batch(costs, n_threads = NULL)
   expect_s3_class(result, "lap_solve_batch_result")
 })

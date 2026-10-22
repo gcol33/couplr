@@ -78,7 +78,7 @@ result <- match_couples(
 
 # View matched pairs
 head(result$pairs)
-#> # A tibble: 6 x 5
+#> # A tibble: 6 × 5
 #>   left_id right_id distance .age_diff .income_diff
 #>   <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #> 1 1       46          0.779    -4.23        9144. 
@@ -351,7 +351,7 @@ result_blocked <- match_couples(
 
 # Verify: matches stay within their block
 result_blocked$pairs |> count(block_id)
-#> # A tibble: 3 x 2
+#> # A tibble: 3 × 2
 #>   block_id       n
 #>   <chr>      <int>
 #> 1 Hospital A    20
@@ -389,7 +389,7 @@ result_full
 
 # Each group has one or more left and right units with matching weights
 head(result_full$groups)
-#> # A tibble: 6 x 4
+#> # A tibble: 6 × 4
 #>   group_id id    side  weight
 #>      <int> <chr> <chr>  <dbl>
 #> 1        1 1     left       1
@@ -608,7 +608,7 @@ schedule <- tibble(
 schedule |>
   group_by(day) |>
   lap_solve(nurse, shift, cost)
-#> # A tibble: 9 x 4
+#> # A tibble: 9 × 4
 #>   day   source target  cost
 #>   <chr>  <int>  <int> <dbl>
 #> 1 Mon        1      2     2
@@ -646,7 +646,7 @@ print(kbest)
 #>   Rank 3: 7.0000
 #> 
 #> Assignments:
-#> # A tibble: 9 x 6
+#> # A tibble: 9 × 6
 #>    rank solution_id source target  cost total_cost
 #>   <int>       <int>  <int>  <int> <dbl>      <dbl>
 #> 1     1           1      1      1     1          5

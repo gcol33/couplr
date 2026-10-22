@@ -127,7 +127,6 @@ right <- tibble(id = 1:50, age = rnorm(50, mean = 55, sd = 3))
 
 # Visualize overlap
 library(ggplot2)
-#> Warning: package 'ggplot2' was built under R version 4.6.1
 combined <- bind_rows(
   left |> mutate(group = "Left"),
   right |> mutate(group = "Right")
@@ -341,7 +340,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0 seconds
+#> Greedy matching (n=500): 0.01 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```

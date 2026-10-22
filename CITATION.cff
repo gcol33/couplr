@@ -16,7 +16,8 @@ preferred-citation:
   authors:
   - family-names: Colling
     given-names: Gilles
+    orcid: https://orcid.org/0000-0003-3070-6066
   year: 2026
   doi: 10.32614/CRAN.package.couplr
-  url: https://CRAN.R-project.org/package=couplr
+  url: https://gillescolling.com/couplr/
   notes: R package version 1.9.0

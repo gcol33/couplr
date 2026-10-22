@@ -167,6 +167,15 @@
   write only beside themselves; `run_benchmarks.R` replaces the shell
   runner.
 
+- `lap_solve_batch(n_threads = NULL)` takes its worker count from
+  `parallelly::availableCores(omit = 1)` instead of
+  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html),
+  so it respects CPU limits set by cgroups, job schedulers and
+  `mc.cores` ([\#68](https://github.com/gcol33/couplr/issues/68)). The
+  parallel path no longer checks for the `parallel` package, which ships
+  with R ([\#67](https://github.com/gcol33/couplr/issues/67)).
+  `parallel` and `parallelly` move from Suggests to Imports.
+
 ## couplr 1.8.1
 
 CRAN release: 2026-10-04

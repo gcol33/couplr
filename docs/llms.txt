@@ -2,198 +2,301 @@
 
 *matching two groups into pairs*
 
-[![CRAN
-status](https://www.r-pkg.org/badges/version/couplr)](https://CRAN.R-project.org/package=couplr)
-[![CRAN
-downloads](https://cranlogs.r-pkg.org/badges/grand-total/couplr)](https://cran.r-project.org/package=couplr)
-[![Monthly
-downloads](https://cranlogs.r-pkg.org/badges/couplr)](https://cran.r-project.org/package=couplr)
-[![R-CMD-check](https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gcol33/couplr/actions/workflows/R-CMD-check.yaml)
-[![Coverage](https://codecov.io/gh/gcol33/couplr/graph/badge.svg?flag=r)](https://app.codecov.io/gh/gcol33/couplr)
-[![License:
-MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+couplr pairs the units of two groups, such as treated and control
+patients, plots, sites or samples, so that the total covariate distance
+over all pairs is as small as possible.
 
-**Optimal one-to-one matching by linear assignment, solved exactly in
-C++.**
+The pairing is a linear assignment problem: the distances between every
+unit of one group and every unit of the other form a cost matrix, and
+the solver picks one partner per unit so that the summed distance is
+minimal. couplr solves it exactly in C++, by default with the
+Jonker-Volgenant algorithm, so the total distance is the global minimum
+and a solve can be certified optimal. You then check covariate balance
+on the matched pairs and decide whether to use them as they are or to
+tighten the match with calipers and blocks.
 
-Hand `couplr` two groups and it returns the pairing that minimizes total
-covariate distance across the whole sample. The assignment is solved
-exactly, by Jonker-Volgenant on ordinary inputs or by any of nineteen
-solvers named explicitly, so the total distance is the global minimum
-and a solve can be certified optimal.
+couplr supports:
+
+- **Large pools.** `memory_mode = "lazy"` computes each distance when
+  the solver needs it, and `memory_mode = "implicit"` generates only the
+  pairs the optimum needs, so neither builds the full distance matrix.
+- **Constraints and strata.** Calipers, a maximum distance, matching
+  within blocks and several controls per treated unit are arguments of
+  [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.html).
+- **Other matching designs.** Full matching, coarsened exact matching,
+  cardinality matching, propensity score subclassification and
+  propensity score matching take the same two-group input and return
+  results the diagnostics understand.
+- **Balance and sensitivity.**
+  [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.html)
+  reports standardized differences, variance ratios and
+  Kolmogorov-Smirnov statistics, and
+  [`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.html)
+  computes Rosenbaum bounds for unmeasured confounding.
+- **Analysis with other matching packages.**
+  [`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md)
+  converts a result to a
+  [MatchIt](https://kosukeimai.github.io/MatchIt/) object, so
+  [cobalt](https://ngreifer.github.io/cobalt/) balance tables and
+  [marginaleffects](https://marginaleffects.com/) estimates run on it.
+- **The assignment solvers.**
+  [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.html)
+  takes a cost matrix directly and offers nineteen solvers by name, the
+  k best assignments and batches of independent problems.
+
+The solve has no random seed: the same input gives the same pairing on
+every run. When several pairings tie at the minimum, which one comes
+back can depend on the order of the rows. [Comparison with
+Alternatives](https://gillescolling.com/couplr/articles/comparison.html)
+sets couplr beside MatchIt,
+[optmatch](https://github.com/markmfredrickson/optmatch) and
+[designmatch](https://cran.r-project.org/package=designmatch).
 
 ## Installation
 
+Install the released version from CRAN. Windows and macOS get a binary
+package and need no build tools:
+
 ``` r
 
-install.packages("couplr")            # CRAN
+install.packages("couplr")
+```
 
-install.packages("pak")               # development version
+The development version compiles C++ code. Install the build tools for
+your operating system first:
+
+| Operating system | Build tools |
+|----|----|
+| Windows | [Rtools](https://cran.r-project.org/bin/windows/Rtools/) matching your R version |
+| macOS | Run `xcode-select --install` in Terminal |
+| Debian / Ubuntu | Install `r-base-dev` |
+
+Check that R can find the compiler:
+
+``` r
+
+pkgbuild::has_build_tools(debug = TRUE)
+```
+
+Then install couplr from GitHub:
+
+``` r
+
+# install.packages("pak")
 pak::pak("gcol33/couplr")
 ```
 
-## Quick start
+The C++ code needs a compiler that supports C++17. It links only to
+Rcpp, which is installed from CRAN with the package, and needs no system
+libraries.
+
+## Usage
+
+1.  Match the two groups with
+    [`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md).
+2.  Check covariate balance with
+    [`balance_diagnostics()`](https://gillescolling.com/couplr/reference/balance_diagnostics.md).
+3.  Join the pairs to their covariates with
+    [`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
+    for the analysis.
+
+The input is two data frames, one row per unit, each with an identifier
+column (`id` by default) and the covariates named in `vars`.
+`auto_scale = TRUE` puts covariates measured in different units on a
+common scale before the distances are computed.
 
 ``` r
 
 library(couplr)
 
-# match treatment and control on covariates, in a single call
-result <- match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)
+set.seed(1)
+treated <- data.frame(
+  id = 1:6,
+  age = round(rnorm(6, 45, 10)),
+  income = round(rnorm(6, 55, 12))
+)
+control <- data.frame(
+  id = 1:12,
+  age = round(rnorm(12, 50, 12)),
+  income = round(rnorm(12, 48, 15))
+)
 
-# analysis-ready paired data
-join_matched(result, treated, control)
+vars <- c("age", "income")
+result <- match_couples(treated, control, vars = vars, auto_scale = TRUE)
+#> Auto-selected scaling method: standardize
+result
+#> couplr result: one-to-one matching, optimal
+#>   Left units:         6 matched of 6
+#>   Right units:        6 matched of 12
+#>   Pairs:              6
+#>   Total distance:     6.44862
 ```
 
-## Optimal and deterministic
-
-[`match_couples()`](https://gillescolling.com/couplr/reference/match_couples.md)
-evaluates the pairing as a whole and returns the assignment with the
-lowest total covariate distance. Because the solve is exact, the total
-distance is the global minimum. There is no random seed: the same input
-gives the same pairing on every run. When several pairings tie at the
-minimum, which of them comes back can depend on the order of the rows.
-
-Large pools are solved exactly as well. `memory_mode = "lazy"` computes
-each distance when the solver needs it, and `memory_mode = "implicit"`
-generates only the pairs the optimum turns out to need, so neither
-builds the full distance matrix. `method = "greedy"` is a speed trade:
-it gives up the optimality guarantee and keeps the same scaling,
-constraints, and blocking.
+Each of the six treated units has one control partner, and six controls
+stay unmatched. Balance is checked on the matched pairs:
 
 ``` r
 
-match_couples(treated, control, vars = c("age", "income"), auto_scale = TRUE)   # optimal
-
-match_couples(treated, control, vars = c("age", "income"),
-              memory_mode = "implicit")                                          # optimal, large pools
-
-match_couples(treated, control, vars = c("age", "income"),
-              method = "greedy", strategy = "pq")                               # approximate, fast
+bal <- balance_diagnostics(result, treated, control, vars = vars)
+bal
 ```
+
+[`join_matched()`](https://gillescolling.com/couplr/reference/join_matched.md)
+returns one row per pair, with the covariates of both partners and their
+differences:
+
+``` r
+
+paired <- join_matched(result, treated, control)
+paired
+#> # A tibble: 6 × 10
+#>   pair_id left_id right_id distance .age_diff .income_diff age_left income_left
+#>     <int>   <int>    <int>    <dbl>     <dbl>        <dbl>    <dbl>       <dbl>
+#> 1       1       1        1    0.453        -4            4       39          61
+#> 2       2       2        9    1.39        -14           10       47          64
+#> 3       3       3        2    1.64         14           15       37          62
+#> 4       4       4        6    0.236         0           -3       61          51
+#> 5       5       5        7    1.06        -12            5       48          73
+#> 6       6       6       12    1.67         11           18       37          60
+#> # ℹ 2 more variables: age_right <dbl>, income_right <dbl>
+```
+
+## Matching large pools
+
+The exact solve applies to large pools as well.
+`memory_mode = "implicit"` generates candidate pairs in rounds and stops
+when the optimum needs no more of them; `method = "greedy"` gives up the
+optimality guarantee for speed and keeps the same scaling, constraints
+and blocking:
+
+``` r
+
+match_couples(treated, control, vars = vars, memory_mode = "implicit")
+match_couples(treated, control, vars = vars, method = "greedy")
+```
+
+[Matching
+Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html)
+compares optimal and greedy matching and the greedy strategies.
 
 ## Scaling and constraints
 
-Covariates on different scales are put on common footing before
-distances are computed, and pairs can be constrained or matched within
-strata:
+`scale` chooses how covariates are scaled (`"standardize"`, `"range"` or
+`"robust"`). `max_distance` forbids pairs beyond a covariate distance,
+`calipers` sets a maximum absolute difference per variable, `block_id`
+names a column to match within, and `ratio` sets the number of controls
+per treated unit:
 
 ``` r
 
 match_couples(
   treated, control,
-  vars         = c("age", "income", "bmi"),
-  scale        = "robust",             # or "standardize", "range"; auto_scale = TRUE picks one
-  max_distance = 2,                    # forbid pairs beyond this covariate distance
-  calipers     = list(age = 5),        # per-variable maximum absolute difference
-  block_id     = "site",               # match only within site
-  ratio        = 2                     # two controls per treated unit
+  vars = vars,
+  scale = "robust",
+  max_distance = 2,
+  calipers = list(age = 5),
+  ratio = 2
 )
 ```
 
-## A family of matching designs
+Treated units without a partner inside the constraints stay unmatched,
+and the printed result counts them.
 
-The same two-group input drives several established designs, each
-returning a result the diagnostics and join helpers understand:
+## Other matching designs
 
-``` r
-
-# variable-ratio full matching
-full_match(treated, control, vars = c("age", "income"), min_controls = 1, max_controls = 3)
-
-# coarsened exact matching
-cem_match(treated, control, vars = c("age", "income"))
-
-# balance-constrained cardinality matching
-cardinality_match(treated, control, vars = c("age", "income"), fine = "site")
-
-# propensity subclassification and propensity matching, formula interface
-subclass_match(treated ~ age + income, data = df, n_subclasses = 5)
-ps_match(treated ~ age + income, data = df)
-```
-
-## Balance and sensitivity
-
-Check covariate balance before and after matching, and probe how
-sensitive a conclusion is to unmeasured confounding:
+[`full_match()`](https://gillescolling.com/couplr/reference/full_match.md)
+forms groups of variable size in which every unit is used,
+[`cem_match()`](https://gillescolling.com/couplr/reference/cem_match.md)
+matches exactly on coarsened covariates, and
+[`cardinality_match()`](https://gillescolling.com/couplr/reference/cardinality_match.md)
+maximizes the number of matched pairs subject to balance constraints:
 
 ``` r
 
-bal <- balance_diagnostics(result, treated, control)   # standardized differences, variance ratios, KS tests
-bal
-autoplot(bal)                           # love plot of standardized differences
-
-sensitivity_analysis(result, treated, control, outcome_var = "recovery_days")   # Rosenbaum bounds
+full_match(treated, control, vars = vars)
+cem_match(treated, control, vars = vars)
+cardinality_match(treated, control, vars = vars)
 ```
 
-## Works with the matching ecosystem
+[`ps_match()`](https://gillescolling.com/couplr/reference/ps_match.md)
+and
+[`subclass_match()`](https://gillescolling.com/couplr/reference/subclass_match.md)
+take a formula of the treatment indicator on the covariates and a single
+data frame.
+[`sensitivity_analysis()`](https://gillescolling.com/couplr/reference/sensitivity_analysis.md)
+takes the name of an outcome column and reports Rosenbaum bounds over a
+range of the sensitivity parameter gamma.
 
-A `couplr` result converts to `matchit`-class with
-[`as_matchit()`](https://gillescolling.com/couplr/reference/as_matchit.md),
-so `cobalt` balance tables and `marginaleffects` estimates run against
-it without rewiring the analysis.
-[`match_data()`](https://gillescolling.com/couplr/reference/match_data.md)
-returns treatment, weights, and subclass columns in one analysis-ready
-frame, and `autoplot()` methods cover matching results, balance, and
-sensitivity.
-
-``` r
-
-m  <- as_matchit(result, treated, control)
-md <- match_data(result, treated, control)
-```
-
-## The assignment backend
+## The assignment solvers
 
 [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
-exposes the solver layer directly. It takes a cost matrix, handles
-rectangular shapes and forbidden edges (`NA` / `Inf`), and offers
-nineteen solvers by name. `method = "auto"` enumerates problems up to 8
-by 8, uses Hopcroft-Karp when the finite costs are all equal or all 0 or
-1, and otherwise Jonker-Volgenant:
+takes a cost matrix, including rectangular ones and forbidden pairs
+(`NA` or `Inf`). `method = "auto"` enumerates problems up to 8 by 8,
+uses Hopcroft-Karp when the finite costs are all equal or all 0 or 1,
+and uses Jonker-Volgenant otherwise:
 
 ``` r
 
 cost <- matrix(c(4, 2, 8, 4, 3, 7, 3, 1, 6), nrow = 3, byrow = TRUE)
 
-lap_solve(cost)                      # auto-selected solver
+lap_solve(cost)
 lap_solve(cost, method = "hungarian")
-lap_solve_kbest(cost, k = 3)         # the three best assignments (Murty's algorithm)
-lap_solve_batch(problems)            # many independent problems in one call
+lap_solve_kbest(cost, k = 3)
 ```
 
-The solvers span the classics and the scaling algorithms:
-Jonker-Volgenant, Hungarian, Kuhn-Munkres, Bertsekas auction (with
-epsilon-scaling variants), Goldberg-Kennedy cost-scaling, Gabow-Tarjan
-bit-scaling, push-relabel, network simplex, and Sinkhorn
-entropy-regularized transport.
+[`lap_solvers()`](https://gillescolling.com/couplr/reference/lap_solvers.md)
+lists the nineteen solvers with their references, among them Hungarian,
+Kuhn-Munkres, Bertsekas auction, Goldberg-Kennedy cost scaling,
+Gabow-Tarjan bit scaling, push-relabel and network simplex.
 [`bottleneck_assignment()`](https://gillescolling.com/couplr/reference/bottleneck_assignment.md)
-minimizes the largest edge instead of the total, and
+minimizes the largest cost instead of the total, and
 [`sinkhorn()`](https://gillescolling.com/couplr/reference/sinkhorn.md)
-returns a soft transport plan.
-
-## Watching a solve
+returns an entropy-regularized transport plan. [The Algorithm
+Collection](https://gillescolling.com/couplr/articles/algorithms.html)
+describes each solver.
 
 [`pixel_morph()`](https://gillescolling.com/couplr/reference/pixel_morph.md)
 treats two images as source and target pixel sets and morphs one into
-the other along the optimal assignment, so a matching problem becomes
-something you can look at:
-
-``` r
-
-pixel_morph(imgA, imgB, n_frames = 16)
-```
+the other along the optimal assignment, which shows a solve as an
+animation.
 
 ## Documentation
 
-- [Getting
-  Started](https://gillescolling.com/couplr/articles/getting-started.html)
+Start with [Quick
+Start](https://gillescolling.com/couplr/articles/getting-started.html):
+a first match, scaling, balance and the joined pairs.
+
 - [Matching
-  Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html)
-- [Algorithms](https://gillescolling.com/couplr/articles/algorithms.html)
-- [Comparison](https://gillescolling.com/couplr/articles/comparison.html)
-- [Pixel
-  Morphing](https://gillescolling.com/couplr/articles/pixel-morphing.html)
+  Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html):
+  preprocessing, calipers, blocking, balance diagnostics and a
+  treatment-effect estimate from start to end.
+- [The Algorithm
+  Collection](https://gillescolling.com/couplr/articles/algorithms.html):
+  the assignment problem and how each solver works.
+- [Comparison with
+  Alternatives](https://gillescolling.com/couplr/articles/comparison.html):
+  couplr beside MatchIt, optmatch and designmatch.
+- [Advanced
+  Topics](https://gillescolling.com/couplr/articles/pixel-morphing.html):
+  pixel morphing, approximation strategies for large problems and
+  optimal transport.
+- [Troubleshooting
+  Guide](https://gillescolling.com/couplr/articles/troubleshooting.html):
+  infeasible problems, poor balance, memory and installation errors.
+- [Full reference](https://gillescolling.com/couplr/reference/): every
+  function.
+
+## Getting help
+
+Questions and bug reports go to the [GitHub
+issues](https://github.com/gcol33/couplr/issues). A bug report is
+easiest to act on with a small reproducible example, for instance made
+with [reprex](https://reprex.tidyverse.org/).
+
+## Contributing
+
+Pull requests are welcome; see the [contributing
+guide](https://gillescolling.com/couplr/CONTRIBUTING.html).
 
 ## Support
 
@@ -211,18 +314,35 @@ Coffee](https://img.shields.io/badge/-Buy%20me%20a%20coffee-FFDD00?logo=buymeaco
 
 ## License
 
-MIT (see the LICENSE file)
+couplr is licensed under MIT.
 
 ## Citation
 
+To cite couplr in publications use:
+
+``` text
+Colling G (2026). _couplr: Optimal Pairing and Matching via Linear
+Assignment_. doi:10.32614/CRAN.package.couplr
+<https://doi.org/10.32614/CRAN.package.couplr>. R package version
+1.9.0, <https://gillescolling.com/couplr/>.
+```
+
+BibTeX:
+
 ``` bibtex
-@software{couplr,
-  author = {Colling, Gilles},
-  title  = {couplr: Optimal Matching via Linear Assignment},
-  year   = {2026},
-  url    = {https://github.com/gcol33/couplr}
+@Manual{colling2026couplr,
+  title = {couplr: Optimal Pairing and Matching via Linear Assignment},
+  author = {Gilles Colling},
+  year = {2026},
+  note = {R package version 1.9.0},
+  doi = {10.32614/CRAN.package.couplr},
+  url = {https://gillescolling.com/couplr/},
 }
 ```
+
+Download the citation as
+[BibTeX](https://gillescolling.com/couplr/couplr.bib) or
+[RIS](https://gillescolling.com/couplr/couplr.ris).
 
 # Package index
 

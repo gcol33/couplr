@@ -1,10 +1,12 @@
 citHeader("To cite couplr in publications use:")
 
-bibentry("Manual",
-         title = "couplr: Optimal Pairing and Matching via Linear Assignment",
-         author = person("Gilles", "Colling"),
-         year = if (is.null(meta$`Date/Publication`)) "2026" else
-           substr(meta$`Date/Publication`, 1, 4),
-         note = sprintf("R package version %s", meta$Version),
-         url = "https://CRAN.R-project.org/package=couplr",
-         doi = "10.32614/CRAN.package.couplr")
+bibentry(
+  bibtype = "Manual",
+  key     = "colling2026couplr",
+  title   = paste0("couplr: ", meta$Title),
+  author  = person("Gilles", "Colling", comment = c(ORCID = "0000-0003-3070-6066")),
+  year    = "2026",
+  note    = paste("R package version", meta$Version),
+  doi     = "10.32614/CRAN.package.couplr",
+  url     = "https://gillescolling.com/couplr/"
+)

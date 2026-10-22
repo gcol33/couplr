@@ -699,7 +699,7 @@ cost <- matrix(c(10, 19, 8, 15, 10, 18, 7, 17, 13, 16, 9, 14, 12, 19, 8, 18),
                nrow = 4, byrow = TRUE)
 kbest <- lap_solve_kbest(cost, k = 5)
 summary(kbest)
-#> # A tibble: 5 x 4
+#> # A tibble: 5 × 4
 #>    rank solution_id total_cost n_assignments
 #>   <int>       <int>      <dbl>         <int>
 #> 1     1           1         49             4

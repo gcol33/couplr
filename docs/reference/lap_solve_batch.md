@@ -56,7 +56,8 @@ is_lap_solve_batch_result(x)
 - n_threads:
 
   Number of threads for parallel execution (default: 1). Set to NULL to
-  use all available cores.
+  use all available cores but one, as reported by
+  [`parallelly::availableCores()`](https://parallelly.futureverse.org/reference/availableCores.html).
 
 - forbidden:
 

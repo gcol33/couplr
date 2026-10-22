@@ -122,7 +122,6 @@ if (requireNamespace("MatchIt", quietly = TRUE)) {
   # Extract matched data
   matched_ps <- match.data(m_ps)
 }
-#> Warning: package 'MatchIt' was built under R version 4.6.1
 #> 
 #> Attaching package: 'MatchIt'
 #> The following object is masked from 'package:couplr':
@@ -290,7 +289,6 @@ if (requireNamespace("optmatch", quietly = TRUE)) {
   cat("optmatch (optimal pair matching):\n")
   cat("  Matched pairs:", n_matched, "\n")
 }
-#> Warning: package 'optmatch' was built under R version 4.6.1
 #> optmatch (optimal pair matching):
 #>   Matched pairs: 200
 ```
@@ -909,7 +907,7 @@ if (balance_lalonde$overall$max_abs_std_diff < 0.25) {
   cat("\n⚠ Some variables exceed 0.25 threshold - consider calipers or blocking\n")
 }
 #> 
-#> <U+26A0> Some variables exceed 0.25 threshold - consider calipers or blocking
+#> ⚠ Some variables exceed 0.25 threshold - consider calipers or blocking
 ```
 
 ### Key Takeaways

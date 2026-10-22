@@ -199,7 +199,7 @@ result <- match_couples(
 
 # View matched pairs
 head(result$pairs)
-#> # A tibble: 6 x 5
+#> # A tibble: 6 × 5
 #>   left_id right_id distance .age_diff .income_diff
 #>   <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #> 1 1       27         0.530   -5.68           2942.
@@ -551,18 +551,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 0.11 seconds
+#>   Time: 0.54 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0 seconds
+#>   Time: 0.09 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: Inf x
+#>   Speedup: 6 x
 ```
 
 ### Greedy Strategies
@@ -662,9 +662,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.00        0.0912          18.24
-#> elapsed1 row_best     0.01        0.0968          19.36
-#> elapsed2       pq     0.00        0.0912          18.24
+#> elapsed    sorted        0        0.0912          18.24
+#> elapsed1 row_best        0        0.0968          19.36
+#> elapsed2       pq        0        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -881,7 +881,7 @@ blocks <- matchmaker(
 cat("Blocking structure:\n")
 #> Blocking structure:
 print(blocks$block_summary)
-#> # A tibble: 3 x 3
+#> # A tibble: 3 × 3
 #>   block_id n_left n_right
 #>   <chr>     <dbl>   <dbl>
 #> 1 A            36      58
@@ -904,7 +904,7 @@ result_blocked$pairs |>
   left_join(left_site |> dplyr::select(id, site), by = c("left_id" = "id")) |>
   left_join(right_site |> dplyr::select(id, site), by = c("right_id" = "id"), suffix = c("_left", "_right")) |>
   count(site_left, site_right)
-#> # A tibble: 3 x 3
+#> # A tibble: 3 × 3
 #>   site_left site_right     n
 #>   <chr>     <chr>      <int>
 #> 1 A         A             36
@@ -930,7 +930,7 @@ cluster_blocks <- matchmaker(
 cat("Cluster-based blocks:\n")
 #> Cluster-based blocks:
 print(cluster_blocks$block_summary)
-#> # A tibble: 3 x 4
+#> # A tibble: 3 × 4
 #>   block_id  n_left n_right mean_age
 #>   <chr>      <dbl>   <dbl>    <dbl>
 #> 1 cluster_1     37      56     61.2
@@ -955,7 +955,7 @@ cluster_blocks$left |>
     mean_age = mean(age),
     sd_age = sd(age)
   )
-#> # A tibble: 3 x 4
+#> # A tibble: 3 × 4
 #>   block_id      n mean_age sd_age
 #>   <chr>     <int>    <dbl>  <dbl>
 #> 1 cluster_1    37     61.2   4.59
@@ -1039,12 +1039,12 @@ print(balance)
 
 # Extract balance table for reporting
 balance_table(balance)
-#> # A tibble: 2 x 8
+#> # A tibble: 2 × 8
 #>   Variable `Mean Left` `Mean Right` `Mean Diff` `Std Diff` `Var Ratio` `KS Stat`
 #>   <chr>          <dbl>        <dbl>       <dbl>      <dbl>       <dbl>     <dbl>
 #> 1 age             45.9         47.3       -1.43     -0.148       0.794      0.18
 #> 2 income       58387.       56118.      2269.        0.155       0.965      0.09
-#> # i 1 more variable: `Std Diff Before` <dbl>
+#> # ℹ 1 more variable: `Std Diff Before` <dbl>
 ```
 
 ### How to Interpret Balance Results
@@ -1117,10 +1117,10 @@ ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
   geom_hline(yintercept = c(-0.1, 0.1), linetype = "dashed", color = "#93c54b", linewidth = 0.8) +
   geom_hline(yintercept = c(-0.25, 0.25), linetype = "dashed", color = "#f47c3c", linewidth = 0.8) +
   geom_col(position = "dodge", width = 0.5) +
-  geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent")),
+  geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"),
              fill = "#93c54b", color = "white", inherit.aes = FALSE,
              size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
-  geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable")),
+  geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"),
              fill = "#f47c3c", color = "white", inherit.aes = FALSE,
              size = 3, fontface = "bold", label.padding = unit(0.2, "lines")) +
   labs(
@@ -1135,11 +1135,11 @@ ggplot(balance_comparison, aes(x = variable, y = std_diff, fill = when)) +
         legend.background = element_rect(fill = "transparent", color = NA),
         panel.grid = element_blank()) +
   coord_flip()
-#> Warning in geom_label(aes(x = 1.5, y = -0.1, label = "<U+00B1>0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.
-#> i Please consider using `annotate()` or provide this layer with data containing
+#> Warning in geom_label(aes(x = 1.5, y = -0.1, label = "±0.1 excellent"), : All aesthetics have length 1, but the data has 4 rows.
+#> ℹ Please consider using `annotate()` or provide this layer with data containing
 #>   a single row.
-#> Warning in geom_label(aes(x = 1.5, y = 0.25, label = "<U+00B1>0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.
-#> i Please consider using `annotate()` or provide this layer with data containing
+#> Warning in geom_label(aes(x = 1.5, y = 0.25, label = "±0.25 acceptable"), : All aesthetics have length 1, but the data has 4 rows.
+#> ℹ Please consider using `annotate()` or provide this layer with data containing
 #>   a single row.
 ```
 
@@ -1726,7 +1726,7 @@ enabling unbiased estimation:
 ``` r
 
 head(result_full$groups, 10)
-#> # A tibble: 10 x 4
+#> # A tibble: 10 × 4
 #>    group_id id    side  weight
 #>       <int> <chr> <chr>  <dbl>
 #>  1        1 1     left       1
@@ -1770,7 +1770,7 @@ result_2to1 <- match_couples(
 #> Auto-selected scaling method: standardize
 
 result_2to1$pairs
-#> # A tibble: 150 x 5
+#> # A tibble: 150 × 5
 #>    left_id right_id distance .age_diff .income_diff
 #>    <chr>   <chr>       <dbl>     <dbl>        <dbl>
 #>  1 3       52        1.07     -11.6          5127. 
@@ -1783,7 +1783,7 @@ result_2to1$pairs
 #>  8 6       25        0.231     -2.50         1139. 
 #>  9 7       143       0.735     -5.12         9559. 
 #> 10 7       94        0.00653    0.0728        -20.9
-#> # i 140 more rows
+#> # ℹ 140 more rows
 ```
 
 Higher ratios increase sample size at the cost of slightly worse
@@ -1912,11 +1912,11 @@ card_bb <- cardinality_match(
 )
 
 glance(card_bb)
-#> # A tibble: 1 x 17
+#> # A tibble: 1 × 17
 #>   design      n_left n_right n_matched_left n_matched_right n_pairs n_groups
 #>   <chr>        <int>   <int>          <int>           <int>   <int>    <int>
 #> 1 cardinality     20      80             20              20      20       NA
-#> # i 10 more variables: total_distance <dbl>, status <chr>, certified <lgl>,
+#> # ℹ 10 more variables: total_distance <dbl>, status <chr>, certified <lgl>,
 #> #   max_suboptimality <dbl>, best_possible <int>, gap <int>, n_nodes <int>,
 #> #   stopped_on <chr>, size_certified <lgl>, size_seconds <dbl>
 summary(card_bb)
@@ -1952,7 +1952,7 @@ summary(card_bb)
 #> Optimization stages:
 #>     stage closed stopped_on n_nodes seconds     value     bound
 #>      size   TRUE optimality       1    0.00 20.000000 20.000000
-#>  distance  FALSE node_limit       9    0.04  5.325514  5.320702
+#>  distance  FALSE node_limit       9    0.14  5.325514  5.320702
 #> 
 #> Unmatched left: 0
 #> Unmatched right: 60
@@ -2030,7 +2030,7 @@ cem_result
 
 # Strata summary: how many units in each coarsened cell
 head(cem_result$strata_summary)
-#> # A tibble: 6 x 4
+#> # A tibble: 6 × 4
 #>   stratum               n_left n_right matched
 #>   <chr>                  <int>   <int> <lgl>  
 #> 1 (25,30]|(3e+04,4e+04]      0       1 FALSE  
@@ -2074,7 +2074,7 @@ sub_result
 #>   Right units:        150 matched of 150
 #>   Groups:             5
 head(sub_result$subclass_summary)
-#> # A tibble: 5 x 7
+#> # A tibble: 5 × 7
 #>   subclass n_treated n_control mean_ps ps_range_low ps_range_high has_overlap
 #>      <int>     <int>     <int>   <dbl>        <dbl>         <dbl> <lgl>      
 #> 1        1         6        44   0.192       0.0902         0.251 TRUE       
@@ -2098,7 +2098,7 @@ and `distance` columns — ready for downstream modelling:
 
 md <- couplr::match_data(result, left_data, right_data)
 head(md)
-#> # A tibble: 6 x 9
+#> # A tibble: 6 × 9
 #>      id   age income education group     treatment weights subclass distance
 #>   <int> <dbl>  <dbl> <chr>     <chr>         <int>   <dbl>    <int>    <dbl>
 #> 1     1  39.4 49344. MA        treatment         1       1        1   0.530 

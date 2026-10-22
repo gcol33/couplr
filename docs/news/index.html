@@ -110,6 +110,7 @@
 <li><p>Help pages: one title style throughout; print, summary and plot methods are documented on the page of their class; <code>example(pixel_morph)</code> runs (the example images are now in the built package); no <code>\dontrun{}</code> examples.</p></li>
 <li><p><code><a href="../reference/cardinality_match.html">cardinality_match()</a></code> documents that a search stopped by <code>time_limit</code> depends on machine speed. <code>time_limit = Inf</code> with a <code>node_limit</code> controls the search budget independently of machine speed; floating-point ties can change the search order across platforms.</p></li>
 <li><p>The benchmark scripts in <code>paper/bench</code> run from any directory and write only beside themselves; <code>run_benchmarks.R</code> replaces the shell runner.</p></li>
+<li><p><code>lap_solve_batch(n_threads = NULL)</code> takes its worker count from <code>parallelly::availableCores(omit = 1)</code> instead of <code><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">parallel::detectCores()</a></code>, so it respects CPU limits set by cgroups, job schedulers and <code>mc.cores</code> (<a href="https://github.com/gcol33/couplr/issues/68" class="external-link">#68</a>). The parallel path no longer checks for the <code>parallel</code> package, which ships with R (<a href="https://github.com/gcol33/couplr/issues/67" class="external-link">#67</a>). <code>parallel</code> and <code>parallelly</code> move from Suggests to Imports.</p></li>
 </ul></div>
 </div>
     <div class="section level2">

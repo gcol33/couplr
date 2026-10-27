@@ -1,4 +1,4 @@
-run        20261012-104019
+run        20261021-113526
 platform   aarch64-apple-darwin25.3.0
 R          R version 4.5.3 (2026-03-11)
 couplr     1.9.0
@@ -6,3 +6,6 @@ MatchIt    4.7.2
 optmatch   0.10.8
 clue       0.3.68
 lpSolve    5.6.23
+bigmatch   not installed
+designmatch not installed
+highs      not installed

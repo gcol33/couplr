@@ -81,7 +81,7 @@ Throughout this vignette, we evaluate a **job training program's effect on earni
 
 ### Key Features
 
-- Automatic preprocessing with health checks and smart scaling
+- Automatic preprocessing with health checks and covariate scaling
 
 - Optimal matching via linear assignment algorithms
 
@@ -89,7 +89,7 @@ Throughout this vignette, we evaluate a **job training program's effect on earni
 
 - Blocking and stratification support
 
-- Comprehensive balance diagnostics
+- Balance diagnostics: standardized differences, variance ratios and KS tests
 
 - Publication-ready output tables
 

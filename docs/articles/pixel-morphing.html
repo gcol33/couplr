@@ -990,8 +990,9 @@ FOR c = 1 TO n_clusters DO
 END FOR
 
 RETURN full_tracks</code></pre>
-<p>This yields efficient and robust trajectories even for very dense
-particle fields.</p>
+<p>Each local <code><a href="../reference/lap_solve.html">lap_solve()</a></code> call then works on the particles
+of one matched cluster pair, which keeps the assignment problems small
+even for very dense particle fields.</p>
 </div>
 <div class="section level3">
 <h3 id="chemistry-molecular-conformation-alignment">Chemistry: Molecular Conformation Alignment<a class="anchor" aria-label="anchor" href="#chemistry-molecular-conformation-alignment"></a>

@@ -229,12 +229,13 @@ credibly.</p>
 <h3 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
 </h3>
 <ul>
-<li><p>Automatic preprocessing with health checks and smart
+<li><p>Automatic preprocessing with health checks and covariate
 scaling</p></li>
 <li><p>Optimal matching via linear assignment algorithms</p></li>
 <li><p>Fast greedy matching for large datasets (n &gt; 5,000)</p></li>
 <li><p>Blocking and stratification support</p></li>
-<li><p>Comprehensive balance diagnostics</p></li>
+<li><p>Balance diagnostics: standardized differences, variance ratios
+and KS tests</p></li>
 <li><p>Publication-ready output tables</p></li>
 </ul>
 </div>
@@ -794,11 +795,11 @@ matters</p></li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Greedy matching:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Greedy matching:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Time:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"seconds\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time: 0.03 seconds</span></span>
+<span><span class="co">#&gt;   Time: 0.05 seconds</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean distance:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">result_greedy</span><span class="op">$</span><span class="va">pairs</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Mean distance: 0.4667</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Speedup:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">time_optimal</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">/</span> <span class="va">time_greedy</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Speedup: 17.3 x</span></span></code></pre></div>
+<span><span class="co">#&gt;   Speedup: 10.4 x</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="greedy-strategies">Greedy Strategies<a class="anchor" aria-label="anchor" href="#greedy-strategies"></a>
@@ -883,9 +884,9 @@ default):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          strategy time_sec mean_distance total_distance</span></span>
-<span><span class="co">#&gt; elapsed    sorted        0        0.0912          18.24</span></span>
-<span><span class="co">#&gt; elapsed1 row_best        0        0.0968          19.36</span></span>
-<span><span class="co">#&gt; elapsed2       pq        0        0.0912          18.24</span></span></code></pre></div>
+<span><span class="co">#&gt; elapsed    sorted     0.00        0.0912          18.24</span></span>
+<span><span class="co">#&gt; elapsed1 row_best     0.00        0.0968          19.36</span></span>
+<span><span class="co">#&gt; elapsed2       pq     0.02        0.0912          18.24</span></span></code></pre></div>
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li><p>Default to <code>strategy = "row_best"</code> for good
@@ -2478,8 +2479,8 @@ smallest total distance at that size, and runs until both are proven or
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Optimization stages:</span></span>
 <span><span class="co">#&gt;     stage closed stopped_on n_nodes seconds     value     bound</span></span>
-<span><span class="co">#&gt;      size   TRUE optimality       1    0.00 20.000000 20.000000</span></span>
-<span><span class="co">#&gt;  distance  FALSE node_limit       9    0.09  5.325514  5.320702</span></span>
+<span><span class="co">#&gt;      size   TRUE optimality       1     0.0 20.000000 20.000000</span></span>
+<span><span class="co">#&gt;  distance  FALSE node_limit       9     0.1  5.325514  5.320702</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Unmatched left: 0</span></span>
 <span><span class="co">#&gt; Unmatched right: 60</span></span></code></pre></div>

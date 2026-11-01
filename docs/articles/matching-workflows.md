@@ -80,7 +80,7 @@ balance quality, and estimate the treatment effect credibly.
 
 ### Key Features
 
-- Automatic preprocessing with health checks and smart scaling
+- Automatic preprocessing with health checks and covariate scaling
 
 - Optimal matching via linear assignment algorithms
 
@@ -88,7 +88,8 @@ balance quality, and estimate the treatment effect credibly.
 
 - Blocking and stratification support
 
-- Comprehensive balance diagnostics
+- Balance diagnostics: standardized differences, variance ratios and KS
+  tests
 
 - Publication-ready output tables
 
@@ -558,11 +559,11 @@ cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.03 seconds
+#>   Time: 0.05 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 17.3 x
+#>   Speedup: 10.4 x
 ```
 
 ### Greedy Strategies
@@ -662,9 +663,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted        0        0.0912          18.24
-#> elapsed1 row_best        0        0.0968          19.36
-#> elapsed2       pq        0        0.0912          18.24
+#> elapsed    sorted     0.00        0.0912          18.24
+#> elapsed1 row_best     0.00        0.0968          19.36
+#> elapsed2       pq     0.02        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -1951,8 +1952,8 @@ summary(card_bb)
 #> 
 #> Optimization stages:
 #>     stage closed stopped_on n_nodes seconds     value     bound
-#>      size   TRUE optimality       1    0.00 20.000000 20.000000
-#>  distance  FALSE node_limit       9    0.09  5.325514  5.320702
+#>      size   TRUE optimality       1     0.0 20.000000 20.000000
+#>  distance  FALSE node_limit       9     0.1  5.325514  5.320702
 #> 
 #> Unmatched left: 0
 #> Unmatched right: 60

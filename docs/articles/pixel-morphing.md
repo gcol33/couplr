@@ -735,8 +735,10 @@ For dense tracking (\\n \> 5000\\), we can first cluster particles:
 
     RETURN full_tracks
 
-This yields efficient and robust trajectories even for very dense
-particle fields.
+Each local
+[`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
+call then works on the particles of one matched cluster pair, which
+keeps the assignment problems small even for very dense particle fields.
 
 ### Chemistry: Molecular Conformation Alignment
 

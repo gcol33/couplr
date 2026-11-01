@@ -800,7 +800,7 @@ END FOR
 RETURN full_tracks
 ```
 
-This yields efficient and robust trajectories even for very dense particle fields.
+Each local `lap_solve()` call then works on the particles of one matched cluster pair, which keeps the assignment problems small even for very dense particle fields.
 
 ### Chemistry: Molecular Conformation Alignment
 

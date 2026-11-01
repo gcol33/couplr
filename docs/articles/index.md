@@ -1,11 +1,11 @@
 # Articles
 
-### Getting Started
+### Get started
 
 - [Quick
   Start](https://gillescolling.com/couplr/articles/getting-started.md):
 
-### Core Topics
+### Core topics
 
 - [The Algorithm
   Collection](https://gillescolling.com/couplr/articles/algorithms.md):

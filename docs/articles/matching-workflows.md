@@ -551,18 +551,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 0.54 seconds
+#>   Time: 0.52 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.09 seconds
+#>   Time: 0.03 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 6 x
+#>   Speedup: 17.3 x
 ```
 
 ### Greedy Strategies
@@ -1952,7 +1952,7 @@ summary(card_bb)
 #> Optimization stages:
 #>     stage closed stopped_on n_nodes seconds     value     bound
 #>      size   TRUE optimality       1    0.00 20.000000 20.000000
-#>  distance  FALSE node_limit       9    0.14  5.325514  5.320702
+#>  distance  FALSE node_limit       9    0.09  5.325514  5.320702
 #> 
 #> Unmatched left: 0
 #> Unmatched right: 60

@@ -40,8 +40,8 @@ navbar:
     - news
     right:
     - search
-    - lightswitch
     - github
+    - lightswitch
   components:
     intro:
       text: Get started
@@ -159,10 +159,11 @@ reference:
   - print.sensitivity_analysis
   - starts_with("autoplot")
 articles:
-- title: Getting Started
-  contents: getting-started
-- title: Core Topics
-  navbar: Core Topics
+- title: Get started
+  contents:
+  - getting-started
+- title: Core topics
+  navbar: Core topics
   contents:
   - algorithms
   - matching-workflows
@@ -173,7 +174,8 @@ articles:
   - troubleshooting
 - title: Advanced
   navbar: Advanced
-  contents: pixel-morphing
+  contents:
+  - pixel-morphing
 news:
   releases:
   - text: Version 1.8.0

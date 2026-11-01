@@ -18,7 +18,7 @@ This vignette serves three purposes:
 **This vignette is different**: Unlike the other couplr documentation,
 it emphasizes *understanding* over *doing*. If you’re looking to solve a
 matching problem today, start with
-[`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)
+[`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md)
 or
 [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md).
 Come here when you want to understand *why* these algorithms work and
@@ -33,7 +33,7 @@ minds
 
 - Familiarity with
   [`lap_solve()`](https://gillescolling.com/couplr/reference/lap_solve.md)
-  ([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md))
+  ([`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md))
 
 - Basic complexity analysis (Big-O notation)
 
@@ -1018,7 +1018,7 @@ size and accuracy requirements.
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
+- [`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md) -
   Basic LAP solving
 
 - [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -

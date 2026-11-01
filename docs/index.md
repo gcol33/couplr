@@ -263,8 +263,8 @@ animation.
 ## Documentation
 
 Start with [Quick
-Start](https://gillescolling.com/couplr/articles/getting-started.html):
-a first match, scaling, balance and the joined pairs.
+Start](https://gillescolling.com/couplr/articles/couplr.html): a first
+match, scaling, balance and the joined pairs.
 
 - [Matching
   Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html):

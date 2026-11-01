@@ -958,7 +958,7 @@ becomes critical.
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
+- [`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md) -
   Basic couplr usage
 
 - [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md) -

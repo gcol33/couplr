@@ -74,7 +74,7 @@ This vignette serves three purposes:
 
 3. **Scientific applications**: Show how matching applies to ecology, physics, and chemistry
 
-**This vignette is different**: Unlike the other couplr documentation, it emphasizes *understanding* over *doing*. If you're looking to solve a matching problem today, start with `vignette("getting-started")` or `vignette("matching-workflows")`. Come here when you want to understand *why* these algorithms work and *when* approximations are appropriate.
+**This vignette is different**: Unlike the other couplr documentation, it emphasizes *understanding* over *doing*. If you're looking to solve a matching problem today, start with `vignette("couplr")` or `vignette("matching-workflows")`. Come here when you want to understand *why* these algorithms work and *when* approximations are appropriate.
 
 ### Who This Vignette Is For
 
@@ -82,7 +82,7 @@ This vignette serves three purposes:
 
 **Prerequisites**:
 
-- Familiarity with `lap_solve()` (`vignette("getting-started")`)
+- Familiarity with `lap_solve()` (`vignette("couplr")`)
 
 - Basic complexity analysis (Big-O notation)
 
@@ -1054,7 +1054,7 @@ The same algorithms that morph images smoothly also track particles in physics, 
 
 ## See Also
 
-- `vignette("getting-started")` - Basic LAP solving
+- `vignette("couplr")` - Basic LAP solving
 
 - `vignette("algorithms")` - Mathematical foundations
 

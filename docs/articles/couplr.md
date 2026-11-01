@@ -212,7 +212,7 @@ plot(result)
 
 ![Histogram showing distribution of match distances, with most matches
 having low distances near
-zero](getting-started_files/figure-html/plot-result-1.svg)
+zero](couplr_files/figure-html/plot-result-1.svg)
 
 The histogram shows how similar matched pairs are. A distribution
 concentrated near zero indicates good matches.

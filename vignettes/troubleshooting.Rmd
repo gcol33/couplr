@@ -703,7 +703,7 @@ sessionInfo()
 
 ## See Also
 
-- `vignette("getting-started")` - Basic usage
+- `vignette("couplr")` - Basic usage
 
 - `vignette("matching-workflows")` - Production matching pipelines
 

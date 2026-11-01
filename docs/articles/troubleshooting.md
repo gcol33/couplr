@@ -340,7 +340,7 @@ time_greedy <- system.time({
 })
 
 cat("Greedy matching (n=500):", round(time_greedy["elapsed"], 2), "seconds\n")
-#> Greedy matching (n=500): 0.02 seconds
+#> Greedy matching (n=500): 0 seconds
 cat("Quality (mean distance):", round(mean(result_greedy$pairs$distance), 4), "\n")
 #> Quality (mean distance): 0.2886
 ```
@@ -811,7 +811,7 @@ sessionInfo()
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
+- [`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md) -
   Basic usage
 
 - [`vignette("matching-workflows")`](https://gillescolling.com/couplr/articles/matching-workflows.md) -

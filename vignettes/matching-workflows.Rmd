@@ -42,7 +42,7 @@ This vignette follows a **complete workflow** from raw data to publication-ready
 
 **Prerequisites**:
 
-- Familiarity with basic `couplr` usage (`vignette("getting-started")`)
+- Familiarity with basic `couplr` usage (`vignette("couplr")`)
 
 - Understanding of causal inference concepts (treatment effects, confounding)
 
@@ -1838,7 +1838,7 @@ All `autoplot()` methods return `ggplot` objects, so you can add layers, themes,
 
 ## See Also
 
-- `vignette("getting-started")` - Basic LAP solving
+- `vignette("couplr")` - Basic LAP solving
 
 - `vignette("algorithms")` - Mathematical foundations
 

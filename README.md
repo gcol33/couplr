@@ -253,7 +253,7 @@ solve as an animation.
 ## Documentation
 
 Start with [Quick
-Start](https://gillescolling.com/couplr/articles/getting-started.html):
+Start](https://gillescolling.com/couplr/articles/couplr.html):
 a first match, scaling, balance and the joined pairs.
 
 - [Matching

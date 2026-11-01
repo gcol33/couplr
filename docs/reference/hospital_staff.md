@@ -186,7 +186,7 @@ groups.
 The dataset is designed to demonstrate progressively complex scenarios:
 
 **Basic LAP**
-([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)):
+([`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md)):
 
 - `basic_costs`: Simple 10x10 assignment
 
@@ -220,7 +220,7 @@ for basic assignment solving,
 for batch solving,
 [`match_couples`](https://gillescolling.com/couplr/reference/match_couples.md)
 for matching workflows,
-[`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md)
+[`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md)
 for introductory tutorial
 
 ## Examples

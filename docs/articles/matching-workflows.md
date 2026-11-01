@@ -32,7 +32,7 @@ working with observational data
 **Prerequisites**:
 
 - Familiarity with basic `couplr` usage
-  ([`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md))
+  ([`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md))
 
 - Understanding of causal inference concepts (treatment effects,
   confounding)
@@ -552,18 +552,18 @@ time_greedy <- system.time({
 cat("Optimal matching:\n")
 #> Optimal matching:
 cat("  Time:", round(time_optimal["elapsed"], 3), "seconds\n")
-#>   Time: 0.52 seconds
+#>   Time: 0.55 seconds
 cat("  Mean distance:", round(mean(result_optimal$pairs$distance), 4), "\n\n")
 #>   Mean distance: 0.3368
 
 cat("Greedy matching:\n")
 #> Greedy matching:
 cat("  Time:", round(time_greedy["elapsed"], 3), "seconds\n")
-#>   Time: 0.05 seconds
+#>   Time: 0.04 seconds
 cat("  Mean distance:", round(mean(result_greedy$pairs$distance), 4), "\n")
 #>   Mean distance: 0.4667
 cat("  Speedup:", round(time_optimal["elapsed"] / time_greedy["elapsed"], 1), "x\n")
-#>   Speedup: 10.4 x
+#>   Speedup: 13.7 x
 ```
 
 ### Greedy Strategies
@@ -663,9 +663,9 @@ comparison <- do.call(rbind, lapply(names(results), function(s) {
 
 print(comparison)
 #>          strategy time_sec mean_distance total_distance
-#> elapsed    sorted     0.00        0.0912          18.24
+#> elapsed    sorted     0.01        0.0912          18.24
 #> elapsed1 row_best     0.00        0.0968          19.36
-#> elapsed2       pq     0.02        0.0912          18.24
+#> elapsed2       pq     0.01        0.0912          18.24
 ```
 
 **Recommendation:**
@@ -1952,8 +1952,8 @@ summary(card_bb)
 #> 
 #> Optimization stages:
 #>     stage closed stopped_on n_nodes seconds     value     bound
-#>      size   TRUE optimality       1     0.0 20.000000 20.000000
-#>  distance  FALSE node_limit       9     0.1  5.325514  5.320702
+#>      size   TRUE optimality       1    0.00 20.000000 20.000000
+#>  distance  FALSE node_limit       9    0.11  5.325514  5.320702
 #> 
 #> Unmatched left: 0
 #> Unmatched right: 60
@@ -2232,7 +2232,7 @@ labels as needed.
 
 ## See Also
 
-- [`vignette("getting-started")`](https://gillescolling.com/couplr/articles/getting-started.md) -
+- [`vignette("couplr")`](https://gillescolling.com/couplr/articles/couplr.md) -
   Basic LAP solving
 
 - [`vignette("algorithms")`](https://gillescolling.com/couplr/articles/algorithms.md) -

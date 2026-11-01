@@ -1,10 +1,5 @@
 # Articles
 
-### Get started
-
-- [Quick
-  Start](https://gillescolling.com/couplr/articles/getting-started.md):
-
 ### Core topics
 
 - [The Algorithm

@@ -841,7 +841,7 @@ For comparison, optimal matching would require full distance matrix computation 
 
 ## See Also
 
-- `vignette("getting-started")` - Basic couplr usage
+- `vignette("couplr")` - Basic couplr usage
 
 - `vignette("matching-workflows")` - Production matching pipelines
 

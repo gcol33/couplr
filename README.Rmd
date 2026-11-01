@@ -166,7 +166,7 @@ lap_solve_kbest(cost, k = 3)
 
 ## Documentation
 
-Start with [Quick Start](https://gillescolling.com/couplr/articles/getting-started.html): a first match, scaling, balance and the joined pairs.
+Start with [Quick Start](https://gillescolling.com/couplr/articles/couplr.html): a first match, scaling, balance and the joined pairs.
 
 - [Matching Workflows](https://gillescolling.com/couplr/articles/matching-workflows.html): preprocessing, calipers, blocking, balance diagnostics and a treatment-effect estimate from start to end.
 - [The Algorithm Collection](https://gillescolling.com/couplr/articles/algorithms.html): the assignment problem and how each solver works.

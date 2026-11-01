@@ -15,7 +15,7 @@ Researchers matching treated and control units (observational studies) or plots,
 ### A1 The pairing with the smallest total distance
 - question: are these the best pairs?
 - answer: match_couples() solves the assignment exactly (Jonker-Volgenant by default); deterministic, certifiable; ties may depend on row order
-- home: vignettes/getting-started.Rmd, vignettes/algorithms.Rmd
+- home: vignettes/couplr.Rmd, vignettes/algorithms.Rmd
 - also: README (opening, Usage), DESCRIPTION
 
 ### A2 Large pools

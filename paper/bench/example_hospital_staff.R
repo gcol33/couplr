@@ -1,6 +1,6 @@
 ## The hospital_staff example of README.md: implicit matching with a
 ## certificate, balance diagnostics, calipers and a path over the maximum
-## distance. Prints every number README.md and the SoftwareX article quote.
+## distance. Prints the example results quoted in README.md and the JOSS paper.
 ##
 ## Reproducible via:  Rscript paper/bench/example_hospital_staff.R
 library(couplr)

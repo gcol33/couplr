@@ -27,7 +27,7 @@ figures:
 home:
   title: 'couplr: Optimal Pairing and Matching via Linear Assignment'
   description: |
-    20 LAP algorithms including Hungarian, Jonker-Volgenant, and Auction methods. Production-ready matching workflows with automatic preprocessing, greedy algorithms for large-scale problems, and comprehensive balance diagnostics.
+    Optimal one-to-one pairing of two groups by linear assignment, solved exactly in C++ with nineteen named solvers. Matching designs with calipers, blocks and scaling, balance diagnostics, and lazy or implicit cost storage for large pools.
 authors:
   Gilles Colling:
     href: https://github.com/gcol33

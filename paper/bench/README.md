@@ -37,6 +37,8 @@ nrow(m_cal$pairs)
 
 These restrictions leave 2,173 admissible pairs. A complete matching is infeasible; the largest matching covers 197 treated units. In implicit mode, Hall's condition identifies infeasibility: a set of rows has fewer distinct admissible columns than rows. The returned set provides evidence that those rows cannot all receive different partners.
 
+The 197-pair result answers a maximum-cardinality question. It is not a feasible solution of the complete-assignment problem, which requires every treated unit to receive a partner, and it does not carry an optimality certificate for that problem. An infeasibility witness and an optimality certificate establish different conclusions.
+
 ### Matching paths
 
 `match_path()` solves an increasing sequence of caliper values. Widening a caliper preserves the feasibility of the previous matching, which supplies a starting solution for the next value. Each result has its own certificate. Decreasing sequences are refused because they can remove pairs used in the current matching.
@@ -71,7 +73,21 @@ For each instance, I evaluated every matching on the same cost matrix and checke
 - [external-lalonde.csv](results/external-lalonde.csv): real-data matching costs and certificates.
 - [external-ENVIRONMENT.txt](results/external-ENVIRONMENT.txt): execution environment.
 
-The environment record dated 30 September 2026 lists Linux, R 4.3.3, couplr 1.8.0, clue 0.3.68, lpSolve 5.6.23, optmatch 0.10.8, MatchIt 4.8.1 and SciPy 1.18.1. The performance timings come from separate runs on an Apple M4 Pro with R 4.5.3, couplr 1.8.0, optmatch 0.10.8 and MatchIt 4.7.2.
+The current external-validation environment record dated 21 October 2026 lists Apple ARM macOS, R 4.5.3, couplr 1.9.0, clue 0.3.68, lpSolve 5.6.23, optmatch 0.10.8, MatchIt 4.7.2 and SciPy 1.17.1. The performance environment record lists the same R and matching-package versions on an Apple M4 Pro. These records accompany the stored results; reruns should retain their own environment records.
+
+### LaLonde interpretation and solver settings
+
+The LaLonde comparison matches 185 treated units to 429 available controls without replacement. On the common cost matrix, the totals in `external-lalonde.csv` are 304.042249060069 for couplr and 304.043164044937 for both MatchIt and optmatch. The calls use `matchit(..., method = "optimal", distance = "mahalanobis", ratio = 1)` and `pairmatch(..., controls = 1)` with no explicit override of the optimization tolerance. These are comparisons at the recorded package defaults, not an experiment isolating the effect of solver tolerance.
+
+Only the couplr pairing passes the exact certificate on this common matrix. That numerical distinction does not imply a better statistical design: absolute standardized mean differences agree to three decimal places and the Black-race indicator remains at 1.053. The data contain 156 Black treated participants and 87 Black controls. This shortage prevents a balanced match on that indicator when all treated units must be retained with distinct controls. The paper uses this example to separate optimization accuracy from covariate balance, not to claim a substantive balance advantage.
+
+## Assignment certificates
+
+For a rectangular assignment with $n<m$, every row must be matched once and every column at most once. With finite admissible costs $C_{ij}$ on edges $E$, the dual maximizes $\sum_i u_i+\sum_j v_j$ subject to $u_i+v_j\le C_{ij}$ on $E$ and $v_j\le0$. The bipartite assignment polytope is integral. A primal-feasible assignment and dual-feasible potentials establish optimality when matched edges are tight and unused columns have $v_j=0$. For a square problem, column constraints can be equalities and both sets of potentials are unrestricted.
+
+`verify_assignment()` checks primal feasibility, dual feasibility, and complementary slackness. It evaluates reduced-cost signs with floating-point expansions. If rounded potentials pass numerical checks but fail exact conditions, it attempts to recover exact potentials from the matching through shortest-path calculations in expansion arithmetic. The certificate identifies whether its conclusion is exact or uses a stated tolerance; exactness is relative to the supplied costs, including rounding during distance construction. Without supplied potentials, verification obtains them through another solve with `assignment_duals()`.
+
+See [the certificate implementation and documentation](../../R/lap_certify.R) and the Shewchuk (1997) reference in [the paper bibliography](../joss/paper.bib). Agreement of recorded objective values alone is not an exact certificate. In particular, `implicit-results.csv` records `certified_optimal` and the duality gap but does not separately record the certificate's arithmetic mode; the paper describes those runs as certified without asserting that this CSV establishes exact arithmetic for every run.
 
 ## Solver selection and diagnostics
 
@@ -87,9 +103,28 @@ The [package documentation](https://gillescolling.com/couplr/) describes the add
 
 This directory contains the scripts for the memory, scaling and candidate-structure experiments, with outputs in [results](results). The performance comparisons cover complete workflows from input data to matched pairs. optmatch uses minimum-cost flow; couplr uses Jonker–Volgenant for the dense one-to-one comparisons.
 
-Memory figures report peak resident memory above the baseline of a fresh R session loading the same packages. Timing runs use one processor core and a single-threaded Basic Linear Algebra Subprograms (BLAS) library. The scripts record a 600-second limit for each timing run. The 22.1-second implicit-mode and 60.6-second lazy-mode results at 50,000 units are individual runs.
+Memory figures report peak resident memory above the baseline of a fresh R session loading the same packages. Timing runs use one processor core and a single-threaded Basic Linear Algebra Subprograms (BLAS) library. The shared timing helper first runs each workflow in a forked feasibility probe with a 600-second limit. Successful probes are followed by timing repetitions in the parent process, without a separate enforced timeout. This helper requires a Unix platform. The 22.171-second implicit-mode and 61.597-second lazy-mode results at 50,000 units in `implicit-results.csv` are individual runs.
+
+### Scaling table protocol
+
+The main comparison uses one-to-one Mahalanobis matching with pooled within-group covariance, eight covariates, and approximately one treated unit per two controls. All workflows materialize distances. The optmatch size limit is disabled. Each instance is represented by its fastest timing repetition; the paper reports the median of those instance-level values. `scaling-results.csv` also records the quartiles and range across instances.
+
+| Total observations | Independent instances | Timing repetitions per instance |
+|-------------------:|----------------------:|--------------------------------:|
+| 500 | 5 | 5 |
+| 2,000 | 5 | 5 |
+| 5,000 | 5 | 3 |
+| 10,000 | 3 | 3 |
+| 20,000 | 3 | 1 |
+| 50,000 | 3 | 1 |
+
+These are the planned counts; a failed feasibility probe contributes an error or timeout rather than a timing. The table's `overflow` entry records `result would exceed 2^31-1 bytes` reached through MatchIt. A `timeout` records an untimed forked feasibility probe exceeding 600 seconds; it is not a measured 600-second solve. Successful probes precede timing repetitions in the parent process. The parent repetitions have no separately enforced timeout. MatchIt delegates this matching method to optmatch, so those columns are related workflows rather than independent solver families. Direct assignment solvers are compared for correctness in the external-validation experiment.
+
+### Candidate-search performance across problem structures
+
+`bench_implicit_grid.R` and `results/implicit-grid-results.csv` vary point-cloud geometry, dimension, sample size, and calipers. The grid reports stored candidate pairs, evaluated distances, elapsed time, and certification separately. For the heavy-tailed cloud with 10,000 observations, eight covariates, and no caliper, implicit mode retains a median 1.1699% of possible pairs while performing distance evaluations equivalent to 2.009 complete pair sets. Its median speedup over lazy mode is 1.00. The result demonstrates compact storage without a timing advantage on that case. The contested cloud provides a stronger stress test: at the same size and dimension, it retains a median 73.318% of possible pairs, evaluates the equivalent of 10.343 complete pair sets, and takes 139.39 seconds against 422.505 seconds for lazy mode. These summaries use five instances. Candidate storage can therefore approach the full graph even while implicit mode remains faster than lazy mode. The grid complements the main scaling comparison rather than supporting a universal speedup claim.
 
 ## Running the scripts
 
-`Rscript paper/bench/run_benchmarks.R` runs the benchmarks the JSS article reports, in order, on one machine; name stages to run a subset (`Rscript paper/bench/run_benchmarks.R memory implicit`) and add `--fresh` to re-measure instead of resuming from the CSVs in `results/`. The scripts work from any directory: inside this repository they time the source tree, elsewhere the installed package, and they write only to `results/` and `logs/` beside themselves. `Rscript paper/bench/example_hospital_staff.R` runs the extended example.
+`Rscript paper/bench/run_benchmarks.R` runs the benchmarks the JOSS paper reports, in order, on one machine; name stages to run a subset (`Rscript paper/bench/run_benchmarks.R memory implicit`) and add `--fresh` to re-measure instead of resuming from the CSVs in `results/`. The scripts work from any directory: inside this repository they time the source tree, elsewhere the installed package, and they write only to `results/` and `logs/` beside themselves. `Rscript paper/bench/example_hospital_staff.R` runs the extended example.
 

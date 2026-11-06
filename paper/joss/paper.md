@@ -14,288 +14,239 @@ authors:
 affiliations:
   - name: Department of Botany and Biodiversity Research, University of Vienna, Austria
     index: 1
-date: 20 July 2026
+date: 2 November 2026
 repository: https://github.com/gcol33/couplr
 bibliography: paper.bib
 header-includes:
+  - \usepackage{lineno}
   - \rightlinenumbers
 ---
 
 # Summary
 
-`couplr` [@couplr] is an R package for optimal pairing, matching, and
-assignment. It solves linear assignment problems: given two sets of objects
-and a cost for each possible pair, choose the pairs with minimum total cost.
-That operation appears in causal inference, experimental design, task
-allocation, sample pairing, and image alignment.
-
-The package provides two entry points. A high-level data-frame interface
-prepares data, builds distances, enforces constraints, and returns
-analysis-ready matched output for optimal, greedy, propensity-score, full,
-coarsened-exact, subclassification, and cardinality matching, with balance
-diagnostics and Rosenbaum sensitivity bounds [@Rosenbaum2002]. A low-level
-interface exposes the solvers directly when the user already has a cost
-matrix. An automatic dispatcher routes each problem to one of 19 internal
-solvers based on shape, sparsity, cost type, and size, so the same package
-supports statistical matching workflows and general-purpose assignment
-tasks.
+`couplr` [@couplr] is an R package for pairing objects from two sets while
+minimizing their total dissimilarity. It supports matching treated and
+control subjects, pairing ecological samples, and assigning tasks to
+resources. Large matching problems can require more memory for pairwise
+distances than for the observations themselves. `couplr` reduces this
+storage requirement by computing distances when needed or retaining only
+candidate pairs, and checks whether the returned assignment is optimal for
+the complete problem. Users can construct matches from data frames or
+supply a cost matrix, impose restrictions on eligible pairs, and assess
+the balance of the resulting groups.
 
 # Statement of need
 
-A serious matching workflow in R today threads three packages by hand: one
-for the assignment solver, one for preprocessing and constraint construction,
-one for balance diagnostics. Any non-default choice (exact blocking,
-calipers on multiple variables, pairwise distances on observed covariates,
-variable-ratio full matching, replacement matching, direct control over the
-solver) pulls the user into a different corner of that toolchain.
+Matching two samples requires choosing among many possible pairs. With
+$n$ observations in one sample and $m$ in the other, a full distance matrix
+contains $nm$ entries. Storing these distances can become the main
+computational constraint as sample sizes increase. Restricting the search
+to nearby candidates reduces storage, but an assignment that is optimal
+among those candidates may still be improved by pairs omitted from the
+search.
 
-`couplr` packages the workflow around the linear assignment problem. A
-causal-inference user starts with a data frame, observed covariates, and a
-treatment indicator; an operations-research user starts with a cost matrix
-already in hand. The same solver core serves both.
+`couplr` addresses this problem by combining reduced cost storage with
+explicit solution verification. Researchers can solve assignments without
+retaining the full distance matrix and check the result against the
+complete set of admissible pairs. Calipers and blocking specify which
+pairs are admissible; verification establishes the quality of the
+assignment under those restrictions. Balance diagnostics then assess
+whether the resulting groups provide the intended statistical comparison.
 
 # State of the field
 
-`MatchIt` [@MatchIt], `optmatch` [@optmatch], `Matching` [@Matching], and
-`designmatch` [@designmatch] handle preprocessing and matching for causal
-inference; `cobalt` supplies cross-package balance diagnostics [@cobalt].
-For the assignment problem itself, R users reach for `clue` (Hungarian via
-`solve_LSAP`) or `lpSolve` (general LP) [@clue; @lpSolve]. The
-causal-inference packages assume a treated/control framing and route through
-a single fixed back-end (`optmatch` for `MatchIt`, network flow for
-`optmatch`, genetic search for `Matching`, integer programming via
-commercial solvers for `designmatch`); the solver-focused packages expose
-one algorithm each without the preprocessing, constraint, or diagnostic
-machinery a matching workflow needs.
+Existing R packages support both statistical matching and direct
+assignment. `MatchIt` [@MatchIt] provides matching and subclassification,
+including optimal pair and full matching through `optmatch` and genetic
+matching through `Matching`. `optmatch` [@optmatch] supports network-flow
+matching and sparse distance structures; `Matching` [@Matching] provides
+multivariate and propensity-score matching; `designmatch` [@designmatch]
+supports explicit balance constraints. `cobalt` [@cobalt] provides
+diagnostics across packages. For supplied cost matrices,
+`clue::solve_LSAP()` solves linear assignment and `lpSolve` supports
+linear and integer programming [@clue; @lpSolve].
 
-`couplr` combines both. It treats covariate distance as the primary entry
-point rather than a side option behind a propensity score, and ships 19
-assignment solvers spanning classical dense assignment, sparse and
-rectangular variants, k-best [@Murty1968], bottleneck, min-cost flow, and
-entropy-regularized transport, with an automatic dispatcher. We are not aware
-of a prior publicly available open-source implementation of the
-Gabow–Tarjan bit-scaling assignment algorithm
-[@GabowTarjan1989]; the algorithm's
-$O(\sqrt{n}\, m \log(n\,C_{\max}))$ bound has stood since 1989 without a
-library counterpart.
+Reducing storage while checking omitted pairs requires distance evaluation
+to remain available during the solve. `couplr` therefore couples its
+distance representation to an assignment layer that can generate
+candidates, identify omitted pairs that could improve a solution, and
+verify the result against the complete problem. Integrating candidate
+generation with the assignment solver gives the search direct access to
+distance calculations and dual values as the candidate graph expands.
+Conversion methods and registered `cobalt` methods connect its results
+to existing statistical workflows.
 
 # Software design
 
-The package has three layers. The first validates inputs and converts data
-frames into cost matrices, handling scaling, missing-data checks, and user
-weights. The second solves the linear assignment problem: given a cost matrix
-$C \in \mathbb{R}^{n \times m}$ with entries $C_{ij}$ for row
-$i \in \{1, \ldots, n\}$ and column $j \in \{1, \ldots, m\}$, find a binary
-assignment matrix $X \in \{0,1\}^{n \times m}$ ($X_{ij} = 1$ iff row $i$ is
-matched to column $j$) solving
+Figure \ref{fig:workflow} outlines the matching workflow, from data and
+restrictions to matched pairs and diagnostics.
+
+![Matching with reduced storage and explicit verification. Three cost representations serve the same objective. In implicit mode, omitted-pair checks expand the candidate set until verification succeeds or the search stops without certification. Assignment certificates and balance diagnostics assess different properties.\label{fig:workflow}](figures/matching-concept.pdf)
+
+The design separates the matching objective from the way costs are
+stored. Users first specify variables, a distance measure, and restrictions
+on eligible pairs. Calipers limit differences in individual variables,
+maximum distances limit overall dissimilarity, and blocking partitions the
+observations into separate assignments. Available distances include
+Euclidean, Manhattan, and Mahalanobis distances, alongside user-supplied
+functions.
+
+For one-to-one assignment, orient the problem so that $n \le m$, and let
+$E$ contain the admissible pairs with finite costs $C_{ij}$. The solver
+seeks a binary matrix $X$ satisfying
 
 $$
-\min_{X} \; \sum_{i,j} C_{ij} X_{ij}
-\quad \text{subject to} \quad
-\sum_{j} X_{ij} \le 1 \ \forall i, \quad
-\sum_{i} X_{ij} \le 1 \ \forall j.
+\min_X \sum_{(i,j)\in E} C_{ij}X_{ij},\qquad
+\sum_{j:(i,j)\in E}X_{ij}=1\ \forall i,\qquad
+\sum_{i:(i,j)\in E}X_{ij}\le1\ \forall j.
 $$
 
-The bipartite structure makes the LP relaxation integral (Birkhoff–von
-Neumann), so row potentials $u_i \in \mathbb{R}$ ($i = 1, \ldots, n$) and
-column potentials $v_j \in \mathbb{R}$ ($j = 1, \ldots, m$) satisfying
+Every row must receive a distinct partner. When the restrictions make
+this impossible, a maximum-cardinality matching instead identifies how
+many rows can receive partners; it is not a feasible solution of the
+complete-assignment problem.
 
-$$
-u_i + v_j \le C_{ij} \quad \forall (i,j),
-\qquad
-u_i + v_j = C_{ij} \quad \text{whenever } X_{ij} = 1
-$$
+Three storage modes offer different memory and computation trade-offs.
+Dense mode stores the full cost matrix. Lazy mode computes distances from
+the features when requested, saving storage at the expense of repeated
+distance evaluation. Implicit mode initially retains a restricted set of
+candidate pairs, solves that assignment, and checks whether omitted pairs
+could improve it. Improving candidates are added until the complete
+problem is verified or the search terminates without certification.
+The certificate records which conclusion was reached. Checking omitted
+pairs can require repeated scans of the complete pair set, so storage
+savings need not translate into fewer distance evaluations.
 
-certify optimality; `assignment_duals()` returns $(u, v)$. Worst-case time
-is $O(n^3)$ for Hungarian and Jonker–Volgenant,
-$O(n^3 \log(n\,C_{\max}))$ for cost scaling, and
-$O(\sqrt{n}\, m \log(n\,C_{\max}))$ for Gabow–Tarjan bit scaling, where
-$C_{\max} = \max_{i,j} |C_{ij}|$ is the largest cost magnitude; the
-dispatcher selects among solvers using $n$, $m$, sparsity, and
-rectangularity. All 19 solvers
-are implemented from scratch in C++ via Rcpp, so the package
-adds no external solver dependency: the Hungarian method [@Kuhn1955],
-Jonker–Volgenant shortest augmenting paths [@JonkerVolgenant1987], auction
-algorithms [@Bertsekas1988], cost scaling [@GoldbergKennedy1995],
-Gabow–Tarjan scaling [@GabowTarjan1989], push-relabel min-cost flow ideas
-[@GoldbergTarjan1988], network simplex, Ramshaw–Tarjan rectangular
-assignment [@RamshawTarjan2012], and related specialized solvers. Each optimal solver
-is checked against brute-force enumeration over randomised integer,
-fractional, rectangular, maximizing, and forbidden-edge instances, so the
-shipped path and the verified path are the same implementation. The third
-layer returns structured result objects with pairs, costs, diagnostics,
-weights, subclass information, and conversion methods for other R matching
-tools.
+Verification checks whether any admissible assignment could have a lower
+total cost. Dual potentials supplied by `assignment_duals()` define a
+lower bound, and `verify_assignment()` checks feasibility and whether the
+assignment attains that bound. Floating-point expansions support exact
+checks [@Shewchuk1997]. The certificate distinguishes exact optimality for
+the supplied costs from a numerical conclusion within a stated tolerance.
+Passing the potentials with the assignment avoids a second solve to
+obtain them; the benchmark documentation gives the dual conditions and
+exact-potential recovery procedure.
 
-Distances cover Euclidean, Manhattan, Mahalanobis (pooled within-group
-covariance by default), Chebyshev, and squared-Euclidean metrics, or a
-user-supplied function; propensity-score distances use a separate entry
-point. Three constraint mechanisms reshape the cost matrix before it reaches
-the solver: a global `max_distance` ceiling, per-variable calipers, and
-forbidden pairs marked as non-finite entries, which every solver recognises
-as a missing edge and uses to short-circuit on infeasibility. Blocking either reuses a factor variable or constructs
-blocks via $k$-means or hierarchical clustering, and the solver is called
-once per block.
+Separating solver selection from storage allows users to change memory
+requirements while retaining the matching objective. Jonker--Volgenant
+[@JonkerVolgenant1987] is the general default: regime benchmarks did not
+support a consistent benefit from selecting solvers by sparsity or matrix
+shape alone. Automatic selection also uses specialized routines for very
+small matrices and constant or binary costs. Alternative solvers,
+k-best [@Murty1968] and bottleneck assignments, and additional statistical
+matching designs are documented with the package.
 
-The dispatcher in `lap_solve(method = "auto")` chooses by shape, sparsity,
-cost type, and size: dense problems use Jonker–Volgenant; matrices over half
-forbidden use its sparse variant `lapmod`; strongly rectangular problems
-avoid padding through shortest augmenting paths; binary and very small
-problems use specialized solvers. Other solvers are named explicitly.
-Figure \ref{fig:benchmark} shows median solve time across problem sizes for
-all 19 solvers.
+The returned pairs can then be assessed as a statistical design.
+Diagnostics report standardized mean differences, variance ratios, and
+Kolmogorov--Smirnov statistics; Rosenbaum bounds assess sensitivity to
+unmeasured confounding for supported paired analyses [@Rosenbaum2002].
+These checks complement assignment verification because a minimum-distance
+matching need not balance every covariate. Outcome estimation remains a
+separate step that must reflect the chosen design [@Stuart2010].
 
-Cost storage is a second automatic choice. Under `memory_mode = "lazy"` each
-cost is evaluated from the underlying feature data as the solver requests it,
-so the footprint follows the covariates rather than the pairs: 100,000 units
-on 100 covariates hold as 80 MB of features where the dense matrix needs
-80 GB. Lazy evaluation covers Jonker–Volgenant and auction with the built-in
-metrics, calipers, `max_distance`, and a user-supplied distance function,
-and returns the same assignment as the dense path. The default `"auto"`
-weighs the estimated dense footprint against available system memory and
-switches before an oversized allocation.
+# Research impact statement
 
-![(a) Median wall-clock solve time versus problem size $n$ for all 19
-assignment solvers in `couplr`, arranged as five small-multiple panels
-grouped by algorithm family (JV / augmenting-path, Auction, Cost-scaling,
-Flow-based, and Other). Within each panel, individual solvers share a
-single family colour and are distinguished by line style; all panels share
-log--log axes. Median of 5 replicates on a single core of an Apple M4 Pro;
-integer cost matrices with entries in $[1, 10{,}000]$. (b) Absolute standardized mean
-differences on the LaLonde NSW data (185 treated, 429 control, eight
-covariates) before and after 1-to-1 optimal Mahalanobis matching. After
-matching, `couplr`, `MatchIt`, and `optmatch` produce identical $|SMD|$ to
-three decimal places, so a single matched point per covariate is shown.
-Five of the eight covariates fall below the 0.1 balance threshold (dashed
-line), `married` and `re74` just above it; the `race_Black` indicator is
-reduced from $1.757$ to $1.053$, a residual no
-1-to-1 matcher can resolve here. Reproducible from `paper/bench/make-figure.R`
-and `paper/bench/bench_lalonde.R`.
-\label{fig:benchmark}](figures/benchmark.png){width=100%}
+The reproducible benchmarks demonstrate substantial memory savings while
+retaining checkable solutions. In a separate memory experiment with
+20,000 observations, implicit mode
+reduced peak resident memory above the loaded-session baseline from
+1,534.5 MB in dense mode to 137.1 MB, while elapsed time increased from
+3.79 to 4.38 seconds. Lazy mode reduced memory further, to
+25.5 MB, but required 6.46 seconds. These individual runs illustrate the
+choice between storing and recomputing distances (Figure \ref{fig:memory}). In a separate experiment,
+implicit assignments were certified at all six sizes from 500 to 50,000
+observations and agreed in objective value with lazy mode. At the largest
+size, implicit mode stored 1.60 million of 555.56 million possible pairs.
 
-`balance_diagnostics()` reports standardized mean differences, variance
-ratios, and Kolmogorov–Smirnov statistics, summarised through
-`balance_table()`; `sensitivity_analysis()` reports the critical Rosenbaum
-$\Gamma$ at which inference would no longer be significant [@Rosenbaum2002].
-Blocked designs surface per-block diagnostics so imbalance is not hidden by
-averaging across strata.
+![Memory savings and their runtime cost. (A) Peak resident memory above the loaded-session baseline, on a logarithmic scale. (B) Memory and elapsed time at 20,000 observations, on linear scales. Each measurement is an individual run with approximately one treated unit per two controls; percentages compare implicit with dense mode.\label{fig:memory}](figures/memory-tradeoff.pdf)
 
-# Quickstart
+The storage advantage depends on the geometry of the data. A broader
+experiment varies geometry, dimension, sample size, and calipers. The
+following results are medians across five instances with 10,000
+observations and eight covariates. The heavy-tailed case retained
+1.17% of possible pairs but took about as long as lazy mode. In the
+contested case, where observations compete for nearby partners, the
+candidate graph expanded to 73.3% of possible pairs and distance
+evaluations reached 10.3 times the number of possible pairs. Implicit
+mode nevertheless completed in 139 seconds compared with 423 seconds for
+lazy mode. Storage savings, distance evaluations, and runtime therefore
+describe distinct aspects of performance.
 
-The package ships with `hospital_staff`, a small example dataset for a
-treated/control workflow that runs without external data.
+Exact certificates confirmed optimality on all 120 common-cost validation
+matrices, covering integer, uniform, and Euclidean costs in square and
+rectangular problems. Recorded objective values agreed with `clue` and
+SciPy on all instances and with `lpSolve` on the 60 smaller square
+instances tested. These comparisons complement small-instance
+brute-force tests. The accompanying synthetic hospital-staff example
+demonstrates how verification handles restrictions: implicit mode matches
+all 200 treated units using 10,800 of 60,000 possible pairs, while tighter
+restrictions leave at most 197 units matchable. An infeasibility witness
+identifies a set of rows with too few admissible partners to cover them all.
 
-```r
-library(couplr)
+Certification adds modest runtime to the dense matching workflow.
+For 20,000 observations, dense `couplr` completed one-to-one
+Mahalanobis matching in 3.78 seconds, or 4.61 seconds with certification,
+compared with 288.50 seconds for `optmatch` (Table \ref{tab:scaling}).
+These timings include distance construction and output preparation;
+`MatchIt` delegates the optimization to `optmatch`. The benchmark uses
+pooled within-group covariance and materializes distances in all
+workflows.
 
-data(hospital_staff)
-treated <- transform(hospital_staff$nurses_extended,   id = nurse_id)
-control <- transform(hospital_staff$controls_extended, id = nurse_id)
-
-# Optimal one-to-one matching on three pre-treatment covariates, with
-# automatic scaling and solver selection.
-m <- match_couples(
-  left  = treated,
-  right = control,
-  vars  = c("age", "experience_years", "certification_level"),
-  auto_scale = TRUE
-)
-
-# Balance on matching variables; analysis-ready paired output.
-bal <- balance_diagnostics(m, treated, control,
-  vars = c("age", "experience_years", "certification_level"))
-balance_table(bal)
-matched <- join_matched(m, treated, control)
-```
-
-On this dataset the matched pairs achieve absolute standardized differences
-below $0.15$ on all three matching covariates. The same `match_couples()`
-call accepts `calipers`, `max_distance`, `block_id`, `method`, `strategy`,
-`replace`, and `ratio` for harder problems. Identification also requires conditional
-ignorability, positivity, and SUTVA; the matched output is designed to feed
-into an outcome regression for a doubly robust estimate [@Stuart2010].
-
-# Comparison against established alternatives
-
-We compare `couplr` against `MatchIt` and `optmatch`. The matching task is
-fixed: 1-to-1 optimal matching on a Mahalanobis distance with pooled
-within-group covariance, the convention
-`optmatch::match_on()` uses by default and `couplr` adopts as of 1.3.1. On
-the canonical Lalonde NSW dataset [@LaLonde1986; @DehejiaWahba1999] (185
-treated, 429 control, eight covariates) all three packages produce identical
-absolute standardized mean differences to three decimal places
-(Figure \ref{fig:benchmark}b), with the remaining seven covariates at
-$\le 0.128$ [@Stuart2010]; per-covariate values are in
-`paper/bench/results/lalonde-per-covariate.csv`.
-
-Table \ref{tab:scaling} reports median wall-clock time on synthetic
-problems with the same eight-covariate structure, at six sizes from
-$n = 500$ to $n = 50{,}000$ with treated:control = 1:2. The margin widens
-with problem size: `couplr` is $9\times$ faster than `optmatch` at
-$n = 500$ and $23\times$ faster at $n = 20{,}000$, where it finishes in
-$12.6$ seconds against $4.8$ minutes, and $11\times$ to $24\times$ faster
-than `MatchIt` up to $n = 10{,}000$, the largest size `MatchIt` completes
-before `MatchIt::matchit(method = "optimal")` aborts inside the `optmatch`
-backend with an integer-size overflow. At $n = 50{,}000$ `couplr` completes
-in $79$ seconds; both alternatives exceed the $300$-second per-replicate
-cap. `couplr` reaches large dense problems through its dispatcher, which
-routes them to Jonker–Volgenant [@JonkerVolgenant1987]. Under
-`memory_mode = "lazy"` the same $n = 50{,}000$ match completes in $61$
-seconds without ever building the matrix, returning the assignment the dense
-path returns (`paper/bench/bench_scaling_lazy.R`).
-
-Table: 1-to-1 optimal Mahalanobis matching, median wall-clock by problem
-size. Treated:control = 1:2; eight covariates; pooled within-group
-covariance; single core, single-threaded BLAS, on an Apple M4 Pro.
-Median of 5 / 5 / 5 / 3 / 3 / 3 instances respectively for the rows;
-`optmatch_max_problem_size` set to `Inf` for $n \ge 10{,}000$. `couplr` is
-timed with `memory_mode = "dense"`, so all three packages materialize the
-distance matrix; the lazy path is reported in the text.
-`int overflow` marks an integer-size overflow
-(\texttt{result would exceed 2\textasciicircum 31-1 bytes}) inside the
-`optmatch` backend reached through `MatchIt`; `timeout` marks a replicate
-exceeding the $300$-second cap. Reproducible from
-`paper/bench/bench_scaling.R` and `paper/bench/bench_scaling_alternatives.R`.
+Table: Complete matching workflow times in seconds, including distance
+construction. Medians across independent instances, using the fastest
+repetition per instance. The second timing column adds solution verification.
 \label{tab:scaling}
 
-| Problem size ($n_t + n_c$) | `couplr` |  `optmatch`  |   `MatchIt`  |
-| :------------------------- | -------: | -----------: | -----------: |
-| $167 + 333$                |   11 ms  |        98 ms |       115 ms |
-| $667 + 1{,}333$            |  114 ms  |       1.64 s |       2.03 s |
-| $1{,}667 + 3{,}333$        |  679 ms  |       12.0 s |       14.8 s |
-| $3{,}333 + 6{,}667$        |  2.93 s  |       58.5 s |       71.2 s |
-| $6{,}667 + 13{,}333$       |  12.6 s  |        289 s | int overflow |
-| $16{,}667 + 33{,}333$      |  78.8 s  |      timeout |      timeout |
+| Total observations | `couplr` | With certificate | `optmatch` | `MatchIt` |
+|-------------------:|---------:|-----------------:|-----------:|----------:|
+| 500                | 0.0033   | 0.0037           | 0.0965     | 0.1161    |
+| 2,000              | 0.0331   | 0.0405           | 1.6336     | 2.0696    |
+| 5,000              | 0.2089   | 0.2528           | 12.0799    | 14.9241   |
+| 10,000             | 0.9299   | 1.1649           | 58.7787    | 71.3423   |
+| 20,000             | 3.7817   | 4.6087           | 288.4989   | overflow  |
+| 50,000             | 25.0925  | 31.2177          | timeout    | timeout   |
 
-Table \ref{tab:capability} summarises feature coverage.
+Treated:control is approximately 1:2, with eight covariates and three to
+five independent instances per size. All workflows materialize distances.
+Runs use one core and single-threaded BLAS on an Apple M4 Pro, R 4.5.3,
+`couplr` 1.9.0, `optmatch` 0.10.8, and `MatchIt` 4.7.2.
+The optmatch size limit is disabled. `overflow` denotes a size-limit error
+reached through MatchIt; `timeout` denotes a feasibility probe exceeding
+600 seconds. The benchmark documentation provides the repetition counts,
+timing protocol, error text, and quartiles across instances.
 
-Table: Differentiating feature coverage; rows where all three packages
-support the feature (covariate distance, propensity-score matching, exact
-blocking, cost-matrix entry point) are omitted. \emph{partial} indicates the
-feature is achievable but not via a first-class user-facing API.
-\label{tab:capability}
+An optimal assignment can still reveal a limitation of the statistical
+design. In the LaLonde job-training example [@LaLonde1986;
+@DehejiaWahba1999], matching all 185 treated units to distinct controls
+from 429 available candidates leaves an absolute standardized mean
+difference of 1.053 for the indicator for Black participants. The
+treated sample includes 156 Black participants, but only 87 Black
+controls are available. This shortage makes balance on the indicator
+unattainable under complete one-to-one matching, regardless of the solver.
+Balance agrees to three decimal places across `couplr`, `MatchIt`, and
+`optmatch`, despite a small difference in assignment cost. The diagnostic
+shows how much imbalance remains in the selected pairs (Figure \ref{fig:balance}).
 
-| Feature                                | `couplr` | `MatchIt` | `optmatch` |
-| :------------------------------------- | :------: | :-------: | :--------: |
-| Per-variable calipers (named vector)   | yes      | yes       | partial    |
-| Rectangular $n_t \neq n_c$, no padding | yes      | partial   | partial    |
-| Sparse-cost support                    | yes      | no        | yes        |
-| k-best assignments (Murty)             | yes      | no        | no         |
-| Bottleneck (minimax) assignment        | yes      | no        | no         |
-| Rosenbaum sensitivity bounds           | yes      | no        | no         |
+![Optimal matching does not ensure covariate balance. (A) LaLonde covariate balance before and after complete one-to-one matching; the shaded band and dashed line mark absolute standardized mean differences up to 0.1. Matched values agree to three decimal places across the three packages. (B) The shortage of Black controls prevents balance on this indicator when all treated participants must be retained.\label{fig:balance}](figures/lalonde-balance.pdf)
 
-<!-- The AI usage disclosure below is a required JOSS section and is excluded
-from the 750–1750 word target. -->
+Scripts, individual measurements, environment records, and extended
+examples accompany the paper under `paper/bench`. The scaling table is
+drawn from `results/scaling-results.csv`; the benchmark documentation
+provides the timing protocol, variation across instances, and solver
+settings.
 
 # AI usage disclosure
 
-The package was developed using a modern AI-assisted developer stack. The
-author designed the package architecture, made the algorithm-selection choices,
-and wrote the implementation in a TUI-first command-line workflow, using a self-hosted
-Qwen3-Coder-Next-REAP-48B-A3B model (mixture-of-experts coder, ~3B active per
-token, 4-bit MLX quantization, running on a single Apple M4 Pro) for code
-completion, refactoring, and boilerplate generation through Anthropic's Claude Code CLI,
-with requests routed to the local model and no cloud inference.
+The author developed the software with AI assistance, designed its
+architecture, and selected its algorithms. A self-hosted
+Qwen3-Coder-Next-REAP-48B-A3B model, accessed through the Claude Code CLI,
+assisted the author's development through code completion, refactoring,
+and boilerplate generation. Large language models accessed through u:ai,
+the University of Vienna's AI service, supported grammar and structure
+checking and manuscript revision. The author reviewed and edited the
+suggested wording and code and takes full responsibility for the code,
+results, and conclusions. Validation included brute-force comparisons,
+external-solver comparisons, and explicit optimality checks.
 
 # Acknowledgements
 

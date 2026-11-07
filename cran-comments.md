@@ -32,11 +32,20 @@ There are no reverse dependencies on CRAN.
 
 ## R CMD check results
 
-PENDING
+0 errors | 0 warnings | 1 note
+
+The note is the incoming-feasibility one: new submission after archival, and
+possibly misspelled words in DESCRIPTION. These are the names of the authors
+of the cited algorithms (Bertsekas, Cuturi, Gabow, Jonker, Tarjan,
+Volgenant) and of the Sinkhorn algorithm.
 
 ## Test environments
 
-PENDING
+* local: Windows 11 x64, R 4.6.1, Rtools45: Status 1 NOTE (as above),
+  tests FAIL 0 | PASS 8975.
+* win-builder: R-devel (2026-11-06 r90845 ucrt), check time 338 s: Status
+  1 NOTE (as above), tests FAIL 0 | PASS 8975.
+* win-builder: R 4.6.2: Status 1 NOTE.
 
 ## Downstream dependencies
 

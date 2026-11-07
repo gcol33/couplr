@@ -1,6 +1,18 @@
+## Resubmission after archival
+
+couplr was archived on 2026-10-26 because the M1-SAN and gcc-UBSAN problems
+reported on 2026-10-05 were not corrected in time. Both reports show one
+error: `build_ball_tree()` took a reference to an element of an empty vector
+(`&cal_lo[id * n_cal]` with no caliper columns), "reference binding to null
+pointer". 1.9.0 takes these pointers as `data() + offset`, at that site and at
+the twelve other row and node pointers of the same form, so no element of an
+empty vector is referenced.
+
+SANITIZER-RESULTS
+
 ## Release notes (1.9.0)
 
-A feature release, 34 days after 1.8.1. The main changes:
+The main changes since 1.8.1:
 
 * The matching functions return objects of one parent class,
   `"couplr_result"`, with shared `print()`, `summary()`, `glance()`, `tidy()`

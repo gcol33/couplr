@@ -22,6 +22,10 @@ on:
       id:
         description: 'Unique ID. You can leave this empty now.'
         type: string
+      skip_suggests:
+        description: 'Comma separated Suggests packages not to install on the Linux containers (their tests skip).'
+        type: string
+        default: ''
 
 jobs:
 
@@ -56,11 +60,25 @@ jobs:
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+      - name: Suggests to install
+        id: suggests
+        if: ${{ github.event.inputs.skip_suggests != '' }}
+        shell: Rscript {0}
+        run: |
+          skip <- trimws(strsplit("${{ github.event.inputs.skip_suggests }}", ",")[[1]])
+          sugg <- trimws(sub("\\(.*", "", strsplit(read.dcf("DESCRIPTION", "Suggests"), ",")[[1]]))
+          keep <- setdiff(sugg[nzchar(sugg)], skip)
+          cat("pkgs=", paste(c("any::rcmdcheck", keep), collapse = ", "), "\n",
+              sep = "", file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
       - uses: r-hub/actions/setup-deps@v1
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+          dependencies: ${{ github.event.inputs.skip_suggests != '' && '"hard"' || '' }}
+          extra-packages: ${{ steps.suggests.outputs.pkgs || 'any::rcmdcheck' }}
       - uses: r-hub/actions/run-check@v1
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: ${{ github.event.inputs.skip_suggests != '' && 'false' || 'true' }}
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}

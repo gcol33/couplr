@@ -1,36 +1,30 @@
-## Release notes (1.8.1)
+## Release notes (1.9.0)
 
-This is a bug-fix release four days after 1.8.0. The first fix concerns
-results that were returned without any error or warning:
+A feature release, 34 days after 1.8.1. The main changes:
 
-* With scaled or weighted matching variables, the low-memory modes
-  (`memory_mode = "lazy"` and `"implicit"`) compared calipers against the
-  scaled values, so they admitted pairs that the caliper excludes and that
-  the default mode excludes. All modes now apply calipers to the variables
-  as supplied.
+* The matching functions return objects of one parent class,
+  `"couplr_result"`, with shared `print()`, `summary()`, `glance()`, `tidy()`
+  and `as.data.frame()` methods, and accessors `certificate()`,
+  `potentials()` and `unmatched_units()`.
+* `assignment()` looks its method up in a solver registry;
+  `lap_solvers()` lists the solvers and `register_lap_solver()` adds one.
+* `cardinality_match()` solves moment-constrained selections by branch and
+  bound with an exact certificate.
+* Dense matching uses less memory (a 20,000-unit Mahalanobis matching peaks
+  at 1.5 GB instead of 6.4 GB).
+* No `\dontrun{}` examples remain; Mahalanobis distances use a Cholesky
+  factorisation instead of `solve()`.
 
-* `as_matchit()` failed for designs with more than one control per treated
-  unit, with replacement, or when both groups used the same ids.
-
-* The column-generation mode now returns an exact optimality certificate on
-  scaled costs, where it previously fell back to a tolerance.
-
-No exported function is removed or renamed, and no dependency is added.
+One unused output column (`ks_pvalue` in `balance_diagnostics()`) was removed.
+There are no reverse dependencies on CRAN.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-The note is the incoming-feasibility one: days since last update 4, number
-of updates in the past 6 months 7. This release fixes the results described
-above, which is why it follows 1.8.0 so closely.
+PENDING
 
 ## Test environments
 
-* local: Windows 11 x64, R 4.6.1, Rtools45 g++ 14.3.0: Status 1 NOTE (as
-  above), tests FAIL 0 | PASS 8382.
-* win-builder: R-devel (2026-09-30 r90605 ucrt): Status 1 NOTE (as above),
-  tests FAIL 0 | PASS 8382.
+PENDING
 
 ## Downstream dependencies
 

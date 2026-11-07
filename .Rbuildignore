@@ -70,3 +70,4 @@
 ^CITATION\.cff$
 ^README\.Rmd$
 ^sidecars$
+^tmp$

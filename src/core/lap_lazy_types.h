@@ -166,10 +166,10 @@ public:
     }
 
     const double* left_row(int64_t i) const {
-        return &left_[static_cast<size_t>(i * n_vars_)];
+        return left_.data() + static_cast<size_t>(i * n_vars_);
     }
     const double* right_row(int64_t j) const {
-        return &right_[static_cast<size_t>(j * n_vars_)];
+        return right_.data() + static_cast<size_t>(j * n_vars_);
     }
 
 private:
@@ -178,8 +178,8 @@ private:
     }
 
     double raw_distance(int64_t i, int64_t j) const {
-        const double* li = &left_[static_cast<size_t>(i * n_vars_)];
-        const double* rj = &right_[static_cast<size_t>(j * n_vars_)];
+        const double* li = left_.data() + static_cast<size_t>(i * n_vars_);
+        const double* rj = right_.data() + static_cast<size_t>(j * n_vars_);
 
         switch (metric_) {
             case DistanceMetric::Euclidean: {
@@ -223,7 +223,7 @@ private:
                     double diff_a = li[a] - rj[a];
                     if (diff_a == 0.0) continue;
                     double row_sum = 0.0;
-                    const double* inv_row = &inv_cov_[static_cast<size_t>(a * n_vars_)];
+                    const double* inv_row = inv_cov_.data() + static_cast<size_t>(a * n_vars_);
                     for (int64_t b = 0; b < n_vars_; ++b) {
                         row_sum += inv_row[b] * (li[b] - rj[b]);
                     }

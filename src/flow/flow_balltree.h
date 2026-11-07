@@ -201,16 +201,16 @@ struct BallTree {
     }
 
     const double* node_centre(int32_t id) const {
-        return &centre[static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars)];
+        return centre.data() + static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars);
     }
     const double* node_box_lo(int32_t id) const {
-        return &box_lo[static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars)];
+        return box_lo.data() + static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars);
     }
     const double* node_box_hi(int32_t id) const {
-        return &box_hi[static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars)];
+        return box_hi.data() + static_cast<std::size_t>(id) * static_cast<std::size_t>(n_vars);
     }
     const double* unit_whitened(int32_t unit) const {
-        return &whitened[static_cast<std::size_t>(unit) * static_cast<std::size_t>(n_vars)];
+        return whitened.data() + static_cast<std::size_t>(unit) * static_cast<std::size_t>(n_vars);
     }
 };
 
@@ -293,7 +293,7 @@ inline double whiten_point(const BallTree& tree, const double* x, double* out) {
     }
     double g = 0.0;
     for (int64_t k = 0; k < n; ++k) {
-        const double* row = &tree.factor[static_cast<std::size_t>(k * n)];
+        const double* row = tree.factor.data() + static_cast<std::size_t>(k * n);
         double s = 0.0;
         double t = 0.0;
         for (int64_t m = k; m < n; ++m) {
@@ -528,7 +528,7 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
         const int32_t a = tree.lo[static_cast<std::size_t>(id)];
         const int32_t b = tree.hi[static_cast<std::size_t>(id)];
 
-        double* ctr = &tree.centre[base];
+        double* ctr = tree.centre.data() + base;
         for (int32_t t = a; t < b; ++t) {
             const double* pw = tree.unit_whitened(tree.perm[static_cast<std::size_t>(t)]);
             for (int64_t k = 0; k < n_vars; ++k) ctr[k] += pw[k];
@@ -548,8 +548,8 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
         }
         tree.radius[static_cast<std::size_t>(id)] = std::sqrt(worst);
 
-        double* blo = &tree.box_lo[base];
-        double* bhi = &tree.box_hi[base];
+        double* blo = tree.box_lo.data() + base;
+        double* bhi = tree.box_hi.data() + base;
         if (tree.is_leaf(id)) {
             for (int64_t k = 0; k < n_vars; ++k) {
                 blo[k] = std::numeric_limits<double>::infinity();

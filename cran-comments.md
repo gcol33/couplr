@@ -8,7 +8,11 @@ pointer". 1.9.0 takes these pointers as `data() + offset`, at that site and at
 the twelve other row and node pointers of the same form, so no element of an
 empty vector is referenced.
 
-SANITIZER-RESULTS
+Checked on R-hub (2026-11-07) with the clang-asan, clang-ubsan and gcc-asan
+containers: no sanitizer reports. Under valgrind: 0 errors, no definitely or
+possibly lost memory. One test asserted that a search finished before the
+default 30 s time limit, which valgrind's slowdown exceeded; it is now bounded
+by a node limit alone.
 
 ## Release notes (1.9.0)
 
@@ -43,8 +47,9 @@ Volgenant) and of the Sinkhorn algorithm.
 
 * local: Windows 11 x64, R 4.6.1, Rtools45: Status 1 NOTE (as above),
   tests FAIL 0 | PASS 8975.
-* win-builder: R-devel (2026-11-06 r90845 ucrt), check time 338 s: Status
+* win-builder: R-devel (2026-11-06 r90845 ucrt), check time 378 s: Status
   1 NOTE (as above), tests FAIL 0 | PASS 8975.
+* R-hub: clang-asan, clang-ubsan, gcc-asan, valgrind (see above).
 * win-builder: R 4.6.2: Status 1 NOTE.
 
 ## Downstream dependencies

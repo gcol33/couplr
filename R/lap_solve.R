@@ -124,6 +124,15 @@
 #'   costs one pass over the admissible pairs; elsewhere it costs the solve
 #'   [verify_assignment()] runs to get them. A solve that did not reach a
 #'   complete optimal matching has nothing to certify and gets no certificate.
+#'   The solvers compare doubles, and on costs whose differences sit below
+#'   their rounding one can stop on a matching that an alternating cycle of
+#'   exactly negative cost still improves. A matching optimal within the
+#'   tolerance but not exactly is therefore improved in exact arithmetic until
+#'   it is exactly optimal, and `match`, `total_cost`, `u` and `v` then
+#'   describe the improved matching, so a certified optimal matching always
+#'   carries an exact certificate. A matching suboptimal by more than rounding,
+#'   as a registered heuristic may return, is left as it came and its
+#'   certificate says so.
 #' @param cardinality How many pairs to produce.
 #'   \itemize{
 #'     \item `"complete"` (default) — every row is matched; an input admitting
@@ -421,7 +430,25 @@ assignment <- function(cost, maximize = FALSE,
   if (!identical(out$status, "optimal")) {
     return(out)
   }
-  out$certificate <- verify_assignment(out, cost, maximize = maximize)
+  .certify_result(out, cost, maximize)
+}
+
+# The certificate of a solve result, attached. A matching optimal to within the
+# tolerance but not exactly is one the solver's doubles stopped on with an
+# exactly negative improvement left below their rounding; it is made exactly
+# optimal and the certificate read on the repaired matching. A matching that
+# fails even the tolerance reading is suboptimal by more than rounding, and the
+# certificate reports it as it came.
+.certify_result <- function(out, cost, maximize) {
+  cert <- verify_assignment(out, cost, maximize = maximize)
+  if (isTRUE(cert$certified_optimal) && !isTRUE(cert$exact_certificate)) {
+    repaired <- .exact_assignment(out, cost, maximize)
+    if (!identical(repaired$match, out$match)) {
+      out <- repaired
+      cert <- verify_assignment(out, cost, maximize = maximize)
+    }
+  }
+  out$certificate <- cert
   out
 }
 
@@ -1410,7 +1437,7 @@ assignment_duals <- function(cost, maximize = FALSE, certify = FALSE) {
   if (certify) {
     # verify_assignment() reads the duals off `out` rather than solving again,
     # which is what makes the check an added pass and not an added solve.
-    out$certificate <- verify_assignment(out, cost, maximize = maximize)
+    out <- .certify_result(out, cost, maximize)
   }
   out
 }

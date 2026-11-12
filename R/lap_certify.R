@@ -264,49 +264,30 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
          " rows.", call. = FALSE)
   }
 
-  # The dual sign condition and the slackness condition on unmatched units both
-  # attach to the side carrying the "at most once" constraint, which is the
-  # long side. Normalize to rows <= columns so there is one set of conditions
-  # to check rather than two mirror images of it.
-  transposed <- n > m
-  if (transposed) {
-    inverted <- .certify_invert_match(match_vec, m)
-    cost <- t(cost)
-    match_vec <- inverted
-    if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
-    if (!is.null(exact)) exact <- list(u = exact$v, v = exact$u)
-  }
-
+  o <- .certify_orient(cost, match_vec, duals, exact)
+  duals <- o$duals
   if (is.null(duals)) {
-    duals <- .certify_solve_duals(cost, maximize)
+    duals <- .certify_solve_duals(o$cost, maximize)
   }
-  .certify_check_dual_lengths(duals, nrow(cost), ncol(cost))
+  .certify_check_dual_lengths(duals, nrow(o$cost), ncol(o$cost))
 
-  report <- lap_certify_dense(cost, as.integer(match_vec),
+  report <- lap_certify_dense(o$cost, as.integer(o$match),
                               as.numeric(duals$u), as.numeric(duals$v),
-                              maximize, tol, arithmetic, exact)
-  .new_assignment_certificate(report, transposed = transposed, tol = tol)
+                              maximize, tol, arithmetic, o$exact)
+  .new_assignment_certificate(report, transposed = o$transposed, tol = tol)
 }
 
 .certify_lazy <- function(cost, match_vec, duals, exact, maximize, tol,
                           arithmetic) {
   n <- cost$n_left
-  m <- cost$n_right
   if (length(match_vec) != n) {
     stop("`match` has length ", length(match_vec), " but the specification has ",
          n, " left units.", call. = FALSE)
   }
 
-  # Same normalization as the dense path, for the same reason: the sign and
-  # slackness conditions attach to the long side, so put it on the columns.
-  transposed <- n > m
-  if (transposed) {
-    match_vec <- .certify_invert_match(match_vec, m)
-    cost <- transpose_lazy_cost_spec(cost)
-    if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
-    if (!is.null(exact)) exact <- list(u = exact$v, v = exact$u)
-  }
-
+  o <- .certify_orient(cost, match_vec, duals, exact)
+  cost <- o$cost
+  duals <- o$duals
   if (is.null(duals)) {
     duals <- .certify_solve_duals(cost, maximize)
   }
@@ -316,10 +297,74 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
   caliper_list <- lazy_cost_spec_calipers(cost)
   report <- lap_certify_lazy(cost$left_mat, cost$right_mat, cost$distance,
                              inv_cov, cost$max_distance, caliper_list,
-                             as.integer(match_vec),
+                             as.integer(o$match),
                              as.numeric(duals$u), as.numeric(duals$v),
-                             maximize, tol, arithmetic, exact)
-  .new_assignment_certificate(report, transposed = transposed, tol = tol)
+                             maximize, tol, arithmetic, o$exact)
+  .new_assignment_certificate(report, transposed = o$transposed, tol = tol)
+}
+
+# The dual sign condition and the slackness condition on unmatched units both
+# attach to the side carrying the "at most once" constraint, which is the long
+# side. Every check and repair runs with rows <= columns, so there is one set of
+# conditions rather than two mirror images of it; a problem with more rows is
+# transposed, its match inverted and its dual sides swapped. `cost` is a numeric
+# matrix or a lazy cost specification.
+.certify_orient <- function(cost, match_vec, duals = NULL, exact = NULL) {
+  lazy <- is_lazy_cost_spec(cost)
+  n <- if (lazy) cost$n_left else nrow(cost)
+  m <- if (lazy) cost$n_right else ncol(cost)
+  transposed <- n > m
+  if (transposed) {
+    match_vec <- .certify_invert_match(match_vec, m)
+    cost <- if (lazy) transpose_lazy_cost_spec(cost) else t(cost)
+    if (!is.null(duals)) duals <- list(u = duals$v, v = duals$u)
+    if (!is.null(exact)) exact <- list(u = exact$v, v = exact$u)
+  }
+  list(cost = cost, match = match_vec, duals = duals, exact = exact,
+       transposed = transposed, lazy = lazy, n = n, m = m)
+}
+
+# A complete matching made exactly optimal on `cost`. The solvers compare
+# doubles, and on costs whose differences sit below their rounding a solver can
+# return a matching that an alternating cycle or path of exactly negative cost
+# still improves; no exact potentials exist for it, so its certificate can only
+# be read at a tolerance. Each such improvement is applied in exact arithmetic
+# until none is left. A result whose matching changed carries the new match,
+# its total and the recovered potentials rounded to doubles, which replace the
+# solver's; one that needed nothing is returned as it came. `x` is a solve
+# result whose `match` covers the short side.
+.exact_assignment <- function(x, cost, maximize) {
+  duals <- if (!is.null(x[["u"]]) && !is.null(x[["v"]])) {
+    list(u = as.numeric(x[["u"]]), v = as.numeric(x[["v"]]))
+  }
+  if (!is_lazy_cost_spec(cost)) cost <- as.matrix(cost)
+  o <- .certify_orient(cost, as.integer(x$match), duals)
+  v_hint <- if (is.null(o$duals)) numeric(0) else as.numeric(o$duals$v)
+
+  res <- if (o$lazy) {
+    lap_exact_assignment_lazy(o$cost$left_mat, o$cost$right_mat,
+                              o$cost$distance, lazy_cost_spec_inv_cov(o$cost),
+                              o$cost$max_distance,
+                              lazy_cost_spec_calipers(o$cost),
+                              as.integer(o$match), v_hint, maximize)
+  } else {
+    lap_exact_assignment_dense(o$cost, as.integer(o$match), v_hint, maximize)
+  }
+  if (!isTRUE(res$optimal) || res$n_improved == 0) {
+    return(x)
+  }
+
+  if (o$transposed) {
+    x$match <- .certify_invert_match(res$match, o$n)
+    x$u <- res$v
+    x$v <- res$u
+  } else {
+    x$match <- res$match
+    x$u <- res$u
+    x$v <- res$v
+  }
+  x$total_cost <- res$total_cost
+  x
 }
 
 # Duals arrive as doubles, or as expansions: a matrix per side, one row per

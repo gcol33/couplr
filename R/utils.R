@@ -1,5 +1,7 @@
 utils::globalVariables(c(".data", "solution_id", "total_cost",
                         "lap_certify_dense", "lap_certify_lazy",
+                        "lap_exact_assignment_dense",
+                        "lap_exact_assignment_lazy",
                         "lap_scan_reduced_costs",
                         "lap_hall_witness_dense", "lap_hall_witness_lazy",
                         "lap_flow_solve", "lap_flow_certify",

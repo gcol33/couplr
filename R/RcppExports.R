@@ -57,6 +57,14 @@ lap_certify_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distanc
     .Call(`_couplr_lap_certify_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, match, u, v, maximize, tol, arithmetic, exact)
 }
 
+lap_exact_assignment_dense <- function(cost, match, v_hint, maximize) {
+    .Call(`_couplr_lap_exact_assignment_dense`, cost, match, v_hint, maximize)
+}
+
+lap_exact_assignment_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers, match, v_hint, maximize) {
+    .Call(`_couplr_lap_exact_assignment_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers, match, v_hint, maximize)
+}
+
 lap_scan_reduced_costs <- function(cost, u, v, tol) {
     .Call(`_couplr_lap_scan_reduced_costs`, cost, u, v, tol)
 }

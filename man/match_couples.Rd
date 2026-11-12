@@ -150,7 +150,9 @@ under \code{memory_mode = "implicit"}, where the certificate is part of the
 solve, and to \code{FALSE} elsewhere, where it costs one extra pass over the
 admissible pairs. Available for one-to-one and \code{ratio}-to-one matching
 without blocks; greedy matching and matching with replacement solve no
-assignment problem and carry none.}
+assignment problem and carry none. In every memory mode the matching is
+made exactly optimal on the stored distances before it is certified, so
+the certificate is exact (see \code{certify} in \code{\link[=assignment]{assignment()}}).}
 }
 \value{
 A list with class "matching_result" containing:

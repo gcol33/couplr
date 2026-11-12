@@ -1125,7 +1125,9 @@
 #'   solve, and to `FALSE` elsewhere, where it costs one extra pass over the
 #'   admissible pairs. Available for one-to-one and `ratio`-to-one matching
 #'   without blocks; greedy matching and matching with replacement solve no
-#'   assignment problem and carry none.
+#'   assignment problem and carry none. In every memory mode the matching is
+#'   made exactly optimal on the stored distances before it is certified, so
+#'   the certificate is exact (see `certify` in [assignment()]).
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
 #'   - `unmatched`: List of unmatched left and right IDs

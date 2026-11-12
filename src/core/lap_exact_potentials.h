@@ -64,6 +64,12 @@ struct ShortestPaths {
     // When asked for, the tags of the arcs of one negative cycle, each arc from
     // the node before it to the node after it, in the order the cycle runs.
     std::vector<int64_t> cycle;
+    // When a cycle was asked for, the arc each label was last set through: the
+    // node it came from (-1 for the root) and the arc's tag. On a search that
+    // ended with `ok`, following them from a node back to the root walks a
+    // shortest path to it.
+    std::vector<int64_t> pred_node;
+    std::vector<int64_t> pred_tag;
 };
 
 // An arc weight a - b of two doubles: a cost entry less another, which is the
@@ -215,6 +221,10 @@ ShortestPaths shortest_paths(int64_t n_nodes, const std::vector<double>& hint,
     }
 
     out.ok = !negative_cycle;
+    if (want_cycle) {
+        out.pred_node = std::move(pred_node);
+        out.pred_tag = std::move(pred_tag);
+    }
     return out;
 }
 
@@ -227,6 +237,11 @@ struct AssignmentPotentials {
     // Pairs whose cost was read, which a source that computes its costs pays
     // for one evaluation each.
     int64_t n_evaluated = 0;
+    // When asked for on a matching that is not optimal, one improving
+    // alternating cycle or path as the moves that apply it: row `first` takes
+    // column `second`. The rows are distinct and so are the columns, so the
+    // moves can be applied in any order.
+    std::vector<std::pair<int64_t, int64_t>> improvement;
 };
 
 // Recover exact optimal duals for `match` over `src`, or report that none exist
@@ -250,12 +265,21 @@ struct AssignmentPotentials {
 // shifting every v down and every u up by the same amount keeps both
 // conditions, and the root arcs cost nothing.
 //
-// `u_hint` and `v_hint` are the solver's potentials when there are any, and
-// order the search only.
+// `v_hint` is the solver's column potentials when there are any, and orders the
+// search only.
+//
+// With `want_improvement`, a matching found not optimal also names how to
+// improve it. Each arc mu(i) -> j carries the move "row i takes column j", and
+// the moves along a negative cycle permute the columns of its rows at a lower
+// total cost. A free column at a negative distance is reached from the root by
+// a shortest path through matched columns whose moves shift each of its rows
+// one column along, free the column the path starts at and take the free one,
+// lowering the total by exactly that distance.
 template <class Source>
 AssignmentPotentials recover_assignment_potentials(const Source& src,
                                                    const std::vector<int>& match,
-                                                   const std::vector<double>& v_hint) {
+                                                   const std::vector<double>& v_hint,
+                                                   bool want_improvement = false) {
     AssignmentPotentials out;
     const int64_t nrow = src.nrow;
     const int64_t ncol = src.ncol;
@@ -282,15 +306,29 @@ AssignmentPotentials recover_assignment_potentials(const Source& src,
             const double ck = matched_cost[static_cast<std::size_t>(i)];
             for_each_admissible(src, i, [&](int64_t j, double c) {
                 ++out.n_evaluated;
-                if (j != k) emit(j, DoubleDifference{c, ck});
+                if (j != k) emit(j, DoubleDifference{c, ck, i * ncol + j});
                 return true;
             });
-        });
-    if (!paths.ok) return out;
+        }, want_improvement);
+
+    const auto move_of = [&](int64_t tag) {
+        return std::make_pair(tag / ncol, tag % ncol);
+    };
+    if (!paths.ok) {
+        for (int64_t tag : paths.cycle) out.improvement.push_back(move_of(tag));
+        return out;
+    }
 
     for (int64_t j = 0; j < ncol; ++j) {
         if (row_of[static_cast<std::size_t>(j)] < 0 &&
             sign(paths.dist[static_cast<std::size_t>(j)]) != 0) {
+            if (want_improvement) {
+                for (int64_t k = j; paths.pred_node[static_cast<std::size_t>(k)] >= 0;
+                     k = paths.pred_node[static_cast<std::size_t>(k)]) {
+                    out.improvement.push_back(
+                        move_of(paths.pred_tag[static_cast<std::size_t>(k)]));
+                }
+            }
             return out;
         }
     }
@@ -307,6 +345,31 @@ AssignmentPotentials recover_assignment_potentials(const Source& src,
     }
     out.ok = true;
     return out;
+}
+
+// Make a complete matching exactly optimal. A solver working in doubles can
+// stop, on costs whose differences sit below their rounding, on a matching that
+// an alternating cycle or path of exactly negative cost still improves; no
+// exact potentials exist for it, and a certificate on it can only be read at a
+// tolerance. Each such improvement is applied, which keeps the matching
+// complete and lowers its exact total, so finitely many rounds reach a matching
+// with none, and the potentials returned are then its exact optimal ones.
+// `match` is updated in place and `n_improved` counts the rounds. A result
+// without `ok` and without an improvement means `match` was not a complete
+// matching over admissible pairs, and it is left as it came.
+template <class Source>
+AssignmentPotentials exact_assignment(const Source& src, std::vector<int>& match,
+                                      const std::vector<double>& v_hint,
+                                      int64_t& n_improved) {
+    n_improved = 0;
+    for (;;) {
+        AssignmentPotentials p = recover_assignment_potentials(src, match, v_hint, true);
+        if (p.ok || p.improvement.empty()) return p;
+        for (const auto& mv : p.improvement) {
+            match[static_cast<std::size_t>(mv.first)] = static_cast<int>(mv.second);
+        }
+        ++n_improved;
+    }
 }
 
 // The exact conditions of lap_certify.h, asked of expansion potentials.

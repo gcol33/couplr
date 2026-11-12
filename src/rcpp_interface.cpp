@@ -312,6 +312,23 @@ Rcpp::List lap_certify_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix ri
 }
 
 // [[Rcpp::export]]
+Rcpp::List lap_exact_assignment_dense(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
+                                      Rcpp::NumericVector v_hint, bool maximize) {
+  return exact_assignment_dense_impl(cost, match, v_hint, maximize);
+}
+
+// [[Rcpp::export]]
+Rcpp::List lap_exact_assignment_lazy(Rcpp::NumericMatrix left_mat,
+                                     Rcpp::NumericMatrix right_mat, SEXP distance,
+                                     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                     double max_distance, Rcpp::List calipers,
+                                     Rcpp::IntegerVector match,
+                                     Rcpp::NumericVector v_hint, bool maximize) {
+  return exact_assignment_lazy_impl(left_mat, right_mat, distance, inv_cov, max_distance,
+                                    calipers, match, v_hint, maximize);
+}
+
+// [[Rcpp::export]]
 Rcpp::List lap_scan_reduced_costs(Rcpp::NumericMatrix cost, Rcpp::NumericVector u,
                                   Rcpp::NumericVector v, double tol) {
   return scan_reduced_costs_impl(cost, u, v, tol);

@@ -356,6 +356,96 @@ Rcpp::List certify_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix r
     return Rcpp::List();
 }
 
+namespace {
+
+// lap::exact::exact_assignment() over one source, in the orientation the
+// certificate reads (rows <= columns, every row matched), with the match, the
+// rounded potentials and the total handed back in the caller's sign. The
+// source is the internal minimization, so a maximize instance negates them.
+template <class Source>
+Rcpp::List exact_assignment_to_list(const Source& src, std::vector<int> match,
+                                    const std::vector<double>& v_hint, bool maximize) {
+    int64_t n_improved = 0;
+    const lap::exact::AssignmentPotentials pots =
+        lap::exact::exact_assignment(src, match, v_hint, n_improved);
+    const double flip = maximize ? -1.0 : 1.0;
+
+    Rcpp::IntegerVector match_out(static_cast<R_xlen_t>(match.size()));
+    for (std::size_t i = 0; i < match.size(); ++i) {
+        match_out[static_cast<R_xlen_t>(i)] = match[i] >= 0 ? match[i] + 1 : 0;
+    }
+
+    Rcpp::NumericVector u_out(static_cast<R_xlen_t>(pots.u.size()));
+    Rcpp::NumericVector v_out(static_cast<R_xlen_t>(pots.v.size()));
+    double total = NA_REAL;
+    if (pots.ok) {
+        for (std::size_t i = 0; i < pots.u.size(); ++i) {
+            u_out[static_cast<R_xlen_t>(i)] =
+                flip * lap::exact::approximate(pots.u[i]).value;
+        }
+        for (std::size_t j = 0; j < pots.v.size(); ++j) {
+            v_out[static_cast<R_xlen_t>(j)] =
+                flip * lap::exact::approximate(pots.v[j]).value;
+        }
+        lap::detail::CompensatedSum sum;
+        for (std::size_t i = 0; i < match.size(); ++i) {
+            double c = 0.0;
+            lap::cost_if_allowed(src, static_cast<int64_t>(i),
+                                 static_cast<int64_t>(match[i]), c);
+            sum.add(c);
+        }
+        total = flip * sum.value();
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("optimal") = pots.ok,
+        Rcpp::Named("n_improved") = static_cast<double>(n_improved),
+        Rcpp::Named("match") = match_out,
+        Rcpp::Named("u") = u_out,
+        Rcpp::Named("v") = v_out,
+        Rcpp::Named("total_cost") = total);
+}
+
+}  // namespace
+
+Rcpp::List exact_assignment_dense_impl(Rcpp::NumericMatrix cost, Rcpp::IntegerVector match,
+                                       Rcpp::NumericVector v_hint, bool maximize) {
+    try {
+        const lap::CostMatrix cm = cost_matrix_for_certify(cost, maximize);
+        return exact_assignment_to_list(cm, match_to_zero_based(match),
+                                        duals_to_internal(v_hint, maximize), maximize);
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
+    }
+    return Rcpp::List();
+}
+
+Rcpp::List exact_assignment_lazy_impl(Rcpp::NumericMatrix left_mat,
+                                      Rcpp::NumericMatrix right_mat, SEXP distance,
+                                      Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                      double max_distance, Rcpp::List calipers,
+                                      Rcpp::IntegerVector match,
+                                      Rcpp::NumericVector v_hint, bool maximize) {
+    try {
+        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
+        if (inv_cov.isNotNull()) {
+            Rcpp::NumericMatrix ic(inv_cov.get());
+            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
+        }
+        const LazySource source = rcpp_lazy_source(
+            left_mat, right_mat, distance, inv_cov_arg, max_distance,
+            calipers, maximize);
+        const std::vector<int> m0 = match_to_zero_based(match);
+        const std::vector<double> v0 = duals_to_internal(v_hint, maximize);
+        return std::visit([&](const auto& cm) {
+            return exact_assignment_to_list(cm, m0, v0, maximize);
+        }, source);
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
+    }
+    return Rcpp::List();
+}
+
 Rcpp::List scan_reduced_costs_impl(Rcpp::NumericMatrix cost, Rcpp::NumericVector u,
                                    Rcpp::NumericVector v, double tol) {
     try {

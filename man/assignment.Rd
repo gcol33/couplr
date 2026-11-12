@@ -153,7 +153,16 @@ done most of the scan, and \code{FALSE} elsewhere. The check reads the duals
 the solve returned where it returned some (see \code{u} and \code{v} below), so it
 costs one pass over the admissible pairs; elsewhere it costs the solve
 \code{\link[=verify_assignment]{verify_assignment()}} runs to get them. A solve that did not reach a
-complete optimal matching has nothing to certify and gets no certificate.}
+complete optimal matching has nothing to certify and gets no certificate.
+The solvers compare doubles, and on costs whose differences sit below
+their rounding one can stop on a matching that an alternating cycle of
+exactly negative cost still improves. A matching optimal within the
+tolerance but not exactly is therefore improved in exact arithmetic until
+it is exactly optimal, and \code{match}, \code{total_cost}, \code{u} and \code{v} then
+describe the improved matching, so a certified optimal matching always
+carries an exact certificate. A matching suboptimal by more than rounding,
+as a registered heuristic may return, is left as it came and its
+certificate says so.}
 
 \item{cardinality}{How many pairs to produce.
 \itemize{

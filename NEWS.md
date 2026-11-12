@@ -1,3 +1,19 @@
+# couplr 1.9.1
+
+## Bug fixes
+
+* **Certified dense and lazy solves end exactly optimal.** The assignment
+  solvers compare doubles, and on costs whose differences sit below their
+  rounding they could stop on a matching that an alternating cycle of exactly
+  negative cost still improved; no exact potentials existed for it, and its
+  certificate fell back to the tolerance. `assignment(certify = TRUE)`,
+  `assignment_duals(certify = TRUE)` and `match_couples(certify = TRUE)` now
+  apply each such improvement in exact arithmetic before certifying, as the
+  implicit loop has since 1.8.1, so a certified optimal matching is exactly
+  optimal on the stored costs and its certificate is exact on every platform.
+  A matching suboptimal by more than rounding, as a registered heuristic may
+  return, is left as it came and its certificate reports it.
+
 # couplr 1.9.0
 
 ## Classes, methods and accessors
@@ -52,18 +68,6 @@
 * **`match_couples(certify = TRUE)` in dense mode.** One-to-one and
   `ratio`-to-one matchings without blocks can carry a checked certificate in
   every memory mode, not only in implicit mode.
-
-* **Certified dense and lazy solves end exactly optimal.** The assignment
-  solvers compare doubles, and on costs whose differences sit below their
-  rounding they could stop on a matching that an alternating cycle of exactly
-  negative cost still improved; no exact potentials existed for it, and its
-  certificate fell back to the tolerance. `assignment(certify = TRUE)`,
-  `assignment_duals(certify = TRUE)` and `match_couples(certify = TRUE)` now
-  apply each such improvement in exact arithmetic before certifying, as the
-  implicit loop has since 1.8.1, so a certified optimal matching is exactly
-  optimal on the stored costs and its certificate is exact on every platform.
-  A matching suboptimal by more than rounding, as a registered heuristic may
-  return, is left as it came and its certificate reports it.
 
 * **Calipers on any shared column.** `calipers` in `match_couples()`,
   `cardinality_match()`, `match_path()` and `update_constraints()` may name

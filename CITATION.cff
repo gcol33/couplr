@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: If you use this software, please cite it as below.
 type: software
 title: 'couplr: Optimal Pairing and Matching via Linear Assignment'
-version: 1.9.0
+version: 1.9.1
 authors:
 - family-names: Colling
   given-names: Gilles
@@ -20,4 +20,4 @@ preferred-citation:
   year: 2026
   doi: 10.32614/CRAN.package.couplr
   url: https://gillescolling.com/couplr/
-  notes: R package version 1.9.0
+  notes: R package version 1.9.1

@@ -2,7 +2,8 @@
 param(
     [switch]$SkipFigure,
     [switch]$SkipPdf,
-    [switch]$LocalPdf
+    [switch]$LocalPdf,
+    [string]$Python = 'python'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,7 +12,11 @@ Set-Location $PaperDir
 
 # ---------- step 1: figure -------------------------------------------------
 
-if (-not $SkipFigure -and (Select-String -Path "$PaperDir\paper.md" -Pattern 'figures/benchmark.png' -Quiet)) {
+if (-not $SkipFigure -and (Select-String -Path "$PaperDir\paper.md" -Pattern 'figures/matching-concept.pdf' -Quiet)) {
+    Write-Host "[1/2] Building TikZ and LaTeX-rendered evidence figures..." -ForegroundColor Cyan
+    & $Python "$PaperDir\make-evidence-figures.py"
+    if ($LASTEXITCODE -ne 0) { throw "make-evidence-figures.py exited with code $LASTEXITCODE." }
+} elseif (-not $SkipFigure -and (Select-String -Path "$PaperDir\paper.md" -Pattern 'figures/benchmark.png' -Quiet)) {
     $Rscript = Get-ChildItem 'C:\Program Files\R\R-*\bin\Rscript.exe' |
                Sort-Object FullName |
                Select-Object -Last 1

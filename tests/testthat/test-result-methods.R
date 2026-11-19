@@ -103,6 +103,45 @@ test_that("the Mahalanobis precision comes from the Cholesky factor", {
   expect_error(couplr:::mahalanobis_precision(matrix(1, 2, 2)), "singular")
 })
 
+test_that("print is shorter than summary for the other assignment results", {
+  cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), 3)
+  n_lines <- function(x) length(capture.output(print(x)))
+  results <- list(
+    lap_solve_kbest(cost, k = 1),
+    lap_solve_kbest(cost, k = 4),
+    bottleneck_assignment(cost),
+    bottleneck_assignment(matrix(7, 1, 1)),
+    lap_solve_line_metric(c(1, 3, 2), c(2.5, 0.5, 1.5)),
+    lap_solve_line_metric(1, 2)
+  )
+  for (res in results) {
+    expect_lt(n_lines(res), n_lines(summary(res)))
+  }
+  expect_output(print(results[[2]]), "Solutions: 4")
+  expect_output(print(results[[3]]), "3 of 3 rows assigned, bottleneck value")
+})
+
+test_that("assignment_duals_result lists its accessors among its own methods", {
+  cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), 3)
+  d <- assignment_duals(cost, certify = TRUE)
+  own <- format(methods(class = "assignment_duals_result"))
+  expect_true(all(c("print", "summary", "as.data.frame", "potentials",
+                    "certificate") %in% own))
+  p <- potentials(d)
+  expect_named(p, c("u", "v"))
+  expect_equal(sum(p$u) + sum(p$v), sum(cost[cbind(1:3, as.data.frame(d)$col)]))
+  expect_s3_class(certificate(d), "assignment_certificate")
+})
+
+test_that("compute_distances() returns one class, and it has methods", {
+  left <- data.frame(id = 1:3, x = c(1, 2, 3))
+  right <- data.frame(id = 4:6, x = c(1.1, 2.1, 3.1))
+  d <- compute_distances(left, right, vars = "x")
+  expect_identical(class(d), "distance_object")
+  expect_true(all(c("print", "summary", "as.matrix") %in%
+                    format(methods(class = "distance_object"))))
+})
+
 test_that("certificate print is shorter than its summary", {
   cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), 3)
   cert <- verify_assignment(assignment(cost), cost)

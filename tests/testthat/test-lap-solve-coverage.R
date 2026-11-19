@@ -388,7 +388,7 @@ test_that("print.lap_line_metric_result handles many assignments", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("more", output)))
+  expect_lte(length(output), 3L)
 })
 
 # ------------------------------------------------------------------------------
@@ -464,7 +464,7 @@ test_that("print.bottleneck_result handles many assignments", {
 
   output <- capture.output(print(result))
 
-  expect_true(any(grepl("more", output)))
+  expect_lte(length(output), 3L)
 })
 
 # ------------------------------------------------------------------------------

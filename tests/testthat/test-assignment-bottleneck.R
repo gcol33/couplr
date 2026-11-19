@@ -342,7 +342,7 @@ test_that("print.bottleneck_result works", {
   output <- capture.output(print(result))
 
   expect_true(any(grepl("Bottleneck Assignment", output)))
-  expect_true(any(grepl("Bottleneck value:", output)))
+  expect_true(any(grepl("bottleneck value", output)))
   expect_true(any(grepl("Status:", output)))
 })
 

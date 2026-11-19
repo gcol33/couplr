@@ -41,8 +41,8 @@ test_that("kbest: handles NA, rectangular, and maximize", {
 test_that("a column subset of k-best results prints and summary names what is missing", {
   cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), 3)
   kb <- lap_solve_kbest(cost, k = 3)
-  expect_output(print(kb[c("rank", "total_cost")]), "Assignments")
-  expect_output(print(kb[c("source", "target")]), "Assignments")
+  expect_output(print(kb[c("rank", "total_cost")]), "Total cost:")
+  expect_output(print(kb[c("source", "target")]), "K-Best Assignment Results")
   expect_error(summary(kb[c("source", "target")]), "rank, solution_id, total_cost")
   expect_equal(nrow(summary(kb)), 3)
 })

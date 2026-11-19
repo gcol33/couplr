@@ -248,7 +248,7 @@ test_that("print.bottleneck_result with many assignments", {
   skip_on_cran()
   cost <- matrix(runif(144), 12, 12)
   result <- bottleneck_assignment(cost)
-  expect_output(print(result), "more assignments")
+  expect_lte(length(capture.output(print(result))), 3L)
 })
 
 # ------------------------------------------------------------------------------

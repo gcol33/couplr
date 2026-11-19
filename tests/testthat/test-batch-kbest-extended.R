@@ -102,9 +102,9 @@ test_that("print.lap_solve_kbest_result with many solutions", {
   cost <- matrix(runif(36), 6, 6)
   result <- lap_solve_kbest(cost, k = 10)
   expect_output(print(result), "K-Best Assignment Results")
-  if (length(unique(result$solution_id)) > 5) {
-    expect_output(print(result), "more solutions")
-  }
+  expect_output(print(result),
+                paste("Solutions:", length(unique(result$solution_id))))
+  expect_lte(length(capture.output(print(result))), 3L)
 })
 
 test_that("summary.lap_solve_kbest_result works", {

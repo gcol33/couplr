@@ -95,8 +95,8 @@ test_that("print.bottleneck_result handles small result", {
   result <- bottleneck_assignment(cost)
 
   expect_output(print(result), "Bottleneck Assignment Result")
-  expect_output(print(result), "Row 1 -> Column")
-  expect_output(print(result), "Bottleneck value:")
+  expect_output(print(result), "2 of 2 rows assigned, bottleneck value 1")
+  expect_output(print(summary(result)), "Bottleneck value: 1")
 })
 
 test_that("print.bottleneck_result handles large result", {
@@ -104,8 +104,8 @@ test_that("print.bottleneck_result handles large result", {
   cost <- matrix(runif(15 * 15), 15, 15)
   result <- bottleneck_assignment(cost)
 
-  # Should truncate after 10 assignments
-  expect_output(print(result), "more assignments")
+  expect_lte(length(capture.output(print(result))), 3L)
+  expect_gte(length(capture.output(print(summary(result)))), 15L)
 })
 
 test_that("bottleneck_assignment returns invisible result", {

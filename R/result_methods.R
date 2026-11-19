@@ -63,6 +63,7 @@
 #' summary(m)
 #'
 #' @name couplr_result
+#' @order 1
 NULL
 
 #' Certificate, Potentials and Unmatched Units of a Result
@@ -192,6 +193,12 @@ potentials.lap_solve_result <- function(x, ...) {
   if (is.null(metadata$u) || is.null(metadata$v)) NULL else
     list(u = metadata$u, v = metadata$v)
 }
+
+#' @export
+potentials.assignment_duals_result <- function(x, ...) NextMethod()
+
+#' @export
+certificate.assignment_duals_result <- function(x, ...) NextMethod()
 
 #' @export
 unmatched_units.lap_solve_result <- function(x, ...) .assignment_metadata(x)$unmatched

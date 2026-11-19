@@ -51,6 +51,7 @@
 #' sens <- sensitivity_analysis(result, left, right, outcome_var = "outcome")
 #' print(sens)
 #'
+#' @order 1
 #' @export
 sensitivity_analysis <- function(result,
                                  left,

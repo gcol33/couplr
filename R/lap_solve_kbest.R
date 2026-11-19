@@ -154,40 +154,22 @@ lap_solve_kbest_df <- function(df, k, source_col, target_col, cost_col,
 #' @method print lap_solve_kbest_result
 print.lap_solve_kbest_result <- function(x, ...) {
   cat("K-Best Assignment Results\n")
-  cat("=========================\n\n")
-  
+
   if (nrow(x) == 0) {
     cat("No solutions found\n")
     return(invisible(x))
   }
-  
-  # A subset of the columns keeps the class, so the header reports only what
+
+  # A subset of the columns keeps the class, so the overview reports only what
   # the remaining columns hold.
   if ("solution_id" %in% names(x)) {
-    cat("Number of solutions:", length(unique(x$solution_id)), "\n")
+    cat("Solutions:", length(unique(x$solution_id)), "\n")
+  }
+  if ("total_cost" %in% names(x)) {
+    cat("Total cost:", format(min(x$total_cost)), "to",
+        format(max(x$total_cost)), "\n")
   }
 
-  if (all(c("solution_id", "rank", "total_cost") %in% names(x))) {
-    solution_costs <- x |>
-      dplyr::group_by(solution_id, rank) |>
-      dplyr::summarise(total_cost = dplyr::first(total_cost), .groups = "drop") |>
-      dplyr::arrange(rank)
-
-    cat("\nSolution costs:\n")
-    for (i in seq_len(min(5, nrow(solution_costs)))) {
-      cat(sprintf("  Rank %d: %.4f\n",
-                  solution_costs$rank[i],
-                  solution_costs$total_cost[i]))
-    }
-
-    if (nrow(solution_costs) > 5) {
-      cat(sprintf("  ... and %d more solutions\n", nrow(solution_costs) - 5))
-    }
-  }
-
-  cat("\nAssignments:\n")
-  print(tibble::as_tibble(x), ...)
-  
   invisible(x)
 }
 

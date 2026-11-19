@@ -1,3 +1,31 @@
+# couplr (development version)
+
+## Classes and methods
+
+* **print() is the short form for the remaining assignment results.**
+  `print()` of a `lap_solve_kbest_result`, a `bottleneck_result` and a
+  `lap_line_metric_result` gives the number of solutions or assigned rows and
+  the objective in two or three lines; `summary()` lists the solutions or the
+  assignments, and `as.data.frame()` or `tibble::as_tibble()` of a k-best
+  result gives every assignment.
+
+* **`assignment_duals_result` has its own `potentials()` and `certificate()`
+  methods**, so `methods(class = "assignment_duals_result")` lists them beside
+  `print()`, `summary()` and `as.data.frame()`.
+
+* **`compute_distances()` returns the class `"distance_object"` alone.** The
+  second class `"couplr_distance"` carried no methods and is gone.
+
+* **Help pages are named after the class or function they document.** The
+  pages of the matching results and of `sensitivity_analysis()` appear in the
+  help index as `couplr_result` and `sensitivity_analysis`.
+
+## Bug fixes
+
+* **A registered solver that assigns one column to several rows is refused.**
+  `assignment()` stops with an error that names the solver, as it does for
+  the other malformed results.
+
 # couplr 1.9.1
 
 ## Bug fixes

@@ -403,7 +403,7 @@ test_that("compute_distances caching works", {
   dist_cache <- compute_distances(left, right, "x", scale = "standardize")
 
   # Check it has the expected class
-  expect_true(inherits(dist_cache, "distance_object") || inherits(dist_cache, "couplr_distance"))
+  expect_identical(class(dist_cache), "distance_object")
 
   # Use cached distances
   result <- match_couples(dist_cache)

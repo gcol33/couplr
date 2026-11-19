@@ -62,6 +62,24 @@ test_that("a solver returning a malformed match is refused", {
   expect_error(assignment(diag(3), method = "test_bad"), "one column index per row")
 })
 
+test_that("a solver assigning one column to several rows is refused", {
+  register_lap_solver("test_repeat",
+                      function(cost, maximize, ...) rep(1L, nrow(cost)))
+  on.exit(rm("test_repeat", envir = couplr:::.lap_registry), add = TRUE)
+  expect_error(assignment(diag(3), method = "test_repeat"),
+               'Solver "test_repeat" assigned a column to more than one row',
+               fixed = TRUE)
+})
+
+test_that("unmatched rows of a registered solver may repeat the value 0", {
+  register_lap_solver("test_partial",
+                      function(cost, maximize, ...) c(1L, 0L, 0L))
+  on.exit(rm("test_partial", envir = couplr:::.lap_registry), add = TRUE)
+  expect_identical(couplr:::.run_lap_solver(couplr:::.lap_solver("test_partial"),
+                                            diag(3), FALSE)$match,
+                   c(1L, 0L, 0L))
+})
+
 test_that("registered solvers return plain integer-valued match vectors", {
   output <- c(1, 2)
   register_lap_solver("test_indices", function(cost, maximize) output)

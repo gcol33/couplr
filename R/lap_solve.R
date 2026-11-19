@@ -921,19 +921,17 @@ lap_solve_line_metric <- function(x, y, cost = "L1", maximize = FALSE) {
 
 #' @export
 print.lap_line_metric_result <- function(x, ...) {
-  cat("1-D Line Assignment Result\n")
-  cat("===========================\n\n")
-  
-  n <- length(x$match)
-  cat("Assignments (1-based):\n")
-  for (i in seq_len(min(n, 10))) {
-    cat(sprintf("  Source %d -> Target %d\n", i, x$match[i]))
-  }
-  if (n > 10) {
-    cat(sprintf("  ... (%d more assignments)\n", n - 10))
-  }
-  
-  cat("\nTotal cost:", x$total_cost, "\n")
+  .assignment_overview(x, "1-D Line Assignment Result",
+                       "total cost", x$total_cost)
+}
+
+# The short form shared by the print methods of the assignment results whose
+# summary() lists every assignment.
+.assignment_overview <- function(x, title, objective_label, objective) {
+  cat(title, "\n", sep = "")
+  cat(sum(x$match > 0L), " of ", length(x$match), " rows assigned, ",
+      objective_label, " ", format(objective), "\n", sep = "")
+  if (!is.null(x[["status"]])) cat("Status:", x[["status"]], "\n")
   invisible(x)
 }
 
@@ -1073,22 +1071,8 @@ bottleneck_assignment <- function(cost, maximize = FALSE) {
 
 #' @export
 print.bottleneck_result <- function(x, ...) {
-  cat("Bottleneck Assignment Result\n")
-  cat("============================\n\n")
-
-  n <- length(x$match)
-  cat("Assignments (1-based indices):\n")
-  for (i in seq_len(min(n, 10))) {
-    cat(sprintf("  Row %d -> Column %d\n", i, x$match[i]))
-  }
-  if (n > 10) {
-    cat(sprintf("  ... (%d more assignments)\n", n - 10))
-  }
-
-  cat("\nBottleneck value:", x$bottleneck, "\n")
-  cat("Status:", x$status, "\n")
-
-  invisible(x)
+  .assignment_overview(x, "Bottleneck Assignment Result",
+                       "bottleneck value", x$bottleneck)
 }
 
 #' @rdname bottleneck_assignment

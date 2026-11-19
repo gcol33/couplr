@@ -97,6 +97,10 @@
          "(0 for an unmatched row), integers in 0..", ncol(cost), ".",
          call. = FALSE)
   }
+  if (anyDuplicated(match[match > 0])) {
+    stop("Solver \"", entry$name, "\" assigned a column to more than one row.",
+         call. = FALSE)
+  }
   res$match <- as.integer(match)
   if (is.null(res[["total_cost"]])) {
     hit <- res$match > 0L

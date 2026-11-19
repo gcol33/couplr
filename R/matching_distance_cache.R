@@ -168,7 +168,7 @@ compute_distances <- function(left, right,
       original_left = left,
       original_right = right
     ),
-    class = c("distance_object", "couplr_distance")
+    class = "distance_object"
   )
 
   dist_obj

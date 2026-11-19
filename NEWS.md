@@ -59,6 +59,17 @@
   factor, where LAPACK's estimate was used; a user-supplied `sigma` that is
   not symmetric is read as its symmetric part.
 
+* **Moment constraints, reported totals and the scaling choice use the same
+  arithmetic.** The pooled spread a `max_std_diff` or `moments` bound of
+  `cardinality_match()` is divided by, the values of the constraint rows, the
+  balance diagnostics built on the same moments, `total_distance` and
+  `mean_distance` of every design, the duals read from an exact certificate,
+  and the mean, standard deviation and skewness behind `auto_scale` and the
+  variable checks were taken with `sum()`, `mean()`, `sd()` and `rowSums()`,
+  whose last digits depend on the platform. They are now sums in index order
+  in doubles, so a printed total is the same digits on every platform and a
+  statistic sitting at a threshold falls on the same side everywhere.
+
 * **`full_match(caliper_sd = )` takes the same caliper in every memory
   mode.** The standard deviation of the distances was `sd()` of the matrix in
   the dense path and a running sum in long double in the implicit path. Both

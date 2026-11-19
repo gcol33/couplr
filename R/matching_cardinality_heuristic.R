@@ -141,7 +141,7 @@
     right = setdiff(right_ids, as.character(pairs$right_id))
   )
   result$info$n_matched <- nrow(pairs)
-  result$info$total_distance <- sum(pairs$distance, na.rm = TRUE)
+  result$info$total_distance <- .plain_sum(pairs$distance, na.rm = TRUE)
   result$info$pruning_iterations <- iter
   result$info$pairs_removed <- original_n - nrow(pairs)
   result$info$max_std_diff_target <- max_std_diff
@@ -178,7 +178,7 @@
                  engine = "heuristic",
                  status = "heuristic",
                  max_std_diff = max_std_diff,
-                 total_distance = sum(pairs$distance, na.rm = TRUE),
+                 total_distance = .plain_sum(pairs$distance, na.rm = TRUE),
                  pairs = pairs),
             class = c("cardinality_heuristic", "cardinality_report"))
 }

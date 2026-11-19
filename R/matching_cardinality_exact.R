@@ -331,7 +331,7 @@
   k <- length(read$left)
   scale <- if (identical(spec$stat, "std_diff")) spec$denominator else 1
   signed <- if (k) {
-    (sum(coefs$u[read$left]) - sum(coefs$w[read$right])) / k
+    (.plain_sum(coefs$u[read$left]) - .plain_sum(coefs$w[read$right])) / k
   } else {
     NA_real_
   }
@@ -462,7 +462,7 @@
   }
 
   tiers <- index$tiers
-  reach <- tiers$base_magnitude + sum(tiers$counts * tiers$weights)
+  reach <- tiers$base_magnitude + .plain_sum(tiers$counts * tiers$weights)
   headroom <- if (reach > 0) PAD_PRECISION_LIMIT / reach else Inf
 
   pairs <- tibble::tibble(

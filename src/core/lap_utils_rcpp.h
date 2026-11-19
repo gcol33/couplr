@@ -172,6 +172,18 @@ double lazy_distance_sd_impl(
 // a specification of the same pairs. NA below two finite entries.
 double finite_sd_impl(const Rcpp::NumericMatrix& x);
 
+// The sum of a vector, and of each row of a matrix, in index order in doubles
+// (lap::plain::sum). R's sum() and rowSums() accumulate in long double where
+// the platform has one, so their last digits differ between platforms.
+double plain_sum_impl(const Rcpp::NumericVector& x);
+double plain_mean_impl(const Rcpp::NumericVector& x);
+Rcpp::NumericVector plain_row_sums_impl(const Rcpp::NumericMatrix& x);
+
+// list(mean, var): the weighted mean and unbiased weighted variance of
+// lap::plain::weighted_moments(), NA where they are undefined.
+Rcpp::List weighted_moments_impl(const Rcpp::NumericVector& x,
+                                 const Rcpp::NumericVector& w);
+
 // The covariance a Mahalanobis distance between two groups is taken under: the
 // pooled within-group covariance when each side holds at least two units, the
 // covariance of the two sides as one sample otherwise. Computed by

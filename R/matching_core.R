@@ -448,7 +448,7 @@
   info <- list(
     solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
     n_matched = nrow(pairs),
-    total_distance = sum(pairs$distance, na.rm = TRUE)
+    total_distance = .plain_sum(pairs$distance, na.rm = TRUE)
   )
   if (identical(plan$design, "fixed_ratio")) {
     info$ratio <- ratio
@@ -601,7 +601,7 @@
     ),
     info = list(
       n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance, na.rm = TRUE),
+      total_distance = .plain_sum(pairs$distance, na.rm = TRUE),
       replace = TRUE,
       ratio = ratio
     ),
@@ -758,7 +758,7 @@
       method = method_label,
       solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
       n_matched = nrow(pairs),
-      total_distance = sum(pairs$distance),
+      total_distance = .plain_sum(pairs$distance),
       distance_metric = dist_obj$metadata$distance,
       scaled = !identical(dist_obj$metadata$scale, FALSE),
       n_left = length(left_ids),
@@ -824,9 +824,9 @@
     n_left = as.integer(n_left),
     n_right = as.integer(n_right),
     n_matched = nrow(pairs),
-    total_distance = sum(pairs$distance, na.rm = TRUE),
+    total_distance = .plain_sum(pairs$distance, na.rm = TRUE),
     mean_distance = if (nrow(pairs) > 0L) {
-      mean(pairs$distance, na.rm = TRUE)
+      .plain_mean(pairs$distance[!is.na(pairs$distance)])
     } else {
       NA_real_
     },
@@ -858,7 +858,7 @@
     blocked = TRUE,
     n_blocks = n_blocks,
     n_matched = nrow(pairs),
-    total_distance = sum(pairs$distance, na.rm = TRUE),
+    total_distance = .plain_sum(pairs$distance, na.rm = TRUE),
     block_summary = block_summary
   )
 }

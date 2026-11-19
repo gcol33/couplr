@@ -33,12 +33,9 @@
 // which routes those metrics to price_block().
 //
 // The functions that form the tree's coordinates and bounds carry
-// LAP_PLAIN_ARITH, as the distance kernels do. A bound is valid with or
-// without fused multiply-add, since each allowance below counts one rounding
-// per operation and a fused pair rounds once instead of twice. What the
-// fusing would change is the bits of the coordinates, and with them where the
-// tree splits and the order in which a descent meets columns of equal cost;
-// without it a descent visits the same nodes on every platform.
+// LAP_PLAIN_ARITH, as the distance kernels do, so the coordinates are the same
+// bits on every platform, and with them where the tree splits and the order in
+// which a descent meets columns of equal cost.
 #pragma once
 
 #include "../core/lap_error.h"

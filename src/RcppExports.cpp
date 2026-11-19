@@ -167,6 +167,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_plain_sum
+double cpp_plain_sum(Rcpp::NumericVector x);
+RcppExport SEXP _couplr_cpp_plain_sum(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_plain_sum(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_plain_mean
+double cpp_plain_mean(Rcpp::NumericVector x);
+RcppExport SEXP _couplr_cpp_plain_mean(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_plain_mean(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_plain_row_sums
+Rcpp::NumericVector cpp_plain_row_sums(Rcpp::NumericMatrix x);
+RcppExport SEXP _couplr_cpp_plain_row_sums(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_plain_row_sums(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_weighted_moments
+Rcpp::List cpp_weighted_moments(Rcpp::NumericVector x, Rcpp::NumericVector w);
+RcppExport SEXP _couplr_cpp_weighted_moments(SEXP xSEXP, SEXP wSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type w(wSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_weighted_moments(x, w));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_group_covariance
 Rcpp::NumericMatrix cpp_group_covariance(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat);
 RcppExport SEXP _couplr_cpp_group_covariance(SEXP left_matSEXP, SEXP right_matSEXP) {
@@ -1317,6 +1362,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_cpp_lazy_dense_matrix", (DL_FUNC) &_couplr_cpp_lazy_dense_matrix, 4},
     {"_couplr_cpp_lazy_distance_sd", (DL_FUNC) &_couplr_cpp_lazy_distance_sd, 4},
     {"_couplr_cpp_finite_sd", (DL_FUNC) &_couplr_cpp_finite_sd, 1},
+    {"_couplr_cpp_plain_sum", (DL_FUNC) &_couplr_cpp_plain_sum, 1},
+    {"_couplr_cpp_plain_mean", (DL_FUNC) &_couplr_cpp_plain_mean, 1},
+    {"_couplr_cpp_plain_row_sums", (DL_FUNC) &_couplr_cpp_plain_row_sums, 1},
+    {"_couplr_cpp_weighted_moments", (DL_FUNC) &_couplr_cpp_weighted_moments, 2},
     {"_couplr_cpp_group_covariance", (DL_FUNC) &_couplr_cpp_group_covariance, 2},
     {"_couplr_cpp_precision_matrix", (DL_FUNC) &_couplr_cpp_precision_matrix, 1},
     {"_couplr_cpp_scaling_statistics", (DL_FUNC) &_couplr_cpp_scaling_statistics, 3},

@@ -266,3 +266,34 @@ validate_calipers <- function(calipers, columns) {
 
   calipers
 }
+
+# Sums in index order in doubles, the same digits on every platform. sum() and
+# rowSums() accumulate in long double where the platform has one. Every sum of
+# doubles that is reported, or that a matching decision is read from, goes
+# through these; a sum of integers or logicals is exact either way.
+.plain_sum <- function(x, na.rm = FALSE) {
+  x <- as.numeric(x)
+  if (na.rm) x <- x[!is.na(x)]
+  cpp_plain_sum(x)
+}
+
+.plain_row_sums <- function(x) {
+  x <- as.matrix(x)
+  storage.mode(x) <- "double"
+  cpp_plain_row_sums(x)
+}
+
+# Mean, sample standard deviation and third standardized moment of a numeric
+# vector in the same plain arithmetic. The cube is two multiplications, since
+# a power goes through the platform's pow().
+.plain_mean <- function(x) cpp_plain_mean(as.numeric(x))
+
+.plain_sd <- function(x) {
+  x <- as.numeric(x)
+  .weighted_moments(x, rep(1, length(x)))$sd
+}
+
+.plain_skewness <- function(x, centre, spread) {
+  z <- (as.numeric(x) - centre) / spread
+  .plain_mean(z * z * z)
+}

@@ -312,7 +312,7 @@ FlowResult solve_min_cost_flow_push_relabel(FlowProblem&       prob,
         const int64_t placed = g.at(fwd.rev).cap;
         const int64_t fa = arc.lower + placed;
         out.flow[static_cast<std::size_t>(a)] = fa;
-        total.add(arc.cost * static_cast<double>(fa));
+        total.add(plain::times(arc.cost, static_cast<double>(fa)));
     }
     out.total_cost = total.value();
 

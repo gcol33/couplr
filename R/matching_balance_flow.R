@@ -801,7 +801,7 @@
        right = right,
        matching = matching,
        n_pairs = length(left),
-       total_distance = sum(index$pair_cost[taken]),
+       total_distance = .plain_sum(index$pair_cost[taken]),
        slack = flow[ranges$slack],
        total_slack = sum(flow[ranges$slack]),
        transfers = tibble::tibble(
@@ -855,15 +855,15 @@
   } else {
     cost <- as.matrix(cost)
     if (length(read$left)) {
-      sum(cost[cbind(read$left, read$right)] - index$cost_shift)
+      .plain_sum(cost[cbind(read$left, read$right)] - index$cost_shift)
     } else {
       0
     }
   }
 
-  arc_cost <- sum(arcs$cost * flow)
+  arc_cost <- .plain_sum(arcs$cost * flow)
   identity <- tiers$penalty * (index$total_budget - read$n_pairs) +
-    sum(tiers$eps * imbalance) + distance
+    .plain_sum(tiers$eps * imbalance) + distance
 
   # A cell feeding both directions of a crossing would be sending surplus out
   # and asking for it back at the same time, which costs gamma per unit and buys

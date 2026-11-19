@@ -49,6 +49,22 @@ cpp_finite_sd <- function(x) {
     .Call(`_couplr_cpp_finite_sd`, x)
 }
 
+cpp_plain_sum <- function(x) {
+    .Call(`_couplr_cpp_plain_sum`, x)
+}
+
+cpp_plain_mean <- function(x) {
+    .Call(`_couplr_cpp_plain_mean`, x)
+}
+
+cpp_plain_row_sums <- function(x) {
+    .Call(`_couplr_cpp_plain_row_sums`, x)
+}
+
+cpp_weighted_moments <- function(x, w) {
+    .Call(`_couplr_cpp_weighted_moments`, x, w)
+}
+
 cpp_group_covariance <- function(left_mat, right_mat) {
     .Call(`_couplr_cpp_group_covariance`, left_mat, right_mat)
 }

@@ -28,7 +28,10 @@ ref_mean <- function(blocks, k) {
     for (i in seq_len(nrow(b))) s <- s + b[i, k]
     n <- n + nrow(b)
   }
-  s / n
+  m <- s / n
+  t <- 0
+  for (b in blocks) for (i in seq_len(nrow(b))) t <- t + (b[i, k] - m)
+  m + t / n
 }
 
 ref_cross <- function(blocks, a, b, ma, mb) {
@@ -319,4 +322,99 @@ test_that("the standard deviation of the distances is one number for a matrix an
   D[4, 1] <- NA
   expect_equal(couplr:::cpp_finite_sd(D), stats::sd(D[is.finite(D)]), tolerance = 1e-12)
   expect_true(is.na(couplr:::cpp_finite_sd(matrix(c(1, Inf), 1, 2))))
+})
+
+test_that("plain sums are the sum in index order", {
+  x <- as.vector(plain_units(40, 3, 5)) / 7
+  s <- 0
+  for (v in x) s <- s + v
+  expect_identical(couplr:::.plain_sum(x), s)
+  expect_identical(couplr:::.plain_sum(c(x, NA), na.rm = TRUE), s)
+  expect_identical(couplr:::.plain_sum(numeric(0)), 0)
+  expect_identical(couplr:::.plain_sum(1:10), 55)
+
+  m <- matrix(x, 40, 3)
+  rows <- vapply(seq_len(40), function(i) {
+    s <- 0
+    for (k in 1:3) s <- s + m[i, k]
+    s
+  }, 0)
+  expect_identical(couplr:::.plain_row_sums(m), rows)
+  expect_equal(couplr:::.plain_row_sums(m), rowSums(m), tolerance = 1e-12)
+})
+
+test_that("the plain mean returns a constant exactly and agrees with mean()", {
+  for (value in c(0.1, 1 / 3, 1e-7, 123456.789)) {
+    for (n in c(2L, 3L, 7L, 10L, 185L, 429L)) {
+      x <- rep(value, n)
+      expect_identical(couplr:::.plain_mean(x), value)
+      expect_identical(couplr:::.plain_sd(x), 0)
+      wm <- couplr:::.weighted_moments(x, rep(1, n))
+      expect_identical(wm$mean, value)
+      expect_identical(wm$var, 0)
+    }
+  }
+  x <- as.vector(plain_units(40, 3, 5)) / 7
+  expect_equal(couplr:::.plain_mean(x), mean(x), tolerance = 1e-14)
+  expect_equal(couplr:::.plain_sd(x), stats::sd(x), tolerance = 1e-12)
+  expect_true(is.na(couplr:::.plain_mean(numeric(0))))
+})
+
+test_that("weighted moments are the hand-computed and the reference ones", {
+  # 1, 2, 4, 9 with unit weights: mean 4, squared deviations 38, variance 38/3.
+  wm <- couplr:::.weighted_moments(c(1, 2, 4, 9), rep(1, 4))
+  expect_identical(wm$mean, 4)
+  expect_equal(wm$var, 38 / 3, tolerance = 1e-15)
+  expect_identical(wm$sd, sqrt(wm$var))
+
+  # Weights 1, 3 on 2, 6: mean 5; sum(w) / (sum(w)^2 - sum(w^2)) = 4 / 6;
+  # sum(w (x - mean)^2) = 9 + 3 = 12; variance 8.
+  wm <- couplr:::.weighted_moments(c(2, 6), c(1, 3))
+  expect_identical(wm$mean, 5)
+  expect_equal(wm$var, 8, tolerance = 1e-15)
+
+  x <- as.vector(plain_units(30, 2, 3)) / 3
+  w <- rep(c(1, 2, 0.5), 20)
+  wm <- couplr:::.weighted_moments(x, w)
+  m <- sum(w * x) / sum(w)
+  expect_equal(wm$mean, m, tolerance = 1e-13)
+  expect_equal(wm$var, sum(w) / (sum(w)^2 - sum(w^2)) * sum(w * (x - m)^2),
+               tolerance = 1e-12)
+
+  # The scalar reference: one operation at a time, in index order.
+  sw <- 0; swx <- 0; sww <- 0
+  for (i in seq_along(x)) {
+    sw <- sw + w[i]
+    swx <- swx + w[i] * x[i]
+    sww <- sww + w[i] * w[i]
+  }
+  m0 <- swx / sw
+  t <- 0
+  for (i in seq_along(x)) t <- t + w[i] * (x[i] - m0)
+  m1 <- m0 + t / sw
+  ss <- 0
+  for (i in seq_along(x)) {
+    d <- x[i] - m1
+    ss <- ss + w[i] * (d * d)
+  }
+  expect_identical(wm$mean, m1)
+  expect_identical(wm$var, sw / (sw * sw - sww) * ss)
+
+  empty <- couplr:::.weighted_moments(numeric(0), numeric(0))
+  expect_true(is.na(empty$mean) && is.na(empty$var) && is.na(empty$sd))
+  one <- couplr:::.weighted_moments(3, 1)
+  expect_identical(one$mean, 3)
+  expect_true(is.na(one$var))
+  none <- couplr:::.weighted_moments(c(1, 2), c(0, 0))
+  expect_true(is.na(none$mean) && is.na(none$var))
+})
+
+test_that("the reported total distance is the plain sum of the pair distances", {
+  left <- data.frame(id = 1:12, plain_units(12, 3, 1))
+  right <- data.frame(id = 101:120, plain_units(20, 3, 2))
+  m <- match_couples(left, right, vars = c("X1", "X2", "X3"),
+                     distance = "mahalanobis")
+  s <- 0
+  for (d in m$pairs$distance) s <- s + d
+  expect_identical(m$info$total_distance, s)
 })

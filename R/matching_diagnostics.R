@@ -5,20 +5,12 @@
 # of matching variables between left and right units in matched pairs
 
 # Weighted mean and (unbiased) weighted variance/sd. With all weights equal to
-# 1 this reduces exactly to mean() and the n-1 sample variance, so unweighted
-# callers are unaffected.
+# 1 this is the mean and the n-1 sample variance. Computed in plain double
+# arithmetic (lap::plain::weighted_moments), so the moment constraints that
+# divide by this spread hold the same numbers on every platform.
 .weighted_moments <- function(x, w) {
-  if (length(x) == 0) {
-    return(list(mean = NA_real_, var = NA_real_, sd = NA_real_))
-  }
-  sw <- sum(w)
-  if (sw == 0) {
-    return(list(mean = NA_real_, var = NA_real_, sd = NA_real_))
-  }
-  m <- sum(w * x) / sw
-  denom <- sw^2 - sum(w^2)
-  v <- if (denom > 0) sw / denom * sum(w * (x - m)^2) else NA_real_
-  list(mean = m, var = v, sd = sqrt(v))
+  m <- cpp_weighted_moments(as.numeric(x), as.numeric(w))
+  list(mean = m$mean, var = m$var, sd = sqrt(m$var))
 }
 
 #' Calculate Standardized Difference

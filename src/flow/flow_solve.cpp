@@ -292,8 +292,8 @@ bool settle_shortfall(const FlowProblem& prob, const FlowOptions& opts,
     short_pi.assign(settled.potential.begin(), settled.potential.begin() + N);
     detail::CompensatedSum total;
     for (int64_t a = 0; a < n_arcs; ++a) {
-        total.add(prob.arcs[static_cast<std::size_t>(a)].cost *
-                  static_cast<double>(short_flow[static_cast<std::size_t>(a)]));
+        total.add(plain::times(prob.arcs[static_cast<std::size_t>(a)].cost,
+                               static_cast<double>(short_flow[static_cast<std::size_t>(a)])));
     }
     total_cost = total.value();
     return true;
@@ -802,7 +802,7 @@ FlowResult solve_min_cost_flow(FlowProblem& prob, const FlowOptions& opts) {
         const int64_t placed = g.at(fwd.rev).cap;
         const int64_t fa = arc.lower + placed;
         out.flow[static_cast<std::size_t>(a)] = fa;
-        total.add(arc.cost * static_cast<double>(fa));
+        total.add(plain::times(arc.cost, static_cast<double>(fa)));
     }
     out.total_cost = total.value();
 

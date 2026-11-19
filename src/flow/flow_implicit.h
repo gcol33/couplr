@@ -419,7 +419,7 @@ inline void exact_master(const FlowProblem& prob, FlowResult& master) {
     }
     ::lap::detail::CompensatedSum total;
     for (std::size_t a = 0; a < prob.arcs.size(); ++a) {
-        total.add(prob.arcs[a].cost * static_cast<double>(master.flow[a]));
+        total.add(plain::times(prob.arcs[a].cost, static_cast<double>(master.flow[a])));
     }
     master.total_cost = total.value();
 }

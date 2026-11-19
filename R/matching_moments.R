@@ -482,5 +482,5 @@
     stop("`i` and `j` must index the left and right pools the coefficients ",
          "were built from.", call. = FALSE)
   }
-  sum(coefs$u[i]) - sum(coefs$w[j]) - length(i) * coefs$b
+  .plain_sum(coefs$u[i]) - .plain_sum(coefs$w[j]) - length(i) * coefs$b
 }

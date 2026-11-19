@@ -99,8 +99,8 @@ check_variable_health <- function(left, right, vars,
       var_summary$issue <- "insufficient_observations"
     } else {
       # Compute statistics on valid data
-      var_mean <- mean(valid_data)
-      var_sd <- stats::sd(valid_data)
+      var_mean <- .plain_mean(valid_data)
+      var_sd <- .plain_sd(valid_data)
       var_min <- min(valid_data)
       var_max <- max(valid_data)
       var_range <- var_max - var_min
@@ -113,7 +113,7 @@ check_variable_health <- function(left, right, vars,
 
       # Compute skewness (using moment formula)
       if (var_sd > 0) {
-        skew <- mean(((valid_data - var_mean) / var_sd)^3)
+        skew <- .plain_skewness(valid_data, var_mean, var_sd)
         var_summary$skewness <- skew
       } else {
         var_summary$skewness <- NA_real_
@@ -229,13 +229,13 @@ suggest_scaling <- function(left, right, vars) {
       next
     }
 
-    var_mean <- mean(var_data)
-    var_sd <- stats::sd(var_data)
+    var_mean <- .plain_mean(var_data)
+    var_sd <- .plain_sd(var_data)
     sds[i] <- var_sd
 
     # Check for skewness
     if (var_sd > 0) {
-      skew <- mean(((var_data - var_mean) / var_sd)^3)
+      skew <- .plain_skewness(var_data, var_mean, var_sd)
       skews[i] <- abs(skew)
     }
 

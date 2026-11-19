@@ -41,6 +41,7 @@
 #pragma once
 
 #include "lap_types.h"
+#include "lap_plain_arith.h"
 #include "lap_cost_source.h"
 #include "lap_exact.h"
 #include "lap_exact_potentials.h"

@@ -386,7 +386,8 @@ verify_assignment <- function(x, cost = NULL, duals = NULL,
     m
   }
   exact <- list(u = as_expansion(duals$u), v = as_expansion(duals$v))
-  list(duals = list(u = rowSums(exact$u), v = rowSums(exact$v)), exact = exact)
+  list(duals = list(u = .plain_row_sums(exact$u), v = .plain_row_sums(exact$v)),
+       exact = exact)
 }
 
 .certify_extract_match <- function(x) {

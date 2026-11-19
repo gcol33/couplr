@@ -447,7 +447,7 @@ verify_flow <- function(x, problem = NULL, potential = NULL, tol = 1e-9,
     if (anyNA(exact_potential) || any(!is.finite(exact_potential))) {
       stop("`potential` must be finite.", call. = FALSE)
     }
-    potential <- rowSums(exact_potential)
+    potential <- .plain_row_sums(exact_potential)
   }
   potential <- as.numeric(potential)
   if (length(potential) != problem$n_nodes) {

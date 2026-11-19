@@ -284,6 +284,26 @@ double cpp_finite_sd(Rcpp::NumericMatrix x) {
 }
 
 // [[Rcpp::export]]
+double cpp_plain_sum(Rcpp::NumericVector x) {
+  return plain_sum_impl(x);
+}
+
+// [[Rcpp::export]]
+double cpp_plain_mean(Rcpp::NumericVector x) {
+  return plain_mean_impl(x);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector cpp_plain_row_sums(Rcpp::NumericMatrix x) {
+  return plain_row_sums_impl(x);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_weighted_moments(Rcpp::NumericVector x, Rcpp::NumericVector w) {
+  return weighted_moments_impl(x, w);
+}
+
+// [[Rcpp::export]]
 Rcpp::NumericMatrix cpp_group_covariance(Rcpp::NumericMatrix left_mat,
                                          Rcpp::NumericMatrix right_mat) {
   return group_covariance_impl(left_mat, right_mat);

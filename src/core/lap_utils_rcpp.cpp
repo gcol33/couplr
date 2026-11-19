@@ -158,6 +158,35 @@ double finite_sd_impl(const Rcpp::NumericMatrix& x) {
   return std::isnan(sd) ? NA_REAL : sd;
 }
 
+double plain_sum_impl(const Rcpp::NumericVector& x) {
+  return lap::plain::sum(x.begin(), static_cast<int64_t>(x.size()));
+}
+
+double plain_mean_impl(const Rcpp::NumericVector& x) {
+  return lap::plain::mean(x.begin(), static_cast<int64_t>(x.size()));
+}
+
+Rcpp::NumericVector plain_row_sums_impl(const Rcpp::NumericMatrix& x) {
+  const int64_t n = x.nrow();
+  const int64_t m = x.ncol();
+  Rcpp::NumericVector out(static_cast<R_xlen_t>(n));
+  // Row i of a column-major matrix is read at a stride of the row count.
+  for (int64_t i = 0; i < n; ++i) out[i] = lap::plain::sum(x.begin() + i, m, n);
+  return out;
+}
+
+Rcpp::List weighted_moments_impl(const Rcpp::NumericVector& x,
+                                 const Rcpp::NumericVector& w) {
+  if (x.size() != w.size()) {
+    LAP_ERROR("weighted_moments_impl: x and w must have the same length");
+  }
+  const lap::plain::WeightedMoments m =
+      lap::plain::weighted_moments(x.begin(), w.begin(), static_cast<int64_t>(x.size()));
+  return Rcpp::List::create(
+      Rcpp::Named("mean") = std::isnan(m.mean) ? NA_REAL : m.mean,
+      Rcpp::Named("var") = std::isnan(m.var) ? NA_REAL : m.var);
+}
+
 // The rows of an R matrix as one block of a sample. An R matrix is
 // column-major, which is the layout a block is read in.
 static lap::plain::ColumnBlock block_of(const Rcpp::NumericMatrix& x) {

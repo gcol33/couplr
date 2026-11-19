@@ -440,7 +440,7 @@
 
 # The value a cut row takes at a point, in doubles.
 .select_row_value <- function(row, x) {
-  sum(rowSums(row$coef) * x)
+  .plain_sum(.plain_row_sums(row$coef) * x)
 }
 
 # The deepest node at which the distance stage cuts at fractional points.
@@ -474,7 +474,7 @@
     stopped_on = res$stopped_on,
     n_nodes = as.integer(res$n_nodes),
     seconds = proc.time()[["elapsed"]] - started,
-    value = read(sum(res$value)),
+    value = read(.plain_sum(res$value)),
     bound = read(res$bound))
   res
 }
@@ -634,7 +634,7 @@
       if (!p$feasible) {
         return(list(feasible = FALSE, value = NULL, rows = NULL))
       }
-      value <- sum(p$distance)
+      value <- .plain_sum(p$distance)
       theta <- x[[cols$theta]]
       cut <- if (theta < value - 1e-9 * max(1, abs(value))) {
         .select_distance_cut(cols, p)

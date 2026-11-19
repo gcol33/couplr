@@ -279,7 +279,7 @@ match_path <- function(left, right, vars,
     n_matched[k] <- length(rows)
     if (length(rows)) {
       status[k] <- "partial"
-      total[k] <- sum(lazy_pair_distances(spec, rows, partial$matched_cols))
+      total[k] <- .plain_sum(lazy_pair_distances(spec, rows, partial$matched_cols))
     }
   }
 

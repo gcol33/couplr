@@ -87,16 +87,93 @@ inline int64_t sample_size(const Sample& sample) {
     return n;
 }
 
-// The mean of column k: the sum in row order, block after block, over the
-// count. NaN for an empty sample.
+// The sum of n values read at a stride, in index order.
+LAP_PLAIN_ARITH_FN inline double sum(const double* x, int64_t n, int64_t stride = 1) {
+    LAP_PLAIN_ARITH
+    double s = 0.0;
+    for (int64_t i = 0; i < n; ++i) s += x[static_cast<std::size_t>(i * stride)];
+    return s;
+}
+
+// The product of two doubles, rounded once. A product written inside a sum
+// can be fused with the addition that follows it; a product taken here cannot.
+LAP_PLAIN_ARITH_FN inline double times(double a, double b) {
+    LAP_PLAIN_ARITH
+    return a * b;
+}
+
+// The weighted mean and the unbiased weighted variance of n values:
+// mean = sum(w x) / sum(w), corrected by the weighted mean of the deviations
+// from it as column_mean() corrects its sum, and
+// var = sum(w) / (sum(w)^2 - sum(w^2)) * sum(w (x - mean)^2),
+// which for unit weights are the mean and the n - 1 sample variance. NaN for
+// both without weight, and for the variance when sum(w)^2 does not exceed
+// sum(w^2), as with one unit.
+struct WeightedMoments {
+    double mean = std::numeric_limits<double>::quiet_NaN();
+    double var = std::numeric_limits<double>::quiet_NaN();
+};
+
+LAP_PLAIN_ARITH_FN inline WeightedMoments weighted_moments(const double* x,
+                                                           const double* w,
+                                                           int64_t n) {
+    LAP_PLAIN_ARITH
+    WeightedMoments out;
+    double sw = 0.0;
+    double swx = 0.0;
+    double sww = 0.0;
+    for (int64_t i = 0; i < n; ++i) {
+        sw += w[i];
+        swx += w[i] * x[i];
+        sww += w[i] * w[i];
+    }
+    if (n == 0 || sw == 0.0) return out;
+    const double m = swx / sw;
+    if (std::isfinite(m)) {
+        double t = 0.0;
+        for (int64_t i = 0; i < n; ++i) t += w[i] * (x[i] - m);
+        out.mean = m + t / sw;
+    } else {
+        out.mean = m;
+    }
+    const double denom = sw * sw - sww;
+    if (!(denom > 0.0)) return out;
+    double ss = 0.0;
+    for (int64_t i = 0; i < n; ++i) {
+        const double d = x[i] - out.mean;
+        ss += w[i] * (d * d);
+    }
+    out.var = sw / denom * ss;
+    return out;
+}
+
+// The mean of column k, in two passes over the rows in order, block after
+// block: the sum over the count, then that value corrected by the mean of the
+// deviations from it. The second pass removes the rounding the first sum
+// accumulated, and it returns a constant column's value exactly, so that the
+// deviations of a constant column are zero and its standard deviation is 0
+// rather than a rounding residue. NaN for an empty sample.
 LAP_PLAIN_ARITH_FN inline double column_mean(const Sample& sample, int64_t k) {
     LAP_PLAIN_ARITH
+    const double n = static_cast<double>(sample_size(sample));
     double s = 0.0;
     for (const ColumnBlock& b : sample) {
         const double* x = b.column(k);
         for (int64_t i = 0; i < b.n; ++i) s += x[i];
     }
-    return s / static_cast<double>(sample_size(sample));
+    const double m = s / n;
+    if (!std::isfinite(m)) return m;
+    double t = 0.0;
+    for (const ColumnBlock& b : sample) {
+        const double* x = b.column(k);
+        for (int64_t i = 0; i < b.n; ++i) t += x[i] - m;
+    }
+    return m + t / n;
+}
+
+// The mean of n values by the same two passes.
+inline double mean(const double* x, int64_t n) {
+    return column_mean(Sample{ColumnBlock{x, n}}, 0);
 }
 
 // The sum over the sample of (x_ia - mean_a) * (x_ib - mean_b), in row order.

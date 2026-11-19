@@ -561,7 +561,7 @@ inline FlowCertificate certify_flow(const FlowProblem& prob,
         detail::CompensatedSum primal;
         for (int64_t a = 0; a < n_arcs; ++a) {
             const FlowArc& arc = prob.arcs[static_cast<std::size_t>(a)];
-            primal.add(arc.cost * static_cast<double>(flow[static_cast<std::size_t>(a)]));
+            primal.add(plain::times(arc.cost, static_cast<double>(flow[static_cast<std::size_t>(a)])));
         }
         rep.primal_objective = primal.value();
     }

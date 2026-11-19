@@ -124,25 +124,13 @@ err_invalid_param <- function(param, value, expected) {
 #' @return No return value, throws an error.
 #' @keywords internal
 err_no_valid_pairs <- function(reason = NULL) {
-  msg <- paste0(
-    "No valid pairs to match - all distances are Inf!\n",
-    "  ", couplr_emoji("broken"), "Your constraints are too strict. Love can't bloom in a vacuum!\n"
-  )
-
+  msg <- "No valid pairs to match: every distance is excluded by the matching restrictions"
   if (!is.null(reason)) {
-    msg <- paste0(msg, "  ", couplr_emoji("info"), "Reason: ", reason, "\n")
+    msg <- paste0(msg, " (", reason, ")")
   }
-
-  msg <- paste0(
-    msg,
-    "  ", couplr_emoji("sparkles"), "Try:\n",
-    "    - Increasing max_distance\n",
-    "    - Relaxing calipers\n",
-    "    - Using fewer blocking variables\n",
-    "    - Checking for data quality issues"
-  )
-
-  couplr_stop(msg)
+  couplr_stop(msg, ".
+",
+              "Widen max_distance or the calipers, or use fewer blocking variables.")
 }
 
 #' Constant variable warning
@@ -150,9 +138,7 @@ err_no_valid_pairs <- function(reason = NULL) {
 #' @keywords internal
 warn_constant_var <- function(var) {
   couplr_warn(
-    "Variable '", var, "' is constant (SD = 0)\n",
-    "  ", couplr_emoji("chart"), "Can't match on a variable that never changes!\n",
-    "  ", couplr_emoji("info"), "This variable will be excluded from matching."
+    "Variable '", var, "' is constant (SD = 0) and is excluded from matching."
   )
 }
 
@@ -161,12 +147,9 @@ warn_constant_var <- function(var) {
 #' @keywords internal
 warn_many_zeros <- function(pct, n_zeros) {
   couplr_warn(
-    sprintf("%.1f%% of distances are zero (%d pairs)", pct, n_zeros), "\n",
-    "  ", couplr_emoji("search"), "Possible duplicates or identical values detected.\n",
-    "  ", couplr_emoji("info"), "Consider:\n",
-    "    - Adding more distinguishing variables\n",
-    "    - Checking for duplicate records\n",
-    "    - Using unique identifiers"
+    sprintf("%.1f%% of distances are zero (%d pairs);
+", pct, n_zeros),
+    "the data may hold duplicate records or too few distinguishing variables."
   )
 }
 
@@ -174,30 +157,15 @@ warn_many_zeros <- function(pct, n_zeros) {
 #' @return No return value, called for side effects (issues a warning).
 #' @keywords internal
 warn_extreme_costs <- function(p95, p99, ratio, problem_vars = NULL) {
-  msg <- paste0(
-    "Distance distribution is highly skewed!\n",
-    "  ", couplr_emoji("chart"), sprintf("95th percentile: %.2f", p95), "\n",
-    "  ", couplr_emoji("chart"), sprintf("99th percentile: %.2f (%.0fx larger!)", p99, ratio), "\n"
-  )
-
+  msg <- sprintf(paste0(
+    "The distances are highly skewed: the 99th percentile (%.2f) is %.0f times ",
+    "the 95th (%.2f)"), p99, ratio, p95)
   if (!is.null(problem_vars) && length(problem_vars) > 0) {
-    msg <- paste0(
-      msg,
-      "  ", couplr_emoji("warning_sign"), "Variables with extreme values: ",
-      paste(problem_vars, collapse = ", "), "\n"
-    )
+    msg <- paste0(msg, ";
+variables with extreme values: ",
+                  paste(problem_vars, collapse = ", "))
   }
-
-  msg <- paste0(
-    msg,
-    "  ", couplr_emoji("sparkles"), "Try:\n",
-    "    - Using scale = 'standardize' or 'robust'\n",
-    "    - Log-transforming skewed variables\n",
-    "    - Removing outliers\n",
-    "    - Using rank-based distances"
-  )
-
-  couplr_warn(msg)
+  couplr_warn(msg, ".")
 }
 
 #' Many forbidden pairs warning
@@ -218,16 +186,9 @@ warn_many_forbidden <- function(pct_forbidden, n_valid, n_left) {
 #' @keywords internal
 warn_constant_distance <- function(value) {
   couplr_warn(
-    sprintf("All distances are identical (%.4f)", value), "\n",
-    "  ", couplr_emoji("broken"), "Your matching variables aren't informative!\n",
-    "  ", couplr_emoji("search"), "Possible causes:\n",
-    "    - Constant variables (no variation)\n",
-    "    - Highly correlated variables\n",
-    "    - Inappropriate distance metric\n",
-    "  ", couplr_emoji("sparkles"), "Try:\n",
-    "    - Using auto_scale = TRUE\n",
-    "    - Checking variable variation\n",
-    "    - Adding more informative variables"
+    sprintf("All distances are identical (%.4f);
+", value),
+    "the matching variables do not distinguish the units."
   )
 }
 
@@ -237,18 +198,14 @@ warn_constant_distance <- function(value) {
 info_low_match_rate <- function(n_matched, n_left, pct) {
   if (pct < 25) {
     couplr_warn(
-      sprintf("Only %d/%d (%.1f%%) units matched", n_matched, n_left, pct), "\n",
-      "  ", couplr_emoji("broken"), "Most units are staying single!\n",
-      "  ", couplr_emoji("info"), "This might indicate:\n",
-      "    - Constraints are too strict\n",
-      "    - Poor overlap between datasets\n",
-      "    - Need for more potential matches (larger right dataset)\n",
-      "  ", couplr_emoji("sparkles"), "Review your matching strategy or relax constraints."
+      sprintf("Only %d of %d left units (%.1f%%) were matched;
+",
+              n_matched, n_left, pct),
+      "the restrictions may be too strict or the two groups may overlap little."
     )
   } else if (pct < 50) {
     couplr_inform(
-      sprintf("%d/%d (%.1f%%) units matched", n_matched, n_left, pct), "\n",
-      "  ", couplr_emoji("info"), "Moderate match rate. Consider relaxing constraints for more matches."
+      sprintf("%d of %d left units (%.1f%%) were matched.", n_matched, n_left, pct)
     )
   }
 }
@@ -258,14 +215,8 @@ info_low_match_rate <- function(n_matched, n_left, pct) {
 #' @keywords internal
 warn_poor_quality <- function(pct_poor, threshold) {
   couplr_warn(
-    sprintf("%.1f%% of matches exceed distance %.2f", pct_poor, threshold), "\n",
-    "  ", couplr_emoji("broken"), "Some matches are pretty distant - not great couples!\n",
-    "  ", couplr_emoji("info"), "These matches might be low quality.\n",
-    "  ", couplr_emoji("sparkles"), "Consider:\n",
-    "    - Using stricter max_distance\n",
-    "    - Improving data overlap\n",
-    "    - Adding more matching variables\n",
-    "    - Using balance diagnostics to assess quality"
+    sprintf("%.1f%% of matched pairs have a distance above %.2f.",
+            pct_poor, threshold)
   )
 }
 
@@ -274,9 +225,9 @@ warn_poor_quality <- function(pct_poor, threshold) {
 #' @keywords internal
 warn_parallel_unavailable <- function() {
   couplr_warn(
-    "Parallel processing requested but 'future' packages not installed\n",
-    "  ", couplr_emoji("info"), "Install with: install.packages(c('future', 'future.apply'))\n",
-    "  ", couplr_emoji("sparkles"), "Falling back to sequential processing."
+    "Parallel processing needs the packages 'future' and 'future.apply';
+",
+    "running sequentially."
   )
 }
 

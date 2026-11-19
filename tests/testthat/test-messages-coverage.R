@@ -74,7 +74,7 @@ test_that("err_invalid_param throws error", {
 test_that("err_no_valid_pairs throws error", {
   skip_on_cran()
   expect_error(couplr:::err_no_valid_pairs(), "No valid pairs")
-  expect_error(couplr:::err_no_valid_pairs("test reason"), "Reason")
+  expect_error(couplr:::err_no_valid_pairs("test reason"), "(test reason)", fixed = TRUE)
 })
 
 # ------------------------------------------------------------------------------
@@ -121,7 +121,8 @@ test_that("warn_constant_distance produces warning", {
 test_that("info_low_match_rate produces messages at different thresholds", {
   skip_on_cran()
   # < 25% produces warning
-  expect_warning(couplr:::info_low_match_rate(10, 100, 10), "single")
+  expect_warning(couplr:::info_low_match_rate(10, 100, 10),
+                 "Only 10 of 100 left units")
 
   # 25-50% produces message - just verify no error
   expect_no_error(

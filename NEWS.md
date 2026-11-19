@@ -20,6 +20,14 @@
   pages of the matching results and of `sensitivity_analysis()` appear in the
   help index as `couplr_result` and `sensitivity_analysis`.
 
+## Messages
+
+* **Warnings are one or two factual lines.** The warnings about constant
+  variables, zero or identical distances, skewed distances, low match rates,
+  distant pairs and missing parallel packages state what was found, without
+  lists of suggestions; the error for a problem without admissible pairs
+  likewise.
+
 ## Bug fixes
 
 * **`full_match()` ends exactly optimal.** The flow solver compares doubles

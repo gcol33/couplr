@@ -191,13 +191,13 @@ test_that("info_low_match_rate handles different rates", {
   # Very low (<25%)
   expect_warning(
     couplr:::info_low_match_rate(10, 100, 10),
-    "staying single"
+    "Only 10 of 100 left units"
   )
 
   # Moderate (25-50%)
   expect_message(
     couplr:::info_low_match_rate(30, 100, 30),
-    "Moderate"
+    "30 of 100 left units"
   )
 
   # Good (>50%) - should not warn or message

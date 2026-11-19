@@ -46,7 +46,7 @@ test_that("err_invalid_param stops with message", {
 test_that("err_no_valid_pairs stops with message", {
   skip_on_cran()
   expect_error(couplr:::err_no_valid_pairs(), "No valid pairs")
-  expect_error(couplr:::err_no_valid_pairs("all infinite"), "Reason")
+  expect_error(couplr:::err_no_valid_pairs("all infinite"), "(all infinite)", fixed = TRUE)
 })
 
 # ------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ test_that("warn_constant_distance issues warning", {
 
 test_that("warn_poor_quality issues warning", {
   skip_on_cran()
-  expect_warning(couplr:::warn_poor_quality(25, 0.5), "exceed distance")
+  expect_warning(couplr:::warn_poor_quality(25, 0.5), "distance above 0.50")
 })
 
 test_that("warn_parallel_unavailable issues warning", {
@@ -109,7 +109,7 @@ test_that("info_low_match_rate handles different percentages", {
   expect_warning(couplr:::info_low_match_rate(2, 10, 20), "Only")
 
   # Moderate match rate (25-50%) - message
-  expect_message(couplr:::info_low_match_rate(4, 10, 40), "Moderate")
+  expect_message(couplr:::info_low_match_rate(4, 10, 40), "4 of 10 left units")
 
   # Good match rate (>50%) - no output
   expect_silent(couplr:::info_low_match_rate(6, 10, 60))

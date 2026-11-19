@@ -245,7 +245,7 @@ print.couplr_flow_problem <- function(x, ...) {
   }
   solved$flow <- step$flow
   solved$potential <- step$potential
-  solved$total_cost <- sum(problem$arcs$cost * step$flow)
+  solved$total_cost <- .plain_sum(problem$arcs$cost * step$flow)
   solved
 }
 

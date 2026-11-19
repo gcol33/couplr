@@ -171,7 +171,7 @@ PAD_PRECISION_LIMIT <- 2^53
   match_out[match_out > m] <- 0L
   matched <- which(match_out > 0L)
   total <- if (length(matched)) {
-    sum(cost[cbind(matched, match_out[matched])])
+    .plain_sum(cost[cbind(matched, match_out[matched])])
   } else {
     0
   }

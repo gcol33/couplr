@@ -199,6 +199,14 @@
 #'   \item `max_matched_slack`, `max_v_unmatched`, `max_v` — the quantities the
 #'         slackness and sign conditions bound.
 #'   \item `n_matched`, `n_rows`, `n_cols`, `transposed`, `tolerance`.
+#'   \item `scope` — present only on the certificate of a partial matching
+#'         from [match_couples()] or [match_path()] that leaves out units
+#'         without an admissible partner: a list with `left` and `right`, the
+#'         ids of the units the certificate was computed over, and `n_left`,
+#'         `n_right`, how many units each side has. The certificate proves the
+#'         matching optimal among the matchings of those units; `n_rows`,
+#'         `n_cols` count them, and `worst_i`, `worst_j` index the whole
+#'         problem. A certificate without `scope` covers every unit.
 #' }
 #'
 #' @seealso [assignment()], [assignment_duals()], [solver_status_values()]
@@ -469,6 +477,7 @@ print.assignment_certificate <- function(x, ...) {
   arith <- if (identical(x$arithmetic, "exact")) "exact arithmetic" else
     sprintf("tolerance %.0e", x$tolerance)
   cat(sprintf("Assignment certificate: %s (%s)\n", verdict, arith))
+  if (!is.null(x$scope)) cat("  over", .scope_text(x$scope), "\n")
   cat(sprintf("  cost %.10g, lower bound %.10g, max suboptimality %s\n",
               x$primal_objective, x$dual_objective,
               if (is.null(x$max_suboptimality) || is.na(x$max_suboptimality))
@@ -525,6 +534,9 @@ print.summary.assignment_certificate <- function(x, ...) {
   cat(sprintf("  dual objective    %.10g\n", x$dual_objective))
   cat(sprintf("  matched           %d of %d rows, %d columns\n",
               x$n_matched, x$n_rows, x$n_cols))
+  if (!is.null(x$scope)) {
+    cat("  covers           ", .scope_text(x$scope), "\n")
+  }
   if (!isTRUE(x$dual_feasible) && !is.null(x$worst_i) && x$worst_i > 0) {
     cat(sprintf("  worst reduced cost %.3e at row %d, column %d\n",
                 x$min_reduced_cost, x$worst_i, x$worst_j))

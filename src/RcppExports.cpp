@@ -381,6 +381,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lap_cost_margins_lazy
+Rcpp::List lap_cost_margins_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP distance, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers);
+RcppExport SEXP _couplr_lap_cost_margins_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP distanceSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type inv_cov(inv_covSEXP);
+    Rcpp::traits::input_parameter< double >::type max_distance(max_distanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type calipers(calipersSEXP);
+    rcpp_result_gen = Rcpp::wrap(lap_cost_margins_lazy(left_mat, right_mat, distance, inv_cov, max_distance, calipers));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lap_kbest_murty
 Rcpp::List lap_kbest_murty(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);
 RcppExport SEXP _couplr_lap_kbest_murty(SEXP costSEXP, SEXP kSEXP, SEXP maximizeSEXP, SEXP single_methodSEXP) {
@@ -1377,6 +1393,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_lap_scan_reduced_costs", (DL_FUNC) &_couplr_lap_scan_reduced_costs, 4},
     {"_couplr_lap_hall_witness_dense", (DL_FUNC) &_couplr_lap_hall_witness_dense, 1},
     {"_couplr_lap_hall_witness_lazy", (DL_FUNC) &_couplr_lap_hall_witness_lazy, 6},
+    {"_couplr_lap_cost_margins_lazy", (DL_FUNC) &_couplr_lap_cost_margins_lazy, 6},
     {"_couplr_lap_kbest_murty", (DL_FUNC) &_couplr_lap_kbest_murty, 4},
     {"_couplr_lap_solve_auction", (DL_FUNC) &_couplr_lap_solve_auction, 3},
     {"_couplr_lap_solve_auction_scaled", (DL_FUNC) &_couplr_lap_solve_auction_scaled, 3},

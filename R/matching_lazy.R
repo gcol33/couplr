@@ -206,3 +206,31 @@ lazy_cost_spec_rows <- function(spec, rows, cols) {
   })
   out
 }
+
+#' Some units of a lazy cost spec, at the distance all of them define
+#'
+#' The rows of [lazy_cost_spec_rows()], with the inverse covariance of a
+#' Mahalanobis distance taken first, from every unit of `spec`. The pooled
+#' covariance of a subset of units, or of replicated rows, is a different
+#' matrix, and a pair's distance is the one the caller's units define.
+#'
+#' @keywords internal
+lazy_cost_spec_subset <- function(spec, rows, cols) {
+  spec$inv_cov <- lazy_cost_spec_inv_cov(spec)
+  lazy_cost_spec_rows(spec, rows, cols)
+}
+
+#' Which units of a lazy cost spec carry an admissible pair
+#'
+#' The lazy counterpart of `lap_cost_margins()`: `row_ok` and `col_ok` say
+#' which left and right units have at least one partner under `max_distance`
+#' and the calipers. Read in C++ without storing a pair
+#' (`admissible_margins()` in src/core/lap_hall.h).
+#'
+#' @return List with logical vectors `row_ok` and `col_ok`.
+#' @keywords internal
+lazy_cost_spec_margins <- function(spec) {
+  lap_cost_margins_lazy(spec$left_mat, spec$right_mat, spec$distance,
+                        lazy_cost_spec_inv_cov(spec), spec$max_distance,
+                        lazy_cost_spec_calipers(spec))
+}

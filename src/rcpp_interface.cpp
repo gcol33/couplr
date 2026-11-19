@@ -391,6 +391,17 @@ Rcpp::List lap_hall_witness_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatr
                                 max_distance, calipers);
 }
 
+// The lazy counterpart of lap_cost_margins(): which rows and columns of a
+// specification carry an admissible pair, read without storing any pair.
+// [[Rcpp::export]]
+Rcpp::List lap_cost_margins_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
+                                 SEXP distance,
+                                 Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                 double max_distance, Rcpp::List calipers) {
+  return admissible_margins_lazy_impl(left_mat, right_mat, distance, inv_cov,
+                                      max_distance, calipers);
+}
+
 // [[Rcpp::export]]
 Rcpp::List lap_kbest_murty(Rcpp::NumericMatrix cost, int k, bool maximize,
                            std::string single_method = "jv") {

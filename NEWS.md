@@ -98,7 +98,24 @@
   `match_couples()` returns the largest matching and the cheapest among
   those, and attached the certificate of the padded problem it solved to find
   it, whose cost was not the total distance of the matching returned.
-  `certificate()` is now `NULL` for such a result.
+  `certificate()` is now `NULL` for such a result. The rule holds in every
+  memory mode and in `match_path()`: under `memory_mode = "lazy"` and
+  `"implicit"` the units without an admissible partner are found by reading
+  the distances without storing them, and the problem over the remaining
+  units is solved by the same solver or edge-generation loop, which
+  certifies it; a point of `match_path()` too tight for a complete matching
+  is answered the same way, so its `certified` column agrees with
+  `match_couples()` at that value. Before, both returned the largest
+  matching without a certificate whenever some unit had no partner. The
+  certificate of such a matching carries `scope`, the ids of the units it
+  covers, and `print()` and `summary()` of the certificate and of the result
+  name them.
+
+* **`match_couples()` on a distance object returns the certificate it was
+  asked for.** With `certify = TRUE` the solve was certified, but the
+  certificate, the implicit loop's search record and Hall's witness stayed
+  on the solver's result and never reached the matching, so
+  `certificate()` returned `NULL`. They are carried as on a data-frame call.
 
 * **A registered solver that assigns one column to several rows is refused.**
   `assignment()` stops with an error that names the solver, as it does for

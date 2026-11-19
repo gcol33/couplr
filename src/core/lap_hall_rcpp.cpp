@@ -68,6 +68,42 @@ Rcpp::List hall_witness_dense_impl(Rcpp::NumericMatrix cost) {
     return Rcpp::List();
 }
 
+Rcpp::List admissible_margins_lazy_impl(Rcpp::NumericMatrix left_mat,
+                                        Rcpp::NumericMatrix right_mat,
+                                        SEXP distance,
+                                        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                        double max_distance, Rcpp::List calipers) {
+    try {
+        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov_arg = R_NilValue;
+        if (inv_cov.isNotNull()) {
+            Rcpp::NumericMatrix ic(inv_cov.get());
+            if (ic.nrow() > 0 && ic.ncol() > 0) inv_cov_arg = inv_cov;
+        }
+
+        const LazySource source = rcpp_lazy_source(
+            left_mat, right_mat, distance, inv_cov_arg, max_distance, calipers, false);
+
+        return std::visit([](const auto& cm) {
+            const lap::AdmissibleMargins mg = lap::admissible_margins(cm);
+            Rcpp::LogicalVector row_ok(static_cast<R_xlen_t>(mg.row_ok.size()));
+            Rcpp::LogicalVector col_ok(static_cast<R_xlen_t>(mg.col_ok.size()));
+            for (size_t i = 0; i < mg.row_ok.size(); ++i) {
+                row_ok[static_cast<R_xlen_t>(i)] = mg.row_ok[i] != 0;
+            }
+            for (size_t j = 0; j < mg.col_ok.size(); ++j) {
+                col_ok[static_cast<R_xlen_t>(j)] = mg.col_ok[j] != 0;
+            }
+            return Rcpp::List::create(Rcpp::Named("row_ok") = row_ok,
+                                      Rcpp::Named("col_ok") = col_ok);
+        }, source);
+
+    } catch (const lap::LapException& e) {
+        Rcpp::stop(e.what());
+    }
+
+    return Rcpp::List();
+}
+
 Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                   SEXP distance,
                                   Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,

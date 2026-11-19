@@ -120,6 +120,14 @@ any.
 \item \code{max_matched_slack}, \code{max_v_unmatched}, \code{max_v} — the quantities the
 slackness and sign conditions bound.
 \item \code{n_matched}, \code{n_rows}, \code{n_cols}, \code{transposed}, \code{tolerance}.
+\item \code{scope} — present only on the certificate of a partial matching
+from \code{\link[=match_couples]{match_couples()}} or \code{\link[=match_path]{match_path()}} that leaves out units
+without an admissible partner: a list with \code{left} and \code{right}, the
+ids of the units the certificate was computed over, and \code{n_left},
+\code{n_right}, how many units each side has. The certificate proves the
+matching optimal among the matchings of those units; \code{n_rows},
+\code{n_cols} count them, and \code{worst_i}, \code{worst_j} index the whole
+problem. A certificate without \code{scope} covers every unit.
 }
 
 Invisibly returns \code{x}.

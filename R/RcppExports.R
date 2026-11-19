@@ -109,6 +109,10 @@ lap_hall_witness_lazy <- function(left_mat, right_mat, distance, inv_cov, max_di
     .Call(`_couplr_lap_hall_witness_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers)
 }
 
+lap_cost_margins_lazy <- function(left_mat, right_mat, distance, inv_cov, max_distance, calipers) {
+    .Call(`_couplr_lap_cost_margins_lazy`, left_mat, right_mat, distance, inv_cov, max_distance, calipers)
+}
+
 lap_kbest_murty <- function(cost, k, maximize, single_method = "jv") {
     .Call(`_couplr_lap_kbest_murty`, cost, k, maximize, single_method)
 }

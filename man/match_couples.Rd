@@ -126,8 +126,10 @@ function is called on a block of left units against every right unit,
 the same contract the dense path calls it under, with the block sized so
 the matrix it returns stays near a million cells; each matched pair is
 then evaluated again alone, and a distance that depends on the other units
-in its call is an error. When the constraints admit no complete matching, the
-largest matching they admit, cheapest among those, is found by the
+in its call is an error. Units without an admissible partner are found by
+reading the distances and left out of the solve, as the dense path prunes
+them. When the units that remain cannot all be matched, the largest
+matching the constraints admit, cheapest among those, is found by the
 edge-generation loop over the same specification, as the dense path finds
 it by padding. Where the metric carries a ball
 bound, the column set is held in a ball tree and a subtree whose bound
@@ -152,7 +154,17 @@ admissible pairs. Available for one-to-one and \code{ratio}-to-one matching
 without blocks; greedy matching and matching with replacement solve no
 assignment problem and carry none. In every memory mode the matching is
 made exactly optimal on the stored distances before it is certified, so
-the certificate is exact (see \code{certify} in \code{\link[=assignment]{assignment()}}).}
+the certificate is exact (see \code{certify} in \code{\link[=assignment]{assignment()}}). When
+\code{max_distance} or \code{calipers} leave some units without any admissible
+partner, the matching is partial, and it is certified over the units
+that can be matched: when every unit with a partner is matched (every
+unit of the shorter side, among the units with partners), the certificate
+is the one of the assignment problem over those units and all their
+possible partners, proves the matching optimal among their matchings, and
+names them in its \code{scope}. When even those units cannot all be matched,
+the result is the largest matching and the cheapest among those, and
+\code{\link[=certificate]{certificate()}} returns \code{NULL}. The rule is the same in every memory mode
+and in \code{\link[=match_path]{match_path()}}.}
 }
 \value{
 A list with class "matching_result" containing:

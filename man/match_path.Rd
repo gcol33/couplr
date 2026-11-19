@@ -70,7 +70,15 @@ gives for a single matching, taken at every point of the sweep.}
 
 \item{certify}{Whether each point carries a checked certificate. \code{TRUE} by
 default: the certificate is what says a point's matching is the optimal one
-for its value, which is the claim a path is read for.}
+for its value, which is the claim a path is read for. A value that
+leaves some units without an admissible partner gives a partial matching,
+certified as \code{\link[=match_couples]{match_couples()}} certifies it: when every unit with a
+partner is matched (every unit of the shorter side, among the units with
+partners), the certificate is the one of the assignment problem over
+those units, proves the matching optimal among their matchings, and names
+them in its \code{scope}; when even those units cannot all be matched, the
+point holds the largest matching, cheapest among those, with no
+certificate and \code{certified} \code{FALSE}.}
 
 \item{keep_per_row, width, tol, max_rounds}{The edge-generation loop's search
 knobs, shared with \code{memory_mode = "implicit"}. Each point converges on any

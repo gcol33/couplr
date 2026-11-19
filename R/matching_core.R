@@ -37,9 +37,11 @@
 # sentinel edge are dropped before the result is returned.
 #
 # A certificate is the one of the assignment problem over the rows and columns
-# kept. When every kept row is matched it proves the matching optimal among
-# the matchings of the units that have an admissible partner. A padded solve
-# answered another objective, and its result carries no certificate.
+# kept. When the short side of the kept units is matched completely it proves
+# the matching optimal among the matchings of the units that have an
+# admissible partner, and its `scope` names those units (.scope_certificate()).
+# A padded solve answered another objective, and its result carries no
+# certificate.
 #
 # Returns a list with:
 #   result       — raw solver output for the submatrix (or NULL if degenerate)
@@ -134,9 +136,66 @@
     potentials <- .sub_potentials(res, sub, orig_rows, orig_cols,
                                   dim(cost_matrix))
   }
+  res <- .scope_certificate(res, orig_rows, orig_cols, dim(cost_matrix))
 
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols,
        potentials = potentials)
+}
+
+# A certificate computed over some rows and columns of a larger problem, read
+# in the larger problem's indices. `scope` names the rows and columns it covers
+# (`left`, `right`) and how many the problem has (`n_left`, `n_right`), so that
+# what the certificate proves is stated beside it: optimality among the
+# matchings of those units. The worst violating pair it reports moves to the
+# same indices.
+#
+# A matching that covers the short side of the whole problem needs no scope:
+# the units left out have no admissible pair, so a zero dual on each of them
+# leaves every dual condition of the whole problem as it was, and the
+# certificate is one for the whole problem. It is then reported as one, as a
+# solve over the whole problem would report it.
+.scope_certificate <- function(res, orig_rows, orig_cols, dims) {
+  cert <- res[["certificate"]]
+  if (is.null(cert) ||
+      (length(orig_rows) == dims[1] && length(orig_cols) == dims[2])) {
+    return(res)
+  }
+  # The certificate was checked with rows <= columns, so on a transposed check
+  # its row index is a column of the problem.
+  row_of <- if (isTRUE(cert$transposed)) orig_cols else orig_rows
+  col_of <- if (isTRUE(cert$transposed)) orig_rows else orig_cols
+  if (isTRUE(cert$worst_i > 0L)) cert$worst_i <- row_of[cert$worst_i]
+  if (isTRUE(cert$worst_j > 0L)) cert$worst_j <- col_of[cert$worst_j]
+  if (isTRUE(cert$n_matched < min(dims))) {
+    cert$scope <- list(left = orig_rows, right = orig_cols,
+                       n_left = dims[1], n_right = dims[2])
+  }
+  res$certificate <- cert
+  res
+}
+
+# The scope of a certificate in the caller's units, named by id. The rows and
+# columns it covers are nodes of the compiled design, and the design's maps say
+# which unit each one stands for; the replicas of a k:1 left unit share their
+# partners, so they are covered together.
+.scope_on_units <- function(cert, row_unit, col_unit, left_ids, right_ids) {
+  if (is.null(cert) || is.null(cert$scope)) {
+    return(cert)
+  }
+  cert$scope <- list(
+    left = left_ids[sort(unique(row_unit[cert$scope$left]))],
+    right = right_ids[sort(unique(col_unit[cert$scope$right]))],
+    n_left = length(left_ids),
+    n_right = length(right_ids)
+  )
+  cert
+}
+
+# One sentence on the units a certificate covers, for print() and summary().
+.scope_text <- function(scope) {
+  sprintf("%s of %s left and %s of %s right units, those with an admissible partner",
+          .fmt_count(length(scope$left)), .fmt_count(scope$n_left),
+          .fmt_count(length(scope$right)), .fmt_count(scope$n_right))
 }
 
 # The assignment duals of `sub`, placed at the original rows and columns it was
@@ -161,17 +220,32 @@
   list(rows = rows, cols = cols)
 }
 
-# Lazy-cost-spec counterpart of .solve_with_partial_feasibility(). The whole
-# problem is put to the solver first. When the constraints admit no complete
-# matching -- the lazy solver throws, or the implicit loop answers with Hall's
-# witness -- the answer is the one the dense path reaches by pruning and
-# sentinel padding: the largest matching the constraints admit, and the
-# cheapest among those. Here it is the one-to-one design solved by the design
-# loop over the same specification, whose shortfall is a maximum flow certified
-# by a residual cut over every admissible pair and whose cost is priced against
-# its potentials, so no pair set is built on the way to it either.
+# Lazy-cost-spec counterpart of .solve_with_partial_feasibility(), answering
+# the same question in the same steps without storing a pair.
+#
+# The units without an admissible partner are found by reading the
+# specification (lazy_cost_spec_margins()) and left out, and the problem over
+# the units that remain is put to the same solver a complete problem goes to.
+# When it matches the short side of those units completely, its answer is the
+# optimum among their matchings, its duals and certificate are the ones of that
+# assignment problem, and the certificate's scope names the units it covers.
+#
+# When it does not -- the lazy solver throws, or the implicit loop answers with
+# Hall's witness -- the answer is the one the dense path reaches by sentinel
+# padding: the largest matching the constraints admit, and the cheapest among
+# those. Here it is the one-to-one design solved by the design loop over the
+# same specification, whose shortfall is a maximum flow certified by a residual
+# cut over every admissible pair and whose cost is priced against its
+# potentials, so no pair set is built on the way to it either. It carries no
+# assignment certificate. The witness names, in the specification's indices,
+# units with partners that cannot all be matched.
+#
+# `complete_infeasible` says the caller already knows the whole problem has no
+# complete matching, so that a problem whose units all have partners goes to
+# the design loop without being solved again.
 .solve_lazy_with_partial_feasibility <- function(cost_matrix, solver_fn,
-                                                 solver_params = list()) {
+                                                 solver_params = list(),
+                                                 complete_infeasible = FALSE) {
   mode <- lazy_cost_spec_mode(cost_matrix)
 
   if (identical(solver_fn, greedy_matching)) {
@@ -180,8 +254,27 @@
          "memory_mode = \"dense\".", call. = FALSE)
   }
 
+  dims <- c(cost_matrix$n_left, cost_matrix$n_right)
+  margins <- lazy_cost_spec_margins(cost_matrix)
+  orig_rows <- which(margins$row_ok)
+  orig_cols <- which(margins$col_ok)
+  # With no admissible pair at all there is nothing to leave out, and the solve
+  # over the whole problem is what answers with Hall's witness over every row.
+  if (!length(orig_rows)) {
+    orig_rows <- seq_len(dims[1])
+    orig_cols <- seq_len(dims[2])
+  }
+  whole <- length(orig_rows) == dims[1] && length(orig_cols) == dims[2]
+
+  if (whole && complete_infeasible) {
+    return(.lazy_partial_matching(cost_matrix))
+  }
+
+  sub <- if (whole) cost_matrix else
+    lazy_cost_spec_subset(cost_matrix, orig_rows, orig_cols)
+
   res <- tryCatch(
-    do.call(solver_fn, c(list(cost_matrix, maximize = FALSE), solver_params)),
+    do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params)),
     error = function(e) e
   )
 
@@ -190,20 +283,44 @@
     # Hall's witness still says why no complete matching exists, beside the
     # largest one that does.
     if (!inherits(res, "error") && !is.null(res$witness)) {
-      partial$result$witness <- res$witness
+      partial$result$witness <- .witness_on_units(res$witness, orig_rows,
+                                                  orig_cols, dims)
     }
     return(partial)
   }
 
   match_vec <- as.integer(res$match)
-  matched_rows <- which(match_vec > 0L)
-  matched_cols <- match_vec[matched_rows]
+  matched_sub_rows <- which(match_vec > 0L)
+  matched_rows <- orig_rows[matched_sub_rows]
+  matched_cols <- orig_cols[match_vec[matched_sub_rows]]
 
-  duals <- .solver_duals(res, transposed = FALSE)
-  potentials <- if (is.null(duals)) NULL else list(rows = duals$u, cols = duals$v)
+  potentials <- .sub_potentials(res, sub, orig_rows, orig_cols, dims)
+  res <- .scope_certificate(res, orig_rows, orig_cols, dims)
 
   list(result = res, matched_rows = matched_rows, matched_cols = matched_cols,
        potentials = potentials)
+}
+
+# A Hall witness found on some rows and columns of a problem, read in the
+# problem's indices. A unit left out had no admissible pair at all, so the
+# deficient rows reach the same columns in the whole problem and the witness
+# holds there as it stands. Its indices follow its own orientation, which
+# `transposed` records.
+.witness_on_units <- function(w, orig_rows, orig_cols, dims) {
+  if (length(orig_rows) == dims[1] && length(orig_cols) == dims[2]) {
+    return(w)
+  }
+  row_of <- if (isTRUE(w$transposed)) orig_cols else orig_rows
+  col_of <- if (isTRUE(w$transposed)) orig_rows else orig_cols
+  w$rows <- row_of[w$rows]
+  w$cols <- col_of[w$cols]
+  if (!is.null(w$matching)) {
+    matching <- integer(if (isTRUE(w$transposed)) dims[2] else dims[1])
+    hit <- which(w$matching > 0L)
+    matching[row_of[hit]] <- col_of[w$matching[hit]]
+    w$matching <- matching
+  }
+  w
 }
 
 # The maximum-cardinality minimum-cost matching of a specification, by the
@@ -287,9 +404,7 @@
     return(cost_matrix)
   }
   if (is_lazy_cost_spec(cost_matrix)) {
-    spec <- cost_matrix
-    spec$inv_cov <- lazy_cost_spec_inv_cov(cost_matrix)
-    return(lazy_cost_spec_rows(spec, plan$row_unit, plan$col_unit))
+    return(lazy_cost_spec_subset(cost_matrix, plan$row_unit, plan$col_unit))
   }
   cost_matrix[plan$row_unit, plan$col_unit, drop = FALSE]
 }
@@ -469,7 +584,7 @@
   # the reason `status` does: return_diagnostics = FALSE truncates `info` to
   # three fields, and a certificate that survives only a diagnostic call is not
   # one a caller can rely on.
-  .carry_solve_evidence(out, solver_result)
+  .carry_solve_evidence(out, solver_result, plan, left_ids, right_ids)
 }
 
 # The solve's duals in the caller's units, named by id. A design that
@@ -518,13 +633,16 @@
   list(left = spread("left", left_ids), right = spread("right", right_ids))
 }
 
-# Move what a solve proved about itself onto the matching it produced.
-.carry_solve_evidence <- function(out, solver_result) {
+# Move what a solve proved about itself onto the matching it produced, with the
+# scope of its certificate read in the caller's units.
+.carry_solve_evidence <- function(out, solver_result, plan, left_ids, right_ids) {
   if (is.null(solver_result)) {
     return(out)
   }
   if (!is.null(solver_result$certificate)) {
-    out$certificate <- solver_result$certificate
+    out$certificate <- .scope_on_units(solver_result$certificate,
+                                       plan$row_unit, plan$col_unit,
+                                       left_ids, right_ids)
   }
   if (!is.null(solver_result$search)) {
     out$search <- solver_result$search
@@ -777,6 +895,8 @@
   )
   result$potentials <- .couples_potentials(solved$potentials, plan,
                                            left_ids, right_ids)
+  result <- .carry_solve_evidence(result, solver_result, plan,
+                                  left_ids, right_ids)
 
   # Check for full matching if required
   if (require_full_matching) {
@@ -1104,8 +1224,10 @@
 #'   the same contract the dense path calls it under, with the block sized so
 #'   the matrix it returns stays near a million cells; each matched pair is
 #'   then evaluated again alone, and a distance that depends on the other units
-#'   in its call is an error. When the constraints admit no complete matching, the
-#'   largest matching they admit, cheapest among those, is found by the
+#'   in its call is an error. Units without an admissible partner are found by
+#'   reading the distances and left out of the solve, as the dense path prunes
+#'   them. When the units that remain cannot all be matched, the largest
+#'   matching the constraints admit, cheapest among those, is found by the
 #'   edge-generation loop over the same specification, as the dense path finds
 #'   it by padding. Where the metric carries a ball
 #'   bound, the column set is held in a ball tree and a subtree whose bound
@@ -1129,7 +1251,17 @@
 #'   without blocks; greedy matching and matching with replacement solve no
 #'   assignment problem and carry none. In every memory mode the matching is
 #'   made exactly optimal on the stored distances before it is certified, so
-#'   the certificate is exact (see `certify` in [assignment()]).
+#'   the certificate is exact (see `certify` in [assignment()]). When
+#'   `max_distance` or `calipers` leave some units without any admissible
+#'   partner, the matching is partial, and it is certified over the units
+#'   that can be matched: when every unit with a partner is matched (every
+#'   unit of the shorter side, among the units with partners), the certificate
+#'   is the one of the assignment problem over those units and all their
+#'   possible partners, proves the matching optimal among their matchings, and
+#'   names them in its `scope`. When even those units cannot all be matched,
+#'   the result is the largest matching and the cheapest among those, and
+#'   [certificate()] returns `NULL`. The rule is the same in every memory mode
+#'   and in [match_path()].
 #' @return A list with class "matching_result" containing:
 #'   - `pairs`: Tibble of matched pairs with distances
 #'   - `unmatched`: List of unmatched left and right IDs

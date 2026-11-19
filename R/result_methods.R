@@ -332,7 +332,7 @@ as.data.frame.couplr_result <- function(x, row.names = NULL, optional = FALSE,
 .fmt_count <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)
 
 # The overview lines shared by print() and summary().
-.overview_lines <- function(g) {
+.overview_lines <- function(g, scope = NULL) {
   lines <- character()
   add <- function(label, value) {
     lines[[length(lines) + 1L]] <<- sprintf("  %-19s %s", paste0(label, ":"), value)
@@ -351,7 +351,8 @@ as.data.frame.couplr_result <- function(x, row.names = NULL, optional = FALSE,
     add("Size bound", sprintf("%s (gap %s)", .fmt_count(g$best_possible), g$gap))
   }
   if (!is.na(g$certified)) {
-    add("Certified optimal", if (g$certified) "yes" else "no")
+    add("Certified optimal", if (!g$certified) "no" else if (is.null(scope))
+      "yes" else paste0("yes, over ", .scope_text(scope)))
   }
   if (has("n_rounds")) {
     add("Pairs generated", sprintf("%s of %s in %d rounds",
@@ -371,7 +372,7 @@ as.data.frame.couplr_result <- function(x, row.names = NULL, optional = FALSE,
 print.couplr_result <- function(x, ...) {
   g <- glance(x)
   cat(.header_line(g), "\n", sep = "")
-  cat(.overview_lines(g), sep = "\n")
+  cat(.overview_lines(g, x$certificate$scope), sep = "\n")
   invisible(x)
 }
 
@@ -404,7 +405,7 @@ summary.couplr_result <- function(object, ...) {
 print.summary.couplr_result <- function(x, ...) {
   g <- x$glance
   cat(.header_line(g), "\n", sep = "")
-  cat(.overview_lines(g), sep = "\n")
+  cat(.overview_lines(g, x$certificate$scope), sep = "\n")
   if (!is.null(x$distances)) {
     cat("\nPair distances (quantiles):\n")
     q <- x$distances

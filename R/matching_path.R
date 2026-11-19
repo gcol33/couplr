@@ -93,7 +93,15 @@
 #'
 #' @param certify Whether each point carries a checked certificate. `TRUE` by
 #'   default: the certificate is what says a point's matching is the optimal one
-#'   for its value, which is the claim a path is read for.
+#'   for its value, which is the claim a path is read for. A value that
+#'   leaves some units without an admissible partner gives a partial matching,
+#'   certified as [match_couples()] certifies it: when every unit with a
+#'   partner is matched (every unit of the shorter side, among the units with
+#'   partners), the certificate is the one of the assignment problem over
+#'   those units, proves the matching optimal among their matchings, and names
+#'   them in its `scope`; when even those units cannot all be matched, the
+#'   point holds the largest matching, cheapest among those, with no
+#'   certificate and `certified` `FALSE`.
 #' @param left_id,right_id Name of the column holding the unit identifier, or
 #'   NULL (default) to use a column called `id`, then meaningful row names,
 #'   then synthesized ids with a warning. See [match_couples()].
@@ -204,9 +212,19 @@ match_path <- function(left, right, vars,
     tol = tol, max_rounds = max_rounds, certify = certify
   )
 
+  # A point the sweep found no complete matching for is answered the way a
+  # single call under memory_mode = "implicit" answers it, by the same loop
+  # with the path's own search knobs and certify.
+  solve_point <- function(cost, maximize = FALSE) {
+    .assignment_implicit(cost, maximize = maximize, certify = certify,
+                         keep_per_row = keep_per_row, width = width,
+                         tol = tol, max_rounds = max_rounds)
+  }
+
   .new_couplr_path(raw, vary = vary, spec = spec, transposed = transposed,
                    tol = tol, left_ids = left_ids, right_ids = right_ids,
-                   left = left, right = right, vars = vars)
+                   left = left, right = right, vars = vars,
+                   solve_point = solve_point)
 }
 
 # What a point's matching did to the covariates, one row per point per variable.
@@ -237,7 +255,8 @@ match_path <- function(left, right, vars,
 # answer is a matching over the caller's left units, its cost is a total
 # distance, and its proof is an assignment certificate.
 .new_couplr_path <- function(raw, vary, spec, transposed, tol,
-                             left_ids, right_ids, left, right, vars) {
+                             left_ids, right_ids, left, right, vars,
+                             solve_point) {
   n_points <- length(raw$match)
   n_left <- spec$n_left
 
@@ -263,23 +282,35 @@ match_path <- function(left, right, vars,
   status <- as.character(pts$status)
   n_matched <- as.integer(pts$n_matched)
   total <- as.numeric(pts$total_cost)
+  certified <- as.logical(pts$certified)
 
-  # A value too tight for a complete matching still admits a largest one, and
-  # a single call at that value returns it, so the point does too: the
-  # one-to-one design solved by the design loop at that cut. The witness saying
-  # why no complete matching exists stays beside it.
+  # A value too tight for a complete matching is answered as a single call at
+  # that value answers it (.solve_lazy_with_partial_feasibility()): when every
+  # unit with an admissible partner can be matched, the optimum over those
+  # units and its certificate, whose scope names them; otherwise the largest
+  # matching, cheapest among those, with no certificate. The sweep's witness
+  # saying why no complete matching exists stays beside it.
+  unit_rows <- seq_len(n_left)
+  unit_cols <- seq_len(spec$n_right)
   for (k in which(status == "infeasible")) {
     at <- spec
     at$max_distance <- as.numeric(pts$value)[k]
-    partial <- suppressWarnings(.lazy_partial_matching(at))
-    rows <- partial$matched_rows
+    solved <- suppressWarnings(.solve_lazy_with_partial_feasibility(
+      at, solve_point, complete_infeasible = TRUE))
+    rows <- solved$matched_rows
     m <- integer(n_left)
-    m[rows] <- partial$matched_cols
+    m[rows] <- solved$matched_cols
     match_out[[k]] <- m
     n_matched[k] <- length(rows)
     if (length(rows)) {
       status[k] <- "partial"
-      total[k] <- .plain_sum(lazy_pair_distances(spec, rows, partial$matched_cols))
+      total[k] <- .plain_sum(lazy_pair_distances(spec, rows, solved$matched_cols))
+    }
+    cert <- solved$result$certificate
+    if (!is.null(cert)) {
+      certificate[k] <- list(.scope_on_units(cert, unit_rows, unit_cols,
+                                             left_ids, right_ids))
+      certified[k] <- isTRUE(cert$certified_optimal)
     }
   }
 
@@ -299,7 +330,7 @@ match_path <- function(left, right, vars,
                                numeric(1)),
     max_abs_std_diff  = vapply(balance, function(b) b$overall$max_abs_std_diff,
                                numeric(1)),
-    certified         = as.logical(pts$certified),
+    certified         = certified,
     seconds           = as.numeric(pts$seconds),
     n_rounds          = as.integer(pts$n_rounds),
     candidate_edges   = as.numeric(pts$candidate_edges),

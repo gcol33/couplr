@@ -252,6 +252,59 @@ bool verify_witness(const Source& src,
 
 }  // namespace hall_detail
 
+// The rows and the columns that carry at least one admissible pair. A unit
+// without one can be left out of every assignment question about the graph,
+// and the units that remain are the ones a matching can cover.
+//
+// Rows are read in ascending order, which is the order a source that computes
+// its costs in blocks of rows serves cheaply. A row stops at its first
+// admissible column unless columns are still unmarked, and only those columns
+// are read again on the rows after it, so a graph in which every unit has a
+// partner costs about one admissible pair per unit rather than its grid. A
+// column without any partner is read against every row, which is what proving
+// that it has none costs.
+struct AdmissibleMargins {
+    std::vector<char> row_ok;
+    std::vector<char> col_ok;
+};
+
+template <class Source>
+AdmissibleMargins admissible_margins(const Source& src) {
+    const int64_t n = src.nrow;
+    const int64_t m = src.ncol;
+
+    AdmissibleMargins out;
+    out.row_ok.assign(static_cast<size_t>(n), static_cast<char>(0));
+    out.col_ok.assign(static_cast<size_t>(m), static_cast<char>(0));
+
+    std::vector<int64_t> open_cols(static_cast<size_t>(m));
+    for (int64_t j = 0; j < m; ++j) open_cols[static_cast<size_t>(j)] = j;
+
+    for (int64_t i = 0; i < n; ++i) {
+        bool found = false;
+        size_t kept = 0;
+        for (size_t t = 0; t < open_cols.size(); ++t) {
+            const int64_t j = open_cols[t];
+            if (src.allowed(i, j)) {
+                out.col_ok[static_cast<size_t>(j)] = 1;
+                found = true;
+            } else {
+                open_cols[kept++] = j;
+            }
+        }
+        open_cols.resize(kept);
+
+        if (!found) {
+            for_each_allowed(src, i, [&](int64_t) {
+                found = true;
+                return false;
+            });
+        }
+        out.row_ok[static_cast<size_t>(i)] = found ? 1 : 0;
+    }
+    return out;
+}
+
 // Maximum-cardinality matching plus, when it leaves rows unmatched, the Koenig
 // deficient set and the columns it reaches.
 template <class Source>

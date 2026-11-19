@@ -52,6 +52,11 @@ Rcpp::List hall_witness_lazy_impl(Rcpp::NumericMatrix left_mat, Rcpp::NumericMat
                                   SEXP distance,
                                   Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                   double max_distance, Rcpp::List calipers);
+Rcpp::List admissible_margins_lazy_impl(Rcpp::NumericMatrix left_mat,
+                                        Rcpp::NumericMatrix right_mat,
+                                        SEXP distance,
+                                        Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
+                                        double max_distance, Rcpp::List calipers);
 
 // k-best solvers (internal)
 Rcpp::List solve_murty_impl(Rcpp::NumericMatrix cost, int k, bool maximize, std::string single_method);

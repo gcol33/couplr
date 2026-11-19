@@ -22,6 +22,16 @@
 
 ## Bug fixes
 
+* **`full_match()` ends exactly optimal.** The flow solver compares doubles
+  and could stop on a flow that a residual cycle of exactly negative cost
+  still improved, by less than its tolerance; no exact potentials existed for
+  that flow, and its certificate fell back to the tolerance. This depended on
+  the platform: the job-training example gave an exact certificate on x86_64
+  and a tolerance certificate on Apple silicon. The dense solve now cancels
+  each such cycle in exact arithmetic before the groups are read and the flow
+  is certified, as cardinality matching and the implicit loop already did, so
+  the flow certificate of a full matching is exact on every platform.
+
 * **A registered solver that assigns one column to several rows is refused.**
   `assignment()` stops with an error that names the solver, as it does for
   the other malformed results.

@@ -568,3 +568,29 @@ test_that("a balance design large enough to round past 1e-9 still certifies", {
   expect_identical(report$gap, 0L)
   expect_true(report$certified)
 })
+
+test_that("a flow optimal only within rounding is moved to the exact optimum", {
+  eps <- 2^-40
+  prob <- list(
+    n_nodes = 4, supply = c(2, 1, -2, -1),
+    arcs = data.frame(tail = c(1, 1, 2, 2), head = c(3, 4, 3, 4),
+                      lower = c(0, 0, 0, 0), upper = c(2, 2, 2, 2),
+                      cost = c(1, 1, 1 + eps, 1))
+  )
+  solved <- couplr:::.flow_solve(prob)
+  solved$flow <- c(1, 1, 1, 0)
+  before <- verify_flow(solved)
+  expect_true(before$certified_optimal)
+  expect_identical(before$arithmetic, "double")
+
+  closed <- couplr:::.flow_close_margin(solved)
+  expect_equal(closed$flow, c(2, 0, 0, 1))
+  expect_equal(closed$total_cost, 3)
+  after <- verify_flow(closed)
+  expect_true(after$certified_optimal)
+  expect_identical(after$arithmetic, "exact")
+
+  unfinished <- solved
+  unfinished$status <- "infeasible"
+  expect_identical(couplr:::.flow_close_margin(unfinished), unfinished)
+})

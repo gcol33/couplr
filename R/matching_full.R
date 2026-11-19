@@ -422,7 +422,7 @@ full_match <- function(left, right, vars,
       )
 
       if (isTRUE(compiled$bounds_feasible)) {
-        solved <- .flow_solve(.flow_problem(
+        solved <- .flow_close_margin(.flow_solve(.flow_problem(
           n_nodes = compiled$problem$n_nodes,
           supply = compiled$problem$supply,
           arcs = tibble::tibble(tail = compiled$problem$tail,
@@ -430,7 +430,7 @@ full_match <- function(left, right, vars,
                                 lower = compiled$problem$lower,
                                 upper = compiled$problem$upper,
                                 cost = compiled$problem$cost)
-        ))
+        )))
         read <- .full_match_groups(compiled, solved$flow, min_controls)
         potentials <- .full_match_potentials(compiled, solved$potential)
         certificate <- verify_flow(solved)

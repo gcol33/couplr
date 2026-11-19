@@ -223,6 +223,32 @@ print.couplr_flow_problem <- function(x, ...) {
   structure(res, class = "flow_solve_result")
 }
 
+# The solver compares doubles and stops within its tolerance of the optimum,
+# so its flow can leave a residual cycle whose stored costs sum below zero by
+# less than that tolerance. The exact read (src/flow/flow_exact_read.h)
+# cancels every such cycle and returns the flow that is optimal for the stored
+# costs, with the potentials recovered from it. A flow the solver did not
+# finish is returned as it came.
+.flow_close_margin <- function(solved) {
+  if (!identical(solved$status, "optimal")) {
+    return(solved)
+  }
+  problem <- solved$problem
+  none <- integer(0)
+  step <- lap_flow_exact_read(problem$n_nodes, problem$supply,
+                              problem$arcs$tail, problem$arcs$head,
+                              problem$arcs$lower, problem$arcs$upper,
+                              problem$arcs$cost, solved$flow, solved$potential,
+                              none, none, none, none, none)
+  if (!isTRUE(step$recovered)) {
+    return(solved)
+  }
+  solved$flow <- step$flow
+  solved$potential <- step$potential
+  solved$total_cost <- sum(problem$arcs$cost * step$flow)
+  solved
+}
+
 .flow_extract_flow <- function(x) {
   if (is.list(x) && !is.null(x$flow)) {
     return(as.numeric(x$flow))

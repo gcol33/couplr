@@ -114,3 +114,25 @@ test_that("a registered solver with potentials passes them to the certificate", 
   expect_identical(certificate(res)$exact_duals_source, "solver")
   expect_true(certificate(res)$certified_optimal)
 })
+
+test_that("an error of a registered solver reaches the caller of match_couples()", {
+  register_lap_solver("test_fails",
+                      function(cost, maximize, ...) stop("solver broke"))
+  register_lap_solver("test_repeat2",
+                      function(cost, maximize, ...) rep(1L, nrow(cost)))
+  on.exit(rm(list = c("test_fails", "test_repeat2"),
+             envir = couplr:::.lap_registry), add = TRUE)
+  left <- data.frame(id = 1:3, x = c(1, 2, 3))
+  right <- data.frame(id = 4:7, x = c(1.1, 2.1, 3.1, 9))
+
+  expect_error(match_couples(left, right, vars = "x", method = "test_fails"),
+               "solver broke")
+  expect_error(match_couples(left, right, vars = "x", method = "test_repeat2"),
+               "more than one row")
+  # A caliper that still admits a complete matching changes nothing about that.
+  expect_error(suppressWarnings(match_couples(left, right, vars = "x",
+                                              max_distance = 0.5,
+                                              auto_scale = FALSE,
+                                              method = "test_fails")),
+               "solver broke")
+})

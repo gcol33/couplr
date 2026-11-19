@@ -68,45 +68,41 @@
   orig_rows <- which(row_ok)
   orig_cols <- which(col_ok)
 
-  res <- tryCatch(
-    do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params)),
-    error = function(e) NULL
-  )
+  # Whether the admissible pairs hold a matching of every row, or of every
+  # column when the columns are fewer, is a property of the graph and is
+  # decided by Hall's condition (src/core/lap_hall.h). An error raised by the
+  # solver is then an error of the solver and reaches the caller. Greedy
+  # matching answers any graph with the pairs it finds.
+  valid <- .is_valid_cost(sub)
+  complete <- identical(solver_fn, greedy_matching) || all(valid) ||
+    isTRUE(lap_hall_witness_dense(
+      if (nrow(sub) <= ncol(sub)) sub else t(sub))$row_perfect)
 
   padded <- NULL
   greedy_fallback <- FALSE
-  if (is.null(res)) {
-    padded <- .pad_forbidden(sub, .is_valid_cost(sub))
+  if (complete) {
+    res <- do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params))
+  } else {
+    padded <- .pad_forbidden(sub, valid)
     if (!is.null(padded)) {
-      res <- tryCatch(
-        do.call(solver_fn, c(list(padded, maximize = FALSE), solver_params)),
-        error = function(e) NULL
-      )
-      if (is.null(res)) {
-        padded <- NULL
-      }
+      # The padded problem has another objective than the matching returned,
+      # so no certificate is asked of its solve.
+      padded_params <- solver_params
+      padded_params$certify <- NULL
+      res <- do.call(solver_fn, c(list(padded, maximize = FALSE), padded_params))
+      res[["certificate"]] <- NULL
+    } else {
+      # The lexicographic objective cannot be written exactly in doubles. Greedy
+      # still produces a partial matching, but it is not the optimal one, so say
+      # so rather than letting an optimal request come back quietly downgraded.
+      res <- greedy_matching(sub, strategy = "sorted")
+      greedy_fallback <- TRUE
+      warning("constraints admit no complete matching and the cost range is too ",
+              "wide to solve the maximum-cardinality problem exactly; returning ",
+              "a greedy partial matching, which is not optimal. Relax ",
+              "max_distance/calipers or rescale the covariates to recover an ",
+              "optimal result.", call. = FALSE)
     }
-  }
-
-  if (is.null(res)) {
-    # Neither the direct nor the padded solve returned. Greedy still produces a
-    # partial matching, but it is not the optimal one, so say so rather than
-    # letting an optimal request come back quietly downgraded.
-    res <- tryCatch(
-      greedy_matching(sub, strategy = "sorted"),
-      error = function(e) NULL
-    )
-    if (is.null(res)) {
-      return(list(result = NULL,
-                  matched_rows = integer(0),
-                  matched_cols = integer(0)))
-    }
-    greedy_fallback <- TRUE
-    warning("constraints admit no complete matching and the cost range is too ",
-            "wide to solve the maximum-cardinality problem exactly; returning ",
-            "a greedy partial matching, which is not optimal. Relax ",
-            "max_distance/calipers or rescale the covariates to recover an ",
-            "optimal result.", call. = FALSE)
   }
 
   match_vec <- as.integer(res$match)
@@ -122,6 +118,12 @@
 
   matched_rows <- orig_rows[matched_sub_rows]
   matched_cols <- orig_cols[matched_sub_cols]
+
+  # A certificate states that no matching of every row has a smaller total. A
+  # matching that leaves a row unmatched is not one of those and carries none.
+  if (length(matched_rows) < nrow(cost_matrix)) {
+    res[["certificate"]] <- NULL
+  }
 
   # The submatrix is an assignment LP, and its duals are what the matching is
   # certified against. A padded solve answered a different objective and a

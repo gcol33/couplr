@@ -509,3 +509,22 @@ test_that("plot.matching_result handles empty result", {
 
   expect_message(plot(result), "No matched pairs to plot")
 })
+
+test_that("a partial matching is the largest and cheapest, and carries no certificate", {
+  left <- data.frame(id = 1:3, x = c(1, 2, 10))
+  right <- data.frame(id = 4:7, x = c(1.2, 2.1, 3, 30))
+  result <- suppressWarnings(match_couples(left, right, vars = "x",
+                                           max_distance = 1.5,
+                                           auto_scale = FALSE, certify = TRUE))
+  g <- glance(result)
+  expect_identical(g$n_pairs, 2L)
+  expect_equal(g$total_distance, 0.2 + 0.1)
+  expect_null(certificate(result))
+  expect_true(is.na(g$certified))
+
+  complete <- suppressWarnings(match_couples(left[1:2, ], right, vars = "x",
+                                             max_distance = 1.5,
+                                             auto_scale = FALSE,
+                                             certify = TRUE))
+  expect_true(glance(complete)$certified)
+})

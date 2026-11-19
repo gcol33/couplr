@@ -32,6 +32,21 @@
   is certified, as cardinality matching and the implicit loop already did, so
   the flow certificate of a full matching is exact on every platform.
 
+* **An error of the solver reaches the caller of `match_couples()`.** The
+  dense path took any error of the solve as the sign that the restrictions
+  admit no complete matching, solved a padded problem instead and, when that
+  failed too, returned a greedy matching with a warning about the cost range.
+  A registered solver that stopped, or returned a malformed result, was
+  hidden that way. Whether a complete matching exists is now decided by
+  Hall's condition on the admissible pairs before the solve.
+
+* **A matching that leaves a left unit unmatched carries no certificate.**
+  With `certify = TRUE` and restrictions that admit no complete matching,
+  `match_couples()` attached the certificate of the padded problem it solved
+  to find the largest matching, whose cost was not the total distance of the
+  matching returned. `certificate()` is now `NULL` for such a result, as it
+  is at the partial points of `match_path()`.
+
 * **A registered solver that assigns one column to several rows is refused.**
   `assignment()` stops with an error that names the solver, as it does for
   the other malformed results.

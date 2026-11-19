@@ -196,6 +196,13 @@ AuctionCoreResult auction_core_impl(const CostSourceT& work, int real_rows,
         kept_count[i] = keep;
         kth_rc[i] = (held == KTH_BEST) ? rank_rc[KTH_BEST - 1] : inf;
 
+        // A row without arcs answers as find_best does.
+        if (held == 0) {
+            best_rc = inf;
+            second_rc = inf;
+            best_j = -1;
+            return;
+        }
         best_rc = rank_rc[0];
         best_j = cols[rank_arc[0]];
         second_rc = (held >= 2) ? rank_rc[1] : inf;

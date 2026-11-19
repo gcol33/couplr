@@ -1,4 +1,4 @@
-# couplr (development version)
+# couplr 2.0.0
 
 ## Classes and methods
 
@@ -48,12 +48,15 @@
   hidden that way. Whether a complete matching exists is now decided by
   Hall's condition on the admissible pairs before the solve.
 
-* **A matching that leaves a left unit unmatched carries no certificate.**
-  With `certify = TRUE` and restrictions that admit no complete matching,
-  `match_couples()` attached the certificate of the padded problem it solved
-  to find the largest matching, whose cost was not the total distance of the
-  matching returned. `certificate()` is now `NULL` for such a result, as it
-  is at the partial points of `match_path()`.
+* **The certificate of a partial matching covers the units that can be
+  matched.** With `certify = TRUE` and restrictions that leave some left
+  units without any admissible partner, the certificate is the one of the
+  assignment problem over the remaining units and proves the matching optimal
+  among their matchings. When even those units cannot all be matched,
+  `match_couples()` returns the largest matching and the cheapest among
+  those, and attached the certificate of the padded problem it solved to find
+  it, whose cost was not the total distance of the matching returned.
+  `certificate()` is now `NULL` for such a result.
 
 * **A registered solver that assigns one column to several rows is refused.**
   `assignment()` stops with an error that names the solver, as it does for

@@ -510,7 +510,9 @@ test_that("plot.matching_result handles empty result", {
   expect_message(plot(result), "No matched pairs to plot")
 })
 
-test_that("a partial matching is the largest and cheapest, and carries no certificate", {
+test_that("a partial matching is certified over the units that can be matched", {
+  # The third left unit has no admissible partner; the other two can both be
+  # matched, and the certificate is the one of their assignment problem.
   left <- data.frame(id = 1:3, x = c(1, 2, 10))
   right <- data.frame(id = 4:7, x = c(1.2, 2.1, 3, 30))
   result <- suppressWarnings(match_couples(left, right, vars = "x",
@@ -519,12 +521,23 @@ test_that("a partial matching is the largest and cheapest, and carries no certif
   g <- glance(result)
   expect_identical(g$n_pairs, 2L)
   expect_equal(g$total_distance, 0.2 + 0.1)
+  expect_true(g$certified)
+  cert <- glance(certificate(result))
+  expect_equal(cert$max_suboptimality, 0)
+  expect_identical(as.character(unmatched_units(result)$left), "3")
+})
+
+test_that("a matching short of the units that have partners carries no certificate", {
+  # The first two left units admit the first right unit only, so one of them
+  # stays unmatched although it has an admissible partner.
+  left <- data.frame(id = 1:3, x = c(1, 1.2, 10))
+  right <- data.frame(id = 4:6, x = c(1.05, 10.2, 10.4))
+  result <- suppressWarnings(match_couples(left, right, vars = "x",
+                                           max_distance = 1,
+                                           auto_scale = FALSE, certify = TRUE))
+  g <- glance(result)
+  expect_identical(g$n_pairs, 2L)
+  expect_equal(g$total_distance, 0.05 + 0.2)
   expect_null(certificate(result))
   expect_true(is.na(g$certified))
-
-  complete <- suppressWarnings(match_couples(left[1:2, ], right, vars = "x",
-                                             max_distance = 1.5,
-                                             auto_scale = FALSE,
-                                             certify = TRUE))
-  expect_true(glance(complete)$certified)
 })

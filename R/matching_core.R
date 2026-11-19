@@ -36,6 +36,11 @@
 # the padded problem with the same optimal solver. Pairs that came back on a
 # sentinel edge are dropped before the result is returned.
 #
+# A certificate is the one of the assignment problem over the rows and columns
+# kept. When every kept row is matched it proves the matching optimal among
+# the matchings of the units that have an admissible partner. A padded solve
+# answered another objective, and its result carries no certificate.
+#
 # Returns a list with:
 #   result       — raw solver output for the submatrix (or NULL if degenerate)
 #   matched_rows — 1-based indices into the *original* cost_matrix rows
@@ -119,11 +124,6 @@
   matched_rows <- orig_rows[matched_sub_rows]
   matched_cols <- orig_cols[matched_sub_cols]
 
-  # A certificate states that no matching of every row has a smaller total. A
-  # matching that leaves a row unmatched is not one of those and carries none.
-  if (length(matched_rows) < nrow(cost_matrix)) {
-    res[["certificate"]] <- NULL
-  }
 
   # The submatrix is an assignment LP, and its duals are what the matching is
   # certified against. A padded solve answered a different objective and a

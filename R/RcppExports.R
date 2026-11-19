@@ -45,6 +45,22 @@ cpp_lazy_distance_sd <- function(left_mat, right_mat, metric, inv_cov) {
     .Call(`_couplr_cpp_lazy_distance_sd`, left_mat, right_mat, metric, inv_cov)
 }
 
+cpp_finite_sd <- function(x) {
+    .Call(`_couplr_cpp_finite_sd`, x)
+}
+
+cpp_group_covariance <- function(left_mat, right_mat) {
+    .Call(`_couplr_cpp_group_covariance`, left_mat, right_mat)
+}
+
+cpp_precision_matrix <- function(cov_mat) {
+    .Call(`_couplr_cpp_precision_matrix`, cov_mat)
+}
+
+cpp_scaling_statistics <- function(left_mat, right_mat, method) {
+    .Call(`_couplr_cpp_scaling_statistics`, left_mat, right_mat, method)
+}
+
 cpp_lap_solve_auction_lazy <- function(left_mat, right_mat, metric, inv_cov, max_distance, calipers, maximize, eps = NULL) {
     .Call(`_couplr_cpp_lap_solve_auction_lazy`, left_mat, right_mat, metric, inv_cov, max_distance, calipers, maximize, eps)
 }

@@ -12,20 +12,13 @@
 #pragma once
 
 #include "lap_types.h"
+#include "lap_plain_arith.h"
 #include <vector>
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
 
 namespace lap {
-
-enum class DistanceMetric {
-    Euclidean,
-    Manhattan,
-    SquaredEuclidean,
-    Chebyshev,
-    Mahalanobis
-};
 
 // Per-variable caliper: pairs with |left[i] - right[j]| exceeding threshold
 // are forbidden, independent of the chosen distance metric. The values are
@@ -177,62 +170,15 @@ private:
         return passes_all(calipers_, i, j);
     }
 
+    // The distance itself is plain::pair_distance(), the one evaluation every
+    // path reads, so the bits of a pair's distance do not depend on which path
+    // asked for it or on the platform it was compiled for.
     double raw_distance(int64_t i, int64_t j) const {
-        const double* li = left_.data() + static_cast<size_t>(i * n_vars_);
-        const double* rj = right_.data() + static_cast<size_t>(j * n_vars_);
-
-        switch (metric_) {
-            case DistanceMetric::Euclidean: {
-                double s = 0.0;
-                for (int64_t k = 0; k < n_vars_; ++k) {
-                    double d = li[k] - rj[k];
-                    s += d * d;
-                }
-                return std::sqrt(s);
-            }
-            case DistanceMetric::Manhattan: {
-                double s = 0.0;
-                for (int64_t k = 0; k < n_vars_; ++k) {
-                    s += std::abs(li[k] - rj[k]);
-                }
-                return s;
-            }
-            case DistanceMetric::SquaredEuclidean: {
-                double s = 0.0;
-                for (int64_t k = 0; k < n_vars_; ++k) {
-                    double d = li[k] - rj[k];
-                    s += d * d;
-                }
-                return s;
-            }
-            case DistanceMetric::Chebyshev: {
-                double s = 0.0;
-                for (int64_t k = 0; k < n_vars_; ++k) {
-                    // std::max drops a NaN operand, so a missing coordinate
-                    // is returned rather than passed over.
-                    const double d = std::abs(li[k] - rj[k]);
-                    if (std::isnan(d)) return d;
-                    s = std::max(s, d);
-                }
-                return s;
-            }
-            case DistanceMetric::Mahalanobis: {
-                // diff' * inv_cov * diff, inv_cov row-major n_vars x n_vars
-                double s = 0.0;
-                for (int64_t a = 0; a < n_vars_; ++a) {
-                    double diff_a = li[a] - rj[a];
-                    if (diff_a == 0.0) continue;
-                    double row_sum = 0.0;
-                    const double* inv_row = inv_cov_.data() + static_cast<size_t>(a * n_vars_);
-                    for (int64_t b = 0; b < n_vars_; ++b) {
-                        row_sum += inv_row[b] * (li[b] - rj[b]);
-                    }
-                    s += diff_a * row_sum;
-                }
-                return std::sqrt(std::max(s, 0.0));
-            }
-        }
-        return 0.0;  // unreachable
+        return plain::pair_distance(
+            metric_,
+            left_.data() + static_cast<size_t>(i * n_vars_),
+            right_.data() + static_cast<size_t>(j * n_vars_),
+            n_vars_, inv_cov_.data());
     }
 
     std::vector<double> left_;

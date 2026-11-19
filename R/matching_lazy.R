@@ -155,11 +155,10 @@ lazy_pair_distances <- function(spec, matched_rows, matched_cols) {
 
 #' Precompute the Mahalanobis inverse covariance matrix for a lazy cost spec
 #'
-#' Mirrors compute_distance_matrix()'s pooled within-group covariance logic
-#' exactly (R/matching_distance.R) -- computed once in R rather than
-#' reimplemented in C++, so the two code paths can't drift apart. A spec whose
-#' rows were reshaped carries the matrix its units defined as `inv_cov`, and
-#' that is returned as it is.
+#' The matrix `compute_distance_matrix()` uses for the same units, from the
+#' same function, `mahalanobis_inv_cov()`. A spec whose rows were reshaped
+#' carries the matrix its units defined as `inv_cov`, and that is returned as
+#' it is.
 #'
 #' @return p x p inverse covariance matrix, or NULL if distance != "mahalanobis".
 #' @keywords internal
@@ -170,18 +169,7 @@ lazy_cost_spec_inv_cov <- function(spec) {
   if (!is.null(spec$inv_cov)) {
     return(spec$inv_cov)
   }
-  n_left <- spec$n_left
-  n_right <- spec$n_right
-  if (!is.null(spec$sigma)) {
-    cov_mat <- spec$sigma
-  } else if (n_left >= 2L && n_right >= 2L) {
-    S_L <- stats::cov(spec$left_mat)
-    S_R <- stats::cov(spec$right_mat)
-    cov_mat <- ((n_left - 1L) * S_L + (n_right - 1L) * S_R) / (n_left + n_right - 2L)
-  } else {
-    cov_mat <- stats::cov(rbind(spec$left_mat, spec$right_mat))
-  }
-  mahalanobis_precision(cov_mat)
+  mahalanobis_inv_cov(spec$left_mat, spec$right_mat, spec$sigma)
 }
 
 #' Calipers of a lazy cost spec, as the C++ cost source reads them

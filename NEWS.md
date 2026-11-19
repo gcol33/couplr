@@ -40,6 +40,30 @@
   is certified, as cardinality matching and the implicit loop already did, so
   the flow certificate of a full matching is exact on every platform.
 
+* **The built-in distances are the same bits on every platform.** The means,
+  standard deviations and covariance behind `scale` and
+  `distance = "mahalanobis"` came from `colMeans()`, `sd()`, `cov()`, `chol()`
+  and `chol2inv()`, which accumulate in long double where the platform has
+  one and call its LAPACK, and the compiled distance of a pair was fused into
+  multiply-add instructions on Apple silicon. Distances therefore differed
+  from about the 15th significant digit between x86_64 and arm64, enough for
+  the solver to return another of several equally good matchings and for an
+  estimate computed on the matched sample to change. The scaling statistics
+  (`"standardize"`, `"range"`, `"robust"`), the pooled covariance, its
+  Cholesky factor and inverse, and the distance of a pair are now computed by
+  one set of C++ routines in double arithmetic with a fixed order of
+  summation and without fused multiply-add, shared by the dense matrix, the
+  lazy cost source and the implicit loop. Distances agree with those of
+  earlier versions to rounding, not to the last bit. A covariance matrix is
+  reported as singular from the exact condition number of its Cholesky
+  factor, where LAPACK's estimate was used; a user-supplied `sigma` that is
+  not symmetric is read as its symmetric part.
+
+* **`full_match(caliper_sd = )` takes the same caliper in every memory
+  mode.** The standard deviation of the distances was `sd()` of the matrix in
+  the dense path and a running sum in long double in the implicit path. Both
+  now read the pairs in the same order through one running sum in doubles.
+
 * **An error of the solver reaches the caller of `match_couples()`.** The
   dense path took any error of the solve as the sign that the restrictions
   admit no complete matching, solved a padded problem instead and, when that

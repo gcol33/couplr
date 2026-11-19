@@ -11,8 +11,10 @@ The \verb{p x p} inverse of \code{cov_mat}.
 }
 \description{
 The Mahalanobis distances need the inverse of a symmetric positive
-definite matrix. \code{chol()} factors it as \verb{R'R}, its failure or a
-reciprocal condition number below machine precision marks a singular
-matrix, and \code{chol2inv()} forms the inverse from the triangular factor.
+definite matrix. The matrix is factored as \verb{L L'}, the inverse of \code{L} is
+formed by forward substitution and the precision matrix as its
+cross-product, in plain double arithmetic. A pivot that is not positive, or
+a factor whose squared reciprocal condition number is below machine
+precision, marks a singular matrix.
 }
 \keyword{internal}

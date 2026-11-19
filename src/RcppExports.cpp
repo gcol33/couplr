@@ -156,6 +156,53 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_finite_sd
+double cpp_finite_sd(Rcpp::NumericMatrix x);
+RcppExport SEXP _couplr_cpp_finite_sd(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_finite_sd(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_group_covariance
+Rcpp::NumericMatrix cpp_group_covariance(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat);
+RcppExport SEXP _couplr_cpp_group_covariance(SEXP left_matSEXP, SEXP right_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_group_covariance(left_mat, right_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_precision_matrix
+SEXP cpp_precision_matrix(Rcpp::NumericMatrix cov_mat);
+RcppExport SEXP _couplr_cpp_precision_matrix(SEXP cov_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type cov_mat(cov_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_precision_matrix(cov_mat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_scaling_statistics
+Rcpp::List cpp_scaling_statistics(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, std::string method);
+RcppExport SEXP _couplr_cpp_scaling_statistics(SEXP left_matSEXP, SEXP right_matSEXP, SEXP methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type left_mat(left_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type right_mat(right_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_scaling_statistics(left_mat, right_mat, method));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_lap_solve_auction_lazy
 Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat, SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov, double max_distance, Rcpp::List calipers, bool maximize, Rcpp::Nullable<double> eps);
 RcppExport SEXP _couplr_cpp_lap_solve_auction_lazy(SEXP left_matSEXP, SEXP right_matSEXP, SEXP metricSEXP, SEXP inv_covSEXP, SEXP max_distanceSEXP, SEXP calipersSEXP, SEXP maximizeSEXP, SEXP epsSEXP) {
@@ -1269,6 +1316,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_couplr_cpp_lazy_pair_distances", (DL_FUNC) &_couplr_cpp_lazy_pair_distances, 6},
     {"_couplr_cpp_lazy_dense_matrix", (DL_FUNC) &_couplr_cpp_lazy_dense_matrix, 4},
     {"_couplr_cpp_lazy_distance_sd", (DL_FUNC) &_couplr_cpp_lazy_distance_sd, 4},
+    {"_couplr_cpp_finite_sd", (DL_FUNC) &_couplr_cpp_finite_sd, 1},
+    {"_couplr_cpp_group_covariance", (DL_FUNC) &_couplr_cpp_group_covariance, 2},
+    {"_couplr_cpp_precision_matrix", (DL_FUNC) &_couplr_cpp_precision_matrix, 1},
+    {"_couplr_cpp_scaling_statistics", (DL_FUNC) &_couplr_cpp_scaling_statistics, 3},
     {"_couplr_cpp_lap_solve_auction_lazy", (DL_FUNC) &_couplr_cpp_lap_solve_auction_lazy, 8},
     {"_couplr_lap_certify_dense", (DL_FUNC) &_couplr_lap_certify_dense, 8},
     {"_couplr_lap_certify_lazy", (DL_FUNC) &_couplr_lap_certify_lazy, 13},

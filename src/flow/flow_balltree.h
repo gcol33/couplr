@@ -31,6 +31,14 @@
 // Manhattan and Chebyshev get no tree. A whitened ball bounds neither, and
 // build_ball_tree() returns an empty tree for them rather than a wrong one,
 // which routes those metrics to price_block().
+//
+// The functions that form the tree's coordinates and bounds carry
+// LAP_PLAIN_ARITH, as the distance kernels do. A bound is valid with or
+// without fused multiply-add, since each allowance below counts one rounding
+// per operation and a fused pair rounds once instead of twice. What the
+// fusing would change is the bits of the coordinates, and with them where the
+// tree splits and the order in which a descent meets columns of equal cost;
+// without it a descent visits the same nodes on every platform.
 #pragma once
 
 #include "../core/lap_error.h"
@@ -66,36 +74,6 @@ inline bool metric_has_ball_bound(DistanceMetric metric) {
 // which is what makes a bound on d a bound on the cost.
 inline double metric_cost_of(DistanceMetric metric, double d) {
     return metric == DistanceMetric::SquaredEuclidean ? d * d : d;
-}
-
-// Lower-triangular L with A = L L', A the symmetric part of `a`. False when A
-// is not positive definite, which is the source saying its Mahalanobis
-// distance has no whitening and no ball can bound it.
-inline bool cholesky_lower(const std::vector<double>& a, int64_t n,
-                           std::vector<double>& l) {
-    l.assign(static_cast<std::size_t>(n * n), 0.0);
-    for (int64_t i = 0; i < n; ++i) {
-        for (int64_t j = 0; j <= i; ++j) {
-            // raw_distance() reads diff' A diff, which is diff' ((A + A')/2)
-            // diff for any A at all, so the symmetric part is the matrix being
-            // factored and an inv_cov off by a rounding error in its symmetry
-            // is not a different problem.
-            double s = 0.5 * (a[static_cast<std::size_t>(i * n + j)] +
-                              a[static_cast<std::size_t>(j * n + i)]);
-            for (int64_t k = 0; k < j; ++k) {
-                s -= l[static_cast<std::size_t>(i * n + k)] *
-                     l[static_cast<std::size_t>(j * n + k)];
-            }
-            if (i == j) {
-                if (!(s > 0.0)) return false;
-                l[static_cast<std::size_t>(i * n + i)] = std::sqrt(s);
-            } else {
-                l[static_cast<std::size_t>(i * n + j)] =
-                    s / l[static_cast<std::size_t>(j * n + j)];
-            }
-        }
-    }
-    return true;
 }
 
 struct BallTree {
@@ -279,7 +257,9 @@ inline int32_t ball_split(BallTree& tree, int32_t a, int32_t b) {
 // must hold n_vars doubles, and return the magnitude g(x) the rounding of those
 // coordinates is bounded against. This is the query side of the same map the
 // tree's centres were built under, origin included.
-inline double whiten_point(const BallTree& tree, const double* x, double* out) {
+LAP_PLAIN_ARITH_FN inline double whiten_point(const BallTree& tree, const double* x,
+                                              double* out) {
+    LAP_PLAIN_ARITH
     const int64_t n = tree.n_vars;
     const double* o = tree.origin.data();
     if (tree.factor.empty()) {
@@ -329,9 +309,10 @@ namespace detail {
 // R = I - L X: L^-1 = X (I - R)^-1, so ||L^-1||_F <= ||X||_F / (1 - ||R||_F)
 // whenever ||R||_F < 1. A factor whose inverse cannot be verified that way
 // gets an infinite allowance, which is no tree.
-inline double bound_allowance(const LazyCostMatrix& src,
-                              const std::vector<double>& factor,
-                              int64_t n_vars) {
+LAP_PLAIN_ARITH_FN inline double bound_allowance(const LazyCostMatrix& src,
+                                                 const std::vector<double>& factor,
+                                                 int64_t n_vars) {
+    LAP_PLAIN_ARITH
     constexpr double kInf = std::numeric_limits<double>::infinity();
     double rel = gamma_of(n_vars + 3);
     if (src.metric() != DistanceMetric::Mahalanobis || factor.empty()) {
@@ -418,7 +399,9 @@ inline double bound_allowance(const LazyCostMatrix& src,
 // The tree over `src`'s columns, or an empty tree when the metric or the
 // covariance leaves no bound. An empty tree is a routing answer rather than an
 // error: it says this source is price_block()'s to scan.
-inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 16) {
+LAP_PLAIN_ARITH_FN inline BallTree build_ball_tree(const LazyCostMatrix& src,
+                                                   int32_t leaf_size = 16) {
+    LAP_PLAIN_ARITH
     BallTree tree;
     if (!metric_has_ball_bound(src.metric())) return tree;
     if (src.ncol <= 0 || src.n_vars() <= 0) return tree;
@@ -427,7 +410,7 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
     if (src.metric() == DistanceMetric::Mahalanobis) {
         if (static_cast<int64_t>(src.inv_cov().size()) != n_vars * n_vars) return tree;
         std::vector<double> l;
-        if (!cholesky_lower(src.inv_cov(), n_vars, l)) return tree;
+        if (!plain::cholesky_lower(src.inv_cov(), n_vars, l)) return tree;
         tree.factor.assign(static_cast<std::size_t>(n_vars * n_vars), 0.0);
         for (int64_t m = 0; m < n_vars; ++m) {
             for (int64_t k = 0; k <= m; ++k) {
@@ -538,12 +521,8 @@ inline BallTree build_ball_tree(const LazyCostMatrix& src, int32_t leaf_size = 1
 
         double worst = 0.0;
         for (int32_t t = a; t < b; ++t) {
-            const double* pw = tree.unit_whitened(tree.perm[static_cast<std::size_t>(t)]);
-            double s = 0.0;
-            for (int64_t k = 0; k < n_vars; ++k) {
-                const double d = pw[k] - ctr[k];
-                s += d * d;
-            }
+            const double s = plain::squared_difference(
+                tree.unit_whitened(tree.perm[static_cast<std::size_t>(t)]), ctr, n_vars);
             if (s > worst) worst = s;
         }
         tree.radius[static_cast<std::size_t>(id)] = std::sqrt(worst);
@@ -609,16 +588,12 @@ struct BallBounds {
     double d_hi = 0.0;
 };
 
-inline BallBounds node_ball_bounds(const BallTree& tree, const double* q_whitened,
-                                   double q_g, int32_t id) {
-    const int64_t n = tree.n_vars;
-    const double* ctr = tree.node_centre(id);
-    double s = 0.0;
-    for (int64_t k = 0; k < n; ++k) {
-        const double d = q_whitened[k] - ctr[k];
-        s += d * d;
-    }
-    const double dc = std::sqrt(s);
+LAP_PLAIN_ARITH_FN inline BallBounds node_ball_bounds(const BallTree& tree,
+                                                      const double* q_whitened,
+                                                      double q_g, int32_t id) {
+    LAP_PLAIN_ARITH
+    const double dc = std::sqrt(
+        plain::squared_difference(q_whitened, tree.node_centre(id), tree.n_vars));
     const double r = tree.radius[static_cast<std::size_t>(id)];
     // The near side of the ball is what a prune rests on, so the centre
     // distance is read low and the radius high; the far side, which bounds a
@@ -654,8 +629,10 @@ inline double box_reach(const double* q_original, const double* blo,
 // A bound on |fl(d' A d) - d' A d| over every column the node holds, which is
 // what the source's row-sum evaluation can be wrong by. Zero for a metric whose
 // terms are non-negative, where the sum cannot cancel.
-inline double source_quadform_slack(const BallTree& tree, const double* q_original,
-                                    int32_t id) {
+LAP_PLAIN_ARITH_FN inline double source_quadform_slack(const BallTree& tree,
+                                                       const double* q_original,
+                                                       int32_t id) {
+    LAP_PLAIN_ARITH
     if (!(tree.src_quad_coef > 0.0)) return 0.0;
     const int64_t n = tree.n_vars;
     const double* blo = tree.node_box_lo(id);

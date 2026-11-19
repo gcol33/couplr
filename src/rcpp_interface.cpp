@@ -279,6 +279,29 @@ double cpp_lazy_distance_sd(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix ri
 }
 
 // [[Rcpp::export]]
+double cpp_finite_sd(Rcpp::NumericMatrix x) {
+  return finite_sd_impl(x);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix cpp_group_covariance(Rcpp::NumericMatrix left_mat,
+                                         Rcpp::NumericMatrix right_mat) {
+  return group_covariance_impl(left_mat, right_mat);
+}
+
+// [[Rcpp::export]]
+SEXP cpp_precision_matrix(Rcpp::NumericMatrix cov_mat) {
+  return precision_matrix_impl(cov_mat);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_scaling_statistics(Rcpp::NumericMatrix left_mat,
+                                  Rcpp::NumericMatrix right_mat,
+                                  std::string method) {
+  return scaling_statistics_impl(left_mat, right_mat, method);
+}
+
+// [[Rcpp::export]]
 Rcpp::List cpp_lap_solve_auction_lazy(Rcpp::NumericMatrix left_mat, Rcpp::NumericMatrix right_mat,
                                       SEXP metric, Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov,
                                       double max_distance, Rcpp::List calipers,

@@ -353,10 +353,8 @@ full_match <- function(left, right, vars,
                                         lazy_cost_spec_inv_cov(cost_matrix))
       if (!is.na(pooled_sd)) caliper_val <- caliper_sd * pooled_sd
     } else {
-      finite_dists <- cost_matrix[is.finite(cost_matrix)]
-      if (length(finite_dists) > 1) {
-        caliper_val <- caliper_sd * stats::sd(finite_dists)
-      }
+      pooled_sd <- cpp_finite_sd(cost_matrix)
+      if (!is.na(pooled_sd)) caliper_val <- caliper_sd * pooled_sd
     }
   } else if (!is.null(caliper)) {
     caliper_val <- caliper

@@ -9,6 +9,14 @@
 # keeps every digit the coordinates carry, which the Gram-matrix identity
 # ||L||^2 + ||R||^2 - 2 L.R would not when the coordinates are large next to the
 # distance between them.
+#
+# Everything a built-in distance is computed from is plain double arithmetic in
+# one C++ header (src/core/lap_plain_arith.h): the scaling statistics, the
+# covariance and its inverse, and the distance of a pair. Each sum runs in a
+# fixed order, in doubles, with no fused multiply-add and no BLAS or LAPACK
+# routine, so the distances are the same bits on every platform. R's mean(),
+# sd(), cov() and chol() are not: they accumulate in long double where the
+# platform has one and call the platform's LAPACK.
 .builtin_metrics <- c("euclidean", "l2", "manhattan", "l1", "cityblock",
                       "squared_euclidean", "sqeuclidean", "sq", "chebyshev",
                       "chebychev", "maximum", "max", "mahalanobis", "maha")
@@ -55,31 +63,7 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
 
   inv_cov <- NULL
   if (distance %in% c("mahalanobis", "maha")) {
-    # Mahalanobis distance: sqrt((x-y)' * Sigma^-1 * (x-y))
-    if (!is.null(sigma)) {
-      # User-supplied covariance matrix
-      if (!is.matrix(sigma) || nrow(sigma) != n_vars || ncol(sigma) != n_vars) {
-        stop(sprintf("sigma must be a %d x %d matrix matching the number of variables",
-                     n_vars, n_vars), call. = FALSE)
-      }
-      cov_mat <- sigma
-    } else {
-      # Pooled within-group covariance — standard convention for Mahalanobis
-      # matching with two groups (e.g., treated/control). Inflating Sigma by
-      # between-group differences (i.e. using cov(rbind(L, R))) would
-      # under-weight matching on variables where the two groups differ most.
-      # Falls back to overall covariance when a group is too small for cov().
-      if (n_left >= 2L && n_right >= 2L) {
-        S_L <- stats::cov(left_mat)
-        S_R <- stats::cov(right_mat)
-        cov_mat <- ((n_left - 1L) * S_L + (n_right - 1L) * S_R) /
-                   (n_left + n_right - 2L)
-      } else {
-        cov_mat <- stats::cov(rbind(left_mat, right_mat))
-      }
-    }
-
-    inv_cov <- mahalanobis_precision(cov_mat)
+    inv_cov <- mahalanobis_inv_cov(left_mat, right_mat, sigma)
   }
 
   storage.mode(left_mat) <- "double"
@@ -87,24 +71,53 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
   cpp_lazy_dense_matrix(left_mat, right_mat, distance, inv_cov)
 }
 
+#' Inverse covariance matrix of a Mahalanobis distance between two groups
+#'
+#' The matrix `A` in `sqrt((x - y)' A (x - y))`: the inverse of `sigma` when it
+#' is supplied, and otherwise of the pooled within-group covariance of the two
+#' groups. Pooling within groups is the convention for treated/control
+#' matching; the covariance of the stacked sample would be inflated by the
+#' difference between the groups and under-weight the variables on which they
+#' differ most. When a group has fewer than two rows the two groups are taken
+#' as one sample. The dense matrix and a lazy specification both read their
+#' matrix from here.
+#'
+#' @param left_mat,right_mat Numeric matrices of the two groups, one row per
+#'   unit and one column per variable.
+#' @param sigma Optional covariance matrix, one row and column per variable.
+#' @return The `p x p` inverse covariance matrix.
+#' @keywords internal
+mahalanobis_inv_cov <- function(left_mat, right_mat, sigma = NULL) {
+  n_vars <- ncol(left_mat)
+  if (is.null(sigma)) {
+    return(mahalanobis_precision(cpp_group_covariance(left_mat, right_mat)))
+  }
+  if (!is.matrix(sigma) || nrow(sigma) != n_vars || ncol(sigma) != n_vars) {
+    stop(sprintf("sigma must be a %d x %d matrix matching the number of variables",
+                 n_vars, n_vars), call. = FALSE)
+  }
+  mahalanobis_precision(sigma)
+}
+
 #' Precision matrix of a covariance matrix, through its Cholesky factor
 #'
 #' The Mahalanobis distances need the inverse of a symmetric positive
-#' definite matrix. `chol()` factors it as `R'R`, its failure or a
-#' reciprocal condition number below machine precision marks a singular
-#' matrix, and `chol2inv()` forms the inverse from the triangular factor.
+#' definite matrix. The matrix is factored as `L L'`, the inverse of `L` is
+#' formed by forward substitution and the precision matrix as its
+#' cross-product, in plain double arithmetic. A pivot that is not positive, or
+#' a factor whose squared reciprocal condition number is below machine
+#' precision, marks a singular matrix.
 #'
 #' @return The `p x p` inverse of `cov_mat`.
 #' @keywords internal
 mahalanobis_precision <- function(cov_mat) {
   cov_mat <- as.matrix(cov_mat)
-  R <- tryCatch(chol(cov_mat), error = function(e) NULL)
-  if (is.null(R) || rcond(R, triangular = TRUE)^2 < .Machine$double.eps) {
+  inv <- if (is.numeric(cov_mat)) cpp_precision_matrix(cov_mat)
+  if (is.null(inv)) {
     stop("Covariance matrix is singular or near-singular; cannot compute Mahalanobis distance. ",
          "Consider removing collinear variables or supplying a regularized sigma.",
          call. = FALSE)
   }
-  inv <- chol2inv(R)
   dimnames(inv) <- dimnames(cov_mat)
   inv
 }
@@ -118,59 +131,33 @@ apply_scaling <- function(left_mat, right_mat, method = "standardize") {
     return(list(left = left_mat, right = right_mat, params = NULL))
   }
 
-  # Compute scaling parameters from combined data
-  combined <- rbind(left_mat, right_mat)
-
+  # The centre and scale of each variable over the left and right units
+  # together. A variable without spread keeps its values: its scale is set to
+  # one.
   if (method == TRUE || method == "standardize" || method == "scale") {
-    # Standardize to mean 0, sd 1
-    means <- colMeans(combined)
-    sds <- apply(combined, 2, stats::sd)
-
-    # Avoid division by zero
-    sds[sds == 0] <- 1
-
-    left_scaled <- scale(left_mat, center = means, scale = sds)
-    right_scaled <- scale(right_mat, center = means, scale = sds)
-
-    params <- list(method = "standardize", means = means, sds = sds)
+    st <- cpp_scaling_statistics(left_mat, right_mat, "standardize")
+    st$scale[st$scale == 0] <- 1
+    params <- list(method = "standardize", means = st$center, sds = st$scale)
   } else if (method == "range" || method == "minmax") {
-    # Scale to [0, 1] based on combined range
-    mins <- apply(combined, 2, min)
-    maxs <- apply(combined, 2, max)
-    ranges <- maxs - mins
-
-    # Avoid division by zero
-    ranges[ranges == 0] <- 1
-
-    left_scaled <- sweep(sweep(left_mat, 2, mins, "-"), 2, ranges, "/")
-    right_scaled <- sweep(sweep(right_mat, 2, mins, "-"), 2, ranges, "/")
-
-    params <- list(method = "range", mins = mins, maxs = maxs, ranges = ranges)
+    st <- cpp_scaling_statistics(left_mat, right_mat, "range")
+    st$scale[st$scale == 0] <- 1
+    params <- list(method = "range", mins = st$center, maxs = st$upper,
+                   ranges = st$scale)
   } else if (method == "robust") {
-    # Robust scaling using median and MAD (median absolute deviation)
-    medians <- apply(combined, 2, stats::median)
-    mads <- apply(combined, 2, stats::mad)
-
-    # Avoid division by zero
-    mads[mads == 0] <- 1
-
-    left_scaled <- sweep(sweep(left_mat, 2, medians, "-"), 2, mads, "/")
-    right_scaled <- sweep(sweep(right_mat, 2, medians, "-"), 2, mads, "/")
-
-    params <- list(method = "robust", medians = medians, mads = mads)
+    st <- cpp_scaling_statistics(left_mat, right_mat, "robust")
+    st$scale[st$scale == 0] <- 1
+    params <- list(method = "robust", medians = st$center, mads = st$scale)
   } else {
     stop(sprintf("Unknown scaling method: %s", method), call. = FALSE)
   }
+  params[-1L] <- lapply(params[-1L], stats::setNames, colnames(left_mat))
 
-  # Remove attributes added by scale()
-  left_scaled <- as.matrix(left_scaled)
-  right_scaled <- as.matrix(right_scaled)
-  attr(left_scaled, "scaled:center") <- NULL
-  attr(left_scaled, "scaled:scale") <- NULL
-  attr(right_scaled, "scaled:center") <- NULL
-  attr(right_scaled, "scaled:scale") <- NULL
+  # One subtraction and one division per value, each a single IEEE operation.
+  rescale <- function(mat) {
+    sweep(sweep(mat, 2, st$center, "-"), 2, st$scale, "/")
+  }
 
-  list(left = left_scaled, right = right_scaled, params = params)
+  list(left = rescale(left_mat), right = rescale(right_mat), params = params)
 }
 
 #' Apply weights to matching variables

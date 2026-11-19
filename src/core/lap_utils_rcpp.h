@@ -103,9 +103,9 @@ lap::CostMatrix rcpp_to_cost_matrix(const Rcpp::NumericMatrix& cost);
 // ("euclidean"/"l2", "manhattan"/"l1"/"cityblock", "squared_euclidean"/
 // "sqeuclidean"/"sq", "chebyshev"/"chebychev"/"maximum"/"max",
 // "mahalanobis"/"maha"). `inv_cov` is the precomputed p x p inverse
-// covariance matrix (only read for Mahalanobis; pass R_NilValue otherwise --
-// computing it is R's job, matching compute_distance_matrix()'s existing
-// pooled-covariance logic, not reimplemented here). `calipers` is an R
+// covariance matrix (only read for Mahalanobis; pass R_NilValue otherwise).
+// R's mahalanobis_inv_cov() builds it from group_covariance_impl() and
+// precision_matrix_impl(). `calipers` is an R
 // list with one list(threshold, left, right) per caliper, carrying the raw
 // values of its variable for each left and right unit (R's
 // lazy_cost_spec_calipers()).
@@ -165,6 +165,31 @@ double lazy_distance_sd_impl(
     const Rcpp::NumericMatrix& right_mat,
     SEXP metric,
     Rcpp::Nullable<Rcpp::NumericMatrix> inv_cov);
+
+// The same standard deviation over the finite entries of a matrix of
+// distances, read row by row through the same running sums, so a caliper
+// stated in standard deviations is the same number for a dense matrix and for
+// a specification of the same pairs. NA below two finite entries.
+double finite_sd_impl(const Rcpp::NumericMatrix& x);
+
+// The covariance a Mahalanobis distance between two groups is taken under: the
+// pooled within-group covariance when each side holds at least two units, the
+// covariance of the two sides as one sample otherwise. Computed by
+// lap::plain, so its bits do not depend on the platform.
+Rcpp::NumericMatrix group_covariance_impl(const Rcpp::NumericMatrix& left_mat,
+                                          const Rcpp::NumericMatrix& right_mat);
+
+// The inverse of a symmetric positive definite matrix through its Cholesky
+// factor, or NULL when the matrix is singular to working precision.
+SEXP precision_matrix_impl(const Rcpp::NumericMatrix& cov_mat);
+
+// The centre and scale of each column over the left and right units together,
+// for `method` "standardize" (mean, standard deviation), "range" (minimum,
+// range, with the maximum as `upper`) or "robust" (median, scaled median
+// absolute deviation).
+Rcpp::List scaling_statistics_impl(const Rcpp::NumericMatrix& left_mat,
+                                   const Rcpp::NumericMatrix& right_mat,
+                                   const std::string& method);
 
 // Convert a pure lap::LapResult to the standard Rcpp result list.
 // Assignment is shifted 0-based -> 1-based (0 = unmatched) and the total is

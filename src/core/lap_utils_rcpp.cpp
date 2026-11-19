@@ -125,29 +125,119 @@ double lazy_distance_sd_impl(
   const LazySource source = rcpp_lazy_source(
       left_mat, right_mat, metric, inv_cov, R_PosInf, Rcpp::List::create(), false);
 
-  // Welford's update, which keeps the variance from the difference of two
-  // large sums, in the extended precision R's own var() accumulates in. A
-  // distance that is not a finite number is left out, as sd() is taken over
-  // the finite entries of a matrix.
-  long double count = 0.0L;
-  long double mean = 0.0L;
-  long double ss = 0.0L;
+  // The pairs are read left unit by left unit, the order finite_sd_impl()
+  // reads a matrix in. A distance that is not a finite number is left out.
+  lap::plain::RunningSd acc;
   std::visit([&](const auto& cm) {
     for (int64_t i = 0; i < cm.nrow; ++i) {
       if ((i & 63) == 0) Rcpp::checkUserInterrupt();
       for (int64_t j = 0; j < cm.ncol; ++j) {
         double c = 0.0;
         if (!cost_if_allowed(cm, i, j, c)) continue;
-        const long double x = c;
-        count += 1.0L;
-        const long double delta = x - mean;
-        mean += delta / count;
-        ss += delta * (x - mean);
+        if (!R_finite(c)) continue;
+        acc.add(c);
       }
     }
   }, source);
-  if (count < 2.0L) return NA_REAL;
-  return static_cast<double>(std::sqrt(ss / (count - 1.0L)));
+  const double sd = acc.sd();
+  return std::isnan(sd) ? NA_REAL : sd;
+}
+
+double finite_sd_impl(const Rcpp::NumericMatrix& x) {
+  const int64_t n = x.nrow();
+  const int64_t m = x.ncol();
+  lap::plain::RunningSd acc;
+  for (int64_t i = 0; i < n; ++i) {
+    if ((i & 63) == 0) Rcpp::checkUserInterrupt();
+    for (int64_t j = 0; j < m; ++j) {
+      const double c = x(i, j);
+      if (R_finite(c)) acc.add(c);
+    }
+  }
+  const double sd = acc.sd();
+  return std::isnan(sd) ? NA_REAL : sd;
+}
+
+// The rows of an R matrix as one block of a sample. An R matrix is
+// column-major, which is the layout a block is read in.
+static lap::plain::ColumnBlock block_of(const Rcpp::NumericMatrix& x) {
+  return lap::plain::ColumnBlock{x.begin(), static_cast<int64_t>(x.nrow())};
+}
+
+Rcpp::NumericMatrix group_covariance_impl(const Rcpp::NumericMatrix& left_mat,
+                                          const Rcpp::NumericMatrix& right_mat) {
+  const int64_t p = left_mat.ncol();
+  if (right_mat.ncol() != p) {
+    LAP_ERROR("group_covariance_impl: left_mat and right_mat must have the same number of columns");
+  }
+  // Two groups of at least two units each have a within-group covariance to
+  // pool. A group of one unit has none, and the two sides are then one sample.
+  std::vector<lap::plain::Sample> groups;
+  if (left_mat.nrow() >= 2 && right_mat.nrow() >= 2) {
+    groups.push_back({block_of(left_mat)});
+    groups.push_back({block_of(right_mat)});
+  } else {
+    groups.push_back({block_of(left_mat), block_of(right_mat)});
+  }
+  std::vector<double> cov;
+  lap::plain::within_group_covariance(groups, p, cov);
+  Rcpp::NumericMatrix out(static_cast<int>(p), static_cast<int>(p));
+  std::copy(cov.begin(), cov.end(), out.begin());
+  return out;
+}
+
+SEXP precision_matrix_impl(const Rcpp::NumericMatrix& cov_mat) {
+  const int64_t p = cov_mat.nrow();
+  if (cov_mat.ncol() != p) {
+    LAP_ERROR("precision_matrix_impl: the covariance matrix must be square");
+  }
+  const std::vector<double> a(cov_mat.begin(), cov_mat.end());
+  std::vector<double> inv;
+  if (!lap::plain::spd_inverse(a, p, inv)) return R_NilValue;
+  Rcpp::NumericMatrix out(static_cast<int>(p), static_cast<int>(p));
+  std::copy(inv.begin(), inv.end(), out.begin());
+  return out;
+}
+
+Rcpp::List scaling_statistics_impl(const Rcpp::NumericMatrix& left_mat,
+                                   const Rcpp::NumericMatrix& right_mat,
+                                   const std::string& method) {
+  const int64_t p = left_mat.ncol();
+  if (right_mat.ncol() != p) {
+    LAP_ERROR("scaling_statistics_impl: left_mat and right_mat must have the same number of columns");
+  }
+  const lap::plain::Sample sample{block_of(left_mat), block_of(right_mat)};
+  Rcpp::NumericVector center(static_cast<R_xlen_t>(p));
+  Rcpp::NumericVector scale(static_cast<R_xlen_t>(p));
+  if (method == "standardize") {
+    for (int64_t k = 0; k < p; ++k) {
+      center[k] = lap::plain::column_mean(sample, k);
+      scale[k] = lap::plain::column_sd(sample, k, center[k]);
+    }
+  } else if (method == "range") {
+    Rcpp::NumericVector upper(static_cast<R_xlen_t>(p));
+    for (int64_t k = 0; k < p; ++k) {
+      double lo = 0.0, hi = 0.0;
+      lap::plain::column_range(sample, k, lo, hi);
+      center[k] = lo;
+      upper[k] = hi;
+      scale[k] = hi - lo;
+    }
+    return Rcpp::List::create(Rcpp::Named("center") = center,
+                              Rcpp::Named("scale") = scale,
+                              Rcpp::Named("upper") = upper);
+  } else if (method == "robust") {
+    for (int64_t k = 0; k < p; ++k) {
+      double median = 0.0, mad = 0.0;
+      lap::plain::column_median_mad(sample, k, median, mad);
+      center[k] = median;
+      scale[k] = mad;
+    }
+  } else {
+    LAP_ERROR("scaling_statistics_impl: unknown method '%s'", method.c_str());
+  }
+  return Rcpp::List::create(Rcpp::Named("center") = center,
+                            Rcpp::Named("scale") = scale);
 }
 
 // Each element is list(threshold, left, right): the caliper and the raw values

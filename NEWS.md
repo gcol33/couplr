@@ -70,6 +70,13 @@
   in doubles, so a printed total is the same digits on every platform and a
   statistic sitting at a threshold falls on the same side everywhere.
 
+* **The selection search of `cardinality_match()` returns the same units on
+  every platform.** With identical inputs the first linear programme of the
+  search ended on the same value and bound on x86_64 and on Apple silicon but
+  on another optimal point, because its pivots were fused into multiply-add
+  instructions on arm64; a search stopped by `node_limit` then returned
+  another matching. The search is compiled without fused multiply-add.
+
 * **`full_match(caliper_sd = )` takes the same caliper in every memory
   mode.** The standard deviation of the distances was `sd()` of the matrix in
   the dense path and a running sum in long double in the implicit path. Both

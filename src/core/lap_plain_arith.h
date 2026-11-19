@@ -43,15 +43,25 @@
 // arithmetic is never compiled inside a caller that carries another setting.
 // Both are applied only where the target has a fused multiply-add instruction
 // (__FP_FAST_FMA), which is the only place GCC has anything to contract.
+//
+// LAP_PLAIN_ARITH_FILE is the same switch for the rest of a translation unit,
+// written once at file scope: the standard pragma for clang, which holds to
+// the end of the file, and GCC's optimize pragma, which applies to every
+// function defined after it. It is for a source file whose whole computation
+// has to be free of contraction, where marking each function would mean
+// marking a solver's every routine.
 #if defined(__clang__)
 #  define LAP_PLAIN_ARITH_FN
 #  define LAP_PLAIN_ARITH _Pragma("STDC FP_CONTRACT OFF")
+#  define LAP_PLAIN_ARITH_FILE _Pragma("STDC FP_CONTRACT OFF")
 #elif defined(__GNUC__) && defined(__FP_FAST_FMA)
 #  define LAP_PLAIN_ARITH_FN __attribute__((noinline, optimize("fp-contract=off")))
 #  define LAP_PLAIN_ARITH
+#  define LAP_PLAIN_ARITH_FILE _Pragma("GCC optimize(\"fp-contract=off\")")
 #else
 #  define LAP_PLAIN_ARITH_FN
 #  define LAP_PLAIN_ARITH
+#  define LAP_PLAIN_ARITH_FILE
 #endif
 
 namespace lap {

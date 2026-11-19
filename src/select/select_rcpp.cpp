@@ -13,6 +13,13 @@
 #include "../core/lap_rcpp_convert.h"
 #include "../core/lap_utils.h"
 #include "../core/lap_utils_rcpp.h"
+
+// The search solves linear programmes in doubles and returns one of the
+// optimal points it finds. Which one depends on the last bits of its pivots,
+// so the whole search is compiled without contraction: a problem then has the
+// same answer on every platform, among selections of equal value too.
+LAP_PLAIN_ARITH_FILE
+
 #include "select_bb.h"
 #include "select_lift.h"
 

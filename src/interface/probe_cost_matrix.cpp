@@ -211,19 +211,25 @@ bool cost_any_admissible_impl(SEXP cost, double big) {
 }
 
 // Row and column flags marking the rows and columns with at least one
-// admissible pair.
+// admissible pair, and the number of admissible pairs. Every admissible pair
+// lies in a flagged row and a flagged column, so the pairs of the flagged rows
+// and columns are all admissible exactly when the count equals the product of
+// their numbers.
 Rcpp::List cost_margins_impl(SEXP cost, double big) {
   Rcpp::IntegerVector dim = Rf_getAttrib(cost, R_DimSymbol);
   if (dim.size() != 2) Rcpp::stop("the cost must be a matrix");
   const R_xlen_t nr = dim[0];
   Rcpp::LogicalVector row_ok(dim[0], false), col_ok(dim[1], false);
+  uint64_t n_admissible = 0;
   visit_costs(cost, [&](R_xlen_t k, double x) {
     if (!admissible(x, big)) return;
+    ++n_admissible;
     row_ok[k % nr] = true;
     col_ok[k / nr] = true;
   });
   return Rcpp::List::create(Rcpp::_["row_ok"] = row_ok,
-                            Rcpp::_["col_ok"] = col_ok);
+                            Rcpp::_["col_ok"] = col_ok,
+                            Rcpp::_["n_admissible"] = static_cast<double>(n_admissible));
 }
 
 // The counts, extremes and type-7 quantiles (R's default) of the admissible

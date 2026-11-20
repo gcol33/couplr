@@ -79,18 +79,20 @@
   # column when the columns are fewer, is a property of the graph and is
   # decided by Hall's condition (src/core/lap_hall.h). An error raised by the
   # solver is then an error of the solver and reaches the caller. Greedy
-  # matching answers any graph with the pairs it finds.
-  valid <- .is_valid_cost(sub)
-  complete <- identical(solver_fn, greedy_matching) || all(valid) ||
-    isTRUE(lap_hall_witness_dense(
-      if (nrow(sub) <= ncol(sub)) sub else t(sub))$row_perfect)
+  # matching answers any graph with the pairs it finds. Both questions are
+  # answered in C++ without a matrix of the cost matrix's size in R: the
+  # margins counted the admissible pairs, and every one of them lies in a kept
+  # row and column.
+  complete <- identical(solver_fn, greedy_matching) ||
+    margins$n_admissible == as.double(length(orig_rows)) * length(orig_cols) ||
+    lap_hall_witness_dense(sub)$max_cardinality == min(dim(sub))
 
   padded <- NULL
   greedy_fallback <- FALSE
   if (complete) {
     res <- do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params))
   } else {
-    padded <- .pad_forbidden(sub, valid)
+    padded <- .pad_forbidden(sub, .is_valid_cost(sub))
     if (!is.null(padded)) {
       # The padded problem has another objective than the matching returned,
       # so no certificate is asked of its solve.

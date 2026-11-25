@@ -510,11 +510,21 @@ print.summary.assignment_certificate <- function(x, ...) {
   cat(sprintf("    all rows matched       %s\n", flag(x$all_rows_matched)))
   cat(sprintf("  dual_feasible            %s\n", flag(x$dual_feasible)))
   cat(sprintf("  complementary_slackness  %s\n", flag(x$complementary_slackness)))
-  cat(sprintf("    matched arcs tight     %s   (max slack %.3e)\n",
-              flag(x$cs_matched_tight), x$max_matched_slack))
-  cat(sprintf("    unmatched columns free %s   (max |v_j| %.3e)\n",
-              flag(x$cs_unmatched_free), x$max_v_unmatched))
-  cat(sprintf("  duality_gap              %.6e\n", x$duality_gap))
+  # An exact certificate rests on potentials whose values are sums of doubles,
+  # and its equalities hold with nothing left over. The slack and the gap of
+  # the doubles the check was given are another matter and are reported apart.
+  exact <- identical(x$arithmetic, "exact")
+  cat(sprintf("    matched arcs tight     %s   (%s)\n", flag(x$cs_matched_tight),
+              if (exact) "exact" else
+                sprintf("max slack %.3e", x$max_matched_slack)))
+  cat(sprintf("    unmatched columns free %s   (%s)\n", flag(x$cs_unmatched_free),
+              if (exact) "exact" else
+                sprintf("max |v_j| %.3e", x$max_v_unmatched)))
+  if (exact) {
+    cat("  duality_gap              0 (exact)\n")
+  } else {
+    cat(sprintf("  duality_gap              %.6e\n", x$duality_gap))
+  }
   if (is.na(x$max_suboptimality)) {
     cat("  max_suboptimality        not reported (primal not feasible)\n")
   } else {
@@ -522,9 +532,15 @@ print.summary.assignment_certificate <- function(x, ...) {
   }
   cat(sprintf("  certified_optimal        %s\n", flag(x$certified_optimal)))
   if (identical(x$arithmetic, "exact")) {
-    cat(sprintf("  arithmetic               exact, no tolerance (%s potentials)\n\n",
+    cat(sprintf("  arithmetic               exact, no tolerance (%s potentials)\n",
                 if (is.null(x$exact_duals_source)) "solver"
                 else x$exact_duals_source))
+    if (identical(x$exact_duals_source, "recovered")) {
+      cat(sprintf(paste0("  potentials given         doubles, max slack %.3e, ",
+                         "duality gap %.3e\n"),
+                  x$max_matched_slack, x$duality_gap))
+    }
+    cat("\n")
   } else {
     cat(sprintf("  arithmetic               double, tolerance %.1e\n\n",
                 x$tolerance))

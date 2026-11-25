@@ -166,6 +166,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
         unmatched_left = block_left_ids,
         unmatched_right = block_right_ids,
         solver = character(0),
+        solve_status = character(0),
         summary = block_summary_row_fn(
           block_id = block,
           n_left = nrow(left_block),
@@ -202,6 +203,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
       unmatched_left = block_result$unmatched$left,
       unmatched_right = block_result$unmatched$right,
       solver = block_result$info$solver,
+      solve_status = block_result$info$solve_status,
       potentials = block_result$potentials,
       summary = block_summary_row_fn(
         block_id = block,
@@ -227,6 +229,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
   all_unmatched_right <- unlist(lapply(block_results, function(x) x$unmatched_right))
   all_summaries <- dplyr::bind_rows(lapply(block_results, function(x) x$summary))
   all_solvers <- unlist(lapply(block_results, function(x) x$solver))
+  all_status <- unlist(lapply(block_results, function(x) x$solve_status))
 
   # Handle empty results
   if (nrow(all_pairs) == 0) {
@@ -246,6 +249,7 @@ parallel_lapply <- function(X, FUN, ..., parallel = FALSE) {
     ),
     block_summary = all_summaries,
     solvers = as.character(all_solvers),
+    solve_status = as.character(all_status),
     potentials = lapply(block_results, function(x) x$potentials)
   )
 }

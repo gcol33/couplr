@@ -50,7 +50,9 @@ problems before calling it, computes the status and, for a solver
 registered here, attaches a certificate by default: \code{\link[=verify_assignment]{verify_assignment()}}
 checks the returned potentials when \code{potentials = TRUE} and otherwise
 computes optimal ones, so a registered solver's answer is proved optimal or
-reported as not.
+reported as not. The \code{status} of such a solve is \code{"optimal"} when the
+certificate proved the answer, or, with \code{certify = FALSE}, when the solver
+returned that status itself; otherwise it is \code{"heuristic"}.
 }
 \examples{
 lap_solvers()

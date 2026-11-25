@@ -54,7 +54,14 @@ completed search and checked bounds. Its summary exposes the size,
 balance, and distance stages and the constraint report.
 \item \code{potentials()} returns the dual potentials as a list with elements
 \code{left} and \code{right} (named by unit id) for a matching, or \code{u} and \code{v} for
-an assignment of a cost matrix; \code{NULL} when the solver returned none.
+an assignment of a cost matrix; \code{NULL} when the solver returned none and
+no certificate was computed. A certified solve by a solver without
+potentials carries the ones its certificate was checked against.
+The values are double precision numbers. An exact certificate that reads
+\verb{recovered potentials} was decided on potentials that doubles cannot
+hold; the certificate returns them as \code{exact_u} and \code{exact_v} (see
+\code{\link[=verify_assignment]{verify_assignment()}}), and the doubles of \code{potentials()} then meet the
+conditions to rounding.
 \item \code{unmatched_units()} returns the ids of the unmatched units as a list with
 elements \code{left} and \code{right}, or the unmatched row indices of an
 assignment.

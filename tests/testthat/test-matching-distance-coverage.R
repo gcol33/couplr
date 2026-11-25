@@ -508,3 +508,21 @@ test_that("a stored block variable is applied, as compute_distances() says it wi
   expect_false(identical(sort(paste(free$pairs$left_id, free$pairs$right_id)),
                          sort(paste(m$pairs$left_id, m$pairs$right_id))))
 })
+
+test_that("a distance function must return one row per left and one column per right unit", {
+  left <- data.frame(id = 1:5, x = c(1, 2, 3, 4, 5))
+  right <- data.frame(id = 1:7, x = c(1.1, 2.2, 2.9, 4.5, 5.5, 7, 8))
+  expect_error(match_couples(left, right, vars = "x", auto_scale = FALSE,
+                             distance = function(l, r) matrix(1, 3, 3)),
+               "3 by 3 matrix for 5 left and 7 right units")
+  expect_error(match_couples(left, right, vars = "x", auto_scale = FALSE,
+                             distance = function(l, r) matrix(1, 7, 5)),
+               "7 by 5 matrix for 5 left and 7 right units")
+  expect_error(match_couples(left, right, vars = "x", auto_scale = FALSE,
+                             distance = function(l, r)
+                               as.data.frame(abs(outer(l[, 1], r[, 1], "-")))),
+               "other than a numeric matrix")
+  ok <- match_couples(left, right, vars = "x", auto_scale = FALSE,
+                      distance = function(l, r) abs(outer(l[, 1], r[, 1], "-")))
+  expect_equal(nrow(ok$pairs), 5L)
+})

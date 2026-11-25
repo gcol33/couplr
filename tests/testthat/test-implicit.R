@@ -493,3 +493,22 @@ test_that("a caliper on a column that is not matched on is honoured in every mod
   gap <- abs(tr$ps[match(free$left_id, tr$id)] - ct$ps[match(free$right_id, ct$id)])
   expect_true(any(gap > 0.03))
 })
+
+test_that("match_couples() refuses a named solver the memory mode cannot run", {
+  set.seed(4051)
+  left <- data.frame(id = 1:12, x = rnorm(12), y = rnorm(12))
+  right <- data.frame(id = 1:30, x = rnorm(30), y = rnorm(30))
+  expect_error(match_couples(left, right, vars = c("x", "y"),
+                             method = "hungarian", memory_mode = "implicit"),
+               "does not apply under memory_mode")
+  expect_error(match_couples(left, right, vars = c("x", "y"),
+                             method = "hungarian", memory_mode = "lazy"),
+               "does not support memory_mode")
+  lazy <- match_couples(left, right, vars = c("x", "y"), method = "jv",
+                        memory_mode = "lazy")
+  dense <- match_couples(left, right, vars = c("x", "y"))
+  expect_equal(glance(lazy)$total_distance, glance(dense)$total_distance)
+  capped <- match_couples(left, right, vars = c("x", "y"), method = "jv",
+                          memory_mode = "lazy", max_distance = 0.3)
+  expect_identical(capped$status, "partial")
+})

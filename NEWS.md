@@ -30,6 +30,44 @@
 
 ## Bug fixes
 
+* **A named solver that a memory mode cannot run is an error in
+  `match_couples()`.** `method = "hungarian"` or a solver added with
+  `register_lap_solver()` under `memory_mode = "implicit"` or `"lazy"` was
+  answered by the package's own flow solver without a certificate and without
+  a message, because the error `assignment()` raises for such a call was read
+  as a problem without a complete matching. The call now stops with that
+  error. `"jv"` and `"auction"` run in lazy mode as before.
+
+* **A registered solver's result reads `"optimal"` only when that was
+  proved.** A solver added with `register_lap_solver()` that returned a
+  matching the certificate found not optimal still had `status = "optimal"`,
+  so `print()` of the matching said `optimal` above `Certified optimal: no`.
+  The status is now `"optimal"` when the certificate proved the answer, or,
+  with `certify = FALSE`, when the solver returned that status itself, and
+  `"heuristic"` otherwise. `match_couples()` passes the status of its solve
+  on, so a matching reports no more than its solver did.
+
+* **The summary of an exact certificate reports its equalities as exact.**
+  `summary()` of an `assignment_certificate` decided in exact arithmetic
+  printed `max slack` and `duality_gap` of the double precision potentials
+  the check was given, which can be of the order of 1e-15, beside
+  `exact, no tolerance`. The two conditions and the gap now read `(exact)`,
+  and when the certificate rests on recovered potentials the values of the
+  doubles are printed on their own line, `potentials given`.
+
+* **`potentials()` returns the potentials of every certified solve.** With
+  `certify = TRUE`, a solver that returns no potentials (`"auction"`,
+  `"csa"`, `"bruteforce"` and others) was certified against optimal
+  potentials that were then dropped, and `potentials()` gave `NULL`. The
+  result now carries them.
+
+* **A distance function is held to the shape of the problem in dense mode.**
+  A function passed as `distance` that returned a matrix of another size, or
+  the transposed one, was accepted in dense mode and gave a matching of the
+  wrong units; lazy and implicit mode already stopped. Dense mode now stops
+  with the same message, and with its own when the function returns
+  something other than a numeric matrix.
+
 * **`full_match()` ends exactly optimal.** The flow solver compares doubles
   and could stop on a flow that a residual cycle of exactly negative cost
   still improved, by less than its tolerance; no exact potentials existed for

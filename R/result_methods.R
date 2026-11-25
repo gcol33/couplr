@@ -80,7 +80,14 @@ NULL
 #'   balance, and distance stages and the constraint report.
 #' * `potentials()` returns the dual potentials as a list with elements
 #'   `left` and `right` (named by unit id) for a matching, or `u` and `v` for
-#'   an assignment of a cost matrix; `NULL` when the solver returned none.
+#'   an assignment of a cost matrix; `NULL` when the solver returned none and
+#'   no certificate was computed. A certified solve by a solver without
+#'   potentials carries the ones its certificate was checked against.
+#'   The values are double precision numbers. An exact certificate that reads
+#'   `recovered potentials` was decided on potentials that doubles cannot
+#'   hold; the certificate returns them as `exact_u` and `exact_v` (see
+#'   [verify_assignment()]), and the doubles of `potentials()` then meet the
+#'   conditions to rounding.
 #' * `unmatched_units()` returns the ids of the unmatched units as a list with
 #'   elements `left` and `right`, or the unmatched row indices of an
 #'   assignment.

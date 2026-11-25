@@ -124,7 +124,9 @@
 #' registered here, attaches a certificate by default: [verify_assignment()]
 #' checks the returned potentials when `potentials = TRUE` and otherwise
 #' computes optimal ones, so a registered solver's answer is proved optimal or
-#' reported as not.
+#' reported as not. The `status` of such a solve is `"optimal"` when the
+#' certificate proved the answer, or, with `certify = FALSE`, when the solver
+#' returned that status itself; otherwise it is `"heuristic"`.
 #'
 #' @param name Name under which the solver is selected with
 #'   `assignment(method = name)`.

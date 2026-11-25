@@ -136,3 +136,48 @@ test_that("an error of a registered solver reaches the caller of match_couples()
                                               method = "test_fails")),
                "solver broke")
 })
+
+test_that("a registered solver is optimal only when a certificate says so", {
+  identity_solver <- function(cost, maximize, ...) seq_len(nrow(cost))
+  register_lap_solver("test_identity", identity_solver)
+  on.exit(rm("test_identity", envir = couplr:::.lap_registry), add = TRUE)
+  claiming <- function(cost, maximize, ...) {
+    list(match = seq_len(nrow(cost)), status = "optimal")
+  }
+  register_lap_solver("test_claiming", claiming)
+  on.exit(rm("test_claiming", envir = couplr:::.lap_registry), add = TRUE)
+
+  cost <- matrix(c(5, 1, 9, 1, 5, 9, 9, 9, 1), 3, byrow = TRUE)
+  res <- assignment(cost, method = "test_identity")
+  expect_false(certificate(res)$certified_optimal)
+  expect_identical(res$status, "heuristic")
+  expect_identical(assignment(cost, method = "test_identity",
+                              certify = FALSE)$status, "heuristic")
+  expect_identical(assignment(cost, method = "test_claiming")$status,
+                   "heuristic")
+  expect_identical(assignment(cost, method = "test_claiming",
+                              certify = FALSE)$status, "optimal")
+  expect_identical(assignment(1 - diag(3), method = "test_identity")$status,
+                   "optimal")
+
+  left <- data.frame(id = 1:3, x = c(0, 1, 2))
+  right <- data.frame(id = 1:3, x = c(1, 0, 2.1))
+  m <- match_couples(left, right, vars = "x", auto_scale = FALSE,
+                     method = "test_identity")
+  expect_identical(m$status, "heuristic")
+  expect_false(glance(m)$certified)
+  expect_output(print(m), "heuristic", fixed = TRUE)
+})
+
+test_that("a certified solve by a solver without potentials carries them", {
+  set.seed(31)
+  cost <- matrix(runif(36), 6)
+  for (method in c("auction", "bruteforce", "csa")) {
+    res <- assignment(cost, method = method, certify = TRUE)
+    pot <- potentials(res)
+    expect_false(is.null(pot), info = method)
+    expect_true(certificate(res)$certified_optimal, info = method)
+    expect_equal(sum(pot$u) + sum(pot$v), res$total_cost, info = method)
+    expect_null(potentials(assignment(cost, method = method)), info = method)
+  }
+})

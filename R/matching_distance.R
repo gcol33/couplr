@@ -49,9 +49,7 @@ compute_distance_matrix <- function(left_mat, right_mat, distance = "euclidean",
 
   # Handle distance specification
   if (is.function(distance)) {
-    # User-provided distance function
-    # Assume it takes two matrices and returns a distance matrix
-    return(distance(left_mat, right_mat))
+    return(.distance_function_matrix(distance, left_mat, right_mat))
   }
 
   # Built-in distance metrics
@@ -255,4 +253,21 @@ build_cost_matrix <- function(left, right, vars, distance = "euclidean",
   attr(dist_matrix, "vars") <- vars
 
   dist_matrix
+}
+
+# The matrix a user's distance function returns for these units, held to what
+# the lazy cost source holds it to (src/core/lap_callback_source.h): a numeric
+# matrix with one row per left unit and one column per right unit.
+.distance_function_matrix <- function(fn, left_mat, right_mat) {
+  d <- fn(left_mat, right_mat)
+  if (!is.matrix(d) || !is.numeric(d)) {
+    stop("The distance function returned something other than a numeric ",
+         "matrix.", call. = FALSE)
+  }
+  if (nrow(d) != nrow(left_mat) || ncol(d) != nrow(right_mat)) {
+    stop("The distance function returned a ", nrow(d), " by ", ncol(d),
+         " matrix for ", nrow(left_mat), " left and ", nrow(right_mat),
+         " right units.", call. = FALSE)
+  }
+  d
 }

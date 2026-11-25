@@ -275,6 +275,10 @@
   sub <- if (whole) cost_matrix else
     lazy_cost_spec_subset(cost_matrix, orig_rows, orig_cols)
 
+  # A method the mode does not run is an error of the call and reaches the
+  # caller. Past it, an error of the solve says the units that remain have no
+  # complete matching, which the design loop below then answers.
+  .check_spec_method(solver_params$method, mode)
   res <- tryCatch(
     do.call(solver_fn, c(list(sub, maximize = FALSE), solver_params)),
     error = function(e) e
@@ -564,6 +568,7 @@
 
   info <- list(
     solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
+    solve_status = .solve_status_of(solver_result),
     n_matched = nrow(pairs),
     total_distance = .plain_sum(pairs$distance, na.rm = TRUE)
   )
@@ -587,6 +592,13 @@
   # three fields, and a certificate that survives only a diagnostic call is not
   # one a caller can rely on.
   .carry_solve_evidence(out, solver_result, plan, left_ids, right_ids)
+}
+
+# What a solve terminated on, for the matching's status; NA when no solve ran
+# or the solver reported none.
+.solve_status_of <- function(solver_result) {
+  status <- solver_result$status
+  if (is.null(status)) NA_character_ else as.character(status)
 }
 
 # The solve's duals in the caller's units, named by id. A design that
@@ -877,6 +889,7 @@
     list(
       method = method_label,
       solver = if (is.null(solver_result)) NA_character_ else solver_result$method_used,
+      solve_status = .solve_status_of(solver_result),
       n_matched = nrow(pairs),
       total_distance = .plain_sum(pairs$distance),
       distance_metric = dist_obj$metadata$distance,
@@ -911,7 +924,8 @@
     solver      = result$info$solver,
     greedy      = identical(method_label, "greedy"),
     n_pairs     = nrow(result$pairs),
-    n_requested = length(left_ids)
+    n_requested = length(left_ids),
+    solve_status = result$info$solve_status
   )
 
   result$info <- c(
@@ -973,10 +987,13 @@
 # `solvers` is one method per block that ran a solve, which is what carries a
 # block's greedy fallback out to the status. Reporting the requested method
 # here instead reports every block as having run it, including the one that
-# did not.
-.blocked_info <- function(pairs, n_blocks, block_summary, solvers) {
+# did not. `solve_status` is what each of those solves terminated on.
+.blocked_info <- function(pairs, n_blocks, block_summary, solvers,
+                          solve_status = character(0)) {
   list(
     solver = if (length(solvers) > 0L) unique(solvers) else NA_character_,
+    solve_status = if (length(solve_status) > 0L) unique(solve_status) else
+      NA_character_,
     blocked = TRUE,
     n_blocks = n_blocks,
     n_matched = nrow(pairs),
@@ -1032,7 +1049,8 @@
       pairs = result$pairs,
       unmatched = result$unmatched,
       info = .blocked_info(result$pairs, length(blocks),
-                           result$block_summary, result$solvers),
+                           result$block_summary, result$solvers,
+                           result$solve_status),
       potentials = .merge_potentials(result$potentials, left_ids, right_ids)
     ))
   }
@@ -1044,6 +1062,7 @@
   block_summaries <- list()
   block_potentials <- list()
   solvers <- character(0)
+  solve_status <- character(0)
 
   for (block in blocks) {
     left_block <- left[left[[block_col]] == block, ]
@@ -1099,6 +1118,7 @@
     all_unmatched_right <- c(all_unmatched_right, block_result$unmatched$right)
 
     solvers <- c(solvers, block_result$info$solver)
+    solve_status <- c(solve_status, block_result$info$solve_status)
     block_potentials[[length(block_potentials) + 1]] <- block_result$potentials
 
     # Block summary
@@ -1138,7 +1158,8 @@
       left = all_unmatched_left,
       right = all_unmatched_right
     ),
-    info = .blocked_info(pairs, length(blocks), block_summary_df, solvers),
+    info = .blocked_info(pairs, length(blocks), block_summary_df, solvers,
+                         solve_status),
     potentials = .merge_potentials(block_potentials, left_ids, right_ids)
   )
 }
@@ -1512,7 +1533,8 @@ match_couples <- function(left, right = NULL,
     solver      = result$info$solver,
     greedy      = greedy,
     n_pairs     = nrow(result$pairs),
-    n_requested = nrow(left) * ratio
+    n_requested = nrow(left) * ratio,
+    solve_status = result$info$solve_status
   )
 
   if (!return_unmatched) {

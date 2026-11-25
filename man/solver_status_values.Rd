@@ -28,8 +28,9 @@ than on optimality. The solution is feasible; its optimality is unproven.}
 interrupt, part way through. What it had placed respects every capacity,
 and is short of what the problem asked it to place, so it is neither an
 answer nor evidence that no answer exists.}
-\item{\code{"heuristic"}}{Produced by a heuristic. Optimality is neither claimed
-nor checked.}
+\item{\code{"heuristic"}}{Produced by a heuristic, or by a solver added with
+\code{\link[=register_lap_solver]{register_lap_solver()}} whose answer no certificate proved optimal.
+Optimality is not claimed.}
 }
 }
 \examples{

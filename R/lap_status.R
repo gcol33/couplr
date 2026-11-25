@@ -34,8 +34,9 @@
 #'     interrupt, part way through. What it had placed respects every capacity,
 #'     and is short of what the problem asked it to place, so it is neither an
 #'     answer nor evidence that no answer exists.}
-#'   \item{`"heuristic"`}{Produced by a heuristic. Optimality is neither claimed
-#'     nor checked.}
+#'   \item{`"heuristic"`}{Produced by a heuristic, or by a solver added with
+#'     [register_lap_solver()] whose answer no certificate proved optimal.
+#'     Optimality is not claimed.}
 #' }
 #'
 #' @return Character vector of the permitted status values.
@@ -115,18 +116,29 @@ solver_status_values <- function() {
 # it on the object. One block falling back is enough to make the whole matching
 # heuristic, because the pairs that block contributed are not the optimal ones.
 #
+# `solve_status` is the status of each solve, one entry per solve as `solver`
+# is. A matching claims no more than its solves did: one solve that stopped
+# short of its optimality condition, or whose solver has none, gives the whole
+# matching that status.
+#
 # `n_requested` is how many pairs the design asked for: the left unit count
 # times the requested ratio. Deriving the shortfall from unmatched left units
 # instead reports a k:1 match optimal as soon as every unit holds one partner,
 # however many of its requested partners are missing, because n_matched counts
 # pairs while unmatched counts units.
-.matching_status <- function(solver, greedy, n_pairs, n_requested) {
+.matching_status <- function(solver, greedy, n_pairs, n_requested,
+                             solve_status = NULL) {
   if (isTRUE(greedy)) {
     return("heuristic")
   }
   solver <- solver[!is.na(solver)]
   if (length(solver) > 0L && any(startsWith(solver, "greedy"))) {
     return("heuristic")
+  }
+  short <- intersect(c("heuristic", "interrupted", "iteration_limit",
+                       "eps_optimal"), solve_status)
+  if (length(short) > 0L) {
+    return(short[1L])
   }
   if (n_pairs == 0L) {
     return("infeasible")
@@ -135,6 +147,23 @@ solver_status_values <- function() {
     return("partial")
   }
   "optimal"
+}
+
+# The status of a solve by a solver added with register_lap_solver(). What
+# such a solver terminated on is not known here, so "optimal" stands only when
+# the solver returned that status itself or a certificate proved the answer,
+# and a certificate that found the answer not optimal overrides the solver's
+# own report. `claimed` says whether the solver returned a status.
+.registered_status <- function(out, claimed) {
+  if (!identical(out$status, "optimal")) {
+    return(out)
+  }
+  cert <- out$certificate
+  proved <- if (is.null(cert)) isTRUE(claimed) else isTRUE(cert$certified_optimal)
+  if (!proved) {
+    out$status <- "heuristic"
+  }
+  out
 }
 
 # Single constructor for the object assignment() and its lazy twin return, so

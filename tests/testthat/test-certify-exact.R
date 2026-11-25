@@ -257,3 +257,24 @@ test_that("the print method names the arithmetic the conclusion is in", {
   expect_output(print(summary(exact)), "exact, no tolerance", fixed = TRUE)
   expect_output(print(summary(loose)), "double, tolerance", fixed = TRUE)
 })
+
+test_that("the summary of an exact certificate reports its equalities as exact", {
+  cost <- matrix(c(4, 2, 5, 3, 3, 6, 7, 5, 4), 3, byrow = TRUE)
+  out <- capture.output(print(summary(certificate(assignment(cost,
+                                                             certify = TRUE)))))
+  expect_true(any(grepl("matched arcs tight     TRUE    (exact)", out,
+                        fixed = TRUE)))
+  expect_true(any(grepl("duality_gap              0 (exact)", out,
+                        fixed = TRUE)))
+  expect_false(any(grepl("max slack", out, fixed = TRUE)))
+
+  set.seed(7)
+  x <- matrix(rnorm(40 * 3), 40)
+  y <- matrix(rnorm(90 * 3), 90)
+  d <- sqrt(outer(rowSums(x^2), rowSums(y^2), "+") - 2 * x %*% t(y))
+  cert <- certificate(assignment(d, certify = TRUE))
+  out <- capture.output(print(summary(cert)))
+  expect_identical(cert$arithmetic, "exact")
+  expect_identical(any(grepl("potentials given", out, fixed = TRUE)),
+                   identical(cert$exact_duals_source, "recovered"))
+})

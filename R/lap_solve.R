@@ -398,7 +398,9 @@ assignment <- function(cost, maximize = FALSE,
     out$u <- duals$u
     out$v <- duals$v
   }
-  .attach_certificate(out, cost, maximize, do_certify)
+  out <- .attach_certificate(out, cost, maximize, do_certify)
+  if (solver$builtin) out else
+    .registered_status(out, claimed = !is.null(res_raw$status))
 }
 
 # The duals a solver returned, in the caller's orientation, or NULL for a solver
@@ -440,6 +442,13 @@ assignment <- function(cost, maximize = FALSE,
 # fails even the tolerance reading is suboptimal by more than rounding, and the
 # certificate reports it as it came.
 .certify_result <- function(out, cost, maximize) {
+  # A solver that returns no potentials is certified against optimal ones
+  # computed here, and the result carries them as it would the solver's own.
+  if (is.null(out[["u"]]) || is.null(out[["v"]])) {
+    duals <- .certify_solve_duals(cost, maximize)
+    out$u <- duals$u
+    out$v <- duals$v
+  }
   cert <- verify_assignment(out, cost, maximize = maximize)
   if (isTRUE(cert$certified_optimal) && !isTRUE(cert$exact_certificate)) {
     repaired <- .exact_assignment(out, cost, maximize)
@@ -469,6 +478,8 @@ assignment <- function(cost, maximize = FALSE,
     stop("maximize must be TRUE or FALSE", call. = FALSE)
   }
 
+  .check_spec_method(method, "lazy")
+
   # `method` may still be the full default-enumeration vector from
   # assignment()'s signature if the caller didn't pass one explicitly.
   if (length(method) > 1 || identical(method, "ssp")) method <- "auto"
@@ -477,11 +488,6 @@ assignment <- function(cost, maximize = FALSE,
   # heuristic (range()/na_rate in assignment()); default to "jv", matching
   # that heuristic's own "otherwise: jv" fallback for the common case.
   if (identical(method, "auto")) method <- "jv"
-
-  if (!.lap_solver(method)$lazy) {
-    stop("method = \"", method, "\" does not support memory_mode = \"lazy\" yet; ",
-         "use \"jv\", \"auction\", or memory_mode = \"dense\".", call. = FALSE)
-  }
 
   n0 <- cost$n_left
   m0 <- cost$n_right

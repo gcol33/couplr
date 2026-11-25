@@ -82,15 +82,7 @@
   if (!is.logical(maximize) || length(maximize) != 1L || is.na(maximize)) {
     stop("`maximize` must be TRUE or FALSE.", call. = FALSE)
   }
-  # The loop is not one of the solvers `method` chooses between: it solves a
-  # sequence of restricted masters with the flow model, and which solver runs
-  # is not the caller's to name here. A named one is a request the path cannot
-  # honour rather than one it can quietly ignore.
-  if (length(method) == 1L && !identical(method, "auto")) {
-    stop("method = \"", method, "\" does not apply under memory_mode = ",
-         "\"implicit\": the restricted master is solved by the flow model, ",
-         "and the loop around it is what the mode names.", call. = FALSE)
-  }
+  .check_spec_method(method, "implicit")
   if (!is.logical(certify) || length(certify) != 1L || is.na(certify)) {
     stop("`certify` must be TRUE or FALSE.", call. = FALSE)
   }
@@ -201,6 +193,30 @@
     return(requested)
   }
   lazy_cost_spec_mode(spec)
+}
+
+# Stop when `method` names a solver that a lazy cost specification cannot be
+# solved with in `mode`. "auto" and the unset default pass in both modes.
+#
+# The implicit loop is not one of the solvers `method` chooses between: it
+# solves a sequence of restricted masters with the flow model, and which
+# solver runs is not the caller's to name there. A named one is a request the
+# path cannot honour rather than one it can quietly ignore. Lazy mode runs the
+# solvers that read a cost source pair by pair, and reads "ssp" as "auto".
+.check_spec_method <- function(method, mode) {
+  if (is.null(method) || length(method) != 1L || identical(method, "auto")) {
+    return(invisible(TRUE))
+  }
+  if (identical(mode, "implicit")) {
+    stop("method = \"", method, "\" does not apply under memory_mode = ",
+         "\"implicit\": the restricted master is solved by the flow model, ",
+         "and the loop around it is what the mode names.", call. = FALSE)
+  }
+  if (!identical(method, "ssp") && !.lap_solver(method)$lazy) {
+    stop("method = \"", method, "\" does not support memory_mode = \"lazy\" yet; ",
+         "use \"jv\", \"auction\", or memory_mode = \"dense\".", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 # Whether to attach a checked certificate: the caller's answer when there is

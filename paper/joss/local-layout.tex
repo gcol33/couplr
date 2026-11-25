@@ -1,0 +1,8 @@
+% Keep the short benchmark table together in the local review PDF.
+\usepackage{etoolbox}
+\usepackage{needspace}
+\usepackage[section]{placeins}
+\BeforeBeginEnvironment{longtable}{\Needspace{16\baselineskip}}
+\clubpenalty=10000
+\widowpenalty=10000
+\AtBeginEnvironment{CSLReferences}{\small}

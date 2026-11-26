@@ -1,56 +1,52 @@
-## Resubmission after archival
+## Release notes (2.0.0)
 
-couplr was archived on 2026-10-26 because the M1-SAN and gcc-UBSAN problems
-reported on 2026-10-05 were not corrected in time. Both reports show one
-error: `build_ball_tree()` took a reference to an element of an empty vector
-(`&cal_lo[id * n_cal]` with no caliper columns), "reference binding to null
-pointer". 1.9.0 takes these pointers as `data() + offset`, at that site and at
-the twelve other row and node pointers of the same form, so no element of an
-empty vector is referenced.
+This is a new version of a package on CRAN (1.9.0, published 2026-11-07).
+The main changes since 1.9.0:
 
-Checked on R-hub (2026-11-07) with the clang-asan, clang-ubsan and gcc-asan
-containers: no sanitizer reports. Under valgrind: 0 errors, no definitely or
-possibly lost memory. One test asserted that a search finished before the
-default 30 s time limit, which valgrind's slowdown exceeded; it is now bounded
-by a node limit alone.
+* Results are the same on every platform. The scaling statistics, the pooled
+  covariance and the Mahalanobis distance of a pair are computed by one set
+  of C++ routines in double arithmetic with a fixed order of summation, so
+  x86_64 and arm64 give the same distances and the same matching. On 1.9.0
+  the distances differed from about the 15th significant digit between the
+  two, which could select another of several equally good matchings.
+* Certified solves, `full_match()` included, end exactly optimal on the
+  stored distances, and their certificates are decided in exact arithmetic.
+* A partial matching is certified over the units that can be matched, in the
+  same way in dense, lazy and implicit mode and in `match_path()`.
+* A solver added with `register_lap_solver()` is reported as optimal only
+  when a certificate proved its answer; an error of a solver, a named solver
+  that a memory mode cannot run and a distance function of the wrong shape
+  stop with a message.
+* `print()` is the short form and `summary()` the full report for every
+  result class.
 
-## Release notes (1.9.0)
-
-The main changes since 1.8.1:
-
-* The matching functions return objects of one parent class,
-  `"couplr_result"`, with shared `print()`, `summary()`, `glance()`, `tidy()`
-  and `as.data.frame()` methods, and accessors `certificate()`,
-  `potentials()` and `unmatched_units()`.
-* `assignment()` looks its method up in a solver registry;
-  `lap_solvers()` lists the solvers and `register_lap_solver()` adds one.
-* `cardinality_match()` solves moment-constrained selections by branch and
-  bound with an exact certificate.
-* Dense matching uses less memory (a 20,000-unit Mahalanobis matching peaks
-  at 1.5 GB instead of 6.4 GB).
-* No `\dontrun{}` examples remain; Mahalanobis distances use a Cholesky
-  factorisation instead of `solve()`.
-
-One unused output column (`ks_pvalue` in `balance_diagnostics()`) was removed.
-There are no reverse dependencies on CRAN.
+The version is 2.0.0 because distances agree with those of 1.9.0 to rounding
+and not to the last bit, and because the second class `"couplr_distance"` of
+a distance object, which had no methods, is gone. There are no reverse
+dependencies on CRAN.
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
-The note is the incoming-feasibility one: new submission after archival, and
-possibly misspelled words in DESCRIPTION. These are the names of the authors
-of the cited algorithms (Bertsekas, Cuturi, Gabow, Jonker, Tarjan,
-Volgenant) and of the Sinkhorn algorithm.
+The note is the incoming-feasibility one: "Number of updates in past 6
+months: 7".
 
 ## Test environments
 
-* local: Windows 11 x64, R 4.6.1, Rtools45: Status 1 NOTE (as above),
-  tests FAIL 0 | PASS 8975.
-* win-builder: R-devel (2026-11-06 r90845 ucrt), check time 378 s: Status
-  1 NOTE (as above), tests FAIL 0 | PASS 8975.
-* R-hub: clang-asan, clang-ubsan, gcc-asan, valgrind (see above).
-* win-builder: R 4.6.2: Status 1 NOTE.
+* win-builder: R-devel (2026-11-17 r90926 ucrt), check time 495 s: Status
+  1 NOTE (as above), tests FAIL 0 | PASS 9810.
+* win-builder: R 4.6.2, check time 460 s: Status 1 NOTE (as above), tests
+  FAIL 0 | PASS 9810.
+* GitHub Actions: macOS (release), Windows (release), Ubuntu (devel,
+  release, oldrel-1): OK.
+* R-hub (2026-11-25): clang-asan and clang-ubsan Status OK with no sanitizer
+  reports; valgrind 0 errors, no definitely or possibly lost memory.
+* R-hub gcc-asan (2026-11-26, `-fsanitize=address,undefined,bounds`): tests
+  OK with no sanitizer reports. ggraph and tidygraph do not build in that
+  container and were left out, so the R code of the `algorithms` vignette,
+  which draws with them, stopped there; all other checks OK.
+* local: macOS 26 arm64, R 4.5.3: tests FAIL 0.
 
 ## Downstream dependencies
 
